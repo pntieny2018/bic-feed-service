@@ -1,3 +1,75 @@
-import { Model } from 'sequelize';
+import {
+  AllowNull,
+  AutoIncrement,
+  BelongsTo,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  HasMany,
+  Length,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
+import { Optional } from 'sequelize';
+import { PostModel } from './post.model';
+import { CommentMediaModel } from './comment-media.model';
 
-export class CommentModel extends Model {}
+export interface IComment {
+  id: number;
+  postID: number;
+  parentID?: number;
+  content?: string;
+  createdBy: number;
+  updatedBy: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  post: PostModel;
+  media: CommentMediaModel[];
+}
+
+@Table({
+  tableName: 'comments',
+})
+export class CommentModel
+  extends Model<IComment, Optional<IComment, 'id'>>
+  implements IComment
+{
+  @PrimaryKey
+  @AutoIncrement
+  @Column
+  id: number;
+
+  @Column
+  parentID: number;
+
+  @ForeignKey(() => PostModel)
+  @AllowNull(false)
+  @Column
+  postID: number;
+
+  @Length({ max: 5000 })
+  @Column
+  content: string;
+
+  @AllowNull(false)
+  @Column
+  public createdBy: number;
+
+  @AllowNull(false)
+  @Column
+  public updatedBy: number;
+
+  @CreatedAt
+  public createdAt?: Date;
+
+  @UpdatedAt
+  public updatedAt?: Date;
+
+  @BelongsTo(() => PostModel)
+  post: PostModel;
+
+  @HasMany(() => CommentMediaModel)
+  media: CommentMediaModel[];
+}

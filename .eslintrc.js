@@ -23,9 +23,8 @@ module.exports = {
       'error',
       {
         selector: 'default',
-        format: ['camelCase', 'UPPER_CASE'],
+        format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
       },
-
       {
         selector: 'variable',
         format: ['camelCase', 'UPPER_CASE'],
@@ -42,7 +41,6 @@ module.exports = {
         format: ['camelCase'],
         leadingUnderscore: 'require',
       },
-
       {
         selector: 'typeLike',
         format: ['PascalCase'],
@@ -73,7 +71,7 @@ module.exports = {
         },
       },
     ],
-    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'warn',
   },
