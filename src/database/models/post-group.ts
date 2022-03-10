@@ -6,7 +6,7 @@ export interface IPostGroup {
   groupId: number;
 }
 @Table({
-  tableName: 'media',
+  tableName: 'post_group',
 })
 export class PostGroupModel extends Model implements IPostGroup {
   @ForeignKey(() => PostModel)

@@ -66,8 +66,8 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   public updatedAt?: Date;
 
   @BelongsTo(() => PostModel)
-  post: PostModel;
+  public post: PostModel;
 
   @HasMany(() => CommentMediaModel)
-  media: CommentMediaModel[];
+  public media: CommentMediaModel[];
 }

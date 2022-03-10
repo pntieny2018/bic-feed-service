@@ -1,23 +1,28 @@
-import { Column, ForeignKey, HasMany, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AutoIncrement, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
-import { PostModel } from './post.model';
 
-export interface IPostReaction {
+export interface ICommentReaction {
   id: number;
   commentId: number;
   reactionName: string;
+  createdBy: number;
 }
 @Table({
-  tableName: 'media',
+  tableName: 'comment_reaction',
+  timestamps: false,
 })
-export class CommentReactionModel extends Model<IPostReaction, Optional<IPostReaction, 'id'>> implements IPostReaction {
+export class CommentReactionModel
+  extends Model<ICommentReaction, Optional<ICommentReaction, 'id'>>
+  implements ICommentReaction
+{
   @PrimaryKey
+  @AutoIncrement
   @Column
   public id: number;
 
-  @ForeignKey(() => PostModel)
+  @ForeignKey(() => CommentModel)
   @Column
   public commentId: number;
 
