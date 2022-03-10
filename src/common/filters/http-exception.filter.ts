@@ -1,10 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ResponseDto } from '../dto';
 import { StatusCode } from '../enum';
@@ -38,10 +32,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     response.status(status).json(
       new ResponseDto({
-        code:
-          status < HttpStatus.INTERNAL_SERVER_ERROR
-            ? StatusCode.BAD_REQUEST
-            : StatusCode.INTERNAL_SERVER_ERROR,
+        code: status < HttpStatus.INTERNAL_SERVER_ERROR ? StatusCode.BAD_REQUEST : StatusCode.INTERNAL_SERVER_ERROR,
         meta: {
           message: exception.message,
           stack: this._getStack(exception),
@@ -72,16 +63,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  public handleValidatorException(
-    exception: ValidatorException,
-    response: Response
-  ): void {
+  public handleValidatorException(exception: ValidatorException, response: Response): void {
     response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
         code: StatusCode.BAD_REQUEST,
         meta: {
-          message:
-            response?.responseMessage?.validator?.fails || 'Validate fails',
+          message: response?.responseMessage?.validator?.fails || 'Validate fails',
           errors: exception.getResponse(),
           stack: this._getStack(exception),
         },

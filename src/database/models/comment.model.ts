@@ -12,14 +12,15 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Optional } from 'sequelize';
 import { PostModel } from './post.model';
+import { Optional } from 'sequelize';
+import { MediaModel } from './media.model';
 import { CommentMediaModel } from './comment-media.model';
 
 export interface IComment {
   id: number;
-  postID: number;
-  parentID?: number;
+  postId: number;
+  parentId?: number;
   content?: string;
   createdBy: number;
   updatedBy: number;
@@ -32,22 +33,19 @@ export interface IComment {
 @Table({
   tableName: 'comments',
 })
-export class CommentModel
-  extends Model<IComment, Optional<IComment, 'id'>>
-  implements IComment
-{
+export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> implements IComment {
   @PrimaryKey
   @AutoIncrement
   @Column
   id: number;
 
   @Column
-  parentID: number;
+  parentId: number;
 
   @ForeignKey(() => PostModel)
   @AllowNull(false)
   @Column
-  postID: number;
+  postId: number;
 
   @Length({ max: 5000 })
   @Column

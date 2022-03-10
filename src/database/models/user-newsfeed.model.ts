@@ -1,21 +1,14 @@
-import {
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
-export interface INewsFeed {
+export interface IUserNewsFeed {
   userId: number;
   postId: number;
 }
-
 @Table({
   tableName: 'user_newsfeed',
 })
-export class NewsFeed extends Model implements INewsFeed {
+export class UserNewsFeedModel extends Model implements IUserNewsFeed {
   @PrimaryKey
   @Column
   public userId: number;

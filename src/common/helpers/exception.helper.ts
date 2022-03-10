@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  HttpException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, HttpException, NotFoundException } from '@nestjs/common';
 
 export class ExceptionHelper {
   public static throw(msg: unknown, status: number): void {

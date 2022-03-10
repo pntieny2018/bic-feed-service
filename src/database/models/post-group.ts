@@ -1,19 +1,12 @@
-import {
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
 export interface IPostGroup {
   postId: number;
   groupId: number;
 }
-
 @Table({
-  tableName: 'post_group',
+  tableName: 'media',
 })
 export class PostGroupModel extends Model implements IPostGroup {
   @ForeignKey(() => PostModel)

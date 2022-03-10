@@ -1,14 +1,5 @@
 import { Optional } from 'sequelize';
-import {
-  AllowNull,
-  AutoIncrement,
-  Column,
-  CreatedAt,
-  HasMany,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { AllowNull, AutoIncrement, Column, CreatedAt, HasMany, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { CommentModel } from './comment.model';
 import { PostMediaModel } from './post-media.model';
 import { PostModel } from './post.model';
@@ -27,10 +18,7 @@ export interface IMedia {
 @Table({
   tableName: 'media',
 })
-export class MediaModel
-  extends Model<IMedia, Optional<IMedia, 'id'>>
-  implements IMedia
-{
+export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements IMedia {
   @PrimaryKey
   @AutoIncrement
   @Column

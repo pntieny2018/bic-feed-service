@@ -1,11 +1,4 @@
-import {
-  BelongsTo,
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { MediaModel } from './media.model';
 import { CommentModel } from './comment.model';
 
@@ -14,7 +7,7 @@ export interface ICommentMedia {
   mediaId: number;
 }
 @Table({
-  tableName: 'comments_media',
+  tableName: 'media',
 })
 export class CommentMediaModel extends Model implements ICommentMedia {
   @ForeignKey(() => CommentModel)

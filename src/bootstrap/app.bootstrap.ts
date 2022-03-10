@@ -9,10 +9,7 @@ export class AppBootstrap {
    * @param configService Reference instance of ConfigService.
    * @return void
    */
-  public static async init(
-    app: INestApplication,
-    configService: ConfigService
-  ): Promise<void> {
+  public static async init(app: INestApplication, configService: ConfigService): Promise<void> {
     const appConfig = configService.get<IAppConfig>('app');
     app.enableVersioning({
       type: VersioningType.URI,

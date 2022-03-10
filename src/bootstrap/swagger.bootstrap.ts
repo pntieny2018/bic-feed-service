@@ -10,10 +10,7 @@ export class SwaggerBootstrap {
    * @param configService Reference instance of ConfigService.
    * @return void
    */
-  public static init(
-    app: INestApplication,
-    configService: ConfigService
-  ): void {
+  public static init(app: INestApplication, configService: ConfigService): void {
     const swaggerConfig = configService.get<ISwaggerConfig>('swagger');
     if (swaggerConfig.enable) {
       const options = new DocumentBuilder()

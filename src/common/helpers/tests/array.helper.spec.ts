@@ -6,10 +6,7 @@ describe('ArrayHelper', function () {
       const firstArrayMock = [1, 2, 3];
       const secondArrayMock = [2, 3, 4];
 
-      const result = ArrayHelper.differenceArrNumber(
-        firstArrayMock,
-        secondArrayMock
-      );
+      const result = ArrayHelper.differenceArrNumber(firstArrayMock, secondArrayMock);
 
       expect(result).toEqual([1]);
     });
