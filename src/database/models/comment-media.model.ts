@@ -7,7 +7,7 @@ export interface ICommentMedia {
   mediaId: number;
 }
 @Table({
-  tableName: 'comments_media',
+  tableName: 'media',
 })
 export class CommentMediaModel extends Model implements ICommentMedia {
   @ForeignKey(() => CommentModel)

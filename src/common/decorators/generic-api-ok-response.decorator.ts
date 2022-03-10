@@ -8,17 +8,17 @@ function ResponseDtoMixinClass<T extends ClassType>(resourceCls: T): ClassType {
     @ApiProperty({
       default: HttpStatus.OK,
     })
-    code: number;
+    public code: number;
 
     @ApiProperty({
       type: resourceCls,
     })
-    data: T;
+    public data: T;
 
     @ApiProperty({
       required: false,
     })
-    meta?: ResponseMeta;
+    public meta?: ResponseMeta;
   }
 
   return ResponseDto;

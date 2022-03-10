@@ -13,6 +13,7 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 import { CommentModel } from './comment.model';
+import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 
 export interface IPost {
@@ -21,7 +22,7 @@ export interface IPost {
   updatedBy: number;
   content: string;
   isImportant: boolean;
-  importantExpiredTime?: Date;
+  importantExpiredAt?: Date;
   isDraft: boolean;
   canReact: boolean;
   canShare: boolean;
@@ -45,7 +46,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public isImportant: boolean;
 
   @Column
-  public importantExpiredTime?: Date;
+  public importantExpiredAt?: Date;
 
   @Column
   public isDraft: boolean;

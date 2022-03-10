@@ -3,10 +3,11 @@ import { AppService } from './app.service';
 import { FeedModule } from '../modules/feed';
 import { AppController } from './app.controller';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
+import { RecentSearchModule } from '../modules/recent-search';
 import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 
 @Module({
-  imports: [LibModule, AuthModule, FeedModule],
+  imports: [LibModule, AuthModule, FeedModule, RecentSearchModule],
   controllers: [AppController],
   providers: [AppService, Logger],
 })
