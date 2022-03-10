@@ -39,4 +39,17 @@ export class ReactionController extends VersionController {
   public async create(@AuthUser() user: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
     return this._reactionService.handleReaction(user, createReactionDto, true);
   }
+
+  @ApiOperation({ summary: 'Delete reaction.' })
+  @ApiBadRequestResponse({
+    description: 'Delete reaction fails',
+  })
+  @ApiOkResponse({
+    description: 'Delete reaction successfully',
+    type: Boolean,
+  })
+  @Delete('/')
+  public async delete(@AuthUser() user: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
+    return this._reactionService.handleReaction(user, createReactionDto, false);
+  }
 }

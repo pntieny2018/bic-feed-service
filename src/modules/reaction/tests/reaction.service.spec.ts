@@ -210,4 +210,82 @@ describe('ReactionService', () => {
       });
     });
   });
+
+  describe('Delete reaction', () => {
+    describe('Delete post reaction', () => {
+      it('Delete post reaction successfully', async () => {
+        const input = mockCreateReactionDto[0];
+        const mockDataFoundOne = createMock<PostReactionModel>({
+          id: 1,
+          postId: input.targetId,
+          reactionName: input.reactionName,
+          createdBy: input.createdBy,
+        });
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(mockDataFoundOne);
+        const postReactionModelDestroySpy = jest.spyOn(postReactionModel, 'destroy').mockResolvedValue(1);
+        expect(await reactionService.handleReaction(mockUserInfoDto, input, false)).toEqual(true);
+        expect(await reactionService.handlePostReaction(mockUserInfoDto.userId, input, false)).toEqual(true);
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(2);
+        expect(postReactionModelDestroySpy).toBeCalledTimes(2);
+      });
+
+      it('Delete post reaction failed because of non-existed such reaction', async () => {
+        const input = mockCreateReactionDto[0];
+        const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+        const postReactionModelDestroySpy = jest.spyOn(postReactionModel, 'destroy').mockResolvedValue(1);
+        try {
+          await reactionService.handleReaction(mockUserInfoDto, input, false);
+        } catch (e) {
+          expect(e.message).toBe('Reaction existence is false');
+        }
+        try {
+          await reactionService.handlePostReaction(mockUserInfoDto.userId, input, false);
+        } catch (e) {
+          expect(e.message).toBe('Reaction existence is false');
+        }
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(2);
+        expect(postReactionModelDestroySpy).toBeCalledTimes(0);
+      });
+    });
+
+    describe('Delete comment reaction', () => {
+      it('Delete comment reaction successfully', async () => {
+        const input = mockCreateReactionDto[1];
+        const mockDataFoundOne = createMock<CommentReactionModel>({
+          id: 1,
+          commentId: input.targetId,
+          reactionName: input.reactionName,
+          createdBy: input.createdBy,
+        });
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(mockDataFoundOne);
+        const commentReactionModelDestroySpy = jest.spyOn(commentReactionModel, 'destroy').mockResolvedValue(1);
+        expect(await reactionService.handleReaction(mockUserInfoDto, input, false)).toEqual(true);
+        expect(await reactionService.handleCommentReaction(mockUserInfoDto.userId, input, false)).toEqual(true);
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(2);
+        expect(commentReactionModelDestroySpy).toBeCalledTimes(2);
+      });
+
+      it('Delete comment reaction failed because of non-existed such reaction', async () => {
+        const input = mockCreateReactionDto[1];
+        const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
+        const commentReactionModelDestroySpy = jest.spyOn(commentReactionModel, 'destroy').mockResolvedValue(1);
+        try {
+          await reactionService.handleReaction(mockUserInfoDto, input, false);
+        } catch (e) {
+          expect(e.message).toBe('Reaction existence is false');
+        }
+        try {
+          await reactionService.handleCommentReaction(mockUserInfoDto.userId, input, false);
+        } catch (e) {
+          expect(e.message).toBe('Reaction existence is false');
+        }
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(2);
+        expect(commentReactionModelDestroySpy).toBeCalledTimes(0);
+      });
+    });
+  });
 });
