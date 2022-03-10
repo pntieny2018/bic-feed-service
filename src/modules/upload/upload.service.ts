@@ -68,10 +68,7 @@ export class UploadService {
    * @param option extension: .png .jpg .mp4 .docx ...
    * @returns
    */
-  public static getKey(
-    uploadType: string,
-    option?: { extension: string }
-  ): string {
+  public static getKey(uploadType: string, option?: { extension: string }): string {
     const UUID = uuid.v4();
     const prefix = '';
     if (!prefix) throw new Error('generate s3 path failed');

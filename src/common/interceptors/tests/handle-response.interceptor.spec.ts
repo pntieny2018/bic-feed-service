@@ -27,10 +27,7 @@ describe('HandleResponseInterceptor', () => {
         handle: jest.fn().mockReturnValue(of(inputData)),
       });
 
-      const responseObserve = interceptor.intercept(
-        mockExecutionContext,
-        mockNextHandler
-      );
+      const responseObserve = interceptor.intercept(mockExecutionContext, mockNextHandler);
 
       const responseDto = await lastValueFrom(responseObserve);
       expect(mockNextHandler.handle).toBeCalled();

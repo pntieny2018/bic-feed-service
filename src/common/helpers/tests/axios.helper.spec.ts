@@ -17,9 +17,7 @@ describe('AxiosHelper', function () {
         },
         status: 200,
       };
-      const result = AxiosHelper.getDataResponse<mockDataType>(
-        axiosResponseMock as any
-      );
+      const result = AxiosHelper.getDataResponse<mockDataType>(axiosResponseMock as any);
 
       expect(result).toMatchObject(expectData);
     });
@@ -36,9 +34,7 @@ describe('AxiosHelper', function () {
         },
         status: 200,
       };
-      const result = AxiosHelper.getDataResponse<mockDataType>(
-        axiosResponseMock as any
-      );
+      const result = AxiosHelper.getDataResponse<mockDataType>(axiosResponseMock as any);
 
       expect(result).toMatchObject(expectData);
     });
