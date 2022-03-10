@@ -20,8 +20,7 @@ describe('StringHelper', function () {
   });
   describe('parseCookieStr', function () {
     it('should return cookie object from cookie string', function () {
-      const cookieStringMock =
-        'auth_id=237e2b6ff5282f665f99cfc73a97e7b1; token=asdsad231232dasd';
+      const cookieStringMock = 'auth_id=237e2b6ff5282f665f99cfc73a97e7b1; token=asdsad231232dasd';
 
       const expectCookieObject = {
         auth_id: '237e2b6ff5282f665f99cfc73a97e7b1',

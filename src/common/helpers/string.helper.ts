@@ -11,10 +11,7 @@ export class StringHelper {
     });
     if ((whiteList ?? []).length) {
       whiteList.forEach((w) => {
-        snakeCaseStr = snakeCaseStr.replace(
-          StringHelper.camelToSnakeCase(w),
-          w
-        );
+        snakeCaseStr = snakeCaseStr.replace(StringHelper.camelToSnakeCase(w), w);
       });
     }
     return snakeCaseStr;
@@ -69,8 +66,7 @@ export class StringHelper {
    */
   public static randomStr(length: number): string {
     let result = '';
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));

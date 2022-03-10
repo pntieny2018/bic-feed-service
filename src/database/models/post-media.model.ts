@@ -1,11 +1,4 @@
-import {
-  BelongsTo,
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
 
@@ -28,8 +21,8 @@ export class PostMediaModel extends Model implements IPostMedia {
   public mediaId: number;
 
   @BelongsTo(() => PostModel)
-  post: PostModel;
+  public post: PostModel;
 
   @BelongsTo(() => MediaModel)
-  media: MediaModel;
+  public media: MediaModel;
 }

@@ -32,10 +32,7 @@ export interface IComment {
 @Table({
   tableName: 'comments',
 })
-export class CommentModel
-  extends Model<IComment, Optional<IComment, 'id'>>
-  implements IComment
-{
+export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> implements IComment {
   @PrimaryKey
   @AutoIncrement
   @Column

@@ -1,21 +1,12 @@
-'use strict';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { DataTypes } = require('sequelize');
 
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    /**
-     * Add altering commands here.
-     *
-     * Example:
-     * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
-     */
+  up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable('posts');
   },
 
-  async down(queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
+  down: async (queryInterface) => {
+    await queryInterface.dropTable('posts');
   },
 };

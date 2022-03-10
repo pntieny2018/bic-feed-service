@@ -9,10 +9,7 @@ describe('ExceptionHelper', function () {
         code: 404,
       };
       try {
-        ExceptionHelper.throw(
-          exceptionInfoMock.message,
-          exceptionInfoMock.code
-        );
+        ExceptionHelper.throw(exceptionInfoMock.message, exceptionInfoMock.code);
       } catch (e) {
         expect(e).toBeInstanceOf(HttpException);
         const httpException: HttpException = e;

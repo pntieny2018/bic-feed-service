@@ -28,25 +28,25 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
     ports:
-      - 5432:5432
+      - '${DB_PORT}:${DB_PORT}'
     env_file:
       - .env
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     networks:
-      - bein-feed-network
+      - bein-stream-network
   redis:
     image: bitnami/redis:latest
     container_name: redis_feed
     env_file:
       - ./.env
     environment:
-      REDIS_PASSWORD: 123456
-      REDIS_PORT_NUMBER: 6376
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT_NUMBER: ${REDIS_PORT}
     ports:
-      - '6376:6376'
+      - '${REDIS_PORT}:${REDIS_PORT}'
     networks:
-      - bein-feed-network
+      - bein-stream-network
 
 networks:
   bein-stream-network:

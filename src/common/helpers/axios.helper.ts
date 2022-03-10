@@ -20,10 +20,7 @@ export class AxiosHelper {
    * @param params Record<string, any>
    * @returns url inject params
    */
-  public static injectParamsToStrUrl(
-    path: string,
-    params: Record<string, unknown>
-  ): string {
+  public static injectParamsToStrUrl(path: string, params: Record<string, unknown>): string {
     Object.entries(params).forEach(([k, v]) => {
       path = path.replace(`:${k}`, encodeURIComponent(<string>v));
     });

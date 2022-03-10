@@ -4,11 +4,25 @@ import { AppModule } from './app/app.module';
 import { ConfigService } from '@nestjs/config';
 import { AppBootstrap } from './bootstrap/app.bootstrap';
 import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
+import * as winston from 'winston';
+import { WinstonModule } from 'nest-winston';
+import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger({
+      transports: [
+        new winston.transports.Console({
+          level: 'debug',
+          format: winston.format.json(),
+        }),
+      ],
+    }),
+  });
+
   const configService = app.get<ConfigService>(ConfigService);
 
+  ClassValidatorBootstrap.init(app, AppModule);
   SwaggerBootstrap.init(app, configService);
   await AppBootstrap.init(app, configService);
 }
