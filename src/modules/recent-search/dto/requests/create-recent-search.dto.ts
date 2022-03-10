@@ -11,7 +11,7 @@ export class CreateRecentSearchDto {
   @IsString()
   @IsNotEmpty()
   @Transform((params) => (params.value ? params.value.trim() : ''))
-  keyword: string;
+  public keyword: string;
 
   @ApiProperty({
     description: 'Target entity. Support: [post,user,article]',
@@ -23,5 +23,5 @@ export class CreateRecentSearchDto {
     message: 'Target must be "post" | "article" | "artical" | "all"',
   })
   @Transform((params) => params.value ?? RecentSearchType.POST)
-  target: string = RecentSearchType.POST;
+  public target: string = RecentSearchType.POST;
 }

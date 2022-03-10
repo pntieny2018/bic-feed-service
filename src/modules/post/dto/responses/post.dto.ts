@@ -1,21 +1,23 @@
-import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Expose } from 'class-transformer';
 import { PostContentDto } from '../post-content.dto';
-import { Audience } from '../audience.dto';
 import { SettingDto } from '../setting.dto';
 
-export class CreatePostDto {
+export class PostDto {
   @ApiProperty({
     description: 'Post ID',
-    type: Audience,
+    type: Number,
+    default: 1,
   })
-  audience: Audience;
+  @Expose({ name: 'is_draft' })
+  id: number;
 
   @ApiProperty({
-    description: 'Post data, includes content, images, files, videos',
-    type: PostContentDto,
+    description: 'Keyword search',
+    type: String,
+    default: 'Bein',
   })
+  @Expose({ name: 'is_draft' })
   data: PostContentDto;
 
   @ApiProperty({
@@ -30,8 +32,6 @@ export class CreatePostDto {
     type: Boolean,
     default: true,
   })
-  @IsBoolean()
-  @IsOptional()
   @Expose({ name: 'is_draft' })
-  isDraft?: boolean = false;
+  isDraft = false;
 }

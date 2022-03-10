@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
-import { RecentSearchType } from '../../recent-search-type.constants';
 
-export class GetRecentSearchPostDto {
+export class GetPostDto {
   @ApiProperty({
     description: 'Sort recent search by created time',
     enum: ['asc', 'desc'],
@@ -13,7 +12,7 @@ export class GetRecentSearchPostDto {
   @IsString()
   @IsOptional()
   @Transform((params) => params.value ?? 'desc')
-  public sort?: 'asc' | 'desc' = 'desc';
+  sort?: 'asc' | 'desc' = 'desc';
 
   @ApiProperty({
     description: 'Limit recent search',
@@ -24,16 +23,5 @@ export class GetRecentSearchPostDto {
   @IsNumber()
   @IsOptional()
   @Transform((params) => parseInt(params.value) ?? 10)
-  public limit?: number;
-
-  @ApiProperty({
-    description: 'Target entity. Support[all,post,article,user]',
-    default: RecentSearchType.POST,
-    required: false,
-  })
-  @IsOptional()
-  @Transform((params) => {
-    return params.value ?? RecentSearchType.POST;
-  })
-  public target?: RecentSearchType = RecentSearchType.ALL;
+  limit?: number;
 }
