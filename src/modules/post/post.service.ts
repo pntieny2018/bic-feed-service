@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import { PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto } from './dto/requests';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { PostDto } from './dto/responses';
 
 @Injectable()
 export class PostService {
@@ -12,9 +13,9 @@ export class PostService {
    */
   private _logger = new Logger(PostService.name);
 
-  constructor(
+  public constructor(
     @InjectModel(PostModel)
-    private _recentSearchModel: typeof PostModel
+    private _postModel: typeof PostModel
   ) {}
 
   /**
@@ -26,7 +27,12 @@ export class PostService {
    */
   public async createPost(createdBy: number, createPostDto: CreatePostDto) {
     try {
-      console.log(createPostDto);
+      const post = this._postModel.findOne({ where: { id: 1 } });
+      return post;
+      const result = plainToClass(PostDto, post, {
+        excludeExtraneousValues: true,
+      });
+      return result;
     } catch (error) {
       this._logger.error(error, error?.stack);
       //this.sentryService.captureException(error);

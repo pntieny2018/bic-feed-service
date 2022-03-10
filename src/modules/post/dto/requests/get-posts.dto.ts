@@ -12,7 +12,7 @@ export class GetPostDto {
   @IsString()
   @IsOptional()
   @Transform((params) => params.value ?? 'desc')
-  sort?: 'asc' | 'desc' = 'desc';
+  public sort?: 'asc' | 'desc' = 'desc';
 
   @ApiProperty({
     description: 'Limit recent search',
@@ -23,5 +23,5 @@ export class GetPostDto {
   @IsNumber()
   @IsOptional()
   @Transform((params) => parseInt(params.value) ?? 10)
-  limit?: number;
+  public limit?: number;
 }

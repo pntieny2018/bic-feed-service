@@ -2,17 +2,17 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SettingDto {
   @ApiProperty({ type: Boolean, description: 'Allow to react' })
-  canReact?: boolean;
+  public canReact?: boolean;
 
   @ApiProperty({ type: Boolean, description: 'Allow to share post' })
-  canShare?: boolean;
+  public canShare?: boolean;
 
   @ApiProperty({ type: Boolean, description: 'Allow to comment' })
-  canComment?: boolean;
+  public canComment?: boolean;
 
   @ApiProperty({ type: Boolean, description: 'Set important post' })
-  isImportant?: boolean;
+  public isImportant?: boolean;
 
   @ApiProperty({ type: Date, description: 'Set important expire time' })
-  importantExpiredAt?: string;
+  public importantExpiredAt?: string;
 }

@@ -6,26 +6,26 @@ export class PostContentDto {
     description: 'Post content',
     type: String,
   })
-  content: string;
+  public content: string;
 
   @ApiProperty({
     description: 'The list of file',
     type: FileDto,
     isArray: true,
   })
-  files: FileDto[];
+  public files: FileDto[];
 
   @ApiProperty({
     description: 'The list of video',
     type: FileDto,
     isArray: true,
   })
-  videos: VideoDto[];
+  public videos: VideoDto[];
 
   @ApiProperty({
     description: 'The list of image',
     type: FileDto,
     isArray: true,
   })
-  images: ImageDto[];
+  public images: ImageDto[];
 }

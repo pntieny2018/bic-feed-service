@@ -9,15 +9,21 @@ import { WinstonModule } from 'nest-winston';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 
 async function bootstrap(): Promise<void> {
+  const logger =
+    process.env.APP_LOGGER_WINSTON === 'false'
+      ? {}
+      : {
+          logger: WinstonModule.createLogger({
+            transports: [
+              new winston.transports.Console({
+                level: 'debug',
+                format: winston.format.json(),
+              }),
+            ],
+          }),
+        };
   const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger({
-      transports: [
-        new winston.transports.Console({
-          level: 'debug',
-          format: winston.format.json(),
-        }),
-      ],
-    }),
+    ...logger,
   });
 
   const configService = app.get<ConfigService>(ConfigService);
