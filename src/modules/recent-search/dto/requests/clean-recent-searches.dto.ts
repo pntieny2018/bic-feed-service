@@ -11,5 +11,5 @@ export class CleanRecentSearchesDto {
     message: 'Target must be "post" | "article" | "artical" | "all"',
   })
   @IsNotEmpty()
-  target: RecentSearchType;
+  public target: RecentSearchType;
 }

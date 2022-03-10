@@ -20,7 +20,6 @@ import { IDatabaseConfig } from '../config/database';
           models: models,
           define: {
             underscored: true,
-            paranoid: true,
             timestamps: true,
             schema: databaseConfig.schema,
           },
