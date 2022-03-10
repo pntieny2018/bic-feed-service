@@ -25,7 +25,7 @@ export class PostService {
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
    */
-  public async createPost(createdBy: number, createPostDto: CreatePostDto){
+  public async createPost(createdBy: number, createPostDto: CreatePostDto) {
     try {
       const post = this._postModel.findOne({ where: { id: 1 } });
       return post;
