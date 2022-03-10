@@ -1,18 +1,18 @@
 export class UserProfile {
-  fullname: string;
-  avatar: string;
-  createdAt?: string;
-  updatedAt?: string;
-  username?: string;
+  public fullname: string;
+  public avatar: string;
+  public createdAt?: string;
+  public updatedAt?: string;
+  public username?: string;
 }
 export class UserDto {
-  username?: string;
-  email?: string;
-  userId: number;
-  staffRole?: any;
-  profile?: UserProfile;
+  public username?: string;
+  public email?: string;
+  public userId: number;
+  public staffRole?: any;
+  public profile?: UserProfile;
 
-  constructor(userInfo: Partial<UserDto>) {
+  public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);
   }
 }

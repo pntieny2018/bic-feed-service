@@ -13,7 +13,7 @@ export class GetRecentSearchPostDto {
   @IsString()
   @IsOptional()
   @Transform((params) => params.value ?? 'desc')
-  sort?: 'asc' | 'desc' = 'desc';
+  public sort?: 'asc' | 'desc' = 'desc';
 
   @ApiProperty({
     description: 'Limit recent search',
@@ -24,7 +24,7 @@ export class GetRecentSearchPostDto {
   @IsNumber()
   @IsOptional()
   @Transform((params) => parseInt(params.value) ?? 10)
-  limit?: number;
+  public limit?: number;
 
   @ApiProperty({
     description: 'Target entity. Support[all,post,article,user]',
@@ -35,5 +35,5 @@ export class GetRecentSearchPostDto {
   @Transform((params) => {
     return params.value ?? RecentSearchType.POST;
   })
-  target?: RecentSearchType = RecentSearchType.ALL;
+  public target?: RecentSearchType = RecentSearchType.ALL;
 }
