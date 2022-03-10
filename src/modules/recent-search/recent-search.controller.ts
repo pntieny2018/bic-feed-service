@@ -24,7 +24,6 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Query() getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
-    console.log('user=', user);
     return this._recentSearchPostService.get(user.userId, getRecentSearchPostDto);
   }
 

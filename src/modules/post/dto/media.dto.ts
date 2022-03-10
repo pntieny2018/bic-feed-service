@@ -8,28 +8,28 @@ export class MediaDto {
     type: String,
     default: 1,
   })
-  id: number;
+  public id: number;
 
   @ApiProperty({
     description: 'Origin name',
     type: String,
     default: 'filename.jpg',
   })
-  name: string;
+  public name: string;
 
   @ApiProperty({
     description: 'The file name',
     type: String,
     default: 'origin_name.jpg',
   })
-  originName: string;
+  public originName: string;
 
   @ApiProperty({
     description: 'The url',
     type: String,
     default: 'https://....',
   })
-  url: string;
+  public url: string;
 }
 
 export class ImageDto extends MediaDto {
@@ -39,7 +39,7 @@ export class ImageDto extends MediaDto {
   })
   @IsOptional()
   @IsNumber()
-  width?: number;
+  public width?: number;
 
   @ApiProperty({
     required: false,
@@ -47,7 +47,7 @@ export class ImageDto extends MediaDto {
   })
   @IsOptional()
   @IsNumber()
-  height?: number;
+  public height?: number;
 }
 
 export class VideoDto extends MediaDto {}

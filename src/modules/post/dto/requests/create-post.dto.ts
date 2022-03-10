@@ -7,22 +7,23 @@ import { SettingDto } from '../setting.dto';
 
 export class CreatePostDto {
   @ApiProperty({
-    description: 'Post ID',
+    description: 'Audience',
     type: Audience,
   })
-  audience: Audience;
+  public audience?: Audience;
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
     type: PostContentDto,
   })
-  data: PostContentDto;
+  public data?: PostContentDto;
 
   @ApiProperty({
     description: 'Setting post',
     type: SettingDto,
   })
-  setting?: SettingDto;
+  @IsNotEmpty()
+  public setting?: SettingDto;
 
   @ApiProperty({
     description: 'To know draft post or not',
@@ -32,6 +33,5 @@ export class CreatePostDto {
   })
   @IsBoolean()
   @IsOptional()
-  @Expose({ name: 'is_draft' })
-  isDraft?: boolean = false;
+  public isDraft?: boolean = false;
 }

@@ -11,7 +11,8 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
     const response: Response = context.switchToHttp().getResponse();
     return next.handle().pipe(
       map((data) => {
-        const canConvert = typeof data === 'object';
+        //const canConvert = typeof data === 'object';
+        const canConvert = false;
         return {
           code: StatusCode.OK,
           data: canConvert ? snakecaseKeys(data) : data,

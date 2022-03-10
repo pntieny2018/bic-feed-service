@@ -8,7 +8,7 @@ import { CreatePostDto, GetPostDto } from './dto/requests';
 @ApiTags('Posts')
 @Controller('posts')
 export class PostController {
-  constructor(private _postService: PostService) {}
+  public constructor(private _postService: PostService) {}
 
   @ApiOperation({ summary: 'Create post' })
   @ApiOkResponse({
@@ -31,6 +31,6 @@ export class PostController {
   })
   @Delete('/:id/delete')
   public deletePostForPost(@Param('id', ParseIntPipe) id: number) {
-   // return this._postService.delete(user.beinUserId, id);
+    // return this._postService.delete(user.beinUserId, id);
   }
 }

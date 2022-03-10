@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class Audience {
-  @ApiProperty({ default: [], type: [Number], description: 'Array of  user_id' })
-  users?: number[];
+  @ApiProperty({ default: [], type: Number, isArray: true, description: 'Array of  user_id' })
+  public users?: number;
 
-  @ApiProperty({ default: [1], type: [Number], description: 'Array of group_id' })
-  groups?: number[];
+  @ApiProperty({ default: [1], type: Number, isArray: true, description: 'Array of group_id' })
+  public groups?: number;
 }

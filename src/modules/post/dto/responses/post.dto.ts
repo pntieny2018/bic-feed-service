@@ -9,22 +9,23 @@ export class PostDto {
     type: Number,
     default: 1,
   })
-  @Expose({ name: 'is_draft' })
-  id: number;
+  @Expose()
+  public id: number;
 
   @ApiProperty({
     description: 'Keyword search',
     type: String,
     default: 'Bein',
   })
-  @Expose({ name: 'is_draft' })
-  data: PostContentDto;
+  @Expose()
+  public data: PostContentDto;
 
   @ApiProperty({
     description: 'Setting post',
     type: SettingDto,
   })
-  setting?: SettingDto;
+  @Expose()
+  public setting?: SettingDto;
 
   @ApiProperty({
     description: 'To know draft post or not',
@@ -32,6 +33,6 @@ export class PostDto {
     type: Boolean,
     default: true,
   })
-  @Expose({ name: 'is_draft' })
-  isDraft = false;
+  @Expose()
+  public isDraft = false;
 }

@@ -37,19 +37,19 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @PrimaryKey
   @AutoIncrement
   @Column
-  id: number;
+  public id: number;
 
   @Column
-  parentId: number;
+  public parentId: number;
 
   @ForeignKey(() => PostModel)
   @AllowNull(false)
   @Column
-  postId: number;
+  public postId: number;
 
   @Length({ max: 5000 })
   @Column
-  content: string;
+  public content: string;
 
   @AllowNull(false)
   @Column
