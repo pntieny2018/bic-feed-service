@@ -6,9 +6,10 @@ import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
 import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 import { PostModule } from 'src/modules/post';
+import { ReactionModule } from 'src/modules/reaction';
 
 @Module({
-  imports: [LibModule, AuthModule, FeedModule, RecentSearchModule, PostModule],
+  imports: [LibModule, AuthModule, FeedModule, RecentSearchModule, PostModule, ReactionModule],
   controllers: [AppController],
   providers: [AppService, Logger],
 })

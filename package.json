@@ -115,6 +115,9 @@
     "roots": [
       "<rootDir>/src/",
       "<rootDir>/libs/"
+    ],
+    "modulePaths": [
+      "<rootDir>"
     ]
   },
   "moduleNameMapper": {
