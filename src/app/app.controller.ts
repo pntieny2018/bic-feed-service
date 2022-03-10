@@ -6,10 +6,9 @@ import { AppService } from './app.service';
   version: '1',
 })
 export class AppController {
-  constructor(private readonly _appService: AppService) {}
-
+  public constructor(private readonly _appService: AppService) {}
   @Get()
-  getHello(): string {
+  public getHello(): string {
     return this._appService.getHello();
   }
 }

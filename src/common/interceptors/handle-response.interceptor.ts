@@ -7,7 +7,7 @@ import snakecaseKeys from 'snakecase-keys';
 
 @Injectable()
 export class HandleResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseDto<T>> {
+  public intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseDto<T>> {
     const response: Response = context.switchToHttp().getResponse();
     return next.handle().pipe(
       map((data) => {

@@ -8,7 +8,7 @@ import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
  */
 export class InjectMessageResponseInterceptor implements NestInterceptor {
   constructor(private _messages: IResponseMessage) {}
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response: Response = context.switchToHttp().getResponse();
     response.responseMessage = this._messages;
     return next.handle();

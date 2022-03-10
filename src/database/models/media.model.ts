@@ -35,11 +35,11 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   public createdBy: number;
 
   @CreatedAt
-  createdAt: Date;
+  public createdAt: Date;
 
   @HasMany(() => PostMediaModel)
-  posts: PostModel[];
+  public posts: PostModel[];
 
   @HasMany(() => PostMediaModel)
-  comments: CommentModel[];
+  public comments: CommentModel[];
 }

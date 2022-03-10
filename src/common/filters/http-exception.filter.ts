@@ -6,9 +6,9 @@ import { ValidatorException } from '../exceptions';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  constructor(private _appEnv: string, private _rootPath: string) {}
+  public constructor(private _appEnv: string, private _rootPath: string) {}
 
-  catch(exception: Error, host: ArgumentsHost): void {
+  public catch(exception: Error, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     if (response.req.originalUrl === '/') {
@@ -28,7 +28,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  handleHttpException(exception: HttpException, response: Response): void {
+  protected handleHttpException(exception: HttpException, response: Response): void {
     const status = exception.getStatus();
     response.status(status).json(
       new ResponseDto({
@@ -46,7 +46,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  public handleUnKnowException(exception: Error, response: Response): void {
+  protected handleUnKnowException(exception: Error, response: Response): void {
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
       new ResponseDto({
         code: StatusCode.INTERNAL_SERVER_ERROR,
@@ -63,7 +63,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  public handleValidatorException(exception: ValidatorException, response: Response): void {
+  protected handleValidatorException(exception: ValidatorException, response: Response): void {
     response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
         code: StatusCode.BAD_REQUEST,

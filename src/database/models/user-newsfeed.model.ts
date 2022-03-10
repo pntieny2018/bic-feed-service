@@ -6,7 +6,7 @@ export interface IUserNewsFeed {
   postId: number;
 }
 @Table({
-  tableName: 'user_newsfeed',
+  tableName: 'newsfeed',
 })
 export class UserNewsFeedModel extends Model implements IUserNewsFeed {
   @PrimaryKey

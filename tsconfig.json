@@ -18,8 +18,18 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/sentry": ["libs/sentry/src"],
-      "@app/sentry/*": ["libs/sentry/src/*"]
+      "@app/redis": [
+        "libs/redis/src"
+      ],
+      "@app/redis/*": [
+        "libs/redis/src/*"
+      ],
+      "@app/sentry": [
+        "libs/sentry/src"
+      ],
+      "@app/sentry/*": [
+        "libs/sentry/src/*"
+      ]
     }
   }
 }

@@ -21,8 +21,8 @@ export class PostMediaModel extends Model implements IPostMedia {
   public mediaId: number;
 
   @BelongsTo(() => PostModel)
-  post: PostModel;
+  public post: PostModel;
 
   @BelongsTo(() => MediaModel)
-  media: MediaModel;
+  public media: MediaModel;
 }

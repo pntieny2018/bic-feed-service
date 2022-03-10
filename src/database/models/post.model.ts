@@ -74,14 +74,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public updatedBy: number;
 
   @CreatedAt
-  createdAt: Date;
+  public createdAt: Date;
 
   @UpdatedAt
-  updatedAt: Date;
+  public updatedAt: Date;
 
   @HasMany(() => CommentModel)
-  comments: CommentModel[];
+  public comments: CommentModel[];
 
   @HasMany(() => PostMediaModel)
-  media: PostMediaModel[];
+  public media: PostMediaModel[];
 }

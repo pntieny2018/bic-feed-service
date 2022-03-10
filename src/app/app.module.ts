@@ -1,23 +1,18 @@
-import { Module } from '@nestjs/common';
+import { LibModule } from './lib.module';
 import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
+import { FeedModule } from '../modules/feed';
 import { AppController } from './app.controller';
-import { configs } from '../config/configuration';
-import { FeedModule } from '../modules/feed/feed.module';
-import { PostModule } from 'src/modules/post';
-import { RecentSearchModule } from 'src/modules/recent-search';
+import { AuthMiddleware, AuthModule } from '../modules/auth';
+import { RecentSearchModule } from '../modules/recent-search';
+import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      cache: true,
-      load: [configs],
-    }),
-    PostModule,
-    RecentSearchModule,
-  ],
+  imports: [LibModule, AuthModule, FeedModule, RecentSearchModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, Logger],
 })
-export class AppModule {}
+export class AppModule {
+  public configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(AuthMiddleware).exclude('/api/health-check').forRoutes('*');
+  }
+}

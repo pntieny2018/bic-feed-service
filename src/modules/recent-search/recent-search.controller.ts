@@ -3,14 +3,17 @@ import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@ne
 //import { AuthUser, UserInfoDto } from '../auth';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchService } from './recent-search.service';
+import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import { CleanRecentSearchesDto } from './dto/requests/clean-recent-searches.dto';
+import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { Controller, Delete, Get, Post, Query, Body, Param, ParseIntPipe } from '@nestjs/common';
 
 @ApiSecurity('authorization')
 @ApiTags('Recent Searches')
 @Controller('recent-searches')
 export class RecentSearchController {
-  constructor(private _recentSearchPostService: RecentSearchService) {}
+  public constructor(private _recentSearchPostService: RecentSearchService) {}
 
   @ApiOperation({ summary: 'Get recent search list' })
   @ApiOkResponse({

@@ -1,3 +1,5 @@
+import { UserDto } from '../../modules/auth';
+
 export interface IResponseMessage {
   validator?: {
     fails: string;
@@ -12,7 +14,7 @@ declare module 'express-serve-static-core' {
    */
   // eslint-disable-next-line @typescript-eslint/naming-convention
   interface Request {
-    user: Record<string, unknown>;
+    user: UserDto;
   }
 
   /**

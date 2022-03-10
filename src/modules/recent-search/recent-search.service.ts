@@ -15,7 +15,7 @@ export class RecentSearchService {
    */
   private _logger = new Logger(RecentSearchService.name);
 
-  constructor(
+  public constructor(
     @InjectModel(RecentSearchModel)
     private _recentSearchModel: typeof RecentSearchModel //private _sentryService: SentryService
   ) {}
