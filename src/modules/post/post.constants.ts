@@ -1,0 +1,1 @@
+export const DEFAULT_POST_ITEMS_NUMBER = 10;

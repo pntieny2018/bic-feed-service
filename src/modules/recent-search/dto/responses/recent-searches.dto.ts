@@ -8,12 +8,12 @@ export class RecentSearchesDto {
     description: 'Target entity',
   })
   @Expose()
-  target: RecentSearchType;
+  public target: RecentSearchType;
 
   @ApiProperty({
     description: 'List recent search',
   })
   @Type(() => RecentSearchDto)
   @Expose()
-  recentSearches: RecentSearchDto[];
+  public recentSearches: RecentSearchDto[];
 }

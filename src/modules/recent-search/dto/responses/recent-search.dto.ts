@@ -8,7 +8,7 @@ export class RecentSearchDto {
     default: 1,
   })
   @Expose()
-  id: number;
+  public id: number;
 
   @ApiProperty({
     description: 'Keyword search',
@@ -16,5 +16,5 @@ export class RecentSearchDto {
     default: 'Bein',
   })
   @Expose()
-  keyword: string;
+  public keyword: string;
 }

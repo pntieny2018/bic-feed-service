@@ -1,10 +1,12 @@
-import { AuthUser, UserDto } from '../auth';
-import { RecentSearchService } from './recent-search.service';
+//import { AuthUser, UserInfoDto } from '../auth';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
+import { RecentSearchService } from './recent-search.service';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import { CleanRecentSearchesDto } from './dto/requests/clean-recent-searches.dto';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { Controller, Delete, Get, Post, Query, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { AuthUser } from '../auth';
+import { UserDto } from '../auth/dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Recent Searches')

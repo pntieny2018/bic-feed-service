@@ -21,8 +21,8 @@ export class CommentMediaModel extends Model implements ICommentMedia {
   public mediaId: number;
 
   @BelongsTo(() => CommentModel)
-  comment: CommentModel;
+  public comment: CommentModel;
 
   @BelongsTo(() => MediaModel)
-  media: MediaModel;
+  public media: MediaModel;
 }

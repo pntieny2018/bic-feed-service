@@ -19,26 +19,26 @@ export class RecentSearchModel extends Model<IRecentSearchAttribute, Optional<IR
   @PrimaryKey
   @AutoIncrement
   @Column
-  id: number;
+  public id: number;
 
   @Column
-  createdBy: number;
+  public createdBy: number;
 
   @Column
-  updatedBy: number;
+  public updatedBy: number;
 
   @Column
-  totalSearched: number;
+  public totalSearched: number;
 
   @Column
-  target: string;
+  public target: string;
 
   @Column
-  keyword: string;
+  public keyword: string;
 
   @CreatedAt
-  createdAt?: Date;
+  public createdAt?: Date;
 
   @UpdatedAt
-  updatedAt?: Date;
+  public updatedAt?: Date;
 }
