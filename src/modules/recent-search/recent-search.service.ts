@@ -26,7 +26,7 @@ export class RecentSearchService {
    * @param getRecentSearchPostDto GetRecentSearchPostDto
    * @returns Promise resolve RecentSearchDto[] or []
    */
-  public async get(createdBy: number, getRecentSearchPostDto: GetRecentSearchPostDto): Promise<RecentSearchesDto>{
+  public async get(createdBy: number, getRecentSearchPostDto: GetRecentSearchPostDto): Promise<RecentSearchesDto> {
     const limit = getRecentSearchPostDto.limit ?? DEFAULT_RECENT_SEARCH_ITEMS_NUMBER;
     const target = getRecentSearchPostDto.target ?? RecentSearchType.ALL;
     const sort = getRecentSearchPostDto.sort ?? 'desc';
@@ -42,7 +42,6 @@ export class RecentSearchService {
         limit: limit,
         order: [['updatedAt', sort]],
       });
-      //return recentSearches;
       return plainToClass(
         RecentSearchesDto,
         { target, recentSearches: recentSearches },

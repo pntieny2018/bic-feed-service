@@ -8,15 +8,16 @@ import { RecentSearchDto, RecentSearchesDto } from '../dto/responses';
 import { mockedRecentSearchList } from './mocks/recent-search-list';
 import { HttpException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
+import { SentryService } from '@app/sentry';
 
 describe('RecentSearchService', () => {
   let recentSearchService: RecentSearchService;
   let recentSearchModelMock;
-  //let sentryService: SentryService;
+  let sentryService: SentryService;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
-        // RecentSearchService,
+        RecentSearchService,
         // {
         //   provide: SentryService,
         //   useValue: {
@@ -231,10 +232,14 @@ describe('RecentSearchService', () => {
 
       const result = await recentSearchService.get(createdBy, {});
       expect(result).toStrictEqual(
-        plainToClass(RecentSearchesDto, {
-          target,
-          recentSearches: mockedRecentSearchList,
-        })
+        plainToClass(
+          RecentSearchesDto,
+          {
+            target,
+            recentSearches: mockedRecentSearchList,
+          },
+          { excludeExtraneousValues: true }
+        )
       );
 
       const queryArgFindUsers: any = recentSearchModelMock.findAll.mock.calls[0][0];
