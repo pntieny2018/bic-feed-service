@@ -1,6 +1,6 @@
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PostContentDto } from '../post-content.dto';
 import { Audience } from '../audience.dto';
 import { SettingDto } from '../setting.dto';
@@ -10,28 +10,35 @@ export class CreatePostDto {
     description: 'Audience',
     type: Audience,
   })
-  public audience?: Audience;
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => Audience)
+  public audience: Audience;
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
     type: PostContentDto,
   })
-  public data?: PostContentDto;
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => PostContentDto)
+  public data: PostContentDto;
 
   @ApiProperty({
     description: 'Setting post',
     type: SettingDto,
   })
-  @IsNotEmpty()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SettingDto)
   public setting?: SettingDto;
 
   @ApiProperty({
     description: 'To know draft post or not',
-    name: 'is_draft',
     type: Boolean,
     default: true,
   })
   @IsBoolean()
   @IsOptional()
-  public isDraft?: boolean = false;
+  public isDraft = true;
 }

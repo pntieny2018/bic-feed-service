@@ -1,31 +1,50 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsOptional, ValidateNested, IsArray } from 'class-validator';
 import { FileDto, ImageDto, VideoDto } from './media.dto';
 
 export class PostContentDto {
   @ApiProperty({
     description: 'Post content',
     type: String,
+    default: 'Content...',
   })
+  @IsNotEmpty()
   public content: string;
 
   @ApiProperty({
     description: 'The list of file',
     type: FileDto,
     isArray: true,
+    default: [],
   })
-  public files: FileDto[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => VideoDto)
+  public files: FileDto[] = [];
 
   @ApiProperty({
     description: 'The list of video',
-    type: FileDto,
+    type: VideoDto,
     isArray: true,
+    default: [],
   })
-  public videos: VideoDto[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => VideoDto)
+  public videos: VideoDto[] = [];
 
   @ApiProperty({
     description: 'The list of image',
-    type: FileDto,
+    type: ImageDto,
     isArray: true,
+    default: [],
   })
-  public images: ImageDto[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImageDto)
+  public images: ImageDto[] = [];
 }

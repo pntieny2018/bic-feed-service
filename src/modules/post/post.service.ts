@@ -27,8 +27,7 @@ export class PostService {
    */
   public async createPost(createdBy: number, createPostDto: CreatePostDto) {
     try {
-      const post = this._postModel.findOne({ where: { id: 1 } });
-      return post;
+      const post = this._postModel.findAll({ where: { createdBy } });
       const result = plainToClass(PostDto, post, {
         excludeExtraneousValues: true,
       });
