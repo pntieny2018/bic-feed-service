@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { PostContentDto } from '../post-content.dto';
-import { SettingDto } from '../setting.dto';
+import { SettingDto } from '../post-setting.dto';
 
 export class PostDto {
   @ApiProperty({

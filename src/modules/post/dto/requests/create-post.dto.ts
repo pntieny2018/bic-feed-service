@@ -2,8 +2,8 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PostContentDto } from '../post-content.dto';
-import { Audience } from '../audience.dto';
-import { SettingDto } from '../setting.dto';
+import { Audience } from '../common/audience.dto';
+import { SettingDto } from '../post-setting.dto';
 
 export class CreatePostDto {
   @ApiProperty({
