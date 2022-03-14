@@ -6,6 +6,8 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { ReactionEnum } from './reaction.enum';
 import { UserDto } from '../auth';
+import sequelize from 'sequelize';
+import { REACTION_KIND_LIMIT } from './reaction.constant';
 
 @Injectable()
 export class ReactionService {
@@ -54,9 +56,19 @@ export class ReactionService {
           createdBy: userId,
         },
       });
-
       if (!!existedReaction === true) {
         throw new Error('Reaction is existed.');
+      }
+
+      const reactions = await this._postReactionModel.findAll<PostReactionModel>({
+        attributes: [[sequelize.fn('DISTINCT', sequelize.col('reaction_name')), 'reactionName']],
+        where: {
+          postId: postId,
+        },
+      });
+      const willExceedReactionKindLim = this._checkIfExceedReactionKindLim(reactions, reactionName);
+      if (willExceedReactionKindLim === true) {
+        throw new Error('Exceed reaction kind limit on a post.');
       }
 
       await this._postReactionModel.create<PostReactionModel>({
@@ -89,9 +101,19 @@ export class ReactionService {
           createdBy: userId,
         },
       });
-
       if (!!existedReaction === true) {
         throw new Error('Reaction is existed.');
+      }
+
+      const reactions = await this._commentReactionModel.findAll<CommentReactionModel>({
+        attributes: [[sequelize.fn('DISTINCT', sequelize.col('reaction_name')), 'reactionName']],
+        where: {
+          commentId: commentId,
+        },
+      });
+      const willExceedReactionKindLim = this._checkIfExceedReactionKindLim(reactions, reactionName);
+      if (willExceedReactionKindLim === true) {
+        throw new Error('Exceed reaction kind limit on a comment.');
       }
 
       await this._commentReactionModel.create<CommentReactionModel>({
@@ -105,5 +127,21 @@ export class ReactionService {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private _checkIfExceedReactionKindLim(
+    reactions: PostReactionModel[] | CommentReactionModel[],
+    reactionName: string
+  ): boolean {
+    const isExistedReactionKind = reactions.findIndex((reaction: PostReactionModel | CommentReactionModel) => {
+      const { reactionName: elementReactionName } = reaction;
+      return elementReactionName === reactionName;
+    });
+    if (isExistedReactionKind >= 0) {
+      return false;
+    }
+    const currentReactionKindCount = reactions.length;
+    const newReactionKindCount = 1;
+    return currentReactionKindCount + newReactionKindCount > REACTION_KIND_LIMIT;
   }
 }
