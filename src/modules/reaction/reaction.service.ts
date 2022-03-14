@@ -6,8 +6,6 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { ReactionEnum } from './reaction.enum';
 import { UserDto } from '../auth';
-import { REACTION_SERVICE, TOPIC_REACTION_CREATED, TOPIC_REACTION_DELETED } from './reaction.constants';
-import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 export class ReactionService {
@@ -17,138 +15,95 @@ export class ReactionService {
     @InjectModel(PostReactionModel)
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
-    private readonly _commentReactionModel: typeof CommentReactionModel,
-    @Inject(REACTION_SERVICE)
-    private readonly _clientKafka: ClientKafka
+    private readonly _commentReactionModel: typeof CommentReactionModel
   ) {}
 
   /**
-   * Handle reaction
+   * Create reaction
    * @param user UserDto
    * @param createReactionDto CreateReactionDto
-   * @param creationFlag boolean
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async handleReaction(
-    user: UserDto,
-    createReactionDto: CreateReactionDto,
-    creationFlag: boolean
-  ): Promise<boolean> {
+  public createReaction(user: UserDto, createReactionDto: CreateReactionDto): Promise<boolean> {
     const { userId } = user;
-
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
-        await this.handlePostReaction(userId, createReactionDto, creationFlag);
-        break;
+        return this._createPostReaction(userId, createReactionDto);
       case ReactionEnum.COMMENT:
-        await this.handleCommentReaction(userId, createReactionDto, creationFlag);
-        break;
+        return this._createCommentReaction(userId, createReactionDto);
       default:
         throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
     }
-
-    const topic = creationFlag ? TOPIC_REACTION_CREATED : TOPIC_REACTION_DELETED;
-
-    this._clientKafka.emit(topic, JSON.stringify(createReactionDto));
-
-    return true;
   }
 
   /**
-   * Handle post reaction
+   * Create post reaction
    * @param userId number
    * @param createReactionDto CreateReactionDto
-   * @param creationFlag boolean
    * @returns Promise resolve boolean
-   * @throws Error
+   * @throws HttpException
    */
-  public async handlePostReaction(
-    userId: number,
-    createReactionDto: CreateReactionDto,
-    creationFlag: boolean
-  ): Promise<boolean> {
-    const { reactionName, targetId } = createReactionDto;
-
+  private async _createPostReaction(userId: number, createReactionDto: CreateReactionDto): Promise<boolean> {
+    const { reactionName, targetId: postId } = createReactionDto;
     try {
       const existedReaction = await this._postReactionModel.findOne<PostReactionModel>({
         where: {
-          postId: targetId,
+          postId: postId,
           reactionName: reactionName,
           createdBy: userId,
         },
       });
 
-      if (creationFlag === !!existedReaction) {
-        throw new Error(`Reaction existence is ${!!existedReaction}`);
+      if (!!existedReaction === true) {
+        throw new Error('Reaction is existed.');
       }
 
-      if (creationFlag === true) {
-        await this._postReactionModel.create<PostReactionModel>({
-          postId: targetId,
-          reactionName: reactionName,
-          createdBy: userId,
-        });
-      } else {
-        await this._postReactionModel.destroy<PostReactionModel>({
-          where: {
-            id: existedReaction.id,
-          },
-        });
-      }
+      await this._postReactionModel.create<PostReactionModel>({
+        postId: postId,
+        reactionName: reactionName,
+        createdBy: userId,
+      });
 
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw e;
+      throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
-   * Handle comment reaction
+   * Create comment reaction
    * @param userId number
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve boolean
-   * @throws Error
+   * @throws HttpException
    */
-  public async handleCommentReaction(
-    userId: number,
-    createReactionDto: CreateReactionDto,
-    creationFlag: boolean
-  ): Promise<boolean> {
-    const { reactionName, targetId } = createReactionDto;
-
+  private async _createCommentReaction(userId: number, createReactionDto: CreateReactionDto): Promise<boolean> {
+    const { reactionName, targetId: commentId } = createReactionDto;
     try {
       const existedReaction = await this._commentReactionModel.findOne<CommentReactionModel>({
         where: {
-          commentId: targetId,
+          commentId: commentId,
           reactionName: reactionName,
           createdBy: userId,
         },
       });
 
-      if (creationFlag === !!existedReaction) {
-        throw new Error(`Reaction existence is ${!!existedReaction}`);
+      if (!!existedReaction === true) {
+        throw new Error('Reaction is existed.');
       }
 
-      if (creationFlag === true) {
-        await this._commentReactionModel.create<CommentReactionModel>({
-          commentId: targetId,
-          reactionName: reactionName,
-          createdBy: userId,
-        });
-      } else {
-        await this._commentReactionModel.destroy<CommentReactionModel>({
-          where: {
-            id: existedReaction.id,
-          },
-        });
-      }
+      await this._commentReactionModel.create<CommentReactionModel>({
+        commentId: commentId,
+        reactionName: reactionName,
+        createdBy: userId,
+      });
 
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw e;
+      throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
