@@ -4,7 +4,7 @@ import { CommentReactionModel } from 'src/database/models/comment-reaction.model
 import { PostReactionModel } from 'src/database/models/post-reaction.model';
 import { ReactionService } from '../reaction.service';
 import { getModelToken } from '@nestjs/sequelize';
-import { mockCreateReactionDto, mockUserDto } from './mocks/input.mock';
+import { mock15ReactionOnAPost, mockCreateReactionDto, mockUserDto } from './mocks/input.mock';
 import { createMock } from '@golevelup/ts-jest';
 
 describe('ReactionController', () => {
@@ -54,8 +54,13 @@ describe('ReactionController', () => {
   describe('Create reaction', () => {
     it('Create post successfully', async () => {
       const input = mockCreateReactionDto[0];
+      const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
+      const postReactionModelFindAllSpy = jest
+        .spyOn(postReactionModel, 'findAll')
+        .mockResolvedValue(mock15ReactionOnAPostData);
       const shouldBeTrue = await reactionController.create(mockUserDto, input);
       expect(shouldBeTrue).toEqual(true);
+      expect(postReactionModelFindAllSpy).toBeCalledTimes(1);
     });
 
     it('Create post reaction failed because of non-existed postId', async () => {
@@ -64,6 +69,10 @@ describe('ReactionController', () => {
         .spyOn(postReactionModel, 'create')
         .mockRejectedValue(new Error('postId is not existed. foreign key constraint'));
       const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+      const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
+      const postReactionModelFindAllSpy = jest
+        .spyOn(postReactionModel, 'findAll')
+        .mockResolvedValue(mock15ReactionOnAPostData);
       try {
         await reactionController.create(mockUserDto, input);
       } catch (e) {
@@ -71,6 +80,7 @@ describe('ReactionController', () => {
       }
       expect(postReactionModelCreateSpy).toBeCalledTimes(1);
       expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+      expect(postReactionModelFindAllSpy).toBeCalledTimes(1);
     });
 
     it('Create post reaction failed because of existed reaction', async () => {
@@ -81,13 +91,17 @@ describe('ReactionController', () => {
         reactionName: input.reactionName,
         createdBy: mockUserDto.userId,
       });
+      const postReactionModelCreateSpy = jest.spyOn(postReactionModel, 'create').mockResolvedValue(mockDataCreated);
+      const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
+      const postReactionModelFindAllSpy = jest
+        .spyOn(postReactionModel, 'findAll')
+        .mockResolvedValue(mock15ReactionOnAPostData);
       const mockDataFoundOne = createMock<PostReactionModel>({
         id: 1,
         postId: input.targetId,
         reactionName: input.reactionName,
         createdBy: mockUserDto.userId,
       });
-      const postReactionModelCreateSpy = jest.spyOn(postReactionModel, 'create').mockResolvedValue(mockDataCreated);
       const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(mockDataFoundOne);
       try {
         await reactionController.create(mockUserDto, input);
@@ -95,6 +109,7 @@ describe('ReactionController', () => {
         expect(e.message).toBe('Can not create reaction.');
       }
       expect(postReactionModelCreateSpy).toBeCalledTimes(0);
+      expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
       expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
     });
   });
