@@ -6,16 +6,14 @@ export const mockCreateReactionDto = [
     reactionName: 'smile',
     target: ReactionEnum.POST,
     targetId: 12,
-    createdBy: 33,
   },
   {
     reactionName: 'sad',
     target: ReactionEnum.COMMENT,
     targetId: 89,
-    createdBy: 22,
   },
 ];
 
-export const mockUserInfoDto: UserDto = {
+export const mockUserDto: UserDto = {
   userId: 33,
 };
