@@ -4,14 +4,16 @@ import { CommentReactionModel } from 'src/database/models/comment-reaction.model
 import { PostReactionModel } from 'src/database/models/post-reaction.model';
 import { ReactionService } from '../reaction.service';
 import { getModelToken } from '@nestjs/sequelize';
-import { mock15ReactionOnAPost, mockCreateReactionDto, mockUserDto } from './mocks/input.mock';
+import { mock15ReactionOnAPost, mockCreateReactionDto, mockPostCanReact, mockUserDto } from './mocks/input.mock';
 import { createMock } from '@golevelup/ts-jest';
+import { PostModel } from 'src/database/models/post.model';
 
 describe('ReactionController', () => {
   let reactionController: ReactionController;
   let commentReactionModel: typeof CommentReactionModel;
   let postReactionModel: typeof PostReactionModel;
   let reactionService: ReactionService;
+  let postModel: typeof PostModel;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,6 +39,16 @@ describe('ReactionController', () => {
             destroy: jest.fn(),
           },
         },
+        {
+          provide: getModelToken(PostModel),
+          useValue: {
+            findAll: jest.fn(),
+            findOne: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            destroy: jest.fn(),
+          },
+        },
       ],
       controllers: [ReactionController],
     }).compile();
@@ -45,6 +57,7 @@ describe('ReactionController', () => {
     reactionService = module.get<ReactionService>(ReactionService);
     commentReactionModel = module.get<typeof CommentReactionModel>(getModelToken(CommentReactionModel));
     postReactionModel = module.get<typeof PostReactionModel>(getModelToken(PostReactionModel));
+    postModel = module.get<typeof PostModel>(getModelToken(PostModel));
   });
 
   it('should be defined', () => {
@@ -58,9 +71,12 @@ describe('ReactionController', () => {
       const postReactionModelFindAllSpy = jest
         .spyOn(postReactionModel, 'findAll')
         .mockResolvedValue(mock15ReactionOnAPostData);
+      const mockPostData = createMock<PostModel>(mockPostCanReact);
+      const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
       const shouldBeTrue = await reactionController.create(mockUserDto, input);
       expect(shouldBeTrue).toEqual(true);
       expect(postReactionModelFindAllSpy).toBeCalledTimes(1);
+      expect(postModelFindOneSpy).toBeCalledTimes(1);
     });
 
     it('Create post reaction failed because of non-existed postId', async () => {
@@ -73,14 +89,16 @@ describe('ReactionController', () => {
       const postReactionModelFindAllSpy = jest
         .spyOn(postReactionModel, 'findAll')
         .mockResolvedValue(mock15ReactionOnAPostData);
+      const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockRejectedValue(new Error('Post is not existed.'));
       try {
         await reactionController.create(mockUserDto, input);
       } catch (e) {
         expect(e.message).toBe('Can not create reaction.');
       }
-      expect(postReactionModelCreateSpy).toBeCalledTimes(1);
+      expect(postReactionModelCreateSpy).toBeCalledTimes(0);
       expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
-      expect(postReactionModelFindAllSpy).toBeCalledTimes(1);
+      expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
+      expect(postModelFindOneSpy).toBeCalledTimes(1);
     });
 
     it('Create post reaction failed because of existed reaction', async () => {
@@ -103,6 +121,8 @@ describe('ReactionController', () => {
         createdBy: mockUserDto.userId,
       });
       const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(mockDataFoundOne);
+      const mockPostData = createMock<PostModel>(mockPostCanReact);
+      const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
       try {
         await reactionController.create(mockUserDto, input);
       } catch (e) {
@@ -111,6 +131,7 @@ describe('ReactionController', () => {
       expect(postReactionModelCreateSpy).toBeCalledTimes(0);
       expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
       expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+      expect(postModelFindOneSpy).toBeCalledTimes(0);
     });
   });
 });

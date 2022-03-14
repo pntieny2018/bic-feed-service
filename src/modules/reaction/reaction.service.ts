@@ -148,7 +148,7 @@ export class ReactionService {
       },
     });
     if (!!post === false) {
-      throw new Error('Post is not existed');
+      throw new Error('Post is not existed.');
     }
     const { canReact, isDraft } = post;
     return canReact === true && isDraft === false;

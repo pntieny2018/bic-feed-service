@@ -1,3 +1,6 @@
+import { plainToInstance } from 'class-transformer';
+import { now } from 'sequelize/types/utils';
+import { IPost, PostModel } from 'src/database/models/post.model';
 import { UserDto } from 'src/modules/auth';
 import { ReactionEnum } from '../../reaction.enum';
 
@@ -13,6 +16,40 @@ export const mockCreateReactionDto = [
     targetId: 89,
   },
 ];
+
+export const mockPostCanReact = {
+  id: 9,
+  createdBy: 33,
+  updatedBy: 33,
+  content: 'haha',
+  isImportant: true,
+  importantExpiredAt: new Date(),
+  isDraft: false,
+  canReact: true,
+  canShare: true,
+  canComment: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  comments: [],
+  media: [],
+};
+
+export const mockPostCannotReact = {
+  id: 9,
+  createdBy: 33,
+  updatedBy: 33,
+  content: 'haha',
+  isImportant: true,
+  importantExpiredAt: new Date(),
+  isDraft: false,
+  canReact: false,
+  canShare: true,
+  canComment: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  comments: [],
+  media: [],
+};
 
 export const mockUserDto: UserDto = {
   userId: 33,
