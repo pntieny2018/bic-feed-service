@@ -37,6 +37,8 @@ export class ReactionService {
       default:
         throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
     }
+
+    //TODO: pub topic to kafka
   }
 
   /**
@@ -61,10 +63,11 @@ export class ReactionService {
       }
 
       const reactions = await this._postReactionModel.findAll<PostReactionModel>({
-        attributes: [[sequelize.fn('DISTINCT', sequelize.col('reaction_name')), 'reactionName']],
+        attributes: [['reaction_name', 'reactionName']],
         where: {
           postId: postId,
         },
+        group: ['reaction_name'],
       });
       const willExceedReactionKindLim = this._checkIfExceedReactionKindLim(reactions, reactionName);
       if (willExceedReactionKindLim === true) {
@@ -106,10 +109,11 @@ export class ReactionService {
       }
 
       const reactions = await this._commentReactionModel.findAll<CommentReactionModel>({
-        attributes: [[sequelize.fn('DISTINCT', sequelize.col('reaction_name')), 'reactionName']],
+        attributes: [['reaction_name', 'reactionName']],
         where: {
           commentId: commentId,
         },
+        group: ['reaction_name'],
       });
       const willExceedReactionKindLim = this._checkIfExceedReactionKindLim(reactions, reactionName);
       if (willExceedReactionKindLim === true) {
