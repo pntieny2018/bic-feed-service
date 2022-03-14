@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { PostReactionModel } from 'src/database/models/post-reaction.model';
 import { IPost, PostModel } from 'src/database/models/post.model';
-import { ReactionService } from '../reaction.service';
+import { CreateReactionService } from '../services';
 import {
   mock15ReactionOnAComment,
   mock15ReactionOnAPost,
@@ -17,7 +17,7 @@ import {
 } from './mocks/input.mock';
 
 describe('ReactionService', () => {
-  let reactionService: ReactionService;
+  let createReactionService: CreateReactionService;
   let commentReactionModel: typeof CommentReactionModel;
   let postReactionModel: typeof PostReactionModel;
   let postModel: typeof PostModel;
@@ -25,7 +25,7 @@ describe('ReactionService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ReactionService,
+        CreateReactionService,
         {
           provide: getModelToken(PostReactionModel),
           useValue: {
@@ -59,7 +59,7 @@ describe('ReactionService', () => {
       ],
     }).compile();
 
-    reactionService = module.get<ReactionService>(ReactionService);
+    createReactionService = module.get<CreateReactionService>(CreateReactionService);
     commentReactionModel = module.get<typeof CommentReactionModel>(getModelToken(CommentReactionModel));
     postReactionModel = module.get<typeof PostReactionModel>(getModelToken(PostReactionModel));
     postModel = module.get<typeof PostModel>(getModelToken(PostModel));
@@ -87,7 +87,7 @@ describe('ReactionService', () => {
         const mockPostData = createMock<PostModel>(mockPostCanReact);
         const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
         const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
-        expect(await reactionService.createReaction(mockUserDto, input)).toEqual(true);
+        expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(true);
         expect(postReactionModelCreateSpy).toBeCalledTimes(1);
         expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
         expect(postReactionModelFindAllSpy).toBeCalledTimes(1);
@@ -109,7 +109,7 @@ describe('ReactionService', () => {
           .spyOn(postModel, 'findOne')
           .mockRejectedValue(new Error('Post is not existed.'));
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }
@@ -144,7 +144,7 @@ describe('ReactionService', () => {
         const mockPostData = createMock<PostModel>(mockPostCanReact);
         const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }
@@ -171,7 +171,7 @@ describe('ReactionService', () => {
         const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
         const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }
@@ -198,7 +198,7 @@ describe('ReactionService', () => {
         const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
         const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }
@@ -226,7 +226,7 @@ describe('ReactionService', () => {
           .spyOn(commentReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnACommentData);
         const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
-        expect(await reactionService.createReaction(mockUserDto, input)).toEqual(true);
+        expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(true);
         expect(commentReactionModelCreateSpy).toBeCalledTimes(1);
         expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
         expect(commentReactionModelFindAllSpy).toBeCalledTimes(1);
@@ -243,7 +243,7 @@ describe('ReactionService', () => {
           .mockResolvedValue(mock15ReactionOnACommentData);
         const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }
@@ -277,7 +277,7 @@ describe('ReactionService', () => {
           .spyOn(commentReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnACommentData);
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }
@@ -303,7 +303,7 @@ describe('ReactionService', () => {
           .mockResolvedValue(mock21ReactionOnACommentData);
         const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
         try {
-          await reactionService.createReaction(mockUserDto, input);
+          await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
           expect(e.message).toBe('Can not create reaction.');
         }

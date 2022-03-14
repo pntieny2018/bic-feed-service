@@ -1,18 +1,18 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreateReactionDto } from './dto/request';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { CreateReactionDto } from '../dto/request';
+import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
-import { ReactionEnum } from './reaction.enum';
-import { UserDto } from '../auth';
-import { REACTION_KIND_LIMIT } from './reaction.constant';
+import { ReactionEnum } from '../reaction.enum';
+import { UserDto } from '../../auth';
+import { REACTION_KIND_LIMIT } from '../reaction.constant';
 import { PostModel } from 'src/database/models/post.model';
 
 //TODO: check if user is in the group that contains the post.
 @Injectable()
-export class ReactionService {
-  private _logger = new Logger(ReactionService.name);
+export class CreateReactionService {
+  private _logger = new Logger(CreateReactionService.name);
 
   public constructor(
     @InjectModel(PostReactionModel)

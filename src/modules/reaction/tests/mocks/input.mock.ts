@@ -1,6 +1,3 @@
-import { plainToInstance } from 'class-transformer';
-import { now } from 'sequelize/types/utils';
-import { IPost, PostModel } from 'src/database/models/post.model';
 import { UserDto } from 'src/modules/auth';
 import { ReactionEnum } from '../../reaction.enum';
 

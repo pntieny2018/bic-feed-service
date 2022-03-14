@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReactionController } from '../reaction.controller';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { PostReactionModel } from 'src/database/models/post-reaction.model';
-import { ReactionService } from '../reaction.service';
+import { CreateReactionService } from '../services';
 import { getModelToken } from '@nestjs/sequelize';
 import { mock15ReactionOnAPost, mockCreateReactionDto, mockPostCanReact, mockUserDto } from './mocks/input.mock';
 import { createMock } from '@golevelup/ts-jest';
@@ -12,13 +12,13 @@ describe('ReactionController', () => {
   let reactionController: ReactionController;
   let commentReactionModel: typeof CommentReactionModel;
   let postReactionModel: typeof PostReactionModel;
-  let reactionService: ReactionService;
+  let createReactionService: CreateReactionService;
   let postModel: typeof PostModel;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ReactionService,
+        CreateReactionService,
         {
           provide: getModelToken(PostReactionModel),
           useValue: {
@@ -54,7 +54,7 @@ describe('ReactionController', () => {
     }).compile();
 
     reactionController = module.get<ReactionController>(ReactionController);
-    reactionService = module.get<ReactionService>(ReactionService);
+    createReactionService = module.get<CreateReactionService>(CreateReactionService);
     commentReactionModel = module.get<typeof CommentReactionModel>(getModelToken(CommentReactionModel));
     postReactionModel = module.get<typeof PostReactionModel>(getModelToken(PostReactionModel));
     postModel = module.get<typeof PostModel>(getModelToken(PostModel));
