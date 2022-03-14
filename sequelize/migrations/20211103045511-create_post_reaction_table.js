@@ -37,7 +37,7 @@ module.exports = {
       }
     );
 
-    await queryInterface.addIndex(tableName, ['post_id', 'reaction_name'], {
+    await queryInterface.addIndex(tableName, ['post_id', 'reaction_name', 'created_by'], {
       unique: true,
     });
   },
