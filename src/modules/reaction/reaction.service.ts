@@ -6,9 +6,10 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { ReactionEnum } from './reaction.enum';
 import { UserDto } from '../auth';
-import sequelize from 'sequelize';
 import { REACTION_KIND_LIMIT } from './reaction.constant';
+import { PostModel } from 'src/database/models/post.model';
 
+//TODO: check if user is in the group that contains the post.
 @Injectable()
 export class ReactionService {
   private _logger = new Logger(ReactionService.name);
@@ -17,7 +18,9 @@ export class ReactionService {
     @InjectModel(PostReactionModel)
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
-    private readonly _commentReactionModel: typeof CommentReactionModel
+    private readonly _commentReactionModel: typeof CommentReactionModel,
+    @InjectModel(PostModel)
+    private readonly _postModel: typeof PostModel
   ) {}
 
   /**
@@ -60,6 +63,11 @@ export class ReactionService {
       });
       if (!!existedReaction === true) {
         throw new Error('Reaction is existed.');
+      }
+
+      const canReact = await this._checkIfCanReactPost(postId);
+      if (canReact === false) {
+        throw new Error('Post does not permit to react.');
       }
 
       const reactions = await this._postReactionModel.findAll<PostReactionModel>({
@@ -131,6 +139,19 @@ export class ReactionService {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private async _checkIfCanReactPost(postId: number): Promise<boolean> {
+    const post = await this._postModel.findOne<PostModel>({
+      where: {
+        id: postId,
+      },
+    });
+    if (!!post === false) {
+      throw new Error('Post is not existed');
+    }
+    const { canReact, isDraft } = post;
+    return canReact === true && isDraft === false;
   }
 
   private _checkIfExceedReactionKindLim(
