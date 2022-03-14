@@ -18,11 +18,11 @@ export class SentryService implements OnApplicationShutdown {
       // console.log('options not found. Did you use SentryModule.forRoot?');
       return;
     }
-    const { debug, integrations = [], ...sentryOptions } = _opts;
+    const { debug: isDebug, integrations = [], ...sentryOptions } = _opts;
     SourceMap.install();
     Sentry.init({
       ...sentryOptions,
-      debug: debug,
+      debug: isDebug,
       integrations: [
         ...integrations,
         new Sentry.Integrations.OnUncaughtException({

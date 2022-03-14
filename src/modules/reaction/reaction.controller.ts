@@ -11,9 +11,6 @@ export class ReactionController {
   public constructor(private readonly _reactionService: ReactionService) {}
 
   @ApiOperation({ summary: 'Create reaction.' })
-  @ApiBadRequestResponse({
-    description: 'Create reaction fails',
-  })
   @ApiOkResponse({
     description: 'Create reaction successfully',
     type: Boolean,

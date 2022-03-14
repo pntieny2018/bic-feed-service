@@ -1,7 +1,7 @@
 import { isObject, isString } from '@nestjs/common/utils/shared.utils';
 
 export class ValidatorException extends Error {
-  constructor(private readonly _response: string | Record<string, unknown> | Record<string, unknown>[]) {
+  public constructor(private readonly _response: string | Record<string, unknown> | Record<string, unknown>[]) {
     super();
     ValidatorException.createBody(this._response);
     this.initMessage();
