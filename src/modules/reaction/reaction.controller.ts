@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity, ApiBadRequestResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
 import { CreateReactionService } from './services';
 import { CreateReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
@@ -16,7 +16,7 @@ export class ReactionController {
     type: Boolean,
   })
   @Post('/')
-  public async create(@AuthUser() user: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
-    return this._createReactionService.createReaction(user, createReactionDto);
+  public async create(@AuthUser() userDto: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
+    return this._createReactionService.createReaction(userDto, createReactionDto);
   }
 }
