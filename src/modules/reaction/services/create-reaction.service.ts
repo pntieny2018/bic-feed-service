@@ -30,8 +30,8 @@ export class CreateReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public createReaction(user: UserDto, createReactionDto: CreateReactionDto): Promise<boolean> {
-    const { userId } = user;
+  public createReaction(userDto: UserDto, createReactionDto: CreateReactionDto): Promise<boolean> {
+    const { userId } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
         return this._createPostReaction(userId, createReactionDto);

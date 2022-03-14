@@ -3,8 +3,8 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { PostReactionModel } from 'src/database/models/post-reaction.model';
-import { IPost, PostModel } from 'src/database/models/post.model';
-import { CreateReactionService } from '../services';
+import { PostModel } from 'src/database/models/post.model';
+import { CreateReactionService, DeleteReactionService } from '../services';
 import {
   mock15ReactionOnAComment,
   mock15ReactionOnAPost,
@@ -18,6 +18,7 @@ import {
 
 describe('ReactionService', () => {
   let createReactionService: CreateReactionService;
+  let deleteReactionService: DeleteReactionService;
   let commentReactionModel: typeof CommentReactionModel;
   let postReactionModel: typeof PostReactionModel;
   let postModel: typeof PostModel;
@@ -26,6 +27,7 @@ describe('ReactionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateReactionService,
+        DeleteReactionService,
         {
           provide: getModelToken(PostReactionModel),
           useValue: {
@@ -60,6 +62,7 @@ describe('ReactionService', () => {
     }).compile();
 
     createReactionService = module.get<CreateReactionService>(CreateReactionService);
+    deleteReactionService = module.get<DeleteReactionService>(DeleteReactionService);
     commentReactionModel = module.get<typeof CommentReactionModel>(getModelToken(CommentReactionModel));
     postReactionModel = module.get<typeof PostReactionModel>(getModelToken(PostReactionModel));
     postModel = module.get<typeof PostModel>(getModelToken(PostModel));
@@ -322,16 +325,15 @@ describe('ReactionService', () => {
           id: 1,
           postId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: input.createdBy,
+          createdBy: mockUserDto.userId,
         });
         const postReactionModelFindOneSpy = jest
           .spyOn(postReactionModel, 'findOne')
           .mockResolvedValue(mockDataFoundOne);
         const postReactionModelDestroySpy = jest.spyOn(postReactionModel, 'destroy').mockResolvedValue(1);
-        expect(await reactionService.handleReaction(mockUserInfoDto, input, false)).toEqual(true);
-        expect(await reactionService.handlePostReaction(mockUserInfoDto.userId, input, false)).toEqual(true);
-        expect(postReactionModelFindOneSpy).toBeCalledTimes(2);
-        expect(postReactionModelDestroySpy).toBeCalledTimes(2);
+        expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+        expect(postReactionModelDestroySpy).toBeCalledTimes(1);
       });
 
       it('Delete post reaction failed because of non-existed such reaction', async () => {
@@ -339,16 +341,11 @@ describe('ReactionService', () => {
         const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
         const postReactionModelDestroySpy = jest.spyOn(postReactionModel, 'destroy').mockResolvedValue(1);
         try {
-          await reactionService.handleReaction(mockUserInfoDto, input, false);
+          await deleteReactionService.deleteReaction(mockUserDto, input);
         } catch (e) {
-          expect(e.message).toBe('Reaction existence is false');
+          expect(e.message).toBe('Can not delete reaction.');
         }
-        try {
-          await reactionService.handlePostReaction(mockUserInfoDto.userId, input, false);
-        } catch (e) {
-          expect(e.message).toBe('Reaction existence is false');
-        }
-        expect(postReactionModelFindOneSpy).toBeCalledTimes(2);
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
         expect(postReactionModelDestroySpy).toBeCalledTimes(0);
       });
     });
@@ -360,16 +357,15 @@ describe('ReactionService', () => {
           id: 1,
           commentId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: input.createdBy,
+          createdBy: mockUserDto.userId,
         });
         const commentReactionModelFindOneSpy = jest
           .spyOn(commentReactionModel, 'findOne')
           .mockResolvedValue(mockDataFoundOne);
         const commentReactionModelDestroySpy = jest.spyOn(commentReactionModel, 'destroy').mockResolvedValue(1);
-        expect(await reactionService.handleReaction(mockUserInfoDto, input, false)).toEqual(true);
-        expect(await reactionService.handleCommentReaction(mockUserInfoDto.userId, input, false)).toEqual(true);
-        expect(commentReactionModelFindOneSpy).toBeCalledTimes(2);
-        expect(commentReactionModelDestroySpy).toBeCalledTimes(2);
+        expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
+        expect(commentReactionModelDestroySpy).toBeCalledTimes(1);
       });
 
       it('Delete comment reaction failed because of non-existed such reaction', async () => {
@@ -377,16 +373,11 @@ describe('ReactionService', () => {
         const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
         const commentReactionModelDestroySpy = jest.spyOn(commentReactionModel, 'destroy').mockResolvedValue(1);
         try {
-          await reactionService.handleReaction(mockUserInfoDto, input, false);
+          await deleteReactionService.deleteReaction(mockUserDto, input);
         } catch (e) {
-          expect(e.message).toBe('Reaction existence is false');
+          expect(e.message).toBe('Can not delete reaction.');
         }
-        try {
-          await reactionService.handleCommentReaction(mockUserInfoDto.userId, input, false);
-        } catch (e) {
-          expect(e.message).toBe('Reaction existence is false');
-        }
-        expect(commentReactionModelFindOneSpy).toBeCalledTimes(2);
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
         expect(commentReactionModelDestroySpy).toBeCalledTimes(0);
       });
     });

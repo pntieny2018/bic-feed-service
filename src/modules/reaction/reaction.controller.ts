@@ -1,6 +1,6 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity, ApiBadRequestResponse } from '@nestjs/swagger';
-import { CreateReactionService } from './services';
+import { CreateReactionService, DeleteReactionService } from './services';
 import { CreateReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 
@@ -8,7 +8,10 @@ import { AuthUser, UserDto } from '../auth';
 @ApiSecurity('authorization')
 @Controller('reactions')
 export class ReactionController {
-  public constructor(private readonly _createReactionService: CreateReactionService) {}
+  public constructor(
+    private readonly _createReactionService: CreateReactionService,
+    private readonly _deleteReactionService: DeleteReactionService
+  ) {}
 
   @ApiOperation({ summary: 'Create reaction.' })
   @ApiOkResponse({
@@ -16,20 +19,17 @@ export class ReactionController {
     type: Boolean,
   })
   @Post('/')
-  public async create(@AuthUser() user: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
-    return this._createReactionService.createReaction(user, createReactionDto);
+  public async create(@AuthUser() userDto: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
+    return this._createReactionService.createReaction(userDto, createReactionDto);
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
-  @ApiBadRequestResponse({
-    description: 'Delete reaction fails',
-  })
   @ApiOkResponse({
     description: 'Delete reaction successfully',
     type: Boolean,
   })
   @Delete('/')
-  public async delete(@AuthUser() user: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
-    return this._reactionService.handleReaction(user, createReactionDto, false);
+  public async delete(@AuthUser() userDto: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
+    return this._deleteReactionService.deleteReaction(userDto, createReactionDto);
   }
 }

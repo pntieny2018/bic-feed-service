@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReactionController } from '../reaction.controller';
 import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { PostReactionModel } from 'src/database/models/post-reaction.model';
-import { CreateReactionService } from '../services';
+import { CreateReactionService, DeleteReactionService } from '../services';
 import { getModelToken } from '@nestjs/sequelize';
 import { mock15ReactionOnAPost, mockCreateReactionDto, mockPostCanReact, mockUserDto } from './mocks/input.mock';
 import { createMock } from '@golevelup/ts-jest';
@@ -19,6 +19,7 @@ describe('ReactionController', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateReactionService,
+        DeleteReactionService,
         {
           provide: getModelToken(PostReactionModel),
           useValue: {
@@ -132,6 +133,36 @@ describe('ReactionController', () => {
       expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
       expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
       expect(postModelFindOneSpy).toBeCalledTimes(0);
+    });
+  });
+
+  describe('Delete reaction', () => {
+    it('Delete reaction successfully', async () => {
+      const input = mockCreateReactionDto[0];
+      const mockDataFoundOne = createMock<PostReactionModel>({
+        id: 1,
+        postId: input.targetId,
+        reactionName: input.reactionName,
+        createdBy: mockUserDto.userId,
+      });
+      const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(mockDataFoundOne);
+      const postReactionModelDestroySpy = jest.spyOn(postReactionModel, 'destroy').mockResolvedValue(1);
+      expect(await reactionController.delete(mockUserDto, input)).toEqual(true);
+      expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+      expect(postReactionModelDestroySpy).toBeCalledTimes(1);
+    });
+
+    it('Delete reaction failed because of non-existed reaction', async () => {
+      const input = mockCreateReactionDto[0];
+      const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+      const postReactionModelDestroySpy = jest.spyOn(postReactionModel, 'destroy').mockResolvedValue(1);
+      try {
+        await reactionController.delete(mockUserDto, input);
+      } catch (e) {
+        expect(e.message).toBe('Can not delete reaction.');
+      }
+      expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+      expect(postReactionModelDestroySpy).toBeCalledTimes(0);
     });
   });
 });
