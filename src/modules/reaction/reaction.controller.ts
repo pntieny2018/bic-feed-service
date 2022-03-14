@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity, ApiBadRequestResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
 import { CreateReactionService, DeleteReactionService } from './services';
 import { CreateReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
