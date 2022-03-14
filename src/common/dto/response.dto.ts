@@ -2,23 +2,23 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ResponseMeta {
   @ApiProperty()
-  message: string;
+  public message: string;
 
   @ApiProperty({ required: false })
-  errors?: unknown;
+  public errors?: unknown;
 
   @ApiProperty({ required: false })
-  stack?: unknown;
+  public stack?: unknown;
 }
 
 export class ResponseDto<T> {
-  code: number;
+  public code: number;
 
-  data: T;
+  public data: T;
 
-  meta: ResponseMeta;
+  public meta: ResponseMeta;
 
-  constructor(data: Partial<ResponseDto<T>>) {
+  public constructor(data: Partial<ResponseDto<T>>) {
     Object.assign(this, data);
   }
 }

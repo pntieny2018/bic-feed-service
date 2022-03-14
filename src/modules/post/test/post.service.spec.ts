@@ -51,9 +51,6 @@ describe('PostService', () => {
   });
 
   describe('Create recent search', () => {
-    it('Should create new recent search if the keyword is not existed', async () => {
-      
-    });
+    it('Should create new recent search if the keyword is not existed', async () => {});
   });
-
 });

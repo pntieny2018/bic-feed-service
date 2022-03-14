@@ -1,4 +1,4 @@
-import { AutoIncrement, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AutoIncrement, Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
@@ -8,10 +8,11 @@ export interface IPostReaction {
   postId: number;
   reactionName: string;
   createdBy: number;
+  createdAt?: Date;
 }
 @Table({
   tableName: 'post_reaction',
-  timestamps: false,
+  updatedAt: false,
 })
 export class PostReactionModel extends Model<IPostReaction, Optional<IPostReaction, 'id'>> implements IPostReaction {
   @PrimaryKey
@@ -29,4 +30,8 @@ export class PostReactionModel extends Model<IPostReaction, Optional<IPostReacti
 
   @Column
   public createdBy: number;
+
+  @Column
+  @CreatedAt
+  public createdAt?: Date;
 }

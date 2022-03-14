@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 import { ReactionEnum } from '../../reaction.enum';
 
 export class CreateReactionDto {
@@ -19,9 +19,4 @@ export class CreateReactionDto {
   @IsNumber()
   @IsNotEmpty()
   public targetId: number;
-
-  @ApiProperty({ name: 'created_by', example: 9 })
-  @Expose({ name: 'created_by' })
-  @IsOptional()
-  public createdBy: number;
 }

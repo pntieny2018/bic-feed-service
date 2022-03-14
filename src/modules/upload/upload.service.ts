@@ -5,14 +5,14 @@ import * as path from 'path';
 
 @Injectable()
 export class UploadService {
-  constructor(private readonly _s3: AWS.S3) {
+  public constructor(private readonly _s3: AWS.S3) {
     this._s3 = new AWS.S3({
       accessKeyId: '',
       secretAccessKey: '',
     });
   }
 
-  async upload(file: Express.Multer.File): Promise<any> {
+  public async upload(file: Express.Multer.File): Promise<any> {
     return new Promise((resolve, reject) => {
       const key = UploadService.getKey('', {
         extension: path.extname(file.originalname),
@@ -34,7 +34,7 @@ export class UploadService {
     });
   }
 
-  async getSignedUrl(
+  public async getSignedUrl(
     uploadType: string,
     originalName: string,
     mimeType: string

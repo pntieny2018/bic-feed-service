@@ -1,4 +1,4 @@
-import { AutoIncrement, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AutoIncrement, Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
@@ -8,10 +8,11 @@ export interface ICommentReaction {
   commentId: number;
   reactionName: string;
   createdBy: number;
+  createdAt?: Date;
 }
 @Table({
   tableName: 'comment_reaction',
-  timestamps: false,
+  updatedAt: false,
 })
 export class CommentReactionModel
   extends Model<ICommentReaction, Optional<ICommentReaction, 'id'>>
@@ -32,4 +33,8 @@ export class CommentReactionModel
 
   @Column
   public createdBy: number;
+
+  @Column
+  @CreatedAt
+  public createdAt?: Date;
 }

@@ -26,12 +26,17 @@ module.exports = {
           type: Sequelize.STRING(50),
           allowNull: false,
         },
+        created_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        },
       },
       {
         schema: schemaName,
       }
     );
-    await queryInterface.addIndex(tableName, ['comment_id', 'reaction_name'], {
+    await queryInterface.addIndex(tableName, ['comment_id', 'reaction_name', 'created_by'], {
       unique: true,
     });
   },

@@ -1,9 +1,9 @@
 // Redis
-export interface CacheManageOptions {
+export interface ICacheManageOptions {
   ttl: number;
   isCacheableValue?: boolean;
 }
 
-export interface ParseOptions {
+export interface IParseOptions {
   parse?: boolean;
 }
