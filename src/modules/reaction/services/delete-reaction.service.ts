@@ -33,7 +33,6 @@ export class DeleteReactionService {
       default:
         throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
     }
-    //TODO: pub topic to kafka
   }
 
   /**

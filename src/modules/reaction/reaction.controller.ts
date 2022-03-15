@@ -3,7 +3,11 @@ import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagg
 import { CreateReactionService, DeleteReactionService } from './services';
 import { CreateReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
-import { REACTION_SERVICE, TOPIC_REACTION_CREATED } from './reaction.constant';
+import {
+  REACTION_SERVICE,
+  TOPIC_REACTION_CREATED,
+  TOPIC_REACTION_DELETED,
+} from './reaction.constant';
 import { ClientKafka } from '@nestjs/microservices';
 import { CreateReactionTopicDto } from './dto/reaction-topic.dto';
 
@@ -43,6 +47,9 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
   ): Promise<boolean> {
-    return this._deleteReactionService.deleteReaction(userDto, createReactionDto);
+    const didDelete = await this._deleteReactionService.deleteReaction(userDto, createReactionDto);
+    const createReactionTopicDto = new CreateReactionTopicDto(createReactionDto, userDto.userId);
+    this._clientKafka.emit(TOPIC_REACTION_DELETED, JSON.stringify(createReactionTopicDto));
+    return didDelete;
   }
 }
