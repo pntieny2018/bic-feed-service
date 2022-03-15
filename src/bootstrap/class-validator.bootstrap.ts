@@ -1,7 +1,14 @@
 import { useContainer } from 'class-validator';
 import { StringHelper } from '../common/helpers';
 import { ValidatorException } from '../common/exceptions';
-import { INestApplication, Logger, Type, DynamicModule, ValidationPipe, ValidationError } from '@nestjs/common';
+import {
+  INestApplication,
+  Logger,
+  Type,
+  DynamicModule,
+  ValidationPipe,
+  ValidationError,
+} from '@nestjs/common';
 
 export type ConstraintItem = { title: string; message: string[] };
 
@@ -20,9 +27,9 @@ export class ClassValidatorBootstrap {
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        forbidUnknownValues: true,
+        // whitelist: true,
+        // forbidNonWhitelisted: true,
+        // forbidUnknownValues: true,
         exceptionFactory: exceptionFactory,
       })
     );
@@ -33,7 +40,9 @@ function exceptionFactory(errors: ValidationError[]): void {
   errors.forEach((e) => {
     flattenErrors.push(...mapChildrenToValidationErrors(e));
   });
-  throw new ValidatorException(buildErrors(flattenErrors.filter((f) => Object.keys(f.constraints).length)));
+  throw new ValidatorException(
+    buildErrors(flattenErrors.filter((f) => Object.keys(f.constraints).length))
+  );
 }
 
 function buildErrors(errors: ValidationError[]): ConstraintItem[] {
@@ -57,7 +66,10 @@ function buildErrors(errors: ValidationError[]): ConstraintItem[] {
   return constraints;
 }
 
-function mapChildrenToValidationErrors(error: ValidationError, parentPath?: string): ValidationError[] {
+function mapChildrenToValidationErrors(
+  error: ValidationError,
+  parentPath?: string
+): ValidationError[] {
   if (!(error.children && error.children.length)) {
     return [error];
   }
@@ -74,7 +86,10 @@ function mapChildrenToValidationErrors(error: ValidationError, parentPath?: stri
   return validationErrors;
 }
 
-function prependConstraintsWithParentProp(parentPath: string, error: ValidationError): ValidationError {
+function prependConstraintsWithParentProp(
+  parentPath: string,
+  error: ValidationError
+): ValidationError {
   const constraints = {};
   for (const key in error.constraints) {
     error['property'] = `${parentPath}.${error['property']}`;

@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RecentSearchService } from '../recent-search.service';
 import { RecentSearchModel } from '../../../database/models/recent-search.model';
 import { getModelToken } from '@nestjs/sequelize';
-import { DEFAULT_RECENT_SEARCH_ITEMS_NUMBER, LIMIT_TOTAL_RECENT_SEARCH, RecentSearchType } from '..';
+import {
+  DEFAULT_RECENT_SEARCH_ITEMS_NUMBER,
+  LIMIT_TOTAL_RECENT_SEARCH,
+  RecentSearchType,
+} from '..';
 import { plainToClass } from 'class-transformer';
 import { RecentSearchDto, RecentSearchesDto } from '../dto/responses';
 import { mockedRecentSearchList } from './mocks/recent-search-list';
@@ -42,7 +46,9 @@ describe('RecentSearchService', () => {
     }).compile();
 
     recentSearchService = moduleRef.get<RecentSearchService>(RecentSearchService);
-    recentSearchModelMock = moduleRef.get<typeof RecentSearchModel>(getModelToken(RecentSearchModel));
+    recentSearchModelMock = moduleRef.get<typeof RecentSearchModel>(
+      getModelToken(RecentSearchModel)
+    );
     //sentryService = moduleRef.get<SentryService>(SentryService);
   });
 
@@ -102,11 +108,15 @@ describe('RecentSearchService', () => {
         keyword,
         target,
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(dataCreateMock.changed).toHaveBeenCalled();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(dataCreateMock.set).toBeCalledWith({
         totalSearched: totalSearched + 1,
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(dataCreateMock.save).toHaveBeenCalled();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.needDeleteRecentSearchOverLimit).toHaveBeenCalledTimes(1);
       expect(result).toStrictEqual(
         plainToClass(RecentSearchDto, dataCreateMock, {
@@ -149,6 +159,7 @@ describe('RecentSearchService', () => {
       recentSearchModelMock.count.mockResolvedValueOnce(LIMIT_TOTAL_RECENT_SEARCH);
 
       await recentSearchService.needDeleteRecentSearchOverLimit(createdBy);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.delete).not.toHaveBeenCalled();
     });
 
@@ -160,7 +171,9 @@ describe('RecentSearchService', () => {
       recentSearchModelMock.findOne.mockResolvedValueOnce(dataCreateMock);
 
       await recentSearchService.needDeleteRecentSearchOverLimit(createdBy);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.delete).toHaveBeenCalledTimes(1);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.delete).toHaveBeenLastCalledWith(createdBy, id);
     });
   });

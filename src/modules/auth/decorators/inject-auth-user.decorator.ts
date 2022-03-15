@@ -3,7 +3,10 @@ import { ContextType, InjectRequestScopeInterceptor } from '../interceptors';
 import { RemoveRequestScopePipe } from '../pipes';
 
 function InjectAuthUserTo(context: ContextType): MethodDecorator {
-  return applyDecorators(UseInterceptors(new InjectRequestScopeInterceptor(context)), UsePipes(RemoveRequestScopePipe));
+  return applyDecorators(
+    UseInterceptors(new InjectRequestScopeInterceptor(context)),
+    UsePipes(RemoveRequestScopePipe)
+  );
 }
 
 export function InjectAuthUserToQuery(): MethodDecorator {

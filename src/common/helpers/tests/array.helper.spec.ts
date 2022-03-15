@@ -13,36 +13,36 @@ describe('ArrayHelper', function () {
   });
   describe('isArray', function () {
     it('should return true if is a array', function () {
-      const result = ArrayHelper.isArray([1, 2, 3, 4]);
-      expect(result).toBe(true);
+      const isArray = ArrayHelper.isArray([1, 2, 3, 4]);
+      expect(isArray).toBe(true);
     });
 
     it('should return false if is not a array', function () {
-      const inputString = ArrayHelper.isArray('a' as any);
-      const inputNumber = ArrayHelper.isArray(1 as any);
-      const inputObject = ArrayHelper.isArray({} as any);
-      const inputUndefined = ArrayHelper.isArray(undefined as any);
-      const inputNull = ArrayHelper.isArray(null as any);
-      const inputNaN = ArrayHelper.isArray(NaN as any);
+      const isInputString = ArrayHelper.isArray('a' as any);
+      const isInputNumber = ArrayHelper.isArray(1 as any);
+      const isInputObject = ArrayHelper.isArray({} as any);
+      const isInputUndefined = ArrayHelper.isArray(undefined as any);
+      const isInputNull = ArrayHelper.isArray(null as any);
+      const isInputNaN = ArrayHelper.isArray(NaN as any);
 
-      expect(inputString).toEqual(false);
-      expect(inputNumber).toEqual(false);
-      expect(inputObject).toEqual(false);
+      expect(isInputString).toEqual(false);
+      expect(isInputNumber).toEqual(false);
+      expect(isInputObject).toEqual(false);
 
-      expect(inputUndefined).toEqual(false);
-      expect(inputNull).toEqual(false);
-      expect(inputNaN).toEqual(false);
+      expect(isInputUndefined).toEqual(false);
+      expect(isInputNull).toEqual(false);
+      expect(isInputNaN).toEqual(false);
     });
   });
   describe('isArraySorted', function () {
     it('should return true if is a sorted number array', function () {
-      const result = ArrayHelper.isArraySorted([1, 2, 3, 4]);
-      expect(result).toBe(true);
+      const isArraySorted = ArrayHelper.isArraySorted([1, 2, 3, 4]);
+      expect(isArraySorted).toBe(true);
     });
 
     it('should return false if is not a sorted number array', function () {
-      const result = ArrayHelper.isArraySorted([8, 1, 2, 3, 4]);
-      expect(result).toBe(false);
+      const isArraySorted = ArrayHelper.isArraySorted([8, 1, 2, 3, 4]);
+      expect(isArraySorted).toBe(false);
     });
   });
 });

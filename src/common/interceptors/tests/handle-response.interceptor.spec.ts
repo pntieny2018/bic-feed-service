@@ -19,6 +19,7 @@ describe('HandleResponseInterceptor', () => {
       const inputData = {
         dataKey: 'dataKey',
       };
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const convertedDataExpect = { data_key: 'dataKey' };
 
       const mockExecutionContext = createMock<ExecutionContext>();
@@ -30,6 +31,7 @@ describe('HandleResponseInterceptor', () => {
       const responseObserve = interceptor.intercept(mockExecutionContext, mockNextHandler);
 
       const responseDto = await lastValueFrom(responseObserve);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(mockNextHandler.handle).toBeCalled();
       expect(responseDto.data).toEqual(convertedDataExpect);
     });
