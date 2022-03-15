@@ -60,7 +60,9 @@ describe('ReactionService', () => {
     }).compile();
 
     createReactionService = module.get<CreateReactionService>(CreateReactionService);
-    commentReactionModel = module.get<typeof CommentReactionModel>(getModelToken(CommentReactionModel));
+    commentReactionModel = module.get<typeof CommentReactionModel>(
+      getModelToken(CommentReactionModel)
+    );
     postReactionModel = module.get<typeof PostReactionModel>(getModelToken(PostReactionModel));
     postModel = module.get<typeof PostModel>(getModelToken(PostModel));
   });
@@ -79,14 +81,20 @@ describe('ReactionService', () => {
           reactionName: input.reactionName,
           createdBy: mockUserDto.userId,
         });
-        const postReactionModelCreateSpy = jest.spyOn(postReactionModel, 'create').mockResolvedValue(mockDataCreated);
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
         const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
         const postReactionModelFindAllSpy = jest
           .spyOn(postReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnAPostData);
         const mockPostData = createMock<PostModel>(mockPostCanReact);
-        const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
-        const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostData);
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(null);
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(true);
         expect(postReactionModelCreateSpy).toBeCalledTimes(1);
         expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
@@ -103,7 +111,9 @@ describe('ReactionService', () => {
         const postReactionModelCreateSpy = jest
           .spyOn(postReactionModel, 'create')
           .mockRejectedValue(new Error('postId is not existed. foreign key constraint'));
-        const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(null);
         const mockPostData = createMock<PostModel>(mockPostCanReact);
         const postModelFindOneSpy = jest
           .spyOn(postModel, 'findOne')
@@ -127,7 +137,9 @@ describe('ReactionService', () => {
           reactionName: input.reactionName,
           createdBy: mockUserDto.userId,
         });
-        const postReactionModelCreateSpy = jest.spyOn(postReactionModel, 'create').mockResolvedValue(mockDataCreated);
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
         const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
         const postReactionModelFindAllSpy = jest
           .spyOn(postReactionModel, 'findAll')
@@ -142,7 +154,9 @@ describe('ReactionService', () => {
           .spyOn(postReactionModel, 'findOne')
           .mockResolvedValue(mockDataFoundOne);
         const mockPostData = createMock<PostModel>(mockPostCanReact);
-        const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostData);
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
@@ -162,14 +176,20 @@ describe('ReactionService', () => {
           reactionName: input.reactionName,
           createdBy: mockUserDto.userId,
         });
-        const postReactionModelCreateSpy = jest.spyOn(postReactionModel, 'create').mockResolvedValue(mockDataCreated);
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
         const mock21ReactionOnAPostData = createMock<PostReactionModel[]>(mock21ReactionOnAPost);
         const postReactionModelFindAllSpy = jest
           .spyOn(postReactionModel, 'findAll')
           .mockResolvedValue(mock21ReactionOnAPostData);
         const mockPostData = createMock<PostModel>(mockPostCanReact);
-        const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
-        const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostData);
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(null);
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
@@ -189,14 +209,20 @@ describe('ReactionService', () => {
           reactionName: input.reactionName,
           createdBy: mockUserDto.userId,
         });
-        const postReactionModelCreateSpy = jest.spyOn(postReactionModel, 'create').mockResolvedValue(mockDataCreated);
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
         const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
         const postReactionModelFindAllSpy = jest
           .spyOn(postReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnAPostData);
         const mockPostData = createMock<PostModel>(mockPostCannotReact);
-        const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(mockPostData);
-        const postReactionModelFindOneSpy = jest.spyOn(postReactionModel, 'findOne').mockResolvedValue(null);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostData);
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(null);
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
@@ -221,11 +247,14 @@ describe('ReactionService', () => {
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
           .mockResolvedValue(mockDataCreated);
-        const mock15ReactionOnACommentData = createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
+        const mock15ReactionOnACommentData =
+          createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
         const commentReactionModelFindAllSpy = jest
           .spyOn(commentReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnACommentData);
-        const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(null);
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(true);
         expect(commentReactionModelCreateSpy).toBeCalledTimes(1);
         expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
@@ -237,11 +266,14 @@ describe('ReactionService', () => {
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
           .mockRejectedValue(new Error('commentId is not existed. foreign key constraint'));
-        const mock15ReactionOnACommentData = createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
+        const mock15ReactionOnACommentData =
+          createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
         const commentReactionModelFindAllSpy = jest
           .spyOn(commentReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnACommentData);
-        const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(null);
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
@@ -272,7 +304,8 @@ describe('ReactionService', () => {
         const commentReactionModelFindOneSpy = jest
           .spyOn(commentReactionModel, 'findOne')
           .mockResolvedValue(mockDataFoundOne);
-        const mock15ReactionOnACommentData = createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
+        const mock15ReactionOnACommentData =
+          createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
         const commentReactionModelFindAllSpy = jest
           .spyOn(commentReactionModel, 'findAll')
           .mockResolvedValue(mock15ReactionOnACommentData);
@@ -297,11 +330,14 @@ describe('ReactionService', () => {
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
           .mockResolvedValue(mockDataCreated);
-        const mock21ReactionOnACommentData = createMock<CommentReactionModel[]>(mock21ReactionOnAComment);
+        const mock21ReactionOnACommentData =
+          createMock<CommentReactionModel[]>(mock21ReactionOnAComment);
         const commentReactionModelFindAllSpy = jest
           .spyOn(commentReactionModel, 'findAll')
           .mockResolvedValue(mock21ReactionOnACommentData);
-        const commentReactionModelFindOneSpy = jest.spyOn(commentReactionModel, 'findOne').mockResolvedValue(null);
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(null);
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {

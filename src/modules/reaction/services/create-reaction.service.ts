@@ -8,6 +8,8 @@ import { ReactionEnum } from '../reaction.enum';
 import { UserDto } from '../../auth';
 import { REACTION_KIND_LIMIT } from '../reaction.constant';
 import { PostModel } from 'src/database/models/post.model';
+import { PostGroupModel } from 'src/database/models/post-group';
+import { UserService } from 'src/shared/user';
 
 //TODO: check if user is in the group that contains the post.
 @Injectable()
@@ -20,7 +22,10 @@ export class CreateReactionService {
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     @InjectModel(PostModel)
-    private readonly _postModel: typeof PostModel
+    private readonly _postModel: typeof PostModel,
+    @InjectModel(PostGroupModel)
+    private readonly _postGroupModel: typeof PostGroupModel,
+    private readonly _userService: UserService
   ) {}
 
   /**
@@ -51,7 +56,10 @@ export class CreateReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  private async _createPostReaction(userId: number, createReactionDto: CreateReactionDto): Promise<boolean> {
+  private async _createPostReaction(
+    userId: number,
+    createReactionDto: CreateReactionDto
+  ): Promise<boolean> {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const existedReaction = await this._postReactionModel.findOne<PostReactionModel>({
@@ -65,9 +73,14 @@ export class CreateReactionService {
         throw new Error('Reaction is existed.');
       }
 
-      const canReact = await this._checkIfCanReactPost(postId);
+      const canReact = await this._canReactPost(postId);
       if (canReact === false) {
         throw new Error('Post does not permit to react.');
+      }
+
+      const isUserInPostGroups = await this._isUserInPostGroups(userId, postId);
+      if (isUserInPostGroups === false) {
+        throw new Error("User is not in the post's groups");
       }
 
       const reactions = await this._postReactionModel.findAll<PostReactionModel>({
@@ -77,7 +90,7 @@ export class CreateReactionService {
         },
         group: ['reaction_name'],
       });
-      const willExceedReactionKindLim = this._checkIfExceedReactionKindLim(reactions, reactionName);
+      const willExceedReactionKindLim = this._willExceedReactionKindLim(reactions, reactionName);
       if (willExceedReactionKindLim === true) {
         throw new Error('Exceed reaction kind limit on a post.');
       }
@@ -102,7 +115,10 @@ export class CreateReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  private async _createCommentReaction(userId: number, createReactionDto: CreateReactionDto): Promise<boolean> {
+  private async _createCommentReaction(
+    userId: number,
+    createReactionDto: CreateReactionDto
+  ): Promise<boolean> {
     const { reactionName, targetId: commentId } = createReactionDto;
     try {
       const existedReaction = await this._commentReactionModel.findOne<CommentReactionModel>({
@@ -123,7 +139,7 @@ export class CreateReactionService {
         },
         group: ['reaction_name'],
       });
-      const willExceedReactionKindLim = this._checkIfExceedReactionKindLim(reactions, reactionName);
+      const willExceedReactionKindLim = this._willExceedReactionKindLim(reactions, reactionName);
       if (willExceedReactionKindLim === true) {
         throw new Error('Exceed reaction kind limit on a comment.');
       }
@@ -141,7 +157,7 @@ export class CreateReactionService {
     }
   }
 
-  private async _checkIfCanReactPost(postId: number): Promise<boolean> {
+  private async _canReactPost(postId: number): Promise<boolean> {
     const post = await this._postModel.findOne<PostModel>({
       where: {
         id: postId,
@@ -154,13 +170,27 @@ export class CreateReactionService {
     return canReact === true && isDraft === false;
   }
 
-  private _checkIfExceedReactionKindLim(
+  private async _isUserInPostGroups(userId: number, postId: number): Promise<boolean> {
+    const postGroups = await this._postGroupModel.findAll<PostGroupModel>({
+      where: {
+        postId: postId,
+      },
+    });
+    const userSharedDto = await this._userService.get(userId);
+    const groupIds = postGroups.map((postGroup: PostGroupModel) => postGroup.groupId);
+    const userGroupIds = userSharedDto.groups;
+    return this._userService.isMemberOfGroups(groupIds, userGroupIds);
+  }
+
+  private _willExceedReactionKindLim(
     reactions: PostReactionModel[] | CommentReactionModel[],
     reactionName: string
   ): boolean {
-    const isExistedReactionKind = reactions.findIndex((reaction: PostReactionModel | CommentReactionModel) => {
-      return reaction.reactionName === reactionName;
-    });
+    const isExistedReactionKind = reactions.findIndex(
+      (reaction: PostReactionModel | CommentReactionModel) => {
+        return reaction.reactionName === reactionName;
+      }
+    );
     if (isExistedReactionKind >= 0) {
       return false;
     }

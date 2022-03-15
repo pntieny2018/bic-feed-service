@@ -16,7 +16,10 @@ export class ReactionController {
     type: Boolean,
   })
   @Post('/')
-  public async create(@AuthUser() userDto: UserDto, @Body() createReactionDto: CreateReactionDto): Promise<boolean> {
+  public async create(
+    @AuthUser() userDto: UserDto,
+    @Body() createReactionDto: CreateReactionDto
+  ): Promise<boolean> {
     return this._createReactionService.createReaction(userDto, createReactionDto);
   }
 }
