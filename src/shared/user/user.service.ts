@@ -14,8 +14,4 @@ export class UserService {
     const keys = userIds.map((userId) => `US:${userId}`);
     return await this._store.mget(keys);
   }
-
-  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
-    return groupIds.every((groupId) => myGroupIds.includes(groupId));
-  }
 }
