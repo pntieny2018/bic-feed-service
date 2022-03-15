@@ -14,4 +14,13 @@ export class GroupService {
     const keys = groupIds.map((groupId) => `GS:${groupId}`);
     return await this._store.mget(keys);
   }
+
+  /**
+   * Check user was join one or more group audience
+   * @param groupIds Number[]
+   * @param myGroupIds Number[]
+   */
+  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
+    return groupIds.some((groupId) => myGroupIds.includes(groupId));
+  }
 }

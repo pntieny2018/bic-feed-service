@@ -1,31 +1,33 @@
 import { LibModule } from './lib.module';
 import { AppService } from './app.service';
 import { FeedModule } from '../modules/feed';
+import { UserModule } from '../shared/user';
+import { GroupModule } from '../shared/group';
 import { PostModule } from 'src/modules/post';
 import { UploadModule } from '../modules/upload';
 import { AppController } from './app.controller';
 import { CommentModule } from '../modules/comment';
+import { MentionModule } from '../modules/mention';
+import { MediaModule } from '../modules/media/media.module';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
-import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
-import { MediaModule } from '../modules/media/media.module';
-import { UserModule } from '../shared/user';
-import { MentionModule } from '../modules/mention';
 
 @Module({
   controllers: [AppController],
-  providers: [AppService, Logger],
+  providers: [AppService],
   imports: [
     LibModule,
     AuthModule,
     CommentModule,
     FeedModule,
-    RecentSearchModule,
     PostModule,
     UploadModule,
     MediaModule,
     UserModule,
+    GroupModule,
     MentionModule,
+    RecentSearchModule,
   ],
 })
 export class AppModule {
