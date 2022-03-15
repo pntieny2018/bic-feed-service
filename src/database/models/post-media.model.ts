@@ -7,7 +7,8 @@ export interface IPostMedia {
   mediaId: number;
 }
 @Table({
-  tableName: 'media',
+  tableName: 'post_media',
+  timestamps: false,
 })
 export class PostMediaModel extends Model implements IPostMedia {
   @ForeignKey(() => PostModel)

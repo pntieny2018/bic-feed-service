@@ -6,9 +6,18 @@ import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
 import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 import { PostModule } from 'src/modules/post';
-
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
-  imports: [LibModule, AuthModule, FeedModule, RecentSearchModule, PostModule],
+  imports: [
+    LibModule,
+    AuthModule,
+    FeedModule,
+    RecentSearchModule,
+    PostModule,
+    EventEmitterModule.forRoot({
+      verboseMemoryLeak: true,
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService, Logger],
 })

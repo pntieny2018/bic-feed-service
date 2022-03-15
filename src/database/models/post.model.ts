@@ -1,4 +1,4 @@
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -12,6 +12,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
+import { UserDto } from 'src/modules/auth';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
@@ -30,7 +31,7 @@ export interface IPost {
   createdAt?: Date;
   updatedAt?: Date;
   comments: CommentModel[];
-  media: PostMediaModel[];
+  mediaList: PostMediaModel[];
 }
 @Table({
   tableName: 'posts',
@@ -83,5 +84,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public comments: CommentModel[];
 
   @HasMany(() => PostMediaModel)
-  public media: PostMediaModel[];
+  public mediaList: PostMediaModel[];
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mentions: UserDto[];
 }

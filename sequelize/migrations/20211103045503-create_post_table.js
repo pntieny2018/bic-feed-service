@@ -52,6 +52,11 @@ module.exports = {
           allowNull: true,
           defaultValue: false,
         },
+        mentions: {
+          type: Sequelize.JSONB,
+          allowNull: false,
+          defaultValue: '[]',
+        },
         created_at: {
           type: Sequelize.DATE,
           allowNull: false,

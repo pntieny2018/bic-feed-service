@@ -1,9 +1,10 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { isArray, IsBoolean, IsNotEmpty, IsOptional, IsArray, ValidateNested } from 'class-validator';
 import { PostContentDto } from '../common/post-content.dto';
 import { Audience } from '../common/audience.dto';
-import { SettingDto } from '../common/post-setting.dto';
+import { PostSettingDto } from '../common/post-setting.dto';
+import { UserDto } from 'src/modules/auth';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -26,12 +27,22 @@ export class CreatePostDto {
 
   @ApiProperty({
     description: 'Setting post',
-    type: SettingDto,
+    type: PostSettingDto,
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => SettingDto)
-  public setting?: SettingDto;
+  @Type(() => PostSettingDto)
+  public setting?: PostSettingDto;
+
+  @ApiProperty({
+    description: 'Setting post',
+    type: PostSettingDto,
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UserDto)
+  @IsArray()
+  public mentions?: UserDto[];
 
   @ApiProperty({
     description: 'To know draft post or not',
