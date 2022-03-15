@@ -159,14 +159,13 @@ export class CreateReactionService {
     reactionName: string
   ): boolean {
     const isExistedReactionKind = reactions.findIndex((reaction: PostReactionModel | CommentReactionModel) => {
-      const { reactionName: elementReactionName } = reaction;
-      return elementReactionName === reactionName;
+      return reaction.reactionName === reactionName;
     });
     if (isExistedReactionKind >= 0) {
       return false;
     }
-    const currentReactionKindCount = reactions.length;
-    const newReactionKindCount = 1;
-    return currentReactionKindCount + newReactionKindCount > REACTION_KIND_LIMIT;
+    const currentReactionKindNum = reactions.length;
+    const newReactionKindNum = 1;
+    return currentReactionKindNum + newReactionKindNum > REACTION_KIND_LIMIT;
   }
 }
