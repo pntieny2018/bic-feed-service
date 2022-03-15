@@ -23,7 +23,7 @@ describe('StringHelper', function () {
       const cookieStringMock = 'auth_id=237e2b6ff5282f665f99cfc73a97e7b1; token=asdsad231232dasd';
 
       const expectCookieObject = {
-        auth_id: '237e2b6ff5282f665f99cfc73a97e7b1',
+        authId: '237e2b6ff5282f665f99cfc73a97e7b1',
         token: 'asdsad231232dasd',
       };
 
@@ -38,13 +38,13 @@ describe('StringHelper', function () {
       const jsonMock = {
         name: 'rose',
       };
-      const result = StringHelper.isJson(JSON.stringify(jsonMock));
-      expect(result).toBe(true);
+      const isJson = StringHelper.isJson(JSON.stringify(jsonMock));
+      expect(isJson).toBe(true);
     });
 
     it('should return false if is not json', function () {
-      const result = StringHelper.isJson('asdsadawsd');
-      expect(result).toBe(false);
+      const isJson = StringHelper.isJson('asdsadawsd');
+      expect(isJson).toBe(false);
     });
   });
   describe('randomStr', function () {

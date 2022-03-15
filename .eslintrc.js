@@ -11,7 +11,7 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js', '*.js'],
+  ignorePatterns: ['.eslintrc.js', '*.js', 'data', '*.spec.ts', '*.input.ts'],
   rules: {
     'prettier/prettier': [
       'error',
@@ -19,7 +19,7 @@ module.exports = {
         semi: true,
         trailingComma: 'es5',
         singleQuote: true,
-        printWidth: 120,
+        printWidth: 100,
         tabWidth: 2,
       },
     ],
@@ -36,9 +36,9 @@ module.exports = {
         format: ['camelCase', 'UPPER_CASE'],
       },
       {
-        "selector": "variable",
-        "modifiers": ["const"],
-        "format": ["UPPER_CASE", "PascalCase", "camelCase"]
+        selector: 'variable',
+        modifiers: ['const'],
+        format: ['UPPER_CASE', 'PascalCase', 'camelCase'],
       },
       {
         selector: 'parameter',

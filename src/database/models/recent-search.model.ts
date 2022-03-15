@@ -1,4 +1,12 @@
-import { AutoIncrement, Column, CreatedAt, Model, PrimaryKey, Table, UpdatedAt } from 'sequelize-typescript';
+import {
+  AutoIncrement,
+  Column,
+  CreatedAt,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 
 export interface IRecentSearchAttribute {
@@ -15,7 +23,10 @@ export interface IRecentSearchAttribute {
 @Table({
   tableName: 'recent_searches',
 })
-export class RecentSearchModel extends Model<IRecentSearchAttribute, Optional<IRecentSearchAttribute, 'id'>> {
+export class RecentSearchModel extends Model<
+  IRecentSearchAttribute,
+  Optional<IRecentSearchAttribute, 'id'>
+> {
   @PrimaryKey
   @AutoIncrement
   @Column

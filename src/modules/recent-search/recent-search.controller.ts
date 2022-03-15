@@ -50,7 +50,10 @@ export class RecentSearchController {
     type: Boolean,
   })
   @Delete('/:id/delete')
-  public deleteRecentSearchForPost(@AuthUser() user: UserDto, @Param('id', ParseIntPipe) id: number): Promise<boolean> {
+  public deleteRecentSearchForPost(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseIntPipe) id: number
+  ): Promise<boolean> {
     return this._recentSearchPostService.delete(user.userId, id);
   }
 

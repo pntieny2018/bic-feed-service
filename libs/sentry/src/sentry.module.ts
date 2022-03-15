@@ -1,7 +1,11 @@
 import { SentryService } from './sentry.service';
 import { SENTRY_MODULE_OPTIONS, SENTRY_TOKEN } from './sentry.constants';
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
-import { ISentryModuleAsyncOptions, ISentryOptionsFactory, SentryModuleOptions } from './sentry.interfaces';
+import {
+  ISentryModuleAsyncOptions,
+  ISentryOptionsFactory,
+  SentryModuleOptions,
+} from './sentry.interfaces';
 
 @Global()
 @Module({})
@@ -46,7 +50,8 @@ export class SentryModule {
     const inject = [(options.useClass || options.useExisting) as Type<ISentryOptionsFactory>];
     return {
       provide: SENTRY_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: ISentryOptionsFactory) => await optionsFactory.createSentryModuleOptions(),
+      useFactory: async (optionsFactory: ISentryOptionsFactory) =>
+        await optionsFactory.createSentryModuleOptions(),
       inject,
     };
   }

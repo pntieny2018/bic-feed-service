@@ -1,6 +1,5 @@
-import { Column, ForeignKey, HasMany, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
-import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
 
@@ -12,7 +11,10 @@ export interface IPostReaction {
 @Table({
   tableName: 'media',
 })
-export class CommentReactionModel extends Model<IPostReaction, Optional<IPostReaction, 'id'>> implements IPostReaction {
+export class CommentReactionModel
+  extends Model<IPostReaction, Optional<IPostReaction, 'id'>>
+  implements IPostReaction
+{
   @PrimaryKey
   @Column
   public id: number;

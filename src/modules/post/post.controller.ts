@@ -1,8 +1,7 @@
-import { Controller, Delete, Get, Post, Query, Res, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Delete, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
-//import { AuthUser, UserInfoDto } from '../auth';
 import { PostService } from './post.service';
-import { CreatePostDto, GetPostDto } from './dto/requests';
+import { CreatePostDto } from './dto/requests';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
