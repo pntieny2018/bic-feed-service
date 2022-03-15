@@ -9,7 +9,7 @@ import {
   TOPIC_REACTION_DELETED,
 } from './reaction.constant';
 import { ClientKafka } from '@nestjs/microservices';
-import { CreateReactionTopicDto } from './dto/reaction-topic.dto';
+import { ReactionDto } from './dto/reaction.dto';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -30,11 +30,11 @@ export class ReactionController {
   public async create(
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
-    const didCreate = await this._createReactionService.createReaction(userDto, createReactionDto);
-    const createReactionTopicDto = new CreateReactionTopicDto(createReactionDto, userDto.userId);
-    this._clientKafka.emit(TOPIC_REACTION_CREATED, JSON.stringify(createReactionTopicDto));
-    return didCreate;
+  ): Promise<ReactionDto> {
+    await this._createReactionService.createReaction(userDto, createReactionDto);
+    const reactionDto = new ReactionDto(createReactionDto, userDto.userId);
+    this._clientKafka.emit(TOPIC_REACTION_CREATED, JSON.stringify(reactionDto));
+    return reactionDto;
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
