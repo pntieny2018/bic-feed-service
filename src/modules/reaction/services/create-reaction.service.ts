@@ -10,6 +10,7 @@ import { REACTION_KIND_LIMIT } from '../reaction.constant';
 import { PostModel } from 'src/database/models/post.model';
 import { PostGroupModel } from 'src/database/models/post-group';
 import { UserService } from 'src/shared/user';
+import { CommentModel } from 'src/database/models/comment.model';
 
 //TODO: check if user is in the group that contains the post.
 @Injectable()
@@ -25,6 +26,8 @@ export class CreateReactionService {
     private readonly _postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     private readonly _postGroupModel: typeof PostGroupModel,
+    @InjectModel(CommentModel)
+    private readonly _commentModel: typeof CommentModel,
     private readonly _userService: UserService
   ) {}
 
@@ -132,6 +135,12 @@ export class CreateReactionService {
         throw new Error('Reaction is existed.');
       }
 
+      const postId = await this._getPostIdOfComment(commentId);
+      const isUserInPostGroups = await this._isUserInPostGroups(userId, postId);
+      if (isUserInPostGroups === false) {
+        throw new Error("User is not in the post's groups.");
+      }
+
       const reactions = await this._commentReactionModel.findAll<CommentReactionModel>({
         attributes: [['reaction_name', 'reactionName']],
         where: {
@@ -168,6 +177,19 @@ export class CreateReactionService {
     }
     const { canReact, isDraft } = post;
     return canReact === true && isDraft === false;
+  }
+
+  private async _getPostIdOfComment(commentId: number): Promise<number> {
+    const post = await this._commentModel.findOne<CommentModel>({
+      attributes: ['id'],
+      where: {
+        id: commentId,
+      },
+    });
+    if (!!post === false) {
+      throw new Error('Database error: Comment is not belong to any post.');
+    }
+    return post.id;
   }
 
   private async _isUserInPostGroups(userId: number, postId: number): Promise<boolean> {

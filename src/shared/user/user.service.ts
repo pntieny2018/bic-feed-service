@@ -15,7 +15,6 @@ export class UserService {
     return await this._store.mget(keys);
   }
 
-  //TODO: fix this
   public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
     return groupIds.some((groupId) => myGroupIds.includes(groupId));
   }
