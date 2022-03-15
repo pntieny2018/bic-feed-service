@@ -12,7 +12,8 @@ export class DeleteReactionService {
 
   public constructor(
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
-    @InjectModel(CommentReactionModel) private readonly _commentReactionModel: typeof CommentReactionModel
+    @InjectModel(CommentReactionModel)
+    private readonly _commentReactionModel: typeof CommentReactionModel
   ) {}
 
   /**
@@ -42,7 +43,10 @@ export class DeleteReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  private async _deletePostReaction(userId: number, createReactionDto: CreateReactionDto): Promise<boolean> {
+  private async _deletePostReaction(
+    userId: number,
+    createReactionDto: CreateReactionDto
+  ): Promise<boolean> {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const existedReaction = await this._postReactionModel.findOne<PostReactionModel>({
@@ -76,7 +80,10 @@ export class DeleteReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  private async _deleteCommentReaction(userId: number, createReactionDto: CreateReactionDto): Promise<boolean> {
+  private async _deleteCommentReaction(
+    userId: number,
+    createReactionDto: CreateReactionDto
+  ): Promise<boolean> {
     const { reactionName, targetId: commentId } = createReactionDto;
     try {
       const existedReaction = await this._commentReactionModel.findOne<CommentReactionModel>({
