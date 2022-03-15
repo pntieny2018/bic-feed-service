@@ -1,7 +1,9 @@
 import { isObject, isString } from '@nestjs/common/utils/shared.utils';
 
 export class ValidatorException extends Error {
-  public constructor(private readonly _response: string | Record<string, unknown> | Record<string, unknown>[]) {
+  public constructor(
+    private readonly _response: string | Record<string, unknown> | Record<string, unknown>[]
+  ) {
     super();
     ValidatorException.createBody(this._response);
     this.initMessage();
@@ -11,7 +13,10 @@ export class ValidatorException extends Error {
   public initMessage(): void {
     if (isString(this._response)) {
       this.message = this._response;
-    } else if (isObject(this._response) && isString((this._response as Record<string, unknown>).message)) {
+    } else if (
+      isObject(this._response) &&
+      isString((this._response as Record<string, unknown>).message)
+    ) {
       this.message = <string>(this._response as Record<string, unknown>).message;
     } else if (this.constructor) {
       this.message = this.constructor.name.match(/[A-Z][a-z]+|\d+/g).join(' ');

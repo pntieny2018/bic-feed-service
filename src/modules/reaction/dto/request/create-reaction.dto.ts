@@ -19,4 +19,8 @@ export class CreateReactionDto {
   @IsNumber()
   @IsNotEmpty()
   public targetId: number;
+
+  public constructor(createReactionDto: CreateReactionDto) {
+    Object.assign(this, createReactionDto);
+  }
 }

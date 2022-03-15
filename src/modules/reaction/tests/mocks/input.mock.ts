@@ -1,3 +1,4 @@
+import { CommentModel } from 'src/database/models/comment.model';
 import { UserDto } from 'src/modules/auth';
 import { ReactionEnum } from '../../reaction.enum';
 
@@ -13,6 +14,17 @@ export const mockCreateReactionDto = [
     targetId: 89,
   },
 ];
+
+export const mockComment = {
+  id: 89,
+  postId: 9,
+  parentId: 1,
+  content: 'huhu viet test nhieu qua :(',
+  createdBy: 33,
+  updatedBy: 33,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
 export const mockPostCanReact = {
   id: 9,
@@ -135,3 +147,30 @@ export const mock15ReactionOnAComment = [
   { id: 14, commentId: 89, reactionName: 'reactionName14', createdBy: 66 },
   { id: 15, commentId: 89, reactionName: 'reactionName15', createdBy: 97 },
 ];
+
+export const mockPostGroup = [
+  {
+    postId: 9,
+    groupId: 2,
+  },
+  {
+    postId: 9,
+    groupId: 10,
+  },
+];
+
+export const mockUserSharedDto = {
+  userId: 33,
+  username: 'username33',
+  fullname: 'fullname33',
+  avatar: 'http://abc.com',
+  groups: [1, 2],
+};
+
+export const mockUserSharedDtoNotInTheGroup = {
+  userId: 33,
+  username: 'username33',
+  fullname: 'fullname33',
+  avatar: 'http://abc.com',
+  groups: [],
+};

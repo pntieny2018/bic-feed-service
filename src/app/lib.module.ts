@@ -1,4 +1,3 @@
-import * as winston from 'winston';
 import * as Sentry from '@sentry/node';
 import { Module } from '@nestjs/common';
 import { RedisModule } from '@app/redis';
@@ -10,6 +9,8 @@ import { ISentryConfig } from '../config/sentry';
 import { configs } from '../config/configuration';
 import { RewriteFrames } from '@sentry/integrations';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DatabaseModule } from '../database';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       cache: true,
       load: [configs],
     }),
+    ScheduleModule.forRoot(),
     HttpModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
@@ -92,6 +94,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService],
     }),
+    DatabaseModule,
   ],
   exports: [HttpModule, RedisModule],
 })

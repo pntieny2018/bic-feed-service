@@ -13,7 +13,6 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 import { CommentModel } from './comment.model';
-import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 
 export interface IPost {

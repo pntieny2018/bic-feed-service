@@ -1,6 +1,6 @@
-import { CallHandler, ExecutionContext, NestInterceptor, Logger } from '@nestjs/common';
+import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { Request } from 'express';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export const REQUEST_CONTEXT = '_requestContext';
 
