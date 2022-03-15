@@ -8,18 +8,15 @@ import { ValidatorException } from '../exceptions';
 export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
-  public catch(exception: Error, host: ArgumentsHost): void {
+  public catch(exception: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    if (response.req.originalUrl === '/') {
-      response.redirect(this._rootPath);
-    }
     if (exception instanceof ValidatorException) {
-      this.handleValidatorException(exception, response);
+      return this.handleValidatorException(exception, response);
     } else if (exception instanceof HttpException) {
-      this.handleHttpException(exception, response);
+      return this.handleHttpException(exception, response);
     } else {
-      this.handleUnKnowException(exception, response);
+      return this.handleUnKnowException(exception, response);
     }
   }
 
@@ -28,11 +25,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleHttpException(exception: HttpException, response: Response): void {
+  protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
-    response.status(status).json(
+    return response.status(status).json(
       new ResponseDto({
-        code: status < HttpStatus.INTERNAL_SERVER_ERROR ? StatusCode.BAD_REQUEST : StatusCode.INTERNAL_SERVER_ERROR,
+        code:
+          status < HttpStatus.INTERNAL_SERVER_ERROR
+            ? StatusCode.BAD_REQUEST
+            : StatusCode.INTERNAL_SERVER_ERROR,
         meta: {
           message: exception.message,
           stack: this._getStack(exception),
@@ -46,8 +46,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleUnKnowException(exception: Error, response: Response): void {
-    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
+  protected handleUnKnowException(exception: Error, response: Response): Response {
+    return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
       new ResponseDto({
         code: StatusCode.INTERNAL_SERVER_ERROR,
         meta: {
@@ -63,8 +63,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleValidatorException(exception: ValidatorException, response: Response): void {
-    response.status(HttpStatus.BAD_REQUEST).json(
+  protected handleValidatorException(exception: ValidatorException, response: Response): Response {
+    return response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
         code: StatusCode.BAD_REQUEST,
         meta: {

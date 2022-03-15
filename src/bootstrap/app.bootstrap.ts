@@ -1,9 +1,8 @@
 import { IAppConfig } from '../config/app';
 import { ConfigService } from '@nestjs/config';
-import { INestApplication, Logger, VersioningType } from '@nestjs/common';
 import { HttpExceptionFilter } from '../common/filters';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { HandleResponseInterceptor } from '../common/interceptors';
+import { INestApplication, Logger, VersioningType } from '@nestjs/common';
 
 export class AppBootstrap {
   /**

@@ -18,6 +18,7 @@ export class SentryService implements OnApplicationShutdown {
       // console.log('options not found. Did you use SentryModule.forRoot?');
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { debug, integrations = [], ...sentryOptions } = _opts;
     SourceMap.install();
     Sentry.init({

@@ -14,7 +14,6 @@ import {
 } from 'sequelize-typescript';
 import { UserDto } from 'src/modules/auth';
 import { CommentModel } from './comment.model';
-import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 
 export interface IPost {
