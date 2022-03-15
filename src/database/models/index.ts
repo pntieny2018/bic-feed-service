@@ -7,6 +7,7 @@ import { PostReactionModel } from './post-reaction.model';
 import { PostModel } from './post.model';
 import { RecentSearchModel } from './recent-search.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
+import { MentionModel } from './mention.model';
 
 export default [
   PostModel,
@@ -18,4 +19,5 @@ export default [
   MediaModel,
   RecentSearchModel,
   UserNewsFeedModel,
+  MentionModel,
 ];

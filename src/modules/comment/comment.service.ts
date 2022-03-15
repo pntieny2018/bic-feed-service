@@ -21,9 +21,16 @@ export class CommentService {
     private _mentionService: MentionService
   ) {}
 
+  /**
+   * Create new comment
+   * @param user Auth user
+   * @param createCommentDto Create Comment Dto
+   * @return Promise resolve CommentModel
+   */
   public async create(user: UserDto, createCommentDto: CreateCommentDto): Promise<CommentModel> {
     //TODO : check post existed and can create comment
     const transaction = await this._sequelizeConnection.transaction();
+
     try {
       const comment = await this._commentModel.create({
         createdBy: user.userId,
@@ -84,7 +91,14 @@ export class CommentService {
     this._logger.log('update comment');
   }
 
-  public destroy(): void {
+  public async destroy(user: UserDto, commentID: number): Promise<number> {
     this._logger.log('delete comment');
+
+    return await this._commentModel.destroy({
+      where: {
+        id: commentID,
+        createdBy: user.userId,
+      },
+    });
   }
 }
