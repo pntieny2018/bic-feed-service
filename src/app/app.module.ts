@@ -10,6 +10,7 @@ import { RecentSearchModule } from '../modules/recent-search';
 import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 import { MediaModule } from '../modules/media/media.module';
 import { UserModule } from '../shared/user';
+import { MentionModule } from '../modules/mention';
 
 @Module({
   controllers: [AppController],
@@ -24,6 +25,7 @@ import { UserModule } from '../shared/user';
     UploadModule,
     MediaModule,
     UserModule,
+    MentionModule,
   ],
 })
 export class AppModule {

@@ -12,7 +12,7 @@ services:
       - /usr/src/app/dist/
       - /usr/src/app/node_modules/
     ports:
-      - 3001:3001
+      - '${APP_PORT}:${APP_PORT}'
     networks:
       - bein-stream-network
     restart: unless-stopped
@@ -38,6 +38,7 @@ services:
   redis:
     image: bitnami/redis:latest
     container_name: redis_feed
+    restart: always
     env_file:
       - ./.env
     environment:
