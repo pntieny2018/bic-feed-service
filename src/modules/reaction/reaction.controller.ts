@@ -46,10 +46,10 @@ export class ReactionController {
   public async delete(
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
-    const didDelete = await this._deleteReactionService.deleteReaction(userDto, createReactionDto);
-    const createReactionTopicDto = new CreateReactionTopicDto(createReactionDto, userDto.userId);
-    this._clientKafka.emit(TOPIC_REACTION_DELETED, JSON.stringify(createReactionTopicDto));
-    return didDelete;
+  ): Promise<ReactionDto> {
+    await this._deleteReactionService.deleteReaction(userDto, createReactionDto);
+    const reactionDto = new ReactionDto(createReactionDto, userDto.userId);
+    this._clientKafka.emit(TOPIC_REACTION_DELETED, JSON.stringify(reactionDto));
+    return reactionDto;
   }
 }
