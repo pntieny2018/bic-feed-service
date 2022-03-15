@@ -76,11 +76,11 @@ export class CreateReactionService {
         throw new Error("User is not in the post's groups");
       }
 
-      const willExceedPostReactionKindLim = await this._willExceedPostReactionKindLim(
+      const willExceedPostReactionKindLimit = await this._willExceedPostReactionKindLimit(
         postId,
         reactionName
       );
-      if (willExceedPostReactionKindLim === true) {
+      if (willExceedPostReactionKindLimit === true) {
         throw new Error('Exceed reaction kind limit on a post.');
       }
 
@@ -124,18 +124,18 @@ export class CreateReactionService {
    * @param reactionName string
    * @returns Promise resolve boolean
    */
-  private async _willExceedPostReactionKindLim(
+  private async _willExceedPostReactionKindLimit(
     postId: number,
     reactionName: string
   ): Promise<boolean> {
     const reactions = await this._postReactionModel.findAll<PostReactionModel>({
-      attributes: [['reaction_name', 'reactionName']],
+      attributes: ['reactionName'],
       where: {
         postId: postId,
       },
-      group: ['reaction_name'],
+      group: ['reactionName'],
     });
-    return this._willExceedReactionKindLim(reactions, reactionName);
+    return this._willExceedReactionKindLimit(reactions, reactionName);
   }
 
   /**
@@ -165,11 +165,11 @@ export class CreateReactionService {
         throw new Error("User is not in the post's groups.");
       }
 
-      const willExceedCommentReactionKindLim = await this._willExceedCommentReactionKindLim(
+      const willExceedCommentReactionKindLimit = await this._willExceedCommentReactionKindLimit(
         commentId,
         reactionName
       );
-      if (willExceedCommentReactionKindLim === true) {
+      if (willExceedCommentReactionKindLimit === true) {
         throw new Error('Exceed reaction kind limit on a comment.');
       }
 
@@ -213,18 +213,18 @@ export class CreateReactionService {
    * @param reactionName string
    * @returns Promise resolve boolean
    */
-  private async _willExceedCommentReactionKindLim(
+  private async _willExceedCommentReactionKindLimit(
     commentId: number,
     reactionName: string
   ): Promise<boolean> {
     const reactions = await this._commentReactionModel.findAll<CommentReactionModel>({
-      attributes: [['reaction_name', 'reactionName']],
+      attributes: ['reactionName'],
       where: {
         commentId: commentId,
       },
-      group: ['reaction_name'],
+      group: ['reactionName'],
     });
-    return this._willExceedReactionKindLim(reactions, reactionName);
+    return this._willExceedReactionKindLimit(reactions, reactionName);
   }
 
   /**
@@ -233,7 +233,7 @@ export class CreateReactionService {
    * @param reactionName string
    * @returns Promise resolve boolean
    */
-  private _willExceedReactionKindLim(
+  private _willExceedReactionKindLimit(
     reactions: PostReactionModel[] | CommentReactionModel[],
     reactionName: string
   ): boolean {

@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 import { CreateReactionDto } from './request';
 
-export class CreateReactionTopicDto extends CreateReactionDto {
+export class ReactionDto extends CreateReactionDto {
   @IsNotEmpty()
   @IsNumber()
   public userId: number;
