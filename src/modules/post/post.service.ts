@@ -1,7 +1,7 @@
 import { InjectModel } from '@nestjs/sequelize';
 import { plainToClass } from 'class-transformer';
 import { PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto } from './dto/requests';
+import { CreatePostDto } from './dto/requests';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PostDto } from './dto/responses';
 

@@ -9,6 +9,7 @@ import { getSwaggerConfig, ISwaggerConfig } from './swagger';
 import { getDatabaseConfig, IDatabaseConfig } from './database';
 import { getSocketIoConfig, ISocketIoConfig } from './socket-io';
 import { getElasticsearchConfig, IElasticsearchConfig } from './elasticsearch';
+import { getS3Config, IS3Config } from './s3';
 
 interface IConfiguration {
   app: IAppConfig;
@@ -22,6 +23,7 @@ interface IConfiguration {
   socket: ISocketIoConfig;
   sentry: ISentryConfig;
   kafka: IKafkaConfig;
+  s3: IS3Config;
 }
 
 export const configs = (): IConfiguration => ({
@@ -36,4 +38,5 @@ export const configs = (): IConfiguration => ({
   socket: getSocketIoConfig(),
   sentry: getSentryConfig(),
   kafka: getKafkaConfig(),
+  s3: getS3Config(),
 });

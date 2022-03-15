@@ -29,7 +29,7 @@ module.exports = {
         },
         updated_by: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         content: {
           type: Sequelize.STRING(5000),
@@ -41,6 +41,10 @@ module.exports = {
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
         },
         updated_at: {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
+        deleted_at: {
           type: Sequelize.DATE,
           allowNull: true,
         },

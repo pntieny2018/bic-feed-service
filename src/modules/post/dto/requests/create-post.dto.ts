@@ -1,6 +1,5 @@
-import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
 import { PostContentDto } from '../post-content.dto';
 import { Audience } from '../audience.dto';
 import { SettingDto } from '../setting.dto';

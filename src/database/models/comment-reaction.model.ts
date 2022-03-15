@@ -1,4 +1,12 @@
-import { AutoIncrement, Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  AutoIncrement,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
