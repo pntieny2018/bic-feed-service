@@ -4,10 +4,11 @@ import { UserSharedDto } from '../../shared/user/dto';
 import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
 import { MentionHelper } from '../../common/helpers/mention.helper';
+import { GroupService } from '../../shared/group';
 
 @Injectable()
 export class MentionService {
-  public constructor(private _userService: UserService) {}
+  public constructor(private _userService: UserService, private _groupService: GroupService) {}
 
   /**
    * Check Valid Mentions
@@ -35,7 +36,7 @@ export class MentionService {
 
     for (const user of users) {
       if (
-        !this._userService.isMemberOfGroups(groupId, user.groups) ||
+        !this._groupService.isMemberOfGroups(groupId, user.groups) ||
         !usernames.includes(user.username)
       ) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
