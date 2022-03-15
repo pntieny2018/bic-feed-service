@@ -1,13 +1,21 @@
+import { PostSettingDto } from './../../modules/post/dto/common/post-setting.dto';
+import { AudienceDto } from './../../modules/post/dto/common/audience.dto';
+import { PostModel } from './../../database/models/post.model';
 import { IEventPayload } from '../../common/interfaces';
 import { AppEvent } from '../event.constant';
-import { PostResponseDto } from 'src/modules/post/dto/responses';
+import { UserSharedDto } from 'src/shared/user/dto';
 
+export interface ICreatedPostPayload {
+  post: PostModel;
+  audience: AudienceDto;
+  mentions: UserSharedDto[];
+  actor: UserSharedDto;
+  setting: PostSettingDto;
+}
 export class CreatedPostEvent implements IEventPayload {
   public static event = AppEvent.POST_CREATED;
-  public payload: {
-    post: PostResponseDto;
-  };
-  public constructor(data: PostResponseDto) {
-    this.payload = { post: data };
+  public payload: ICreatedPostPayload;
+  public constructor(data: ICreatedPostPayload) {
+    this.payload = data;
   }
 }

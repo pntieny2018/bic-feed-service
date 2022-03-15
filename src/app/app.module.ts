@@ -28,7 +28,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     GroupModule,
     MentionModule,
     RecentSearchModule,
-    PostModule,
     EventEmitterModule.forRoot({
       verboseMemoryLeak: true,
     }),

@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
 
-export class Audience {
+export class AudienceDto {
   @ApiProperty({ default: [], type: Number, isArray: true, description: 'Array of  user_id' })
   @IsOptional()
   @IsArray()

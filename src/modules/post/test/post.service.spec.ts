@@ -4,7 +4,6 @@ import { PostModel } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { plainToClass } from 'class-transformer';
-import { PostDto } from '../dto/responses';
 import { mockedPostList } from './mocks/post-list';
 import { HttpException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';

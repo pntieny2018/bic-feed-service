@@ -1,7 +1,10 @@
-import { DataTypes, Optional } from 'sequelize';
+import { MentionableType } from './../../common/constants/model.constant';
+import { MentionModel } from './mention.model';
+import { DataTypes, Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
+  BelongsToMany,
   Column,
   CreatedAt,
   Default,
@@ -14,6 +17,7 @@ import {
 } from 'sequelize-typescript';
 import { UserDto } from 'src/modules/auth';
 import { CommentModel } from './comment.model';
+import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 
 export interface IPost {
@@ -30,7 +34,7 @@ export interface IPost {
   createdAt?: Date;
   updatedAt?: Date;
   comments: CommentModel[];
-  mediaList: PostMediaModel[];
+  media?: MediaModel[];
 }
 @Table({
   tableName: 'posts',
@@ -82,11 +86,17 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @HasMany(() => CommentModel)
   public comments: CommentModel[];
 
-  @HasMany(() => PostMediaModel)
-  public mediaList: PostMediaModel[];
+  @BelongsToMany(() => MediaModel, () => PostMediaModel)
+  public media?: MediaModel[];
 
-  @Column({
-    type: DataTypes.JSONB,
+  @HasMany(() => MentionModel, {
+    foreignKey: 'entityId',
+    constraints: false,
+    scope: {
+      mentionableType: MentionableType.POST,
+    },
   })
-  public mentions: UserDto[];
+  public mentions: MentionModel[];
+
+  public addMedia!: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 }

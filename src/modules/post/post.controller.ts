@@ -1,7 +1,20 @@
+import { UserSharedDto } from './../../shared/user/dto/user-shared.dto';
+import { UserService } from './../../shared/user/user.service';
 import { PostResponseDto } from './dto/responses/post.dto';
 import { AuthUser } from './../auth/decorators/auth.decorator';
-import { UserDto } from './../auth/dto/user.dto';
-import { Controller, Delete, Get, Post, Query, Res, Body, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  Res,
+  Body,
+  Param,
+  ParseIntPipe,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/requests';
@@ -10,7 +23,7 @@ import { CreatePostDto } from './dto/requests';
 @ApiTags('Posts')
 @Controller('posts')
 export class PostController {
-  public constructor(private _postService: PostService) {}
+  public constructor(private _postService: PostService, private _userService: UserService) {}
 
   @ApiOperation({ summary: 'Create post' })
   @ApiOkResponse({
@@ -18,8 +31,7 @@ export class PostController {
     type: String,
   })
   @Post('/')
-  public createPost(@AuthUser() user: UserDto, @Body() createPostDto: CreatePostDto) {
-    console.log(createPostDto);
+  public async createPost(@AuthUser() user: UserSharedDto, @Body() createPostDto: CreatePostDto) {
     return this._postService.createPost(user, createPostDto);
   }
 

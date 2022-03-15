@@ -1,8 +1,11 @@
+import { IMedia } from './../../database/models/media.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { MediaModel } from '../../database/models/media.model';
 import { Sequelize } from 'sequelize-typescript';
 import { UserDto } from '../auth';
+import { MediaDto } from '../post/dto/common/media.dto';
+import { FindOptions } from 'sequelize';
 
 @Injectable()
 export class MediaService {
@@ -41,5 +44,15 @@ export class MediaService {
         id: mediaId,
       },
     });
+  }
+
+  /**
+   *  Get media list
+   * @param options FindOptions
+   */
+  public async getMediaList(options?: FindOptions<IMedia>): Promise<MediaModel[]> {
+    const result = await this._mediaModel.findAll(options);
+
+    return result;
   }
 }
