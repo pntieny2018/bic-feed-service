@@ -1,4 +1,5 @@
-import { RedisService } from '@app/redis';
+//FIXME: use @app/redis
+import { RedisService } from '../../../libs/redis/src';
 import { Injectable } from '@nestjs/common';
 import { UserSharedDto } from './dto';
 

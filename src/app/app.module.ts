@@ -11,6 +11,7 @@ import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 import { MediaModule } from '../modules/media/media.module';
 import { UserModule } from '../shared/user';
 import { MentionModule } from '../modules/mention';
+import { ReactionModule } from 'src/modules/reaction';
 
 @Module({
   controllers: [AppController],
@@ -26,6 +27,7 @@ import { MentionModule } from '../modules/mention';
     MediaModule,
     UserModule,
     MentionModule,
+    ReactionModule,
   ],
 })
 export class AppModule {

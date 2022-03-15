@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
-import { RedisModule } from '@app/redis';
+//FIXME: @app/redis
+import { RedisModule } from '../../../libs/redis/src';
 
 @Module({
   imports: [RedisModule],

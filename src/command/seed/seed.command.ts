@@ -36,6 +36,13 @@ export class SeedCommand implements CommandRunner {
         avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
         groups: [1, 2],
       },
+      {
+        userId: 33,
+        username: 'username33',
+        fullname: 'User Name 33',
+        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+        groups: [1, 2],
+      },
     ];
 
     groups.forEach((g) => this._storeService.set(`GS:${g.groupId}`, g));
