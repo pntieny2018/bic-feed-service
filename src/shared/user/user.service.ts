@@ -17,6 +17,6 @@ export class UserService {
 
   //TODO: fix this
   public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
-    return myGroupIds.every((groupId) => groupIds.includes(groupId));
+    return groupIds.some((groupId) => myGroupIds.includes(groupId));
   }
 }
