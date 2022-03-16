@@ -119,7 +119,7 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src/modules/post",
+      "<rootDir>/src/",
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
