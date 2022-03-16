@@ -5,10 +5,14 @@ import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
 import { MentionHelper } from '../../common/helpers/mention.helper';
 import { GroupService } from '../../shared/group';
+import { MentionableType } from 'src/common/constants';
 
 @Injectable()
 export class MentionService {
-  public constructor(private _userService: UserService, private _groupService: GroupService) {}
+  public constructor(
+    private _userService: UserService,
+    private _groupService: GroupService
+  ) {}
 
   /**
    * Check Valid Mentions

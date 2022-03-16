@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class MediaDto {
   @ApiProperty({
@@ -7,6 +8,7 @@ export class MediaDto {
     type: String,
     default: 1,
   })
+  @IsNotEmpty()
   public id: number;
 
   @ApiProperty({
@@ -14,6 +16,8 @@ export class MediaDto {
     type: String,
     default: 'filename.jpg',
   })
+  @IsOptional()
+  @IsString()
   public name: string;
 
   @ApiProperty({
@@ -21,6 +25,7 @@ export class MediaDto {
     type: String,
     default: 'origin_name.jpg',
   })
+  @IsOptional()
   public originName: string;
 
   @ApiProperty({
@@ -28,6 +33,7 @@ export class MediaDto {
     type: String,
     default: 'https://....',
   })
+  @IsOptional()
   public url: string;
 }
 

@@ -1,36 +1,62 @@
+import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
+import { AudienceDto } from './../common/audience.dto';
+import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
-import { PostContentDto } from '../post-content.dto';
-import { Audience } from '../audience.dto';
-import { SettingDto } from '../setting.dto';
+import {
+  isArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { PostContentDto } from '../common/post-content.dto';
+import { PostSettingDto } from '../common/post-setting.dto';
 
 export class CreatePostDto {
   @ApiProperty({
     description: 'Audience',
-    type: Audience,
+    type: AudienceDto,
   })
-  public audience?: Audience;
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => AudienceDto)
+  public audience: AudienceDto;
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
     type: PostContentDto,
   })
-  public data?: PostContentDto;
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => PostContentDto)
+  public data: PostContentDto;
 
   @ApiProperty({
     description: 'Setting post',
-    type: SettingDto,
+    type: PostSettingDto,
   })
-  @IsNotEmpty()
-  public setting?: SettingDto;
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => PostSettingDto)
+  public setting?: PostSettingDto = { isImportant: false };
+
+  @ApiProperty({
+    description: 'Setting post',
+    type: PostSettingDto,
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UserSharedDto)
+  @IsArray()
+  public mentions?: UserSharedDto[] = [];
 
   @ApiProperty({
     description: 'To know draft post or not',
-    name: 'is_draft',
     type: Boolean,
     default: true,
   })
   @IsBoolean()
   @IsOptional()
-  public isDraft?: boolean = false;
+  public isDraft = true;
 }

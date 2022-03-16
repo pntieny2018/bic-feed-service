@@ -45,7 +45,6 @@ export class RecentSearchService {
         limit: limit,
         order: [['updatedAt', sort]],
       });
-      //return recentSearches;
       return plainToClass(
         RecentSearchesDto,
         { target, recentSearches: recentSearches },
