@@ -39,11 +39,12 @@ export class CreatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => PostSettingDto)
-  public setting?: PostSettingDto = { isImportant: false };
+  public setting?: PostSettingDto = { isImportant: false, importantExpiredAt: null };
 
   @ApiProperty({
-    description: 'Setting post',
-    type: PostSettingDto,
+    description: 'Mention',
+    type: UserSharedDto,
+    isArray: true,
   })
   @IsOptional()
   @ValidateNested({ each: true })

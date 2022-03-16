@@ -16,7 +16,6 @@ export class PostContentDto {
     description: 'The list of file',
     type: FileDto,
     isArray: true,
-    default: [],
   })
   @IsOptional()
   @IsArray()
@@ -28,7 +27,6 @@ export class PostContentDto {
     description: 'The list of video',
     type: VideoDto,
     isArray: true,
-    default: [],
   })
   @IsOptional()
   @IsArray()
@@ -40,7 +38,6 @@ export class PostContentDto {
     description: 'The list of image',
     type: ImageDto,
     isArray: true,
-    default: [],
   })
   @IsOptional()
   @IsArray()

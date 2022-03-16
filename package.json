@@ -119,9 +119,13 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src/",
+      "<rootDir>/src/modules/post",
       "<rootDir>/libs/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
+      "^@app/sentry(|/.*)$": "<rootDir>/libs/sentry/src/$1"
+    }
   },
   "moduleNameMapper": {
     "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsBoolean, IsDateString } from 'class-validator';
+import { IsOptional, IsBoolean, IsDateString, ValidateIf, IsNotEmpty } from 'class-validator';
 
 export class PostSettingDto {
   @ApiProperty({ type: Boolean, default: true, description: 'Allow to react' })
@@ -17,7 +17,7 @@ export class PostSettingDto {
   @IsBoolean()
   public canComment?: boolean = true;
 
-  @ApiProperty({ type: Boolean, default: false, description: 'Set important post' })
+  @ApiProperty({ type: Boolean, example: true, default: false, description: 'Set important post' })
   @IsOptional()
   @IsBoolean()
   public isImportant?: boolean = false;
@@ -28,7 +28,8 @@ export class PostSettingDto {
     type: Date,
     description: 'Set important expire time',
   })
-  @IsOptional()
+  @ValidateIf((i) => i.isImportant === true)
+  @IsNotEmpty()
   @IsDateString()
-  public importantExpiredAt?: Date;
+  public importantExpiredAt?: Date = null;
 }

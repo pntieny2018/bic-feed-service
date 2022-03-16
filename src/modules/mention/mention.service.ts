@@ -9,10 +9,7 @@ import { MentionableType } from 'src/common/constants';
 
 @Injectable()
 export class MentionService {
-  public constructor(
-    private _userService: UserService,
-    private _groupService: GroupService
-  ) {}
+  public constructor(private _userService: UserService, private _groupService: GroupService) {}
 
   /**
    * Check Valid Mentions
@@ -22,7 +19,7 @@ export class MentionService {
    * @throws LogicException
    */
   public async checkValidMentions(
-    groupId: number[],
+    groupIds: number[],
     content: string,
     userIds: number[]
   ): Promise<void> {
@@ -33,14 +30,16 @@ export class MentionService {
     if (users.length !== userIds.length) {
       throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
     }
-
+    console.log('users', users);
+    console.log('usernames', usernames);
+    
     if (users.length !== usernames.length) {
       throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
     }
 
     for (const user of users) {
       if (
-        !this._groupService.isMemberOfGroups(groupId, user.groups) ||
+        !this._groupService.isMemberOfGroups(groupIds, user.groups) ||
         !usernames.includes(user.username)
       ) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);

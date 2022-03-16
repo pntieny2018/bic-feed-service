@@ -13,28 +13,31 @@ export class MediaDto {
 
   @ApiProperty({
     description: 'Origin name',
+    required: false,
     type: String,
     default: 'filename.jpg',
   })
   @IsOptional()
   @IsString()
-  public name: string;
+  public name?: string;
 
   @ApiProperty({
     description: 'The file name',
     type: String,
+    required: false,
     default: 'origin_name.jpg',
   })
   @IsOptional()
-  public originName: string;
+  public originName?: string;
 
   @ApiProperty({
     description: 'The url',
     type: String,
+    required: false,
     default: 'https://....',
   })
   @IsOptional()
-  public url: string;
+  public url?: string;
 }
 
 export class ImageDto extends MediaDto {

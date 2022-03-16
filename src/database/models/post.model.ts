@@ -33,7 +33,7 @@ export interface IPost {
   canComment: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  comments: CommentModel[];
+  comments?: CommentModel[];
   media?: MediaModel[];
 }
 @Table({
@@ -84,7 +84,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public updatedAt: Date;
 
   @HasMany(() => CommentModel)
-  public comments: CommentModel[];
+  public comments?: CommentModel[];
 
   @BelongsToMany(() => MediaModel, () => PostMediaModel)
   public media?: MediaModel[];
@@ -96,7 +96,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       mentionableType: MentionableType.POST,
     },
   })
-  public mentions: MentionModel[];
+  public mentions?: MentionModel[];
 
-  public addMedia!: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+  public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 }
