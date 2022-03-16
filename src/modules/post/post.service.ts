@@ -63,7 +63,7 @@ export class PostService {
         throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
       }
       const mentionUserIds = mentions.map((i) => i.userId);
-      // await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+      //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
 
       const { files, videos, images } = data;
       const mediaIds = [];
