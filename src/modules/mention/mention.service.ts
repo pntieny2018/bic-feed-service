@@ -30,9 +30,7 @@ export class MentionService {
     if (users.length !== userIds.length) {
       throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
     }
-    console.log('users', users);
-    console.log('usernames', usernames);
-    
+
     if (users.length !== usernames.length) {
       throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
     }
