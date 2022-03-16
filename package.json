@@ -29,6 +29,7 @@
     "@nestjs/common": "^8.4.0",
     "@nestjs/config": "^1.2.0",
     "@nestjs/core": "^8.4.0",
+    "@nestjs/event-emitter": "^1.0.0",
     "@nestjs/elasticsearch": "^8.0.0",
     "@nestjs/microservices": "^8.4.0",
     "@nestjs/platform-express": "^8.4.0",
@@ -120,7 +121,11 @@
     "roots": [
       "<rootDir>/src/",
       "<rootDir>/libs/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
+      "^@app/sentry(|/.*)$": "<rootDir>/libs/sentry/src/$1"
+    }
   },
   "moduleNameMapper": {
     "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

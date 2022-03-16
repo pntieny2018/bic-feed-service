@@ -1,9 +1,25 @@
-import { InjectModel } from '@nestjs/sequelize';
-import { plainToClass } from 'class-transformer';
+import { UserSharedDto } from './../../shared/user/dto/user-shared.dto';
+import { Sequelize } from 'sequelize-typescript';
+import { UserService } from './../../shared/user/user.service';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { PostDto } from './dto/responses';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import { MediaService } from '../media/media.service';
+import { GroupService } from '../../shared/group/group.service';
+
+import { MentionService } from '../mention';
+import { isInstance } from 'class-validator';
+import { LogicException } from 'src/common/exceptions';
+import { Transaction } from 'sequelize';
+import { CreatedPostEvent } from '../../events/post/created-post.event';
 
 @Injectable()
 export class PostService {
@@ -14,31 +30,100 @@ export class PostService {
   private _logger = new Logger(PostService.name);
 
   public constructor(
+    @InjectConnection()
+    private _sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
-    private _postModel: typeof PostModel
+    private _postModel: typeof PostModel,
+    private _eventEmitter: EventEmitter2,
+    private _userService: UserService,
+    private _groupService: GroupService,
+    private _mediaService: MediaService,
+    private _mentionService: MentionService
   ) {}
 
   /**
-   * Create recent search
-   * @param createdBy Number
+   * Create Post
+   * @param authUser UserSharedDto
    * @param createPostDto CreatePostDto
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
    */
-  public async createPost(createdBy: number, createPostDto: CreatePostDto) {
+  public async createPost(authUser: UserSharedDto, createPostDto: CreatePostDto): Promise<boolean> {
+    let transaction;
     try {
-      const post = this._postModel.findOne({ where: { id: 1 } });
-      return post;
-      const result = plainToClass(PostDto, post, {
-        excludeExtraneousValues: true,
-      });
-      return result;
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-      //this.sentryService.captureException(error);
+      const { isDraft, data, setting, mentions, audience } = createPostDto;
+      const creator = await this._userService.get(authUser.userId);
+      if (!creator) {
+        throw new HttpException(`UserID ${authUser.userId} not found`, HttpStatus.BAD_REQUEST);
+      }
 
-      throw new HttpException("Can't create recent search", HttpStatus.INTERNAL_SERVER_ERROR);
+      const { groups } = audience;
+      const isMember = await this._groupService.isMemberOfGroups(groups, creator.groups);
+      if (!isMember) {
+        throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
+      }
+      const mentionUserIds = mentions.map((i) => i.userId);
+      // await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+
+      const { files, videos, images } = data;
+      const mediaIds = [];
+      mediaIds.push(...files.map((i) => i.id));
+      mediaIds.push(...videos.map((i) => i.id));
+      mediaIds.push(...images.map((i) => i.id));
+      await this._mediaService.checkValidMedia(mediaIds, authUser.userId);
+
+      transaction = await this._sequelizeConnection.transaction();
+
+      const post = await this._postModel.create({
+        isDraft,
+        content: data.content,
+        createdBy: authUser.userId,
+        updatedBy: authUser.userId,
+        isImportant: setting.isImportant,
+        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+        canShare: setting.canShare,
+        canComment: setting.canComment,
+        canReact: setting.canReact,
+      });
+
+      if (mediaIds.length) {
+        await post.addMedia(mediaIds);
+        await this._mediaService.activeMedia(mediaIds, authUser.userId);
+      }
+
+      if (mentionUserIds.length) {
+        // await this._mentionService.create(post.id, mentionUserIds, MentionableType.POST);
+      }
+
+      this._eventEmitter.emit(
+        CreatedPostEvent.event,
+        new CreatedPostEvent({
+          post,
+          actor: authUser,
+          mentions,
+          audience,
+          setting,
+        })
+      );
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      if (typeof transaction !== 'undefined') await transaction.rollback();
+      this._logger.error(error, error?.stack);
+      throw error;
     }
+  }
+
+  /**
+   * Get post by id
+   * @param id Number
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async getPost(id: number) {
+    return null;
+    //return this._postModel.findOne({ where: { id } });
   }
 
   /**
