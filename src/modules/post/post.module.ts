@@ -33,5 +33,6 @@ import { GroupModule } from 'src/shared/group';
   ],
   providers: [PostService],
   controllers: [PostController],
+  exports: [PostService],
 })
 export class PostModule {}

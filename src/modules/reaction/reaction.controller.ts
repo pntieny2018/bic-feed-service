@@ -19,7 +19,7 @@ export class ReactionController {
   @ApiOperation({ summary: 'Create reaction.' })
   @ApiOkResponse({
     description: 'Create reaction successfully',
-    type: Boolean,
+    type: ReactionDto,
   })
   @Post('/')
   public async create(

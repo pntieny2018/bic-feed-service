@@ -41,7 +41,7 @@ export class SeedCommand implements CommandRunner {
         username: 'username33',
         fullname: 'User Name 33',
         avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
-        groups: [1, 2],
+        groups: [1, 2, 9],
       },
     ];
 

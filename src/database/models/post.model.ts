@@ -19,6 +19,8 @@ import { UserDto } from 'src/modules/auth';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
+import { UserNewsFeedModel } from './user-newsfeed.model';
+import { PostGroupModel } from './post-group.model';
 
 export interface IPost {
   id: number;
@@ -78,9 +80,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public updatedBy: number;
 
   @CreatedAt
+  @Column
   public createdAt: Date;
 
   @UpdatedAt
+  @Column
   public updatedAt: Date;
 
   @HasMany(() => CommentModel)
@@ -97,6 +101,16 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     },
   })
   public mentions: MentionModel[];
+
+  @HasMany(() => UserNewsFeedModel, {
+    foreignKey: 'postId',
+  })
+  public userNewsFeeds: UserNewsFeedModel[];
+
+  @HasMany(() => PostGroupModel, {
+    foreignKey: 'postId',
+  })
+  public postGroups: PostGroupModel[];
 
   public addMedia!: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 }

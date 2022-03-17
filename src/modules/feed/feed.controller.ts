@@ -1,38 +1,27 @@
-import {
-  ApiForbiddenResponse,
-  ApiInternalServerErrorResponse,
-  ApiSecurity,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
-import { Controller, Get, Logger } from '@nestjs/common';
-import { APP_VERSION } from '../../common/constants';
-import { GenericApiOkResponse, ResponseMessages } from '../../common/decorators';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { AuthUser, InjectAuthUserToQuery, UserDto } from '../auth';
+import { GetTimelineDto } from './dto/request';
+import { FeedDto } from './dto/response';
+import { FeedService } from './feed.service';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
-@ApiUnauthorizedResponse({
-  description: 'Unauthorized',
-})
-@ApiInternalServerErrorResponse({
-  description: 'Internal Server Error',
-})
-@ApiForbiddenResponse({
-  description: 'Forbidden',
-})
-@Controller({
-  path: 'feeds',
-  version: APP_VERSION,
-})
+@Controller('feeds')
 export class FeedController {
-  protected logger = new Logger(FeedController.name);
+  public constructor(private readonly _feedService: FeedService) {}
 
-  @Get('/newsfeed')
-  @GenericApiOkResponse(String, 'Get newsfeed successfully')
-  @ResponseMessages({
-    success: 'Get newsfeed successfully',
+  @ApiOperation({ summary: 'Get timeline in a group.' })
+  @ApiOkResponse({
+    description: 'Get timeline in a group successfully.',
+    type: FeedDto,
   })
-  public getNewsFeed(): string {
-    return '10';
+  @InjectAuthUserToQuery()
+  @Get('/timeline')
+  public async getTimeline(
+    @AuthUser() userDto: UserDto,
+    @Query() getTimelineDto: GetTimelineDto
+  ): Promise<FeedDto> {
+    return this._feedService.getTimeline(userDto, getTimelineDto);
   }
 }
