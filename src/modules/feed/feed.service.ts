@@ -12,7 +12,6 @@ import { Op } from 'sequelize';
 import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
 import { FindOptions } from 'sequelize';
 import { plainToInstance } from 'class-transformer';
-import sequelize from 'sequelize';
 
 @Injectable()
 export class FeedService {
@@ -83,6 +82,9 @@ export class FeedService {
         );
       }
 
+      //FIXME: delete here
+      console.log(normalPostIds);
+
       const postIds = [...chosenImportantPostIds, ...normalPostIds];
       //FIXME: use postService.
       const posts = await Promise.all(
@@ -120,14 +122,14 @@ export class FeedService {
     const { offset, limit } = getTimelineDto;
     const now = new Date();
     const importantPosts = await this._postModel.findAll<PostModel>({
-      attributes: ['id'],
+      attributes: ['id', 'createdAt'],
       include: include,
       where: {
         importantExpiredAt: {
           [Op.gt]: now,
         },
       },
-      order: [[sequelize.col('created_at'), 'DESC']],
+      order: [['createdAt', 'DESC']],
       limit: offset + limit,
     });
     const importantPostIds = importantPosts.map((post: PostModel) => post.id);
@@ -137,10 +139,7 @@ export class FeedService {
   private static _newPaginationOpts(offset: number, limit: number, queriedNum: number): number[] {
     let newOffset: number;
     let newLimit: number;
-    if (queriedNum === offset + limit) {
-      newOffset = -1;
-      newLimit = 0;
-    } else if (queriedNum < offset) {
+    if (queriedNum < offset) {
       newOffset = offset - queriedNum;
       newLimit = limit;
     } else {
@@ -157,7 +156,7 @@ export class FeedService {
     const { offset, limit } = getTimelineDto;
     const now = new Date();
     const normalPosts = await this._postModel.findAll<PostModel>({
-      attributes: ['id'],
+      attributes: ['id', 'createdAt'],
       include: include,
       where: {
         importantExpiredAt: {
@@ -167,7 +166,7 @@ export class FeedService {
           },
         },
       },
-      order: [[sequelize.col('created_at'), 'DESC']],
+      order: [['createdAt', 'DESC']],
       limit: limit,
       offset: offset,
     });

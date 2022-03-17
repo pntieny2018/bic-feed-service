@@ -7,7 +7,7 @@ import { UserModule } from 'src/shared/user';
 import { CanReadTimelineConstraint } from './validations/decorators';
 
 @Module({
-  imports: [DatabaseModule, PostModule],
+  imports: [DatabaseModule, PostModule, UserModule],
   providers: [FeedService, CanReadTimelineConstraint],
   controllers: [FeedController],
 })
