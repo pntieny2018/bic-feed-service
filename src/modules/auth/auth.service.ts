@@ -1,5 +1,5 @@
 import { UserDto } from './dto';
-import * as jwkToPem from 'jwk-to-pem';
+import jwkToPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';

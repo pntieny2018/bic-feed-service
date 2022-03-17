@@ -1,6 +1,8 @@
 import { RedisService } from '@app/redis';
 import { Injectable } from '@nestjs/common';
-import { UserSharedDto } from './dto';
+import { UserDataShareDto, UserSharedDto } from './dto';
+import { IComment } from '../../database/models/comment.model';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UserService {
@@ -11,7 +13,32 @@ export class UserService {
   }
 
   public async getMany(userIds: number[]): Promise<UserSharedDto[]> {
-    const keys = userIds.map((userId) => `US:${userId}`);
+    const keys = [...new Set(userIds)].map((userId) => `US:${userId}`);
     return await this._store.mget(keys);
+  }
+
+  public async bindUserToComment(commentsResponse: IComment[]): Promise<void> {
+    const actorIds: number[] = [];
+
+    for (const comment of commentsResponse) {
+      actorIds.push(comment.createdBy);
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
+          actorIds.push(cm.createdBy);
+        }
+      }
+    }
+    const usersInfo = await this.getMany(actorIds);
+    const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
+      excludeExtraneousValues: true,
+    });
+    for (const comment of commentsResponse) {
+      comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
+          cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
+        }
+      }
+    }
   }
 }
