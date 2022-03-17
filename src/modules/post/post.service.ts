@@ -20,7 +20,7 @@ import { isInstance } from 'class-validator';
 import { LogicException } from 'src/common/exceptions';
 import { Transaction } from 'sequelize';
 import { CreatedPostEvent } from '../../events/post/created-post.event';
-import { PostGroupModel } from 'src/database/models/post-group.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
 
 @Injectable()
 export class PostService {
@@ -92,7 +92,8 @@ export class PostService {
       });
 
       if (mediaIds.length) {
-        await post.addMedia(mediaIds);
+        const a = await post.addMedia(mediaIds);
+        console.log('a=', a)
         await this._mediaService.activeMedia(mediaIds, authUser.userId);
       }
 

@@ -19,11 +19,12 @@ import { Transaction } from 'sequelize';
 import { UserSharedDto } from 'src/shared/user/dto';
 import { CreatePostDto } from '../dto/requests';
 import { CreatedPostEvent } from '../../../events/post/created-post.event';
-import { PostGroupModel } from 'src/database/models/post-group.model';
+import { PostGroupModel } from '../../../database/models/post-group.model';
 
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
+  let postGroupModelMock;
   let sentryService: SentryService;
   let eventEmitter: EventEmitter2;
   let userService: UserService;
@@ -90,8 +91,7 @@ describe('PostService', () => {
         {
           provide: getModelToken(PostGroupModel),
           useValue: {
-            create: jest.fn(),
-            addMedia: jest.fn(),
+            bulkCreate: jest.fn()
           },
         },
         {
@@ -105,6 +105,7 @@ describe('PostService', () => {
 
     postService = moduleRef.get<PostService>(PostService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
+    postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     sentryService = moduleRef.get<SentryService>(SentryService);
     eventEmitter = moduleRef.get<EventEmitter2>(EventEmitter2);
     userService = moduleRef.get<UserService>(UserService);
@@ -112,6 +113,7 @@ describe('PostService', () => {
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
+    
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),
       commit: jest.fn(),
@@ -128,7 +130,7 @@ describe('PostService', () => {
 
   describe('createPost', () => {
     it('Create post successfully', async () => {
-      const dataCreateMock = createMock<PostModel>(mockedPostList[0]);
+      const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
       userService.get = jest.fn().mockResolvedValue(true);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
@@ -140,19 +142,23 @@ describe('PostService', () => {
       });
       sequelize.transaction = jest.fn().mockResolvedValue(transactionMock);
       
-      postModelMock.create.mockResolvedValueOnce(dataCreateMock);
-      postModelMock.addMedia.mockResolvedValueOnce(dataCreateMock);
+      postModelMock.create.mockResolvedValueOnce(mockedDataCreatePost);
+      postModelMock.addMedia.mockResolvedValueOnce(mockedDataCreatePost);
+      postGroupModelMock.bulkCreate.mockResolvedValueOnce(true);
 
       const result = await postService.createPost(mockedUserAuth, mockedCreatePost);
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
       expect(result).toBe(true); 
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
+      expect(mediaService.activeMedia).toBeCalledTimes(1)
+      expect(mediaService.checkValidMedia).toBeCalledTimes(1)
+      //expect(mediaService.activeMedia).toBeCalledWith()
 
       expect(eventEmitter.emit).toBeCalledWith(
         CreatedPostEvent.event,
         new CreatedPostEvent({
-          post: dataCreateMock,
+          post: mockedDataCreatePost,
           actor: mockedUserAuth,
           mentions: mockedCreatePost.mentions,
           audience: mockedCreatePost.audience,
@@ -161,7 +167,9 @@ describe('PostService', () => {
       );
  
       const createPostQuery: any = postModelMock.create.mock.calls[0][0];
-      const addMediaQuery: any = postModelMock.addMedia.mock.calls[0];
+      const createPostGroupQuery: any = postGroupModelMock.bulkCreate.mock.calls[0][0];
+      //const addMediaQuery: any = postModelMock.addMedia.mock.calls[0];
+      //console.log('addMediaQuery=', addMediaQuery);
       //add Reaction
       expect(createPostQuery).toStrictEqual({
         content: mockedCreatePost.data.content,
@@ -175,10 +183,17 @@ describe('PostService', () => {
         canReact: mockedCreatePost.setting.canReact
       });
 
+      const postGroupExpected = mockedCreatePost.audience.groups.map(groupId => {
+        return {
+          postId: mockedDataCreatePost.id,
+          groupId
+        }
+      })
+      expect(createPostGroupQuery).toStrictEqual(postGroupExpected);
     });
 
     it('Should rollback if have an exception when insert data into DB', async () => {
-      const dataCreateMock = createMock<PostModel>(mockedPostList[0]);
+      const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
       userService.get = jest.fn().mockResolvedValue(true);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
