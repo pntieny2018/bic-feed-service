@@ -19,6 +19,7 @@ import { Transaction } from 'sequelize';
 import { UserSharedDto } from 'src/shared/user/dto';
 import { CreatePostDto } from '../dto/requests';
 import { CreatedPostEvent } from '../../../events/post/created-post.event';
+import { PostGroupModel } from 'src/database/models/post-group.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -81,6 +82,13 @@ describe('PostService', () => {
         },
         {
           provide: getModelToken(PostModel),
+          useValue: {
+            create: jest.fn(),
+            addMedia: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostGroupModel),
           useValue: {
             create: jest.fn(),
             addMedia: jest.fn(),
@@ -153,7 +161,7 @@ describe('PostService', () => {
       );
  
       const createPostQuery: any = postModelMock.create.mock.calls[0][0];
-      //const addMediaQuery: any = postModelMock.addMedia.mock.calls;
+      const addMediaQuery: any = postModelMock.addMedia.mock.calls[0];
       //add Reaction
       expect(createPostQuery).toStrictEqual({
         content: mockedCreatePost.data.content,

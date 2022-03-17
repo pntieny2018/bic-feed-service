@@ -20,6 +20,7 @@ import { isInstance } from 'class-validator';
 import { LogicException } from 'src/common/exceptions';
 import { Transaction } from 'sequelize';
 import { CreatedPostEvent } from '../../events/post/created-post.event';
+import { PostGroupModel } from 'src/database/models/post-group.model';
 
 @Injectable()
 export class PostService {
@@ -34,6 +35,8 @@ export class PostService {
     private _sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel,
+    @InjectModel(PostGroupModel)
+    private _postGroupModel: typeof PostGroupModel,
     private _eventEmitter: EventEmitter2,
     private _userService: UserService,
     private _groupService: GroupService,
@@ -63,7 +66,9 @@ export class PostService {
         throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
       }
       const mentionUserIds = mentions.map((i) => i.userId);
-      await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+      if (mentionUserIds.length) {
+        await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+      }
 
       const { files, videos, images } = data;
       const mediaIds = [];
@@ -89,6 +94,16 @@ export class PostService {
       if (mediaIds.length) {
         await post.addMedia(mediaIds);
         await this._mediaService.activeMedia(mediaIds, authUser.userId);
+      }
+
+      if (groups.length) {
+        const postGroupDataCreate = groups.map((groupId) => {
+          return {
+            postId: post.id,
+            groupId,
+          };
+        });
+        await this._postGroupModel.bulkCreate(postGroupDataCreate);
       }
 
       if (mentionUserIds.length) {

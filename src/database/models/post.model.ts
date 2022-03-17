@@ -1,6 +1,13 @@
 import { MentionableType } from './../../common/constants/model.constant';
 import { MentionModel } from './mention.model';
-import { DataTypes, Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
+import {
+  DataTypes,
+  Optional,
+  BelongsToManyAddAssociationsMixin,
+  HasManyAddAssociationMixin,
+  HasManySetAssociationsMixin,
+  HasManyAddAssociationsMixin,
+} from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -19,6 +26,7 @@ import { UserDto } from 'src/modules/auth';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
+import { PostGroupModel } from './post-group.model';
 
 export interface IPost {
   id: number;
@@ -35,6 +43,7 @@ export interface IPost {
   updatedAt?: Date;
   comments?: CommentModel[];
   media?: MediaModel[];
+  groups?: PostGroupModel[];
 }
 @Table({
   tableName: 'posts',
@@ -64,7 +73,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public canShare: boolean;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Length({ max: 5000 })
   @Column
   public content: string;

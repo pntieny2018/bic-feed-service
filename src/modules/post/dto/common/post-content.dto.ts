@@ -7,15 +7,17 @@ export class PostContentDto {
   @ApiProperty({
     description: 'Post content',
     type: String,
-    default: 'Content...',
+    default: null,
+    required: false,
   })
-  @IsNotEmpty()
-  public content: string;
+  @IsOptional()
+  public content: string = null;
 
   @ApiProperty({
     description: 'The list of file',
     type: FileDto,
     isArray: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -27,6 +29,7 @@ export class PostContentDto {
     description: 'The list of video',
     type: VideoDto,
     isArray: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -38,6 +41,7 @@ export class PostContentDto {
     description: 'The list of image',
     type: ImageDto,
     isArray: true,
+    required: false,
   })
   @IsOptional()
   @IsArray()

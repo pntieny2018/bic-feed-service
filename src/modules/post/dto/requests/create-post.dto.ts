@@ -26,25 +26,34 @@ export class CreatePostDto {
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
     type: PostContentDto,
+    required: false,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => PostContentDto)
-  public data: PostContentDto;
+  public data: PostContentDto = { content: null, files: [], images: [], videos: [] };
 
   @ApiProperty({
     description: 'Setting post',
     type: PostSettingDto,
+    required: false,
   })
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => PostSettingDto)
-  public setting?: PostSettingDto = { isImportant: false, importantExpiredAt: null };
+  public setting?: PostSettingDto = {
+    canShare: true,
+    canReact: true,
+    canComment: true,
+    isImportant: false,
+    importantExpiredAt: null,
+  };
 
   @ApiProperty({
     description: 'Mention',
     type: UserSharedDto,
     isArray: true,
+    required: false,
   })
   @IsOptional()
   @ValidateNested({ each: true })
