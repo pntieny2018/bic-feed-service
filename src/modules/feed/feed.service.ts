@@ -82,9 +82,6 @@ export class FeedService {
         );
       }
 
-      //FIXME: delete here
-      console.log(normalPostIds);
-
       const postIds = [...chosenImportantPostIds, ...normalPostIds];
       //FIXME: use postService.
       const posts = await Promise.all(
