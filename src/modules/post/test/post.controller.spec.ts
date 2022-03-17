@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
 import { RedisModule } from '@app/redis';
-import { mockedCreatePost } from './mocks/post-list';
+import { mockedCreatePostDto } from './mocks/post-list';
 import { mockedUserAuth } from './mocks/user-auth';
 import { HttpException } from '@nestjs/common';
 
@@ -41,9 +41,9 @@ describe('PostController', () => {
   describe('createPost', () => {
     it('Create post successfully', async () => {
       postService.createPost = jest.fn().mockResolvedValue(true);
-      const result = await postService.createPost(mockedUserAuth, mockedCreatePost);
+      const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       expect(postService.createPost).toBeCalledTimes(1);
-      expect(postService.createPost).toBeCalledWith(mockedUserAuth, mockedCreatePost);
+      expect(postService.createPost).toBeCalledWith(mockedUserAuth, mockedCreatePostDto);
       expect(result).toBe(true); 
     });
   });

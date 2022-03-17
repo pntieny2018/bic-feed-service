@@ -2,7 +2,7 @@ import { UpdatedAt } from 'sequelize-typescript';
 import { IPost, PostModel } from 'src/database/models/post.model';
 import { CreatePostDto } from '../../dto/requests';
 
-export const mockedCreatePost: CreatePostDto = {
+export const mockedCreatePostDto: CreatePostDto = {
   data: {
     content: 'aaaa',
     files: [
