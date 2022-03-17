@@ -5,7 +5,7 @@ import { CreatedPostEvent } from '../../events/post';
 @Injectable()
 export class CreatedPostListener {
   private _logger = new Logger(CreatedPostListener.name);
-  public constructor() {}
+  public constructor() {} 
 
   @OnEvent(CreatedPostEvent.event)
   public async onPostCreated(createdPostEvent: CreatedPostEvent) {

@@ -5,20 +5,11 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { MediaService } from '../media/media.service';
 import { GroupService } from '../../shared/group/group.service';
 
 import { MentionService } from '../mention';
-import { isInstance } from 'class-validator';
-import { LogicException } from 'src/common/exceptions';
-import { Transaction } from 'sequelize';
 import { CreatedPostEvent } from '../../events/post/created-post.event';
 import { PostGroupModel } from '../../database/models/post-group.model';
 
@@ -92,8 +83,7 @@ export class PostService {
       });
 
       if (mediaIds.length) {
-        const a = await post.addMedia(mediaIds);
-        console.log('a=', a)
+        await post.addMedia(mediaIds);
         await this._mediaService.activeMedia(mediaIds, authUser.userId);
       }
 
