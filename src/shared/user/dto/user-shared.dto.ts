@@ -1,27 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 
-export class UserSharedDto {
-  @ApiProperty({
-    type: Number,
-  })
-  public userId: number;
+export class UserDataShareDto {
+  @ApiProperty()
+  @Expose()
+  public id: number;
 
-  @ApiProperty({
-    type: String,
-    required: false,
-  })
+  @ApiProperty()
+  @Expose()
   public username: string;
 
-  @ApiProperty({
-    type: String,
-    required: false,
-  })
-  public fullname?: string;
+  @ApiProperty()
+  @Expose()
+  public fullname: string;
 
-  @ApiProperty({
-    type: String,
-    required: false,
-  })
-  public avatar?: string;
+  @ApiProperty()
+  @Expose()
+  public avatar: string;
+}
+
+export class UserSharedDto extends UserDataShareDto {
   public groups: number[];
 }

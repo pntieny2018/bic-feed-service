@@ -12,10 +12,12 @@ export class ResponseMeta {
 }
 
 export class ResponseDto<T> {
+  @ApiProperty()
   public code: number;
 
   public data: T;
 
+  @ApiProperty()
   public meta: ResponseMeta;
 
   public constructor(data: Partial<ResponseDto<T>>) {

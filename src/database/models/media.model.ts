@@ -27,6 +27,11 @@ export interface IMedia {
   posts: PostModel[];
   comments: CommentModel[];
   createdAt?: Date;
+  name: string;
+  originName?: string;
+  width?: number;
+  height?: number;
+  extension?: string;
 }
 @Table({
   tableName: 'media',
@@ -37,15 +42,12 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @PrimaryKey
   @AutoIncrement
   @Column
-  @ApiProperty()
   public id: number;
 
   @Column
-  @ApiProperty()
   public url: string;
 
   @Column
-  @ApiProperty()
   public type: MediaType;
 
   @Column
@@ -54,18 +56,29 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @AllowNull(false)
   @Column
-  @ApiProperty()
   public createdBy: number;
 
   @CreatedAt
-  @ApiProperty()
   public createdAt: Date;
 
   @HasMany(() => PostMediaModel)
-  @ApiProperty()
   public posts: PostModel[];
 
   @BelongsToMany(() => CommentModel, () => CommentMediaModel)
-  @ApiProperty()
   public comments: CommentModel[];
+
+  @Column
+  public name: string;
+
+  @Column
+  public originName?: string;
+
+  @Column
+  public width?: number;
+
+  @Column
+  public height?: number;
+
+  @Column
+  public extension?: string;
 }

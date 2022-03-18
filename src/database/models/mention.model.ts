@@ -1,18 +1,10 @@
 import { PostModel } from './post.model';
 import { CommentModel } from './comment.model';
 import { MentionableType } from '../../common/constants';
-import {
-  AutoIncrement,
-  BelongsTo,
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { AutoIncrement, BelongsTo, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 export interface IMention {
-  id: number;
+  id?: number;
   mentionableType: MentionableType;
   entityId: number;
   userId: number;
@@ -21,6 +13,8 @@ export interface IMention {
 }
 @Table({
   tableName: 'mentions',
+  createdAt: false,
+  updatedAt: false,
 })
 export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implements IMention {
   @PrimaryKey
@@ -28,7 +22,7 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   @Column
   public id: number;
 
-  @Column
+  @Column({})
   public mentionableType: MentionableType;
 
   @Column
