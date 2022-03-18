@@ -9,6 +9,7 @@ import { MENTION_ERROR_ID } from './errors/mention.error';
 import { MentionHelper } from '../../common/helpers/mention.helper';
 import { IMention, MentionModel } from '../../database/models/mention.model';
 import { plainToInstance } from 'class-transformer';
+import { PostResponseDto } from '../feed/dto/response/post.dto';
 
 @Injectable()
 export class MentionService {
@@ -74,21 +75,21 @@ export class MentionService {
     });
   }
 
-  // public async bindMentionsToPosts(posts: PostResponseDto[]): Promise<void> {
-  //   const userIds: number[] = [];
-  //   posts.forEach((post) => {
-  //     post.mentions.forEach((mention) => {
-  //       userIds.push(mention.userId);
-  //     });
-  //   });
+  public async bindMentionsToPosts(posts: PostResponseDto[]): Promise<void> {
+    const userIds: number[] = [];
+    posts.forEach((post) => {
+      post.mentions.forEach((mention) => {
+        userIds.push(mention.id);
+      });
+    });
 
-  //   const userShareDtos = await this.resolveMentions(userIds);
-  //   posts.forEach((post) => {
-  //     post.mentions.forEach((mention) => {
-  //       mention = userShareDtos.find((u) => u.userId === mention.userId);
-  //     });
-  //   });
-  // }
+    const userShareDtos = await this.resolveMentions(userIds);
+    posts.forEach((post) => {
+      post.mentions.forEach((mention) => {
+        mention = userShareDtos.find((u) => u.id === mention.id);
+      });
+    });
+  }
   /**
    * Bind mention to comment
    * @param commentsResponse any[]

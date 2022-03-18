@@ -23,13 +23,13 @@ export class UserService {
     return groupIds.some((groupId) => myGroupIds.includes(groupId));
   }
 
-  // public async bindUserToPosts(posts: PostResponseDto[]): Promise<void> {
-  //   const userIds = posts.map((post) => post.actor.userId);
-  //   const userSharedDtos = await this.getMany(userIds);
-  //   posts.forEach((post) => {
-  //     post.actor = userSharedDtos.find((u) => u.userId === post.actor.userId);
-  //   });
-  // }
+  public async bindUserToPosts(posts: PostResponseDto[]): Promise<void> {
+    const userIds = posts.map((post) => post.actor.id);
+    const userSharedDtos = await this.getMany(userIds);
+    posts.forEach((post) => {
+      post.actor = userSharedDtos.find((u) => u.id === post.actor.id);
+    });
+  }
 
   public async bindUserToComment(commentsResponse: IComment[]): Promise<void> {
     const actorIds: number[] = [];

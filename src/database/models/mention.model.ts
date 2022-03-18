@@ -13,8 +13,7 @@ export interface IMention {
 }
 @Table({
   tableName: 'mentions',
-  createdAt: false,
-  updatedAt: false,
+  timestamps: false,
 })
 export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implements IMention {
   @PrimaryKey
