@@ -3,11 +3,12 @@
 module.exports = {
   async up (queryInterface, Sequelize) {
     const data = [];
-    for (let i = 0; i < 100; ++i) {
+    const userIds = [5, 3, 7, 10];
+    for (let i = 1; i <= 10; ++i) {
       data.push({
-        post_id: i + 1,
-        created_by: i,
-        updated_by: i,
+        post_id: Math.random() * 5 + 1,
+        created_by: userIds[Math.floor(Math.random() * userIds.length)],
+        updated_by: userIds[Math.floor(Math.random() * userIds.length)],
         content: `Random content ${i}...`,
       });
     }

@@ -1,55 +1,74 @@
+import { RedisModule } from '../../../../libs/redis/src';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
+import { DatabaseModule } from 'src/database';
 import { PostModel } from 'src/database/models/post.model';
-import { UserService } from 'src/shared/user';
+import { UserModule, UserService } from 'src/shared/user';
 import { FeedService } from '../feed.service';
+import { mockGetTimeLineDto, mockUserDto } from './mocks/input.mock';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { IRedisConfig } from 'src/config/redis';
+import { configs } from 'src/config/configuration';
+import { instanceToPlain, plainToClass, plainToInstance } from 'class-transformer';
+import { mockGetTimelineOutput } from './mocks/output.mock';
+import { FeedPostDto } from '../dto/response';
 
 describe('FeedService', () => {
   let feedService: FeedService;
-  let postModel: typeof PostModel;
-  let userService: UserService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FeedService,
-        {
-          provide: getModelToken(PostModel),
-          useValue: {
-            findAll: jest.fn(),
-            findOne: jest.fn(),
-            create: jest.fn(),
-            update: jest.fn(),
-            destroy: jest.fn(),
+      imports: [
+        DatabaseModule,
+        ConfigModule.forRoot({
+          isGlobal: true,
+          cache: true,
+          load: [configs],
+        }),
+        RedisModule.registerAsync({
+          useFactory: async (configService: ConfigService) => {
+            const redisConfig = configService.get<IRedisConfig>('redis');
+            const sslConfig = redisConfig.ssl
+              ? {
+                  tls: {
+                    host: redisConfig.host,
+                    port: redisConfig.port,
+                    password: redisConfig.password,
+                  },
+                }
+              : {};
+            return {
+              redisOptions: {
+                db: redisConfig.db,
+                host: redisConfig.host,
+                port: redisConfig.port,
+                password: redisConfig.password,
+                ...sslConfig,
+              },
+            };
           },
-        },
-        {
-          provide: UserService,
-          useValue: {
-            getMany: jest.fn(),
-          },
-        },
+          inject: [ConfigService],
+        }),
+        UserModule,
       ],
+      providers: [FeedService],
     }).compile();
 
     feedService = module.get<FeedService>(FeedService);
-    userService = module.get<UserService>(UserService);
-    postModel = module.get<typeof PostModel>(getModelToken(PostModel));
   });
 
   it('should be defined', () => {
     expect(feedService).toBeDefined();
-    expect(userService).toBeDefined();
-    expect(postModel).toBeDefined();
   });
 
   describe('User get timeline', () => {
-    describe('User get timeline of a group that user is not a member of', () => {
-      it('Should failed', async () => {});
-    });
-
     describe('Get timeline success with order important-post-first and created-at second', () => {
-      it('Should get successfully with predefined timeline', async () => {});
+      it('Should get successfully with predefined timeline', async () => {
+        const result = await feedService.getTimeline(mockUserDto, mockGetTimeLineDto);
+        const rawResult = instanceToPlain(result);
+        // console.log(result.data[0].createdAt.toString());
+        expect(rawResult).toEqual(mockGetTimelineOutput);
+      });
     });
   });
 });

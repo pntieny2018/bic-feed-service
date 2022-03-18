@@ -119,7 +119,6 @@ export class FeedService {
       const posts = await this._convertToFeedPostDto(rows);
 
       return new PageDto(posts, {
-        total: count,
         offset: offset + limit,
         limit: FEED_PAGING_DEFAULT_LIMIT,
       });
