@@ -4,19 +4,17 @@ import { PostGroupModel } from 'src/database/models/post-group.model';
 import { IPost, PostModel } from 'src/database/models/post.model';
 import { UserNewsFeedModel } from 'src/database/models/user-newsfeed.model';
 import { UserDto } from '../auth';
-import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
 import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
 import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
-import { IMedia, MediaModel } from 'src/database/models/media.model';
+import { MediaModel } from 'src/database/models/media.model';
 import { MentionModel } from 'src/database/models/mention.model';
 import sequelize from 'sequelize';
-import { FileDto, ImageDto, MediaDto, VideoDto } from '../post/dto/common/media.dto';
-import { classToPlain, instanceToPlain, plainToInstance } from 'class-transformer';
+import { MediaDto } from '../post/dto/common/media.dto';
+import { plainToInstance } from 'class-transformer';
 import { UserService } from 'src/shared/user';
-import { MentionService } from '../mention';
-import { UserDataShareDto, UserSharedDto } from 'src/shared/user/dto';
+import { UserDataShareDto } from 'src/shared/user/dto';
 import { PageDto } from 'src/common/dto/pagination/page.dto';
 import { FeedPostDto } from './dto/response';
 import { IPostReaction, PostReactionModel } from 'src/database/models/post-reaction.model';
@@ -115,10 +113,10 @@ export class FeedService {
         ],
       });
 
-      const posts = await this._convertToPostResponseDto(rows);
-
-      this._logger.log(rows);
-      this._logger.log(count);
+      if (rows.length === 0) {
+        throw new Error('No more posts.');
+      }
+      const posts = await this._convertToFeedPostDto(rows);
 
       return new PageDto(posts, {
         total: count,
@@ -127,6 +125,9 @@ export class FeedService {
       });
     } catch (e) {
       this._logger.error(e, e?.stack);
+      if (e?.message === 'No more posts.') {
+        throw new HttpException(e.message, HttpStatus.NOT_FOUND);
+      }
       throw new HttpException('Can not get timeline.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -160,7 +161,7 @@ export class FeedService {
     return constraints;
   }
 
-  private async _convertToPostResponseDto(rows: IPost[]): Promise<FeedPostDto[]> {
+  private async _convertToFeedPostDto(rows: PostModel[]): Promise<FeedPostDto[]> {
     const userIds = FeedService._getUserIds(rows);
     const usersSharedDto = (await this._userService.getMany(userIds)).filter(Boolean);
     const usersDataSharedDto = plainToInstance(UserDataShareDto, usersSharedDto, {
