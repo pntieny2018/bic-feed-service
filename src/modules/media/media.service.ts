@@ -1,17 +1,11 @@
-import { IMedia } from './../../database/models/media.model';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
-import { MediaModel } from '../../database/models/media.model';
-import { Sequelize } from 'sequelize-typescript';
 import { UserDto } from '../auth';
-import { MediaDto } from '../post/dto/common/media.dto';
 import { FindOptions } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { IMedia } from '../../database/models/media.model';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { MediaModel, MediaType } from '../../database/models/media.model';
 
 @Injectable()
 export class MediaService {
@@ -25,13 +19,14 @@ export class MediaService {
    * Create media
    * @param user UserDto
    * @param url String
+   * @param mediaType MediaType
    */
-  public async create(user: UserDto, url: string): Promise<any> {
+  public async create(user: UserDto, url: string, mediaType: MediaType): Promise<any> {
     try {
       return await this._mediaModel.create({
         createdBy: user.userId,
         url: url,
-        type: 'image',
+        type: mediaType,
       });
     } catch (ex) {
       throw new InternalServerErrorException("Can't create media");

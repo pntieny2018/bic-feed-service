@@ -20,7 +20,16 @@ export class GroupService {
    * @param groupIds Number[]
    * @param myGroupIds Number[]
    */
-  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
+  public isMemberOfSomeGroups(groupIds: number[], myGroupIds: number[]): boolean {
     return groupIds.some((groupId) => myGroupIds.includes(groupId));
+  }
+
+  /**
+   * Check user must join all group audience
+   * @param groupIds Number[]
+   * @param myGroupIds Number[]
+   */
+  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
+    return groupIds.every((groupId) => myGroupIds.includes(groupId));
   }
 }
