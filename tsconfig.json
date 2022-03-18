@@ -8,6 +8,7 @@
     "allowSyntheticDefaultImports": true,
     "target": "es2017",
     "sourceMap": true,
+    "allowJs": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
@@ -17,6 +18,8 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
     "paths": {
       "@app/redis": [
         "libs/redis/src"
@@ -30,6 +33,7 @@
       "@app/sentry/*": [
         "libs/sentry/src/*"
       ]
-    }
-  }
+    },
+  },
+  "include": ["src","sequelize","libs","test"]
 }

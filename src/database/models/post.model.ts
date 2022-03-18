@@ -1,6 +1,13 @@
 import { MentionableType } from './../../common/constants/model.constant';
 import { MentionModel } from './mention.model';
-import { DataTypes, Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
+import {
+  DataTypes,
+  Optional,
+  BelongsToManyAddAssociationsMixin,
+  HasManyAddAssociationMixin,
+  HasManySetAssociationsMixin,
+  HasManyAddAssociationsMixin,
+} from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -41,8 +48,9 @@ export interface IPost {
   canComment: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  comments: CommentModel[];
+  comments?: CommentModel[];
   media?: MediaModel[];
+  groups?: PostGroupModel[];
 }
 @Table({
   tableName: 'posts',
@@ -72,7 +80,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public canShare: boolean;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Length({ max: 5000 })
   @Column
   public content: string;
@@ -94,7 +102,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public updatedAt: Date;
 
   @HasMany(() => CommentModel)
-  public comments: CommentModel[];
+  public comments?: CommentModel[];
 
   @BelongsToMany(() => MediaModel, () => PostMediaModel)
   public media?: MediaModel[];
@@ -106,7 +114,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       [StringHelper.camelToSnakeCase('mentionableType')]: MentionableType.POST,
     },
   })
-  public mentions: MentionModel[];
+  public mentions?: MentionModel[];
 
   @HasMany(() => UserNewsFeedModel, {
     foreignKey: 'postId',

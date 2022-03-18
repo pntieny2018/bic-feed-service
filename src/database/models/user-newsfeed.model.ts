@@ -7,7 +7,6 @@ export interface IUserNewsFeed {
 }
 @Table({
   tableName: 'user_newsfeed',
-  timestamps: false,
 })
 export class UserNewsFeedModel extends Model implements IUserNewsFeed {
   @PrimaryKey

@@ -15,6 +15,7 @@ import { RecentSearchModule } from '../modules/recent-search';
 import { ReactionModule } from 'src/modules/reaction';
 
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ListenerModule } from 'src/listeners';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -31,6 +32,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     MentionModule,
     ReactionModule,
     RecentSearchModule,
+    ListenerModule,
     EventEmitterModule.forRoot({
       verboseMemoryLeak: true,
     }),

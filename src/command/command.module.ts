@@ -4,6 +4,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configs } from '../config/configuration';
 import { RedisModule } from '../../libs/redis/src/redis.module';
 import { IRedisConfig } from '../config/redis';
+import { DatabaseModule } from '../database';
+import { SequelizeTinkerCommand } from './sequelize-tinker.command';
+import { CommentModule } from '../modules/comment';
+import { FeedModule } from '../modules/feed';
+import { PostModule } from '../modules/post';
+import { UploadModule } from '../modules/upload';
+import { MediaModule } from '../modules/media/media.module';
+import { UserModule } from '../shared/user';
+import { GroupModule } from '../shared/group';
+import { MentionModule } from '../modules/mention';
 
 @Module({
   imports: [
@@ -36,7 +46,14 @@ import { IRedisConfig } from '../config/redis';
       },
       inject: [ConfigService],
     }),
+    DatabaseModule,
+    CommentModule,
+    PostModule,
+    MediaModule,
+    UserModule,
+    GroupModule,
+    MentionModule,
   ],
-  providers: [SeedCommand],
+  providers: [SeedCommand, SequelizeTinkerCommand],
 })
 export class CommandModule {}
