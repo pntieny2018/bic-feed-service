@@ -10,8 +10,15 @@ import { FeedDto } from './dto/response';
 import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
 import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
-import { FindOptions } from 'sequelize';
-import { plainToInstance } from 'class-transformer';
+import { MediaModel } from 'src/database/models/media.model';
+import { MentionModel } from 'src/database/models/mention.model';
+import sequelize from 'sequelize';
+import { PostResponseDto } from '../post/dto/responses';
+import { MediaDto } from '../post/dto/common/media.dto';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { UserService } from 'src/shared/user';
+import { MentionService } from '../mention';
+import { UserSharedDto } from 'src/shared/user/dto';
 
 @Injectable()
 export class FeedService {
@@ -19,6 +26,8 @@ export class FeedService {
 
   public constructor(
     private readonly _postService: PostService,
+    private readonly _userService: UserService,
+    private readonly _mentionService: MentionService,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
 
@@ -38,14 +47,26 @@ export class FeedService {
     userId: number,
     getTimelineDto: GetTimelineDto
   ): Promise<FeedDto> {
-    const { offset, limit, groupId } = getTimelineDto;
+    const { limit, offset, groupId } = getTimelineDto;
+    const constraints = FeedService._getIdConstrains(getTimelineDto);
 
     try {
-      const findOptsInclude: FindOptions = {
+      const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+        where: {
+          ...constraints,
+        },
+        attributes: {
+          include: [
+            PostModel.loadReactionsCount(),
+            PostModel.loadCommentsCount(),
+            PostModel.importantPostsFirstCondition(),
+          ],
+        },
         include: [
           {
             model: PostGroupModel,
-            attributes: [],
+            attributes: ['groupId', 'postId'],
+            as: 'belongToGroup',
             where: {
               groupId: groupId,
             },
@@ -53,121 +74,138 @@ export class FeedService {
           },
           {
             model: UserNewsFeedModel,
-            attributes: [],
+            attributes: ['userId', 'postId'],
             where: {
               userId: userId,
             },
             required: true,
           },
-        ],
-      };
-
-      const importantPostIds = await this._getImportantPostIds(getTimelineDto, findOptsInclude);
-      const chosenImportantPostIds = importantPostIds.slice(offset, offset + limit);
-
-      const [normalPostsOffset, normalPostsLimit] = FeedService._newPaginationOpts(
-        offset,
-        limit,
-        importantPostIds.length
-      );
-      let normalPostIds: number[] = [];
-      if (normalPostsLimit > 0) {
-        normalPostIds = await this._getNormalPostIds(
           {
-            offset: normalPostsOffset,
-            limit: normalPostsLimit,
-            groupId: groupId,
+            model: PostGroupModel,
+            as: 'audienceGroup',
+            attributes: ['groupId', 'postId'],
+            required: true,
           },
-          findOptsInclude
-        );
-      }
-
-      const postIds = [...chosenImportantPostIds, ...normalPostIds];
-      //FIXME: use postService.
-      const posts = await Promise.all(
-        // postIds.map((postId: number) => this._postService.getPost(postId))
-
-        // simulate _postService.getPost
-        postIds.map((postId: number) =>
-          this._postModel.findOne<PostModel>({
-            where: {
-              id: postId,
+          {
+            model: MediaModel,
+            through: {
+              attributes: [],
             },
-          })
-        )
-      );
+            required: false,
+          },
+          {
+            model: MentionModel,
+            required: false,
+          },
+        ],
+        offset: offset,
+        limit: limit,
+        order: [
+          [sequelize.col('importantFirst'), 'ASC'],
+          ['createdAt', 'DESC'],
+        ],
+      });
 
-      const rawFeedDto = {
-        next: {
-          offset: offset + limit,
-          limit: FEED_PAGING_DEFAULT_LIMIT,
-        },
+      const posts = FeedService._convertToPostResponseDto(rows);
+      this._mentionService.bindMentionsToPosts(posts);
+      this._userService.bindUserToPosts(posts);
+
+      this._logger.log(rows);
+      this._logger.log(count);
+
+      return {
+        next: { offset: offset + limit, limit: FEED_PAGING_DEFAULT_LIMIT },
         results: posts,
       };
-      const feedDto = plainToInstance(FeedDto, rawFeedDto);
-      return feedDto;
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not get timeline.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  private async _getImportantPostIds(
-    getTimelineDto: GetTimelineDto,
-    { include }: FindOptions
-  ): Promise<number[]> {
-    const { offset, limit } = getTimelineDto;
-    const now = new Date();
-    const importantPosts = await this._postModel.findAll<PostModel>({
-      attributes: ['id', 'createdAt'],
-      include: include,
-      where: {
-        importantExpiredAt: {
-          [Op.gt]: now,
-        },
-      },
-      order: [['createdAt', 'DESC']],
-      limit: offset + limit,
-    });
-    const importantPostIds = importantPosts.map((post: PostModel) => post.id);
-    return importantPostIds;
-  }
-
-  private static _newPaginationOpts(offset: number, limit: number, queriedNum: number): number[] {
-    let newOffset: number;
-    let newLimit: number;
-    if (queriedNum < offset) {
-      newOffset = offset - queriedNum;
-      newLimit = limit;
-    } else {
-      newOffset = 0;
-      newLimit = limit - (queriedNum - offset);
+  private static _getIdConstrains(getTimelineDto: GetTimelineDto): object {
+    const constraints = {};
+    if (getTimelineDto.idGT) {
+      constraints['id'] = {
+        [Op.gt]: getTimelineDto.idGT,
+        ...constraints['id'],
+      };
     }
-    return [newOffset, newLimit];
+    if (getTimelineDto.idGTE) {
+      constraints['id'] = {
+        [Op.gte]: getTimelineDto.idGTE,
+        ...constraints['id'],
+      };
+    }
+    if (getTimelineDto.idLT) {
+      constraints['id'] = {
+        [Op.lt]: getTimelineDto.idLT,
+        ...constraints['id'],
+      };
+    }
+    if (getTimelineDto.idLTE) {
+      constraints['id'] = {
+        [Op.lte]: getTimelineDto.idLTE,
+        ...constraints['id'],
+      };
+    }
+    return constraints;
   }
 
-  private async _getNormalPostIds(
-    getTimelineDto: GetTimelineDto,
-    { include }: FindOptions
-  ): Promise<number[]> {
-    const { offset, limit } = getTimelineDto;
-    const now = new Date();
-    const normalPosts = await this._postModel.findAll<PostModel>({
-      attributes: ['id', 'createdAt'],
-      include: include,
-      where: {
-        importantExpiredAt: {
-          [Op.or]: {
-            [Op.lte]: now,
-            [Op.is]: null,
-          },
-        },
-      },
-      order: [['createdAt', 'DESC']],
-      limit: limit,
-      offset: offset,
+  private static _convertToPostResponseDto(rows: PostModel[]): PostResponseDto[] {
+    const parseReaction = function (value: string): Record<string, Record<string, number>> {
+      if (value && value !== '1=') {
+        const rawReactionsCount: string = (value as string).substring(1);
+        const [s1, s2] = rawReactionsCount.split('=');
+        const reactionsName = s1.split(',');
+        const total = s2.split(',');
+        const reactionsCount = {};
+        reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
+        return reactionsCount;
+      }
+      return null;
+    };
+
+    return rows.map((row: PostModel) => {
+      const post = new PostResponseDto();
+      post.id = row.id;
+
+      const mediaTypes = {
+        files: [],
+        videos: [],
+        images: [],
+      };
+      row.media.forEach((media: MediaModel) => {
+        const mediaDto = plainToInstance(MediaDto, instanceToPlain(media), {
+          excludeExtraneousValues: true,
+        });
+        mediaTypes[media.type].push(mediaDto);
+      });
+      post.data = {
+        content: row.content,
+        ...mediaTypes,
+      };
+
+      post.setting = {
+        canReact: row.canReact,
+        canShare: row.canShare,
+        canComment: row.canComment,
+        isImportant: row.isImportant,
+        importantExpiredAt: row.importantExpiredAt,
+      };
+
+      post.isDraft = row.isDraft;
+      post.commentCount = parseInt(row['commentsCount'] ?? 0);
+      post.reactionsCount = parseReaction(row['reactionsCount']);
+
+      post.actor.userId = row.createdBy;
+      post.mentions = [];
+      row.mentions.forEach((mention, index) => {
+        post.mentions.push(new UserSharedDto());
+        post.mentions[index].userId = mention.userId;
+      });
+
+      return post;
     });
-    const normalPostIds = normalPosts.map((post: PostModel) => post.id);
-    return normalPostIds;
   }
 }

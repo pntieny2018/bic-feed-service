@@ -1,3 +1,3 @@
-import { PagingDto } from 'src/common/dto';
+import { PageOptionsDto } from 'src/common/dto';
 
-export class GetNewsFeedDto extends PagingDto {}
+export class GetNewsFeedDto extends PageOptionsDto {}

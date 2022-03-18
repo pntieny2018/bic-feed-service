@@ -21,6 +21,7 @@ export interface IMention {
 }
 @Table({
   tableName: 'mentions',
+  timestamps: false, //TODO: need it?
 })
 export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implements IMention {
   @PrimaryKey
@@ -28,7 +29,7 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   @Column
   public id: number;
 
-  @Column
+  @Column({})
   public mentionableType: MentionableType;
 
   @Column
@@ -37,7 +38,6 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   @Column
   public userId: number;
 
-  // FIXME: error when start server.
   // @BelongsTo(() => PostModel, 'entityId')
   // public post?: PostModel;
 

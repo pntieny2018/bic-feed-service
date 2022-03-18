@@ -1,10 +1,10 @@
-import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
+import { UserSharedDto } from 'src/shared/user/dto/user-shared.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { IsArray } from 'class-validator';
-import { PostContentDto } from '../common/post-content.dto';
-import { PostSettingDto } from '../common/post-setting.dto';
-import { ReactionCountDto } from '../common/reaction-count.dto';
+import { PostContentDto } from 'src/modules/post/dto/common/post-content.dto';
+import { PostSettingDto } from 'src/modules/post/dto/common/post-setting.dto';
+import { ReactionCountDto } from 'src/modules/post/dto/common/reaction-count.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -61,6 +61,7 @@ export class PostResponseDto {
     description: 'Array of reaction count',
     type: Boolean,
   })
+  @Expose()
   @Expose()
   @IsArray()
   public reactionsCount: Record<string, Record<string, number>>;

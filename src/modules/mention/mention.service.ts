@@ -6,13 +6,12 @@ import { MENTION_ERROR_ID } from './errors/mention.error';
 import { MentionHelper } from '../../common/helpers/mention.helper';
 import { GroupService } from '../../shared/group';
 import { MentionableType } from 'src/common/constants';
+import { plainToInstance } from 'class-transformer';
+import { PostResponseDto } from '../feed/dto/response/post.dto';
 
 @Injectable()
 export class MentionService {
-  public constructor(
-    private _userService: UserService,
-    private _groupService: GroupService
-  ) {}
+  public constructor(private _userService: UserService, private _groupService: GroupService) {}
 
   /**
    * Check Valid Mentions
@@ -46,5 +45,35 @@ export class MentionService {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
       }
     }
+  }
+
+  /**
+   * Resolve mentions by id
+   * @param userIds number[]
+   * @returns Promise resolve UserDataShareDto[]
+   */
+  public async resolveMentions(userIds: number[]): Promise<UserSharedDto[]> {
+    if (!userIds.length) return [];
+    const users = await this._userService.getMany(userIds);
+
+    return plainToInstance(UserSharedDto, users, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  public async bindMentionsToPosts(posts: PostResponseDto[]): Promise<void> {
+    const userIds: number[] = [];
+    posts.forEach((post) => {
+      post.mentions.forEach((mention) => {
+        userIds.push(mention.userId);
+      });
+    });
+
+    const userShareDtos = await this.resolveMentions(userIds);
+    posts.forEach((post) => {
+      post.mentions.forEach((mention) => {
+        mention = userShareDtos.find((u) => u.userId === mention.userId);
+      });
+    });
   }
 }

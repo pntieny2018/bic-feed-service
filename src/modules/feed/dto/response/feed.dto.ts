@@ -1,14 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsNotEmptyObject } from 'class-validator';
+import { IsArray, IsNotEmptyObject } from 'class-validator';
+import { PostResponseDto } from './post.dto';
 
 export class FeedDto {
   @ApiProperty({ name: 'next' })
-  @Expose({ name: 'next' })
   @IsNotEmptyObject()
+  @Expose()
   public next: { offset: number; limit: number };
 
   @ApiProperty({ name: 'results' })
-  @Expose({ name: 'results' })
-  public results: any[];
+  @IsArray()
+  @Expose()
+  public results: any[]; //PostResponseDto[];
 }
