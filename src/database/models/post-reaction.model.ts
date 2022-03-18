@@ -13,9 +13,9 @@ import { PostModel } from './post.model';
 
 export interface IPostReaction {
   id: number;
-  postId: number;
+  postId?: number;
   reactionName: string;
-  createdBy: number;
+  createdBy?: number;
   createdAt?: Date;
 }
 @Table({

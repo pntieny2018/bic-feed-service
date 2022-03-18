@@ -4,8 +4,8 @@ module.exports = {
     const data = [];
     for (let i = 0; i <= 100; i++) {
       data.push({
-        created_by: 1,
-        updated_by: 1,
+        created_by: i,
+        updated_by: i,
         content: `content ${i} ...`,
       });
     }

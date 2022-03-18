@@ -1,1 +1,1 @@
-export * from 'src/modules/post/dto/responses';
+export * from './feed-post.dto';

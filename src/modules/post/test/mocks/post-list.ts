@@ -22,9 +22,11 @@ export const mockedCreatePostDto: CreatePostDto = {
   },
   mentions: [
     {
-      userId: 1,
+      id: 1,
       username: 'abcd',
       groups: [1],
+      fullname: 'lvq',
+      avatar: 'https://',
     },
   ],
   audience: {

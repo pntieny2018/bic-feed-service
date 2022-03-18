@@ -6,7 +6,7 @@ import { FeedRanking } from '../../feed.enum';
 import { CanReadTimeline } from '../../validations/decorators';
 
 export class GetTimelineDto extends PageOptionsDto {
-  @ApiProperty({ example: 9 })
+  @ApiProperty({ name: 'groupId', example: 9 })
   @CanReadTimeline()
   @Type(() => Number)
   @IsInt()

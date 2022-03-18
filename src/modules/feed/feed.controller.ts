@@ -3,7 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagg
 import { PageDto } from 'src/common/dto/pagination/page.dto';
 import { AuthUser, InjectAuthUserToQuery, UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
-import { PostResponseDto } from './dto/response';
+import { FeedPostDto } from './dto/response';
 import { FeedService } from './feed.service';
 
 @ApiTags('Feeds')
@@ -22,7 +22,7 @@ export class FeedController {
   public async getTimeline(
     @AuthUser() userDto: UserDto,
     @Query() getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<FeedPostDto>> {
     return this._feedService.getTimeline(userDto, getTimelineDto);
   }
 }

@@ -9,32 +9,31 @@ import { GetTimelineDto } from './dto/request';
 import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
 import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
-import { MediaModel } from 'src/database/models/media.model';
+import { IMedia, MediaModel } from 'src/database/models/media.model';
 import { MentionModel } from 'src/database/models/mention.model';
 import sequelize from 'sequelize';
-import { PostResponseDto } from '../post/dto/responses';
-import { MediaDto } from '../post/dto/common/media.dto';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { FileDto, ImageDto, MediaDto, VideoDto } from '../post/dto/common/media.dto';
+import { classToPlain, instanceToPlain, plainToInstance } from 'class-transformer';
 import { UserService } from 'src/shared/user';
 import { MentionService } from '../mention';
 import { UserDataShareDto, UserSharedDto } from 'src/shared/user/dto';
 import { PageDto } from 'src/common/dto/pagination/page.dto';
+import { FeedPostDto } from './dto/response';
+import { IPostReaction, PostReactionModel } from 'src/database/models/post-reaction.model';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
 
   public constructor(
-    private readonly _postService: PostService,
     private readonly _userService: UserService,
-    private readonly _mentionService: MentionService,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
 
   public getTimeline(
     userDto: UserDto,
     getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<FeedPostDto>> {
     const { userId } = userDto;
     getTimelineDto.limit = Math.min(getTimelineDto.limit, FEED_PAGING_DEFAULT_LIMIT);
 
@@ -49,7 +48,7 @@ export class FeedService {
   private async _getImportantRankingTimeline(
     userId: number,
     getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<FeedPostDto>> {
     const { limit, offset, groupId } = getTimelineDto;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
 
@@ -100,6 +99,13 @@ export class FeedService {
             model: MentionModel,
             required: false,
           },
+          {
+            model: PostReactionModel,
+            where: {
+              createdBy: userId,
+            },
+            required: false,
+          },
         ],
         offset: offset,
         limit: limit,
@@ -114,7 +120,7 @@ export class FeedService {
       this._logger.log(rows);
       this._logger.log(count);
 
-      return new PageDto<PostResponseDto>(posts, {
+      return new PageDto(posts, {
         total: count,
         offset: offset + limit,
         limit: FEED_PAGING_DEFAULT_LIMIT,
@@ -154,32 +160,51 @@ export class FeedService {
     return constraints;
   }
 
-  private async _convertToPostResponseDto(rows: IPost[]): Promise<PostResponseDto[]> {
+  private async _convertToPostResponseDto(rows: IPost[]): Promise<FeedPostDto[]> {
     const userIds = FeedService._getUserIds(rows);
-    const usersSharedDto = await this._userService.getMany(userIds);
+    const usersSharedDto = (await this._userService.getMany(userIds)).filter(Boolean);
     const usersDataSharedDto = plainToInstance(UserDataShareDto, usersSharedDto, {
       excludeExtraneousValues: true,
     });
 
     return rows.map((row: PostModel) => {
-      const post = new PostResponseDto();
-      post.id = row.id;
+      row = row.toJSON();
+      const post = new FeedPostDto();
 
-      const mediaTypes = {
-        files: [],
-        videos: [],
-        images: [],
-      };
-      row.media.forEach((media: MediaModel) => {
-        const mediaDto = plainToInstance(MediaDto, instanceToPlain(media), {
-          excludeExtraneousValues: true,
-        });
-        mediaTypes[media.type].push(mediaDto);
-      });
+      post.id = row.id;
+      post.isDraft = row.isDraft;
+
+      post.actor = usersDataSharedDto.find((u) => u.id === row.createdBy);
+      post.createdAt = row.createdAt;
+
+      const mediaTypes = MediaDto.filterMediaType(row.media);
       post.data = {
         content: row.content,
         ...mediaTypes,
       };
+
+      post.audience = {
+        groups: (row['audienceGroup'] ?? []).reduce((groupIds: number[], e: PostGroupModel) => {
+          groupIds.push(e.groupId);
+          return groupIds;
+        }, []),
+      };
+
+      post.reactionsCount = PostModel.parseAggregatedReaction(row['reactionsCount']);
+      post.ownerReactions = row.postReactions.map((e: PostReactionModel): IPostReaction => {
+        return {
+          id: e.id,
+          reactionName: e.reactionName,
+          createdAt: e.createdAt,
+        };
+      });
+
+      post.commentCount = parseInt(row['commentsCount'] ?? 0);
+
+      post.mentions = row.mentions.map((mention) => {
+        const mentionedUser = usersDataSharedDto.find((u) => u.id === mention.userId);
+        return mentionedUser;
+      });
 
       post.setting = {
         canReact: row.canReact,
@@ -188,17 +213,6 @@ export class FeedService {
         isImportant: row.isImportant,
         importantExpiredAt: row.importantExpiredAt,
       };
-
-      post.isDraft = row.isDraft;
-      post.commentCount = parseInt(row['commentsCount'] ?? 0);
-      post.reactionsCount = PostModel.parseAggregatedReaction(row['reactionsCount']);
-      post.actor = usersDataSharedDto.find((u) => u.id === row.createdBy);
-
-      post.mentions = [];
-      row.mentions.forEach((mention) => {
-        const mentionedUser = usersDataSharedDto.find((u) => u.id === mention.userId);
-        post.mentions.push(mentionedUser);
-      });
 
       return post;
     });
