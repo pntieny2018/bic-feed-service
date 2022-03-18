@@ -7,6 +7,7 @@ import {
   HasManyAddAssociationMixin,
   HasManySetAssociationsMixin,
   HasManyAddAssociationsMixin,
+  BelongsToManySetAssociationsMixin,
 } from 'sequelize';
 import {
   AllowNull,
@@ -108,4 +109,5 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public mentions?: MentionModel[];
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+  public setMedia?: BelongsToManySetAssociationsMixin<MediaModel, number>;
 }

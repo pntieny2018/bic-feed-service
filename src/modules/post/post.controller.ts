@@ -1,10 +1,11 @@
 import { UserSharedDto } from './../../shared/user/dto/user-shared.dto';
 import { AuthUser } from './../auth/decorators/auth.decorator';
-import { Controller, Delete, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Body, Param, ParseIntPipe, Put } from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/requests';
 import { GenericApiOkResponse } from '../../common/decorators';
+import { UpdatePostDto } from './dto/requests/update-post.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -20,6 +21,17 @@ export class PostController {
     @Body() createPostDto: CreatePostDto
   ): Promise<boolean> {
     return this._postService.createPost(user, createPostDto);
+  }
+
+  @ApiOperation({ summary: 'Update post' })
+  @GenericApiOkResponse(Boolean, 'Update post successfully')
+  @Put('/:postId')
+  public updatePost(
+    @AuthUser() user: UserSharedDto,
+    @Param('postId', ParseIntPipe) postId: number,
+    @Body() createPostDto: UpdatePostDto
+  ): Promise<boolean> {
+    return this._postService.updatePost(postId, user, createPostDto);
   }
 
   @Get('/:id')
