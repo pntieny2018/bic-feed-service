@@ -1,10 +1,9 @@
-import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
+import { UserDataShareDto } from 'src/shared/user/dto/user-shared.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { IsArray } from 'class-validator';
 import { PostContentDto } from '../common/post-content.dto';
 import { PostSettingDto } from '../common/post-setting.dto';
-import { ReactionCountDto } from '../common/reaction-count.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -37,18 +36,18 @@ export class PostResponseDto {
 
   @ApiProperty({
     description: 'Post creator information',
-    type: UserSharedDto,
+    type: UserDataShareDto,
   })
   @Expose()
-  @Type(() => UserSharedDto)
-  public actor: UserSharedDto;
+  @Type(() => UserDataShareDto)
+  public actor: UserDataShareDto;
 
   @ApiProperty({
     description: 'Array of user',
-    type: UserSharedDto,
+    type: UserDataShareDto,
   })
   @Expose()
-  public mentions: UserSharedDto[];
+  public mentions: UserDataShareDto[];
 
   @ApiProperty({
     description: 'Total number of comments',

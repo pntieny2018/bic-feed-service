@@ -46,9 +46,9 @@ export class PostService {
     let transaction;
     try {
       const { isDraft, data, setting, mentions, audience } = createPostDto;
-      const creator = await this._userService.get(authUser.userId);
+      const creator = await this._userService.get(authUser.id);
       if (!creator) {
-        throw new HttpException(`UserID ${authUser.userId} not found`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(`UserID ${authUser.id} not found`, HttpStatus.BAD_REQUEST);
       }
 
       const { groups } = audience;
@@ -56,7 +56,7 @@ export class PostService {
       if (!isMember) {
         throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
       }
-      const mentionUserIds = mentions.map((i) => i.userId);
+      const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
         await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
       }
@@ -66,15 +66,15 @@ export class PostService {
       mediaIds.push(...files.map((i) => i.id));
       mediaIds.push(...videos.map((i) => i.id));
       mediaIds.push(...images.map((i) => i.id));
-      await this._mediaService.checkValidMedia(mediaIds, authUser.userId);
+      await this._mediaService.checkValidMedia(mediaIds, authUser.id);
 
       transaction = await this._sequelizeConnection.transaction();
 
       const post = await this._postModel.create({
         isDraft,
         content: data.content,
-        createdBy: authUser.userId,
-        updatedBy: authUser.userId,
+        createdBy: authUser.id,
+        updatedBy: authUser.id,
         isImportant: setting.isImportant,
         importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
         canShare: setting.canShare,
@@ -84,7 +84,7 @@ export class PostService {
 
       if (mediaIds.length) {
         await post.addMedia(mediaIds);
-        await this._mediaService.activeMedia(mediaIds, authUser.userId);
+        await this._mediaService.activeMedia(mediaIds, authUser.id);
       }
 
       if (groups.length) {

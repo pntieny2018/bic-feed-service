@@ -6,12 +6,12 @@ import { FeedRanking } from '../../feed.enum';
 import { CanReadTimeline } from '../../validations/decorators';
 
 export class GetTimelineDto extends PageOptionsDto {
-  @ApiProperty({ name: 'group_id', example: 9 })
+  @ApiProperty({ example: 9 })
   @CanReadTimeline()
   @Type(() => Number)
   @IsInt()
   @IsNotEmpty()
-  @Expose({ name: 'group_id' })
+  @Expose()
   public groupId: number;
 
   @ApiProperty({
@@ -21,6 +21,6 @@ export class GetTimelineDto extends PageOptionsDto {
   })
   @IsString()
   @IsOptional()
-  @Expose({ name: 'ranking' })
+  @Expose()
   public ranking?: FeedRanking = FeedRanking.IMPORTANT;
 }

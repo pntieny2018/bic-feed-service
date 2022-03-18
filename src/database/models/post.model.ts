@@ -1,13 +1,6 @@
 import { MentionableType } from './../../common/constants/model.constant';
 import { MentionModel } from './mention.model';
-import {
-  DataTypes,
-  Optional,
-  BelongsToManyAddAssociationsMixin,
-  HasManyAddAssociationMixin,
-  HasManySetAssociationsMixin,
-  HasManyAddAssociationsMixin,
-} from 'sequelize';
+import { Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -23,7 +16,6 @@ import {
   UpdatedAt,
   Sequelize,
 } from 'sequelize-typescript';
-import { UserDto } from 'src/modules/auth';
 import { CommentModel } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
@@ -51,6 +43,7 @@ export interface IPost {
   comments?: CommentModel[];
   media?: MediaModel[];
   groups?: PostGroupModel[];
+  mentions?: MentionModel[];
 }
 @Table({
   tableName: 'posts',
@@ -172,10 +165,23 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
-  public static importantPostsFirstCondition(): [Literal, string] {
+  public static importantPostsFirstCondition(alias?: string): [Literal, string] {
     return [
-      sequelize.literal(`CASE WHEN "PostModel"."important_expired_at" > NOW() THEN 0 ELSE 1 END`),
-      'importantFirst',
+      sequelize.literal(`CASE WHEN "PostModel"."important_expired_at" > NOW() THEN 1 ELSE 0 END`),
+      alias ?? 'isNowImportant',
     ];
+  }
+
+  public static parseAggregatedReaction(value: string): Record<string, Record<string, number>> {
+    if (value && value !== '1=') {
+      const rawReactionsCount: string = (value as string).substring(1);
+      const [s1, s2] = rawReactionsCount.split('=');
+      const reactionsName = s1.split(',');
+      const total = s2.split(',');
+      const reactionsCount = {};
+      reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
+      return reactionsCount;
+    }
+    return null;
   }
 }

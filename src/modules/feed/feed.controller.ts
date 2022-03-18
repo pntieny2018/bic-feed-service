@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { PageDto } from 'src/common/dto/pagination/page.dto';
 import { AuthUser, InjectAuthUserToQuery, UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
-import { FeedDto } from './dto/response';
+import { PostResponseDto } from './dto/response';
 import { FeedService } from './feed.service';
 
 @ApiTags('Feeds')
@@ -14,14 +15,14 @@ export class FeedController {
   @ApiOperation({ summary: 'Get timeline in a group.' })
   @ApiOkResponse({
     description: 'Get timeline in a group successfully.',
-    type: FeedDto,
+    type: PageDto,
   })
   @InjectAuthUserToQuery()
   @Get('/timeline')
   public async getTimeline(
     @AuthUser() userDto: UserDto,
     @Query() getTimelineDto: GetTimelineDto
-  ): Promise<FeedDto> {
+  ): Promise<PageDto<PostResponseDto>> {
     return this._feedService.getTimeline(userDto, getTimelineDto);
   }
 }

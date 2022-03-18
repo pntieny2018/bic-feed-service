@@ -1,12 +1,11 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostGroupModel } from 'src/database/models/post-group.model';
-import { PostModel } from 'src/database/models/post.model';
+import { IPost, PostModel } from 'src/database/models/post.model';
 import { UserNewsFeedModel } from 'src/database/models/user-newsfeed.model';
 import { UserDto } from '../auth';
 import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
-import { FeedDto } from './dto/response';
 import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
 import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
@@ -18,7 +17,8 @@ import { MediaDto } from '../post/dto/common/media.dto';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { UserService } from 'src/shared/user';
 import { MentionService } from '../mention';
-import { UserSharedDto } from 'src/shared/user/dto';
+import { UserDataShareDto, UserSharedDto } from 'src/shared/user/dto';
+import { PageDto } from 'src/common/dto/pagination/page.dto';
 
 @Injectable()
 export class FeedService {
@@ -31,7 +31,10 @@ export class FeedService {
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
 
-  public getTimeline(userDto: UserDto, getTimelineDto: GetTimelineDto): Promise<FeedDto> {
+  public getTimeline(
+    userDto: UserDto,
+    getTimelineDto: GetTimelineDto
+  ): Promise<PageDto<PostResponseDto>> {
     const { userId } = userDto;
     getTimelineDto.limit = Math.min(getTimelineDto.limit, FEED_PAGING_DEFAULT_LIMIT);
 
@@ -46,7 +49,7 @@ export class FeedService {
   private async _getImportantRankingTimeline(
     userId: number,
     getTimelineDto: GetTimelineDto
-  ): Promise<FeedDto> {
+  ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, groupId } = getTimelineDto;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
 
@@ -101,22 +104,21 @@ export class FeedService {
         offset: offset,
         limit: limit,
         order: [
-          [sequelize.col('importantFirst'), 'ASC'],
+          [sequelize.col('isNowImportant'), 'DESC'],
           ['createdAt', 'DESC'],
         ],
       });
 
-      const posts = FeedService._convertToPostResponseDto(rows);
-      this._mentionService.bindMentionsToPosts(posts);
-      this._userService.bindUserToPosts(posts);
+      const posts = await this._convertToPostResponseDto(rows);
 
       this._logger.log(rows);
       this._logger.log(count);
 
-      return {
-        next: { offset: offset + limit, limit: FEED_PAGING_DEFAULT_LIMIT },
-        results: posts,
-      };
+      return new PageDto<PostResponseDto>(posts, {
+        total: count,
+        offset: offset + limit,
+        limit: FEED_PAGING_DEFAULT_LIMIT,
+      });
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not get timeline.', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -152,19 +154,12 @@ export class FeedService {
     return constraints;
   }
 
-  private static _convertToPostResponseDto(rows: PostModel[]): PostResponseDto[] {
-    const parseReaction = function (value: string): Record<string, Record<string, number>> {
-      if (value && value !== '1=') {
-        const rawReactionsCount: string = (value as string).substring(1);
-        const [s1, s2] = rawReactionsCount.split('=');
-        const reactionsName = s1.split(',');
-        const total = s2.split(',');
-        const reactionsCount = {};
-        reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
-        return reactionsCount;
-      }
-      return null;
-    };
+  private async _convertToPostResponseDto(rows: IPost[]): Promise<PostResponseDto[]> {
+    const userIds = FeedService._getUserIds(rows);
+    const usersSharedDto = await this._userService.getMany(userIds);
+    const usersDataSharedDto = plainToInstance(UserDataShareDto, usersSharedDto, {
+      excludeExtraneousValues: true,
+    });
 
     return rows.map((row: PostModel) => {
       const post = new PostResponseDto();
@@ -196,16 +191,28 @@ export class FeedService {
 
       post.isDraft = row.isDraft;
       post.commentCount = parseInt(row['commentsCount'] ?? 0);
-      post.reactionsCount = parseReaction(row['reactionsCount']);
+      post.reactionsCount = PostModel.parseAggregatedReaction(row['reactionsCount']);
+      post.actor = usersDataSharedDto.find((u) => u.id === row.createdBy);
 
-      post.actor.userId = row.createdBy;
       post.mentions = [];
-      row.mentions.forEach((mention, index) => {
-        post.mentions.push(new UserSharedDto());
-        post.mentions[index].userId = mention.userId;
+      row.mentions.forEach((mention) => {
+        const mentionedUser = usersDataSharedDto.find((u) => u.id === mention.userId);
+        post.mentions.push(mentionedUser);
       });
 
       return post;
     });
+  }
+
+  private static _getUserIds(rows: IPost[]): number[] {
+    const userIds: number[] = [];
+    rows.forEach((row) => {
+      userIds.push(row.createdBy);
+      const mentions = row.mentions ?? [];
+      mentions.forEach((mention) => {
+        userIds.push(mention.userId);
+      });
+    });
+    return userIds;
   }
 }
