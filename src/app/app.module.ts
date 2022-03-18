@@ -12,7 +12,8 @@ import { MediaModule } from '../modules/media/media.module';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
-
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ListenerModule } from 'src/listeners';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -28,6 +29,10 @@ import { RecentSearchModule } from '../modules/recent-search';
     GroupModule,
     MentionModule,
     RecentSearchModule,
+    ListenerModule,
+    EventEmitterModule.forRoot({
+      verboseMemoryLeak: true,
+    }),
   ],
 })
 export class AppModule {

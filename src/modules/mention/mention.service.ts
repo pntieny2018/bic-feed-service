@@ -1,3 +1,4 @@
+import { UserMentionDto } from './dto';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { UserService } from '../../shared/user';
@@ -7,7 +8,6 @@ import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
 import { MentionHelper } from '../../common/helpers/mention.helper';
 import { IMention, MentionModel } from '../../database/models/mention.model';
-import { UserMentionDto } from './dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -26,7 +26,7 @@ export class MentionService {
    * @throws LogicException
    */
   public async checkValidMentions(
-    groupId: number[],
+    groupIds: number[],
     content: string,
     userIds: number[]
   ): Promise<void> {
@@ -44,7 +44,7 @@ export class MentionService {
 
     for (const user of users) {
       if (
-        !this._groupService.isMemberOfGroups(groupId, user.groups) ||
+        !this._groupService.isMemberOfGroups(groupIds, user.groups) ||
         !usernames.includes(user.username)
       ) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
