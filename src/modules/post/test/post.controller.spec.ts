@@ -41,9 +41,9 @@ describe('PostController', () => {
   describe('createPost', () => {
     it('Create post successfully', async () => {
       postService.createPost = jest.fn().mockResolvedValue(true);
-      const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+      const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
       expect(postService.createPost).toBeCalledTimes(1);
-      expect(postService.createPost).toBeCalledWith(mockedUserAuth, mockedCreatePostDto);
+      expect(postService.createPost).toBeCalledWith(mockedUserAuth.id, mockedCreatePostDto);
       expect(result).toBe(true); 
     });
   });

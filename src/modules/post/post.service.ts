@@ -1,4 +1,3 @@
-import { UserSharedDto } from './../../shared/user/dto/user-shared.dto';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from './../../shared/user/user.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -12,6 +11,7 @@ import { GroupService } from '../../shared/group/group.service';
 import { MentionService } from '../mention';
 import { CreatedPostEvent } from '../../events/post/created-post.event';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { UserDto } from '../auth';
 
 @Injectable()
 export class PostService {
@@ -37,18 +37,18 @@ export class PostService {
 
   /**
    * Create Post
-   * @param authUser UserSharedDto
+   * @param authUser UserDto
    * @param createPostDto CreatePostDto
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
    */
-  public async createPost(authUser: UserSharedDto, createPostDto: CreatePostDto): Promise<boolean> {
+  public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
     let transaction;
     try {
       const { isDraft, data, setting, mentions, audience } = createPostDto;
-      const creator = await this._userService.get(authUser.userId);
+      const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUser.userId} not found`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
       }
 
       const { groups } = audience;
@@ -56,7 +56,7 @@ export class PostService {
       if (!isMember) {
         throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
       }
-      const mentionUserIds = mentions.map((i) => i.userId);
+      const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
         await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
       }
@@ -66,15 +66,15 @@ export class PostService {
       mediaIds.push(...files.map((i) => i.id));
       mediaIds.push(...videos.map((i) => i.id));
       mediaIds.push(...images.map((i) => i.id));
-      await this._mediaService.checkValidMedia(mediaIds, authUser.userId);
+      await this._mediaService.checkValidMedia(mediaIds, authUserId);
 
       transaction = await this._sequelizeConnection.transaction();
 
       const post = await this._postModel.create({
         isDraft,
         content: data.content,
-        createdBy: authUser.userId,
-        updatedBy: authUser.userId,
+        createdBy: authUserId,
+        updatedBy: authUserId,
         isImportant: setting.isImportant,
         importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
         canShare: setting.canShare,
@@ -84,7 +84,7 @@ export class PostService {
 
       if (mediaIds.length) {
         await post.addMedia(mediaIds);
-        await this._mediaService.activeMedia(mediaIds, authUser.userId);
+        await this._mediaService.activeMedia(mediaIds, authUserId);
       }
 
       if (groups.length) {
@@ -105,7 +105,7 @@ export class PostService {
         CreatedPostEvent.event,
         new CreatedPostEvent({
           post,
-          actor: authUser,
+          actor: creator,
           mentions,
           audience,
           setting,
@@ -123,22 +123,22 @@ export class PostService {
 
   /**
    * Update Post
-   * @param authUser UserSharedDto
+   * @param authUser UserDto
    * @param createPostDto UpdatePostDto
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
    */
   public async updatePost(
     postId: number,
-    authUser: UserSharedDto,
+    authUserId: number,
     createPostDto: CreatePostDto
   ): Promise<boolean> {
     let transaction;
     try {
       const { isDraft, data, setting, mentions, audience } = createPostDto;
-      const creator = await this._userService.get(authUser.userId);
+      const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUser.userId} not found`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
       }
 
       const { groups } = audience;
@@ -152,11 +152,11 @@ export class PostService {
         throw new HttpException('The post not found', HttpStatus.BAD_REQUEST);
       }
 
-      if (post.createdBy !== authUser.userId) {
+      if (post.createdBy !== authUserId) {
         throw new HttpException('Access denied', HttpStatus.BAD_REQUEST);
       }
 
-      const mentionUserIds = mentions.map((i) => i.userId);
+      const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
         await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
       }
@@ -166,13 +166,13 @@ export class PostService {
       mediaIds.push(...files.map((i) => i.id));
       mediaIds.push(...videos.map((i) => i.id));
       mediaIds.push(...images.map((i) => i.id));
-      await this._mediaService.checkValidMedia(mediaIds, authUser.userId);
+      await this._mediaService.checkValidMedia(mediaIds, authUserId);
 
       transaction = await this._sequelizeConnection.transaction();
       post.set({
         isDraft,
         content: data.content,
-        updatedBy: authUser.userId,
+        updatedBy: authUserId,
         isImportant: setting.isImportant,
         importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
         canShare: setting.canShare,
@@ -204,7 +204,7 @@ export class PostService {
         CreatedPostEvent.event,
         new CreatedPostEvent({
           post,
-          actor: authUser,
+          actor: creator,
           mentions,
           audience,
           setting,
