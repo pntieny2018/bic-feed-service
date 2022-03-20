@@ -1,3 +1,4 @@
+import { MentionableType } from './../../common/constants/model.constant';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from './../../shared/user/user.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -98,7 +99,13 @@ export class PostService {
       }
 
       if (mentionUserIds.length) {
-        // await this._mentionService.create(post.id, mentionUserIds, MentionableType.POST);
+        await this._mentionService.create(
+          mentionUserIds.map((userId) => ({
+            entityId: post.id,
+            userId,
+            mentionableType: MentionableType.POST,
+          }))
+        );
       }
 
       this._eventEmitter.emit(
@@ -162,54 +169,47 @@ export class PostService {
       }
 
       const { files, videos, images } = data;
-      const mediaIds = [];
-      mediaIds.push(...files.map((i) => i.id));
-      mediaIds.push(...videos.map((i) => i.id));
-      mediaIds.push(...images.map((i) => i.id));
-      await this._mediaService.checkValidMedia(mediaIds, authUserId);
+      const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
       transaction = await this._sequelizeConnection.transaction();
-      post.set({
-        isDraft,
-        content: data.content,
-        updatedBy: authUserId,
-        isImportant: setting.isImportant,
-        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-        canShare: setting.canShare,
-        canComment: setting.canComment,
-        canReact: setting.canReact,
-      });
-
-      post.save();
-
-      if (mediaIds.length) {
-        await post.setMedia(mediaIds);
-      }
-
-      if (groups.length) {
-        const postGroupDataCreate = groups.map((groupId) => {
-          return {
-            postId: post.id,
-            groupId,
-          };
-        });
-        await this._postGroupModel.bulkCreate(postGroupDataCreate);
-      }
-
-      if (mentionUserIds.length) {
-        // await this._mentionService.create(post.id, mentionUserIds, MentionableType.POST);
-      }
-
-      this._eventEmitter.emit(
-        CreatedPostEvent.event,
-        new CreatedPostEvent({
-          post,
-          actor: creator,
-          mentions,
-          audience,
-          setting,
-        })
+      await this._postModel.update(
+        {
+          isDraft,
+          content: data.content,
+          updatedBy: authUserId,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
+        },
+        {
+          where: {
+            id: postId,
+            createdBy: authUserId,
+          },
+        }
       );
+
+      await post.setMedia(unitMediaIds);
+
+      await post.setMentions([]);
+
+      // if (mentionUserIds.length) {
+      // await post.setMentions(mentionUserIds);
+      // }
+
+      // this._eventEmitter.emit(
+      //   CreatedPostEvent.event,
+      //   new CreatedPostEvent({
+      //     post,
+      //     actor: creator,
+      //     mentions,
+      //     audience,
+      //     setting,
+      //   })
+      // );
       await transaction.commit();
 
       return true;

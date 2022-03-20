@@ -59,7 +59,7 @@ export class MediaService {
 
   /**
    * Validate Mention
-   * @param media { files, videos, images }
+   * @param mediaIds Array of media ID
    * @param createdBy created_by of post
    * @returns Promise resolve boolean
    * @throws HttpException
