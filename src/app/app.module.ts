@@ -1,7 +1,8 @@
 import { LibModule } from './lib.module';
 import { AppService } from './app.service';
-import { FeedModule } from '../modules/feed';
 import { UserModule } from '../shared/user';
+import { FeedModule } from '../modules/feed';
+import { ListenerModule } from '../listeners';
 import { GroupModule } from '../shared/group';
 import { PostModule } from 'src/modules/post';
 import { UploadModule } from '../modules/upload';
@@ -12,12 +13,10 @@ import { MediaModule } from '../modules/media/media.module';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
-import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ListenerModule } from 'src/listeners';
-import { DatabaseModule } from '../database';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { IElasticsearchConfig } from '../config/elasticsearch';
 import { ConfigService } from '@nestjs/config';
+import { NotificationModule } from '../modules/notification/notification.module';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -45,11 +44,9 @@ import { ConfigService } from '@nestjs/config';
     UserModule,
     GroupModule,
     MentionModule,
-    RecentSearchModule,
     ListenerModule,
-    EventEmitterModule.forRoot({
-      verboseMemoryLeak: true,
-    }),
+    RecentSearchModule,
+    NotificationModule,
   ],
 })
 export class AppModule {
