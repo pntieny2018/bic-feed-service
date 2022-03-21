@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
-import { PostReactionModel } from 'src/database/models/post-reaction.model';
-import { UserDto } from 'src/modules/auth';
+import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import { PostReactionModel } from '../../../database/models/post-reaction.model';
+import { UserDto } from '../../auth';
 import { CreateReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
 
