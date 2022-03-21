@@ -7,7 +7,7 @@ export interface IPostMedia {
   mediaId: number;
 }
 @Table({
-  tableName: 'posts_medias',
+  tableName: 'posts_media',
   timestamps: false,
 })
 export class PostMediaModel extends Model implements IPostMedia {
