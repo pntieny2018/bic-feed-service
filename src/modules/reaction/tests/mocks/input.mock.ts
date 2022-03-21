@@ -1,8 +1,8 @@
-import { CommentModel } from 'src/database/models/comment.model';
-import { UserDto } from 'src/modules/auth';
+import { UserDto } from '../../../auth';
+import { CreateReactionDto } from '../../dto/request';
 import { ReactionEnum } from '../../reaction.enum';
 
-export const mockCreateReactionDto = [
+export const mockCreateReactionDto: CreateReactionDto[] = [
   {
     reactionName: 'smile',
     target: ReactionEnum.POST,

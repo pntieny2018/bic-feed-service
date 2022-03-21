@@ -1,11 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 import { CreateReactionDto } from './request';
 
 export class ReactionDto extends CreateReactionDto {
-  @ApiProperty({ name: 'user_id', example: 9 })
   @IsNotEmpty()
   @IsNumber()
+  @Expose()
   public userId: number;
 
   public constructor(createReactionDto: CreateReactionDto, userId: number) {

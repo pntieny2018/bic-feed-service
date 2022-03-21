@@ -11,10 +11,10 @@ module.exports = {
       });
     }
 
-    return queryInterface.bulkInsert('post_group', data);
+    return queryInterface.bulkInsert('posts_groups', data);
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('post_group', null, {});
+    await queryInterface.bulkDelete('posts_groups', null, {});
   }
 };

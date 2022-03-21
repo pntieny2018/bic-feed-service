@@ -1,7 +1,8 @@
 import { LibModule } from './lib.module';
 import { AppService } from './app.service';
-import { FeedModule } from '../modules/feed';
 import { UserModule } from '../shared/user';
+import { FeedModule } from '../modules/feed';
+import { ListenerModule } from '../listeners';
 import { GroupModule } from '../shared/group';
 import { PostModule } from 'src/modules/post';
 import { UploadModule } from '../modules/upload';
@@ -12,14 +13,28 @@ import { MediaModule } from '../modules/media/media.module';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
-import { ReactionModule } from 'src/modules/reaction';
-
-import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ListenerModule } from 'src/listeners';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { IElasticsearchConfig } from '../config/elasticsearch';
+import { ConfigService } from '@nestjs/config';
+import { NotificationModule } from '../modules/notification/notification.module';
+import { ReactionModule } from '../modules/reaction';
 @Module({
   controllers: [AppController],
   providers: [AppService],
   imports: [
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     LibModule,
     AuthModule,
     CommentModule,
@@ -33,9 +48,8 @@ import { ListenerModule } from 'src/listeners';
     ReactionModule,
     RecentSearchModule,
     ListenerModule,
-    EventEmitterModule.forRoot({
-      verboseMemoryLeak: true,
-    }),
+    RecentSearchModule,
+    NotificationModule,
   ],
 })
 export class AppModule {

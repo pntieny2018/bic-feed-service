@@ -3,14 +3,17 @@ import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateReactionDto } from '../dto/request';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
-import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { ReactionEnum } from '../reaction.enum';
 import { UserDto } from '../../auth';
 import { REACTION_KIND_LIMIT } from '../reaction.constant';
-import { PostModel } from 'src/database/models/post.model';
-import { PostGroupModel } from 'src/database/models/post-group.model';
-import { UserService } from 'src/shared/user';
-import { CommentModel } from 'src/database/models/comment.model';
+import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import { PostModel } from '../../../database/models/post.model';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { CommentModel } from '../../../database/models/comment.model';
+import { UserService } from '../../../shared/user';
+import { GroupService } from '../../../shared/group';
+import { CommonReactionService } from './common-reaction.service';
+import { ReactionDto } from '../dto/reaction.dto';
 
 @Injectable()
 export class CreateReactionService {
@@ -27,7 +30,9 @@ export class CreateReactionService {
     private readonly _postGroupModel: typeof PostGroupModel,
     @InjectModel(CommentModel)
     private readonly _commentModel: typeof CommentModel,
-    private readonly _userService: UserService
+    private readonly _userService: UserService,
+    private readonly _groupService: GroupService,
+    private readonly _commonReactionService: CommonReactionService
   ) {}
 
   /**
@@ -36,7 +41,10 @@ export class CreateReactionService {
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve boolean
    */
-  public createReaction(userDto: UserDto, createReactionDto: CreateReactionDto): Promise<boolean> {
+  public createReaction(
+    userDto: UserDto,
+    createReactionDto: CreateReactionDto
+  ): Promise<ReactionDto> {
     const { userId } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
@@ -58,10 +66,13 @@ export class CreateReactionService {
   private async _createPostReaction(
     userId: number,
     createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
+  ): Promise<ReactionDto> {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
-      const isExistedPostReaction = await this._isExistedPostReaction(userId, createReactionDto);
+      const isExistedPostReaction = await this._commonReactionService.isExistedPostReaction(
+        userId,
+        createReactionDto
+      );
       if (isExistedPostReaction === true) {
         throw new Error('Reaction is existed.');
       }
@@ -90,32 +101,12 @@ export class CreateReactionService {
         createdBy: userId,
       });
 
-      return true;
+      const reactionDto = new ReactionDto(createReactionDto, userId);
+      return reactionDto;
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Is existed post reaction
-   * @param userId number
-   * @param createReactionDto CreateReactionDto
-   * @returns Promise resolve boolean
-   */
-  private async _isExistedPostReaction(
-    userId: number,
-    createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
-    const { reactionName, targetId: postId } = createReactionDto;
-    const existedReaction = await this._postReactionModel.findOne<PostReactionModel>({
-      where: {
-        postId: postId,
-        reactionName: reactionName,
-        createdBy: userId,
-      },
-    });
-    return !!existedReaction;
   }
 
   /**
@@ -148,10 +139,10 @@ export class CreateReactionService {
   private async _createCommentReaction(
     userId: number,
     createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
+  ): Promise<ReactionDto> {
     const { reactionName, targetId: commentId } = createReactionDto;
     try {
-      const isExistedCommentReaction = await this._isExistedCommentReaction(
+      const isExistedCommentReaction = await this._commonReactionService.isExistedCommentReaction(
         userId,
         createReactionDto
       );
@@ -179,32 +170,12 @@ export class CreateReactionService {
         createdBy: userId,
       });
 
-      return true;
+      const reactionDto = new ReactionDto(createReactionDto, userId);
+      return reactionDto;
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Is existed comment reaction
-   * @param userId number
-   * @param createReactionDto CreateReactionDto
-   * @returns Promise resolve boolean
-   */
-  private async _isExistedCommentReaction(
-    userId: number,
-    createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
-    const { reactionName, targetId: commentId } = createReactionDto;
-    const existedReaction = await this._commentReactionModel.findOne<CommentReactionModel>({
-      where: {
-        commentId: commentId,
-        reactionName: reactionName,
-        createdBy: userId,
-      },
-    });
-    return !!existedReaction;
   }
 
   /**
@@ -260,13 +231,11 @@ export class CreateReactionService {
     const post = await this._postModel.findOne<PostModel>({
       where: {
         id: postId,
+        canReact: true,
+        isDraft: false,
       },
     });
-    if (!!post === false) {
-      throw new Error('Post is not existed.');
-    }
-    const { canReact, isDraft } = post;
-    return canReact === true && isDraft === false;
+    return !!post === true;
   }
 
   /**
@@ -277,16 +246,16 @@ export class CreateReactionService {
    * @throws Error
    */
   private async _getPostIdOfComment(commentId: number): Promise<number> {
-    const post = await this._commentModel.findOne<CommentModel>({
-      attributes: ['id'],
+    const comment = await this._commentModel.findOne<CommentModel>({
+      attributes: ['postId'],
       where: {
         id: commentId,
       },
     });
-    if (!!post === false) {
+    if (!!comment.postId === false) {
       throw new Error('Database error: Comment is not belong to any post.');
     }
-    return post.id;
+    return comment.postId;
   }
 
   /**
@@ -303,8 +272,11 @@ export class CreateReactionService {
       },
     });
     const userSharedDto = await this._userService.get(userId);
+    if (!!userSharedDto === false) {
+      throw new Error('Can not get user data by UserService.');
+    }
     const groupIds = postGroups.map((postGroup: PostGroupModel) => postGroup.groupId);
     const userGroupIds = userSharedDto.groups;
-    return this._userService.isMemberOfGroups(groupIds, userGroupIds);
+    return this._groupService.isMemberOfSomeGroups(groupIds, userGroupIds);
   }
 }

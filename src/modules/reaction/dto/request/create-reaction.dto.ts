@@ -1,23 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsNumber, IsNotEmpty } from 'class-validator';
 import { ReactionEnum } from '../../reaction.enum';
 
 export class CreateReactionDto {
-  @ApiProperty({ name: 'reaction_name', example: 'smile' })
-  @Expose({ name: 'reaction_name' })
+  @ApiProperty({ example: 'smile' })
   @IsNotEmpty()
+  @Expose()
   public reactionName: string;
 
-  @ApiProperty({ name: 'target', example: 'POST' })
-  @Expose({ name: 'target' })
+  @ApiProperty({ example: 'POST' })
   @IsNotEmpty()
+  @Expose()
   public target: ReactionEnum;
 
-  @ApiProperty({ name: 'target_id', example: 1 })
-  @Expose({ name: 'target_id' })
-  @IsInt()
+  @ApiProperty({ example: 1 })
+  @IsNumber()
   @IsNotEmpty()
+  @Expose()
   public targetId: number;
 
   public constructor(createReactionDto: CreateReactionDto) {

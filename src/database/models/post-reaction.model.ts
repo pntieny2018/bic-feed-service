@@ -19,7 +19,7 @@ export interface IPostReaction {
   createdAt?: Date;
 }
 @Table({
-  tableName: 'post_reaction',
+  tableName: 'posts_reactions',
   updatedAt: false,
 })
 export class PostReactionModel

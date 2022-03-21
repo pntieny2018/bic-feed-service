@@ -14,6 +14,7 @@ import { MediaModule } from '../modules/media/media.module';
 import { UserModule } from '../shared/user';
 import { GroupModule } from '../shared/group';
 import { MentionModule } from '../modules/mention';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -46,13 +47,16 @@ import { MentionModule } from '../modules/mention';
       },
       inject: [ConfigService],
     }),
-    // DatabaseModule,
-    // CommentModule,
-    // PostModule,
-    // MediaModule,
-    // UserModule,
-    // GroupModule,
-    // MentionModule,
+    EventEmitterModule.forRoot({
+      verboseMemoryLeak: true,
+    }),
+    DatabaseModule,
+    CommentModule,
+    PostModule,
+    MediaModule,
+    UserModule,
+    GroupModule,
+    MentionModule,
   ],
   providers: [SeedCommand], //, SequelizeTinkerCommand],
 })

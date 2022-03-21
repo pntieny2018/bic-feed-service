@@ -18,7 +18,7 @@ export interface ICommentReaction {
   createdAt?: Date;
 }
 @Table({
-  tableName: 'comment_reaction',
+  tableName: 'comments_reactions',
   updatedAt: false,
   paranoid: false,
 })

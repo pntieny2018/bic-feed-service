@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { getKafkaConfig } from 'src/config/kafka';
-import { DatabaseModule } from 'src/database';
-import { UserModule } from 'src/shared/user';
+import { getKafkaConfig } from '../../config/kafka';
+import { DatabaseModule } from '../../database';
+import { GroupModule } from '../../shared/group';
+import { UserModule } from '../../shared/user';
 import { REACTION_SERVICE } from './reaction.constant';
 import { ReactionController } from './reaction.controller';
-import { CreateReactionService } from './services';
+import { CreateReactionService, DeleteReactionService, CommonReactionService } from './services';
 
 const KAFKA_CONFIG = getKafkaConfig();
 
@@ -14,6 +15,7 @@ const KAFKA_CONFIG = getKafkaConfig();
   imports: [
     DatabaseModule,
     UserModule,
+    GroupModule,
     ClientsModule.register([
       {
         name: REACTION_SERVICE,
@@ -23,6 +25,6 @@ const KAFKA_CONFIG = getKafkaConfig();
     ]),
   ],
   controllers: [ReactionController],
-  providers: [CreateReactionService],
+  providers: [CreateReactionService, DeleteReactionService, CommonReactionService],
 })
 export class ReactionModule {}

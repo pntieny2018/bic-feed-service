@@ -1,6 +1,14 @@
 import { MentionableType } from './../../common/constants/model.constant';
 import { MentionModel } from './mention.model';
-import { Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
+import {
+  DataTypes,
+  Optional,
+  BelongsToManyAddAssociationsMixin,
+  HasManyAddAssociationMixin,
+  HasManySetAssociationsMixin,
+  HasManyAddAssociationsMixin,
+  BelongsToManySetAssociationsMixin,
+} from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,

@@ -4,7 +4,13 @@ import { plainToClass } from 'class-transformer';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchModel } from '../../database/models/recent-search.model';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { DEFAULT_RECENT_SEARCH_ITEMS_NUMBER } from '.';
 
 @Injectable()
