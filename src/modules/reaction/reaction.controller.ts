@@ -41,16 +41,18 @@ export class ReactionController {
   @ApiOperation({ summary: 'Delete reaction.' })
   @ApiOkResponse({
     description: 'Delete reaction successfully',
-    type: ReactionDto,
+    type: Boolean,
   })
   @Delete('/')
   public async delete(
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
-    await this._deleteReactionService.deleteReaction(userDto, createReactionDto);
-    const reactionDto = new ReactionDto(createReactionDto, userDto.userId);
+  ): Promise<boolean> {
+    const reactionDto = await this._deleteReactionService.deleteReaction(
+      userDto,
+      createReactionDto
+    );
     this._clientKafka.emit(TOPIC_REACTION_DELETED, JSON.stringify(reactionDto));
-    return reactionDto;
+    return true;
   }
 }

@@ -2,10 +2,7 @@ import { RedisService } from '@app/redis';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateReactionService, DeleteReactionService } from '../services';
-import {
-  mockCreateReactionDto,
-  mockUserDto,
-} from './mocks/input.mock';
+import { mockCreateReactionDto, mockUserDto } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
 import { REACTION_SERVICE } from '../reaction.constant';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
@@ -33,7 +30,7 @@ describe('ReactionController', () => {
         GroupService,
         CommonReactionService,
         CreateReactionService,
-        CommonReactionService,
+        DeleteReactionService,
         {
           provide: REACTION_SERVICE,
           useValue: {
@@ -114,16 +111,16 @@ describe('ReactionController', () => {
           ...input,
           userId: mockUserDto.userId,
         });
-        const createReactionServiceCreatePostSpy = jest
+        const createReactionServiceCreateReactionSpy = jest
           .spyOn(createReactionService, 'createReaction')
           .mockResolvedValue(response);
         expect(await reactionController.create(mockUserDto, input)).toEqual(true);
-        expect(createReactionServiceCreatePostSpy).toBeCalledTimes(1);
+        expect(createReactionServiceCreateReactionSpy).toBeCalledTimes(1);
       });
 
       it('Create post reaction failed', async () => {
         const input = mockCreateReactionDto[0];
-        const createReactionServiceCreatePostSpy = jest
+        const createReactionServiceCreateReactionSpy = jest
           .spyOn(createReactionService, 'createReaction')
           .mockRejectedValue(
             new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR)
@@ -133,7 +130,7 @@ describe('ReactionController', () => {
         } catch (e) {
           expect(e.message).toEqual('Can not create reaction.');
         }
-        expect(createReactionServiceCreatePostSpy).toBeCalledTimes(1);
+        expect(createReactionServiceCreateReactionSpy).toBeCalledTimes(1);
       });
     });
 
@@ -144,16 +141,16 @@ describe('ReactionController', () => {
           ...input,
           userId: mockUserDto.userId,
         });
-        const createReactionServiceCreatePostSpy = jest
+        const createReactionServiceCreateCommentSpy = jest
           .spyOn(createReactionService, 'createReaction')
           .mockResolvedValue(response);
         expect(await reactionController.create(mockUserDto, input)).toEqual(true);
-        expect(createReactionServiceCreatePostSpy).toBeCalledTimes(1);
+        expect(createReactionServiceCreateCommentSpy).toBeCalledTimes(1);
       });
 
       it('Create comment reaction failed', async () => {
         const input = mockCreateReactionDto[1];
-        const createReactionServiceCreatePostSpy = jest
+        const createReactionServiceCreateCommentSpy = jest
           .spyOn(createReactionService, 'createReaction')
           .mockRejectedValue(
             new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR)
@@ -163,7 +160,7 @@ describe('ReactionController', () => {
         } catch (e) {
           expect(e.message).toEqual('Can not create reaction.');
         }
-        expect(createReactionServiceCreatePostSpy).toBeCalledTimes(1);
+        expect(createReactionServiceCreateCommentSpy).toBeCalledTimes(1);
       });
     });
   });
@@ -171,32 +168,30 @@ describe('ReactionController', () => {
   describe('Delete reaction', () => {
     it('Delete post reaction successfully', async () => {
       const input = mockCreateReactionDto[0];
-        const deleteReactionServiceCreatePostSpy = jest
-          .spyOn(deleteReactionService, 'deleteReaction')
-          .mockResolvedValue(true);
-        const response = {
-          ...input,
-          userId: mockUserDto.userId,
-        };
-        expect(await reactionController.delete(mockUserDto, input)).toEqual(response);
-        expect(deleteReactionServiceCreatePostSpy).toBeCalledTimes(1);
-    });
-
-    it('Delete post reaction failed because of non-existed reaction', async () => {
-      const input = mockCreateReactionDto[0];
-      const deleteReactionServiceCreatePostSpy = jest
-        .spyOn(deleteReactionService, 'deleteReaction')
-        .mockRejectedValue(new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR));
       const response = {
         ...input,
         userId: mockUserDto.userId,
       };
+      const deleteReactionServiceDeleteReactionSpy = jest
+        .spyOn(deleteReactionService, 'deleteReaction')
+        .mockResolvedValue(response);
+      expect(await reactionController.delete(mockUserDto, input)).toEqual(true);
+      expect(deleteReactionServiceDeleteReactionSpy).toBeCalledTimes(1);
+    });
+
+    it('Delete post reaction failed because of non-existed reaction', async () => {
+      const input = mockCreateReactionDto[0];
+      const deleteReactionServiceDeleteReactionSpy = jest
+        .spyOn(deleteReactionService, 'deleteReaction')
+        .mockRejectedValue(
+          new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR)
+        );
       try {
         await reactionController.delete(mockUserDto, input);
       } catch (e) {
         expect(e.message).toEqual('Can not delete reaction.');
       }
-      expect(deleteReactionServiceCreatePostSpy).toBeCalledTimes(1);
+      expect(deleteReactionServiceDeleteReactionSpy).toBeCalledTimes(1);
     });
   });
 });
