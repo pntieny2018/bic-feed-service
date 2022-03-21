@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 const schemaName = process.env.POSTGRES_SCHEMA;
-const tableName = 'post_media';
+const tableName = 'posts_media';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {

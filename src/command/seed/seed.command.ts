@@ -1,8 +1,8 @@
-import { RedisService } from '../../../libs/redis/src/redis.service';
+import { RedisService } from '@app/redis';
 import { Command, CommandRunner } from 'nest-commander';
 import { Logger } from '@nestjs/common';
 
-@Command({ name: 'seed', description: 'Create shared user and group  data' })
+@Command({ name: 'seed', description: 'Create shared user and group data' })
 export class SeedCommand implements CommandRunner {
   public logger = new Logger(SeedCommand.name);
 

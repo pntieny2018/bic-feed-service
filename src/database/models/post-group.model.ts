@@ -6,7 +6,7 @@ export interface IPostGroup {
   groupId: number;
 }
 @Table({
-  tableName: 'post_group',
+  tableName: 'posts_groups',
   timestamps: false,
 })
 export class PostGroupModel extends Model implements IPostGroup {

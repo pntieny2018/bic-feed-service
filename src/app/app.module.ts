@@ -17,6 +17,7 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { IElasticsearchConfig } from '../config/elasticsearch';
 import { ConfigService } from '@nestjs/config';
 import { NotificationModule } from '../modules/notification/notification.module';
+import { ReactionModule } from '../modules/reaction';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -44,6 +45,8 @@ import { NotificationModule } from '../modules/notification/notification.module'
     UserModule,
     GroupModule,
     MentionModule,
+    ReactionModule,
+    RecentSearchModule,
     ListenerModule,
     RecentSearchModule,
     NotificationModule,
@@ -51,6 +54,9 @@ import { NotificationModule } from '../modules/notification/notification.module'
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).exclude('/api/health-check').forRoutes('*');
+    consumer
+      .apply(AuthMiddleware)
+      .exclude('/api/document/**', '/api/health-check', '/api/')
+      .forRoutes('*');
   }
 }
