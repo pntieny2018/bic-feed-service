@@ -24,6 +24,8 @@ export const mockedCreatePostDto: CreatePostDto = {
     {
       id: 1,
       username: 'abcd',
+      fullname: 'abcd',
+      avatar: 'asdfsdf',
       groups: [1],
       fullname: '...',
       avatar: '...',

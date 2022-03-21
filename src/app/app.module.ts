@@ -13,12 +13,28 @@ import { MediaModule } from '../modules/media/media.module';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { IElasticsearchConfig } from '../config/elasticsearch';
+import { ConfigService } from '@nestjs/config';
 import { NotificationModule } from '../modules/notification/notification.module';
 import { ReactionModule } from '../modules/reaction';
 @Module({
   controllers: [AppController],
   providers: [AppService],
   imports: [
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     LibModule,
     AuthModule,
     CommentModule,

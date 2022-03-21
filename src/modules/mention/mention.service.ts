@@ -9,6 +9,8 @@ import { MENTION_ERROR_ID } from './errors/mention.error';
 import { MentionHelper } from '../../common/helpers/mention.helper';
 import { IMention, MentionModel } from '../../database/models/mention.model';
 import { plainToInstance } from 'class-transformer';
+import { MentionableType } from '../../common/constants';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class MentionService {
@@ -110,5 +112,43 @@ export class MentionService {
         }
       }
     }
+  }
+
+  /**
+   * Delete/Insert mention by entity
+   * @param userIds Array of User ID
+   * @param mentionableType Post or comment
+   * @param entityId Post ID or Comment ID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async setMention(
+    userIds: number[],
+    mentionableType: MentionableType,
+    entityId: number
+  ): Promise<boolean> {
+    const currentMentions = await this._mentionModel.findAll({
+      where: { mentionableType, entityId },
+    });
+    const currentMentionUserIds = currentMentions.map((i) => i.userId);
+
+    const deleteUserIds = ArrayHelper.differenceArrNumber(currentMentionUserIds, userIds);
+    if (deleteUserIds.length) {
+      await this._mentionModel.destroy({
+        where: { mentionableType, entityId, userId: deleteUserIds },
+      });
+    }
+
+    const addUserIds = ArrayHelper.differenceArrNumber(userIds, currentMentionUserIds);
+    if (addUserIds.length) {
+      await this._mentionModel.bulkCreate(
+        addUserIds.map((userId) => ({
+          mentionableType,
+          entityId,
+          userId,
+        }))
+      );
+    }
+    return true;
   }
 }

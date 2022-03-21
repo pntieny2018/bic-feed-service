@@ -149,8 +149,8 @@ describe('PostService', () => {
           mediaId
         }
       }));
-      console.log('postMediaExpected=', postMediaExpected);
-      userService.get = jest.fn().mockResolvedValue(true);
+     
+      userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
       mediaService.activeMedia = jest.fn(); 
@@ -164,14 +164,14 @@ describe('PostService', () => {
       postModelMock.create.mockResolvedValueOnce(mockedDataCreatePost);
       postGroupModelMock.bulkCreate.mockResolvedValueOnce(true); 
 
-      const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+      const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
       expect(result).toBe(true); 
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
       expect(mockedDataCreatePost.addMedia).toHaveBeenCalledWith(mediaIds);
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(mediaService.activeMedia).toBeCalledTimes(1)
-      expect(mediaService.activeMedia).toBeCalledWith(mediaIds, mockedUserAuth.userId)
+      expect(mediaService.activeMedia).toBeCalledWith(mediaIds, mockedUserAuth.id)
       expect(postGroupModelMock.bulkCreate).toBeCalledTimes(1)
       expect(transactionMock.commit).toBeCalledTimes(1);
 
@@ -194,8 +194,8 @@ describe('PostService', () => {
       expect(createPostQuery).toStrictEqual({
         content: mockedCreatePostDto.data.content,
         isDraft: mockedCreatePostDto.isDraft,
-        createdBy: mockedUserAuth.userId,
-        updatedBy: mockedUserAuth.userId,
+        createdBy: mockedUserAuth.id,
+        updatedBy: mockedUserAuth.id,
         isImportant: mockedCreatePostDto.setting.isImportant,
         importantExpiredAt: mockedCreatePostDto.setting.isImportant === false ? null: mockedCreatePostDto.setting.importantExpiredAt,
         canShare: mockedCreatePostDto.setting.canShare,
@@ -220,7 +220,7 @@ describe('PostService', () => {
       postModelMock.create.mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+        const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
 
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();

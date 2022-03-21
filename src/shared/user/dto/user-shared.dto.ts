@@ -1,21 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class UserDataShareDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'User ID',
+    type: Number,
+  })
   @Expose()
+  @IsNotEmpty()
   public id: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Username',
+    type: String,
+  })
   @Expose()
+  @IsOptional()
   public username: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Username',
+    type: String,
+  })
   @Expose()
+  @IsOptional()
   public fullname: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Username',
+    type: String,
+  })
   @Expose()
+  @IsOptional()
   public avatar: string;
 }
 

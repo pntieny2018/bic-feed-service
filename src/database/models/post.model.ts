@@ -7,6 +7,7 @@ import {
   HasManyAddAssociationMixin,
   HasManySetAssociationsMixin,
   HasManyAddAssociationsMixin,
+  BelongsToManySetAssociationsMixin,
 } from 'sequelize';
 import {
   AllowNull,
