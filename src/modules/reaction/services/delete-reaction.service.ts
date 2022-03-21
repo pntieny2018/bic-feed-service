@@ -6,7 +6,7 @@ import { UserDto } from '../../auth';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CreateReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
-import { CommonReactionService } from '.';
+import { CommonReactionService } from './common-reaction.service';
 
 @Injectable()
 export class DeleteReactionService {

@@ -18,7 +18,7 @@ import {
   mockUserSharedDto,
   mockUserSharedDtoNotInTheGroup,
 } from './mocks/input.mock';
-import { DeleteReactionService } from '../services/delete-reaction.service';
+import { DeleteReactionService } from '../services';
 import { PostModel } from '../../../database/models/post.model';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { CommentModel } from '../../../database/models/comment.model';
