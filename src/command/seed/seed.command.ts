@@ -1,4 +1,4 @@
-import { RedisService } from '../../../libs/redis/src/redis.service';
+import { RedisService } from '@app/redis';
 import { Command, CommandRunner } from 'nest-commander';
 import { Logger } from '@nestjs/common';
 
@@ -33,13 +33,6 @@ export class SeedCommand implements CommandRunner {
         userId: 2,
         username: 'username2',
         fullname: 'User Name 2',
-        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
-        groups: [1, 2],
-      },
-      {
-        userId: 33,
-        username: 'username33',
-        fullname: 'User Name 33',
         avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
         groups: [1, 2],
       },

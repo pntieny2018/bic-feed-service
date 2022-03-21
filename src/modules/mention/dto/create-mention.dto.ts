@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateMentionDto {
   @ApiProperty({
     required: false,
-    type: Number,
+    type: [Number],
   })
   public userIds: number[];
 }

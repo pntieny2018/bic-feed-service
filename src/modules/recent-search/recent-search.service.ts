@@ -4,7 +4,7 @@ import { plainToClass } from 'class-transformer';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchModel } from '../../database/models/recent-search.model';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { DEFAULT_RECENT_SEARCH_ITEMS_NUMBER } from '.';
 
 @Injectable()
@@ -45,7 +45,6 @@ export class RecentSearchService {
         limit: limit,
         order: [['updatedAt', sort]],
       });
-      //return recentSearches;
       return plainToClass(
         RecentSearchesDto,
         { target, recentSearches: recentSearches },
@@ -54,7 +53,7 @@ export class RecentSearchService {
     } catch (error) {
       this._logger.error(error, error.stack);
       //this._sentryService.captureException(error);
-      throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException('Internal server error');
     }
   }
 

@@ -23,12 +23,18 @@ export interface IMedia {
   createdBy: number;
   url: string;
   type: MediaType;
+  isDraft: boolean;
   posts: PostModel[];
   comments: CommentModel[];
   createdAt?: Date;
+  name: string;
+  originName?: string;
+  width?: number;
+  height?: number;
+  extension?: string;
 }
 @Table({
-  tableName: 'media',
+  tableName: 'medias',
   createdAt: false,
   updatedAt: false,
 })
@@ -36,31 +42,43 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @PrimaryKey
   @AutoIncrement
   @Column
-  @ApiProperty()
   public id: number;
 
   @Column
-  @ApiProperty()
   public url: string;
 
   @Column
-  @ApiProperty()
   public type: MediaType;
+
+  @Column
+  @ApiProperty()
+  public isDraft: boolean;
 
   @AllowNull(false)
   @Column
-  @ApiProperty()
   public createdBy: number;
 
   @CreatedAt
-  @ApiProperty()
   public createdAt: Date;
 
   @HasMany(() => PostMediaModel)
-  @ApiProperty()
   public posts: PostModel[];
 
   @BelongsToMany(() => CommentModel, () => CommentMediaModel)
-  @ApiProperty()
   public comments: CommentModel[];
+
+  @Column
+  public name: string;
+
+  @Column
+  public originName?: string;
+
+  @Column
+  public width?: number;
+
+  @Column
+  public height?: number;
+
+  @Column
+  public extension?: string;
 }

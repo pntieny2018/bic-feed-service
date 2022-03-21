@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { Module } from '@nestjs/common';
-import { RedisModule } from '@app/redis';
+import { RedisModule } from '@app/redis/redis.module';
 import { HttpModule } from '@nestjs/axios';
 import { SentryModule } from '@app/sentry';
 import { IAxiosConfig } from '../config/axios';

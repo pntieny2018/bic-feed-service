@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 const schemaName = process.env.POSTGRES_SCHEMA;
-const tableName = 'media';
+const tableName = 'medias';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -30,6 +30,26 @@ module.exports = {
           type: Sequelize.BOOLEAN,
           allowNull: true,
           defaultValue: true,
+        },
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        origin_name: {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        width: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        height: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        extension: {
+          type: Sequelize.STRING,
+          allowNull: true,
         },
         created_at: {
           type: Sequelize.DATE,

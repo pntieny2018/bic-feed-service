@@ -9,7 +9,6 @@ import {
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { CommentModel } from './comment.model';
-import { MediaModel } from './media.model';
 
 export interface ICommentReaction {
   id: number;
@@ -19,8 +18,9 @@ export interface ICommentReaction {
   createdAt?: Date;
 }
 @Table({
-  tableName: 'comment_reaction',
+  tableName: 'comments_reactions',
   updatedAt: false,
+  paranoid: false,
 })
 export class CommentReactionModel
   extends Model<ICommentReaction, Optional<ICommentReaction, 'id'>>
@@ -35,14 +35,12 @@ export class CommentReactionModel
   @Column
   public commentId: number;
 
-  @ForeignKey(() => MediaModel)
   @Column
   public reactionName: string;
 
   @Column
   public createdBy: number;
 
-  @Column
   @CreatedAt
-  public createdAt?: Date;
+  public createdAt: Date;
 }

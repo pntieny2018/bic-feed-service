@@ -26,10 +26,10 @@ module.exports = {
       });
     }
 
-    return queryInterface.bulkInsert('media', data);
+    return queryInterface.bulkInsert('medias', data);
   },
 
   async down(queryInterface, sequelize) {
-    return queryInterface.bulkDelete('media', null, {});
+    return queryInterface.bulkDelete('medias', null, {});
   },
 };

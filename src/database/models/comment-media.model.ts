@@ -7,7 +7,7 @@ export interface ICommentMedia {
   mediaId: number;
 }
 @Table({
-  tableName: 'comment_media',
+  tableName: 'comments_medias',
   createdAt: false,
   updatedAt: false,
 })
