@@ -1,4 +1,12 @@
-import { Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  AutoIncrement,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { CommentModel } from './comment.model';
 
@@ -6,6 +14,8 @@ export interface ICommentReaction {
   id: number;
   commentId: number;
   reactionName: string;
+  createdBy: number;
+  createdAt?: Date;
 }
 @Table({
   tableName: 'comments_reactions',
@@ -17,6 +27,7 @@ export class CommentReactionModel
   implements ICommentReaction
 {
   @PrimaryKey
+  @AutoIncrement
   @Column
   public id: number;
 
