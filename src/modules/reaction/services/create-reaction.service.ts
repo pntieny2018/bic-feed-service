@@ -3,14 +3,15 @@ import { Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CreateReactionDto } from '../dto/request';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
-import { CommentReactionModel } from 'src/database/models/comment-reaction.model';
 import { ReactionEnum } from '../reaction.enum';
 import { UserDto } from '../../auth';
 import { REACTION_KIND_LIMIT } from '../reaction.constant';
-import { PostModel } from 'src/database/models/post.model';
-import { PostGroupModel } from 'src/database/models/post-group.model';
-import { UserService } from 'src/shared/user';
-import { CommentModel } from 'src/database/models/comment.model';
+import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import { PostModel } from '../../../database/models/post.model';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { CommentModel } from '../../../database/models/comment.model';
+import { UserService } from '../../../shared/user';
+import { GroupService } from '../../../shared/group';
 
 @Injectable()
 export class CreateReactionService {
@@ -27,7 +28,8 @@ export class CreateReactionService {
     private readonly _postGroupModel: typeof PostGroupModel,
     @InjectModel(CommentModel)
     private readonly _commentModel: typeof CommentModel,
-    private readonly _userService: UserService
+    private readonly _userService: UserService,
+    private readonly _groupService: GroupService
   ) {}
 
   /**
@@ -305,6 +307,6 @@ export class CreateReactionService {
     const userSharedDto = await this._userService.get(userId);
     const groupIds = postGroups.map((postGroup: PostGroupModel) => postGroup.groupId);
     const userGroupIds = userSharedDto.groups;
-    return this._userService.isMemberOfGroups(groupIds, userGroupIds);
+    return this._groupService.isMemberOfSomeGroups(groupIds, userGroupIds);
   }
 }

@@ -1,5 +1,4 @@
-//FIXME: use @app/redis
-import { RedisService } from '../../../libs/redis/src';
+import { RedisService } from '@app/redis';
 import { Injectable } from '@nestjs/common';
 import { UserDataShareDto, UserSharedDto } from './dto';
 import { IComment } from '../../database/models/comment.model';
