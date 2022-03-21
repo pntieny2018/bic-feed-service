@@ -2,10 +2,7 @@ import { RedisService } from '@app/redis';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateReactionService } from '../services';
-import {
-  mockCreateReactionDto,
-  mockUserDto,
-} from './mocks/input.mock';
+import { mockCreateReactionDto, mockUserDto } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
 import { REACTION_SERVICE } from '../reaction.constant';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
@@ -16,6 +13,9 @@ import { PostGroupModel } from '../../../database/models/post-group.model';
 import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { createMock } from '@golevelup/ts-jest';
+import { ReactionDto } from '../dto/reaction.dto';
+import { CommonReactionService } from '../services/common-reaction.service';
 
 describe('ReactionService', () => {
   let createReactionService: CreateReactionService;
@@ -25,15 +25,17 @@ describe('ReactionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReactionController],
       providers: [
+        UserService,
+        GroupService,
+        CommonReactionService,
         CreateReactionService,
+        CommonReactionService,
         {
           provide: REACTION_SERVICE,
           useValue: {
             emit: jest.fn(),
           },
         },
-        UserService,
-        GroupService,
         {
           provide: RedisService,
           useClass: jest.fn(),
@@ -103,14 +105,14 @@ describe('ReactionService', () => {
     describe('Create post reaction', () => {
       it('Create post reaction successfully', async () => {
         const input = mockCreateReactionDto[0];
-        const createReactionServiceCreatePostSpy = jest
-          .spyOn(createReactionService, 'createReaction')
-          .mockResolvedValue(true);
-        const response = {
+        const response = createMock<ReactionDto>({
           ...input,
           userId: mockUserDto.userId,
-        };
-        expect(await reactionController.create(mockUserDto, input)).toEqual(response);
+        });
+        const createReactionServiceCreatePostSpy = jest
+          .spyOn(createReactionService, 'createReaction')
+          .mockResolvedValue(response);
+        expect(await reactionController.create(mockUserDto, input)).toEqual(true);
         expect(createReactionServiceCreatePostSpy).toBeCalledTimes(1);
       });
 
@@ -133,14 +135,14 @@ describe('ReactionService', () => {
     describe('Create comment reaction', () => {
       it('Create comment reaction successfully', async () => {
         const input = mockCreateReactionDto[1];
-        const createReactionServiceCreatePostSpy = jest
-          .spyOn(createReactionService, 'createReaction')
-          .mockResolvedValue(true);
-        const response = {
+        const response = createMock<ReactionDto>({
           ...input,
           userId: mockUserDto.userId,
-        };
-        expect(await reactionController.create(mockUserDto, input)).toEqual(response);
+        });
+        const createReactionServiceCreatePostSpy = jest
+          .spyOn(createReactionService, 'createReaction')
+          .mockResolvedValue(response);
+        expect(await reactionController.create(mockUserDto, input)).toEqual(true);
         expect(createReactionServiceCreatePostSpy).toBeCalledTimes(1);
       });
 

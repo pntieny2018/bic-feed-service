@@ -7,6 +7,7 @@ import { UserModule } from '../../shared/user';
 import { REACTION_SERVICE } from './reaction.constant';
 import { ReactionController } from './reaction.controller';
 import { CreateReactionService } from './services';
+import { CommonReactionService } from './services/common-reaction.service';
 
 const KAFKA_CONFIG = getKafkaConfig();
 
@@ -24,6 +25,6 @@ const KAFKA_CONFIG = getKafkaConfig();
     ]),
   ],
   controllers: [ReactionController],
-  providers: [CreateReactionService],
+  providers: [CreateReactionService, CommonReactionService],
 })
 export class ReactionModule {}
