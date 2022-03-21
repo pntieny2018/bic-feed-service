@@ -3,7 +3,7 @@ import { UserDto } from '../../../dto';
 export const userInfoExpect: UserDto = {
   email: 'tronghm@evol.group',
   username: undefined,
-  userId: 4,
+  id: 4,
   staffRole: 'ADMINISTRATOR',
   profile: undefined,
 };

@@ -1,5 +1,5 @@
-import { MediaModule } from './../media/media.module';
-import { UserModule } from './../../shared/user/user.module';
+import { MediaModule } from '../media';
+import { UserModule } from '../../shared/user';
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database';
 import { PostService } from './post.service';
@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from 'src/config/elasticsearch';
 import { GroupModule } from 'src/shared/group';
 import { MentionModule } from '../mention';
+import { PostPolicyService } from './post-policy.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { MentionModule } from '../mention';
     MediaModule,
     MentionModule,
   ],
-  providers: [PostService],
-  controllers: [PostController],
+  providers: [PostService, PostPolicyService],
+  controllers: [PostController, PostPolicyService],
 })
 export class PostModule {}

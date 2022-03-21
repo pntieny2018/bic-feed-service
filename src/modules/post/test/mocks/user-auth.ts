@@ -1,7 +1,7 @@
 import { UserSharedDto } from 'src/shared/user/dto';
 
 export const mockedUserAuth: UserSharedDto = {
-  userId: 1,
+  id: 1,
   username: 'asdfsdf',
   fullname: 'asfsdf',
   avatar: 'aaaaa',

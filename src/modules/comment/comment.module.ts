@@ -4,9 +4,11 @@ import { CommentService } from './comment.service';
 import { DatabaseModule } from '../../database';
 import { MentionModule } from '../mention';
 import { UserModule } from '../../shared/user';
+import { PostModule } from '../post';
+import { AuthorityModule } from '../authority';
 
 @Module({
-  imports: [DatabaseModule, UserModule, MentionModule],
+  imports: [DatabaseModule, AuthorityModule, PostModule, UserModule, MentionModule],
   controllers: [CommentController],
   providers: [CommentService],
 })

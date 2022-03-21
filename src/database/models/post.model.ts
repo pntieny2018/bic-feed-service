@@ -108,4 +108,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public mentions?: MentionModel[];
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+
+  @HasMany(() => PostGroupModel)
+  public groups: PostGroupModel[];
 }

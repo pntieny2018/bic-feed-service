@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER, TOPIC } from './producer.constants';
 import { ClientKafka } from '@nestjs/microservices';
+import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
 
 @Injectable()
 export class NotificationService {
@@ -10,15 +11,15 @@ export class NotificationService {
     @Inject(REACTION_PRODUCER) private _reactionProducer: ClientKafka
   ) {}
 
-  public publishPostNotification<T>(payload: T): any {
+  public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
     return this._postProducer.send(TOPIC.POST_NOTIFICATION, payload);
   }
 
-  public publishCommentNotification<T>(payload: T): any {
+  public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
     return this._postProducer.send(TOPIC.POST_NOTIFICATION, payload);
   }
 
-  public publishReactionNotification<T>(payload: T): any {
+  public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
     return this._postProducer.send(TOPIC.POST_NOTIFICATION, payload);
   }
 }

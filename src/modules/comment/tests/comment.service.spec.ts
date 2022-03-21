@@ -65,8 +65,8 @@ describe('CommentService', () => {
   });
 
   describe('CommentService.delete', () => {
-    describe('Create comment with post not existed', () => {
-      it('should throw exception', () => {});
+    describe('Delete comment does not existed', () => {
+      it('should return false', () => {});
     });
 
     describe('Create comment with parent comment id not existed', () => {

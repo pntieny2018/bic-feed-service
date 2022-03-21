@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { PageOptionsDto } from '../../../../common/dto/pagination';
 
 export class GetCommentDto extends PageOptionsDto {
@@ -8,6 +8,12 @@ export class GetCommentDto extends PageOptionsDto {
   })
   @IsOptional()
   public postId?: number = undefined;
+
+  @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  public parentId?: number = undefined;
 
   @ApiProperty({
     required: false,

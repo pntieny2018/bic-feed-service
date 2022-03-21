@@ -1,5 +1,5 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 
 export enum OrderEnum {
@@ -7,14 +7,15 @@ export enum OrderEnum {
   DESC = 'DESC',
 }
 export class PageOptionsDto {
-  @ApiPropertyOptional({ enum: OrderEnum, default: OrderEnum.ASC })
+  @ApiProperty({ enum: OrderEnum, default: OrderEnum.ASC, required: false })
   @IsEnum(OrderEnum)
   @IsOptional()
   public order?: OrderEnum = OrderEnum.ASC;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     minimum: 1,
     default: 25,
+    required: false,
   })
   @Type(() => Number)
   @IsInt()
@@ -22,9 +23,10 @@ export class PageOptionsDto {
   @IsOptional()
   public limit?: number = 25;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     minimum: 0,
     default: 0,
+    required: false,
   })
   @Type(() => Number)
   @IsInt()
@@ -32,27 +34,27 @@ export class PageOptionsDto {
   @IsOptional()
   public offset?: number = 0;
 
-  @ApiPropertyOptional({
-    default: 0,
+  @ApiProperty({
+    required: false,
   })
   @IsOptional()
   public idGTE?: number = 0;
 
-  @ApiPropertyOptional({
-    default: 0,
+  @ApiProperty({
+    required: false,
   })
   @IsOptional()
-  public idLTE?: number = 0;
+  public idLTE?: number = undefined;
 
-  @ApiPropertyOptional({
-    default: 0,
+  @ApiProperty({
+    required: false,
   })
   @IsOptional()
-  public idGT?: number = 0;
+  public idGT?: number = undefined;
 
-  @ApiPropertyOptional({
-    default: 0,
+  @ApiProperty({
+    required: false,
   })
   @IsOptional()
-  public idLT?: number = 0;
+  public idLT?: number = undefined;
 }

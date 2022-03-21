@@ -24,7 +24,7 @@ export class MediaService {
   public async create(user: UserDto, url: string, mediaType: MediaType): Promise<any> {
     try {
       return await this._mediaModel.create({
-        createdBy: user.userId,
+        createdBy: user.id,
         url: url,
         type: mediaType,
       });
@@ -41,7 +41,7 @@ export class MediaService {
   public async destroy(user: UserDto, mediaId: number): Promise<any> {
     return await this._mediaModel.destroy({
       where: {
-        createdBy: user.userId,
+        createdBy: user.id,
         id: mediaId,
       },
     });
