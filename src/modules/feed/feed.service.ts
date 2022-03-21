@@ -1,23 +1,21 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostGroupModel } from 'src/database/models/post-group.model';
-import { IPost, PostModel } from 'src/database/models/post.model';
-import { UserNewsFeedModel } from 'src/database/models/user-newsfeed.model';
 import { UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
 import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
-import { MediaModel } from 'src/database/models/media.model';
-import { MentionModel } from 'src/database/models/mention.model';
 import sequelize from 'sequelize';
 import { MediaDto } from '../post/dto/common/media.dto';
-import { plainToInstance } from 'class-transformer';
-import { UserService } from 'src/shared/user';
-import { UserDataShareDto } from 'src/shared/user/dto';
-import { PageDto } from 'src/common/dto/pagination/page.dto';
 import { FeedPostDto } from './dto/response';
-import { IPostReaction, PostReactionModel } from 'src/database/models/post-reaction.model';
+import { UserService } from '../../shared/user';
+import { IPost, PostModel } from '../../database/models/post.model';
+import { PageDto } from '../../common/dto/pagination/page.dto';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { MediaModel } from '../../database/models/media.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 
 @Injectable()
 export class FeedService {
@@ -98,7 +96,6 @@ export class FeedService {
             required: false,
           },
           {
-            model: PostReactionModel,
             where: {
               createdBy: userId,
             },
@@ -162,10 +159,7 @@ export class FeedService {
 
   private async _convertToFeedPostDto(rows: PostModel[]): Promise<FeedPostDto[]> {
     const userIds = FeedService._getUserIds(rows);
-    const usersSharedDto = (await this._userService.getMany(userIds)).filter(Boolean);
-    const usersDataSharedDto = plainToInstance(UserDataShareDto, usersSharedDto, {
-      excludeExtraneousValues: true,
-    });
+    const userSharedDtos = (await this._userService.getMany(userIds)).filter(Boolean);
 
     return rows.map((row: PostModel) => {
       row = row.toJSON();
@@ -174,7 +168,7 @@ export class FeedService {
       post.id = row.id;
       post.isDraft = row.isDraft;
 
-      post.actor = usersDataSharedDto.find((u) => u.id === row.createdBy);
+      post.actor = userSharedDtos.find((u) => u.id === row.createdBy);
       post.createdAt = row.createdAt;
 
       const mediaTypes = MediaDto.filterMediaType(row.media);
@@ -202,7 +196,7 @@ export class FeedService {
       post.commentCount = parseInt(row['commentsCount'] ?? 0);
 
       post.mentions = row.mentions.map((mention) => {
-        const mentionedUser = usersDataSharedDto.find((u) => u.id === mention.userId);
+        const mentionedUser = userSharedDtos.find((u) => u.id === mention.userId);
         return mentionedUser;
       });
 

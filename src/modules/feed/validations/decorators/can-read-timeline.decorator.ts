@@ -6,8 +6,8 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { REQUEST_CONTEXT, UserDto } from 'src/modules/auth';
-import { UserService } from 'src/shared/user';
+import { UserService } from '../../../../shared/user';
+import { REQUEST_CONTEXT, UserDto } from '../../../auth';
 
 const VALIDATOR_CONSTRAINT_NAME = 'CanReadTimelineConstraint';
 

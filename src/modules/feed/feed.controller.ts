@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { PageDto } from 'src/common/dto/pagination/page.dto';
+import { PageDto } from '../../common/dto/pagination/page.dto';
 import { AuthUser, InjectAuthUserToQuery, UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedPostDto } from './dto/response';

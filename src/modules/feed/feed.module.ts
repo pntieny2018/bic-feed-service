@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
-import { DatabaseModule } from 'src/database';
-import { UserModule } from 'src/shared/user';
 import { CanReadTimelineConstraint } from './validations/decorators';
+import { DatabaseModule } from '../../database';
+import { UserModule } from '../../shared/user';
 
 @Module({
   imports: [DatabaseModule, UserModule],

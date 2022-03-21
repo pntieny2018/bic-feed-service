@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { IsNotEmpty, IsInt, IsOptional, IsString } from 'class-validator';
-import { PageOptionsDto } from 'src/common/dto';
+import { PageOptionsDto } from '../../../../common/dto';
 import { FeedRanking } from '../../feed.enum';
 import { CanReadTimeline } from '../../validations/decorators';
 
