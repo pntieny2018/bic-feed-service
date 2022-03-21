@@ -1,4 +1,4 @@
-import { RedisService } from '../../../libs/redis/src/redis.service';
+import { RedisService } from '@app/redis';
 import { Command, CommandRunner } from 'nest-commander';
 import { Logger } from '@nestjs/common';
 

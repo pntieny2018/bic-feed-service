@@ -1,21 +1,10 @@
 import { RedisService } from '@app/redis';
-import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateReactionService } from '../services';
 import {
-  mock15ReactionOnAComment,
-  mock15ReactionOnAPost,
-  mock21ReactionOnAComment,
-  mock21ReactionOnAPost,
-  mockComment,
   mockCreateReactionDto,
-  mockPostCannotReact,
-  mockPostCanReact,
-  mockPostGroup,
   mockUserDto,
-  mockUserSharedDto,
-  mockUserSharedDtoNotInTheGroup,
 } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
 import { REACTION_SERVICE } from '../reaction.constant';
@@ -25,7 +14,6 @@ import { PostModel } from '../../../database/models/post.model';
 import { CommentModel } from '../../../database/models/comment.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { UserService } from '../../../shared/user';
-import { UserSharedDto } from '../../../shared/user/dto';
 import { GroupService } from '../../../shared/group';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
