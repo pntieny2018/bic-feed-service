@@ -17,7 +17,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CommonReactionService } from '../services/common-reaction.service';
 
-describe('ReactionService', () => {
+describe('ReactionController', () => {
   let createReactionService: CreateReactionService;
   let reactionController: ReactionController;
 
