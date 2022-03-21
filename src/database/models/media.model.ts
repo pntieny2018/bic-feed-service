@@ -34,7 +34,7 @@ export interface IMedia {
   extension?: string;
 }
 @Table({
-  tableName: 'media',
+  tableName: 'medias',
   createdAt: false,
   updatedAt: false,
 })
