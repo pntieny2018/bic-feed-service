@@ -246,16 +246,16 @@ export class CreateReactionService {
    * @throws Error
    */
   private async _getPostIdOfComment(commentId: number): Promise<number> {
-    const post = await this._commentModel.findOne<CommentModel>({
-      attributes: ['id'],
+    const comment = await this._commentModel.findOne<CommentModel>({
+      attributes: ['postId'],
       where: {
         id: commentId,
       },
     });
-    if (!!post === false) {
+    if (!!comment.postId === false) {
       throw new Error('Database error: Comment is not belong to any post.');
     }
-    return post.id;
+    return comment.postId;
   }
 
   /**
