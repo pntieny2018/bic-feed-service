@@ -58,6 +58,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     GroupModule,
     MentionModule,
   ],
-  providers: [SeedCommand], //, SequelizeTinkerCommand],
+  providers: [SeedCommand, SequelizeTinkerCommand],
 })
 export class CommandModule {}

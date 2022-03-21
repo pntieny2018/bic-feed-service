@@ -27,8 +27,6 @@ export const mockedCreatePostDto: CreatePostDto = {
       fullname: 'abcd',
       avatar: 'asdfsdf',
       groups: [1],
-      fullname: 'lvq',
-      avatar: 'https://',
     },
   ],
   audience: {
