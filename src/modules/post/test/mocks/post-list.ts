@@ -23,9 +23,9 @@ export const mockedCreatePostDto: CreatePostDto = {
   mentions: [
     {
       id: 1,
-      fullname: 'abcd',
       username: 'abcd',
-      avatar: 'xxx',
+      fullname: 'abcd',
+      avatar: 'asdfsdf',
       groups: [1],
     },
   ],

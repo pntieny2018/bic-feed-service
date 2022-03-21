@@ -1,4 +1,3 @@
-import { UserSharedDto } from './../../shared/user/dto/user-shared.dto';
 //import { AuthUser, UserInfoDto } from '../auth';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchService } from './recent-search.service';
@@ -6,7 +5,7 @@ import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import { CleanRecentSearchesDto } from './dto/requests/clean-recent-searches.dto';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { Controller, Delete, Get, Post, Query, Body, Param, ParseIntPipe } from '@nestjs/common';
-import { AuthUser } from '../auth';
+import { AuthUser, UserDto } from '../auth';
 
 @ApiSecurity('authorization')
 @ApiTags('Recent Searches')
@@ -21,7 +20,7 @@ export class RecentSearchController {
   })
   @Get('/')
   public getRecentSearches(
-    @AuthUser() user: UserSharedDto,
+    @AuthUser() user: UserDto,
     @Query() getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
     return this._recentSearchPostService.get(user.id, getRecentSearchPostDto);
@@ -34,7 +33,7 @@ export class RecentSearchController {
   })
   @Post('/')
   public createRecentSearch(
-    @AuthUser() user: UserSharedDto,
+    @AuthUser() user: UserDto,
     @Body() createRecentSearchPostDto: CreateRecentSearchDto
   ): Promise<RecentSearchDto> {
     return this._recentSearchPostService.create(user.id, createRecentSearchPostDto);
@@ -51,7 +50,7 @@ export class RecentSearchController {
   })
   @Delete('/:id/delete')
   public deleteRecentSearchForPost(
-    @AuthUser() user: UserSharedDto,
+    @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) id: number
   ): Promise<boolean> {
     return this._recentSearchPostService.delete(user.id, id);
@@ -64,7 +63,7 @@ export class RecentSearchController {
   })
   @Delete('/:target/clean')
   public cleanRecentSearchesForPost(
-    @AuthUser() user: UserSharedDto,
+    @AuthUser() user: UserDto,
     @Param() cleanRecentSearchesDto: CleanRecentSearchesDto
   ): Promise<boolean> {
     return this._recentSearchPostService.clean(user.id, cleanRecentSearchesDto.target);

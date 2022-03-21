@@ -11,19 +11,15 @@ describe('PostController', () => {
   let postController: PostController;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      imports: [
-        RedisModule,
-      ],
-      controllers: [
-        PostController,
-      ],
+      imports: [RedisModule],
+      controllers: [PostController],
       providers: [
         {
-          provide: PostService, 
+          provide: PostService,
           useValue: {
-            createPost: jest.fn()
-          }
-        }
+            createPost: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -41,10 +37,10 @@ describe('PostController', () => {
   describe('createPost', () => {
     it('Create post successfully', async () => {
       postService.createPost = jest.fn().mockResolvedValue(true);
-      const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+      const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
       expect(postService.createPost).toBeCalledTimes(1);
-      expect(postService.createPost).toBeCalledWith(mockedUserAuth, mockedCreatePostDto);
-      expect(result).toBe(true); 
+      expect(postService.createPost).toBeCalledWith(mockedUserAuth.id, mockedCreatePostDto);
+      expect(result).toBe(true);
     });
   });
 });

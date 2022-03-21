@@ -1,4 +1,4 @@
-import { UserSharedDto } from '../../shared/user/dto';
+import { MentionableType } from '../../common/constants';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -6,12 +6,13 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { MediaService } from '../media/media.service';
+import { MediaService } from '../media';
 import { GroupService } from '../../shared/group';
-
 import { MentionService } from '../mention';
 import { CreatedPostEvent } from '../../events/post';
+import { UpdatedPostEvent } from 'src/events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class PostService {
@@ -37,18 +38,18 @@ export class PostService {
 
   /**
    * Create Post
-   * @param authUser UserSharedDto
+   * @param authUser UserDto
    * @param createPostDto CreatePostDto
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
    */
-  public async createPost(authUser: UserSharedDto, createPostDto: CreatePostDto): Promise<boolean> {
+  public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
     let transaction;
     try {
       const { isDraft, data, setting, mentions, audience } = createPostDto;
-      const creator = await this._userService.get(authUser.id);
+      const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUser.id} not found`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
       }
 
       const { groups } = audience;
@@ -62,19 +63,15 @@ export class PostService {
       }
 
       const { files, videos, images } = data;
-      const mediaIds = [];
-      mediaIds.push(...files.map((i) => i.id));
-      mediaIds.push(...videos.map((i) => i.id));
-      mediaIds.push(...images.map((i) => i.id));
-      await this._mediaService.checkValidMedia(mediaIds, authUser.id);
-
+      const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
       transaction = await this._sequelizeConnection.transaction();
 
       const post = await this._postModel.create({
         isDraft,
         content: data.content,
-        createdBy: authUser.id,
-        updatedBy: authUser.id,
+        createdBy: authUserId,
+        updatedBy: authUserId,
         isImportant: setting.isImportant,
         importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
         canShare: setting.canShare,
@@ -82,9 +79,9 @@ export class PostService {
         canReact: setting.canReact,
       });
 
-      if (mediaIds.length) {
-        await post.addMedia(mediaIds);
-        await this._mediaService.activeMedia(mediaIds, authUser.id);
+      if (unitMediaIds.length) {
+        await post.addMedia(unitMediaIds);
+        await this._mediaService.activeMedia(unitMediaIds, authUserId);
       }
 
       if (groups.length) {
@@ -98,17 +95,116 @@ export class PostService {
       }
 
       if (mentionUserIds.length) {
-        // await this._mentionService.create(post.id, mentionUserIds, MentionableType.POST);
+        await this._mentionService.create(
+          mentionUserIds.map((userId) => ({
+            entityId: post.id,
+            userId,
+            mentionableType: MentionableType.POST,
+          }))
+        );
       }
 
       this._eventEmitter.emit(
         CreatedPostEvent.event,
         new CreatedPostEvent({
-          post,
-          actor: authUser,
+          id: post.id,
+          isDraft,
+          data,
+          actor: creator,
           mentions,
           audience,
           setting,
+        })
+      );
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      if (typeof transaction !== 'undefined') await transaction.rollback();
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Update Post
+   * @param authUser UserDto
+   * @param createPostDto UpdatePostDto
+   * @returns Promise resolve recentSearchPostDto
+   * @throws HttpException
+   */
+  public async updatePost(
+    postId: number,
+    authUserId: number,
+    createPostDto: CreatePostDto
+  ): Promise<boolean> {
+    let transaction;
+    try {
+      const { isDraft, data, setting, mentions, audience } = createPostDto;
+      const creator = await this._userService.get(authUserId);
+      if (!creator) {
+        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
+      }
+
+      const { groups } = audience;
+      const isMember = await this._groupService.isMemberOfGroups(groups, creator.groups);
+      if (!isMember) {
+        throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
+      }
+
+      const post = await this._postModel.findOne({ where: { id: postId } });
+      if (!post) {
+        throw new HttpException('The post not found', HttpStatus.BAD_REQUEST);
+      }
+
+      if (post.createdBy !== authUserId) {
+        throw new HttpException('Access denied', HttpStatus.BAD_REQUEST);
+      }
+
+      const mentionUserIds = mentions.map((i) => i.id);
+      if (mentionUserIds.length) {
+        await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+      }
+
+      const { files, videos, images } = data;
+      const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
+
+      transaction = await this._sequelizeConnection.transaction();
+      await this._postModel.update(
+        {
+          isDraft,
+          content: data.content,
+          updatedBy: authUserId,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
+        },
+        {
+          where: {
+            id: postId,
+            createdBy: authUserId,
+          },
+        }
+      );
+      await this._mediaService.setMediaPost(unitMediaIds, postId);
+      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
+      await this.setPostGroup(groups, post.id);
+
+      this._eventEmitter.emit(
+        UpdatedPostEvent.event,
+        new UpdatedPostEvent({
+          updatedPost: {
+            id: post.id,
+            isDraft,
+            data,
+            actor: creator,
+            mentions,
+            audience,
+            setting,
+          },
         })
       );
       await transaction.commit();
@@ -148,5 +244,37 @@ export class PostService {
 
       throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Delete/Insert group by post
+   * @param groupIds Array of Group ID
+   * @param postId PostID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async setPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+    const currentGroups = await this._postGroupModel.findAll({
+      where: { postId },
+    });
+    const currentGroupIds = currentGroups.map((i) => i.groupId);
+
+    const deleteGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, groupIds);
+    if (deleteGroupIds.length) {
+      await this._postGroupModel.destroy({
+        where: { groupId: deleteGroupIds, postId },
+      });
+    }
+
+    const addGroupIds = ArrayHelper.differenceArrNumber(groupIds, currentGroupIds);
+    if (addGroupIds.length) {
+      await this._postGroupModel.bulkCreate(
+        addGroupIds.map((groupId) => ({
+          postId,
+          groupId,
+        }))
+      );
+    }
+    return true;
   }
 }

@@ -15,6 +15,7 @@ import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
 import { NotificationModule } from '../modules/notification';
+import { ReactionModule } from '../modules/reaction';
 
 @Module({
   controllers: [AppController],
@@ -30,6 +31,8 @@ import { NotificationModule } from '../modules/notification';
     UserModule,
     GroupModule,
     MentionModule,
+    ReactionModule,
+    RecentSearchModule,
     ListenerModule,
     AuthorityModule,
     RecentSearchModule,
@@ -38,6 +41,9 @@ import { NotificationModule } from '../modules/notification';
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).exclude('/api/health-check').forRoutes('*');
+    consumer
+      .apply(AuthMiddleware)
+      .exclude('/api/document/**', '/api/health-check', '/api/')
+      .forRoutes('*');
   }
 }
