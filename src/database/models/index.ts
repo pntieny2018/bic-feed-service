@@ -19,7 +19,6 @@ export default [
   CommentMediaModel,
   CommentReactionModel,
   MediaModel,
-  MentionModel,
   RecentSearchModel,
   UserNewsFeedModel,
   MentionModel,

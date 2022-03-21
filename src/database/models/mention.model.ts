@@ -31,10 +31,9 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   @Column
   public userId: number;
 
-  // FIXME: error when start server.
-  // @BelongsTo(() => PostModel, 'entityId')
-  // public post?: PostModel;
+  @BelongsTo(() => PostModel, 'entityId')
+  public post?: PostModel;
 
-  // @BelongsTo(() => CommentModel, 'entityId')
-  // public comment?: CommentModel;
+  @BelongsTo(() => CommentModel, 'entityId')
+  public comment?: CommentModel;
 }
