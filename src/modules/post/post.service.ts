@@ -10,9 +10,10 @@ import { MediaService } from '../media/media.service';
 import { GroupService } from '../../shared/group/group.service';
 
 import { MentionService } from '../mention';
-import { CreatedPostEvent } from '../../events/post/created-post.event';
+import { CreatedPostEvent } from '../../events/post';
+import { UpdatedPostEvent } from 'src/events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { UserDto } from '../auth';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class PostService {
@@ -63,11 +64,8 @@ export class PostService {
       }
 
       const { files, videos, images } = data;
-      const mediaIds = [];
-      mediaIds.push(...files.map((i) => i.id));
-      mediaIds.push(...videos.map((i) => i.id));
-      mediaIds.push(...images.map((i) => i.id));
-      await this._mediaService.checkValidMedia(mediaIds, authUserId);
+      const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
       transaction = await this._sequelizeConnection.transaction();
 
@@ -83,9 +81,9 @@ export class PostService {
         canReact: setting.canReact,
       });
 
-      if (mediaIds.length) {
-        await post.addMedia(mediaIds);
-        await this._mediaService.activeMedia(mediaIds, authUserId);
+      if (unitMediaIds.length) {
+        await post.addMedia(unitMediaIds);
+        await this._mediaService.activeMedia(unitMediaIds, authUserId);
       }
 
       if (groups.length) {
@@ -111,7 +109,9 @@ export class PostService {
       this._eventEmitter.emit(
         CreatedPostEvent.event,
         new CreatedPostEvent({
-          post,
+          id: post.id,
+          isDraft,
+          data,
           actor: creator,
           mentions,
           audience,
@@ -191,25 +191,24 @@ export class PostService {
           },
         }
       );
+      await this._mediaService.setMediaPost(unitMediaIds, postId);
+      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
+      await this.setPostGroup(groups, post.id);
 
-      await post.setMedia(unitMediaIds);
-
-      await post.setMentions([]);
-
-      // if (mentionUserIds.length) {
-      // await post.setMentions(mentionUserIds);
-      // }
-
-      // this._eventEmitter.emit(
-      //   CreatedPostEvent.event,
-      //   new CreatedPostEvent({
-      //     post,
-      //     actor: creator,
-      //     mentions,
-      //     audience,
-      //     setting,
-      //   })
-      // );
+      this._eventEmitter.emit(
+        UpdatedPostEvent.event,
+        new UpdatedPostEvent({
+          updatedPost: {
+            id: post.id,
+            isDraft,
+            data,
+            actor: creator,
+            mentions,
+            audience,
+            setting,
+          },
+        })
+      );
       await transaction.commit();
 
       return true;
@@ -247,5 +246,37 @@ export class PostService {
 
       throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Delete/Insert group by post
+   * @param groupIds Array of Group ID
+   * @param postId PostID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async setPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+    const currentGroups = await this._postGroupModel.findAll({
+      where: { postId },
+    });
+    const currentGroupIds = currentGroups.map((i) => i.groupId);
+
+    const deleteGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, groupIds);
+    if (deleteGroupIds.length) {
+      await this._postGroupModel.destroy({
+        where: { groupId: deleteGroupIds, postId },
+      });
+    }
+
+    const addGroupIds = ArrayHelper.differenceArrNumber(groupIds, currentGroupIds);
+    if (addGroupIds.length) {
+      await this._postGroupModel.bulkCreate(
+        addGroupIds.map((groupId) => ({
+          postId,
+          groupId,
+        }))
+      );
+    }
+    return true;
   }
 }

@@ -43,7 +43,6 @@ export class AuthService {
     }
     try {
       const payload = await jwt.verify(token, pem);
-      console.log('payload=', payload);
       const isId = payload['token_use'] === 'id';
       return new UserDto({
         email: payload['email'],

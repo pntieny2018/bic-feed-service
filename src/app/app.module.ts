@@ -14,10 +14,27 @@ import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ListenerModule } from 'src/listeners';
+import { DatabaseModule } from '../database';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { IElasticsearchConfig } from '../config/elasticsearch';
+import { ConfigService } from '@nestjs/config';
 @Module({
   controllers: [AppController],
   providers: [AppService],
   imports: [
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     LibModule,
     AuthModule,
     CommentModule,

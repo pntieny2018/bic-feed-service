@@ -1,18 +1,22 @@
 import { UserDto } from '../auth';
-import { FindOptions } from 'sequelize';
+import { FindOptions, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { IMedia } from '../../database/models/media.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { MediaModel, MediaType } from '../../database/models/media.model';
+import { PostMediaModel } from '../../database/models/post-media.model';
+import { ArrayHelper } from '../../common/helpers';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class MediaService {
   private _logger = new Logger(MediaService.name);
   public constructor(
     @InjectConnection() private _sequelizeConnection: Sequelize,
-    @InjectModel(MediaModel) private _mediaModel: typeof MediaModel
+    @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
+    @InjectModel(PostMediaModel) private _postMedia: typeof PostMediaModel
   ) {}
 
   /**
@@ -100,6 +104,69 @@ export class MediaService {
       }
     );
 
+    return true;
+  }
+
+  /**
+   * Delete/Insert and update isDraft for media of post
+   * @param mediaIds Array of Media ID
+   * @param postId PostID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async setMediaPost(mediaIds: number[], postId: number): Promise<boolean> {
+    const currentPostMediaList = await this._postMedia.findAll({
+      where: { postId },
+    });
+    const currentMediaIds = currentPostMediaList.map((i) => i.mediaId);
+
+    const deleteIds = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
+    if (deleteIds.length) {
+      await this._postMedia.destroy({
+        where: { postId, mediaId: deleteIds },
+      });
+    }
+
+    const addIds = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
+    if (addIds.length) {
+      await this._postMedia.bulkCreate(
+        addIds.map((mediaId) => ({
+          postId,
+          mediaId,
+        }))
+      );
+    }
+    await this.updateMediaDraft([...deleteIds, ...addIds]);
+    return true;
+  }
+
+  /**
+   * Update Media.isDraft, called when update Post
+   * @param mediaIds Array of Media ID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
+    if (mediaIds.length === 0) return true;
+    const query = ` UPDATE feed.media
+                SET is_draft = tmp.not_has_post
+                FROM (
+                  SELECT media.id, 
+                  CASE WHEN COUNT(post_media.post_id) > 0 THEN false ELSE true
+                  END as not_has_post
+                  FROM feed.media
+                  LEFT JOIN feed.post_media ON post_media.media_id = media.id
+                  WHERE media.id IN (:mediaIds)
+                  GROUP BY media.id
+                ) as tmp 
+                WHERE tmp.id = feed.media.id`;
+    await this._sequelizeConnection.query(query, {
+      replacements: {
+        mediaIds,
+      },
+      type: QueryTypes.UPDATE,
+      raw: true,
+    });
     return true;
   }
 }
