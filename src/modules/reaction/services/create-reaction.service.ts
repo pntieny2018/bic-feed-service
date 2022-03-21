@@ -12,7 +12,7 @@ import { PostGroupModel } from '../../../database/models/post-group.model';
 import { CommentModel } from '../../../database/models/comment.model';
 import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
-import { CommonReactionService } from './common-reaction.service';
+import { CommonReactionService } from '.';
 import { ReactionDto } from '../dto/reaction.dto';
 
 @Injectable()

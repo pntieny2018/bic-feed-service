@@ -6,8 +6,7 @@ import { GroupModule } from '../../shared/group';
 import { UserModule } from '../../shared/user';
 import { REACTION_SERVICE } from './reaction.constant';
 import { ReactionController } from './reaction.controller';
-import { CreateReactionService, DeleteReactionService } from './services';
-import { CommonReactionService } from './services/common-reaction.service';
+import { CreateReactionService, DeleteReactionService, CommonReactionService } from './services';
 
 const KAFKA_CONFIG = getKafkaConfig();
 
