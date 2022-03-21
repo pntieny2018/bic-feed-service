@@ -11,6 +11,7 @@ import { RewriteFrames } from '@sentry/integrations';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from '../database';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -18,6 +19,9 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true,
       cache: true,
       load: [configs],
+    }),
+    EventEmitterModule.forRoot({
+      verboseMemoryLeak: true,
     }),
     ScheduleModule.forRoot(),
     HttpModule.registerAsync({
