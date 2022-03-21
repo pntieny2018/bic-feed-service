@@ -18,7 +18,7 @@ import {
   mockUserSharedDto,
   mockUserSharedDtoNotInTheGroup,
 } from './mocks/input.mock';
-import { DeleteReactionService } from '../services/delete-reaction.service';
+import { DeleteReactionService } from '../services';
 import { PostModel } from '../../../database/models/post.model';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { CommentModel } from '../../../database/models/comment.model';
@@ -27,7 +27,7 @@ import { GroupService } from '../../../shared/group';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CommonReactionService } from '../services/common-reaction.service';
+import { CommonReactionService } from '../services';
 
 describe('ReactionService', () => {
   let createReactionService: CreateReactionService;

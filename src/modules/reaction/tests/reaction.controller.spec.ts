@@ -15,7 +15,7 @@ import { GroupService } from '../../../shared/group';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CommonReactionService } from '../services/common-reaction.service';
+import { CommonReactionService } from '../services';
 
 describe('ReactionController', () => {
   let createReactionService: CreateReactionService;
