@@ -14,6 +14,8 @@ import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
 import { ReactionModule } from 'src/modules/reaction';
 
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ListenerModule } from 'src/listeners';
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -30,6 +32,10 @@ import { ReactionModule } from 'src/modules/reaction';
     MentionModule,
     ReactionModule,
     RecentSearchModule,
+    ListenerModule,
+    EventEmitterModule.forRoot({
+      verboseMemoryLeak: true,
+    }),
   ],
 })
 export class AppModule {

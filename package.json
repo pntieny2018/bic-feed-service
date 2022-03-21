@@ -29,6 +29,7 @@
     "@nestjs/common": "^8.4.0",
     "@nestjs/config": "^1.2.0",
     "@nestjs/core": "^8.4.0",
+    "@nestjs/event-emitter": "^1.0.0",
     "@nestjs/elasticsearch": "^8.0.0",
     "@nestjs/microservices": "^8.4.0",
     "@nestjs/platform-express": "^8.4.0",
@@ -62,6 +63,7 @@
     "winston": "^3.6.0"
   },
   "devDependencies": {
+    "@ef-carbon/tspm": "^2.2.5",
     "@golevelup/ts-jest": "^0.3.2",
     "@nestjs/cli": "^8.2.1",
     "@nestjs/schematics": "^8.0.7",
@@ -98,7 +100,7 @@
     "ts-jest": "^27.0.3",
     "ts-loader": "^9.2.3",
     "ts-node": "^10.0.0",
-    "tsconfig-paths": "^3.10.1",
+    "tsconfig-paths": "^3.14.0",
     "typescript": "^4.3.5",
     "webpack": "^5.70.0"
   },
@@ -108,7 +110,6 @@
       "json",
       "ts"
     ],
-    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -119,16 +120,14 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
+      "<rootDir>/sequelize/",
       "<rootDir>/src/",
       "<rootDir>/libs/"
     ],
-    "modulePaths": [
-      "<rootDir>"
-    ]
-  },
-  "moduleNameMapper": {
-    "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
-    "^@app/sentry(|/.*)$": "<rootDir>/libs/sentry/src/$1"
+    "moduleNameMapper": {
+      "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",
+      "^@app/sentry(|/.*)$": "<rootDir>/libs/sentry/src/$1"
+    }
   },
   "husky": {
     "hooks": {

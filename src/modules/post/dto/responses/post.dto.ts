@@ -1,13 +1,15 @@
+import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
-import { PostContentDto } from '../post-content.dto';
-import { SettingDto } from '../setting.dto';
+import { Expose, Type } from 'class-transformer';
+import { IsArray } from 'class-validator';
+import { PostContentDto } from '../common/post-content.dto';
+import { PostSettingDto } from '../common/post-setting.dto';
+import { ReactionCountDto } from '../common/reaction-count.dto';
 
-export class PostDto {
+export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
     type: Number,
-    default: 1,
   })
   @Expose()
   public id: number;
@@ -15,24 +17,52 @@ export class PostDto {
   @ApiProperty({
     description: 'Keyword search',
     type: String,
-    default: 'Bein',
   })
   @Expose()
   public data: PostContentDto;
 
   @ApiProperty({
     description: 'Setting post',
-    type: SettingDto,
+    type: PostSettingDto,
   })
   @Expose()
-  public setting?: SettingDto;
+  public setting: PostSettingDto;
 
   @ApiProperty({
     description: 'To know draft post or not',
-    name: 'is_draft',
     type: Boolean,
-    default: true,
   })
   @Expose()
-  public isDraft = false;
+  public isDraft: boolean;
+
+  @ApiProperty({
+    description: 'Post creator information',
+    type: UserSharedDto,
+  })
+  @Expose()
+  @Type(() => UserSharedDto)
+  public actor: UserSharedDto;
+
+  @ApiProperty({
+    description: 'Array of user',
+    type: UserSharedDto,
+  })
+  @Expose()
+  public mentions: UserSharedDto[];
+
+  @ApiProperty({
+    description: 'Total number of comments',
+    type: Number,
+  })
+  @Expose()
+  public commentCount: number;
+
+  @ApiProperty({
+    description: 'Array of reaction count',
+    type: Boolean,
+  })
+  @Expose()
+  @Type(() => ReactionCountDto)
+  @IsArray()
+  public reactionCount: ReactionCountDto[] = [];
 }

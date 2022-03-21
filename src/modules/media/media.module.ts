@@ -8,5 +8,6 @@ import { DatabaseModule } from '../../database';
   imports: [UploadModule, DatabaseModule],
   controllers: [MediaController],
   providers: [MediaService],
+  exports: [MediaService],
 })
 export class MediaModule {}
