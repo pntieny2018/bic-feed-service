@@ -20,7 +20,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<boolean> {
-    return this._postService.createPost(user.userId, createPostDto);
+    return this._postService.createPost(user.id, createPostDto);
   }
 
   @ApiOperation({ summary: 'Update post' })
@@ -31,7 +31,7 @@ export class PostController {
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createPostDto: UpdatePostDto
   ): Promise<boolean> {
-    return this._postService.updatePost(postId, user.userId, createPostDto);
+    return this._postService.updatePost(postId, user.id, createPostDto);
   }
 
   @Get('/:id')

@@ -61,7 +61,7 @@ export const mockPostCannotReact = {
 };
 
 export const mockUserDto: UserDto = {
-  userId: 33,
+  id: 33,
 };
 
 export const mock15ReactionOnAPost = [

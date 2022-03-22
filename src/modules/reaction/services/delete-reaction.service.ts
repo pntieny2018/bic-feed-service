@@ -30,12 +30,12 @@ export class DeleteReactionService {
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionDto> {
-    const { userId } = userDto;
+    const { id } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
-        return this._deletePostReaction(userId, createReactionDto);
+        return this._deletePostReaction(id, createReactionDto);
       case ReactionEnum.COMMENT:
-        return this._deleteCommentReaction(userId, createReactionDto);
+        return this._deleteCommentReaction(id, createReactionDto);
       default:
         throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
     }

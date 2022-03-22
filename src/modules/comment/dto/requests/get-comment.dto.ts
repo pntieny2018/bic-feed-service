@@ -4,10 +4,9 @@ import { PageOptionsDto } from '../../../../common/dto/pagination';
 
 export class GetCommentDto extends PageOptionsDto {
   @ApiProperty({
-    required: false,
+    required: true,
   })
-  @IsOptional()
-  public postId?: number = undefined;
+  public postId: number;
 
   @ApiProperty({
     required: false,

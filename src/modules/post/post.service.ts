@@ -3,16 +3,19 @@ import { Sequelize } from 'sequelize-typescript';
 import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { MediaService } from '../media';
 import { GroupService } from '../../shared/group';
 import { MentionService } from '../mention';
-import { CreatedPostEvent } from '../../events/post';
-import { UpdatedPostEvent } from 'src/events/post';
+import { CreatedPostEvent, UpdatedPostEvent } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
+import { EntityIdDto } from '../../common/dto';
+import { CommentModel } from '../../database/models/comment.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 
 @Injectable()
 export class PostService {
@@ -59,7 +62,7 @@ export class PostService {
       }
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        await this._mentionService.checkValidMentions(groups, mentionUserIds);
       }
 
       const { files, videos, images } = data;
@@ -163,7 +166,7 @@ export class PostService {
 
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        await this._mentionService.checkValidMentions(groups, mentionUserIds);
       }
 
       const { files, videos, images } = data;
@@ -276,5 +279,89 @@ export class PostService {
       );
     }
     return true;
+  }
+
+  public async findPost(entity: EntityIdDto): Promise<IPost> {
+    let conditions = {};
+    if (entity.postId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
+        ],
+        where: {
+          id: entity.postId,
+        },
+      };
+    }
+
+    if (entity.commentId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+          },
+          {
+            model: CommentModel,
+            as: 'comments',
+            where: {
+              id: entity.commentId,
+            },
+          },
+        ],
+      };
+    }
+    if (entity.reactionPostId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+          },
+          {
+            model: PostReactionModel,
+            as: 'reactions',
+            where: {
+              id: entity.reactionPostId,
+            },
+          },
+        ],
+      };
+    }
+
+    if (entity.reactionCommentId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+          },
+          {
+            model: CommentModel,
+            as: 'comments',
+            include: [
+              {
+                model: CommentReactionModel,
+                as: 'reactions',
+                where: {
+                  id: entity.reactionCommentId,
+                },
+              },
+            ],
+          },
+        ],
+      };
+    }
+
+    const post = await this._postModel.findOne(conditions);
+
+    if (!post) {
+      throw new BadRequestException('The post does not exist !');
+    }
+    return post;
   }
 }

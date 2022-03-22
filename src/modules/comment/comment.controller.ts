@@ -104,7 +104,7 @@ export class CommentController {
   public destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number
-  ): Promise<number> {
+  ): Promise<boolean> {
     this._logger.log('delete comment');
     return this._commentService.destroy(user, commentId);
   }
