@@ -1,3 +1,4 @@
+import { getDatabaseConfig } from '../../config/database/database.config';
 import { UserDto } from '../auth';
 import { FindOptions, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
@@ -147,19 +148,20 @@ export class MediaService {
    * @throws HttpException
    */
   public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
+    const { schema } = getDatabaseConfig();
     if (mediaIds.length === 0) return true;
-    const query = ` UPDATE feed.media
+    const query = ` UPDATE ${schema}.media
                 SET is_draft = tmp.not_has_post
                 FROM (
                   SELECT media.id, 
                   CASE WHEN COUNT(post_media.post_id) > 0 THEN false ELSE true
                   END as not_has_post
-                  FROM feed.media
-                  LEFT JOIN feed.post_media ON post_media.media_id = media.id
+                  FROM ${schema}.media
+                  LEFT JOIN ${schema}.post_media ON post_media.media_id = media.id
                   WHERE media.id IN (:mediaIds)
                   GROUP BY media.id
                 ) as tmp 
-                WHERE tmp.id = feed.media.id`;
+                WHERE tmp.id = ${schema}.media.id`;
     await this._sequelizeConnection.query(query, {
       replacements: {
         mediaIds,
