@@ -1,1 +1,0 @@
-export const FEED_PAGING_DEFAULT_LIMIT = 20;

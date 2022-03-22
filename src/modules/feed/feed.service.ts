@@ -4,9 +4,7 @@ import { UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
-import { FEED_PAGING_DEFAULT_LIMIT } from './feed.constant';
 import sequelize from 'sequelize';
-import { MediaDto } from '../post/dto/common/media.dto';
 import { FeedPostDto } from './dto/response';
 import { UserService } from '../../shared/user';
 import { IPost, PostModel } from '../../database/models/post.model';
@@ -16,6 +14,8 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
+import { MediaService } from '../media/media.service';
+import { PAGING_DEFAULT_LIMIT } from '../../common/constants';
 
 @Injectable()
 export class FeedService {
@@ -31,7 +31,6 @@ export class FeedService {
     getTimelineDto: GetTimelineDto
   ): Promise<PageDto<FeedPostDto>> {
     const { userId } = userDto;
-    getTimelineDto.limit = Math.min(getTimelineDto.limit, FEED_PAGING_DEFAULT_LIMIT);
 
     switch (getTimelineDto.ranking) {
       case FeedRanking.IMPORTANT:
@@ -47,7 +46,6 @@ export class FeedService {
   ): Promise<PageDto<FeedPostDto>> {
     const { limit, offset, groupId } = getTimelineDto;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
-
     try {
       const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
         where: {
@@ -96,6 +94,7 @@ export class FeedService {
             required: false,
           },
           {
+            model: PostReactionModel,
             where: {
               createdBy: userId,
             },
@@ -109,7 +108,6 @@ export class FeedService {
           ['createdAt', 'DESC'],
         ],
       });
-
       if (rows.length === 0) {
         throw new Error('No more posts.');
       }
@@ -117,7 +115,7 @@ export class FeedService {
 
       return new PageDto(posts, {
         offset: offset + limit,
-        limit: FEED_PAGING_DEFAULT_LIMIT,
+        limit: PAGING_DEFAULT_LIMIT,
       });
     } catch (e) {
       this._logger.error(e, e?.stack);
@@ -160,7 +158,6 @@ export class FeedService {
   private async _convertToFeedPostDto(rows: PostModel[]): Promise<FeedPostDto[]> {
     const userIds = FeedService._getUserIds(rows);
     const userSharedDtos = (await this._userService.getMany(userIds)).filter(Boolean);
-
     return rows.map((row: PostModel) => {
       row = row.toJSON();
       const post = new FeedPostDto();
@@ -169,9 +166,13 @@ export class FeedService {
       post.isDraft = row.isDraft;
 
       post.actor = userSharedDtos.find((u) => u.id === row.createdBy);
+      if (!!post.actor === false) {
+        throw new Error('Can not get data of user on Redis.');
+      }
+
       post.createdAt = row.createdAt;
 
-      const mediaTypes = MediaDto.filterMediaType(row.media);
+      const mediaTypes = MediaService.filterMediaType(row.media);
       post.data = {
         content: row.content,
         ...mediaTypes,
@@ -197,6 +198,9 @@ export class FeedService {
 
       post.mentions = row.mentions.map((mention) => {
         const mentionedUser = userSharedDtos.find((u) => u.id === mention.userId);
+        if (!!mentionedUser === false) {
+          throw new Error('Can not get data of user on Redis.');
+        }
         return mentionedUser;
       });
 

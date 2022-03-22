@@ -30,10 +30,10 @@ import { PostMediaModel } from './post-media.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
 import { PostGroupModel } from './post-group.model';
 import { PostReactionModel } from './post-reaction.model';
-import { StringHelper } from 'src/common/helpers';
-import { getDatabaseConfig } from 'src/config/database';
 import { Literal } from 'sequelize/types/utils';
 import sequelize from 'sequelize';
+import { StringHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
 
 export interface IPost {
   id: number;
@@ -148,12 +148,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
                                string_agg(cast(TT as varchar),',') AS total_list 
                                FROM (
                                        SELECT 
-                                           COUNT(${schema}.post_reaction.id ) as TT,
-                                           ${schema}.post_reaction.reaction_name as RN,
-                                           MIN(${schema}.post_reaction.created_at) as minDate
-                                       FROM   ${schema}.post_reaction
-                                       WHERE  ${schema}.post_reaction.post_id = "PostModel"."id"
-                                       GROUP BY ${schema}.post_reaction.reaction_name
+                                           COUNT(${schema}.posts_reactions.id ) as TT,
+                                           ${schema}.posts_reactions.reaction_name as RN,
+                                           MIN(${schema}.posts_reactions.created_at) as minDate
+                                       FROM   ${schema}.posts_reactions
+                                       WHERE  ${schema}.posts_reactions.post_id = "PostModel"."id"
+                                       GROUP BY ${schema}.posts_reactions.reaction_name
                                        ORDER BY minDate ASC
                                ) as orderBefore
                        ) AS RC

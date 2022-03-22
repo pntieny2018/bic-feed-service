@@ -2,16 +2,11 @@
 module.exports = {
   async up(queryInterface, sequelize) {
     const data = [];
-    const userIds = [5, 3, 7];
-    for (let i = 0; i <= 5; i++) {
-      const x = Date.now() + Math.random() * 36000000 * (Math.random() > 0.5 ? 1 : -1);
-      const important_expired_at = Math.random() > 0.5 ? new Date(x) : null;
+    for (let i = 0; i <= 100; i++) {
       data.push({
-        created_by: userIds[Math.floor(Math.random() * userIds.length)],
-        updated_by: userIds[Math.floor(Math.random() * userIds.length)],
+        created_by: 1,
+        updated_by: 1,
         content: `content ${i} ...`,
-        important_expired_at: important_expired_at,
-        created_at: new Date(Date.now() + Math.random() * 36000000 * (Math.random() > 0.5 ? 1 : -1))
       });
     }
 

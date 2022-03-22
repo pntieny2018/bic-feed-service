@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 const schemaName = process.env.POSTGRES_SCHEMA;
-const tableName = 'comment_reaction';
+const tableName = 'comments_reactions';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(

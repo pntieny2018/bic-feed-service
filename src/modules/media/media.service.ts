@@ -9,6 +9,8 @@ import { MediaModel, MediaType } from '../../database/models/media.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { ArrayHelper } from '../../common/helpers';
 import { Op } from 'sequelize';
+import { FileDto, ImageDto, VideoDto } from '../post/dto/common/media.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class MediaService {
@@ -168,5 +170,29 @@ export class MediaService {
       raw: true,
     });
     return true;
+  }
+
+  /**
+   * Filter media type
+   * @param media Media[]
+   * @returns object
+   */
+  public static filterMediaType(media: IMedia[]): {
+    files: FileDto[];
+    videos: VideoDto[];
+    images: ImageDto[];
+  } {
+    const mediaTypes = {
+      files: [],
+      videos: [],
+      images: [],
+    };
+    media.forEach((media: IMedia) => {
+      const TypeMediaDto =
+        media.type === 'file' ? FileDto : media.type === 'image' ? ImageDto : VideoDto;
+      const typeMediaDto = plainToInstance(TypeMediaDto, media);
+      mediaTypes[`${media.type}s`].push(typeMediaDto);
+    });
+    return mediaTypes;
   }
 }

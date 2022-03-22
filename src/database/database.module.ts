@@ -22,7 +22,6 @@ import { IDatabaseConfig } from '../config/database';
             underscored: true,
             timestamps: true,
             schema: databaseConfig.schema,
-          
           },
           benchmark: true,
           logQueryParameters: true,
