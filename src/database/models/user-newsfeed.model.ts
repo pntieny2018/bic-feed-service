@@ -1,4 +1,4 @@
-import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
 export interface IUserNewsFeed {
@@ -17,4 +17,7 @@ export class UserNewsFeedModel extends Model implements IUserNewsFeed {
   @PrimaryKey
   @Column
   public postId: number;
+
+  @BelongsTo(() => PostModel)
+  public postModel: PostModel;
 }
