@@ -140,7 +140,6 @@ describe('PostService', () => {
       const { files, videos, images } = mockedCreatePostDto.data;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
-      console.log('mentionUserIds=', mentionUserIds) 
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
