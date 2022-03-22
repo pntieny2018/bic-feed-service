@@ -143,7 +143,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
-      //mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
+      mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
       mentionService.create = jest.fn(); 
       postService.addPostGroup = jest.fn().mockResolvedValue(true);
       mediaService.activeMedia = jest.fn(); 
@@ -161,7 +161,7 @@ describe('PostService', () => {
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
-      //expect(mentionService.checkValidMentions).toBeCalledWith(mockedCreatePostDto.audience.groups, mockedCreatePostDto.data.content, mentionUserIds)
+      expect(mentionService.checkValidMentions).toBeCalledWith(mockedCreatePostDto.audience.groups, mockedCreatePostDto.data.content, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
 
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
@@ -245,7 +245,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
-      //mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
+      mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
       mentionService.setMention = jest.fn(); 
       postService.setPostGroup = jest.fn().mockResolvedValue(true);
       mediaService.setMediaPost = jest.fn();
@@ -264,7 +264,7 @@ describe('PostService', () => {
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
-      //expect(mentionService.checkValidMentions).toBeCalledWith(mockedUpdatePostDto.audience.groups, mockedUpdatePostDto.data.content, mentionUserIds)
+      expect(mentionService.checkValidMentions).toBeCalledWith(mockedUpdatePostDto.audience.groups, mockedUpdatePostDto.data.content, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
       
       expect(sequelize.transaction).toBeCalledTimes(1);
