@@ -5,7 +5,6 @@ import { PostReactionModel } from '../../../database/models/post-reaction.model'
 import { UserDto } from '../../auth';
 import { DeleteReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
-import { CommonReactionService } from './common-reaction.service';
 
 @Injectable()
 export class DeleteReactionService {
@@ -14,7 +13,7 @@ export class DeleteReactionService {
   public constructor(
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
-    private readonly _commentReactionModel: typeof CommentReactionModel,
+    private readonly _commentReactionModel: typeof CommentReactionModel
   ) {}
 
   /**
