@@ -26,6 +26,13 @@ export class FeedService {
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
 
+  /**
+   * Get timeline
+   * @param userDto UserDto
+   * @param getTimelineDto GetTimelineDto
+   * @returns Promise resolve PageDto
+   * @throws HttpException
+   */
   public getTimeline(
     userDto: UserDto,
     getTimelineDto: GetTimelineDto
@@ -40,6 +47,13 @@ export class FeedService {
     }
   }
 
+  /**
+   * Get important ranking timeline
+   * @param userId number
+   * @param getTimelineDto GetTimelineDto
+   * @returns Promise resolve PageDto
+   * @throws HttpException
+   */
   private async _getImportantRankingTimeline(
     userId: number,
     getTimelineDto: GetTimelineDto
@@ -126,6 +140,11 @@ export class FeedService {
     }
   }
 
+  /**
+   * Get id constrains
+   * @param getTimelineDto GetTimelineDto
+   * @returns object
+   */
   private static _getIdConstrains(getTimelineDto: GetTimelineDto): object {
     const constraints = {};
     if (getTimelineDto.idGT) {
@@ -155,6 +174,12 @@ export class FeedService {
     return constraints;
   }
 
+  /**
+   * Convert to FeedPostDto
+   * @param rows PostModel[]
+   * @returns Promise resolve FeedPostDto[]
+   * @throws Error
+   */
   private async _convertToFeedPostDto(rows: PostModel[]): Promise<FeedPostDto[]> {
     const userIds = FeedService._getUserIds(rows);
     const userSharedDtos = (await this._userService.getMany(userIds)).filter(Boolean);
@@ -216,6 +241,11 @@ export class FeedService {
     });
   }
 
+  /**
+   * Get userIds
+   * @param rows IPost[]
+   * @returns number[]
+   */
   private static _getUserIds(rows: IPost[]): number[] {
     const userIds: number[] = [];
     rows.forEach((row) => {

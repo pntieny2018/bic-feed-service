@@ -10,7 +10,6 @@ import { CreateReactionService, DeleteReactionService, CommonReactionService } f
 
 const KAFKA_CONFIG = getKafkaConfig();
 
-//FIXME: change expose of dtos to snake_case
 @Module({
   imports: [
     DatabaseModule,
