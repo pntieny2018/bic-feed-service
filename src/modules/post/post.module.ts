@@ -11,6 +11,5 @@ import { MentionModule } from '../mention';
   imports: [DatabaseModule, UserModule, GroupModule, MediaModule, MentionModule],
   providers: [PostService],
   controllers: [PostController],
-  exports: [PostService],
 })
 export class PostModule {}

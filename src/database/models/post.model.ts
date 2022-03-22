@@ -117,6 +117,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   })
   public mentions?: MentionModel[];
 
+  public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+
   @HasMany(() => UserNewsFeedModel, {
     foreignKey: 'postId',
   })
@@ -134,8 +136,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => PostReactionModel)
   public postReactions: PostReactionModel[];
-
-  public addMedia!: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
