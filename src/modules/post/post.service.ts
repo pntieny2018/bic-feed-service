@@ -11,7 +11,7 @@ import { GroupService } from '../../shared/group/group.service';
 
 import { MentionService } from '../mention';
 import { CreatedPostEvent } from '../../events/post';
-import { UpdatedPostEvent } from 'src/events/post';
+import { UpdatedPostEvent } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
 
@@ -60,7 +60,7 @@ export class PostService {
       }
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
       }
 
       const { files, videos, images } = data;
@@ -86,15 +86,7 @@ export class PostService {
         await this._mediaService.activeMedia(unitMediaIds, authUserId);
       }
 
-      if (groups.length) {
-        const postGroupDataCreate = groups.map((groupId) => {
-          return {
-            postId: post.id,
-            groupId,
-          };
-        });
-        await this._postGroupModel.bulkCreate(postGroupDataCreate);
-      }
+      this.addPostGroup(groups, post.id);
 
       if (mentionUserIds.length) {
         await this._mentionService.create(
@@ -165,7 +157,7 @@ export class PostService {
 
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
       }
 
       const { files, videos, images } = data;
@@ -246,6 +238,23 @@ export class PostService {
 
       throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Add group to post
+   * @param groupIds Array of Group ID
+   * @param postId PostID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async addPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+    if (groupIds.length === 0) return true;
+    const postGroupDataCreate = groupIds.map((groupId) => ({
+      postId: postId,
+      groupId,
+    }));
+    await this._postGroupModel.bulkCreate(postGroupDataCreate);
+    return true;
   }
 
   /**

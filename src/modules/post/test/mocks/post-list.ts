@@ -34,6 +34,36 @@ export const mockedCreatePostDto: CreatePostDto = {
   },
   isDraft: false,
 };
+
+export const mockedUpdatePostDto: CreatePostDto = {
+  data: {
+    content: 'bbb',
+    files: [],
+    images: [],
+    videos: [],
+  },
+  setting: {
+    canReact: false,
+    canComment: true,
+    canShare: true,
+    isImportant: false,
+    importantExpiredAt: null,
+  },
+  mentions: [
+    {
+      id: 1,
+      username: 'abcd',
+      fullname: 'abcd',
+      avatar: 'asdfsdf',
+      groups: [1],
+    },
+  ],
+  audience: {
+    groups: [2],
+  },
+  isDraft: false,
+};
+
 export const mockedPostList: IPost[] = [
   {
     id: 1,
@@ -45,7 +75,7 @@ export const mockedPostList: IPost[] = [
     canReact: true,
     canComment: true,
     content: 'aaaa',
-    isDraft: true,
+    isDraft: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
