@@ -10,10 +10,11 @@ import { MediaService } from '../media/media.service';
 import { GroupService } from '../../shared/group/group.service';
 
 import { MentionService } from '../mention';
-import { CreatedPostEvent } from '../../events/post';
+import { CreatedPostEvent, PublishedPostEvent } from '../../events/post';
 import { UpdatedPostEvent } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
+import { UpdatePostDto } from './dto/requests/update-post.dto';
 
 @Injectable()
 export class PostService {
@@ -122,7 +123,8 @@ export class PostService {
 
   /**
    * Update Post
-   * @param authUser UserDto
+   * @param postId postID
+   * @param authUserId userID
    * @param createPostDto UpdatePostDto
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
@@ -130,11 +132,11 @@ export class PostService {
   public async updatePost(
     postId: number,
     authUserId: number,
-    createPostDto: CreatePostDto
+    updatePostDto: UpdatePostDto
   ): Promise<boolean> {
     let transaction;
     try {
-      const { isDraft, data, setting, mentions, audience } = createPostDto;
+      const { isDraft, data, setting, mentions, audience } = updatePostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
         throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
@@ -206,6 +208,45 @@ export class PostService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Publish Post
+   * @param postId PostID
+   * @param authUserId UserID
+   * @returns Promise resolve recentSearchPostDto
+   * @throws HttpException
+   */
+  public async publishPost(postId: number, authUserId: number): Promise<boolean> {
+    try {
+      const post = await this._postModel.findOne({ where: { id: postId } });
+      if (!post) {
+        throw new HttpException('The post not found', HttpStatus.BAD_REQUEST);
+      }
+
+      if (post.createdBy !== authUserId) {
+        throw new HttpException('Access denied', HttpStatus.BAD_REQUEST);
+      }
+
+      await this._postModel.update(
+        {
+          isDraft: true,
+        },
+        {
+          where: {
+            id: postId,
+            createdBy: authUserId,
+          },
+        }
+      );
+
+      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(postId));
+
+      return true;
+    } catch (error) {
       this._logger.error(error, error?.stack);
       throw error;
     }

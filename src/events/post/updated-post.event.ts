@@ -1,7 +1,5 @@
 import { AppEvent } from '../event.constant';
 import { IEventPayload } from '../../common/interfaces';
-import { PostResponseDto } from 'src/modules/post/dto/responses';
-import { PostModel } from '../../database/models/post.model';
 import { AudienceDto } from '../../modules/post/dto/common/audience.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostSettingDto } from '../../modules/post/dto/common/post-setting.dto';

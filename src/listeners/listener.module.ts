@@ -1,3 +1,4 @@
+import { PostModule } from '../modules/post';
 import postListeners from './post';
 import { Module } from '@nestjs/common';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
@@ -19,6 +20,7 @@ import { ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService],
     }),
+    PostModule,
   ],
   providers: [...postListeners],
 })
