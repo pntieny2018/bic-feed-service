@@ -174,7 +174,7 @@ export class MediaService {
 
   /**
    * Filter media type
-   * @param media Media[]
+   * @param media IMedia[]
    * @returns object
    */
   public static filterMediaType(media: IMedia[]): {

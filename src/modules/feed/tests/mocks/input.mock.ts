@@ -63,7 +63,7 @@ export const mockPostModelFindAndCountAll = [
       },
     ],
     mentions: [],
-    postReactions: [],
+    ownerReactions: [],
   },
   {
     id: 1,
@@ -122,7 +122,7 @@ export const mockPostModelFindAndCountAll = [
       { id: 9, mentionableType: MentionableType.POST, entityId: 1, userId: 1 },
       { id: 10, mentionableType: MentionableType.POST, entityId: 1, userId: 33 },
     ],
-    postReactions: [
+    ownerReactions: [
       {
         id: 19,
         postId: 1,
@@ -183,7 +183,7 @@ export const mockPostModelFindAndCountAll = [
       { id: 3, mentionableType: MentionableType.POST, entityId: 5, userId: 33 },
       { id: 4, mentionableType: MentionableType.POST, entityId: 5, userId: 2 },
     ],
-    postReactions: [
+    ownerReactions: [
       {
         id: 5,
         postId: 5,
@@ -232,7 +232,7 @@ export const mockPostModelFindAndCountAll = [
       { id: 6, mentionableType: MentionableType.POST, entityId: 4, userId: 33 },
       { id: 8, mentionableType: MentionableType.POST, entityId: 4, userId: 2 },
     ],
-    postReactions: [
+    ownerReactions: [
       {
         id: 20,
         postId: 4,
@@ -280,7 +280,7 @@ export const mockPostModelFindAndCountAll = [
       },
     ],
     mentions: [{ id: 5, mentionableType: MentionableType.POST, entityId: 2, userId: 1 }],
-    postReactions: [
+    ownerReactions: [
       {
         id: 18,
         postId: 2,

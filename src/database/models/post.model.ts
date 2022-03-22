@@ -134,7 +134,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   })
   public postGroups: PostGroupModel[];
 
-  @HasMany(() => PostReactionModel)
+  @HasMany(() => PostReactionModel, {
+    as: 'ownerReactions',
+    foreignKey: 'postId',
+  })
   public postReactions: PostReactionModel[];
 
   public static loadReactionsCount(alias?: string): [Literal, string] {

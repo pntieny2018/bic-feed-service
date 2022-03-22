@@ -417,7 +417,7 @@ export const mockGetTimelineOutput = {
     },
   ],
   meta: {
-    offset: 20,
-    limit: 20,
+    offset: 25,
+    limit: 25,
   },
 };

@@ -48,19 +48,5 @@ describe('FeedController', () => {
       expect(result).toEqual(mockGetTimelineOutput);
       expect(feedServiceGetTimeLineSpy).toBeCalledTimes(1);
     });
-
-    it('Should failed to get timeline', async () => {
-      const feedServiceGetTimeLineSpy = jest
-        .spyOn(feedService, 'getTimeline')
-        .mockRejectedValue(
-          new HttpException('Can not get timeline.', HttpStatus.INTERNAL_SERVER_ERROR)
-        );
-      try {
-        const result = await feedController.getTimeline(mockUserDto, mockGetTimeLineDto);
-      } catch (e) {
-        expect(e.message).toEqual('Can not get timeline.');
-      }
-      expect(feedServiceGetTimeLineSpy).toBeCalledTimes(1);
-    });
   });
 });

@@ -23,6 +23,8 @@ class EPostModel extends PostModel {
   public belongToGroup: Array<object>;
 
   public audienceGroup: Array<object>;
+
+  public ownerReactions: Array<object>;
 }
 
 describe('FeedService', () => {
@@ -96,33 +98,10 @@ describe('FeedService', () => {
       const userServiceGetManySpy = jest
         .spyOn(userService, 'getMany')
         .mockResolvedValue(mockUserServiceGetManyResult);
-      try {
-        const result = await feedService.getTimeline(mockUserDto, mockGetTimeLineDto);
-      } catch (e) {
-        expect(e.message).toEqual('No more posts.');
-      }
-      expect(postModelFindAndCountAllSpy).toBeCalledTimes(1);
-      expect(userServiceGetManySpy).toBeCalledTimes(0);
-    });
-
-    it('Should error when can not get user data on redis', async () => {
-      const input = createMock<PostModel[]>(mockPostModelFindAndCountAll as EPostModel[]);
-      input.forEach((e) => {
-        e.toJSON = () => e;
-      });
-      const postModelFindAndCountAllSpy = jest
-        .spyOn(postModel, 'findAndCountAll')
-        .mockResolvedValue({ rows: input, count: [] });
-      const userServiceGetManySpy = jest
-        .spyOn(userService, 'getMany')
-        .mockResolvedValue([]);
-      try {
-        const result = await feedService.getTimeline(mockUserDto, mockGetTimeLineDto);
-      } catch (e) {
-        expect(e.message).toEqual('Can not get timeline.')
-      }
+      const result = await feedService.getTimeline(mockUserDto, mockGetTimeLineDto);
+      expect(result.data).toEqual([]);
       expect(postModelFindAndCountAllSpy).toBeCalledTimes(1);
       expect(userServiceGetManySpy).toBeCalledTimes(1);
-    })
+    });
   });
 });

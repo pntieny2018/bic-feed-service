@@ -109,6 +109,7 @@ export class FeedService {
           },
           {
             model: PostReactionModel,
+            as: 'ownerReactions',
             where: {
               createdBy: userId,
             },
@@ -122,9 +123,7 @@ export class FeedService {
           ['createdAt', 'DESC'],
         ],
       });
-      if (rows.length === 0) {
-        throw new Error('No more posts.');
-      }
+
       const posts = await this._convertToFeedPostDto(rows);
 
       return new PageDto(posts, {
@@ -133,9 +132,6 @@ export class FeedService {
       });
     } catch (e) {
       this._logger.error(e, e?.stack);
-      if (e?.message === 'No more posts.') {
-        throw new HttpException(e.message, HttpStatus.NOT_FOUND);
-      }
       throw new HttpException('Can not get timeline.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -178,7 +174,6 @@ export class FeedService {
    * Convert to FeedPostDto
    * @param rows PostModel[]
    * @returns Promise resolve FeedPostDto[]
-   * @throws Error
    */
   private async _convertToFeedPostDto(rows: PostModel[]): Promise<FeedPostDto[]> {
     const userIds = FeedService._getUserIds(rows);
@@ -191,9 +186,6 @@ export class FeedService {
       post.isDraft = row.isDraft;
 
       post.actor = userSharedDtos.find((u) => u.id === row.createdBy);
-      if (!!post.actor === false) {
-        throw new Error('Can not get data of user on Redis.');
-      }
 
       post.createdAt = row.createdAt;
 
@@ -211,21 +203,20 @@ export class FeedService {
       };
 
       post.reactionsCount = PostModel.parseAggregatedReaction(row['reactionsCount']);
-      post.ownerReactions = row.postReactions.map((e: PostReactionModel): IPostReaction => {
-        return {
-          id: e.id,
-          reactionName: e.reactionName,
-          createdAt: e.createdAt,
-        };
-      });
+      post.ownerReactions = (row['ownerReactions'] ?? []).map(
+        (e: PostReactionModel): IPostReaction => {
+          return {
+            id: e.id,
+            reactionName: e.reactionName,
+            createdAt: e.createdAt,
+          };
+        }
+      );
 
       post.commentCount = parseInt(row['commentsCount'] ?? 0);
 
       post.mentions = row.mentions.map((mention) => {
         const mentionedUser = userSharedDtos.find((u) => u.id === mention.userId);
-        if (!!mentionedUser === false) {
-          throw new Error('Can not get data of user on Redis.');
-        }
         return mentionedUser;
       });
 
