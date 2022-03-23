@@ -35,6 +35,7 @@ export class ClassValidatorBootstrap {
     );
   }
 }
+
 function exceptionFactory(errors: ValidationError[]): void {
   const flattenErrors = [];
   errors.forEach((e) => {

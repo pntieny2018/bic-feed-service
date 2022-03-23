@@ -37,11 +37,11 @@ export class FeedService {
     userDto: UserDto,
     getTimelineDto: GetTimelineDto
   ): Promise<PageDto<FeedPostDto>> {
-    const { userId } = userDto;
+    const { id } = userDto;
 
     switch (getTimelineDto.ranking) {
       case FeedRanking.IMPORTANT:
-        return this._getImportantRankingTimeline(userId, getTimelineDto);
+        return this._getImportantRankingTimeline(id, getTimelineDto);
       default:
         throw new HttpException('Ranking algorithm type not match.', HttpStatus.NOT_FOUND);
     }

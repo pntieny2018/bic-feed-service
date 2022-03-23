@@ -37,7 +37,9 @@ export class UploadService {
     const key = UploadService.getKey(uploadType, {
       extension: path.extname(file.originalname),
     });
+
     const bucket = this.getBucket();
+
     await this._storage.send(
       new PutObjectCommand({
         Bucket: bucket,

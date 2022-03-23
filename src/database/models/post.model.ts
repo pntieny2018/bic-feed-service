@@ -1,14 +1,6 @@
-import { MentionableType } from './../../common/constants/model.constant';
+import { MentionableType } from '../../common/constants';
 import { MentionModel } from './mention.model';
-import {
-  DataTypes,
-  Optional,
-  BelongsToManyAddAssociationsMixin,
-  HasManyAddAssociationMixin,
-  HasManySetAssociationsMixin,
-  HasManyAddAssociationsMixin,
-  BelongsToManySetAssociationsMixin,
-} from 'sequelize';
+import { Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -118,6 +110,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public mentions?: MentionModel[];
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
+
+  @HasMany(() => PostGroupModel)
+  public groups: PostGroupModel[] = [];
+
+  @HasMany(() => PostReactionModel)
+  public reactions: PostReactionModel[];
 
   @HasMany(() => UserNewsFeedModel, {
     foreignKey: 'postId',

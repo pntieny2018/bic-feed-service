@@ -2,8 +2,8 @@ import { UserSharedDto } from 'src/shared/user/dto';
 
 export const mockedUserAuth: UserSharedDto = {
   id: 1,
-  username: 'abcd',
-  fullname: 'aaaa',
-  avatar: 'aaaa',
+  username: 'asdfsdf',
+  fullname: 'asfsdf',
+  avatar: 'aaaaa',
   groups: [1, 2],
 };

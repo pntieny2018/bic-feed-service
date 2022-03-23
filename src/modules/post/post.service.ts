@@ -1,19 +1,21 @@
-import { MentionableType } from './../../common/constants/model.constant';
+import { MentionableType } from '../../common/constants';
 import { Sequelize } from 'sequelize-typescript';
-import { UserService } from './../../shared/user/user.service';
+import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { MediaService } from '../media/media.service';
-import { GroupService } from '../../shared/group/group.service';
-
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { MediaService } from '../media';
+import { GroupService } from '../../shared/group';
 import { MentionService } from '../mention';
-import { CreatedPostEvent, PublishedPostEvent } from '../../events/post';
-import { UpdatedPostEvent } from '../../events/post';
+import { CreatedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
+import { EntityIdDto } from '../../common/dto';
+import { CommentModel } from '../../database/models/comment.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
 
 @Injectable()
@@ -67,7 +69,6 @@ export class PostService {
       const { files, videos, images } = data;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
-
       transaction = await this._sequelizeConnection.transaction();
 
       const post = await this._postModel.create({
@@ -333,5 +334,89 @@ export class PostService {
       );
     }
     return true;
+  }
+
+  public async findPost(entity: EntityIdDto): Promise<IPost> {
+    let conditions = {};
+    if (entity.postId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
+        ],
+        where: {
+          id: entity.postId,
+        },
+      };
+    }
+
+    if (entity.commentId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+          },
+          {
+            model: CommentModel,
+            as: 'comments',
+            where: {
+              id: entity.commentId,
+            },
+          },
+        ],
+      };
+    }
+    if (entity.reactionPostId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+          },
+          {
+            model: PostReactionModel,
+            as: 'reactions',
+            where: {
+              id: entity.reactionPostId,
+            },
+          },
+        ],
+      };
+    }
+
+    if (entity.reactionCommentId) {
+      conditions = {
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+          },
+          {
+            model: CommentModel,
+            as: 'comments',
+            include: [
+              {
+                model: CommentReactionModel,
+                as: 'reactions',
+                where: {
+                  id: entity.reactionCommentId,
+                },
+              },
+            ],
+          },
+        ],
+      };
+    }
+
+    const post = await this._postModel.findOne(conditions);
+
+    if (!post) {
+      throw new BadRequestException('The post does not exist !');
+    }
+    return post;
   }
 }

@@ -15,7 +15,7 @@ export class CommentDataDto {
   @ValidateNested({ each: true })
   @Type(() => ImageMetadataDto)
   @Expose()
-  public images?: ImageMetadataDto[];
+  public images?: ImageMetadataDto[] = [];
 
   @ApiProperty({ required: false, type: [VideoMetadataDto] })
   @IsOptional()
@@ -23,7 +23,7 @@ export class CommentDataDto {
   @ValidateNested({ each: true })
   @Type(() => VideoMetadataDto)
   @Expose()
-  public videos?: VideoMetadataDto[];
+  public videos?: VideoMetadataDto[] = [];
 
   @ApiProperty({ required: false, type: [FileMetadataDto] })
   @IsOptional()
@@ -31,5 +31,5 @@ export class CommentDataDto {
   @ValidateNested({ each: true })
   @Type(() => FileMetadataDto)
   @Expose()
-  public files?: FileMetadataDto[];
+  public files?: FileMetadataDto[] = [];
 }

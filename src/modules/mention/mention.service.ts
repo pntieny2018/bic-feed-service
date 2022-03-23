@@ -1,54 +1,39 @@
-import { UserMentionDto } from './dto';
+import { RemoveMentionDto, UserMentionDto } from './dto';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { UserService } from '../../shared/user';
 import { GroupService } from '../../shared/group';
 import { UserDataShareDto, UserSharedDto } from '../../shared/user/dto';
 import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
-import { MentionHelper } from '../../common/helpers/mention.helper';
 import { IMention, MentionModel } from '../../database/models/mention.model';
 import { plainToInstance } from 'class-transformer';
 import { MentionableType } from '../../common/constants';
 import { ArrayHelper } from '../../common/helpers';
+import { Op, QueryTypes } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { getDatabaseConfig } from '../../config/database';
 
 @Injectable()
 export class MentionService {
   public constructor(
     private _userService: UserService,
     private _groupService: GroupService,
+    @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MentionModel) private _mentionModel: typeof MentionModel
   ) {}
 
   /**
    * Check Valid Mentions
-   * @param groupId number[]
-   * @param content string
+   * @param groupIds
    * @param userIds number[]
    * @throws LogicException
    */
-  public async checkValidMentions(
-    groupIds: number[],
-    content: string,
-    userIds: number[]
-  ): Promise<void> {
+  public async checkValidMentions(groupIds: number[], userIds: number[]): Promise<void> {
     const users: UserSharedDto[] = await this._userService.getMany(userIds);
 
-    const usernames = MentionHelper.findMention(content);
-
-    if (users.length !== userIds.length) {
-      throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
-    }
-
-    if (users.length !== usernames.length) {
-      throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
-    }
-
     for (const user of users) {
-      if (
-        !this._groupService.isMemberOfGroups(groupIds, user.groups) ||
-        !usernames.includes(user.username)
-      ) {
+      if (!this._groupService.isMemberOfGroups(groupIds, user.groups)) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
       }
     }
@@ -150,5 +135,43 @@ export class MentionService {
       );
     }
     return true;
+  }
+
+  public async destroy(removeMentionDto: RemoveMentionDto): Promise<any> {
+    const databaseConfig = getDatabaseConfig();
+
+    if (removeMentionDto.commentId) {
+      return await this._sequelizeConnection.query(
+        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.comment_id = $commentId`,
+        {
+          type: QueryTypes.DELETE,
+          bind: {
+            commentId: removeMentionDto.commentId,
+          },
+        }
+      );
+    }
+
+    if (removeMentionDto.postId) {
+      return await this._sequelizeConnection.query(
+        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.post_id = $postId`,
+        {
+          type: QueryTypes.DELETE,
+          bind: {
+            postId: removeMentionDto.postId,
+          },
+        }
+      );
+    }
+
+    if (removeMentionDto.mentionIds) {
+      return await this._mentionModel.destroy({
+        where: {
+          id: {
+            [Op.in]: removeMentionDto.mentionIds,
+          },
+        },
+      });
+    }
   }
 }

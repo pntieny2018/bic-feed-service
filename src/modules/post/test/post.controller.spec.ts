@@ -10,19 +10,15 @@ describe('PostController', () => {
   let postController: PostController;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      imports: [
-        RedisModule,
-      ],
-      controllers: [
-        PostController,
-      ],
+      imports: [RedisModule],
+      controllers: [PostController],
       providers: [
         {
-          provide: PostService, 
+          provide: PostService,
           useValue: {
-            createPost: jest.fn()
-          }
-        }
+            createPost: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -43,27 +39,27 @@ describe('PostController', () => {
       const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
       expect(postService.createPost).toBeCalledTimes(1);
       expect(postService.createPost).toBeCalledWith(mockedUserAuth.id, mockedCreatePostDto);
-      expect(result).toBe(true); 
+      expect(result).toBe(true);
     });
   });
 
   describe('updatePost', () => {
     it('Update post successfully', async () => {
-      postService.updatePost = jest.fn().mockResolvedValue(true);      
+      postService.updatePost = jest.fn().mockResolvedValue(true);
       const result = await postService.updatePost(1, mockedUserAuth.id, mockedCreatePostDto);
       expect(postService.updatePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledWith(1, mockedUserAuth.id, mockedCreatePostDto);
-      expect(result).toBe(true); 
-    }); 
+      expect(result).toBe(true);
+    });
   });
 
   describe('publishPost', () => {
     it('Publish post successfully', async () => {
-      postService.publishPost = jest.fn().mockResolvedValue(true);      
+      postService.publishPost = jest.fn().mockResolvedValue(true);
       const result = await postService.publishPost(1, mockedUserAuth.id);
       expect(postService.publishPost).toBeCalledTimes(1);
       expect(postService.publishPost).toBeCalledWith(1, mockedUserAuth.id);
-      expect(result).toBe(true); 
-    }); 
+      expect(result).toBe(true);
+    });
   });
 });

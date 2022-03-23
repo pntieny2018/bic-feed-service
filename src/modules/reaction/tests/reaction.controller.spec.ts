@@ -109,7 +109,7 @@ describe('ReactionController', () => {
         const input = mockCreateReactionDto[0];
         const response = createMock<ReactionDto>({
           ...input,
-          userId: mockUserDto.userId,
+          userId: mockUserDto.id,
         });
         const createReactionServiceCreateReactionSpy = jest
           .spyOn(createReactionService, 'createReaction')
@@ -139,7 +139,7 @@ describe('ReactionController', () => {
         const input = mockCreateReactionDto[1];
         const response = createMock<ReactionDto>({
           ...input,
-          userId: mockUserDto.userId,
+          userId: mockUserDto.id,
         });
         const createReactionServiceCreateCommentSpy = jest
           .spyOn(createReactionService, 'createReaction')

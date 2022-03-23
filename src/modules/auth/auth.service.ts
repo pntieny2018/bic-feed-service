@@ -7,11 +7,16 @@ import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { UserService } from '../../shared/user';
 
 @Injectable()
 export class AuthService {
   private _logger = new Logger(AuthService.name);
-  public constructor(private _httpService: HttpService, private _configService: ConfigService) {}
+  public constructor(
+    private _userService: UserService,
+    private _httpService: HttpService,
+    private _configService: ConfigService
+  ) {}
 
   public async login(token: string): Promise<UserDto> {
     const decodedJwt = jwt.decode(token, { complete: true });
@@ -44,13 +49,14 @@ export class AuthService {
     try {
       const payload = await jwt.verify(token, pem);
       const isId = payload['token_use'] === 'id';
-      return new UserDto({
+      const user = new UserDto({
         email: payload['email'],
         username: isId ? payload['custom:username'] : payload['username'],
-        userId: isId ? parseInt(payload['custom:bein_user_id']) : 0,
+        id: isId ? parseInt(payload['custom:bein_user_id']) : 0,
         staffRole: isId ? payload['custom:bein_staff_role'] : null,
-        profile: null,
       });
+      user.profile = await this._userService.get(user.id);
+      return user;
     } catch (e) {
       this._logger.error(e, e?.stack);
       const message = e instanceof TokenExpiredError ? 'Auth token expired' : 'Unauthorized';

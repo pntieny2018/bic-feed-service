@@ -120,9 +120,7 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/sequelize/",
-      "<rootDir>/src/",
-      "<rootDir>/libs/"
+      "<rootDir>/src/"
     ],
     "moduleNameMapper": {
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

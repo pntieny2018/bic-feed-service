@@ -1,8 +1,8 @@
-export const POST_PRODUCER = 'post_producer';
+export const POST_PRODUCER = 'post_notification_producer';
 
-export const REACTION_PRODUCER = 'reaction_producer';
+export const REACTION_PRODUCER = 'reaction_notification_producer';
 
-export const COMMENT_PRODUCER = 'comment_producer';
+export const COMMENT_PRODUCER = 'comment_notification_producer';
 
 export const TOPIC = {
   POST_NOTIFICATION: 'post_notification',

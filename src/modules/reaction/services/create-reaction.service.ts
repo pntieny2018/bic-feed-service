@@ -45,12 +45,12 @@ export class CreateReactionService {
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionDto> {
-    const { userId } = userDto;
+    const { id } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
-        return this._createPostReaction(userId, createReactionDto);
+        return this._createPostReaction(id, createReactionDto);
       case ReactionEnum.COMMENT:
-        return this._createCommentReaction(userId, createReactionDto);
+        return this._createCommentReaction(id, createReactionDto);
       default:
         throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
     }
