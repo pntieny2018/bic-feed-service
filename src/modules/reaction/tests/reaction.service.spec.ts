@@ -10,15 +10,18 @@ import {
   mock21ReactionOnAComment,
   mock21ReactionOnAPost,
   mockComment,
+  mockCommentReactionModelFindOne,
   mockCreateReactionDto,
+  mockDeleteReactionDto,
   mockPostCannotReact,
   mockPostCanReact,
   mockPostGroup,
+  mockPostReactionModelFindOne,
   mockUserDto,
   mockUserSharedDto,
   mockUserSharedDtoNotInTheGroup,
 } from './mocks/input.mock';
-import { DeleteReactionService } from '../services/delete-reaction.service';
+import { DeleteReactionService } from '../services';
 import { PostModel } from '../../../database/models/post.model';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { CommentModel } from '../../../database/models/comment.model';
@@ -27,7 +30,7 @@ import { GroupService } from '../../../shared/group';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CommonReactionService } from '../services/common-reaction.service';
+import { CommonReactionService } from '../services';
 
 describe('ReactionService', () => {
   let createReactionService: CreateReactionService;
@@ -602,73 +605,89 @@ describe('ReactionService', () => {
   describe('Delete reaction', () => {
     describe('Delete post reaction', () => {
       it('Delete post reaction successfully', async () => {
-        const input = mockCreateReactionDto[0];
-        const commonReactionIsExistedPostReaction = jest
-          .spyOn(commonReactionService, 'isExistedPostReaction')
-          .mockResolvedValue(true);
-        const postReactionModelDestroySpy = jest
-          .spyOn(postReactionModel, 'destroy')
-          .mockResolvedValue(1);
-        const response: ReactionDto = {
-          ...input,
-          userId: mockUserDto.id,
-        };
-        expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(response);
-        expect(commonReactionIsExistedPostReaction).toBeCalledTimes(1);
-        expect(postReactionModelDestroySpy).toBeCalledTimes(1);
+        const input = mockDeleteReactionDto[0];
+        const mockmockPostReactionModelFindOne = createMock<PostReactionModel>(
+          mockPostReactionModelFindOne as PostReactionModel
+        );
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(mockmockPostReactionModelFindOne);
+        expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
       });
 
       it('Delete post reaction failed because of non-existed such reaction', async () => {
-        const input = mockCreateReactionDto[0];
-        const commonReactionIsExistedPostReaction = jest
-          .spyOn(commonReactionService, 'isExistedPostReaction')
-          .mockResolvedValue(false);
-        const postReactionModelDestroySpy = jest
-          .spyOn(postReactionModel, 'destroy')
-          .mockResolvedValue(1);
+        const input = mockDeleteReactionDto[0];
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(null);
         try {
           await deleteReactionService.deleteReaction(mockUserDto, input);
         } catch (e) {
-          expect(e.message).toBe('Can not delete reaction.');
+          expect(e.message).toEqual('Can not delete reaction.');
         }
-        expect(commonReactionIsExistedPostReaction).toBeCalledTimes(1);
-        expect(postReactionModelDestroySpy).toBeCalledTimes(0);
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+      });
+
+      it('Delete post reaction failed because of not a reaction of user', async () => {
+        const input = mockDeleteReactionDto[0];
+        const mockmockPostReactionModelFindOne = createMock<PostReactionModel>({
+          ...mockPostReactionModelFindOne,
+          createdBy: 9999,
+        } as PostReactionModel);
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(mockmockPostReactionModelFindOne);
+        try {
+          await deleteReactionService.deleteReaction(mockUserDto, input);
+        } catch (e) {
+          expect(e.message).toEqual('Can not delete reaction.');
+        }
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
       });
     });
 
     describe('Delete comment reaction', () => {
       it('Delete comment reaction successfully', async () => {
-        const input = mockCreateReactionDto[1];
-        const commonReactionIsExistedCommentReaction = jest
-          .spyOn(commonReactionService, 'isExistedCommentReaction')
-          .mockResolvedValue(true);
-        const commentReactionModelDestroySpy = jest
-          .spyOn(commentReactionModel, 'destroy')
-          .mockResolvedValue(1);
-        const response: ReactionDto = {
-          ...input,
-          userId: mockUserDto.id,
-        };
-        expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(response);
-        expect(commonReactionIsExistedCommentReaction).toBeCalledTimes(1);
-        expect(commentReactionModelDestroySpy).toBeCalledTimes(1);
+        const input = mockDeleteReactionDto[1];
+        const mockmockCommentReactionModelFindOne = createMock<CommentReactionModel>(
+          mockCommentReactionModelFindOne as CommentReactionModel
+        );
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(mockmockCommentReactionModelFindOne);
+        expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
       });
 
       it('Delete comment reaction failed because of non-existed such reaction', async () => {
-        const input = mockCreateReactionDto[1];
-        const commonReactionIsExistedCommentReaction = jest
-          .spyOn(commonReactionService, 'isExistedCommentReaction')
-          .mockResolvedValue(false);
-        const commentReactionModelDestroySpy = jest
-          .spyOn(commentReactionModel, 'destroy')
-          .mockResolvedValue(1);
+        const input = mockDeleteReactionDto[1];
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(null);
         try {
           await deleteReactionService.deleteReaction(mockUserDto, input);
         } catch (e) {
-          expect(e.message).toBe('Can not delete reaction.');
+          expect(e.message).toEqual('Can not delete reaction.');
         }
-        expect(commonReactionIsExistedCommentReaction).toBeCalledTimes(1);
-        expect(commentReactionModelDestroySpy).toBeCalledTimes(0);
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
+      });
+
+      it('Delete comment reaction failed because of not a reaction of user', async () => {
+        const input = mockDeleteReactionDto[1];
+        const mockmockCommentReactionModelFindOne = createMock<CommentReactionModel>({
+          ...mockCommentReactionModelFindOne,
+          createdBy: 9999,
+        } as CommentReactionModel);
+        const commentReactionModelFindOneSpy = jest
+          .spyOn(commentReactionModel, 'findOne')
+          .mockResolvedValue(mockmockCommentReactionModelFindOne);
+        try {
+          await deleteReactionService.deleteReaction(mockUserDto, input);
+        } catch (e) {
+          expect(e.message).toEqual('Can not delete reaction.');
+        }
+        expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
       });
     });
   });

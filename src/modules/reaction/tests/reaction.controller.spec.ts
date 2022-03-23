@@ -2,7 +2,7 @@ import { RedisService } from '@app/redis';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateReactionService, DeleteReactionService } from '../services';
-import { mockCreateReactionDto, mockUserDto } from './mocks/input.mock';
+import { mockCreateReactionDto, mockDeleteReactionDto, mockUserDto } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
 import { REACTION_SERVICE } from '../reaction.constant';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
@@ -15,7 +15,7 @@ import { GroupService } from '../../../shared/group';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CommonReactionService } from '../services/common-reaction.service';
+import { CommonReactionService } from '../services';
 
 describe('ReactionController', () => {
   let createReactionService: CreateReactionService;
@@ -109,7 +109,7 @@ describe('ReactionController', () => {
         const input = mockCreateReactionDto[0];
         const response = createMock<ReactionDto>({
           ...input,
-          userId: mockUserDto.userId,
+          userId: mockUserDto.id,
         });
         const createReactionServiceCreateReactionSpy = jest
           .spyOn(createReactionService, 'createReaction')
@@ -139,7 +139,7 @@ describe('ReactionController', () => {
         const input = mockCreateReactionDto[1];
         const response = createMock<ReactionDto>({
           ...input,
-          userId: mockUserDto.userId,
+          userId: mockUserDto.id,
         });
         const createReactionServiceCreateCommentSpy = jest
           .spyOn(createReactionService, 'createReaction')
@@ -167,20 +167,16 @@ describe('ReactionController', () => {
 
   describe('Delete reaction', () => {
     it('Delete post reaction successfully', async () => {
-      const input = mockCreateReactionDto[0];
-      const response = {
-        ...input,
-        userId: mockUserDto.userId,
-      };
+      const input = mockDeleteReactionDto[0];
       const deleteReactionServiceDeleteReactionSpy = jest
         .spyOn(deleteReactionService, 'deleteReaction')
-        .mockResolvedValue(response);
+        .mockResolvedValue(true);
       expect(await reactionController.delete(mockUserDto, input)).toEqual(true);
       expect(deleteReactionServiceDeleteReactionSpy).toBeCalledTimes(1);
     });
 
     it('Delete post reaction failed because of non-existed reaction', async () => {
-      const input = mockCreateReactionDto[0];
+      const input = mockDeleteReactionDto[0];
       const deleteReactionServiceDeleteReactionSpy = jest
         .spyOn(deleteReactionService, 'deleteReaction')
         .mockRejectedValue(

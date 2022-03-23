@@ -1,6 +1,6 @@
 import { IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PageOptionsDto } from '../../../../common/dto/pagination';
+import { PageOptionsDto } from '../../../../common/dto';
 
 export class GetCommentDto extends PageOptionsDto {
   @ApiProperty({

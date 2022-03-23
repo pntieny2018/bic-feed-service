@@ -16,6 +16,8 @@ import { CommentMediaModel } from '../../database/models/comment-media.model';
 import { EntityType } from './media.constants';
 import { getDatabaseConfig } from '../../config/database';
 import { RemoveMediaDto } from './dto';
+import { FileDto, ImageDto, VideoDto } from '../post/dto/common/media.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class MediaService {
@@ -150,19 +152,20 @@ export class MediaService {
    * @throws HttpException
    */
   public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
+    const { schema } = getDatabaseConfig();
     if (mediaIds.length === 0) return true;
-    const query = ` UPDATE feed.media
+    const query = ` UPDATE ${schema}.media
                 SET is_draft = tmp.not_has_post
                 FROM (
                   SELECT media.id, 
                   CASE WHEN COUNT(post_media.post_id) > 0 THEN false ELSE true
                   END as not_has_post
-                  FROM feed.media
-                  LEFT JOIN feed.post_media ON post_media.media_id = media.id
+                  FROM ${schema}.media
+                  LEFT JOIN ${schema}.post_media ON post_media.media_id = media.id
                   WHERE media.id IN (:mediaIds)
                   GROUP BY media.id
                 ) as tmp 
-                WHERE tmp.id = feed.media.id`;
+                WHERE tmp.id = ${schema}.media.id`;
     await this._sequelizeConnection.query(query, {
       replacements: {
         mediaIds,
@@ -263,5 +266,29 @@ export class MediaService {
         },
       }
     );
+  }
+
+  /**
+   * Filter media type
+   * @param media IMedia[]
+   * @returns object
+   */
+  public static filterMediaType(media: IMedia[]): {
+    files: FileDto[];
+    videos: VideoDto[];
+    images: ImageDto[];
+  } {
+    const mediaTypes = {
+      files: [],
+      videos: [],
+      images: [],
+    };
+    media.forEach((media: IMedia) => {
+      const TypeMediaDto =
+        media.type === 'file' ? FileDto : media.type === 'image' ? ImageDto : VideoDto;
+      const typeMediaDto = plainToInstance(TypeMediaDto, media);
+      mediaTypes[`${media.type}s`].push(typeMediaDto);
+    });
+    return mediaTypes;
   }
 }

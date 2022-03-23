@@ -22,7 +22,7 @@ export class PostContentDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => VideoDto)
+  @Type(() => FileDto)
   public files: FileDto[] = [];
 
   @ApiProperty({

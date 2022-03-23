@@ -19,7 +19,7 @@ import { MediaModel } from '../../database/models/media.model';
 import { PageDto } from '../../common/dto/pagination/page.dto';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CommentModel } from '../../database/models/comment.model';
+import { CommentModel, IComment } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
@@ -27,6 +27,7 @@ import { AuthorityService } from '../authority';
 import { PostService } from '../post/post.service';
 import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
+import { UserDataShareDto } from '../../shared/user/dto';
 
 @Injectable()
 export class CommentService {
@@ -46,16 +47,22 @@ export class CommentService {
 
   /**
    * Create new comment
-   * @param user Auth user
-   * @param createCommentDto Create Comment Dto
-   * @param replyId Reply comment id
-   * @return Promise resolve CommentModel
+   * @param user UserDto
+   * @param createCommentDto CreateCommentDto
+   * @param replyId Number
+   * @return Promise resolve CommentResponseDto
    */
   public async create(
     user: UserDto,
     createCommentDto: CreateCommentDto,
     replyId?: number
   ): Promise<CommentResponseDto> {
+    this._logger.debug(
+      `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
+        createCommentDto
+      )},replyId: ${replyId} `
+    );
+
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
@@ -119,12 +126,23 @@ export class CommentService {
     }
   }
 
+  /**
+   * Update comment
+   * @param user UserDto
+   * @param commentId Number
+   * @param updateCommentDto UpdateCommentDto
+   * @return Promise resolve CommentResponseDto
+   */
   public async update(
     user: UserDto,
     commentId: number,
     updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.log('update comment');
+    this._logger.debug(
+      `[update] user: ${JSON.stringify(user)}, updateCommentDto: ${JSON.stringify(
+        updateCommentDto
+      )},commentId: ${commentId} `
+    );
 
     const comment = await this._commentModel.findOne({
       where: {
@@ -199,15 +217,16 @@ export class CommentService {
   }
 
   /**
-   * Get comment
-   * @param commentID
+   * Get single comment
+   * @param commentId Number
+   * @returns Promise resolve CommentResponseDto
    */
-  public async getComment(commentID: number): Promise<CommentResponseDto> {
-    this._logger.debug(`get comment with id: ${commentID}`);
+  public async getComment(commentId: number): Promise<CommentResponseDto> {
+    this._logger.debug(`[getComment] ,commentId: ${commentId} `);
 
     const response = await this._commentModel.findOne({
       where: {
-        id: commentID,
+        id: commentId,
       },
       include: [
         {
@@ -224,20 +243,27 @@ export class CommentService {
 
     const rawComment = response.toJSON();
     await this._mentionService.bindMentionsToComment([rawComment]);
-    await this._userService.bindUserToComment([rawComment]);
+    await this.bindUserToComment([rawComment]);
 
-    return plainToInstance(CommentResponseDto, rawComment);
+    return plainToInstance(CommentResponseDto, rawComment, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
-   * Get list comment
+   * Get comment list
    * @param user UserDto
    * @param getCommentDto GetCommentDto
+   * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getComments(
     user: UserDto,
     getCommentDto: GetCommentDto
   ): Promise<PageDto<CommentResponseDto>> {
+    this._logger.debug(
+      `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(getCommentDto)}`
+    );
+
     const conditions = {};
     const offset = {};
 
@@ -251,7 +277,7 @@ export class CommentService {
 
     conditions['parentId'] = getCommentDto?.parentId ?? 0;
 
-    if (getCommentDto.offset) {
+    if (getCommentDto.offset || getCommentDto.offset === 0) {
       offset['offset'] = getCommentDto.offset;
     }
     if (getCommentDto.idGT) {
@@ -329,14 +355,14 @@ export class CommentService {
         },
       ],
       ...offset,
-      limit: getCommentDto.limit,
-      order: [['createdAt', getCommentDto.order]],
+      limit: getCommentDto?.limit ?? 25,
+      order: [['createdAt', getCommentDto.order ?? 'DESC']],
     });
     const response = rows.map((r) => r.toJSON());
 
     await this._mentionService.bindMentionsToComment(response);
 
-    await this._userService.bindUserToComment(response);
+    await this.bindUserToComment(response);
 
     const comments = plainToInstance(CommentResponseDto, response, {
       excludeExtraneousValues: true,
@@ -350,36 +376,76 @@ export class CommentService {
   }
 
   /**
-   * Delete comment
-   * @param user
-   * @param commentID
+   * Delete single comment
+   * @param user UserDto
+   * @param commentId Number
+   * @returns Promise resolve boolean
    */
-  public async destroy(user: UserDto, commentID: number): Promise<boolean> {
-    this._logger.log('delete comment');
+  public async destroy(user: UserDto, commentId: number): Promise<boolean> {
+    this._logger.debug(`[destroy] user: ${JSON.stringify(user)}, commentID: ${commentId}`);
 
     const comment = await this._commentModel.findOne({
       where: {
-        id: commentID,
+        id: commentId,
         createdBy: user.id,
       },
     });
     if (!comment) {
-      throw new BadRequestException(`Comment ${commentID} not found`);
+      throw new BadRequestException(`Comment ${commentId} not found`);
     }
+
+    const post = await this._postService.findPost({
+      commentId: commentId,
+    });
+
+    await this._authorityService.allowAccess(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
 
     try {
-      await this._mediaService.destroyCommentMedia(user, commentID);
+      await this._mediaService.destroyCommentMedia(user, commentId);
 
       await this._mentionService.destroy({
-        commentId: commentID,
+        commentId: commentId,
       });
       await comment.destroy();
       await transaction.commit();
       return true;
     } catch (e) {
       await transaction.rollback();
+    }
+  }
+
+  /**
+   * Bind user info to comment list
+   * @param commentsResponse  Array<IComment>
+   * @returns Promise resolve void
+   */
+  public async bindUserToComment(commentsResponse: IComment[]): Promise<void> {
+    const actorIds: number[] = [];
+
+    for (const comment of commentsResponse) {
+      actorIds.push(comment.createdBy);
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
+          actorIds.push(cm.createdBy);
+        }
+      }
+    }
+
+    const usersInfo = await this._userService.getMany(actorIds);
+
+    const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
+      excludeExtraneousValues: true,
+    });
+
+    for (const comment of commentsResponse) {
+      comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
+          cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
+        }
+      }
     }
   }
 }

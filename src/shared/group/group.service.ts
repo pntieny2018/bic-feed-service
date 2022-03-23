@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@app/redis';
-import { GroupSharedDto } from './dto/group-shared.dto';
+import { GroupSharedDto } from './dto';
 
 @Injectable()
 export class GroupService {
@@ -11,8 +11,9 @@ export class GroupService {
   }
 
   public async getMany(groupIds: number[]): Promise<GroupSharedDto[]> {
-    const keys = groupIds.map((groupId) => `GS:${groupId}`);
-    return await this._store.mget(keys);
+    const keys = [...new Set(groupIds)].map((groupId) => `GS:${groupId}`);
+    if (keys.length) return await this._store.mget(keys);
+    return [];
   }
 
   /**

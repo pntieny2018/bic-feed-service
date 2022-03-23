@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { PAGING_DEFAULT_LIMIT } from '../../constants';
 
 export enum OrderEnum {
   ASC = 'ASC',
@@ -10,7 +11,7 @@ export class PageOptionsDto {
   @ApiProperty({ enum: OrderEnum, default: OrderEnum.ASC, required: false })
   @IsEnum(OrderEnum)
   @IsOptional()
-  public order?: OrderEnum = OrderEnum.ASC;
+  public order?: OrderEnum = OrderEnum.DESC;
 
   @ApiProperty({
     minimum: 1,
@@ -19,6 +20,7 @@ export class PageOptionsDto {
   })
   @Type(() => Number)
   @IsInt()
+  @Max(PAGING_DEFAULT_LIMIT)
   @Min(1)
   @IsOptional()
   public limit?: number = 25;

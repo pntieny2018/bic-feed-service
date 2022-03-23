@@ -11,7 +11,7 @@ export class PageMetaDto {
   public limit: number;
 
   @ApiProperty()
-  public total: number;
+  public total?: number;
 
   @ApiProperty()
   public hasPreviousPage?: boolean;

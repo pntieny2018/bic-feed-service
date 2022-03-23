@@ -1,5 +1,5 @@
 import { UserDto } from '../../../auth';
-import { CreateReactionDto } from '../../dto/request';
+import { CreateReactionDto, DeleteReactionDto } from '../../dto/request';
 import { ReactionEnum } from '../../reaction.enum';
 
 export const mockCreateReactionDto: CreateReactionDto[] = [
@@ -14,6 +14,35 @@ export const mockCreateReactionDto: CreateReactionDto[] = [
     targetId: 89,
   },
 ];
+
+export const mockDeleteReactionDto: DeleteReactionDto[] = [
+  {
+    target: ReactionEnum.POST,
+    reactionId: 1,
+  },
+  {
+    target: ReactionEnum.COMMENT,
+    reactionId: 2,
+  },
+];
+
+export const mockUserDto: UserDto = {
+  id: 33,
+};
+
+export const mockPostReactionModelFindOne = {
+  id: 1,
+  postId: 5,
+  reactionName: 'smile',
+  createdBy: mockUserDto.id,
+};
+
+export const mockCommentReactionModelFindOne = {
+  id: 2,
+  commentId: 5,
+  reactionName: 'smile',
+  createdBy: mockUserDto.id,
+};
 
 export const mockComment = {
   id: 89,
@@ -58,10 +87,6 @@ export const mockPostCannotReact = {
   updatedAt: new Date(),
   comments: [],
   media: [],
-};
-
-export const mockUserDto: UserDto = {
-  id: 33,
 };
 
 export const mock15ReactionOnAPost = [

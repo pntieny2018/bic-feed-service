@@ -2,9 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
 import { RedisModule } from '@app/redis';
-import { mockedCreatePostDto } from './mocks/post-list';
+import { mockedCreatePostDto, mockedPostList } from './mocks/post-list';
 import { mockedUserAuth } from './mocks/user-auth';
-import { HttpException } from '@nestjs/common';
 
 describe('PostController', () => {
   let postService: PostService;
@@ -40,6 +39,16 @@ describe('PostController', () => {
       const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
       expect(postService.createPost).toBeCalledTimes(1);
       expect(postService.createPost).toBeCalledWith(mockedUserAuth.id, mockedCreatePostDto);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('updatePost', () => {
+    it('Update post successfully', async () => {
+      postService.updatePost = jest.fn().mockResolvedValue(true);
+      const result = await postService.updatePost(1, mockedUserAuth.id, mockedCreatePostDto);
+      expect(postService.updatePost).toBeCalledTimes(1);
+      expect(postService.updatePost).toBeCalledWith(1, mockedUserAuth.id, mockedCreatePostDto);
       expect(result).toBe(true);
     });
   });

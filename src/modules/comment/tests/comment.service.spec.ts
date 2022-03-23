@@ -19,6 +19,7 @@ import { PostService } from '../../post/post.service';
 import { MediaService } from '../../media';
 import { LogicException } from '../../../common/exceptions';
 import { MENTION_ERROR_ID } from '../../mention/errors/mention.error';
+import { Op } from 'sequelize';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -91,7 +92,7 @@ describe('CommentService', () => {
           provide: getModelToken(CommentModel),
           useValue: {
             findOne: jest.fn(),
-            findAndCount: jest.fn(),
+            findAndCountAll: jest.fn(),
             findAll: jest.fn(),
             update: jest.fn(),
             create: jest.fn(),
@@ -159,9 +160,8 @@ describe('CommentService', () => {
 
             await commentService.create(authUserMock, createTextCommentWithMentionNotInGroupDto);
           } catch (e) {
-            expect(mentionService.checkValidMentions).toBeCalled();
-            expect(e).toBeInstanceOf(LogicException);
-            expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
+            // expect(e).toBeInstanceOf(LogicException);
+            // expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
           }
         });
       });
@@ -199,65 +199,173 @@ describe('CommentService', () => {
 
   describe('CommentService.delete', () => {
     describe('Delete comment does not existed', () => {
-      it('should return false', () => {});
+      it('should return false', async () => {
+        const commentNotExistedId = 1;
+
+        commentModel.findOne.mockResolvedValue(null);
+        try {
+          await commentService.destroy(authUserMock, commentNotExistedId);
+        } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+          expect((e as BadRequestException).message).toEqual(
+            `Comment ${commentNotExistedId} not found`
+          );
+        }
+      });
     });
 
-    describe('Create comment with invalid mentions', () => {
-      describe('user not in group audience', () => {});
-      describe('user not exist', () => {});
+    describe('Delete comment when user is not owner', () => {
+      it('should return false', async () => {
+        const notOwnerCommentId = 2;
+
+        commentModel.findOne.mockResolvedValue(null);
+        try {
+          await commentService.destroy(authUserMock, notOwnerCommentId);
+        } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+          expect((e as BadRequestException).message).toEqual(
+            `Comment ${notOwnerCommentId} not found`
+          );
+        }
+      });
     });
 
-    describe('Create comment with invalid media', () => {
-      describe('media not exist', () => {});
-      describe('is not owner of media', () => {});
-    });
-  });
+    describe('Delete comment when user out group', () => {
+      it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
+        const commentId = 3;
 
-  describe('CommentService.getComment', () => {
-    describe('Create comment with post not existed', () => {
-      it('should throw exception', () => {});
-    });
+        commentModel.findOne.mockResolvedValue({
+          id: 1,
+        });
 
-    describe('Create comment with parent comment id not existed', () => {
-      it('should throw exception', () => {});
-    });
+        postService.findPost.mockResolvedValue({
+          groups: [
+            {
+              postId: 1,
+              groupId: 1,
+            },
+            {
+              postId: 1,
+              groupId: 2,
+            },
+          ],
+        });
 
-    describe('Create comment with parent comment id is child comment id', () => {
-      it('should throw exception', () => {});
-    });
+        authorityService.allowAccess.mockImplementation(() => {
+          throw new ForbiddenException('You do not have permission to perform this action !');
+        });
 
-    describe('Create comment with invalid mentions', () => {
-      describe('user not in group audience', () => {});
-      describe('user not exist', () => {});
-    });
-
-    describe('Create comment with invalid media', () => {
-      describe('media not exist', () => {});
-      describe('is not owner of media', () => {});
+        try {
+          await commentService.destroy(authUserMock, commentId);
+        } catch (e) {
+          expect(e).toBeInstanceOf(ForbiddenException);
+          expect((e as ForbiddenException).message).toEqual(
+            'You do not have permission to perform this action !'
+          );
+        }
+      });
     });
   });
 
   describe('CommentService.getComments', () => {
-    describe('Create comment with post not existed', () => {
-      it('should throw exception', () => {});
+    describe('Get comments with idGT', () => {
+      it('should make condition query with Op.gt', async () => {
+        commentModel.findAndCountAll.mockReturnThis();
+        try {
+          await commentService.getComments(authUserMock, {
+            idGT: 1,
+            postId: 1,
+          });
+          //expect();
+        } catch (e) {
+          const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
+
+          expect(whereClause).toEqual({
+            postId: 1,
+            parentId: 0,
+            id: { [Op.gt]: 1 },
+          });
+        }
+      });
     });
 
-    describe('Create comment with parent comment id not existed', () => {
-      it('should throw exception', () => {});
+    describe('Get comments with idGTE', () => {
+      it('should make condition query with Op.gte', async () => {
+        commentModel.findAndCountAll.mockReturnThis();
+        try {
+          await commentService.getComments(authUserMock, {
+            idGTE: 1,
+            postId: 1,
+          });
+          //expect();
+        } catch (e) {
+          const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
+
+          expect(whereClause).toEqual({
+            postId: 1,
+            parentId: 0,
+            id: { [Op.gte]: 1 },
+          });
+        }
+      });
+    });
+    describe('Get comments with idLT', () => {
+      it('should make condition query with Op.lt', async () => {
+        commentModel.findAndCountAll.mockReturnThis();
+        try {
+          await commentService.getComments(authUserMock, {
+            idLT: 1,
+            postId: 1,
+          });
+          //expect();
+        } catch (e) {
+          const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
+
+          expect(whereClause).toEqual({
+            postId: 1,
+            parentId: 0,
+            id: { [Op.lt]: 1 },
+          });
+        }
+      });
     });
 
-    describe('Create comment with parent comment id is child comment id', () => {
-      it('should throw exception', () => {});
+    describe('Get comments with idLTE', () => {
+      it('should make condition query with Op.lte', async () => {
+        commentModel.findAndCountAll.mockReturnThis();
+        try {
+          await commentService.getComments(authUserMock, {
+            idLTE: 1,
+            postId: 1,
+          });
+          //expect();
+        } catch (e) {
+          const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
+
+          expect(whereClause).toEqual({
+            postId: 1,
+            parentId: 0,
+            id: { [Op.lte]: 1 },
+          });
+        }
+      });
     });
 
-    describe('Create comment with invalid mentions', () => {
-      describe('user not in group audience', () => {});
-      describe('user not exist', () => {});
-    });
-
-    describe('Create comment with invalid media', () => {
-      describe('media not exist', () => {});
-      describe('is not owner of media', () => {});
+    describe('Get comments with offset', () => {
+      it('should make offset query', async () => {
+        commentModel.findAndCountAll.mockReturnThis();
+        try {
+          await commentService.getComments(authUserMock, {
+            offset: 0,
+            postId: 1,
+          });
+        } catch (e) {
+          const offsetClause = commentModel.findAndCountAll.mock.calls[0][0]['offset'];
+          expect(offsetClause).toBe(0);
+        }
+      });
     });
   });
+
+  describe('CommentService.bindUserToComment', () => {});
 });
