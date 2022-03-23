@@ -34,6 +34,16 @@ export class PostController {
     return this._postService.updatePost(postId, user.userId, createPostDto);
   }
 
+  @ApiOperation({ summary: 'Publish post' })
+  @GenericApiOkResponse(Boolean, 'Publish post successfully')
+  @Put('/:postId/publish')
+  public publishPost(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseIntPipe) postId: number
+  ): Promise<boolean> {
+    return this._postService.publishPost(postId, user.userId);
+  }
+
   @Get('/:id')
   public getPost(@Param('id', ParseIntPipe) id: number) {
     return this._postService.getPost(id);
