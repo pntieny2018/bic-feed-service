@@ -8,13 +8,16 @@ import { CreatePostDto } from './dto/requests';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { MediaService } from '../media/media.service';
 import { GroupService } from '../../shared/group/group.service';
-
+import { IMedia } from '../../database/models/media.model';
 import { MentionService } from '../mention';
-import { CreatedPostEvent, PublishedPostEvent } from '../../events/post';
+import { CreatedPostEvent, DeletedPostEvent, PublishedPostEvent } from '../../events/post';
 import { UpdatedPostEvent } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
+import { MentionModel } from '../../database/models/mention.model';
+import { MediaModel } from '../../database/models/media.model';
+import { classToPlain, plainToClass } from 'class-transformer';
 
 @Injectable()
 export class PostService {
@@ -42,7 +45,7 @@ export class PostService {
    * Create Post
    * @param authUser UserDto
    * @param createPostDto CreatePostDto
-   * @returns Promise resolve recentSearchPostDto
+   * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
@@ -55,7 +58,8 @@ export class PostService {
       }
 
       const { groups } = audience;
-      const isMember = await this._groupService.isMemberOfGroups(groups, creator.groups);
+      const groupIds = groups.map((i) => i.id);
+      const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
         throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
       }
@@ -87,7 +91,7 @@ export class PostService {
         await this._mediaService.activeMedia(unitMediaIds, authUserId);
       }
 
-      this.addPostGroup(groups, post.id);
+      this.addPostGroup(groupIds, post.id);
 
       if (mentionUserIds.length) {
         await this._mentionService.create(
@@ -126,7 +130,7 @@ export class PostService {
    * @param postId postID
    * @param authUserId userID
    * @param createPostDto UpdatePostDto
-   * @returns Promise resolve recentSearchPostDto
+   * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async updatePost(
@@ -143,7 +147,8 @@ export class PostService {
       }
 
       const { groups } = audience;
-      const isMember = await this._groupService.isMemberOfGroups(groups, creator.groups);
+      const groupIds = groups.map((i) => i.id);
+      const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
         throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
       }
@@ -179,9 +184,9 @@ export class PostService {
           },
         }
       );
-      await this._mediaService.setMediaPost(unitMediaIds, postId);
+      await this._mediaService.setMediaByPost(unitMediaIds, postId);
       await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
-      await this.setPostGroup(groups, post.id);
+      await this.setGroupByPost(groupIds, post.id);
 
       this._eventEmitter.emit(
         UpdatedPostEvent.event,
@@ -211,12 +216,15 @@ export class PostService {
    * Publish Post
    * @param postId PostID
    * @param authUserId UserID
-   * @returns Promise resolve recentSearchPostDto
+   * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
-      const post = await this._postModel.findOne({ where: { id: postId } });
+      const post = await this._postModel.findOne({
+        where: { id: postId },
+        include: [MentionModel, MediaModel],
+      });
       await this._checkPostExistAndOwner(post, authUserId);
 
       await this._postModel.update(
@@ -230,8 +238,31 @@ export class PostService {
           },
         }
       );
-
-      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(postId));
+      const authInfo = await this._userService.get(authUserId);
+      
+      const mentionIds = post.mentions.map((i) => i.userId);
+      const mentions = await this._mentionService.resolveMentions(mentionIds);
+      const groupIds = [1]; //post.groups((i) => i.groupId);
+      const groups = await this._groupService.getMany(groupIds);
+        //const media = MediaService.filterMediaType(post.media);
+       console.log(post.data.images);
+       // console.log('media=', media);
+      this._eventEmitter.emit(
+        PublishedPostEvent.event,
+        new PublishedPostEvent({
+          id: post.id,
+          isDraft: post.isDraft,
+          data: post.data,
+          actor: authInfo,
+          mentions,
+          audience: {
+            groups,
+          },
+          setting: {
+            canReact: post.canReact,
+          },
+        })
+      );
 
       return true;
     } catch (error) {
@@ -269,20 +300,35 @@ export class PostService {
   }
 
   /**
-   * Delete recent search by id
-   * @param createdBy Number
-   * @param id Number
+   * Delete post by id
+   * @param postId postID
+   * @param authUserId auth user ID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async delete(createdBy: number, id: number): Promise<boolean> {
+  public async deletePost(postId: number, authUserId: number): Promise<boolean> {
+    const transaction = await this._sequelizeConnection.transaction();
     try {
+      const post = await this._postModel.findOne({ where: { id: postId } });
+      await this._checkPostExistAndOwner(post, authUserId);
+
+      await this._postModel.destroy({
+        where: {
+          id: postId,
+          createdBy: authUserId,
+        },
+      });
+      await this._mentionService.setMention([], MentionableType.POST, postId);
+      await this._mediaService.setMediaByPost([], postId);
+      await this.setGroupByPost([], postId);
+      this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(post));
+      transaction.commit();
+
       return true;
     } catch (error) {
-      this._logger.error(error);
-      //this.sentryService.captureException(error);
-
-      throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
+      this._logger.error(error, error?.stack);
+      transaction.rollback();
+      throw error;
     }
   }
 
@@ -310,7 +356,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+  public async setGroupByPost(groupIds: number[], postId: number): Promise<boolean> {
     const currentGroups = await this._postGroupModel.findAll({
       where: { postId },
     });

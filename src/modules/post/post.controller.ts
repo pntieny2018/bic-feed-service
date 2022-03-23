@@ -50,7 +50,10 @@ export class PostController {
   }
 
   @Delete('/:id/delete')
-  public deletePost(@Param('id', ParseIntPipe) id: number) {
-    // return this._postService.delete(user.beinUserId, id);
+  public deletePost(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseIntPipe) postId: number
+  ): Promise<boolean> {
+    return this._postService.deletePost(postId, user.userId);
   }
 }

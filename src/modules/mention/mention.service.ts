@@ -65,13 +65,13 @@ export class MentionService {
   /**
    * Resolve mentions by id
    * @param userIds number[]
-   * @returns Promise resolve UserDataShareDto[]
+   * @returns Promise resolve UserSharedDto[]
    */
-  public async resolveMentions(userIds: number[]): Promise<UserDataShareDto[]> {
+  public async resolveMentions(userIds: number[]): Promise<UserSharedDto[]> {
     if (!userIds.length) return [];
     const users = await this._userService.getMany(userIds);
 
-    return plainToInstance(UserDataShareDto, users, {
+    return plainToInstance(UserSharedDto, users, {
       excludeExtraneousValues: true,
     });
   }

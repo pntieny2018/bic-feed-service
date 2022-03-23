@@ -1,5 +1,5 @@
 export class GroupSharedDto {
-  public groupId: number;
+  public id: number;
   public name: string;
   public icon: string;
 }

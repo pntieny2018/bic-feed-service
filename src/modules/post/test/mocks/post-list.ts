@@ -30,7 +30,13 @@ export const mockedCreatePostDto: CreatePostDto = {
     },
   ],
   audience: {
-    groups: [1],
+    groups: [
+      {
+        id: 1,
+        name: 'abcd',
+        icon: 'aaaa',
+      },
+    ],
   },
   isDraft: false,
 };
@@ -59,7 +65,13 @@ export const mockedUpdatePostDto: CreatePostDto = {
     },
   ],
   audience: {
-    groups: [2],
+    groups: [
+      {
+        id: 1,
+        name: 'abcd',
+        icon: 'aaaa',
+      },
+    ],
   },
   isDraft: false,
 };

@@ -24,6 +24,7 @@ import { CreatedPostEvent } from '../../../events/post/created-post.event';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostMediaModel } from '../../../database/models/post-media.model';
 import { PublishedPostEvent } from '../../../events/post';
+import { group } from 'console';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -139,6 +140,7 @@ describe('PostService', () => {
     it('Create post successfully', async () => {
       const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
       const { files, videos, images } = mockedCreatePostDto.data;
+      const groupIds = mockedCreatePostDto.audience.groups.map((i) => i.id)
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
@@ -162,7 +164,7 @@ describe('PostService', () => {
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
-      //expect(mentionService.checkValidMentions).toBeCalledWith(mockedCreatePostDto.audience.groups, mockedCreatePostDto.data.content, mentionUserIds)
+      //expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mockedCreatePostDto.data.content, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
 
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
@@ -177,7 +179,7 @@ describe('PostService', () => {
         mentionableType: MentionableType.POST,
       })))
       expect(postService.addPostGroup).toBeCalledTimes(1)
-      expect(postService.addPostGroup).toHaveBeenCalledWith(mockedCreatePostDto.audience.groups, mockedDataCreatePost.id)
+      expect(postService.addPostGroup).toHaveBeenCalledWith(groupIds, mockedDataCreatePost.id)
       expect(transactionMock.commit).toBeCalledTimes(1);
 
       expect(eventEmitter.emit).toBeCalledTimes(1); 
@@ -241,6 +243,7 @@ describe('PostService', () => {
       const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
       const { files, videos, images } = mockedUpdatePostDto.data;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      const groupIds = mockedUpdatePostDto.audience.groups.map((i) => i.id);
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);  
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
@@ -248,8 +251,8 @@ describe('PostService', () => {
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
       //mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
       mentionService.setMention = jest.fn(); 
-      postService.setPostGroup = jest.fn().mockResolvedValue(true);
-      mediaService.setMediaPost = jest.fn();
+      postService.setGroupByPost = jest.fn().mockResolvedValue(true);
+      mediaService.setMediaByPost = jest.fn();
       
       eventEmitter.emit = jest.fn();
       const transactionMock = createMock<Transaction>({
@@ -265,17 +268,17 @@ describe('PostService', () => {
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
-      //expect(mentionService.checkValidMentions).toBeCalledWith(mockedUpdatePostDto.audience.groups, mockedUpdatePostDto.data.content, mentionUserIds)
+      //expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mockedUpdatePostDto.data.content, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
       
       expect(sequelize.transaction).toBeCalledTimes(1);
 
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
-      expect(mediaService.setMediaPost).toHaveBeenCalledWith(mediaIds, mockedDataUpdatePost.id);      
+      expect(mediaService.setMediaByPost).toHaveBeenCalledWith(mediaIds, mockedDataUpdatePost.id);      
       expect(mentionService.setMention).toBeCalledWith(mentionUserIds, MentionableType.POST, mockedDataUpdatePost.id)
 
-      expect(postService.setPostGroup).toBeCalledTimes(1)
-      expect(postService.setPostGroup).toHaveBeenCalledWith(mockedUpdatePostDto.audience.groups, mockedDataUpdatePost.id)
+      expect(postService.setGroupByPost).toBeCalledTimes(1)
+      expect(postService.setGroupByPost).toHaveBeenCalledWith(groupIds, mockedDataUpdatePost.id)
       expect(transactionMock.commit).toBeCalledTimes(1);
 
       expect(eventEmitter.emit).toBeCalledTimes(1);
@@ -383,7 +386,15 @@ describe('PostService', () => {
       expect(eventEmitter.emit).toBeCalledTimes(1);
       expect(eventEmitter.emit).toBeCalledWith(
         PublishedPostEvent.event,
-        new PublishedPostEvent(mockedDataUpdatePost.id)
+        new PublishedPostEvent({
+          id: mockedDataUpdatePost.id,
+          isDraft: mockedUpdatePostDto.isDraft,
+          data: mockedUpdatePostDto.data,
+          actor: mockedUserAuth,
+          mentions: mockedUpdatePostDto.mentions,
+          audience: mockedUpdatePostDto.audience,
+          setting: mockedUpdatePostDto.setting,
+        })
       );
  
       const [dataUpdate, condition]: any = postModelMock.update.mock.calls[0];

@@ -16,7 +16,11 @@ import { PostModel } from './post.model';
 import { CommentMediaModel } from './comment-media.model';
 import { ApiProperty } from '@nestjs/swagger';
 
-export type MediaType = 'video' | 'image' | 'file';
+export enum MediaType {
+  VIDEO = 'video',
+  IMAGE = 'image',
+  FILE = 'file',
+}
 
 export interface IMedia {
   id: number;

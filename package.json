@@ -121,7 +121,7 @@
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/sequelize/",
-      "<rootDir>/src/",
+      "<rootDir>/src/modules/post",
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {

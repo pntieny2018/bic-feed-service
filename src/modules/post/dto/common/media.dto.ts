@@ -8,6 +8,7 @@ export class MediaDto {
     type: String,
     default: 1,
   })
+  @Expose()
   @IsNotEmpty()
   public id: number;
 
@@ -17,6 +18,7 @@ export class MediaDto {
     type: String,
     default: 'filename.jpg',
   })
+  @Expose()
   @IsOptional()
   @IsString()
   public name?: string;
@@ -28,6 +30,7 @@ export class MediaDto {
     default: 'origin_name.jpg',
   })
   @IsOptional()
+  @Expose()
   public originName?: string;
 
   @ApiProperty({
@@ -36,6 +39,7 @@ export class MediaDto {
     required: false,
     default: 'https://....',
   })
+  @Expose()
   @IsOptional()
   public url?: string;
 }
@@ -47,6 +51,7 @@ export class ImageDto extends MediaDto {
   })
   @IsOptional()
   @IsNumber()
+  @Expose()
   public width?: number;
 
   @ApiProperty({
@@ -55,6 +60,7 @@ export class ImageDto extends MediaDto {
   })
   @IsOptional()
   @IsNumber()
+  @Expose()
   public height?: number;
 }
 

@@ -117,7 +117,7 @@ export class MediaService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setMediaPost(mediaIds: number[], postId: number): Promise<boolean> {
+  public async setMediaByPost(mediaIds: number[], postId: number): Promise<boolean> {
     const currentPostMediaList = await this._postMedia.findAll({
       where: { postId },
     });
