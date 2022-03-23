@@ -36,10 +36,10 @@ export class PostController {
 
   @ApiOperation({ summary: 'Publish post' })
   @GenericApiOkResponse(Boolean, 'Publish post successfully')
-  @Put('/:postId')
+  @Put('/:postId/publish')
   public publishPost(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseIntPipe) postId: number,
+    @Param('postId', ParseIntPipe) postId: number
   ): Promise<boolean> {
     return this._postService.publishPost(postId, user.userId);
   }

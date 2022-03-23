@@ -22,19 +22,6 @@ import { ReactionModule } from '../modules/reaction';
   controllers: [AppController],
   providers: [AppService],
   imports: [
-    ElasticsearchModule.registerAsync({
-      useFactory: async (configService: ConfigService) => {
-        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
-        return {
-          node: elasticsearchConfig.node,
-          auth: {
-            username: elasticsearchConfig.username,
-            password: elasticsearchConfig.password,
-          },
-        };
-      },
-      inject: [ConfigService],
-    }),
     LibModule,
     AuthModule,
     CommentModule,

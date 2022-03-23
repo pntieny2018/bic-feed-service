@@ -12,6 +12,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from '../database';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { IElasticsearchConfig } from '../config/elasticsearch';
 
 @Module({
   imports: [
@@ -19,6 +21,19 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       isGlobal: true,
       cache: true,
       load: [configs],
+    }),
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
     }),
     EventEmitterModule.forRoot({
       verboseMemoryLeak: true,
@@ -100,6 +115,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     }),
     DatabaseModule,
   ],
-  exports: [HttpModule, RedisModule],
+  exports: [HttpModule, ElasticsearchModule],
 })
 export class LibModule {}

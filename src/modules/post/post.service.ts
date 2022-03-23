@@ -149,13 +149,7 @@ export class PostService {
       }
 
       const post = await this._postModel.findOne({ where: { id: postId } });
-      if (!post) {
-        throw new HttpException('The post not found', HttpStatus.BAD_REQUEST);
-      }
-
-      if (post.createdBy !== authUserId) {
-        throw new HttpException('Access denied', HttpStatus.BAD_REQUEST);
-      }
+      await this._checkPostExistAndOwner(post, authUserId);
 
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
@@ -223,17 +217,11 @@ export class PostService {
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
-      if (!post) {
-        throw new HttpException('The post not found', HttpStatus.BAD_REQUEST);
-      }
-
-      if (post.createdBy !== authUserId) {
-        throw new HttpException('Access denied', HttpStatus.BAD_REQUEST);
-      }
+      await this._checkPostExistAndOwner(post, authUserId);
 
       await this._postModel.update(
         {
-          isDraft: true,
+          isDraft: false,
         },
         {
           where: {
@@ -252,6 +240,23 @@ export class PostService {
     }
   }
 
+  /**
+   * Check post exist and owner
+   * @param post Post model
+   * @param authUserId Auth userID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  private async _checkPostExistAndOwner(post, authUserId): Promise<boolean> {
+    if (!post) {
+      throw new HttpException('The post not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (post.createdBy !== authUserId) {
+      throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
+    }
+    return true;
+  }
   /**
    * Get post by id
    * @param id Number
