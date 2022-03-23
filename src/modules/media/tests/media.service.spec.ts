@@ -1,11 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MediaService } from '../media.service';
-import { getModelToken, InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { getModelToken } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { MediaModel } from '../../../database/models/media.model';
 import { PostMediaModel } from '../../../database/models/post-media.model';
 import { CommentMediaModel } from '../../../database/models/comment-media.model';
-import { CommentModel } from '../../../database/models/comment.model';
 
 describe('MediaService', () => {
   let service: MediaService;

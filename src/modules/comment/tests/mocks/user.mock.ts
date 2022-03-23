@@ -1,5 +1,6 @@
 import { UserDto } from '../../../auth';
 import { UserDataShareDto } from '../../../../shared/user/dto';
+import { ObjectHelper } from '../../../../common/helpers';
 
 export const authUserMock: UserDto = {
   id: 1,
@@ -16,6 +17,9 @@ export const authUserMock: UserDto = {
   },
 };
 
+export const actorComment: UserDataShareDto = {
+  ...(ObjectHelper.omit(['groups'], authUserMock.profile) as any),
+};
 export const authUserNotInGroupContainPostMock: UserDto = {
   id: 2,
   username: 'john.kendy',

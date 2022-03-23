@@ -1,4 +1,4 @@
-import { AuthUser } from './../auth/decorators/auth.decorator';
+import { AuthUser } from '../auth';
 import { Controller, Delete, Get, Post, Body, Param, ParseIntPipe, Put } from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
 import { PostService } from './post.service';
@@ -41,7 +41,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number
   ): Promise<boolean> {
-    return this._postService.publishPost(postId, user.userId);
+    return this._postService.publishPost(postId, user.id);
   }
 
   @Get('/:id')

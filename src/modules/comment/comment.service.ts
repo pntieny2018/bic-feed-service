@@ -55,7 +55,7 @@ export class CommentService {
   public async create(
     user: UserDto,
     createCommentDto: CreateCommentDto,
-    replyId?: number
+    replyId = 0
   ): Promise<CommentResponseDto> {
     this._logger.debug(
       `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
@@ -78,14 +78,14 @@ export class CommentService {
     try {
       const comment = await this._commentModel.create({
         createdBy: user.id,
-        parentId: replyId ? replyId : 0,
-        content: createCommentDto.data?.content,
+        parentId: replyId,
+        content: createCommentDto.data.content,
         postId: post.id,
       });
 
-      const usersMentions = createCommentDto?.mentions ?? [];
+      const usersMentions = createCommentDto.mentions;
 
-      if (usersMentions.length) {
+      if (usersMentions && usersMentions.length) {
         const userMentionIds = usersMentions.map((u) => u.id);
         const groupAudienceIds = post.groups.map((g) => g.groupId);
 
@@ -101,9 +101,9 @@ export class CommentService {
       }
 
       const media = [
-        ...(createCommentDto.data?.files ?? []),
-        ...(createCommentDto.data?.images ?? []),
-        ...(createCommentDto.data?.videos ?? []),
+        ...createCommentDto.data.files,
+        ...createCommentDto.data.images,
+        ...createCommentDto.data.videos,
       ];
 
       if (media.length) {
@@ -122,7 +122,7 @@ export class CommentService {
     } catch (ex) {
       await transaction.rollback();
 
-      throw new InternalServerErrorException("Can't create comment");
+      throw ex;
     }
   }
 

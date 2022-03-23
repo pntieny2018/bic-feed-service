@@ -1,7 +1,7 @@
 import { basename } from 'path';
 import { ApiProperty } from '@nestjs/swagger';
 import { IDocumentMetadata } from './interfaces';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class FileMetadataDto implements IDocumentMetadata {
