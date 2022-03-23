@@ -16,7 +16,7 @@ export class ClassValidatorBootstrap {
   /**
    * Initializers the ClassValidatorBootstrap.
    * Make class-validators can be injected as dependency module providers.
-   * Use ValidationPipe as global pipe with custom errors response
+   * Use ValidationPipe as global pipes with custom errors response
    * @param app Reference instance of INestApplication.
    * @param module Class constructor of module or DynamicModule
    * @return void

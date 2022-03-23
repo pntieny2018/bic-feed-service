@@ -17,7 +17,7 @@ export class CreateCommentDto {
   @Type(() => CommentDataDto)
   public data: CommentDataDto;
 
-  @ApiProperty({ type: [UserDataShareDto] })
+  @ApiProperty({ type: [UserDataShareDto], required: false })
   @Type(() => UserDataShareDto)
-  public mentions?: UserDataShareDto[];
+  public mentions?: UserDataShareDto[] = [];
 }
