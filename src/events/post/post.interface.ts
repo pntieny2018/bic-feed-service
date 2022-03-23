@@ -6,6 +6,7 @@ export interface IPostEventPayload {
   id: number;
   isDraft: boolean;
   data: PostContentDto;
+  commentsCount: number;
   audience: AudienceDto;
   mentions: UserSharedDto[];
   actor: UserSharedDto;

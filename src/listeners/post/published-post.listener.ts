@@ -15,7 +15,7 @@ export class PublishedPostListener {
     if (isDraft) return;
 
     // send message to kafka
-
+    console.log('xxxxxx');
     const index = ElasticsearchHelper.INDEX.POST;
     try {
       const dataIndex = {

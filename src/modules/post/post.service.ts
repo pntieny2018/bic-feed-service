@@ -10,7 +10,12 @@ import { MediaService } from '../media/media.service';
 import { GroupService } from '../../shared/group/group.service';
 import { IMedia } from '../../database/models/media.model';
 import { MentionService } from '../mention';
-import { CreatedPostEvent, DeletedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
+import {
+  CreatedPostEvent,
+  DeletedPostEvent,
+  PublishedPostEvent,
+  UpdatedPostEvent,
+} from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
 import { EntityIdDto } from '../../common/dto';
@@ -20,6 +25,8 @@ import { CommentReactionModel } from '../../database/models/comment-reaction.mod
 import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
+import { getDatabaseConfig } from '../../config/database';
+import { QueryTypes } from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -67,7 +74,7 @@ export class PostService {
       }
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
       const { files, videos, images } = data;
@@ -109,6 +116,7 @@ export class PostService {
         new CreatedPostEvent({
           id: post.id,
           isDraft,
+          commentsCount: post.commentsCount,
           data,
           actor: creator,
           mentions,
@@ -159,7 +167,7 @@ export class PostService {
 
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
       const { files, videos, images } = data;
@@ -195,6 +203,7 @@ export class PostService {
           updatedPost: {
             id: post.id,
             isDraft,
+            commentsCount: post.commentsCount,
             data,
             actor: creator,
             mentions,
@@ -224,7 +233,7 @@ export class PostService {
     try {
       const post = await this._postModel.findOne({
         where: { id: postId },
-        include: [MentionModel, MediaModel],
+        include: [MentionModel, MediaModel, PostGroupModel],
       });
       await this._checkPostExistAndOwner(post, authUserId);
 
@@ -240,28 +249,25 @@ export class PostService {
         }
       );
       const authInfo = await this._userService.get(authUserId);
-      
-      const mentionIds = post.mentions.map((i) => i.userId);
-      const mentions = await this._mentionService.resolveMentions(mentionIds);
-      const groupIds = [1]; //post.groups((i) => i.groupId);
-      const groups = await this._groupService.getMany(groupIds);
-        //const media = MediaService.filterMediaType(post.media);
-       console.log(post.data.images);
-       // console.log('media=', media);
+      const { setting, id, data, groups, mentions, commentsCount } = post;
+      const mentionIds = mentions.map((i) => i.userId);
+      const dataMentions = await this._mentionService.resolveMentions(mentionIds);
+      const groupIds = groups.map((i) => i.groupId);
+      const dataGroups = await this._groupService.getMany(groupIds);
+
       this._eventEmitter.emit(
         PublishedPostEvent.event,
         new PublishedPostEvent({
-          id: post.id,
-          isDraft: post.isDraft,
-          data: post.data,
+          id,
+          isDraft: false,
+          data,
+          commentsCount,
           actor: authInfo,
-          mentions,
+          mentions: dataMentions,
           audience: {
-            groups,
+            groups: dataGroups,
           },
-          setting: {
-            canReact: post.canReact,
-          },
+          setting,
         })
       );
 
@@ -289,6 +295,30 @@ export class PostService {
     }
     return true;
   }
+
+  /**
+   * Update comments count
+   * @param postId Post ID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async updateCommentCountByPost(postId: number): Promise<boolean> {
+    const { schema } = getDatabaseConfig();
+    const postTable = PostModel.tableName;
+    const commentTable = CommentModel.tableName;
+    const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
+      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = 19
+    );`;
+    await this._sequelizeConnection.query(query, {
+      replacements: {
+        postId,
+      },
+      type: QueryTypes.UPDATE,
+      raw: true,
+    });
+    return true;
+  }
+
   /**
    * Get post by id
    * @param id Number

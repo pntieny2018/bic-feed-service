@@ -36,6 +36,7 @@ export interface IPost {
   createdBy: number;
   updatedBy: number;
   content: string;
+  commentsCount: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
   isDraft: boolean;
@@ -57,6 +58,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AutoIncrement
   @Column
   public id: number;
+
+  @Column
+  public commentsCount: number;
 
   @Default(false)
   @Column
@@ -125,16 +129,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     foreignKey: 'postId',
   })
   public userNewsFeeds: UserNewsFeedModel[];
-
-  @HasMany(() => PostGroupModel, {
-    as: 'audienceGroup',
-    foreignKey: 'postId',
-  })
-  @HasMany(() => PostGroupModel, {
-    as: 'belongToGroup',
-    foreignKey: 'postId',
-  })
-  public postGroups: PostGroupModel[];
 
   @HasMany(() => PostReactionModel, {
     as: 'ownerReactions',

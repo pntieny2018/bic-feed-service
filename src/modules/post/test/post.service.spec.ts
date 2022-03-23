@@ -143,7 +143,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
-      //mentionService.checkValidMentions = jest.fn().mockResolvedValue(true);
+      mentionService.checkValidMentions = jest.fn().mockResolvedValue(true);
       mentionService.create = jest.fn();
       postService.addPostGroup = jest.fn().mockResolvedValue(true);
       mediaService.activeMedia = jest.fn();
@@ -161,7 +161,7 @@ describe('PostService', () => {
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
-      //expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mockedCreatePostDto.data.content, mentionUserIds)
+      expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
 
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
@@ -186,6 +186,7 @@ describe('PostService', () => {
           id: mockedDataCreatePost.id,
           isDraft: mockedCreatePostDto.isDraft,
           data: mockedCreatePostDto.data,
+          commentsCount: mockedDataCreatePost.commentsCount,
           actor: mockedUserAuth,
           mentions: mockedCreatePostDto.mentions,
           audience: mockedCreatePostDto.audience,
@@ -247,7 +248,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
-      //mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
+      mentionService.checkValidMentions = jest.fn().mockResolvedValue(true); 
       mentionService.setMention = jest.fn(); 
       postService.setGroupByPost = jest.fn().mockResolvedValue(true);
       mediaService.setMediaByPost = jest.fn();
@@ -266,7 +267,7 @@ describe('PostService', () => {
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
-      //expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mockedUpdatePostDto.data.content, mentionUserIds)
+      expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
       
       expect(sequelize.transaction).toBeCalledTimes(1);
@@ -287,6 +288,7 @@ describe('PostService', () => {
             id: mockedDataUpdatePost.id,
             isDraft: mockedUpdatePostDto.isDraft,
             data: mockedUpdatePostDto.data,
+            commentsCount: mockedDataUpdatePost.commentsCount,
             actor: mockedUserAuth,
             mentions: mockedUpdatePostDto.mentions,
             audience: mockedUpdatePostDto.audience,
@@ -399,6 +401,7 @@ describe('PostService', () => {
           id: mockedDataUpdatePost.id,
           isDraft: mockedUpdatePostDto.isDraft,
           data: mockedUpdatePostDto.data,
+          commentsCount: mockedDataUpdatePost.commentsCount,
           actor: mockedUserAuth,
           mentions: mockedUpdatePostDto.mentions,
           audience: mockedUpdatePostDto.audience,

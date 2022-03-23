@@ -31,7 +31,6 @@ export class MentionService {
    */
   public async checkValidMentions(groupIds: number[], userIds: number[]): Promise<void> {
     const users: UserSharedDto[] = await this._userService.getMany(userIds);
-
     for (const user of users) {
       if (!this._groupService.isMemberOfGroups(groupIds, user.groups)) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);

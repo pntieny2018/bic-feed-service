@@ -41,7 +41,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number
   ): Promise<boolean> {
-    return this._postService.publishPost(postId, user.userId);
+    return this._postService.publishPost(postId, user.id);
   }
 
   @Get('/:id')
@@ -54,6 +54,6 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) postId: number
   ): Promise<boolean> {
-    return this._postService.deletePost(postId, user.userId);
+    return this._postService.deletePost(postId, user.id);
   }
 }
