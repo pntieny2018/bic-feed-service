@@ -22,6 +22,19 @@ import { IElasticsearchConfig } from '../config/elasticsearch';
       cache: true,
       load: [configs],
     }),
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     EventEmitterModule.forRoot({
       verboseMemoryLeak: true,
     }),
@@ -115,6 +128,6 @@ import { IElasticsearchConfig } from '../config/elasticsearch';
     }),
     DatabaseModule,
   ],
-  exports: [HttpModule, RedisModule, ElasticsearchModule],
+  exports: [HttpModule, ElasticsearchModule],
 })
 export class LibModule {}

@@ -52,4 +52,14 @@ describe('PostController', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('publishPost', () => {
+    it('Publish post successfully', async () => {
+      postService.publishPost = jest.fn().mockResolvedValue(true);
+      const result = await postService.publishPost(1, mockedUserAuth.id);
+      expect(postService.publishPost).toBeCalledTimes(1);
+      expect(postService.publishPost).toBeCalledWith(1, mockedUserAuth.id);
+      expect(result).toBe(true);
+    });
+  });
 });
