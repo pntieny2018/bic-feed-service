@@ -1,7 +1,3 @@
-import { AuthUser, UserDto } from '../auth';
-import { CreateCommentDto } from './dto/requests';
-import { CommentService } from './comment.service';
-import { APP_VERSION } from '../../common/constants';
 import {
   Body,
   Controller,
@@ -14,11 +10,15 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { AuthUser, UserDto } from '../auth';
+import { CreateCommentDto } from './dto/requests';
+import { CommentService } from './comment.service';
+import { APP_VERSION } from '../../common/constants';
 import { GetCommentDto } from './dto/requests/get-comment.dto';
-import { UpdateCommentDto } from './dto/requests/update-comment.dto';
-import { CommentResponseDto } from './dto/response/comment.response.dto';
 import { PageDto } from '../../common/dto/pagination/page.dto';
+import { UpdateCommentDto } from './dto/requests/update-comment.dto';
+import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { CommentResponseDto } from './dto/response/comment.response.dto';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -40,8 +40,6 @@ export class CommentController {
     return this._commentService.getComments(user, getCommentDto);
   }
 
-  // @GenericApiOkResponse(, 'Create comment successfully')
-
   @ApiOkResponse({
     type: CommentResponseDto,
     description: 'Create reply comment successfully',
@@ -52,7 +50,7 @@ export class CommentController {
     @Body() createCommentDto: CreateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug(
-      `create comment by ${user.userId} with body: ${JSON.stringify(createCommentDto)}`
+      `create comment by ${user.id} with body: ${JSON.stringify(createCommentDto)}`
     );
     return this._commentService.create(user, createCommentDto);
   }
@@ -106,7 +104,7 @@ export class CommentController {
   public destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number
-  ): Promise<number> {
+  ): Promise<boolean> {
     this._logger.log('delete comment');
     return this._commentService.destroy(user, commentId);
   }

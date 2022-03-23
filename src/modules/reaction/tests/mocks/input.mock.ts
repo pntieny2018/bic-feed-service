@@ -27,21 +27,21 @@ export const mockDeleteReactionDto: DeleteReactionDto[] = [
 ];
 
 export const mockUserDto: UserDto = {
-  userId: 33,
+  id: 33,
 };
 
 export const mockPostReactionModelFindOne = {
   id: 1,
   postId: 5,
   reactionName: 'smile',
-  createdBy: mockUserDto.userId,
+  createdBy: mockUserDto.id,
 };
 
 export const mockCommentReactionModelFindOne = {
   id: 2,
   commentId: 5,
   reactionName: 'smile',
-  createdBy: mockUserDto.userId,
+  createdBy: mockUserDto.id,
 };
 
 export const mockComment = {

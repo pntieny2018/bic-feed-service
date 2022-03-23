@@ -8,6 +8,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import jwt from 'jsonwebtoken';
+import { UserService } from '../../../shared/user';
 
 const httpServiceMock = {
   get: (): Observable<any> => {
@@ -38,6 +39,12 @@ describe('AuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
+        {
+          provide: UserService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
         {
           provide: HttpService,
           useValue: httpServiceMock,

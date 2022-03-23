@@ -113,6 +113,19 @@ import { IElasticsearchConfig } from '../config/elasticsearch';
       },
       inject: [ConfigService],
     }),
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     DatabaseModule,
   ],
   exports: [HttpModule, ElasticsearchModule],

@@ -11,7 +11,7 @@ export const mockGetTimeLineDto: GetTimelineDto = {
 };
 
 export const mockUserDto: UserDto = {
-  userId: 33,
+  id: 33,
 };
 
 export const mockPostModelFindAndCountAll = [

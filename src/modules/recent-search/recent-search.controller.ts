@@ -23,7 +23,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Query() getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
-    return this._recentSearchPostService.get(user.userId, getRecentSearchPostDto);
+    return this._recentSearchPostService.get(user.id, getRecentSearchPostDto);
   }
 
   @ApiOperation({ summary: 'Create recent search' })
@@ -36,7 +36,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Body() createRecentSearchPostDto: CreateRecentSearchDto
   ): Promise<RecentSearchDto> {
-    return this._recentSearchPostService.create(user.userId, createRecentSearchPostDto);
+    return this._recentSearchPostService.create(user.id, createRecentSearchPostDto);
   }
 
   @ApiOperation({ summary: 'Delete recent search' })
@@ -53,7 +53,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) id: number
   ): Promise<boolean> {
-    return this._recentSearchPostService.delete(user.userId, id);
+    return this._recentSearchPostService.delete(user.id, id);
   }
 
   @ApiOperation({ summary: 'Clean recent search' })
@@ -66,6 +66,6 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Param() cleanRecentSearchesDto: CleanRecentSearchesDto
   ): Promise<boolean> {
-    return this._recentSearchPostService.clean(user.userId, cleanRecentSearchesDto.target);
+    return this._recentSearchPostService.clean(user.id, cleanRecentSearchesDto.target);
   }
 }

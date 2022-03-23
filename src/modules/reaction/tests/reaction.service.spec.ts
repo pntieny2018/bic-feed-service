@@ -142,7 +142,7 @@ describe('ReactionService', () => {
           id: 1,
           postId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const postReactionModelCreateSpy = jest
           .spyOn(postReactionModel, 'create')
@@ -171,7 +171,7 @@ describe('ReactionService', () => {
           .mockReturnValue(true);
         const response: ReactionDto = {
           ...input,
-          userId: mockUserDto.userId,
+          userId: mockUserDto.id,
         };
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(response);
         expect(postReactionModelCreateSpy).toBeCalledTimes(1);
@@ -229,7 +229,7 @@ describe('ReactionService', () => {
           id: 2,
           postId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const postReactionModelCreateSpy = jest
           .spyOn(postReactionModel, 'create')
@@ -276,7 +276,7 @@ describe('ReactionService', () => {
           id: 22,
           postId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const postReactionModelCreateSpy = jest
           .spyOn(postReactionModel, 'create')
@@ -323,7 +323,7 @@ describe('ReactionService', () => {
           id: 1,
           postId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const postReactionModelCreateSpy = jest
           .spyOn(postReactionModel, 'create')
@@ -372,7 +372,7 @@ describe('ReactionService', () => {
           id: 1,
           commentId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
@@ -402,7 +402,7 @@ describe('ReactionService', () => {
           .mockReturnValue(true);
         const response: ReactionDto = {
           ...input,
-          userId: mockUserDto.userId,
+          userId: mockUserDto.id,
         };
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(response);
         expect(commentReactionModelCreateSpy).toBeCalledTimes(1);
@@ -462,7 +462,7 @@ describe('ReactionService', () => {
           id: 2,
           commentId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
@@ -510,7 +510,7 @@ describe('ReactionService', () => {
           id: 22,
           commentId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
@@ -558,7 +558,7 @@ describe('ReactionService', () => {
           id: 1,
           commentId: input.targetId,
           reactionName: input.reactionName,
-          createdBy: mockUserDto.userId,
+          createdBy: mockUserDto.id,
         });
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')

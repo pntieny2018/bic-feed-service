@@ -1,7 +1,6 @@
 import { IAppConfig } from '../config/app';
 import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from '../common/filters';
-import { HandleResponseInterceptor } from '../common/interceptors';
 import { INestApplication, Logger, VersioningType } from '@nestjs/common';
 
 export class AppBootstrap {
@@ -19,8 +18,6 @@ export class AppBootstrap {
     });
 
     app.setGlobalPrefix(appConfig.apiPrefix);
-
-    app.useGlobalInterceptors(new HandleResponseInterceptor());
 
     app.useGlobalFilters(new HttpExceptionFilter(appConfig.env, '/'));
 

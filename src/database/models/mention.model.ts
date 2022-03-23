@@ -21,7 +21,7 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   @Column
   public id: number;
 
-  @Column({})
+  @Column
   public mentionableType: MentionableType;
 
   @Column

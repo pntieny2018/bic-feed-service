@@ -70,6 +70,8 @@ export class MediaController {
     },
   })
   public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: number): Promise<any> {
-    return this._mediaService.destroy(user, mediaId);
+    return this._mediaService.destroy(user, {
+      mediaIds: [mediaId],
+    });
   }
 }

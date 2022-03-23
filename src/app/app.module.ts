@@ -5,19 +5,18 @@ import { FeedModule } from '../modules/feed';
 import { ListenerModule } from '../listeners';
 import { GroupModule } from '../shared/group';
 import { PostModule } from 'src/modules/post';
+import { MediaModule } from '../modules/media';
 import { UploadModule } from '../modules/upload';
 import { AppController } from './app.controller';
 import { CommentModule } from '../modules/comment';
 import { MentionModule } from '../modules/mention';
-import { MediaModule } from '../modules/media/media.module';
+import { AuthorityModule } from '../modules/authority';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
-import { ElasticsearchModule } from '@nestjs/elasticsearch';
-import { IElasticsearchConfig } from '../config/elasticsearch';
-import { ConfigService } from '@nestjs/config';
-import { NotificationModule } from '../modules/notification/notification.module';
+import { NotificationModule } from '../modules/notification';
 import { ReactionModule } from '../modules/reaction';
+
 @Module({
   controllers: [AppController],
   providers: [AppService],
@@ -35,6 +34,7 @@ import { ReactionModule } from '../modules/reaction';
     ReactionModule,
     RecentSearchModule,
     ListenerModule,
+    AuthorityModule,
     RecentSearchModule,
     NotificationModule,
   ],

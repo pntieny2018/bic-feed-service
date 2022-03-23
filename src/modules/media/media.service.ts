@@ -1,15 +1,21 @@
-import { getDatabaseConfig } from '../../config/database/database.config';
 import { UserDto } from '../auth';
-import { FindOptions, QueryTypes } from 'sequelize';
+import { FindOptions, Op, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { IMedia } from '../../database/models/media.model';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { MediaModel, MediaType } from '../../database/models/media.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { ArrayHelper } from '../../common/helpers';
-import { Op } from 'sequelize';
+import { CommentMediaModel } from '../../database/models/comment-media.model';
+import { EntityType } from './media.constants';
+import { getDatabaseConfig } from '../../config/database';
+import { RemoveMediaDto } from './dto';
 import { FileDto, ImageDto, VideoDto } from '../post/dto/common/media.dto';
 import { plainToInstance } from 'class-transformer';
 
@@ -19,7 +25,8 @@ export class MediaService {
   public constructor(
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
-    @InjectModel(PostMediaModel) private _postMedia: typeof PostMediaModel
+    @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
+    @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel
   ) {}
 
   /**
@@ -31,7 +38,7 @@ export class MediaService {
   public async create(user: UserDto, url: string, mediaType: MediaType): Promise<any> {
     try {
       return await this._mediaModel.create({
-        createdBy: user.userId,
+        createdBy: user.id,
         url: url,
         type: mediaType,
       });
@@ -42,16 +49,11 @@ export class MediaService {
 
   /**
    *  Delete media
-   * @param user UserDto
-   * @param mediaId Number
+   * @param user UserDto UserDto
+   * @param removeMediaDto RemoveMediaDto
    */
-  public async destroy(user: UserDto, mediaId: number): Promise<any> {
-    return await this._mediaModel.destroy({
-      where: {
-        createdBy: user.userId,
-        id: mediaId,
-      },
-    });
+  public async destroy(user: UserDto, removeMediaDto: RemoveMediaDto): Promise<any> {
+    return null;
   }
 
   /**
@@ -118,21 +120,21 @@ export class MediaService {
    * @throws HttpException
    */
   public async setMediaByPost(mediaIds: number[], postId: number): Promise<boolean> {
-    const currentPostMediaList = await this._postMedia.findAll({
+    const currentPostMediaList = await this._postMediaModel.findAll({
       where: { postId },
     });
     const currentMediaIds = currentPostMediaList.map((i) => i.mediaId);
 
     const deleteIds = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
     if (deleteIds.length) {
-      await this._postMedia.destroy({
+      await this._postMediaModel.destroy({
         where: { postId, mediaId: deleteIds },
       });
     }
 
     const addIds = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
     if (addIds.length) {
-      await this._postMedia.bulkCreate(
+      await this._postMediaModel.bulkCreate(
         addIds.map((mediaId) => ({
           postId,
           mediaId,
@@ -172,6 +174,98 @@ export class MediaService {
       raw: true,
     });
     return true;
+  }
+
+  public async sync(entityId: number, entityType: EntityType, mediaIds: number[]): Promise<void> {
+    const changes = {
+      attached: [],
+      detached: [],
+    };
+
+    const condition =
+      entityType === EntityType.POST
+        ? {
+            attributes: ['id'],
+            where: {
+              postId: entityId,
+            },
+          }
+        : {
+            attributes: ['id'],
+            where: {
+              commentId: entityId,
+            },
+          };
+
+    const currentMedia = await (entityType === EntityType.POST
+      ? this._postMediaModel.findAll(condition)
+      : this._commentMediaModel.findAll(condition));
+
+    const currentMediaIds = currentMedia.map((m) => m.mediaId);
+
+    changes.attached = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
+
+    changes.detached = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
+
+    const getAttachedData = (
+      data: number[],
+      entityKey: string,
+      entityId: number,
+      mediaKey: string
+    ): any[] =>
+      data.map((id) => ({
+        [entityKey]: entityId,
+        [mediaKey]: id,
+      }));
+
+    const getDetachedData = (
+      data: number[],
+      entityKey: string,
+      entityId: number,
+      mediaKey: string
+    ): object => ({
+      where: {
+        [entityKey]: entityId,
+        [mediaKey]: {
+          [Op.in]: data,
+        },
+      },
+    });
+
+    if (changes.attached.length) {
+      await (entityType === EntityType.POST
+        ? this._postMediaModel.bulkCreate(
+            getAttachedData(changes.attached, 'postId', entityId, 'mediaId')
+          )
+        : this._commentMediaModel.bulkCreate(
+            getAttachedData(changes.attached, 'commentId', entityId, 'mediaId')
+          ));
+    }
+
+    if (changes.detached.length) {
+      await (entityType === EntityType.POST
+        ? this._postMediaModel.destroy(
+            getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
+          )
+        : this._commentMediaModel.destroy(
+            getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
+          ));
+    }
+  }
+
+  public destroyCommentMedia(user: UserDto, commentId: number): Promise<void> {
+    const databaseConfig = getDatabaseConfig();
+    return this._sequelizeConnection.query(
+      `DELETE FROM ${databaseConfig.schema}.${CommentMediaModel.tableName} 
+               WHERE 
+             ${databaseConfig.schema}.${CommentMediaModel.tableName}.comment_id = $commentId`,
+      {
+        type: QueryTypes.DELETE,
+        bind: {
+          commentId: commentId,
+        },
+      }
+    );
   }
 
   /**

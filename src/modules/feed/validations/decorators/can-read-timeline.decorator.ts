@@ -25,7 +25,7 @@ export class CanReadTimelineConstraint implements ValidatorConstraintInterface {
   public async validate(groupId: number, args?: ValidationArguments): Promise<boolean> {
     const userDto: UserDto = args.object[REQUEST_CONTEXT].user;
     try {
-      const userSharedDto = await this._userService.get(userDto.userId);
+      const userSharedDto = await this._userService.get(userDto.id);
       return userSharedDto.groups.includes(groupId);
     } catch (e) {
       this._logger.error(e, e?.stack);
