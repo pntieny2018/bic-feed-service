@@ -10,15 +10,16 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { CreateCommentDto } from './dto/requests';
 import { CommentService } from './comment.service';
 import { APP_VERSION } from '../../common/constants';
 import { GetCommentDto } from './dto/requests/get-comment.dto';
-import { PageDto } from '../../common/dto/pagination/page.dto';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
+import { CreateCommentPipe } from './pipes/create-comment.pipe';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -36,7 +37,7 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Query() getCommentDto: GetCommentDto
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.log('get comment');
+    this._logger.debug('get comment');
     return this._commentService.getComments(user, getCommentDto);
   }
 
@@ -47,7 +48,7 @@ export class CommentController {
   @Post()
   public create(
     @AuthUser() user: UserDto,
-    @Body() createCommentDto: CreateCommentDto
+    @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug(
       `create comment by ${user.id} with body: ${JSON.stringify(createCommentDto)}`
@@ -65,7 +66,7 @@ export class CommentController {
     @Param('commentId', ParseIntPipe) commentId: number,
     @Body() createCommentDto: CreateCommentDto
   ): Promise<any> {
-    this._logger.log('reply comment');
+    this._logger.debug('reply comment');
     return this._commentService.create(user, createCommentDto, commentId);
   }
 
@@ -78,7 +79,7 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number
   ): Promise<any> {
-    this._logger.log('get comment');
+    this._logger.debug('get comment');
     return this._commentService.getComment(commentId);
   }
 
@@ -92,7 +93,7 @@ export class CommentController {
     @Param('commentId', ParseIntPipe) commentId: number,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.log('update comment');
+    this._logger.debug('update comment');
     return this._commentService.update(user, commentId, updateCommentDto);
   }
 
@@ -105,7 +106,7 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number
   ): Promise<boolean> {
-    this._logger.log('delete comment');
+    this._logger.debug('delete comment');
     return this._commentService.destroy(user, commentId);
   }
 }

@@ -7,7 +7,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { UserService } from '../../../../shared/user';
-import { REQUEST_CONTEXT, UserDto } from '../../../auth';
+import { UserDto } from '../../../auth';
 
 const VALIDATOR_CONSTRAINT_NAME = 'CanReadTimelineConstraint';
 
@@ -23,7 +23,7 @@ export class CanReadTimelineConstraint implements ValidatorConstraintInterface {
   }
 
   public async validate(groupId: number, args?: ValidationArguments): Promise<boolean> {
-    const userDto: UserDto = args.object[REQUEST_CONTEXT].user;
+    const userDto: UserDto = args.object['user'];
     try {
       const userSharedDto = await this._userService.get(userDto.id);
       return userSharedDto.groups.includes(groupId);

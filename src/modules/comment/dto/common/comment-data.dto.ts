@@ -7,21 +7,21 @@ export class CommentDataDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @Expose()
-  public content?: string;
+  public content?: string = null;
 
   @ApiProperty({ required: false, type: [ImageMetadataDto] })
-  @IsOptional()
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => ImageMetadataDto)
   @Expose()
   public images?: ImageMetadataDto[] = [];
 
   @ApiProperty({ required: false, type: [VideoMetadataDto] })
-  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VideoMetadataDto)
+  @IsOptional()
   @Expose()
   public videos?: VideoMetadataDto[] = [];
 
@@ -30,6 +30,7 @@ export class CommentDataDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => FileMetadataDto)
+  @IsOptional()
   @Expose()
   public files?: FileMetadataDto[] = [];
 }

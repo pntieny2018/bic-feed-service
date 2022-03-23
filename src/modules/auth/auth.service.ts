@@ -27,7 +27,7 @@ export class AuthService {
     const cognitoConfig = this._configService.get<ICognitoConfig>('cognito');
     const tokenValidationUrl = `https://cognito-idp.${cognitoConfig.region}.amazonaws.com/${cognitoConfig.poolId}/.well-known/jwks.json`;
     const response = await lastValueFrom(this._httpService.get(tokenValidationUrl));
-    const keys = response['data']?.keys;
+    const keys = response['data']['keys'];
     const pems = keys
       .map((key) => {
         const keyId = key.kid;
@@ -41,7 +41,7 @@ export class AuthService {
       })
       .reduce((obj, item) => ({ ...obj, ...item }), {});
 
-    const kid = decodedJwt?.['header']?.kid;
+    const kid = decodedJwt['header']['kid'];
     const pem = pems[kid];
     if (!pem) {
       throw new UnauthorizedException('Unauthorized');

@@ -10,8 +10,11 @@ import { CommentModel } from '../../../database/models/comment.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
 import {
+  createCommentDto,
   createCommentWithPostNotFoundDto,
+  createdComment,
   createTextCommentDto,
+  createTextCommentWithMentionInGroupDto,
   createTextCommentWithMentionNotInGroupDto,
 } from './mocks/create-comment-dto.mock';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
@@ -31,6 +34,7 @@ describe('CommentService', () => {
   let sequelizeConnection;
   let commentModel;
   let postService;
+  let mediaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -87,7 +91,16 @@ describe('CommentService', () => {
             bindUserToComment: jest.fn(),
           },
         },
-        { provide: Sequelize, useValue: { query: jest.fn(), transaction: jest.fn() } },
+        {
+          provide: Sequelize,
+          useValue: {
+            query: jest.fn(),
+            transaction: jest.fn(async () => ({
+              commit: jest.fn(),
+              rollback: jest.fn(),
+            })),
+          },
+        },
         {
           provide: getModelToken(CommentModel),
           useValue: {
@@ -111,6 +124,7 @@ describe('CommentService', () => {
     sequelizeConnection = module.get<Sequelize>(Sequelize);
     commentModel = module.get<typeof CommentModel>(getModelToken(CommentModel));
     postService = module.get<PostService>(PostService);
+    mediaService = module.get<MediaService>(MediaService);
   });
 
   it('should be defined', () => {
@@ -119,13 +133,13 @@ describe('CommentService', () => {
 
   describe('CommentService.create', () => {
     it('Post allow comment', async () => {});
+
     describe('Create comment with post not existed', () => {
       it("should throw BadRequestException('The post does not exist !')", async () => {
         try {
           postService.findPost.mockRejectedValue(
             new BadRequestException('The post does not exist !')
           );
-
           await commentService.create(authUserMock, createCommentWithPostNotFoundDto);
         } catch (e) {
           expect(e).toBeInstanceOf(BadRequestException);
@@ -154,14 +168,35 @@ describe('CommentService', () => {
       describe('user not in group audience', () => {
         it('should throw  LogicException(MENTION_ERROR_ID.USER_NOT_FOUND)', async () => {
           try {
-            mentionService.checkValidMentions.mockRejectedValue(
-              new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND)
-            );
+            postService.findPost.mockResolvedValue({
+              id: 1,
+              groups: [
+                {
+                  groupId: 1,
+                  postId: 1,
+                },
+              ],
+            });
+
+            authorityService.allowAccess.mockReturnThis();
+
+            postPolicyService.allow.mockReturnThis();
+
+            commentModel.create.mockResolvedValue({
+              createdBy: 1,
+              parentId: 0,
+              content: ' hello',
+              postId: 1,
+            });
+
+            mentionService.checkValidMentions.mockImplementation(() => {
+              throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
+            });
 
             await commentService.create(authUserMock, createTextCommentWithMentionNotInGroupDto);
           } catch (e) {
-            // expect(e).toBeInstanceOf(LogicException);
-            // expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
+            expect(e).toBeInstanceOf(LogicException);
+            expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
           }
         });
       });
@@ -170,6 +205,68 @@ describe('CommentService', () => {
     describe('Create comment with invalid media', () => {
       describe('media not exist', () => {});
       describe('is not owner of media', () => {});
+    });
+
+    describe('Create comment with valid data', () => {
+      it('should create successfully', async () => {
+        postService.findPost.mockResolvedValue({
+          id: 2,
+          groups: [
+            {
+              groupId: 1,
+              postId: 2,
+            },
+          ],
+        });
+
+        authorityService.allowAccess.mockReturnThis();
+
+        postPolicyService.allow.mockReturnThis();
+
+        sequelizeConnection.transaction.mockImplementation(() => ({
+          commit: jest.fn().mockReturnThis(),
+          rollback: jest.fn().mockReturnThis(),
+        }));
+
+        commentModel.create.mockResolvedValue({
+          id: 1,
+          ...createTextCommentWithMentionInGroupDto,
+        });
+
+        mentionService.checkValidMentions.mockResolvedValue();
+
+        mentionService.create.mockReturnThis();
+
+        mediaService.sync.mockReturnThis();
+
+        const getCommentSpy = jest
+          .spyOn(commentService, 'getComment')
+          .mockResolvedValue(createdComment);
+
+        await commentService.create(authUserMock, createCommentDto);
+
+        expect(postService.findPost).toBeCalled();
+
+        expect(authorityService.allowAccess).toBeCalled();
+
+        expect(postPolicyService.allow).toBeCalled();
+
+        expect(sequelizeConnection.transaction).toBeCalled();
+
+        expect(commentModel.create).toBeCalled();
+
+        expect(mentionService.checkValidMentions).toBeCalled();
+
+        expect(mentionService.create).toBeCalled();
+
+        expect(mediaService.sync).toBeCalled();
+
+        const syncParams = mediaService.sync.mock.calls[0];
+
+        expect(syncParams).toEqual([1, 'comment', [1]]);
+
+        expect(getCommentSpy).toBeCalled();
+      });
     });
   });
 
@@ -367,5 +464,9 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.bindUserToComment', () => {});
+  describe('CommentService.bindUserToComment', () => {
+    it('', async () => {
+      // await commentService.bindUserToComment()
+    });
+  });
 });
