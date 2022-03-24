@@ -2,32 +2,25 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
-import { CreatedPostEvent } from '../../events/post';
-
+import { DeletedPostEvent, UpdatedPostEvent } from '../../events/post';
 @Injectable()
-export class CreatedPostListener {
-  private _logger = new Logger(CreatedPostListener.name);
+export class DeletedPostListener {
+  private _logger = new Logger(DeletedPostListener.name);
   public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
 
-  @OnEvent(CreatedPostEvent.event)
-  public async onPostCreated(createdPostEvent: CreatedPostEvent): Promise<boolean> {
-    const { isDraft, id, data, setting, audience } = createdPostEvent.payload;
-    if (isDraft) return;
+  @OnEvent(DeletedPostEvent.event)
+  public async onPostDeleted(updatedPostEvent: DeletedPostEvent): Promise<boolean> {
+    this._logger.debug(`Event: ${updatedPostEvent}`);
+    const { id, isDraft } = updatedPostEvent.payload;
+    if (isDraft) return false;
 
     // send message to kafka
 
     const index = ElasticsearchHelper.INDEX.POST;
     try {
-      const dataIndex = {
-        id,
-        audience,
-        data,
-        setting,
-      };
-      await this._elasticsearchService.index({
+      await this._elasticsearchService.delete({
         index,
         id: `${id}`,
-        body: dataIndex,
       });
       return true;
     } catch (error) {

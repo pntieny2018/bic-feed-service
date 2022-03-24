@@ -1,28 +1,32 @@
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
+import { UserSharedDto } from '../../../../shared/user/dto';
+import { GroupSharedDto } from '../../../../shared/group/dto/group-shared.dto';
 
 export class AudienceDto {
   @ApiProperty({
     default: [],
-    type: Number,
+    type: UserSharedDto,
     required: false,
     isArray: true,
-    description: 'Array of  user_id',
+    description: 'Array of user',
   })
   @IsOptional()
   @IsArray()
-  @Type(() => Number)
-  public users?: number[] = [];
+  @Type(() => UserSharedDto)
+  @ValidateNested({ each: true })
+  public users?: UserSharedDto[] = [];
 
   @ApiProperty({
     default: [1],
-    type: Number,
+    type: GroupSharedDto,
     isArray: true,
-    description: 'Array of group_id',
+    description: 'Array of group',
   })
+  @ValidateNested({ each: true })
   @IsNotEmpty()
   @ArrayNotEmpty()
-  @Type(() => Number)
-  public groups: number[];
+  @Type(() => GroupSharedDto)
+  public groups: GroupSharedDto[];
 }

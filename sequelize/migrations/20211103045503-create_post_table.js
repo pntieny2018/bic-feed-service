@@ -22,6 +22,11 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
+        comments_count: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          defaultValue: 0
+        },
         is_important: {
           type: Sequelize.BOOLEAN,
           allowNull: true,

@@ -9,7 +9,7 @@ import {
 } from '..';
 import { plainToClass } from 'class-transformer';
 import { RecentSearchDto, RecentSearchesDto } from '../dto/responses';
-import { mockedRecentSearchList } from './mocks/recent-search-list';
+import { mockedRecentSearchList } from './mocks/recent-search-list.mock';
 import { HttpException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { SentryService } from '@app/sentry';

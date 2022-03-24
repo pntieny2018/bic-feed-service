@@ -1,5 +1,6 @@
 import { UpdatedAt } from 'sequelize-typescript';
 import { IPost, PostModel } from 'src/database/models/post.model';
+import { MentionableType } from '../../../../common/constants';
 import { CreatePostDto } from '../../dto/requests';
 
 export const mockedCreatePostDto: CreatePostDto = {
@@ -30,7 +31,13 @@ export const mockedCreatePostDto: CreatePostDto = {
     },
   ],
   audience: {
-    groups: [1],
+    groups: [
+      {
+        id: 1,
+        name: 'abcd',
+        icon: 'aaaa',
+      },
+    ],
   },
   isDraft: false,
 };
@@ -59,7 +66,13 @@ export const mockedUpdatePostDto: CreatePostDto = {
     },
   ],
   audience: {
-    groups: [2],
+    groups: [
+      {
+        id: 1,
+        name: 'abcd',
+        icon: 'aaaa',
+      },
+    ],
   },
   isDraft: false,
 };
@@ -70,6 +83,7 @@ export const mockedPostList: IPost[] = [
     createdBy: 1,
     updatedBy: 1,
     isImportant: true,
+    commentsCount: 0,
     importantExpiredAt: new Date(),
     canShare: true,
     canReact: true,
@@ -83,6 +97,7 @@ export const mockedPostList: IPost[] = [
     id: 2,
     createdBy: 1,
     updatedBy: 1,
+    commentsCount: 1,
     isImportant: false,
     importantExpiredAt: null,
     canShare: true,

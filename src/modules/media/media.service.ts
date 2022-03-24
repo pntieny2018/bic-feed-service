@@ -119,7 +119,7 @@ export class MediaService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setMediaPost(mediaIds: number[], postId: number): Promise<boolean> {
+  public async setMediaByPost(mediaIds: number[], postId: number): Promise<boolean> {
     const currentPostMediaList = await this._postMediaModel.findAll({
       where: { postId },
     });
@@ -153,15 +153,16 @@ export class MediaService {
    */
   public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
     const { schema } = getDatabaseConfig();
+    const postMedia = PostMediaModel.tableName;
     if (mediaIds.length === 0) return true;
     const query = ` UPDATE ${schema}.media
                 SET is_draft = tmp.not_has_post
                 FROM (
                   SELECT media.id, 
-                  CASE WHEN COUNT(post_media.post_id) > 0 THEN false ELSE true
+                  CASE WHEN COUNT(${postMedia}.post_id) > 0 THEN false ELSE true
                   END as not_has_post
                   FROM ${schema}.media
-                  LEFT JOIN ${schema}.post_media ON post_media.media_id = media.id
+                  LEFT JOIN ${schema}.${postMedia} ON ${postMedia}.media_id = media.id
                   WHERE media.id IN (:mediaIds)
                   GROUP BY media.id
                 ) as tmp 
