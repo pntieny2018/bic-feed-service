@@ -16,7 +16,7 @@ export class SeedCommand implements CommandRunner {
         icon: 'https://docs.nestjs.com/assets/logo-small.svg',
       },
       {
-        v: 2,
+        id: 2,
         name: 'Group 2',
         icon: 'https://docs.nestjs.com/assets/logo-small.svg',
       },
