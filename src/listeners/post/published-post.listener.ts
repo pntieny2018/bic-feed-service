@@ -9,13 +9,12 @@ export class PublishedPostListener {
   public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
 
   @OnEvent(PublishedPostEvent.event)
-  public async onPostCreated(publishedPostEvent: PublishedPostEvent): Promise<boolean> {
+  public async onPostPublished(publishedPostEvent: PublishedPostEvent): Promise<boolean> {
     this._logger.debug(`Event: ${publishedPostEvent}`);
     const { isDraft, id, data, setting, audience } = publishedPostEvent.payload;
     if (isDraft) return;
 
     // send message to kafka
-    console.log('xxxxxx');
     const index = ElasticsearchHelper.INDEX.POST;
     try {
       const dataIndex = {

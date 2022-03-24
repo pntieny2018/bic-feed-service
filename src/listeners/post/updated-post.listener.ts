@@ -9,7 +9,7 @@ export class UpdatedPostListener {
   public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
 
   @OnEvent(UpdatedPostEvent.event)
-  public async onPostCreated(updatedPostEvent: UpdatedPostEvent): Promise<boolean> {
+  public async onPostUpdated(updatedPostEvent: UpdatedPostEvent): Promise<boolean> {
     this._logger.debug(`Event: ${updatedPostEvent}`);
     const { id, data, isDraft, setting, audience } = updatedPostEvent.payload.updatedPost;
     if (isDraft) return false;

@@ -139,7 +139,7 @@ export class PostService {
   }
 
   /**
-   * Update Post
+   * Update Post except isDraft
    * @param postId postID
    * @param authUserId userID
    * @param createPostDto UpdatePostDto
@@ -153,7 +153,7 @@ export class PostService {
   ): Promise<boolean> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { isDraft, data, setting, mentions, audience } = updatePostDto;
+      const { data, setting, mentions, audience } = updatePostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
@@ -180,7 +180,6 @@ export class PostService {
 
       await this._postModel.update(
         {
-          isDraft,
           content: data.content,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
@@ -205,7 +204,7 @@ export class PostService {
         new UpdatedPostEvent({
           updatedPost: {
             id: post.id,
-            isDraft,
+            isDraft: post.isDraft,
             commentsCount: post.commentsCount,
             data,
             actor: creator,
@@ -253,9 +252,8 @@ export class PostService {
       );
       const authInfo = await this._userService.get(authUserId);
       const { setting, id, data, groups, mentions, commentsCount } = post;
-      //console.log('posts mentions=', post.mentions);
       const mentionIds = mentions.map((i) => i.userId);
-      const dataMentions = await this._mentionService.resolveMentions(mentionIds);
+      const dataMentions = await this._mentionService.resolveMentions(mentionIds); 
       const groupIds = groups.map((i) => i.groupId);
       const dataGroups = await this._groupService.getMany(groupIds);
 
@@ -334,16 +332,16 @@ export class PostService {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
-      await this._checkPostExistAndOwner(post, authUserId);
+      //await this._checkPostExistAndOwner(post, authUserId);
+      await this._mentionService.setMention([], MentionableType.POST, postId);
+      await this._mediaService.setMediaByPost([], postId);
+      await this.setGroupByPost([], postId);
       await this._postModel.destroy({
         where: {
           id: postId,
           createdBy: authUserId,
         },
       });
-      await this._mentionService.setMention([], MentionableType.POST, postId);
-      await this._mediaService.setMediaByPost([], postId);
-      await this.setGroupByPost([], postId);
       this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(post));
       transaction.commit();
 

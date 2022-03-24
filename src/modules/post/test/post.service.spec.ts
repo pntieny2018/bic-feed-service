@@ -6,8 +6,8 @@ import { IPost, PostModel } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { plainToClass } from 'class-transformer';
-import { mockedPostList, mockedCreatePostDto, mockedUpdatePostDto } from './mocks/post-list';
-import { mockedUserAuth } from './mocks/user-auth';
+import { mockedPostList, mockedCreatePostDto, mockedUpdatePostDto } from './mocks/post-list.mock';
+import { mockedUserAuth } from './mocks/user-auth.mock';
 import { BadRequestException, ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { SentryService } from '@app/sentry';
@@ -22,9 +22,7 @@ import { Transaction } from 'sequelize';
 import { CreatedPostEvent } from '../../../events/post';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PublishedPostEvent } from '../../../events/post';
-import { group } from 'console';
 import { MentionModel } from '../../../database/models/mention.model';
-import { truncate } from 'fs';
 import { EntityIdDto } from '../../../common/dto';
 
 describe('PostService', () => {
@@ -312,7 +310,6 @@ describe('PostService', () => {
       //add Reaction
       expect(updatePostQuery).toStrictEqual({
         content: mockedUpdatePostDto.data.content,
-        isDraft: mockedUpdatePostDto.isDraft,
         updatedBy: mockedUserAuth.id,
         isImportant: mockedUpdatePostDto.setting.isImportant,
         importantExpiredAt:
@@ -323,7 +320,7 @@ describe('PostService', () => {
         canComment: mockedUpdatePostDto.setting.canComment,
         canReact: mockedUpdatePostDto.setting.canReact,
       });
-    });
+    }); 
 
     it('Should catch exception if creator not found in cache', async () => {
       userService.get = jest.fn().mockResolvedValue(null);

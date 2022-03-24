@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { mockedUserAuth } from './mocks/user-auth';
+import { mockedUserAuth } from './mocks/user-auth.mock';
 import { RecentSearchService } from '../recent-search.service';
 import { RecentSearchController } from '../recent-search.controller';
 
