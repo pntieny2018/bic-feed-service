@@ -5,10 +5,15 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
-import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { MediaService } from '../media/media.service';
 import { GroupService } from '../../shared/group/group.service';
-import { IMedia } from '../../database/models/media.model';
 import { MentionService } from '../mention';
 import {
   CreatedPostEvent,
@@ -58,19 +63,19 @@ export class PostService {
    * @throws HttpException
    */
   public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
-    let transaction;
+    const transaction = await this._sequelizeConnection.transaction();
     try {
       const { isDraft, data, setting, mentions, audience } = createPostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
+        throw new BadRequestException(`UserID ${authUserId} not found`);
       }
 
       const { groups } = audience;
       const groupIds = groups.map((i) => i.id);
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
-        throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
+        throw new BadRequestException('You can not create post in this groups');
       }
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
@@ -80,7 +85,6 @@ export class PostService {
       const { files, videos, images } = data;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
-      transaction = await this._sequelizeConnection.transaction();
 
       const post = await this._postModel.create({
         isDraft,
@@ -147,19 +151,19 @@ export class PostService {
     authUserId: number,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
-    let transaction;
+    const transaction = await this._sequelizeConnection.transaction();
     try {
       const { isDraft, data, setting, mentions, audience } = updatePostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
+        throw new BadRequestException(`UserID ${authUserId} not found`);
       }
 
       const { groups } = audience;
       const groupIds = groups.map((i) => i.id);
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
-        throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
+        throw new BadRequestException('You can not create post in this groups');
       }
 
       const post = await this._postModel.findOne({ where: { id: postId } });
@@ -174,7 +178,6 @@ export class PostService {
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
-      transaction = await this._sequelizeConnection.transaction();
       await this._postModel.update(
         {
           isDraft,
@@ -216,7 +219,7 @@ export class PostService {
 
       return true;
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
+      await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }
@@ -250,6 +253,7 @@ export class PostService {
       );
       const authInfo = await this._userService.get(authUserId);
       const { setting, id, data, groups, mentions, commentsCount } = post;
+      //console.log('posts mentions=', post.mentions);
       const mentionIds = mentions.map((i) => i.userId);
       const dataMentions = await this._mentionService.resolveMentions(mentionIds);
       const groupIds = groups.map((i) => i.groupId);
@@ -287,11 +291,11 @@ export class PostService {
    */
   private async _checkPostExistAndOwner(post, authUserId): Promise<boolean> {
     if (!post) {
-      throw new HttpException('The post not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('The post not found');
     }
 
     if (post.createdBy !== authUserId) {
-      throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
+      throw new ForbiddenException('Access denied');
     }
     return true;
   }
@@ -320,17 +324,6 @@ export class PostService {
   }
 
   /**
-   * Get post by id
-   * @param id Number
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async getPost(id: number) {
-    return null;
-    //return this._postModel.findOne({ where: { id } });
-  }
-
-  /**
    * Delete post by id
    * @param postId postID
    * @param authUserId auth user ID
@@ -342,7 +335,6 @@ export class PostService {
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
       await this._checkPostExistAndOwner(post, authUserId);
-
       await this._postModel.destroy({
         where: {
           id: postId,

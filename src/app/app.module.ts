@@ -4,7 +4,7 @@ import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { ListenerModule } from '../listeners';
 import { GroupModule } from '../shared/group';
-import { PostModule } from 'src/modules/post';
+import { PostModule } from '../modules/post';
 import { MediaModule } from '../modules/media';
 import { UploadModule } from '../modules/upload';
 import { AppController } from './app.controller';
@@ -35,7 +35,6 @@ import { ReactionModule } from '../modules/reaction';
     RecentSearchModule,
     ListenerModule,
     AuthorityModule,
-    RecentSearchModule,
     NotificationModule,
   ],
 })

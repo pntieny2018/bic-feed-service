@@ -1,3 +1,17 @@
+import { RecentSearchType } from '../..';
+import { CreateRecentSearchDto, GetRecentSearchPostDto } from '../../dto/requests';
+
+export const getRecentSearchesDto: GetRecentSearchPostDto = {
+  sort: 'asc',
+  limit: 10,
+  target: 'post' as RecentSearchType,
+};
+
+export const createRecentSearchDto: CreateRecentSearchDto = {
+  target: 'post',
+  keyword: 'aaaaa',
+};
+
 export const mockedRecentSearchList = [
   {
     id: 1,

@@ -1,5 +1,6 @@
 import { UpdatedAt } from 'sequelize-typescript';
 import { IPost, PostModel } from 'src/database/models/post.model';
+import { MentionableType } from '../../../../common/constants';
 import { CreatePostDto } from '../../dto/requests';
 
 export const mockedCreatePostDto: CreatePostDto = {

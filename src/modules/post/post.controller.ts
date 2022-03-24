@@ -44,11 +44,6 @@ export class PostController {
     return this._postService.publishPost(postId, user.id);
   }
 
-  @Get('/:id')
-  public getPost(@Param('id', ParseIntPipe) id: number) {
-    return this._postService.getPost(id);
-  }
-
   @Delete('/:id/delete')
   public deletePost(
     @AuthUser() user: UserDto,

@@ -1,9 +1,6 @@
-import { InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { IPost } from '../../database/models/post.model';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PostAllow } from './post.constants';
-import { UserDto } from '../auth';
-import { EntityIdDto } from '../../common/dto/entity-id.dto';
 
 @Injectable()
 export class PostPolicyService {
