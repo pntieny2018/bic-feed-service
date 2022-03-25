@@ -9,6 +9,7 @@ import { RecentSearchModel } from './recent-search.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
 import { MentionModel } from './mention.model';
 import { PostGroupModel } from './post-group.model';
+import { FollowModel } from './follow.model';
 
 export default [
   PostModel,
@@ -22,4 +23,5 @@ export default [
   RecentSearchModel,
   UserNewsFeedModel,
   MentionModel,
+  FollowModel,
 ];

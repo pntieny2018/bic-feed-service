@@ -3,6 +3,7 @@ import { UserMentionDto } from '../../../mention/dto';
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { UserDataShareDto } from '../../../../shared/user/dto';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
 
 export class CommentResponseDto {
   @ApiProperty()
@@ -38,6 +39,12 @@ export class CommentResponseDto {
   })
   @Expose()
   public media?: MediaResponseDto[];
+
+  @ApiProperty({
+    type: [ReactionResponseDto],
+  })
+  @Expose()
+  public ownerReactions?: ReactionResponseDto[] = [];
 
   @ApiProperty({
     type: 'object',
@@ -76,4 +83,8 @@ export class CommentResponseDto {
   @Transform(({ value }) => plainToInstance(CommentResponseDto, value))
   @Expose()
   public child?: CommentResponseDto[];
+
+  public constructor(data: Partial<CommentResponseDto>) {
+    Object.assign(this, data);
+  }
 }

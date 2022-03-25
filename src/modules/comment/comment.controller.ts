@@ -20,6 +20,7 @@ import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
 import { CreateCommentPipe } from './pipes/create-comment.pipe';
+import { GetCommentsPipe } from './pipes';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -35,7 +36,7 @@ export class CommentController {
   @Get('/')
   public getList(
     @AuthUser() user: UserDto,
-    @Query() getCommentDto: GetCommentDto
+    @Query(GetCommentsPipe) getCommentDto: GetCommentDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comment');
     return this._commentService.getComments(user, getCommentDto);
