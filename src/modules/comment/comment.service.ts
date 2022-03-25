@@ -281,7 +281,7 @@ export class CommentService {
 
     conditions['postId'] = getCommentDto.postId;
 
-    conditions['parentId'] = getCommentDto.parentId;
+    conditions['parentId'] = getCommentDto.parentId ?? 0;
 
     if (getCommentDto.offset || getCommentDto.offset === 0) {
       offset['offset'] = getCommentDto.offset;

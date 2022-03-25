@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IPostReaction } from '../../../../database/models/post-reaction.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
 import { PostContentDto } from '../../../post/dto/common/post-content.dto';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceDto } from '../common/audience.dto';
 
 export class FeedPostDto {
@@ -59,11 +60,25 @@ export class FeedPostDto {
   public commentCount: number;
 
   @ApiProperty({
-    description: 'Array of reaction count',
-    type: Boolean,
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+    },
+  })
+  @Transform(({ value }) => {
+    if (value && value !== '1=') {
+      const rawReactionsCount: string = (value as string).substring(1);
+      const [s1, s2] = rawReactionsCount.split('=');
+      const reactionsName = s1.split(',');
+      const total = s2.split(',');
+      const reactionsCount = {};
+      reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
+      return reactionsCount;
+    }
+    return null;
   })
   @Expose()
-  public reactionsCount: Record<string, Record<string, number>>;
+  public reactionsCount?: Record<string, Record<string, number>>;
 
   @ApiProperty({
     type: Date,
@@ -77,13 +92,13 @@ export class FeedPostDto {
   @Expose()
   public audience: AudienceDto;
 
-  @ApiProperty({ 
-    type: Boolean
+  @ApiProperty({
+    type: [ReactionResponseDto],
   })
   @Expose()
-  public ownerReactions: IPostReaction[];
+  public ownerReactions?: ReactionResponseDto[] = [];
 
   @ApiProperty({ type: CommentResponseDto, isArray: true })
   @Expose()
-  public comment: CommentResponseDto[];
+  public comments: CommentResponseDto[];
 }

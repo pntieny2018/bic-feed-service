@@ -25,7 +25,7 @@ import {
 } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
-import { EntityIdDto } from '../../common/dto';
+import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
@@ -78,6 +78,7 @@ export class PostService {
           PostModel.loadMedia(),
           [sequelize.literal('array_agg(DISTINCT(group_id))'), 'groupIds'],
           [sequelize.literal('array_agg(DISTINCT(user_id))'), 'mentionIds'],
+          //CommentModel.loadReactionsCount(),
         ],
       },
       where: { id: postId },
@@ -94,16 +95,19 @@ export class PostService {
         },
       ],
     });
+    //const comments = [];
     const comments = await this._commentService.getComments(
       user,
       {
         postId,
         childLimit: 10,
+        order: OrderEnum.DESC,
+        limit: 10,
       },
       false
     );
     console.log('comments=', comments);
-    return comments;
+    return post;
   }
   /**
    * Create Post
