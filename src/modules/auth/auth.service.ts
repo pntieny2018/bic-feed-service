@@ -48,12 +48,11 @@ export class AuthService {
     }
     try {
       const payload = await jwt.verify(token, pem);
-      const isId = payload['token_use'] === 'id';
       const user = new UserDto({
         email: payload['email'],
-        username: isId ? payload['custom:username'] : payload['username'],
-        id: isId ? parseInt(payload['custom:bein_user_id']) : 0,
-        staffRole: isId ? payload['custom:bein_staff_role'] : null,
+        username: payload['custom:username'],
+        id: parseInt(payload['custom:bein_user_id']),
+        staffRole: payload['custom:bein_staff_role'],
       });
       user.profile = await this._userService.get(user.id);
       return user;

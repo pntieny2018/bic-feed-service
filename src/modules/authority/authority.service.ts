@@ -9,7 +9,9 @@ export class AuthorityService {
 
   public allowAccess(user: UserDto, post: IPost): void {
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
-    const userJoinedGroupIds = user?.profile?.groups ?? [];
+
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
