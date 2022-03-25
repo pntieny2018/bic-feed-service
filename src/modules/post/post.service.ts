@@ -8,6 +8,8 @@ import { CreatePostDto } from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -32,6 +34,10 @@ import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
+import { triggerAsyncId } from 'async_hooks';
+import sequelize from 'sequelize';
+import { CommentService } from '../comment/comment.service';
+import { UserDto } from '../auth';
 
 @Injectable()
 export class PostService {
@@ -52,9 +58,53 @@ export class PostService {
     private _userService: UserService,
     private _groupService: GroupService,
     private _mediaService: MediaService,
-    private _mentionService: MentionService
+    private _mentionService: MentionService,
+    @Inject(forwardRef(() => CommentService))
+    private _commentService: CommentService
   ) {}
 
+  /**
+   * Get Post
+   * @param postId number
+   * @param user UserDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async getPost(postId: number, user: UserDto) {
+    const post = this._postModel.findOne({
+      attributes: {
+        exclude: ['updatedBy'],
+        include: [
+          PostModel.loadMedia(),
+          [sequelize.literal('array_agg(DISTINCT(group_id))'), 'groupIds'],
+          [sequelize.literal('array_agg(DISTINCT(user_id))'), 'mentionIds'],
+        ],
+      },
+      where: { id: postId },
+      group: ['PostModel.id'],
+      include: [
+        {
+          model: PostGroupModel,
+          attributes: [],
+        },
+        {
+          model: MentionModel,
+          required: false,
+          attributes: [],
+        },
+      ],
+    });
+    const comments = await this._commentService.getComments(
+      user,
+      {
+        postId,
+        childLimit: 10,
+      },
+      false
+    );
+    console.log('comments=', comments);
+    return comments;
+  }
   /**
    * Create Post
    * @param authUser UserDto
@@ -253,7 +303,7 @@ export class PostService {
       const authInfo = await this._userService.get(authUserId);
       const { setting, id, data, groups, mentions, commentsCount } = post;
       const mentionIds = mentions.map((i) => i.userId);
-      const dataMentions = await this._mentionService.resolveMentions(mentionIds); 
+      const dataMentions = await this._mentionService.resolveMentions(mentionIds);
       const groupIds = groups.map((i) => i.groupId);
       const dataGroups = await this._groupService.getMany(groupIds);
 

@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -34,6 +36,7 @@ export class CommentService {
   private _logger = new Logger(CommentService.name);
 
   public constructor(
+    @Inject(forwardRef(() => PostService))
     private _postService: PostService,
     private _userService: UserService,
     private _mediaService: MediaService,
@@ -258,7 +261,8 @@ export class CommentService {
    */
   public async getComments(
     user: UserDto,
-    getCommentDto: GetCommentDto
+    getCommentDto: GetCommentDto,
+    checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug(
       `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(getCommentDto)}`
@@ -267,11 +271,13 @@ export class CommentService {
     const conditions = {};
     const offset = {};
 
-    const post = await this._postService.findPost({
-      postId: getCommentDto.postId,
-    });
+    if (checkAccess) {
+      const post = await this._postService.findPost({
+        postId: getCommentDto.postId,
+      });
 
-    await this._authorityService.allowAccess(user, post);
+      await this._authorityService.allowAccess(user, post);
+    }
 
     conditions['postId'] = getCommentDto.postId;
 

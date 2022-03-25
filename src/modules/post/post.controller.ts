@@ -13,6 +13,13 @@ import { UserDto } from '../auth';
 export class PostController {
   public constructor(private _postService: PostService) {}
 
+  @ApiOperation({ summary: 'Search post' })
+  @GenericApiOkResponse(Boolean)
+  @Get('/:postId')
+  public getPost(@AuthUser() user: UserDto, @Param('postId', ParseIntPipe) postId: number) {
+    return this._postService.getPost(postId, user);
+  }
+
   @ApiOperation({ summary: 'Create post' })
   @GenericApiOkResponse(Boolean, 'Create post successfully')
   @Post('/')

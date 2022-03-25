@@ -1,12 +1,13 @@
-import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { IsArray } from 'class-validator';
-import { PostContentDto } from '../common/post-content.dto';
-import { PostSettingDto } from '../common/post-setting.dto';
-import { ReactionCountDto } from '../common/reaction-count.dto';
+import { IPostReaction } from '../../../../database/models/post-reaction.model';
+import { UserSharedDto } from '../../../../shared/user/dto';
+import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
+import { PostContentDto } from '../../../post/dto/common/post-content.dto';
+import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { AudienceDto } from '../common/audience.dto';
 
-export class PostResponseDto {
+export class FeedPostDto {
   @ApiProperty({
     description: 'Post ID',
     type: Number,
@@ -62,7 +63,27 @@ export class PostResponseDto {
     type: Boolean,
   })
   @Expose()
-  @Type(() => ReactionCountDto)
-  @IsArray()
-  public reactionCount: ReactionCountDto[] = [];
+  public reactionsCount: Record<string, Record<string, number>>;
+
+  @ApiProperty({
+    type: Date,
+  })
+  @Expose()
+  public createdAt: Date;
+
+  @ApiProperty({
+    type: AudienceDto,
+  })
+  @Expose()
+  public audience: AudienceDto;
+
+  @ApiProperty({ 
+    type: Boolean
+  })
+  @Expose()
+  public ownerReactions: IPostReaction[];
+
+  @ApiProperty({ type: CommentResponseDto, isArray: true })
+  @Expose()
+  public comment: CommentResponseDto[];
 }
