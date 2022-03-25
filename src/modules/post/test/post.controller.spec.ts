@@ -2,12 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
 import { RedisModule } from '@app/redis';
-import { mockedCreatePostDto, mockedPostList } from './mocks/post-list';
-import { mockedUserAuth } from './mocks/user-auth';
+import { mockedCreatePostDto, mockedPostList, mockedUpdatePostDto } from './mocks/post-list.mock';
+import { mockedUserAuth } from './mocks/user-auth.mock';
+import { UserDto } from '../../auth';
+import { createMock } from '@golevelup/ts-jest';
+import { CreatePostDto } from '../dto/requests';
 
 describe('PostController', () => {
   let postService: PostService;
   let postController: PostController;
+  const userDto = createMock<UserDto>({
+    id: 1,
+    username: 'aaaa'
+  });
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [RedisModule],
@@ -30,13 +37,13 @@ describe('PostController', () => {
     jest.resetAllMocks();
   });
   it('should be defined', () => {
-    expect(postService).toBeDefined();
+    expect(postController).toBeDefined();
   });
 
   describe('createPost', () => {
     it('Create post successfully', async () => {
       postService.createPost = jest.fn().mockResolvedValue(true);
-      const result = await postService.createPost(mockedUserAuth.id, mockedCreatePostDto);
+      const result = await postController.createPost(userDto, mockedCreatePostDto);
       expect(postService.createPost).toBeCalledTimes(1);
       expect(postService.createPost).toBeCalledWith(mockedUserAuth.id, mockedCreatePostDto);
       expect(result).toBe(true);
@@ -46,9 +53,10 @@ describe('PostController', () => {
   describe('updatePost', () => {
     it('Update post successfully', async () => {
       postService.updatePost = jest.fn().mockResolvedValue(true);
-      const result = await postService.updatePost(1, mockedUserAuth.id, mockedCreatePostDto);
+      const mockedDataUpdatePost = mockedPostList[0];
+      const result = await postController.updatePost(userDto, mockedDataUpdatePost.id, mockedUpdatePostDto);
       expect(postService.updatePost).toBeCalledTimes(1);
-      expect(postService.updatePost).toBeCalledWith(1, mockedUserAuth.id, mockedCreatePostDto);
+      expect(postService.updatePost).toBeCalledWith(1, mockedUserAuth.id, mockedUpdatePostDto);
       expect(result).toBe(true);
     });
   });
@@ -56,9 +64,21 @@ describe('PostController', () => {
   describe('publishPost', () => {
     it('Publish post successfully', async () => {
       postService.publishPost = jest.fn().mockResolvedValue(true);
-      const result = await postService.publishPost(1, mockedUserAuth.id);
+      const mockedDataUpdatePost = mockedPostList[0];
+      const result = await postController.publishPost(userDto, mockedDataUpdatePost.id);
       expect(postService.publishPost).toBeCalledTimes(1);
-      expect(postService.publishPost).toBeCalledWith(1, mockedUserAuth.id);
+      expect(postService.publishPost).toBeCalledWith(userDto.id, mockedDataUpdatePost.id);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('deletePost', () => {
+    it('Delete post successfully', async () => {
+      postService.deletePost = jest.fn().mockResolvedValue(true);
+      const mockedDataUpdatePost = mockedPostList[0];
+      const result = await postController.deletePost(userDto, mockedDataUpdatePost.id);
+      expect(postService.deletePost).toBeCalledTimes(1);
+      expect(postService.deletePost).toBeCalledWith(mockedDataUpdatePost.id, userDto.id);
       expect(result).toBe(true);
     });
   });

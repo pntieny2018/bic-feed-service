@@ -1,6 +1,6 @@
-import { MentionableType } from '../../common/constants';
 import { MentionModel } from './mention.model';
-import { Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
+import { MediaType } from './media.model';
+import { DataTypes, Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -26,12 +26,17 @@ import { Literal } from 'sequelize/types/utils';
 import sequelize from 'sequelize';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
+import { PostContentDto } from '../../modules/post/dto/common/post-content.dto';
+import { FileDto, ImageDto, VideoDto } from '../../modules/post/dto/common/media.dto';
+import { plainToClass, plainToInstance } from 'class-transformer';
+import { MentionableType } from '../../common/constants';
 
 export interface IPost {
   id: number;
   createdBy: number;
   updatedBy: number;
   content: string;
+  commentsCount: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
   isDraft: boolean;
@@ -53,6 +58,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AutoIncrement
   @Column
   public id: number;
+
+  @Column
+  public commentsCount: number;
 
   @Default(false)
   @Column
@@ -122,21 +130,53 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   })
   public userNewsFeeds: UserNewsFeedModel[];
 
-  @HasMany(() => PostGroupModel, {
-    as: 'audienceGroup',
-    foreignKey: 'postId',
-  })
-  @HasMany(() => PostGroupModel, {
-    as: 'belongToGroup',
-    foreignKey: 'postId',
-  })
-  public postGroups: PostGroupModel[];
-
   @HasMany(() => PostReactionModel, {
     as: 'ownerReactions',
     foreignKey: 'postId',
   })
   public postReactions: PostReactionModel[];
+
+  public get setting(): {
+    canReact: boolean;
+    canComment: boolean;
+    canShare: boolean;
+    isImportant: boolean;
+    importantExpiredAt: Date;
+  } {
+    return {
+      canReact: this.getDataValue('canReact'),
+      canComment: this.getDataValue('canComment'),
+      canShare: this.getDataValue('canShare'),
+      isImportant: this.getDataValue('isImportant'),
+      importantExpiredAt: this.getDataValue('importantExpiredAt'),
+    };
+  }
+
+  public get data(): PostContentDto {
+    const mediaList = this.media ?? [];
+    const result = {
+      content: this.getDataValue('content'),
+      images: [],
+      files: [],
+      videos: [],
+    };
+
+    mediaList.forEach((media) => {
+      switch (media.type) {
+        case MediaType.IMAGE:
+          result.images.push(plainToClass(ImageDto, media, { excludeExtraneousValues: true }));
+          break;
+        case MediaType.VIDEO:
+          result.images.push(plainToClass(VideoDto, media, { excludeExtraneousValues: true }));
+          break;
+        case MediaType.FILE:
+          result.images.push(plainToClass(FileDto, media, { excludeExtraneousValues: true }));
+          break;
+      }
+    });
+
+    return result;
+  }
 
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();

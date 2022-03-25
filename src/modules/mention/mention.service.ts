@@ -31,7 +31,6 @@ export class MentionService {
    */
   public async checkValidMentions(groupIds: number[], userIds: number[]): Promise<void> {
     const users: UserSharedDto[] = await this._userService.getMany(userIds);
-
     for (const user of users) {
       if (!this._groupService.isMemberOfGroups(groupIds, user.groups)) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
@@ -50,13 +49,13 @@ export class MentionService {
   /**
    * Resolve mentions by id
    * @param userIds number[]
-   * @returns Promise resolve UserDataShareDto[]
+   * @returns Promise resolve UserSharedDto[]
    */
-  public async resolveMentions(userIds: number[]): Promise<UserDataShareDto[]> {
+  public async resolveMentions(userIds: number[]): Promise<UserSharedDto[]> {
     if (!userIds.length) return [];
     const users = await this._userService.getMany(userIds);
 
-    return plainToInstance(UserDataShareDto, users, {
+    return plainToInstance(UserSharedDto, users, {
       excludeExtraneousValues: true,
     });
   }

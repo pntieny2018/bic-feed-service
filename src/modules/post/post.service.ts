@@ -5,11 +5,22 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto } from './dto/requests';
-import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { MediaService } from '../media';
-import { GroupService } from '../../shared/group';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { MediaService } from '../media/media.service';
+import { GroupService } from '../../shared/group/group.service';
 import { MentionService } from '../mention';
-import { CreatedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
+import {
+  CreatedPostEvent,
+  DeletedPostEvent,
+  PublishedPostEvent,
+  UpdatedPostEvent,
+} from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
 import { EntityIdDto } from '../../common/dto';
@@ -17,6 +28,10 @@ import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
+import { MentionModel } from '../../database/models/mention.model';
+import { MediaModel } from '../../database/models/media.model';
+import { getDatabaseConfig } from '../../config/database';
+import { QueryTypes } from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -44,32 +59,32 @@ export class PostService {
    * Create Post
    * @param authUser UserDto
    * @param createPostDto CreatePostDto
-   * @returns Promise resolve recentSearchPostDto
+   * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
-    let transaction;
+    const transaction = await this._sequelizeConnection.transaction();
     try {
       const { isDraft, data, setting, mentions, audience } = createPostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
+        throw new BadRequestException(`UserID ${authUserId} not found`);
       }
 
       const { groups } = audience;
-      const isMember = await this._groupService.isMemberOfGroups(groups, creator.groups);
+      const groupIds = groups.map((i) => i.id);
+      const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
-        throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
+        throw new BadRequestException('You can not create post in this groups');
       }
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
       const { files, videos, images } = data;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
-      transaction = await this._sequelizeConnection.transaction();
 
       const post = await this._postModel.create({
         isDraft,
@@ -88,7 +103,7 @@ export class PostService {
         await this._mediaService.activeMedia(unitMediaIds, authUserId);
       }
 
-      this.addPostGroup(groups, post.id);
+      this.addPostGroup(groupIds, post.id);
 
       if (mentionUserIds.length) {
         await this._mentionService.create(
@@ -105,6 +120,7 @@ export class PostService {
         new CreatedPostEvent({
           id: post.id,
           isDraft,
+          commentsCount: post.commentsCount,
           data,
           actor: creator,
           mentions,
@@ -123,11 +139,11 @@ export class PostService {
   }
 
   /**
-   * Update Post
+   * Update Post except isDraft
    * @param postId postID
    * @param authUserId userID
    * @param createPostDto UpdatePostDto
-   * @returns Promise resolve recentSearchPostDto
+   * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async updatePost(
@@ -135,18 +151,19 @@ export class PostService {
     authUserId: number,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
-    let transaction;
+    const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { isDraft, data, setting, mentions, audience } = updatePostDto;
+      const { data, setting, mentions, audience } = updatePostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
-        throw new HttpException(`UserID ${authUserId} not found`, HttpStatus.BAD_REQUEST);
+        throw new BadRequestException(`UserID ${authUserId} not found`);
       }
 
       const { groups } = audience;
-      const isMember = await this._groupService.isMemberOfGroups(groups, creator.groups);
+      const groupIds = groups.map((i) => i.id);
+      const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
-        throw new HttpException('You can not create post in this groups', HttpStatus.BAD_REQUEST);
+        throw new BadRequestException('You can not create post in this groups');
       }
 
       const post = await this._postModel.findOne({ where: { id: postId } });
@@ -154,17 +171,15 @@ export class PostService {
 
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
-        //await this._mentionService.checkValidMentions(groups, data.content, mentionUserIds);
+        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
       const { files, videos, images } = data;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
-      transaction = await this._sequelizeConnection.transaction();
       await this._postModel.update(
         {
-          isDraft,
           content: data.content,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
@@ -180,16 +195,17 @@ export class PostService {
           },
         }
       );
-      await this._mediaService.setMediaPost(unitMediaIds, postId);
+      await this._mediaService.setMediaByPost(unitMediaIds, postId);
       await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
-      await this.setPostGroup(groups, post.id);
+      await this.setGroupByPost(groupIds, post.id);
 
       this._eventEmitter.emit(
         UpdatedPostEvent.event,
         new UpdatedPostEvent({
           updatedPost: {
             id: post.id,
-            isDraft,
+            isDraft: post.isDraft,
+            commentsCount: post.commentsCount,
             data,
             actor: creator,
             mentions,
@@ -202,7 +218,7 @@ export class PostService {
 
       return true;
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
+      await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }
@@ -212,12 +228,15 @@ export class PostService {
    * Publish Post
    * @param postId PostID
    * @param authUserId UserID
-   * @returns Promise resolve recentSearchPostDto
+   * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
-      const post = await this._postModel.findOne({ where: { id: postId } });
+      const post = await this._postModel.findOne({
+        where: { id: postId },
+        include: [MentionModel, MediaModel, PostGroupModel],
+      });
       await this._checkPostExistAndOwner(post, authUserId);
 
       await this._postModel.update(
@@ -231,8 +250,28 @@ export class PostService {
           },
         }
       );
+      const authInfo = await this._userService.get(authUserId);
+      const { setting, id, data, groups, mentions, commentsCount } = post;
+      const mentionIds = mentions.map((i) => i.userId);
+      const dataMentions = await this._mentionService.resolveMentions(mentionIds); 
+      const groupIds = groups.map((i) => i.groupId);
+      const dataGroups = await this._groupService.getMany(groupIds);
 
-      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(postId));
+      this._eventEmitter.emit(
+        PublishedPostEvent.event,
+        new PublishedPostEvent({
+          id,
+          isDraft: false,
+          data,
+          commentsCount,
+          actor: authInfo,
+          mentions: dataMentions,
+          audience: {
+            groups: dataGroups,
+          },
+          setting,
+        })
+      );
 
       return true;
     } catch (error) {
@@ -250,40 +289,67 @@ export class PostService {
    */
   private async _checkPostExistAndOwner(post, authUserId): Promise<boolean> {
     if (!post) {
-      throw new HttpException('The post not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('The post not found');
     }
 
     if (post.createdBy !== authUserId) {
-      throw new HttpException('Access denied', HttpStatus.FORBIDDEN);
+      throw new ForbiddenException('Access denied');
     }
     return true;
   }
+
   /**
-   * Get post by id
-   * @param id Number
+   * Update comments count
+   * @param postId Post ID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async getPost(id: number) {
-    return null;
-    //return this._postModel.findOne({ where: { id } });
+  public async updateCommentCountByPost(postId: number): Promise<boolean> {
+    const { schema } = getDatabaseConfig();
+    const postTable = PostModel.tableName;
+    const commentTable = CommentModel.tableName;
+    const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
+      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = 19
+    );`;
+    await this._sequelizeConnection.query(query, {
+      replacements: {
+        postId,
+      },
+      type: QueryTypes.UPDATE,
+      raw: true,
+    });
+    return true;
   }
 
   /**
-   * Delete recent search by id
-   * @param createdBy Number
-   * @param id Number
+   * Delete post by id
+   * @param postId postID
+   * @param authUserId auth user ID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async delete(createdBy: number, id: number): Promise<boolean> {
+  public async deletePost(postId: number, authUserId: number): Promise<boolean> {
+    const transaction = await this._sequelizeConnection.transaction();
     try {
+      const post = await this._postModel.findOne({ where: { id: postId } });
+      //await this._checkPostExistAndOwner(post, authUserId);
+      await this._mentionService.setMention([], MentionableType.POST, postId);
+      await this._mediaService.setMediaByPost([], postId);
+      await this.setGroupByPost([], postId);
+      await this._postModel.destroy({
+        where: {
+          id: postId,
+          createdBy: authUserId,
+        },
+      });
+      this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(post));
+      transaction.commit();
+
       return true;
     } catch (error) {
-      this._logger.error(error);
-      //this.sentryService.captureException(error);
-
-      throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
+      this._logger.error(error, error?.stack);
+      transaction.rollback();
+      throw error;
     }
   }
 
@@ -311,7 +377,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+  public async setGroupByPost(groupIds: number[], postId: number): Promise<boolean> {
     const currentGroups = await this._postGroupModel.findAll({
       where: { postId },
     });

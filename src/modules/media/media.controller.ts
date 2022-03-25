@@ -23,6 +23,7 @@ import { APP_VERSION } from '../../common/constants';
 import { MediaService } from './media.service';
 import { AuthUser, UserDto } from '../auth';
 import { ResponseMessages } from '../../common/decorators';
+import { MediaType } from '../../database/models/media.model';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -51,7 +52,7 @@ export class MediaController {
     @Body('uploadType') uploadType: UploadType
   ): Promise<any> {
     const url = await this._uploadService.upload(file, uploadType);
-    return this._mediaService.create(user, url, 'image');
+    return this._mediaService.create(user, url, MediaType.IMAGE);
   }
 
   @ApiOperation({ summary: 'Delete Media' })

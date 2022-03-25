@@ -11,7 +11,7 @@ import { AuthUser, UserDto } from '../auth';
 @ApiTags('Recent Searches')
 @Controller('recent-searches')
 export class RecentSearchController {
-  public constructor(private _recentSearchPostService: RecentSearchService) {}
+  public constructor(private _recentSearchService: RecentSearchService) {}
 
   @ApiOperation({ summary: 'Get recent search list' })
   @ApiOkResponse({
@@ -23,7 +23,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Query() getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
-    return this._recentSearchPostService.get(user.id, getRecentSearchPostDto);
+    return this._recentSearchService.get(user.id, getRecentSearchPostDto);
   }
 
   @ApiOperation({ summary: 'Create recent search' })
@@ -36,7 +36,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Body() createRecentSearchPostDto: CreateRecentSearchDto
   ): Promise<RecentSearchDto> {
-    return this._recentSearchPostService.create(user.id, createRecentSearchPostDto);
+    return this._recentSearchService.create(user.id, createRecentSearchPostDto);
   }
 
   @ApiOperation({ summary: 'Delete recent search' })
@@ -49,11 +49,11 @@ export class RecentSearchController {
     type: Boolean,
   })
   @Delete('/:id/delete')
-  public deleteRecentSearchForPost(
+  public deleteRecentSearch(
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) id: number
   ): Promise<boolean> {
-    return this._recentSearchPostService.delete(user.id, id);
+    return this._recentSearchService.delete(user.id, id);
   }
 
   @ApiOperation({ summary: 'Clean recent search' })
@@ -62,10 +62,10 @@ export class RecentSearchController {
     type: Boolean,
   })
   @Delete('/:target/clean')
-  public cleanRecentSearchesForPost(
+  public cleanRecentSearches(
     @AuthUser() user: UserDto,
     @Param() cleanRecentSearchesDto: CleanRecentSearchesDto
   ): Promise<boolean> {
-    return this._recentSearchPostService.clean(user.id, cleanRecentSearchesDto.target);
+    return this._recentSearchService.clean(user.id, cleanRecentSearchesDto.target);
   }
 }

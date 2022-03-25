@@ -11,12 +11,12 @@ export class SeedCommand implements CommandRunner {
   public async run(): Promise<any> {
     const groups = [
       {
-        groupId: 1,
+        id: 1,
         name: 'Group 1',
         icon: 'https://docs.nestjs.com/assets/logo-small.svg',
       },
       {
-        groupId: 2,
+        id: 2,
         name: 'Group 2',
         icon: 'https://docs.nestjs.com/assets/logo-small.svg',
       },
@@ -38,7 +38,7 @@ export class SeedCommand implements CommandRunner {
       },
     ];
 
-    groups.forEach((g) => this._storeService.set(`GS:${g.groupId}`, g));
+    groups.forEach((g) => this._storeService.set(`GS:${g.id}`, g));
     users.forEach((u) => this._storeService.set(`US:${u.id}`, u));
 
     this.logger.log('done');
