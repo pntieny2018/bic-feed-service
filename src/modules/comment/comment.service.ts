@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
@@ -14,9 +9,9 @@ import { Sequelize } from 'sequelize-typescript';
 import { CreateCommentDto } from './dto/requests';
 import { plainToInstance } from 'class-transformer';
 import { MentionableType } from '../../common/constants';
-import { GetCommentDto } from './dto/requests/get-comment.dto';
+import { GetCommentDto } from './dto/requests';
 import { MediaModel } from '../../database/models/media.model';
-import { PageDto } from '../../common/dto/pagination/page.dto';
+import { PageDto } from '../../common/dto';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentModel, IComment } from '../../database/models/comment.model';
@@ -275,7 +270,7 @@ export class CommentService {
 
     conditions['postId'] = getCommentDto.postId;
 
-    conditions['parentId'] = getCommentDto?.parentId ?? 0;
+    conditions['parentId'] = getCommentDto.parentId;
 
     if (getCommentDto.offset || getCommentDto.offset === 0) {
       offset['offset'] = getCommentDto.offset;
@@ -355,8 +350,8 @@ export class CommentService {
         },
       ],
       ...offset,
-      limit: getCommentDto?.limit ?? 25,
-      order: [['createdAt', getCommentDto.order ?? 'DESC']],
+      limit: getCommentDto.limit,
+      order: [['createdAt', getCommentDto.order]],
     });
     const response = rows.map((r) => r.toJSON());
 

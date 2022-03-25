@@ -39,6 +39,7 @@
     "@nestjs/websockets": "^8.4.0",
     "@sentry/integrations": "^6.18.2",
     "@sentry/node": "^6.18.2",
+    "@types/jsonwebtoken": "^8.5.8",
     "aws-sdk": "^2.1089.0",
     "cache-manager": "^3.6.0",
     "class-transformer": "^0.5.1",
@@ -48,6 +49,7 @@
     "ioredis": "^4.28.5",
     "jsonwebtoken": "^8.5.1",
     "jwk-to-pem": "^2.0.5",
+    "kafka-retry": "^1.0.7",
     "kafkajs": "^1.16.0",
     "nest-commander": "^2.4.0",
     "nest-winston": "^1.6.2",
@@ -115,7 +117,21 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "<rootDir>/src/**/**.ts",
+      "!**/index.ts",
+      "!**/*.dto.ts",
+      "!**/constants.ts",
+      "!**/*.constants.ts",
+      "!**/*.mock.ts",
+      "!**/(mock|test)/*.ts",
+      "!**/*.module.ts",
+      "!**/*.config.ts",
+      "!seed.ts",
+      "!**/*.command.ts",
+      "!**/cli.ts",
+      "!**/configuration.ts",
+      "!**/main.ts",
+      "!<rootDir>/libs/"
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",

@@ -71,6 +71,7 @@ describe('AuthService', () => {
             await authService.login(authInput.nullToken);
           } catch (e) {
             expect(e).toBeInstanceOf(UnauthorizedException);
+            expect((e as UnauthorizedException).message).toEqual('Unauthorized');
           }
         });
       });
@@ -107,10 +108,14 @@ describe('AuthService', () => {
 
       describe('expired token', () => {
         it('should throw an UnauthorizedException', async () => {
+          jest.spyOn(jwt, 'verify').mockImplementation(() => {
+            throw new jwt.TokenExpiredError('Token Expired Error', new Date());
+          });
           try {
             await authService.login(authInput.expiredToken);
           } catch (e) {
             expect(e).toBeInstanceOf(UnauthorizedException);
+            expect((e as UnauthorizedException).message).toEqual('Auth token expired');
           }
         });
       });

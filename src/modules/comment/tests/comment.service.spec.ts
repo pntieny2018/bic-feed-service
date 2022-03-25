@@ -1,14 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { CommentService } from '../comment.service';
-import { UserService } from '../../../shared/user';
-import { GroupService } from '../../../shared/group';
-import { MentionService } from '../../mention';
-import { AuthorityService } from '../../authority';
-import { PostPolicyService } from '../../post/post-policy.service';
-import { Sequelize } from 'sequelize-typescript';
-import { CommentModel } from '../../../database/models/comment.model';
-import { getModelToken } from '@nestjs/sequelize';
-import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
+import { Op } from 'sequelize';
 import {
   createCommentDto,
   createCommentWithPostNotFoundDto,
@@ -17,12 +7,26 @@ import {
   createTextCommentWithMentionInGroupDto,
   createTextCommentWithMentionNotInGroupDto,
 } from './mocks/create-comment-dto.mock';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PostService } from '../../post/post.service';
 import { MediaService } from '../../media';
+import { PageDto } from '../../../common/dto';
+import { MentionService } from '../../mention';
+import { Sequelize } from 'sequelize-typescript';
+import { getModelToken } from '@nestjs/sequelize';
+import { UserService } from '../../../shared/user';
+import { AuthorityService } from '../../authority';
+import { CommentService } from '../comment.service';
+import { GroupService } from '../../../shared/group';
+import { Test, TestingModule } from '@nestjs/testing';
+import { PostService } from '../../post/post.service';
+import { getCommentsMock } from './mocks/get-comments.mock';
 import { LogicException } from '../../../common/exceptions';
+import { PostPolicyService } from '../../post/post-policy.service';
+import { CommentModel } from '../../../database/models/comment.model';
 import { MENTION_ERROR_ID } from '../../mention/errors/mention.error';
-import { Op } from 'sequelize';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { CommentResponseDto } from '../dto/response/comment.response.dto';
+import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -35,6 +39,7 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
+  let ct = jest.createMockFromModule('class-transformer');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -367,21 +372,92 @@ describe('CommentService', () => {
   describe('CommentService.getComments', () => {
     describe('Get comments with idGT', () => {
       it('should make condition query with Op.gt', async () => {
-        commentModel.findAndCountAll.mockReturnThis();
         try {
-          await commentService.getComments(authUserMock, {
+          const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
+
+          const fakeModel = (getCommentsMock as any[]).map((i) => {
+            i['toJSON'] = () => i;
+            return i;
+          });
+
+          commentModel.findAndCountAll.mockResolvedValue({
+            rows: fakeModel,
+            count: 1,
+          });
+
+          mentionService.bindMentionsToComment.mockResolvedValue(getCommentsMock);
+
+          const bindCommentSpy = jest.spyOn(commentService, 'bindUserToComment').mockResolvedValue([
+            {
+              id: 1,
+              parentId: null,
+              postId: 1,
+              content: 'hello',
+              createdBy: 1,
+              updatedBy: 1,
+              createdAt: '2022-03-11T08:39:58.832Z',
+              updatedAt: '2022-03-11T08:39:58.832Z',
+              reactionsCount: '1=',
+              media: [],
+              mentions: [],
+              ownerReactions: [],
+              child: [[Object]],
+              actor: {
+                id: 1,
+                username: 'bret.josh',
+                fullname: 'Bret Josh',
+                avatar: 'https://bein.group/josh.png',
+              },
+            },
+            {
+              id: 2,
+              parentId: 1,
+              postId: 1,
+              content: 'hello',
+              createdBy: 2,
+              updatedBy: 2,
+              createdAt: '2022-03-11T08:41:35.047Z',
+              updatedAt: '2022-03-11T08:41:35.047Z',
+              reactionsCount: '1=',
+              media: [],
+              mentions: [],
+              ownerReactions: [],
+              child: [],
+              actor: {
+                id: 2,
+                username: 'caitlyn.back',
+                fullname: 'Caitlyn Back',
+                avatar: 'https://bein.group/back.png',
+              },
+            },
+          ] as any);
+
+          const response = await commentService.getComments(authUserMock, {
             idGT: 1,
             postId: 1,
           });
-          //expect();
-        } catch (e) {
+
+          const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
+
           const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
+
+          expect(logSpy).toBeCalled();
 
           expect(whereClause).toEqual({
             postId: 1,
             parentId: 0,
             id: { [Op.gt]: 1 },
           });
+
+          expect(bindCommentSpy).toBeCalled();
+
+          expect(response).toBeInstanceOf(PageDto);
+
+          expect(response.data[0]).toBeInstanceOf(CommentResponseDto);
+
+          expect(response.data[0]).toEqual(expectResponse);
+        } catch (e) {
+          throw e;
         }
       });
     });
@@ -406,6 +482,7 @@ describe('CommentService', () => {
         }
       });
     });
+
     describe('Get comments with idLT', () => {
       it('should make condition query with Op.lt', async () => {
         commentModel.findAndCountAll.mockReturnThis();
@@ -465,8 +542,56 @@ describe('CommentService', () => {
   });
 
   describe('CommentService.bindUserToComment', () => {
-    it('', async () => {
-      // await commentService.bindUserToComment()
+    describe('Happy case: ', () => {
+      it('should add actor property to comment response', async () => {
+        const actorCommentMock = [
+          {
+            id: 1,
+            fullname: 'Bret Josh',
+            username: 'bret.josh',
+            avatar: 'https://bein.group/josh.png',
+          },
+          {
+            id: 2,
+            fullname: 'Caitlyn Back',
+            username: 'caitlyn.back',
+            avatar: 'https://bein.group/back.png',
+          },
+        ];
+        userService.getMany.mockResolvedValue(actorCommentMock);
+
+        const commentResponse = getCommentsMock;
+
+        await commentService.bindUserToComment(commentResponse as any);
+
+        expect(userService.getMany).toBeCalled();
+
+        expect(commentResponse[0]['actor']).toEqual(actorCommentMock[0]);
+
+        expect(commentResponse[0]['child'][0]['actor']).toEqual(actorCommentMock[1]);
+
+        expect(commentResponse[1]['actor']).toEqual(actorCommentMock[1]);
+      });
+    });
+
+    describe('Redis die or no data', () => {
+      it('should missing actor property to comment response', async () => {
+        const actorCommentNullMock = [];
+
+        userService.getMany.mockResolvedValue(actorCommentNullMock);
+
+        const commentNoActorResponse = getCommentsMock;
+
+        await commentService.bindUserToComment(commentNoActorResponse as any);
+
+        expect(userService.getMany).toBeCalled();
+
+        expect(commentNoActorResponse[0]['actor']).toBeUndefined();
+
+        expect(commentNoActorResponse[0]['child'][0]['actor']).toBeUndefined();
+
+        expect(commentNoActorResponse[1]['actor']).toBeUndefined();
+      });
     });
   });
 });

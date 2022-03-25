@@ -68,11 +68,12 @@ export class SequelizeTinkerCommand implements CommandRunner {
           },
         ],
         offset: 0,
-        limit: 10,
+        limit: 3,
         order: [['createdAt', 'ASC']],
       });
 
       const response = rows.rows.map((r) => r.toJSON());
+      // console.log(JSON.stringify(response, null, 4));
       await this._mentionService.bindMentionsToComment(response);
       console.log(JSON.stringify(plainToInstance(CommentResponseDto, response), null, 4));
     } catch (ex) {

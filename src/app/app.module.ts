@@ -1,5 +1,4 @@
 import { LibModule } from './lib.module';
-import { AppService } from './app.service';
 import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { ListenerModule } from '../listeners';
@@ -7,7 +6,6 @@ import { GroupModule } from '../shared/group';
 import { PostModule } from '../modules/post';
 import { MediaModule } from '../modules/media';
 import { UploadModule } from '../modules/upload';
-import { AppController } from './app.controller';
 import { CommentModule } from '../modules/comment';
 import { MentionModule } from '../modules/mention';
 import { AuthorityModule } from '../modules/authority';
@@ -18,8 +16,6 @@ import { NotificationModule } from '../modules/notification';
 import { ReactionModule } from '../modules/reaction';
 
 @Module({
-  controllers: [AppController],
-  providers: [AppService],
   imports: [
     LibModule,
     AuthModule,
