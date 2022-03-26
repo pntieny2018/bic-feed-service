@@ -1,5 +1,4 @@
 import { useContainer } from 'class-validator';
-import { StringHelper } from '../common/helpers';
 import { ValidatorException } from '../common/exceptions';
 import {
   INestApplication,
@@ -47,19 +46,13 @@ function exceptionFactory(errors: ValidationError[]): void {
 }
 
 function buildErrors(errors: ValidationError[]): ConstraintItem[] {
-  const properties = errors.map((e) => StringHelper.camelToSnakeCase(e.property));
+  const properties = errors.map((e) => e.property);
   // make the error message group by property
   const constraints: ConstraintItem[] = [];
 
   properties.forEach((p, index) => {
     const item: ConstraintItem = {
-      message: Object.values(errors[index].constraints).map((ct) => {
-        let msg = StringHelper.camelToSnakeCase(ct, ['UUID', 'uuid']);
-        if (msg[0] === '_') {
-          msg = msg.slice(1);
-        }
-        return msg;
-      }),
+      message: Object.values(errors[index].constraints),
       title: p,
     };
     constraints.push(item);

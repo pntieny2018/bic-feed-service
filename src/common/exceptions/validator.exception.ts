@@ -18,8 +18,6 @@ export class ValidatorException extends Error {
       isString((this._response as Record<string, unknown>).message)
     ) {
       this.message = <string>(this._response as Record<string, unknown>).message;
-    } else if (this.constructor) {
-      this.message = this.constructor.name.match(/[A-Z][a-z]+|\d+/g).join(' ');
     }
   }
 

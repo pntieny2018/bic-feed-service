@@ -1,4 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { FileDto, ImageDto, VideoDto } from '../../../post/dto/common/media.dto';
+
+export class MediaFilterResponseDto {
+  @ApiProperty()
+  public files: FileDto[];
+
+  @ApiProperty()
+  public videos: VideoDto[];
+
+  @ApiProperty()
+  public images: ImageDto[];
+}
 
 export class MediaResponseDto {
   @ApiProperty()

@@ -26,7 +26,7 @@ import { MENTION_ERROR_ID } from '../../mention/errors/mention.error';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommentResponseDto } from '../dto/response/comment.response.dto';
 import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -39,7 +39,6 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
-  let ct = jest.createMockFromModule('class-transformer');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -49,6 +48,7 @@ describe('CommentService', () => {
           provide: MediaService,
           useValue: {
             sync: jest.fn(),
+            destroyCommentMedia: jest.fn(),
           },
         },
         {
@@ -77,6 +77,7 @@ describe('CommentService', () => {
             resolveMentions: jest.fn(),
             bindMentionsToComment: jest.fn(),
             setMention: jest.fn(),
+            destroy: jest.fn(),
           },
         },
         {
@@ -367,6 +368,90 @@ describe('CommentService', () => {
         }
       });
     });
+
+    it('should delete comment and relationship successfully', async () => {
+      const commentId = 10;
+
+      commentModel.findOne.mockResolvedValue({
+        id: 1,
+        destroy: jest.fn(),
+      });
+
+      postService.findPost.mockResolvedValue({
+        groups: [
+          {
+            postId: 1,
+            groupId: 1,
+          },
+          {
+            postId: 1,
+            groupId: 2,
+          },
+        ],
+      });
+
+      authorityService.allowAccess.mockReturnThis();
+
+      mediaService.destroyCommentMedia.mockResolvedValue({});
+
+      mentionService.destroy.mockResolvedValue({});
+
+      commentModel.destroy.mockResolvedValue(1);
+
+      const trxCommit = await sequelizeConnection.transaction().commit.mockResolvedValue(1);
+
+      const deletedFlag = await commentService.destroy(authUserMock, commentId);
+
+      expect(commentModel.findOne).toBeCalled();
+      expect(postService.findPost).toBeCalled();
+      expect(authorityService.allowAccess).toBeCalled();
+      expect(mediaService.destroyCommentMedia).toBeCalled();
+      expect(mentionService.destroy).toBeCalled();
+      expect(trxCommit).toBeCalled();
+      expect(deletedFlag).toBeTruthy();
+    });
+
+    it('should delete comment and relationship false and throw exception', async () => {
+      const commentId = 10;
+
+      commentModel.findOne.mockResolvedValue({
+        id: 1,
+        destroy: jest.fn(() => Promise.reject(new Error('connect error'))),
+      });
+
+      postService.findPost.mockResolvedValue({
+        groups: [
+          {
+            postId: 1,
+            groupId: 1,
+          },
+          {
+            postId: 1,
+            groupId: 2,
+          },
+        ],
+      });
+
+      authorityService.allowAccess.mockReturnValue({});
+
+      mediaService.destroyCommentMedia.mockReturnValue(Promise.resolve());
+
+      mentionService.destroy.mockReturnValue(Promise.resolve());
+
+      // const trxRollback = (await sequelizeConnection.transaction()).rollback.mockResolvedValue(1);
+
+      const loggerSpy = jest.spyOn(commentService['_logger'], 'error').mockReturnThis();
+
+      await commentService.destroy(authUserMock, commentId);
+
+      expect(commentModel.findOne).toBeCalled();
+      expect(postService.findPost).toBeCalled();
+      expect(authorityService.allowAccess).toBeCalled();
+      expect(mediaService.destroyCommentMedia).toBeCalled();
+      expect(mentionService.destroy).toBeCalled();
+      expect(loggerSpy).toBeCalled();
+      // expect(trxRollback).toBeCalled();
+    });
   });
 
   describe('CommentService.getComments', () => {
@@ -374,6 +459,12 @@ describe('CommentService', () => {
       it('should make condition query with Op.gt', async () => {
         try {
           const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
+
+          const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
+
+          const classTransformer = jest
+            .spyOn(commentService['_classTransformer'], 'plainToInstance')
+            .mockReturnValue(expectResponse);
 
           const fakeModel = (getCommentsMock as any[]).map((i) => {
             i['toJSON'] = () => i;
@@ -437,8 +528,6 @@ describe('CommentService', () => {
             postId: 1,
           });
 
-          const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
-
           const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
 
           expect(logSpy).toBeCalled();
@@ -450,6 +539,8 @@ describe('CommentService', () => {
           });
 
           expect(bindCommentSpy).toBeCalled();
+
+          expect(classTransformer).toBeCalled();
 
           expect(response).toBeInstanceOf(PageDto);
 

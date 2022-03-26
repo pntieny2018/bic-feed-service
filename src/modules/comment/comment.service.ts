@@ -1,32 +1,34 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
-import { MentionService } from '../mention';
-import { UserService } from '../../shared/user';
-import { GroupService } from '../../shared/group';
-import { Sequelize } from 'sequelize-typescript';
-import { CreateCommentDto } from './dto/requests';
-import { plainToInstance } from 'class-transformer';
-import { MentionableType } from '../../common/constants';
-import { GetCommentDto } from './dto/requests';
-import { MediaModel } from '../../database/models/media.model';
+import { MediaService } from '../media';
 import { PageDto } from '../../common/dto';
+import { MentionService } from '../mention';
+import { GetCommentDto } from './dto/requests';
+import { UserService } from '../../shared/user';
+import { AuthorityService } from '../authority';
+import { Sequelize } from 'sequelize-typescript';
+import { GroupService } from '../../shared/group';
+import { CreateCommentDto } from './dto/requests';
+import { PostService } from '../post/post.service';
+import { EntityType } from '../media/media.constants';
+import { MentionableType } from '../../common/constants';
+import { UserDataShareDto } from '../../shared/user/dto';
+import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CommentModel, IComment } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
-import { AuthorityService } from '../authority';
-import { PostService } from '../post/post.service';
-import { MediaService } from '../media';
-import { EntityType } from '../media/media.constants';
-import { UserDataShareDto } from '../../shared/user/dto';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { CommentModel, IComment } from '../../database/models/comment.model';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 
 @Injectable()
 export class CommentService {
   private _logger = new Logger(CommentService.name);
+  private _classTransformer = new ClassTransformer();
 
   public constructor(
     private _postService: PostService,
@@ -168,7 +170,7 @@ export class CommentService {
         content: updateCommentDto.data?.content,
       });
 
-      const updateMentions = updateCommentDto?.mentions ?? [];
+      const updateMentions = updateCommentDto.mentions;
 
       if (updateMentions.length) {
         const userIds = updateMentions.map((u) => u.id);
@@ -186,9 +188,9 @@ export class CommentService {
       }
 
       const media = [
-        ...(updateCommentDto.data?.files ?? []),
-        ...(updateCommentDto.data?.images ?? []),
-        ...(updateCommentDto.data?.videos ?? []),
+        ...updateCommentDto.data.files,
+        ...updateCommentDto.data.images,
+        ...updateCommentDto.data.videos,
       ];
 
       if (media.length) {
@@ -342,7 +344,8 @@ export class CommentService {
           ],
         },
         {
-          association: 'ownerReactions',
+          model: CommentReactionModel,
+          as: 'ownerReactions',
           required: false,
           where: {
             createdBy: user.id,
@@ -359,7 +362,7 @@ export class CommentService {
 
     await this.bindUserToComment(response);
 
-    const comments = plainToInstance(CommentResponseDto, response, {
+    const comments = this._classTransformer.plainToInstance(CommentResponseDto, response, {
       excludeExtraneousValues: true,
     });
 
@@ -403,10 +406,13 @@ export class CommentService {
       await this._mentionService.destroy({
         commentId: commentId,
       });
+
       await comment.destroy();
+
       await transaction.commit();
       return true;
     } catch (e) {
+      this._logger.error(e, e.stack);
       await transaction.rollback();
     }
   }

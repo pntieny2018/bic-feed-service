@@ -45,4 +45,15 @@ describe('ArrayHelper', function () {
       expect(isArraySorted).toBe(false);
     });
   });
+
+  describe('arraysEqual', function () {
+    it('should return true if two array equal ', function () {
+      const flag = ArrayHelper.arraysEqual([1, 2], [2, 1]);
+      expect(flag).toBeTruthy();
+    });
+    it('should return false if two array not equal ', function () {
+      const flag = ArrayHelper.arraysEqual([1, 2, 3], [2, 1]);
+      expect(flag).toBeFalsy();
+    });
+  });
 });

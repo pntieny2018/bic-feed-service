@@ -38,6 +38,12 @@ describe('AxiosHelper', function () {
 
       expect(result).toMatchObject(expectData);
     });
+
+    it('should return null ', function () {
+      const result = AxiosHelper.getDataResponse(null);
+
+      expect(result).toBeNull();
+    });
   });
   describe('injectParamsToStrUrl', function () {
     it('should return path with injected params', function () {

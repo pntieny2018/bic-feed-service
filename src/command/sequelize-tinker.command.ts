@@ -6,6 +6,7 @@ import { MentionModel } from '../database/models/mention.model';
 import { plainToInstance } from 'class-transformer';
 import { CommentResponseDto } from '../modules/comment/dto/response/comment.response.dto';
 import { MentionService } from '../modules/mention';
+import { CommentReactionModel } from '../database/models/comment-reaction.model';
 
 @Command({ name: 'tinker', description: 'Create shared user and group  data' })
 export class SequelizeTinkerCommand implements CommandRunner {
@@ -18,8 +19,8 @@ export class SequelizeTinkerCommand implements CommandRunner {
     try {
       const rows = await this._commentModel.findAndCountAll({
         where: {
-          postId: 1,
-          //id: 1,
+          // postId: 1,
+          id: 57,
         },
         attributes: {
           include: [CommentModel.loadReactionsCount()],
@@ -34,7 +35,7 @@ export class SequelizeTinkerCommand implements CommandRunner {
           },
           {
             model: MentionModel,
-            required: false,
+            as: 'mentions',
           },
           {
             model: CommentModel,
@@ -56,6 +57,10 @@ export class SequelizeTinkerCommand implements CommandRunner {
                 model: MentionModel,
                 as: 'mentions',
                 required: false,
+              },
+              {
+                model: CommentReactionModel,
+                as: 'ownerReactions',
               },
             ],
           },

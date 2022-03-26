@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserMentionDto } from '../../../mention/dto';
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
-import { MediaResponseDto } from '../../../media/dto/response';
+import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { MediaService } from '../../../media';
 
 export class CommentResponseDto {
   @ApiProperty()
@@ -35,10 +36,16 @@ export class CommentResponseDto {
   public updatedAt?: Date;
 
   @ApiProperty({
-    type: [MediaResponseDto],
+    type: MediaFilterResponseDto,
+  })
+  @Transform(({ value }) => {
+    if (value && value.length) {
+      return MediaService.filterMediaType(value);
+    }
+    return new MediaFilterResponseDto();
   })
   @Expose()
-  public media?: MediaResponseDto[];
+  public media?: MediaFilterResponseDto;
 
   @ApiProperty({
     type: [ReactionResponseDto],
