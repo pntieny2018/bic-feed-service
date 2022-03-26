@@ -1,5 +1,6 @@
 import { CreateCommentDto } from '../../dto/requests';
 import { actorComment, userMentionInGroupMock, userMentionNotInGroupMock } from './user.mock';
+import { CommentResponseDto } from '../../dto/response/comment.response.dto';
 
 const createTextCommentDto: CreateCommentDto = {
   postId: 1,
@@ -99,7 +100,7 @@ const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
   mentions: [userMentionNotInGroupMock],
 };
 
-export const createdComment = {
+export const createdComment: CommentResponseDto = {
   id: 1,
   actor: {
     id: 1,
@@ -111,20 +112,20 @@ export const createdComment = {
   postId: 2,
   content: 'hello @caitlyn.back',
   createdAt: new Date(),
-  media: [
-    {
-      id: 1,
-      createdBy: 1,
-      url: 'https://photo.com/ba7339bc-5204-4009-9d43-89b6d2787747.png',
-      type: 'image',
-      createdAt: new Date(),
-      name: 'ba7339bc-5204-4009-9d43-89b6d2787747.png',
-      originName: 'love-is-war.png',
-      width: 50,
-      height: 50,
-      extension: 'image/png',
-    },
-  ],
+  media: {
+    images: [
+      {
+        id: 1,
+        url: 'https://photo.com/ba7339bc-5204-4009-9d43-89b6d2787747.png',
+        name: 'ba7339bc-5204-4009-9d43-89b6d2787747.png',
+        originName: 'love-is-war.png',
+        width: 50,
+        height: 50,
+      },
+    ],
+    videos: [],
+    files: [],
+  },
   reactionsCount: {},
   mentions: {
     ['caitlyn.back']: {

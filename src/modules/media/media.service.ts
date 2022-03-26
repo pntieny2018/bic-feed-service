@@ -18,6 +18,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { RemoveMediaDto } from './dto';
 import { FileDto, ImageDto, VideoDto } from '../post/dto/common/media.dto';
 import { plainToInstance } from 'class-transformer';
+import { MediaFilterResponseDto } from './dto/response';
 
 @Injectable()
 export class MediaService {
@@ -274,11 +275,7 @@ export class MediaService {
    * @param media IMedia[]
    * @returns object
    */
-  public static filterMediaType(media: IMedia[]): {
-    files: FileDto[];
-    videos: VideoDto[];
-    images: ImageDto[];
-  } {
+  public static filterMediaType(media: IMedia[]): MediaFilterResponseDto {
     const mediaTypes = {
       files: [],
       videos: [],
