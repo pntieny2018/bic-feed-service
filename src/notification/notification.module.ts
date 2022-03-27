@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { NotificationService } from './notification.service';
-import { ClientsModule } from '@nestjs/microservices';
-import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER } from './producer.constants';
 import { ConfigService } from '@nestjs/config';
-import { IKafkaConfig } from '../../config/kafka';
-import { KafkaOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
+import { IKafkaConfig } from '../config/kafka';
+import { ClientsModule } from '@nestjs/microservices';
+import { NotificationService } from './notification.service';
 import { Transport } from '@nestjs/microservices/enums/transport.enum';
+import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER } from './producer.constants';
+import { KafkaOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');

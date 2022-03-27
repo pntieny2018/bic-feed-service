@@ -49,6 +49,7 @@ describe('CommentService', () => {
           useValue: {
             sync: jest.fn(),
             destroyCommentMedia: jest.fn(),
+            checkValidMedia: jest.fn(),
           },
         },
         {
@@ -242,6 +243,8 @@ describe('CommentService', () => {
         mentionService.checkValidMentions.mockResolvedValue();
 
         mentionService.create.mockReturnThis();
+
+        mediaService.checkValidMedia.mockResolvedValue({});
 
         mediaService.sync.mockReturnThis();
 

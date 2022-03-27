@@ -121,6 +121,8 @@
       "!**/index.ts",
       "!**/*.dto.ts",
       "!**/*.constant.ts",
+      "!**/*.model.ts",
+      "!**/*.enum.ts",
       "!**/*.bootstrap.ts",
       "!**/*.constants.ts",
       "!**/*.mock.ts",
