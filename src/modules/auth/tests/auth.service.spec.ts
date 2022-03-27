@@ -34,8 +34,9 @@ const configServiceMock = {
 
 describe('AuthService', () => {
   let authService: AuthService;
+  let userService;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -57,6 +58,7 @@ describe('AuthService', () => {
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
+    userService = module.get<UserService>(UserService);
   });
 
   it('AuthService should be defined', () => {
@@ -76,7 +78,7 @@ describe('AuthService', () => {
         });
       });
 
-      describe('undefine token', () => {
+      describe('undefined token', () => {
         it('should throw an UnauthorizedException', async () => {
           try {
             await authService.login(undefined);
@@ -120,12 +122,20 @@ describe('AuthService', () => {
         });
       });
     });
-
     describe('valid token', () => {
-      jest.spyOn(jwt, 'verify').mockImplementation(() => payLoad);
-
       it('should return the user data', async () => {
-        const user: UserDto = await authService.login(authInput.tokenValid);
+        jest.spyOn(jwt, 'verify').mockImplementation(() => payLoad);
+        userService.get.mockResolvedValue({
+          id: 4,
+          username: 'tronghm',
+          fullname: 'Hoàng Minh Trọng',
+          avatar:
+            'https://bein-development-storage.s3.ap-southeast-1.amazonaws.com/public/a/f9/af95058bbbc7ace1630495801f5b8694.JPG',
+          groups: [1, 2],
+        });
+
+        const user = await authService.login(authInput.tokenValid);
+        expect(user).toBeInstanceOf(UserDto);
         expect(user).toEqual(userInfoExpect);
       });
     });

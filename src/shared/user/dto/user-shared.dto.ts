@@ -20,7 +20,7 @@ export class UserDataShareDto {
   public username: string;
 
   @ApiProperty({
-    description: 'Username',
+    description: 'Fullname',
     type: String,
   })
   @Expose()
@@ -28,7 +28,7 @@ export class UserDataShareDto {
   public fullname: string;
 
   @ApiProperty({
-    description: 'Username',
+    description: 'Avatar',
     type: String,
   })
   @Expose()

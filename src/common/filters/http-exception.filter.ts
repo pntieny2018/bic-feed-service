@@ -27,12 +27,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
+    let code = StatusCode.INTERNAL_SERVER_ERROR;
+
+    if (status < HttpStatus.INTERNAL_SERVER_ERROR) {
+      code = StatusCode.BAD_REQUEST;
+    }
     return response.status(status).json(
       new ResponseDto({
-        code:
-          status < HttpStatus.INTERNAL_SERVER_ERROR
-            ? StatusCode.BAD_REQUEST
-            : StatusCode.INTERNAL_SERVER_ERROR,
+        code: code,
         meta: {
           message: exception.message,
           stack: this._getStack(exception),
@@ -64,11 +66,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param response
    */
   protected handleValidatorException(exception: ValidatorException, response: Response): Response {
+    let message = 'Validate fails';
+
+    if (response.responseMessage && response.responseMessage.validator) {
+      message = response.responseMessage.validator.fails;
+    }
     return response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
         code: StatusCode.BAD_REQUEST,
         meta: {
-          message: response?.responseMessage?.validator?.fails || 'Validate fails',
+          message: message,
           errors: exception.getResponse(),
           stack: this._getStack(exception),
         },
@@ -83,6 +90,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private _getStack(exception: HttpException | Error): string[] {
     const arrayStack = exception.stack.split('\n');
-    return this._appEnv === 'development' ? arrayStack : null;
+    if (this._appEnv === 'development') {
+      return arrayStack;
+    }
+    return null;
   }
 }

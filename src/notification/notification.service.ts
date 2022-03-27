@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER, TOPIC } from './producer.constants';
 import { ClientKafka } from '@nestjs/microservices';
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
+import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER, TOPIC } from './producer.constants';
 
 @Injectable()
 export class NotificationService {

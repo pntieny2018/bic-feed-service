@@ -14,6 +14,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { IElasticsearchConfig } from '../config/elasticsearch';
+import { InternalEventEmitterModule } from './custom/event-emitter';
 
 @Module({
   imports: [
@@ -34,9 +35,6 @@ import { IElasticsearchConfig } from '../config/elasticsearch';
         };
       },
       inject: [ConfigService],
-    }),
-    EventEmitterModule.forRoot({
-      verboseMemoryLeak: true,
     }),
     ScheduleModule.forRoot(),
     HttpModule.registerAsync({
@@ -127,6 +125,7 @@ import { IElasticsearchConfig } from '../config/elasticsearch';
       inject: [ConfigService],
     }),
     DatabaseModule,
+    InternalEventEmitterModule,
   ],
   exports: [HttpModule, ElasticsearchModule],
 })

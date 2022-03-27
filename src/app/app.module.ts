@@ -12,7 +12,7 @@ import { AuthorityModule } from '../modules/authority';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
-import { NotificationModule } from '../modules/notification';
+import { NotificationModule } from '../notification';
 import { ReactionModule } from '../modules/reaction';
 
 @Module({
