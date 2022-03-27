@@ -21,5 +21,6 @@ import { GroupModule } from '../../shared/group';
   ],
   controllers: [CommentController],
   providers: [CommentService],
+  exports: [CommentService],
 })
 export class CommentModule {}

@@ -44,3 +44,256 @@ export const getCommentsMock = [
     child: [],
   },
 ];
+
+export const getCommentRawMock = {
+  id: 57,
+  parentId: null,
+  postId: 1,
+  content: 'hello my fen @username2',
+  createdBy: 1,
+  updatedBy: 1,
+  createdAt: '2022-03-15T09:18:58.993Z',
+  updatedAt: '2022-03-15T09:18:58.993Z',
+  reactionsCount: '1kiss,love,okie=2,2,1',
+  media: [
+    {
+      id: 1,
+      url: 'https://docs.nestjs.com/assets/logo-small.svg\n',
+      type: 'image',
+      isDraft: false,
+      createdBy: 1,
+      name: 'sdandasbdsabdjsbadj.png',
+      originName: 'sadad.png',
+      width: 500,
+      height: 500,
+      extension: 'image/png',
+    },
+  ],
+  mentions: [
+    {
+      id: 1,
+      mentionableType: 'comment',
+      entityId: 57,
+      userId: 2,
+    },
+  ],
+  child: [
+    {
+      id: 58,
+      parentId: 57,
+      postId: 1,
+      content: 'hello my fen @username2',
+      createdBy: 1,
+      updatedBy: 1,
+      createdAt: '2022-03-25T09:52:26.680Z',
+      updatedAt: '2022-03-15T09:18:58.993Z',
+      reactionsCount: '1=',
+      media: [],
+      mentions: [],
+      ownerReactions: [],
+    },
+  ],
+};
+
+export const getCommentBindMentionMock = {
+  id: 57,
+  parentId: null,
+  postId: 1,
+  content: 'hello my fen @username2',
+  createdBy: 1,
+  updatedBy: 1,
+  createdAt: '2022-03-15T09:18:58.993Z',
+  updatedAt: '2022-03-15T09:18:58.993Z',
+  reactionsCount: '1kiss,love,okie=2,2,1',
+  media: [
+    {
+      id: 1,
+      url: 'https://docs.nestjs.com/assets/logo-small.svg\n',
+      type: 'image',
+      isDraft: false,
+      createdBy: 1,
+      name: 'sdandasbdsabdjsbadj.png',
+      originName: 'sadad.png',
+      width: 500,
+      height: 500,
+      extension: 'image/png',
+    },
+  ],
+  mentions: [
+    {
+      username2: {
+        id: 2,
+        username: 'username2',
+        fullname: 'User Name 2',
+        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+      },
+    },
+  ],
+  child: [
+    {
+      id: 58,
+      parentId: 57,
+      postId: 1,
+      content: 'hello my fen @username2',
+      createdBy: 1,
+      updatedBy: 1,
+      createdAt: '2022-03-25T09:52:26.680Z',
+      updatedAt: '2022-03-15T09:18:58.993Z',
+      reactionsCount: '1=',
+      media: [],
+      mentions: [],
+      ownerReactions: [],
+    },
+  ],
+};
+
+export const getCommentBindUserMock = {
+  id: 57,
+  parentId: null,
+  postId: 1,
+  content: 'hello my fen @username2',
+  actor: {
+    id: 1,
+    username: 'username1',
+    fullname: 'User Name 1',
+    avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+  },
+  createdBy: 1,
+  updatedBy: 1,
+  createdAt: '2022-03-15T09:18:58.993Z',
+  updatedAt: '2022-03-15T09:18:58.993Z',
+  reactionsCount: '1kiss,love,okie=2,2,1',
+  media: [
+    {
+      id: 1,
+      url: 'https://docs.nestjs.com/assets/logo-small.svg\n',
+      type: 'image',
+      isDraft: false,
+      createdBy: 1,
+      name: 'sdandasbdsabdjsbadj.png',
+      originName: 'sadad.png',
+      width: 500,
+      height: 500,
+      extension: 'image/png',
+    },
+  ],
+  mentions: [
+    {
+      username2: {
+        id: 2,
+        username: 'username2',
+        fullname: 'User Name 2',
+        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+      },
+    },
+  ],
+  child: [
+    {
+      id: 58,
+      parentId: 57,
+      postId: 1,
+      content: 'hello my fen @username2',
+      actor: {
+        id: 1,
+        username: 'username1',
+        fullname: 'User Name 1',
+        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+      },
+      createdBy: 1,
+      updatedBy: 1,
+      createdAt: '2022-03-25T09:52:26.680Z',
+      updatedAt: '2022-03-15T09:18:58.993Z',
+      reactionsCount: '1=',
+      media: [],
+      mentions: [],
+      ownerReactions: [],
+    },
+  ],
+};
+
+export const getCommentMock = {
+  ownerReactions: [
+    {
+      id: 1,
+      commentId: 57,
+      reactionName: 'kiss',
+      createdBy: 1,
+      createdAt: '2022-03-16T04:22:23.480Z',
+    },
+  ],
+  id: 57,
+  parentId: null,
+  postId: 1,
+  content: 'hello my fen @username2',
+  createdBy: 1,
+  updatedBy: 1,
+  createdAt: '2022-03-15T09:18:58.993Z',
+  updatedAt: '2022-03-15T09:18:58.993Z',
+  reactionsCount: {
+    ['0']: {
+      kiss: 2,
+    },
+    ['1']: {
+      love: 2,
+    },
+    ['2']: {
+      okie: 1,
+    },
+  },
+  media: {
+    files: [],
+    videos: [],
+    images: [
+      {
+        id: 1,
+        url: 'https://docs.nestjs.com/assets/logo-small.svg\n',
+        type: 'image',
+        isDraft: false,
+        createdBy: 1,
+        name: 'sdandasbdsabdjsbadj.png',
+        originName: 'sadad.png',
+        width: 500,
+        height: 500,
+        extension: 'image/png',
+      },
+    ],
+  },
+  mentions: [
+    {
+      username2: {
+        id: 2,
+        username: 'username2',
+        fullname: 'User Name 2',
+        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+      },
+    },
+  ],
+  child: [
+    {
+      ownerReactions: [],
+      id: 58,
+      parentId: 57,
+      postId: 1,
+      content: 'hello my fen @username2',
+      createdBy: 1,
+      updatedBy: 1,
+      createdAt: '2022-03-25T09:52:26.680Z',
+      updatedAt: '2022-03-15T09:18:58.993Z',
+      reactionsCount: null,
+      media: {},
+      mentions: [],
+      actor: {
+        id: 1,
+        username: 'username1',
+        fullname: 'User Name 1',
+        avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+      },
+    },
+  ],
+  actor: {
+    id: 1,
+    username: 'username1',
+    fullname: 'User Name 1',
+    avatar: 'https://docs.nestjs.com/assets/logo-small.svg',
+  },
+};

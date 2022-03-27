@@ -1,3 +1,8 @@
+import {
+  CommentHasBeenCreatedEvent,
+  CommentHasBeenDeletedEvent,
+  CommentHasBeenUpdatedEvent,
+} from '../../events/comment';
 import { Op } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
@@ -24,11 +29,6 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import {
-  CommentHasBeenCreatedEvent,
-  CommentHasBeenDeletedEvent,
-  CommentHasBeenUpdatedEvent,
-} from '../../events/comment';
 
 @Injectable()
 export class CommentService {
@@ -117,7 +117,7 @@ export class CommentService {
         await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds);
       }
 
-      const commentResponse = await this.getComment(comment.id);
+      const commentResponse = await this.getComment(user, comment.id);
 
       await transaction.commit();
 
@@ -180,7 +180,7 @@ export class CommentService {
     try {
       await comment.update({
         updatedBy: user.id,
-        content: updateCommentDto.data?.content,
+        content: updateCommentDto.data.content,
       });
 
       const updateMentions = updateCommentDto.mentions;
@@ -209,7 +209,7 @@ export class CommentService {
         await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds);
       }
 
-      const commentResponse = await this.getComment(commentId);
+      const commentResponse = await this.getComment(user, commentId);
 
       await transaction.commit();
 
@@ -222,7 +222,7 @@ export class CommentService {
 
       return commentResponse;
     } catch (ex) {
-      this._logger.error(ex, ex?.stack);
+      this._logger.error(ex, ex.stack);
       await transaction.rollback();
       throw ex;
     }
@@ -230,15 +230,24 @@ export class CommentService {
 
   /**
    * Get single comment
+   * @param user UserDto
    * @param commentId Number
+   * @param childLimit Number
    * @returns Promise resolve CommentResponseDto
    */
-  public async getComment(commentId: number): Promise<CommentResponseDto> {
+  public async getComment(
+    user: UserDto,
+    commentId: number,
+    childLimit = 25
+  ): Promise<CommentResponseDto> {
     this._logger.debug(`[getComment] ,commentId: ${commentId} `);
 
     const response = await this._commentModel.findOne({
       where: {
         id: commentId,
+      },
+      attributes: {
+        include: [CommentModel.loadReactionsCount()],
       },
       include: [
         {
@@ -246,18 +255,53 @@ export class CommentService {
           through: {
             attributes: [],
           },
+          required: false,
         },
         {
           model: MentionModel,
+          as: 'mentions',
+          required: false,
+        },
+        {
+          model: CommentModel,
+          limit: childLimit,
+          required: false,
+          attributes: {
+            include: [CommentModel.loadReactionsCount()],
+          },
+          include: [
+            {
+              model: MediaModel,
+              through: {
+                attributes: [],
+              },
+              required: false,
+            },
+            {
+              model: MentionModel,
+              as: 'mentions',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: CommentReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: user.id,
+          },
         },
       ],
     });
 
     const rawComment = response.toJSON();
+
     await this._mentionService.bindMentionsToComment([rawComment]);
+
     await this.bindUserToComment([rawComment]);
 
-    return plainToInstance(CommentResponseDto, rawComment, {
+    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
   }
