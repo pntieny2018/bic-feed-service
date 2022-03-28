@@ -16,10 +16,10 @@ export class NotificationService {
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer.send(TOPIC.POST_NOTIFICATION, payload);
+    return this._commentProducer.send(TOPIC.COMMENT_NOTIFICATION, payload);
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer.send(TOPIC.POST_NOTIFICATION, payload);
+    return this._reactionProducer.send(TOPIC.REACTION_NOTIFICATION, payload);
   }
 }
