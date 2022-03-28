@@ -43,6 +43,7 @@ import { PostResponseDto } from './dto/responses';
 import { AudienceDto } from './dto/common/audience.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { AuthorityService } from '../authority';
+import post from '../../listeners/post';
 
 @Injectable()
 export class PostService {
@@ -125,11 +126,13 @@ export class PostService {
       },
       false
     );
-    const { audience, actor, mentions } = await this.getExtraData(post);
-
+    const postJson = post.toJSON();
+    await this._mentionService.bindMentionsToPosts([postJson]);
+    await this.bindActorToPost([postJson]);
+    await this.bindAudienceToPost([postJson]);
     const result = this._classTransformer.plainToInstance(
       PostResponseDto,
-      { ...post.toJSON(), audience, actor, mentions, comments },
+      { ...postJson, comments },
       {
         excludeExtraneousValues: true,
       }
@@ -139,40 +142,43 @@ export class PostService {
   }
 
   /**
-   * Get audience, actor and mentions by Post
-   * @param post Post model
-   * @returns Promise resolve boolean
+   * Bind Audience To Post.groups
+   * @param posts Array of post
+   * @returns Promise resolve void
    * @throws HttpException
    */
-  public async getExtraData(post: PostModel): Promise<{
-    audience: AudienceDto;
-    actor: UserSharedDto | null;
-    mentions: UserSharedDto[];
-  }> {
-    const result = {
-      audience: { groups: [] },
-      actor: null,
-      mentions: [],
-    };
-    const groupIds = post.groups.map((i) => i.groupId);
-    result.audience.groups = await this._groupService.getMany(groupIds);
-    const userIds = post.mentions.map((i) => i.userId);
-    userIds.push(post.createdBy);
-    const users = await this._userService.getMany(userIds);
-
-    const user = users.find((i) => i.id === post.createdBy);
-
-    result.actor = plainToInstance(UserSharedDto, user, {
-      excludeExtraneousValues: true,
-    });
-    result.mentions = post.mentions.map((mention) => {
-      const mentionedUser = users.find((u) => u.id === mention.userId);
-      return plainToInstance(UserSharedDto, mentionedUser, {
-        excludeExtraneousValues: true,
-      });
-    });
-    return result;
+  public async bindAudienceToPost(posts: any[]): Promise<void> {
+    const groupIds = [];
+    for (const post of posts) {
+      if (post.groups && post.groups.length) {
+        groupIds.push(...post.groups.map((m) => m.groupId));
+      }
+    }
+    const groups = await this._groupService.getMany(groupIds);
+    for (const post of posts) {
+      if (post.groups && post.groups.length) {
+        post.audience = { groups: post.groups.map((v) => groups.find((u) => u.id === v.groupId)) };
+      }
+    }
   }
+
+  /**
+   * Bind Actor info to post.createdBy
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindActorToPost(posts: any[]): Promise<void> {
+    const userIds = [];
+    for (const post of posts) {
+      userIds.push(post.createdBy);
+    }
+    const users = await this._userService.getMany(userIds);
+    for (const post of posts) {
+      post.actor = users.find((i) => i.id === post.createdBy);
+    }
+  }
+
   /**
    * Create Post
    * @param authUser UserDto
@@ -183,7 +189,7 @@ export class PostService {
   public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { isDraft, data, setting, mentions, audience } = createPostDto;
+      const { isDraft, content, media, setting, mentions, audience } = createPostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
@@ -200,13 +206,13 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, videos, images } = data;
+      const { files, videos, images } = media;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
       const post = await this._postModel.create({
         isDraft,
-        content: data.content,
+        content,
         createdBy: authUserId,
         updatedBy: authUserId,
         isImportant: setting.isImportant,
@@ -239,7 +245,8 @@ export class PostService {
           id: post.id,
           isDraft,
           commentsCount: post.commentsCount,
-          data,
+          content: post.content,
+          media: { files, videos, images },
           actor: creator,
           mentions,
           audience,
@@ -271,7 +278,7 @@ export class PostService {
   ): Promise<boolean> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { data, setting, mentions, audience } = updatePostDto;
+      const { content, media, setting, mentions, audience } = updatePostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
@@ -292,13 +299,13 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, videos, images } = data;
+      const { files, videos, images } = media;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
       await this._postModel.update(
         {
-          content: data.content,
+          content,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
           importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
@@ -324,7 +331,8 @@ export class PostService {
             id: post.id,
             isDraft: post.isDraft,
             commentsCount: post.commentsCount,
-            data,
+            content: post.content,
+            media: { files, videos, images },
             actor: creator,
             mentions,
             audience,
@@ -368,29 +376,21 @@ export class PostService {
           },
         }
       );
-
-      const extraPost = await this.getExtraData(post);
-
-      const { id, data, commentsCount, actor, mentions, audience, setting } =
-        this._classTransformer.plainToInstance(
-          PostResponseDto,
-          {
-            ...post.toJSON(),
-            audience: extraPost.audience,
-            actor: extraPost.actor,
-            mentions: extraPost.mentions,
-          },
-          {
-            excludeExtraneousValues: true,
-          }
-        );
+      const postJson = post.toJSON();
+      await this._mentionService.bindMentionsToPosts([postJson]);
+      await this.bindActorToPost([postJson]);
+      await this.bindAudienceToPost([postJson]);
+      const { id, content, commentsCount, actor, mentions, audience, setting } =
+        this._classTransformer.plainToInstance(PostResponseDto, postJson, {
+          excludeExtraneousValues: true,
+        });
 
       this._eventEmitter.emit(
         PublishedPostEvent.event,
         new PublishedPostEvent({
           id,
           isDraft: false,
-          data,
+          content,
           commentsCount,
           actor,
           mentions,

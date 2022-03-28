@@ -100,41 +100,30 @@ export class MentionService {
 
   /**
    * Bind mention to post
-   * @param commentsResponse any[]
+   * @param posts any[]
    */
-  //  public async bindMentionsToComment(commentsResponse: any[]): Promise<void> {
-  //   const userIds: number[] = [];
+  public async bindMentionsToPosts(posts: any[]): Promise<void> {
+    const userIds: number[] = [];
 
-  //   for (const comment of commentsResponse) {
-  //     if (comment.mentions && comment.mentions.length) {
-  //       userIds.push(...comment.mentions.map((m) => m.userId));
-  //     }
-  //     if (comment.child && comment.child.length) {
-  //       for (const cm of comment.child) {
-  //         userIds.push(...cm.mentions.map((m) => m.userId));
-  //       }
-  //     }
-  //   }
+    for (const post of posts) {
+      if (post.mentions && post.mentions.length) {
+        userIds.push(...post.mentions.map((m) => m.userId));
+      }
+    }
 
-  //   const usersInfo = await this.resolveMentions(userIds);
-  //   const convert = (usersData): UserMentionDto[] =>
-  //     usersData.map((userData) => ({
-  //       [userData.username]: userData,
-  //     }));
+    const usersInfo = await this.resolveMentions(userIds);
 
-  //   for (const comment of commentsResponse) {
-  //     if (comment.mentions && comment.mentions.length) {
-  //       comment.mentions = convert(
-  //         comment.mentions.map((v) => usersInfo.find((u) => u.id === v.userId))
-  //       );
-  //     }
-  //     if (comment.child && comment.child.length) {
-  //       for (const cm of comment.child) {
-  //         cm.mentions = convert(cm.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
-  //       }
-  //     }
-  //   }
-  // }
+    const convert = (usersData): UserMentionDto[] =>
+      usersData.map((userData) => ({
+        [userData.username]: userData,
+      }));
+
+    for (const post of posts) {
+      if (post.mentions && post.mentions.length) {
+        post.mentions = convert(post.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
+      }
+    }
+  }
   /**
    * Delete/Insert mention by entity
    * @param userIds Array of User ID

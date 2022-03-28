@@ -4,8 +4,8 @@ import { MentionableType } from '../../../../common/constants';
 import { CreatePostDto } from '../../dto/requests';
 
 export const mockedCreatePostDto: CreatePostDto = {
-  data: {
-    content: 'aaaa',
+  content: 'aaaa',
+  media: {
     files: [
       {
         id: 1,
@@ -43,8 +43,8 @@ export const mockedCreatePostDto: CreatePostDto = {
 };
 
 export const mockedUpdatePostDto: CreatePostDto = {
-  data: {
-    content: 'bbb',
+  content: 'aaaa',
+  media: {
     files: [],
     images: [],
     videos: [],

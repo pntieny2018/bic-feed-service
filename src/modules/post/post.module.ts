@@ -21,8 +21,8 @@ import { AuthorityModule } from '../authority';
     AuthorityModule,
     forwardRef(() => CommentModule),
   ],
+  controllers: [PostController],
   providers: [PostService, PostPolicyService],
   exports: [PostService, PostPolicyService],
-  controllers: [PostController],
 })
 export class PostModule {}

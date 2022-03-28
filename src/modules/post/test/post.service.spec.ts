@@ -8,7 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { plainToClass } from 'class-transformer';
 import { mockedPostList, mockedCreatePostDto, mockedUpdatePostDto } from './mocks/post-list.mock';
 import { mockedUserAuth } from './mocks/user-auth.mock';
-import { BadRequestException, ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, HttpException, NotFoundException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { SentryService } from '@app/sentry';
 import { RedisModule } from '@app/redis';
@@ -24,6 +24,11 @@ import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PublishedPostEvent } from '../../../events/post';
 import { MentionModel } from '../../../database/models/mention.model';
 import { EntityIdDto } from '../../../common/dto';
+import { CommentModule, CommentService } from '../../comment';
+import { AuthorityService } from '../../authority';
+import { PostPolicyService } from '../post-policy.service';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import post from '../../../listeners/post';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -35,6 +40,9 @@ describe('PostService', () => {
   let groupService: GroupService;
   let mediaService: MediaService;
   let mentionService: MentionService;
+  let commentService: CommentService;
+  let postPolicyService: PostPolicyService;
+  let authorityService: AuthorityService;
   let transactionMock;
   let sequelize: Sequelize;
   beforeEach(async () => {
@@ -42,6 +50,20 @@ describe('PostService', () => {
       imports: [RedisModule],
       providers: [
         PostService,
+        AuthorityService,
+        PostPolicyService, 
+        {
+          provide: CommentService,
+          useValue: {
+            getComments: jest.fn(),
+          },
+        },
+        {
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
         {
           provide: EventEmitter2,
           useValue: {
@@ -120,7 +142,11 @@ describe('PostService', () => {
     groupService = moduleRef.get<GroupService>(GroupService);
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
-    sequelize = moduleRef.get<Sequelize>(Sequelize);
+    commentService = moduleRef.get<CommentService>(CommentService);
+    authorityService = moduleRef.get<AuthorityService>(AuthorityService);
+    postPolicyService = moduleRef.get<PostPolicyService>(PostPolicyService);
+    
+    sequelize = moduleRef.get<Sequelize>(Sequelize); 
 
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),
@@ -139,7 +165,7 @@ describe('PostService', () => {
   describe('createPost', () => {
     it('Create post successfully', async () => {
       const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
-      const { files, videos, images } = mockedCreatePostDto.data;
+      const { files, videos, images } = mockedCreatePostDto.media;
       const groupIds = mockedCreatePostDto.audience.groups.map((i) => i.id)
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
@@ -183,7 +209,8 @@ describe('PostService', () => {
         new CreatedPostEvent({
           id: mockedDataCreatePost.id,
           isDraft: mockedCreatePostDto.isDraft,
-          data: mockedCreatePostDto.data,
+          content: mockedCreatePostDto.content,
+          media: mockedCreatePostDto.media,
           commentsCount: mockedDataCreatePost.commentsCount,
           actor: mockedUserAuth,
           mentions: mockedCreatePostDto.mentions,
@@ -196,7 +223,7 @@ describe('PostService', () => {
 
       //add Reaction
       expect(createPostQuery).toStrictEqual({
-        content: mockedCreatePostDto.data.content,
+        content: mockedCreatePostDto.content,
         isDraft: mockedCreatePostDto.isDraft,
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,
@@ -253,7 +280,7 @@ describe('PostService', () => {
   describe('updatePost', () => {
     const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
     it('Update post successfully', async () => {
-      const { files, videos, images } = mockedUpdatePostDto.data;
+      const { files, videos, images } = mockedUpdatePostDto.media;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       const groupIds = mockedUpdatePostDto.audience.groups.map((i) => i.id);
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
@@ -295,7 +322,8 @@ describe('PostService', () => {
           updatedPost: {
             id: mockedDataUpdatePost.id,
             isDraft: mockedUpdatePostDto.isDraft,
-            data: mockedUpdatePostDto.data,
+            media: mockedUpdatePostDto.media,
+            content: mockedUpdatePostDto.content,
             commentsCount: mockedDataUpdatePost.commentsCount,
             actor: mockedUserAuth,
             mentions: mockedUpdatePostDto.mentions,
@@ -309,7 +337,7 @@ describe('PostService', () => {
 
       //add Reaction
       expect(updatePostQuery).toStrictEqual({
-        content: mockedUpdatePostDto.data.content,
+        content: mockedUpdatePostDto.content,
         updatedBy: mockedUserAuth.id,
         isImportant: mockedUpdatePostDto.setting.isImportant,
         importantExpiredAt:
@@ -402,10 +430,10 @@ describe('PostService', () => {
 
   describe('publishPost', () => {
     it('Publish post successfully', async () => {
-      const mockedDataUpdatePost = createMock<PostModel>({
+      const mockedDataUpdatePost = createMock({
         ... mockedPostList[0],
         ... {
-          data: mockedUpdatePostDto.data
+          content: mockedUpdatePostDto.content,
         },
         ...{
           setting: mockedUpdatePostDto.setting
@@ -417,42 +445,30 @@ describe('PostService', () => {
           groupId: 1,
         }
       ]); 
-      mockedDataUpdatePost.mentions = createMock<MentionModel[]>([
+      mockedDataUpdatePost.mentions = createMock([
         {
-          id: 1,
-          mentionableType: MentionableType.POST,
-          entityId: 1,
+          postId: 1,
           userId:1
         }
-      ]); 
-      //mockedDataUpdatePost.data = createMock(mockedUpdatePostDto.data); 
+      ]);
+      mentionService.bindMentionsToPosts = jest.fn();
       userService.get = jest.fn().mockResolvedValueOnce(mockedUserAuth) 
+      userService.getMany = jest.fn().mockResolvedValueOnce([mockedUserAuth]) 
       mentionService.resolveMentions = jest.fn().mockResolvedValueOnce(mockedUpdatePostDto.mentions);
+      postService.bindActorToPost = jest.fn();
+      postService.bindAudienceToPost = jest.fn();
       groupService.getMany = jest.fn().mockResolvedValueOnce(mockedUpdatePostDto.audience.groups); 
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
       eventEmitter.emit = jest.fn();
 
       postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
 
-      const result = await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth.id);
+      const result = await postService.publishPost(1, mockedUserAuth.id);
       expect(result).toBe(true);
 
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
 
       expect(eventEmitter.emit).toBeCalledTimes(1);
-      expect(eventEmitter.emit).toBeCalledWith(
-        PublishedPostEvent.event,
-        new PublishedPostEvent({
-          id: mockedDataUpdatePost.id,
-          isDraft: mockedUpdatePostDto.isDraft,
-          data: mockedUpdatePostDto.data,
-          commentsCount: mockedDataUpdatePost.commentsCount,
-          actor: mockedUserAuth,
-          mentions: mockedUpdatePostDto.mentions,
-          audience: mockedUpdatePostDto.audience,
-          setting: mockedUpdatePostDto.setting,
-        })
-      );
 
       const [dataUpdate, condition]: any = postModelMock.update.mock.calls[0];
       expect(dataUpdate).toStrictEqual({
@@ -463,7 +479,7 @@ describe('PostService', () => {
         createdBy: mockedUserAuth.id,
       });
     });
-
+ 
     it('Post not found', async () => {
       const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
       postModelMock.findOne.mockResolvedValueOnce(null); 
@@ -615,7 +631,8 @@ describe('PostService', () => {
       reactionPostId: 1
     }
     it('Should get post successfully', async () => {
-      postModelMock.findOne.mockResolvedValueOnce({id:1});
+      const mockedPost = createMock<PostModel>(mockedPostList[0])
+      postModelMock.findOne.mockResolvedValueOnce(mockedPost);
       const result = await postService.findPost(entity);
       expect(postModelMock.findOne).toBeCalledTimes(1);
 

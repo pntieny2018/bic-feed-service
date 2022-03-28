@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
-import { DeletedPostEvent, UpdatedPostEvent } from '../../events/post';
+import { DeletedPostEvent } from '../../events/post';
 @Injectable()
 export class DeletedPostListener {
   private _logger = new Logger(DeletedPostListener.name);

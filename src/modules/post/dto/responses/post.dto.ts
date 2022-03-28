@@ -20,24 +20,24 @@ export class PostResponseDto {
   public id: number;
 
   @ApiProperty({
-    description: 'Keyword search',
+    description: 'Content',
     type: String,
   })
   @Expose()
-  @Transform(({ obj }) => {
-    let mediaFilterred;
-    const media = obj.media;
-    if (media && media.length) {
-      mediaFilterred = MediaService.filterMediaType(media);
-    } else {
-      mediaFilterred = new MediaFilterResponseDto([], [], []);
-    }
-    return {
-      ...mediaFilterred,
-      content: obj.content,
-    };
+  public content: string;
+
+  @ApiProperty({
+    description: 'Array of files, images, videos',
+    type: MediaFilterResponseDto,
   })
-  public data: PostContentDto;
+  @Expose()
+  @Transform(({ value }) => {
+    if (value && value.length) {
+      return MediaService.filterMediaType(value);
+    }
+    return new MediaFilterResponseDto([], [], []);
+  })
+  public media?: MediaFilterResponseDto;
 
   @ApiProperty({
     description: 'Setting post',
@@ -94,7 +94,7 @@ export class PostResponseDto {
     },
   })
   @Transform(({ value }) => {
-    if (value && value !== '1=') {
+    if (value && value !== '1=' && typeof value === 'string') {
       const rawReactionsCount: string = (value as string).substring(1);
       const [s1, s2] = rawReactionsCount.split('=');
       const reactionsName = s1.split(',');
