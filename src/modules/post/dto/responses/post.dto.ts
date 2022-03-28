@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
+import { PageDto } from '../../../../common/dto';
 import { IPostReaction } from '../../../../database/models/post-reaction.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
@@ -8,7 +9,7 @@ import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceDto } from '../common/audience.dto';
 
-export class FeedPostDto {
+export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
     type: Number,
@@ -98,7 +99,7 @@ export class FeedPostDto {
   @Expose()
   public ownerReactions?: ReactionResponseDto[] = [];
 
-  @ApiProperty({ type: CommentResponseDto, isArray: true })
+  //@ApiProperty({ type: PageDto<CommentResponseDto>, isArray: true })
   @Expose()
-  public comments: CommentResponseDto[];
+  public comments: PageDto<CommentResponseDto>;
 }

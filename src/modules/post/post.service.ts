@@ -38,6 +38,8 @@ import { triggerAsyncId } from 'async_hooks';
 import sequelize from 'sequelize';
 import { CommentService } from '../comment/comment.service';
 import { UserDto } from '../auth';
+import { plainToClass } from 'class-transformer';
+import { PostResponseDto } from './dto/responses';
 
 @Injectable()
 export class PostService {
@@ -71,7 +73,7 @@ export class PostService {
    * @throws HttpException
    */
   public async getPost(postId: number, user: UserDto) {
-    const post = this._postModel.findOne({
+    const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
         include: [
@@ -95,7 +97,7 @@ export class PostService {
         },
       ],
     });
-    //const comments = [];
+
     const comments = await this._commentService.getComments(
       user,
       {
@@ -106,8 +108,14 @@ export class PostService {
       },
       false
     );
-    console.log('comments=', comments);
+    
+    const result = plainToClass(
+      PostResponseDto,
+      { ...post.toJSON(), setting: post.setting },
+      { excludeExtraneousValues: true }
+    );
     return post;
+    //return { ...result, comments };
   }
   /**
    * Create Post
