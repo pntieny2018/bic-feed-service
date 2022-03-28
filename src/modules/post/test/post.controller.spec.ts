@@ -6,7 +6,6 @@ import { mockedUserAuth } from './mocks/user-auth.mock';
 import { UserDto } from '../../auth';
 import { createMock } from '@golevelup/ts-jest';
 import { GetPostDto } from '../dto/requests';
-import { PostPolicyService } from '../post-policy.service';
 
 describe('PostController', () => {
   let postService: PostService;
