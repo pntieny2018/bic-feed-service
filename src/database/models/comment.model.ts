@@ -5,6 +5,7 @@ import {
   BelongsToMany,
   Column,
   CreatedAt,
+  Default,
   ForeignKey,
   HasMany,
   Length,
@@ -54,7 +55,9 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   public actor: UserDataShareDto;
 
+  @AllowNull(true)
   @ForeignKey(() => CommentModel)
+  @Default(0)
   @Column
   public parentId: number;
 
@@ -67,11 +70,9 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @Column
   public content: string;
 
-  @AllowNull(false)
   @Column
   public createdBy: number;
 
-  @AllowNull(false)
   @Column
   public updatedBy: number;
 
@@ -100,7 +101,11 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   })
   public mentions: MentionModel[];
 
-  @HasMany(() => CommentModel)
+  @HasMany(() => CommentModel, {
+    foreignKey: {
+      allowNull: true,
+    },
+  })
   public child?: CommentModel[];
 
   @HasMany(() => CommentReactionModel)

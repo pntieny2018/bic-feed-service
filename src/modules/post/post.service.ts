@@ -609,6 +609,6 @@ export class PostService {
     if (!post) {
       throw new BadRequestException('The post does not exist !');
     }
-    return post;
+    return post.toJSON();
   }
 }

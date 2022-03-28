@@ -178,7 +178,7 @@ export class MentionService {
 
     if (removeMentionDto.commentId) {
       return await this._sequelizeConnection.query(
-        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.comment_id = $commentId`,
+        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.entity_id = $commentId`,
         {
           type: QueryTypes.DELETE,
           bind: {
@@ -190,7 +190,7 @@ export class MentionService {
 
     if (removeMentionDto.postId) {
       return await this._sequelizeConnection.query(
-        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.post_id = $postId`,
+        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.entityId = $postId`,
         {
           type: QueryTypes.DELETE,
           bind: {

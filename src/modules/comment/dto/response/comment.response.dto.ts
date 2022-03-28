@@ -42,7 +42,7 @@ export class CommentResponseDto {
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }
-    return new MediaFilterResponseDto();
+    return new MediaFilterResponseDto([], [], []);
   })
   @Expose()
   public media?: MediaFilterResponseDto;
@@ -69,7 +69,10 @@ export class CommentResponseDto {
       reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
       return reactionsCount;
     }
-    return null;
+    if (value === '1=') {
+      return null;
+    }
+    return value;
   })
   @Expose()
   public reactionsCount?: Record<string, Record<string, number>>;

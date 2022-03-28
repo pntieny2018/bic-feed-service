@@ -70,7 +70,6 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
-
     // check user can access
     this._authorityService.allowAccess(user, post);
 
@@ -295,6 +294,10 @@ export class CommentService {
         },
       ],
     });
+
+    if (!response) {
+      throw new BadRequestException(`Comment ${commentId} not found`);
+    }
 
     const rawComment = response.toJSON();
 
