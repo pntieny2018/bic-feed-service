@@ -42,7 +42,7 @@ export class CommentResponseDto {
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }
-    return new MediaFilterResponseDto();
+    return new MediaFilterResponseDto([], [], []);
   })
   @Expose()
   public media?: MediaFilterResponseDto;
@@ -60,7 +60,7 @@ export class CommentResponseDto {
     },
   })
   @Transform(({ value }) => {
-    if (value && value !== '1=') {
+    if (value && value !== '1=' && typeof value === 'string') {
       const rawReactionsCount: string = (value as string).substring(1);
       const [s1, s2] = rawReactionsCount.split('=');
       const reactionsName = s1.split(',');
@@ -69,7 +69,10 @@ export class CommentResponseDto {
       reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
       return reactionsCount;
     }
-    return null;
+    if (value === '1=') {
+      return null;
+    }
+    return value;
   })
   @Expose()
   public reactionsCount?: Record<string, Record<string, number>>;

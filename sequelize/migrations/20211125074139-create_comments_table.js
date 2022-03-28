@@ -20,8 +20,8 @@ module.exports = {
         },
         parent_id: {
           type: Sequelize.INTEGER,
-          allowNull: true,
-          references: { model: tableName, key: 'id' },
+          allowNull: false,
+          defaultValue: 0,
         },
         created_by: {
           type: Sequelize.INTEGER,
