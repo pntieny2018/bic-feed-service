@@ -49,6 +49,7 @@ export interface IPost {
   media?: MediaModel[];
   groups?: PostGroupModel[];
   mentions?: MentionModel[];
+  mentionIds?: number[];
 }
 @Table({
   tableName: 'posts',
@@ -120,7 +121,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 
   @HasMany(() => PostGroupModel)
-  public groups: PostGroupModel[] = [];
+  public groups: PostGroupModel[];
 
   @HasMany(() => PostReactionModel)
   public reactions: PostReactionModel[];
@@ -135,48 +136,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     foreignKey: 'postId',
   })
   public postReactions: PostReactionModel[];
-
-  public get setting(): {
-    canReact: boolean;
-    canComment: boolean;
-    canShare: boolean;
-    isImportant: boolean;
-    importantExpiredAt: Date;
-  } {
-    return {
-      canReact: this.getDataValue('canReact'),
-      canComment: this.getDataValue('canComment'),
-      canShare: this.getDataValue('canShare'),
-      isImportant: this.getDataValue('isImportant'),
-      importantExpiredAt: this.getDataValue('importantExpiredAt'),
-    };
-  }
-
-  public get data(): PostContentDto {
-    const mediaList = this.media ?? [];
-    const result = {
-      content: this.getDataValue('content'),
-      images: [],
-      files: [],
-      videos: [],
-    };
-
-    mediaList.forEach((media) => {
-      switch (media.type) {
-        case MediaType.IMAGE:
-          result.images.push(plainToClass(ImageDto, media, { excludeExtraneousValues: true }));
-          break;
-        case MediaType.VIDEO:
-          result.images.push(plainToClass(VideoDto, media, { excludeExtraneousValues: true }));
-          break;
-        case MediaType.FILE:
-          result.images.push(plainToClass(FileDto, media, { excludeExtraneousValues: true }));
-          break;
-      }
-    });
-
-    return result;
-  }
 
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
@@ -227,7 +186,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           GROUP BY media.id)
        `
       ),
-      alias ?? 'mediaList',
+      alias ?? 'media',
     ];
   }
 

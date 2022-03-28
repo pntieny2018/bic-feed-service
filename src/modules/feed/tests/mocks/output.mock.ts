@@ -58,7 +58,7 @@ export const mockGetTimelineOutput = {
         },
       },
       ownerReactions: [],
-      commentCount: 3,
+      commentsCount: 3,
       mentions: [],
       setting: {
         canReact: true,
@@ -134,7 +134,7 @@ export const mockGetTimelineOutput = {
           createdAt: new Date('2022-03-21T16:10:32.140Z'),
         },
       ],
-      commentCount: 2,
+      commentsCount: 2,
       mentions: [
         {
           id: 2,
@@ -239,7 +239,7 @@ export const mockGetTimelineOutput = {
           createdAt: new Date('2022-03-21T10:48:49.060Z'),
         },
       ],
-      commentCount: 1,
+      commentsCount: 1,
       mentions: [
         {
           id: 33,
@@ -316,7 +316,7 @@ export const mockGetTimelineOutput = {
           createdAt: new Date('2022-03-21T16:10:43.066Z'),
         },
       ],
-      commentCount: 3,
+      commentsCount: 3,
       mentions: [
         {
           id: 1,
@@ -397,7 +397,7 @@ export const mockGetTimelineOutput = {
           createdAt: new Date('2022-03-21T16:10:20.274Z'),
         },
       ],
-      commentCount: 1,
+      commentsCount: 1,
       mentions: [
         {
           id: 1,

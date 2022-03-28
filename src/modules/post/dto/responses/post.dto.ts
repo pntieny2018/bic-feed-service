@@ -4,6 +4,8 @@ import { PageDto } from '../../../../common/dto';
 import { IPostReaction } from '../../../../database/models/post-reaction.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
+import { MediaService } from '../../../media';
+import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { PostContentDto } from '../../../post/dto/common/post-content.dto';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
@@ -22,6 +24,19 @@ export class PostResponseDto {
     type: String,
   })
   @Expose()
+  @Transform(({ obj }) => {
+    let mediaFilterred;
+    const media = obj.media;
+    if (media && media.length) {
+      mediaFilterred = MediaService.filterMediaType(media);
+    } else {
+      mediaFilterred = new MediaFilterResponseDto();
+    }
+    return {
+      ...mediaFilterred,
+      content: obj.content,
+    };
+  })
   public data: PostContentDto;
 
   @ApiProperty({
@@ -29,6 +44,18 @@ export class PostResponseDto {
     type: PostSettingDto,
   })
   @Expose()
+  @Transform(({ obj, value }) => {
+    if (!value) {
+      return {
+        canReact: obj.canReact,
+        canComment: obj.canComment,
+        canShare: obj.canShare,
+        isImportant: obj.isImportant,
+        importantExpiredAt: obj.importantExpiredAt,
+      };
+    }
+    return value;
+  })
   public setting: PostSettingDto;
 
   @ApiProperty({
@@ -58,7 +85,7 @@ export class PostResponseDto {
     type: Number,
   })
   @Expose()
-  public commentCount: number;
+  public commentsCount: number;
 
   @ApiProperty({
     type: 'object',
@@ -102,4 +129,8 @@ export class PostResponseDto {
   //@ApiProperty({ type: PageDto<CommentResponseDto>, isArray: true })
   @Expose()
   public comments: PageDto<CommentResponseDto>;
+
+  public constructor(data: Partial<PostResponseDto>) {
+    Object.assign(this, data);
+  }
 }

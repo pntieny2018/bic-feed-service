@@ -8,6 +8,7 @@ import { MentionModule } from '../mention';
 import { PostPolicyService } from './post-policy.service';
 import { GroupModule } from '../../shared/group';
 import { CommentModule } from '../comment';
+import { AuthorityModule } from '../authority';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CommentModule } from '../comment';
     GroupModule,
     MediaModule,
     MentionModule,
+    AuthorityModule,
     forwardRef(() => CommentModule),
   ],
   providers: [PostService, PostPolicyService],

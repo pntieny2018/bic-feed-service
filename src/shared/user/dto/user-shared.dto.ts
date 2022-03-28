@@ -31,7 +31,7 @@ export class UserDataShareDto {
     description: 'Avatar',
     type: String,
   })
-  @Expose()
+  //@Expose()
   @IsOptional()
   public avatar: string;
 }

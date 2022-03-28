@@ -4,7 +4,7 @@ import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto } from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
@@ -38,8 +38,11 @@ import { triggerAsyncId } from 'async_hooks';
 import sequelize from 'sequelize';
 import { CommentService } from '../comment/comment.service';
 import { UserDto } from '../auth';
-import { plainToClass } from 'class-transformer';
+import { ClassTransformer, plainToClass, plainToInstance } from 'class-transformer';
 import { PostResponseDto } from './dto/responses';
+import { AudienceDto } from './dto/common/audience.dto';
+import { UserSharedDto } from '../../shared/user/dto';
+import { AuthorityService } from '../authority';
 
 @Injectable()
 export class PostService {
@@ -48,7 +51,7 @@ export class PostService {
    * @private
    */
   private _logger = new Logger(PostService.name);
-
+  private _classTransformer = new ClassTransformer();
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
@@ -62,7 +65,8 @@ export class PostService {
     private _mediaService: MediaService,
     private _mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
-    private _commentService: CommentService
+    private _commentService: CommentService,
+    private _authorityService: AuthorityService
   ) {}
 
   /**
@@ -72,50 +76,103 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async getPost(postId: number, user: UserDto) {
+  public async getPost(postId: number, user: UserDto, getPostDto: GetPostDto) {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [
-          PostModel.loadMedia(),
-          [sequelize.literal('array_agg(DISTINCT(group_id))'), 'groupIds'],
-          [sequelize.literal('array_agg(DISTINCT(user_id))'), 'mentionIds'],
-          //CommentModel.loadReactionsCount(),
-        ],
+        include: [PostModel.loadReactionsCount()],
       },
       where: { id: postId },
-      group: ['PostModel.id'],
       include: [
         {
           model: PostGroupModel,
-          attributes: [],
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
         },
         {
           model: MentionModel,
+          as: 'mentions',
           required: false,
-          attributes: [],
+          attributes: ['userId'],
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: user.id,
+          },
         },
       ],
     });
+
+    await this._authorityService.allowAccess(user, post);
 
     const comments = await this._commentService.getComments(
       user,
       {
         postId,
-        childLimit: 10,
-        order: OrderEnum.DESC,
-        limit: 10,
+        childLimit: getPostDto.childCommentLimit,
+        order: getPostDto.commentOrder,
+        limit: getPostDto.commentLimit,
       },
       false
     );
-    
-    const result = plainToClass(
+    return comments;
+    const { audience, actor, mentions } = await this.getExtraData(post);
+
+    const result = this._classTransformer.plainToInstance(
       PostResponseDto,
-      { ...post.toJSON(), setting: post.setting },
-      { excludeExtraneousValues: true }
+      { ...post.toJSON(), audience, actor, mentions, comments },
+      {
+        excludeExtraneousValues: true,
+      }
     );
-    return post;
-    //return { ...result, comments };
+
+    return result;
+  }
+
+  /**
+   * Get audience, actor and mentions by Post
+   * @param post Post model
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async getExtraData(post: PostModel): Promise<{
+    audience: AudienceDto;
+    actor: UserSharedDto | null;
+    mentions: UserSharedDto[];
+  }> {
+    const result = {
+      audience: { groups: [] },
+      actor: null,
+      mentions: [],
+    };
+    const groupIds = post.groups.map((i) => i.groupId);
+    result.audience.groups = await this._groupService.getMany(groupIds);
+    const userIds = post.mentions.map((i) => i.userId);
+    userIds.push(post.createdBy);
+    const users = await this._userService.getMany(userIds);
+
+    const user = users.find((i) => i.id === post.createdBy);
+
+    result.actor = plainToInstance(UserSharedDto, user, {
+      excludeExtraneousValues: true,
+    });
+    result.mentions = post.mentions.map((mention) => {
+      const mentionedUser = users.find((u) => u.id === mention.userId);
+      return plainToInstance(UserSharedDto, mentionedUser, {
+        excludeExtraneousValues: true,
+      });
+    });
+    return result;
   }
   /**
    * Create Post
@@ -312,12 +369,22 @@ export class PostService {
           },
         }
       );
-      const authInfo = await this._userService.get(authUserId);
-      const { setting, id, data, groups, mentions, commentsCount } = post;
-      const mentionIds = mentions.map((i) => i.userId);
-      const dataMentions = await this._mentionService.resolveMentions(mentionIds);
-      const groupIds = groups.map((i) => i.groupId);
-      const dataGroups = await this._groupService.getMany(groupIds);
+
+      const extraPost = await this.getExtraData(post);
+
+      const { id, data, commentsCount, actor, mentions, audience, setting } =
+        this._classTransformer.plainToInstance(
+          PostResponseDto,
+          {
+            ...post.toJSON(),
+            audience: extraPost.audience,
+            actor: extraPost.actor,
+            mentions: extraPost.mentions,
+          },
+          {
+            excludeExtraneousValues: true,
+          }
+        );
 
       this._eventEmitter.emit(
         PublishedPostEvent.event,
@@ -326,11 +393,9 @@ export class PostService {
           isDraft: false,
           data,
           commentsCount,
-          actor: authInfo,
-          mentions: dataMentions,
-          audience: {
-            groups: dataGroups,
-          },
+          actor,
+          mentions,
+          audience,
           setting,
         })
       );
@@ -341,7 +406,6 @@ export class PostService {
       throw error;
     }
   }
-
   /**
    * Check post exist and owner
    * @param post Post model

@@ -60,7 +60,7 @@ export class CommentResponseDto {
     },
   })
   @Transform(({ value }) => {
-    if (value && value !== '1=') {
+    if (value && value !== '1=' && typeof value === 'string') {
       const rawReactionsCount: string = (value as string).substring(1);
       const [s1, s2] = rawReactionsCount.split('=');
       const reactionsName = s1.split(',');
