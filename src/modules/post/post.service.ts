@@ -253,7 +253,7 @@ export class PostService {
       const authInfo = await this._userService.get(authUserId);
       const { setting, id, data, groups, mentions, commentsCount } = post;
       const mentionIds = mentions.map((i) => i.userId);
-      const dataMentions = await this._mentionService.resolveMentions(mentionIds); 
+      const dataMentions = await this._mentionService.resolveMentions(mentionIds);
       const groupIds = groups.map((i) => i.groupId);
       const dataGroups = await this._groupService.getMany(groupIds);
 
@@ -483,6 +483,6 @@ export class PostService {
     if (!post) {
       throw new BadRequestException('The post does not exist !');
     }
-    return post;
+    return post.toJSON();
   }
 }

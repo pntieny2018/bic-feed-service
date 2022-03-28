@@ -24,4 +24,17 @@ export class FeedController {
   ): Promise<PageDto<FeedPostDto>> {
     return this._feedService.getTimeline(userDto, getTimelineDto);
   }
+
+  @ApiOperation({ summary: 'Get timeline in a group.' })
+  @ApiOkResponse({
+    description: 'Get timeline in a group successfully.',
+    type: PageDto,
+  })
+  @Get('/newsfeed')
+  public async getNewsFeed(
+    @AuthUser() userDto: UserDto,
+    @Query() getTimelineDto: GetTimelineDto
+  ): Promise<PageDto<FeedPostDto>> {
+    return this._feedService.getTimeline(userDto, getTimelineDto);
+  }
 }

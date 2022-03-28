@@ -10,6 +10,12 @@ export class MediaFilterResponseDto {
 
   @ApiProperty()
   public images: ImageDto[];
+
+  public constructor(files: FileDto[], videos: VideoDto[], images: ImageDto[]) {
+    this.videos = videos;
+    this.images = images;
+    this.files = files;
+  }
 }
 
 export class MediaResponseDto {

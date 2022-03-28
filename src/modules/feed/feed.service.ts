@@ -1,21 +1,21 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { UserDto } from '../auth';
-import { GetTimelineDto } from './dto/request';
-import { FeedRanking } from './feed.enum';
 import { Op } from 'sequelize';
 import sequelize from 'sequelize';
+import { UserDto } from '../auth';
+import { MediaService } from '../media';
+import { FeedRanking } from './feed.enum';
+import { PageDto } from '../../common/dto';
 import { FeedPostDto } from './dto/response';
+import { GetTimelineDto } from './dto/request';
 import { UserService } from '../../shared/user';
-import { IPost, PostModel } from '../../database/models/post.model';
-import { PageDto } from '../../common/dto/pagination/page.dto';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { InjectModel } from '@nestjs/sequelize';
+import { PAGING_DEFAULT_LIMIT } from '../../common/constants';
 import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
+import { IPost, PostModel } from '../../database/models/post.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { MediaService } from '../media/media.service';
-import { PAGING_DEFAULT_LIMIT } from '../../common/constants';
 
 @Injectable()
 export class FeedService {
@@ -61,7 +61,7 @@ export class FeedService {
     const { limit, offset, groupId } = getTimelineDto;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
     try {
-      const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+      const { rows } = await this._postModel.findAndCountAll<PostModel>({
         where: {
           ...constraints,
         },
@@ -248,4 +248,6 @@ export class FeedService {
     });
     return userIds;
   }
+
+  public async getNewsFeed() {}
 }

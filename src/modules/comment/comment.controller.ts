@@ -12,20 +12,18 @@ import {
 } from '@nestjs/common';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
-import { CreateCommentDto } from './dto/requests';
 import { CommentService } from './comment.service';
 import { APP_VERSION } from '../../common/constants';
-import { GetCommentDto } from './dto/requests/get-comment.dto';
+import { CreateCommentPipe, GetCommentsPipe } from './pipes';
+import { CreateCommentDto, GetCommentDto } from './dto/requests';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
-import { ApiOkResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
-import { CreateCommentPipe } from './pipes/create-comment.pipe';
-import { GetCommentsPipe } from './pipes';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
 @Controller({
-  path: 'comment',
+  path: 'comments',
   version: APP_VERSION,
 })
 export class CommentController {
@@ -33,20 +31,22 @@ export class CommentController {
 
   public constructor(private _commentService: CommentService) {}
 
+  @ApiOperation({ summary: 'Get comment list' })
   @Get('/')
   public getList(
     @AuthUser() user: UserDto,
     @Query(GetCommentsPipe) getCommentDto: GetCommentDto
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.debug('get comment');
+    this._logger.debug('get comments');
     return this._commentService.getComments(user, getCommentDto);
   }
 
+  @ApiOperation({ summary: 'Create new comment' })
   @ApiOkResponse({
     type: CommentResponseDto,
-    description: 'Create reply comment successfully',
+    description: 'Create comment successfully',
   })
-  @Post()
+  @Post('/')
   public create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
@@ -57,6 +57,7 @@ export class CommentController {
     return this._commentService.create(user, createCommentDto);
   }
 
+  @ApiOperation({ summary: 'Reply comment' })
   @ApiOkResponse({
     type: CommentResponseDto,
     description: 'Create reply comment successfully',
@@ -65,12 +66,13 @@ export class CommentController {
   public reply(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
-    @Body() createCommentDto: CreateCommentDto
+    @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
   ): Promise<any> {
     this._logger.debug('reply comment');
     return this._commentService.create(user, createCommentDto, commentId);
   }
 
+  @ApiOperation({ summary: 'Get comment' })
   @ApiOkResponse({
     type: CommentResponseDto,
     description: 'Get comment successfully',
@@ -84,6 +86,7 @@ export class CommentController {
     return this._commentService.getComment(user, commentId);
   }
 
+  @ApiOperation({ summary: 'Update comment' })
   @ApiOkResponse({
     type: CommentResponseDto,
     description: 'Update comment successfully',
@@ -98,6 +101,7 @@ export class CommentController {
     return this._commentService.update(user, commentId, updateCommentDto);
   }
 
+  @ApiOperation({ summary: 'Delete comment' })
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete comment successfully',
