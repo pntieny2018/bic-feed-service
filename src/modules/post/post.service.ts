@@ -125,7 +125,6 @@ export class PostService {
       },
       false
     );
-    return comments;
     const { audience, actor, mentions } = await this.getExtraData(post);
 
     const result = this._classTransformer.plainToInstance(

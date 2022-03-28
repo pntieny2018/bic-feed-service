@@ -30,7 +30,7 @@ export class PostResponseDto {
     if (media && media.length) {
       mediaFilterred = MediaService.filterMediaType(media);
     } else {
-      mediaFilterred = new MediaFilterResponseDto();
+      mediaFilterred = new MediaFilterResponseDto([], [], []);
     }
     return {
       ...mediaFilterred,
