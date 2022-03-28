@@ -420,7 +420,6 @@ export class CommentService {
       order: [['createdAt', getCommentDto.order]],
     });
     const response = rows.map((r) => r.toJSON());
-
     await this._mentionService.bindMentionsToComment(response);
 
     await this.bindUserToComment(response);
