@@ -173,23 +173,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
-  public static loadMedia(alias?: string): [Literal, string] {
-    const { schema } = getDatabaseConfig();
-    return [
-      Sequelize.literal(
-        `(SELECT JSON_AGG(
-          JSON_BUILD_OBJECT('id', media.id, 'url', media.url, 'name', media.name, 'type', media.type)
-       )
-          FROM ${schema}.media
-          INNER JOIN ${schema}.posts_media as PM ON PM.media_id = media.id
-          WHERE PM.post_id="PostModel"."id"
-          GROUP BY media.id)
-       `
-      ),
-      alias ?? 'media',
-    ];
-  }
-
   public static importantPostsFirstCondition(alias?: string): [Literal, string] {
     return [
       sequelize.literal(`CASE WHEN "PostModel"."important_expired_at" > NOW() THEN 1 ELSE 0 END`),
