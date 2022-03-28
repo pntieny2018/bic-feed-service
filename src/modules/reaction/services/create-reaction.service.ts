@@ -77,7 +77,7 @@ export class CreateReactionService {
         throw new Error('Reaction is existed.');
       }
 
-      const canReact = await this._canReactPost(postId);
+      const [canReact, post] = await this._canReactPost(postId);
       if (canReact === false) {
         throw new Error('Post does not permit to react.');
       }
@@ -102,6 +102,8 @@ export class CreateReactionService {
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
+      this._commonReactionService.createEvent(reactionDto, post.toJSON());
+
       return reactionDto;
     } catch (e) {
       this._logger.error(e, e?.stack);
@@ -150,7 +152,7 @@ export class CreateReactionService {
         throw new Error('Reaction is existed.');
       }
 
-      const postId = await this._getPostIdOfComment(commentId);
+      const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
       const isUserInPostGroups = await this._isUserInPostGroups(userId, postId);
       if (isUserInPostGroups === false) {
         throw new Error("User is not in the post's groups.");
@@ -171,6 +173,9 @@ export class CreateReactionService {
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
+      const post = await this._getPost(postId);
+      this._commonReactionService.createEvent(reactionDto, post.toJSON(), comment.toJSON());
+
       return reactionDto;
     } catch (e) {
       this._logger.error(e, e?.stack);
@@ -224,10 +229,10 @@ export class CreateReactionService {
   /**
    * Can react post by checking the fields **canReact** and **isDraft**
    * @param postId number
-   * @returns Promise resolve boolean
+   * @returns Promise resolve [boolean, PostModel]
    * @throws Error
    */
-  private async _canReactPost(postId: number): Promise<boolean> {
+  private async _canReactPost(postId: number): Promise<[boolean, PostModel]> {
     const post = await this._postModel.findOne<PostModel>({
       where: {
         id: postId,
@@ -235,19 +240,17 @@ export class CreateReactionService {
         isDraft: false,
       },
     });
-    return !!post === true;
+    return [!!post === true, post];
   }
 
   /**
-   *
-   * Get postId of a comment
+   * Get postId of a comment and comment
    * @param commentId number
-   * @returns Promise resolve number
+   * @returns Promise resolve [number, CommentModel]
    * @throws Error
    */
-  private async _getPostIdOfComment(commentId: number): Promise<number> {
+  private async _getPostIdOfCommentAndComment(commentId: number): Promise<[number, CommentModel]> {
     const comment = await this._commentModel.findOne<CommentModel>({
-      attributes: ['postId'],
       where: {
         id: commentId,
       },
@@ -255,7 +258,28 @@ export class CreateReactionService {
     if (!!comment.postId === false) {
       throw new Error('Database error: Comment is not belong to any post.');
     }
-    return comment.postId;
+    if (!!comment === false) {
+      throw new Error('Comment is not existed.');
+    }
+    return [comment.postId, comment];
+  }
+
+  /**
+   * Get post by id
+   * @param postId number
+   * @returns Promise resolve PostModel
+   * @throws Error
+   */
+  private async _getPost(postId: number): Promise<PostModel> {
+    const post = await this._postModel.findOne<PostModel>({
+      where: {
+        id: postId,
+      },
+    });
+    if (!!post === false) {
+      throw new Error('Database error: Comment is belong to a non-existed post.');
+    }
+    return post;
   }
 
   /**
