@@ -81,7 +81,7 @@ export class CommentController {
     @Param('commentId', ParseIntPipe) commentId: number
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getComment(commentId);
+    return this._commentService.getComment(user, commentId);
   }
 
   @ApiOkResponse({

@@ -8,6 +8,12 @@ describe('StringHelper', function () {
       const result = StringHelper.camelToSnakeCase(stringMock, []);
       expect(result).toEqual(expectString);
     });
+    it('should return old string when have white list', function () {
+      const stringMock = 'UIID';
+      const expectString = 'UIID';
+      const result = StringHelper.camelToSnakeCase(stringMock, ['UIID']);
+      expect(result).toEqual(expectString);
+    });
   });
   describe('snakeToCamelCase', function () {
     it('should return camel case string', function () {
@@ -31,6 +37,12 @@ describe('StringHelper', function () {
 
       expect(result).toEqual(expectCookieObject);
       expect(result).toEqual(expectCookieObject);
+    });
+
+    it('should return {} when parse error', function () {
+      const result = StringHelper.parseCookieStr(undefined);
+
+      expect(result).toEqual({});
     });
   });
   describe('isJson', function () {

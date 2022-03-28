@@ -1,39 +1,39 @@
 import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+  CommentHasBeenCreatedEvent,
+  CommentHasBeenDeletedEvent,
+  CommentHasBeenUpdatedEvent,
+} from '../../events/comment';
 import { Op } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
+import { MediaService } from '../media';
+import { PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
 import { UserService } from '../../shared/user';
-import { GroupService } from '../../shared/group';
+import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
-import { CreateCommentDto } from './dto/requests';
-import { plainToInstance } from 'class-transformer';
+import { GroupService } from '../../shared/group';
+import { PostService } from '../post/post.service';
+import { EntityType } from '../media/media.constants';
 import { MentionableType } from '../../common/constants';
-import { GetCommentDto } from './dto/requests';
+import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
-import { PageDto } from '../../common/dto';
 import { PostPolicyService } from '../post/post-policy.service';
+import { CreateCommentDto, GetCommentDto } from './dto/requests';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CommentModel, IComment } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
-import { AuthorityService } from '../authority';
-import { PostService } from '../post/post.service';
-import { MediaService } from '../media';
-import { EntityType } from '../media/media.constants';
-import { UserDataShareDto } from '../../shared/user/dto';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { CommentModel, IComment } from '../../database/models/comment.model';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 
 @Injectable()
 export class CommentService {
   private _logger = new Logger(CommentService.name);
+  private _classTransformer = new ClassTransformer();
 
   public constructor(
     @Inject(forwardRef(() => PostService))
@@ -44,6 +44,7 @@ export class CommentService {
     private _mentionService: MentionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
+    private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel
   ) {}
@@ -88,7 +89,7 @@ export class CommentService {
 
       const usersMentions = createCommentDto.mentions;
 
-      if (usersMentions && usersMentions.length) {
+      if (usersMentions.length) {
         const userMentionIds = usersMentions.map((u) => u.id);
         const groupAudienceIds = post.groups.map((g) => g.groupId);
 
@@ -110,16 +111,23 @@ export class CommentService {
       ];
 
       if (media.length) {
-        await this._mediaService.sync(
-          comment.id,
-          EntityType.COMMENT,
-          media.map((m) => m.id)
-        );
+        const mediaIds = media.map((m) => m.id);
+
+        await this._mediaService.checkValidMedia(mediaIds, user.id);
+
+        await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds);
       }
 
-      const commentResponse = await this.getComment(comment.id);
+      const commentResponse = await this.getComment(user, comment.id);
 
       await transaction.commit();
+
+      this._eventEmitter.emit(
+        new CommentHasBeenCreatedEvent({
+          comment: comment,
+          post: post,
+        })
+      );
 
       return commentResponse;
     } catch (ex) {
@@ -173,47 +181,49 @@ export class CommentService {
     try {
       await comment.update({
         updatedBy: user.id,
-        content: updateCommentDto.data?.content,
+        content: updateCommentDto.data.content,
       });
 
-      const updateMentions = updateCommentDto?.mentions ?? [];
+      const updateMentions = updateCommentDto.mentions;
 
       if (updateMentions.length) {
         const userIds = updateMentions.map((u) => u.id);
+
         const groupAudienceIds = post.groups.map((g) => g.groupId);
 
         await this._mentionService.checkValidMentions(groupAudienceIds, userIds);
 
-        await this._mentionService.create(
-          updateMentions.map((user) => ({
-            entityId: comment.id,
-            userId: user.id,
-            mentionableType: MentionableType.COMMENT,
-          }))
-        );
+        await this._mentionService.setMention(userIds, MentionableType.COMMENT, comment.id);
       }
 
       const media = [
-        ...(updateCommentDto.data?.files ?? []),
-        ...(updateCommentDto.data?.images ?? []),
-        ...(updateCommentDto.data?.videos ?? []),
+        ...updateCommentDto.data.files,
+        ...updateCommentDto.data.images,
+        ...updateCommentDto.data.videos,
       ];
 
       if (media.length) {
-        await this._mediaService.sync(
-          comment.id,
-          EntityType.COMMENT,
-          media.map((m) => m.id)
-        );
+        const mediaIds = media.map((m) => m.id);
+
+        await this._mediaService.checkValidMedia(mediaIds, user.id);
+
+        await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds);
       }
 
-      const commentResponse = await this.getComment(commentId);
+      const commentResponse = await this.getComment(user, commentId);
 
       await transaction.commit();
 
+      this._eventEmitter.emit(
+        new CommentHasBeenUpdatedEvent({
+          comment: comment,
+          post: post,
+        })
+      );
+
       return commentResponse;
     } catch (ex) {
-      this._logger.error(ex, ex?.stack);
+      this._logger.error(ex, ex.stack);
       await transaction.rollback();
       throw ex;
     }
@@ -221,15 +231,24 @@ export class CommentService {
 
   /**
    * Get single comment
+   * @param user UserDto
    * @param commentId Number
+   * @param childLimit Number
    * @returns Promise resolve CommentResponseDto
    */
-  public async getComment(commentId: number): Promise<CommentResponseDto> {
+  public async getComment(
+    user: UserDto,
+    commentId: number,
+    childLimit = 25
+  ): Promise<CommentResponseDto> {
     this._logger.debug(`[getComment] ,commentId: ${commentId} `);
 
     const response = await this._commentModel.findOne({
       where: {
         id: commentId,
+      },
+      attributes: {
+        include: [CommentModel.loadReactionsCount()],
       },
       include: [
         {
@@ -237,18 +256,53 @@ export class CommentService {
           through: {
             attributes: [],
           },
+          required: false,
         },
         {
           model: MentionModel,
+          as: 'mentions',
+          required: false,
+        },
+        {
+          model: CommentModel,
+          limit: childLimit,
+          required: false,
+          attributes: {
+            include: [CommentModel.loadReactionsCount()],
+          },
+          include: [
+            {
+              model: MediaModel,
+              through: {
+                attributes: [],
+              },
+              required: false,
+            },
+            {
+              model: MentionModel,
+              as: 'mentions',
+              required: false,
+            },
+          ],
+        },
+        {
+          model: CommentReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: user.id,
+          },
         },
       ],
     });
 
     const rawComment = response.toJSON();
+
     await this._mentionService.bindMentionsToComment([rawComment]);
+
     await this.bindUserToComment([rawComment]);
 
-    return plainToInstance(CommentResponseDto, rawComment, {
+    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
   }
@@ -353,7 +407,8 @@ export class CommentService {
           ],
         },
         {
-          association: 'ownerReactions',
+          model: CommentReactionModel,
+          as: 'ownerReactions',
           required: false,
           where: {
             createdBy: user.id,
@@ -370,7 +425,7 @@ export class CommentService {
 
     await this.bindUserToComment(response);
 
-    const comments = plainToInstance(CommentResponseDto, response, {
+    const comments = this._classTransformer.plainToInstance(CommentResponseDto, response, {
       excludeExtraneousValues: true,
     });
 
@@ -414,10 +469,21 @@ export class CommentService {
       await this._mentionService.destroy({
         commentId: commentId,
       });
+
       await comment.destroy();
+
       await transaction.commit();
+
+      this._eventEmitter.emit(
+        new CommentHasBeenDeletedEvent({
+          comment: comment,
+          post: post,
+        })
+      );
+
       return true;
     } catch (e) {
+      this._logger.error(e, e.stack);
       await transaction.rollback();
     }
   }

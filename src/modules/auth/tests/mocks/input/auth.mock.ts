@@ -35,7 +35,7 @@ export const payLoad = {
   'custom:bein_user_id': '4',
   'custom:bein_staff_role': 'ADMINISTRATOR',
   iss: 'https://cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_wCKCkEdVr',
-  'cognito:username': 'tronghm',
+  'custom:username': 'tronghm',
   origin_jti: 'b3a155a8-11a1-4065-82fb-8370bd8e33ce',
   aud: '5vn1978e1vuogeorbravhq2q82',
   event_id: '5889e575-6595-4b95-a5f0-65acbeb92f47',

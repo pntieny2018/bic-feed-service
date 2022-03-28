@@ -15,18 +15,19 @@ import { getModelToken } from '@nestjs/sequelize';
 import { UserService } from '../../../shared/user';
 import { AuthorityService } from '../../authority';
 import { CommentService } from '../comment.service';
+import { plainToInstance } from 'class-transformer';
 import { GroupService } from '../../../shared/group';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../../post/post.service';
-import { getCommentsMock } from './mocks/get-comments.mock';
 import { LogicException } from '../../../common/exceptions';
 import { PostPolicyService } from '../../post/post-policy.service';
 import { CommentModel } from '../../../database/models/comment.model';
 import { MENTION_ERROR_ID } from '../../mention/errors/mention.error';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommentResponseDto } from '../dto/response/comment.response.dto';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
+import { getCommentMock, getCommentRawMock, getCommentsMock } from './mocks/get-comments.mock';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -39,16 +40,23 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
-  let ct = jest.createMockFromModule('class-transformer');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CommentService,
         {
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
+        {
           provide: MediaService,
           useValue: {
             sync: jest.fn(),
+            destroyCommentMedia: jest.fn(),
+            checkValidMedia: jest.fn(),
           },
         },
         {
@@ -77,6 +85,7 @@ describe('CommentService', () => {
             resolveMentions: jest.fn(),
             bindMentionsToComment: jest.fn(),
             setMention: jest.fn(),
+            destroy: jest.fn(),
           },
         },
         {
@@ -137,8 +146,6 @@ describe('CommentService', () => {
   });
 
   describe('CommentService.create', () => {
-    it('Post allow comment', async () => {});
-
     describe('Create comment with post not existed', () => {
       it("should throw BadRequestException('The post does not exist !')", async () => {
         try {
@@ -242,6 +249,8 @@ describe('CommentService', () => {
 
         mentionService.create.mockReturnThis();
 
+        mediaService.checkValidMedia.mockResolvedValue({});
+
         mediaService.sync.mockReturnThis();
 
         const getCommentSpy = jest
@@ -276,26 +285,185 @@ describe('CommentService', () => {
   });
 
   describe('CommentService.update', () => {
-    describe('Create comment with post not existed', () => {
-      it('should throw exception', () => {});
+    describe('Update comment with comment not existed', () => {
+      it("should throw BadRequestException('The comment 1 does not exist !')", async () => {
+        try {
+          commentModel.findOne.mockResolvedValue(null);
+
+          await commentService.update(authUserNotInGroupContainPostMock, 1, {
+            data: {
+              content: 'create text comment',
+              files: [],
+              images: [],
+              videos: [],
+            },
+          });
+        } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+          expect((e as BadRequestException).message).toEqual(`Comment 1 not found`);
+        }
+      });
     });
 
-    describe('Create comment with parent comment id not existed', () => {
-      it('should throw exception', () => {});
+    describe('Update comment with post not existed', () => {
+      it("should throw BadRequestException('The post does not exist !')", async () => {
+        try {
+          commentModel.findOne.mockResolvedValue({
+            postId: 1,
+          });
+          postService.findPost.mockRejectedValue(
+            new BadRequestException('The post does not exist !')
+          );
+          await commentService.create(authUserMock, createCommentWithPostNotFoundDto);
+        } catch (e) {
+          expect(e).toBeInstanceOf(BadRequestException);
+          expect((e as BadRequestException).message).toEqual('The post does not exist !');
+        }
+      });
     });
 
-    describe('Create comment with parent comment id is child comment id', () => {
-      it('should throw exception', () => {});
+    describe('Update comment when user out group', () => {
+      it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
+        try {
+          commentModel.findOne.mockResolvedValue({
+            postId: 1,
+          });
+
+          postService.findPost.mockResolvedValue({
+            groups: [
+              {
+                groupId: 10,
+                postId: 1,
+              },
+            ],
+          });
+          authorityService.allowAccess.mockImplementation(() => {
+            throw new ForbiddenException('You do not have permission to perform this action !');
+          });
+          await commentService.update(authUserNotInGroupContainPostMock, 1, {
+            data: {
+              content: 'create text comment',
+              files: [],
+              images: [],
+              videos: [],
+            },
+          });
+        } catch (e) {
+          expect(e).toBeInstanceOf(ForbiddenException);
+          expect((e as ForbiddenException).message).toEqual(
+            'You do not have permission to perform this action !'
+          );
+        }
+      });
     });
 
-    describe('Create comment with invalid mentions', () => {
-      describe('user not in group audience', () => {});
-      describe('user not exist', () => {});
+    describe('Update comment with invalid mentions', () => {
+      describe('user not in group audience', () => {
+        it('should throw  LogicException(MENTION_ERROR_ID.USER_NOT_FOUND)', async () => {
+          try {
+            commentModel.findOne.mockResolvedValue({
+              postId: 1,
+              update: jest.fn().mockResolvedValue({
+                id: 1,
+              }),
+            });
+
+            postService.findPost.mockResolvedValue({
+              id: 1,
+              groups: [
+                {
+                  groupId: 1,
+                  postId: 1,
+                },
+              ],
+            });
+
+            authorityService.allowAccess.mockReturnThis();
+
+            postPolicyService.allow.mockReturnThis();
+
+            mentionService.checkValidMentions.mockImplementation(() => {
+              throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
+            });
+
+            await commentService.update(authUserMock, 1, createTextCommentWithMentionNotInGroupDto);
+          } catch (e) {
+            expect(e).toBeInstanceOf(LogicException);
+            expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
+          }
+        });
+      });
     });
 
-    describe('Create comment with invalid media', () => {
+    describe('Update comment with invalid media', () => {
       describe('media not exist', () => {});
       describe('is not owner of media', () => {});
+    });
+
+    describe('Update comment with valid data', () => {
+      it('should updated successfully', async () => {
+        commentModel.findOne.mockResolvedValue({
+          id: 1,
+          postId: 2,
+          update: jest.fn().mockResolvedValue({
+            id: 1,
+            content: 'create text mention comment @bret.josh',
+          }),
+        });
+
+        postService.findPost.mockResolvedValue({
+          id: 2,
+          groups: [
+            {
+              groupId: 1,
+              postId: 2,
+            },
+          ],
+        });
+
+        authorityService.allowAccess.mockReturnThis();
+
+        postPolicyService.allow.mockReturnThis();
+
+        sequelizeConnection.transaction.mockImplementation(() => ({
+          commit: jest.fn().mockReturnThis(),
+          rollback: jest.fn().mockReturnThis(),
+        }));
+
+        mentionService.checkValidMentions.mockResolvedValue();
+
+        mentionService.setMention.mockResolvedValue({});
+
+        mediaService.checkValidMedia.mockResolvedValue({});
+
+        mediaService.sync.mockReturnThis();
+
+        const getCommentSpy = jest
+          .spyOn(commentService, 'getComment')
+          .mockResolvedValue(createdComment);
+
+        await commentService.update(authUserMock, 1, createCommentDto);
+
+        expect(postService.findPost).toBeCalled();
+
+        expect(authorityService.allowAccess).toBeCalled();
+
+        expect(postPolicyService.allow).toBeCalled();
+
+        expect(sequelizeConnection.transaction).toBeCalled();
+
+        expect(mentionService.checkValidMentions).toBeCalled();
+
+        expect(mentionService.setMention).toBeCalled();
+
+        expect(mediaService.sync).toBeCalled();
+
+        const syncParams = mediaService.sync.mock.calls[0];
+
+        expect(syncParams).toEqual([1, 'comment', [1]]);
+
+        expect(getCommentSpy).toBeCalled();
+      });
     });
   });
 
@@ -367,6 +535,90 @@ describe('CommentService', () => {
         }
       });
     });
+
+    it('should delete comment and relationship successfully', async () => {
+      const commentId = 10;
+
+      commentModel.findOne.mockResolvedValue({
+        id: 1,
+        destroy: jest.fn(),
+      });
+
+      postService.findPost.mockResolvedValue({
+        groups: [
+          {
+            postId: 1,
+            groupId: 1,
+          },
+          {
+            postId: 1,
+            groupId: 2,
+          },
+        ],
+      });
+
+      authorityService.allowAccess.mockReturnThis();
+
+      mediaService.destroyCommentMedia.mockResolvedValue({});
+
+      mentionService.destroy.mockResolvedValue({});
+
+      commentModel.destroy.mockResolvedValue(1);
+
+      // const trxCommit = await sequelizeConnection.transaction().commit.mockResolvedValue(1);
+
+      const deletedFlag = await commentService.destroy(authUserMock, commentId);
+
+      expect(commentModel.findOne).toBeCalled();
+      expect(postService.findPost).toBeCalled();
+      expect(authorityService.allowAccess).toBeCalled();
+      expect(mediaService.destroyCommentMedia).toBeCalled();
+      expect(mentionService.destroy).toBeCalled();
+      // expect(trxCommit).toBeCalled();
+      expect(deletedFlag).toBeTruthy();
+    });
+
+    it('should delete comment and relationship false and throw exception', async () => {
+      const commentId = 10;
+
+      commentModel.findOne.mockResolvedValue({
+        id: 1,
+        destroy: jest.fn(() => Promise.reject(new Error('connect error'))),
+      });
+
+      postService.findPost.mockResolvedValue({
+        groups: [
+          {
+            postId: 1,
+            groupId: 1,
+          },
+          {
+            postId: 1,
+            groupId: 2,
+          },
+        ],
+      });
+
+      authorityService.allowAccess.mockReturnValue({});
+
+      mediaService.destroyCommentMedia.mockReturnValue(Promise.resolve());
+
+      mentionService.destroy.mockReturnValue(Promise.resolve());
+
+      // const trxRollback = (await sequelizeConnection.transaction()).rollback.mockResolvedValue(1);
+
+      const loggerSpy = jest.spyOn(commentService['_logger'], 'error').mockReturnThis();
+
+      await commentService.destroy(authUserMock, commentId);
+
+      expect(commentModel.findOne).toBeCalled();
+      expect(postService.findPost).toBeCalled();
+      expect(authorityService.allowAccess).toBeCalled();
+      expect(mediaService.destroyCommentMedia).toBeCalled();
+      expect(mentionService.destroy).toBeCalled();
+      expect(loggerSpy).toBeCalled();
+      // expect(trxRollback).toBeCalled();
+    });
   });
 
   describe('CommentService.getComments', () => {
@@ -374,6 +626,12 @@ describe('CommentService', () => {
       it('should make condition query with Op.gt', async () => {
         try {
           const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
+
+          const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
+
+          const classTransformer = jest
+            .spyOn(commentService['_classTransformer'], 'plainToInstance')
+            .mockReturnValue(expectResponse);
 
           const fakeModel = (getCommentsMock as any[]).map((i) => {
             i['toJSON'] = () => i;
@@ -437,8 +695,6 @@ describe('CommentService', () => {
             postId: 1,
           });
 
-          const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
-
           const whereClause = commentModel.findAndCountAll.mock.calls[0][0]['where'];
 
           expect(logSpy).toBeCalled();
@@ -450,6 +706,8 @@ describe('CommentService', () => {
           });
 
           expect(bindCommentSpy).toBeCalled();
+
+          expect(classTransformer).toBeCalled();
 
           expect(response).toBeInstanceOf(PageDto);
 
@@ -538,6 +796,35 @@ describe('CommentService', () => {
           expect(offsetClause).toBe(0);
         }
       });
+    });
+  });
+
+  describe('CommentService.getComment', () => {
+    it('should return comment', async () => {
+      const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
+
+      commentModel.findOne.mockResolvedValue({
+        ...getCommentRawMock,
+        toJSON: () => getCommentRawMock,
+      });
+
+      mentionService.bindMentionsToComment.mockResolvedValue(Promise.resolve());
+
+      const bindUserToCommentSpy = jest
+        .spyOn(commentService, 'bindUserToComment')
+        .mockResolvedValue(Promise.resolve());
+
+      const classTransformerSpy = jest
+        .spyOn(commentService['_classTransformer'], 'plainToInstance')
+        .mockImplementation(() => getCommentMock);
+      const comment = await commentService.getComment(authUserMock, 57);
+
+      expect(logSpy).toBeCalled();
+      expect(commentModel.findOne).toBeCalled();
+      expect(mentionService.bindMentionsToComment).toBeCalled();
+      expect(bindUserToCommentSpy).toBeCalled();
+      expect(classTransformerSpy).toBeCalled();
+      expect(comment).toEqual(getCommentMock);
     });
   });
 

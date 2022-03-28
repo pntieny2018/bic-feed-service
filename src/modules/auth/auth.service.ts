@@ -8,10 +8,13 @@ import { ICognitoConfig } from '../../config/cognito';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../../shared/user';
+import { ClassTransformer } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
   private _logger = new Logger(AuthService.name);
+  private _classTransformer = new ClassTransformer();
+
   public constructor(
     private _userService: UserService,
     private _httpService: HttpService,
@@ -48,17 +51,22 @@ export class AuthService {
     }
     try {
       const payload = await jwt.verify(token, pem);
-      const user = new UserDto({
+
+      const user = this._classTransformer.plainToInstance(UserDto, {
         email: payload['email'],
         username: payload['custom:username'],
         id: parseInt(payload['custom:bein_user_id']),
         staffRole: payload['custom:bein_staff_role'],
       });
+
       user.profile = await this._userService.get(user.id);
       return user;
     } catch (e) {
-      this._logger.error(e, e?.stack);
-      const message = e instanceof TokenExpiredError ? 'Auth token expired' : 'Unauthorized';
+      this._logger.error(e, e.stack);
+      let message = 'Unauthorized';
+      if (e instanceof TokenExpiredError) {
+        message = 'Auth token expired';
+      }
       throw new UnauthorizedException(message);
     }
   }

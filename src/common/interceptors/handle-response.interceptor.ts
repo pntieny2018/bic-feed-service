@@ -8,13 +8,17 @@ import { map, Observable } from 'rxjs';
 export class HandleResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>> {
   public intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseDto<T>> {
     const response: Response = context.switchToHttp().getResponse();
+    let message = 'OK';
+    if (response.responseMessage) {
+      message = response.responseMessage.success;
+    }
     return next.handle().pipe(
       map((data) => {
         return {
           code: StatusCode.OK,
           data: data,
           meta: {
-            message: response?.responseMessage?.success || 'OK',
+            message: message,
           },
         };
       })

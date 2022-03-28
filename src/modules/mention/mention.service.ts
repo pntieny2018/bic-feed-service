@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { UserService } from '../../shared/user';
 import { GroupService } from '../../shared/group';
-import { UserDataShareDto, UserSharedDto } from '../../shared/user/dto';
+import { UserSharedDto } from '../../shared/user/dto';
 import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
 import { IMention, MentionModel } from '../../database/models/mention.model';

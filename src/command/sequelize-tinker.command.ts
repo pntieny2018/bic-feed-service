@@ -6,20 +6,23 @@ import { MentionModel } from '../database/models/mention.model';
 import { plainToInstance } from 'class-transformer';
 import { CommentResponseDto } from '../modules/comment/dto/response/comment.response.dto';
 import { MentionService } from '../modules/mention';
+import { CommentReactionModel } from '../database/models/comment-reaction.model';
+import { CommentService } from '../modules/comment';
 
 @Command({ name: 'tinker', description: 'Create shared user and group  data' })
 export class SequelizeTinkerCommand implements CommandRunner {
   public constructor(
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
-    private _mentionService: MentionService
+    private _mentionService: MentionService,
+    private _commentService: CommentService
   ) {}
 
   public async run(): Promise<any> {
     try {
       const rows = await this._commentModel.findAndCountAll({
         where: {
-          postId: 1,
-          //id: 1,
+          // postId: 1,
+          id: 57,
         },
         attributes: {
           include: [CommentModel.loadReactionsCount()],
@@ -34,7 +37,7 @@ export class SequelizeTinkerCommand implements CommandRunner {
           },
           {
             model: MentionModel,
-            required: false,
+            as: 'mentions',
           },
           {
             model: CommentModel,
@@ -57,6 +60,10 @@ export class SequelizeTinkerCommand implements CommandRunner {
                 as: 'mentions',
                 required: false,
               },
+              {
+                model: CommentReactionModel,
+                as: 'ownerReactions',
+              },
             ],
           },
           {
@@ -73,9 +80,10 @@ export class SequelizeTinkerCommand implements CommandRunner {
       });
 
       const response = rows.rows.map((r) => r.toJSON());
-      // console.log(JSON.stringify(response, null, 4));
+      console.log(1, JSON.stringify(response, null, 4));
       await this._mentionService.bindMentionsToComment(response);
-      console.log(JSON.stringify(plainToInstance(CommentResponseDto, response), null, 4));
+      await this._commentService.bindUserToComment(response);
+      console.log(2, JSON.stringify(plainToInstance(CommentResponseDto, response), null, 4));
     } catch (ex) {
       // eslint-disable-next-line no-console
       console.log(ex);

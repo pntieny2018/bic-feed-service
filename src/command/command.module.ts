@@ -1,20 +1,18 @@
 import { Module } from '@nestjs/common';
-import { SeedCommand } from './seed/seed.command';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { configs } from '../config/configuration';
-import { RedisModule } from '../../libs/redis/src/redis.module';
-import { IRedisConfig } from '../config/redis';
-import { DatabaseModule } from '../database';
-import { SequelizeTinkerCommand } from './sequelize-tinker.command';
-import { CommentModule } from '../modules/comment';
-import { FeedModule } from '../modules/feed';
-import { PostModule } from '../modules/post';
-import { UploadModule } from '../modules/upload';
-import { MediaModule } from '../modules/media/media.module';
+import { RedisModule } from '@app/redis';
 import { UserModule } from '../shared/user';
+import { PostModule } from '../modules/post';
+import { DatabaseModule } from '../database';
 import { GroupModule } from '../shared/group';
+import { MediaModule } from '../modules/media';
+import { IRedisConfig } from '../config/redis';
+import { SeedCommand } from './seed/seed.command';
+import { configs } from '../config/configuration';
 import { MentionModule } from '../modules/mention';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CommentModule } from '../modules/comment';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SequelizeTinkerCommand } from './sequelize-tinker.command';
+import { InternalEventEmitterModule } from '../app/custom/event-emitter';
 
 @Module({
   imports: [
@@ -47,9 +45,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       },
       inject: [ConfigService],
     }),
-    EventEmitterModule.forRoot({
-      verboseMemoryLeak: true,
-    }),
+    InternalEventEmitterModule,
     DatabaseModule,
     CommentModule,
     PostModule,

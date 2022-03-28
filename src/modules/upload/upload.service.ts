@@ -8,8 +8,8 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class UploadService {
-  private readonly _storage: S3Client;
-  private readonly _s3Config: IS3Config;
+  private _storage: S3Client;
+  private _s3Config: IS3Config;
 
   public constructor(private _configService: ConfigService) {
     const s3Config = this._configService.get<IS3Config>('s3');
@@ -32,20 +32,20 @@ export class UploadService {
   public async upload(
     file: Express.Multer.File,
     uploadType: string,
-    alc?: string
+    alc = 'public-read'
   ): Promise<string> {
-    const key = UploadService.getKey(uploadType, {
+    const key = this.getKey(uploadType, {
       extension: path.extname(file.originalname),
     });
 
-    const bucket = this.getBucket();
+    const bucket = this._s3Config.userSharingAssetsBucket;
 
     await this._storage.send(
       new PutObjectCommand({
         Bucket: bucket,
         Body: file.buffer,
         Key: key,
-        ACL: alc ?? this._s3Config.ACL,
+        ACL: alc,
       })
     );
     return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
@@ -57,16 +57,12 @@ export class UploadService {
    * @param option extension: .png .jpg .mp4 .docx ...
    * @returns
    */
-  public static getKey(uploadType: string, option?: { extension: string }): string {
+  public getKey(uploadType: string, option: { extension: string }): string {
     const UUID = uuid.v4();
     const prefix = UploadPrefix[uploadType];
 
     if (!prefix) throw new Error('generate s3 path failed');
 
-    return `${prefix}/${UUID}${option?.extension || ''}`;
-  }
-
-  public getBucket(): string {
-    return this._s3Config.userSharingAssetsBucket;
+    return `${prefix}/${UUID}${option.extension}`;
   }
 }
