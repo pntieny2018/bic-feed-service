@@ -26,7 +26,7 @@ export const UserHasLeftCommunity = 'user.has.left.community';
 export const FileHasBeenUploaded = 'file.has.been.uploaded';
 
 // reaction
-export const ReactionHasBeenAdded = 'reaction.has.been.added';
+export const ReactionHasBeenCreated = 'reaction.has.been.created';
 export const ReactionHasBeenRemoved = 'reaction.has.been.removed';
 
 // ws

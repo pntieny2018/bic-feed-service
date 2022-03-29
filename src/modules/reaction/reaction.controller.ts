@@ -1,19 +1,20 @@
-import { Body, Controller, Delete, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
 import { CreateReactionService, DeleteReactionService } from './services';
 import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
-import { REACTION_SERVICE, TOPIC_REACTION_CREATED } from './reaction.constant';
-import { ClientKafka } from '@nestjs/microservices';
+import { APP_VERSION } from '../../common/constants';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
-@Controller('reactions')
+@Controller({
+  path: 'reactions',
+  version: APP_VERSION,
+})
 export class ReactionController {
   public constructor(
     private readonly _createReactionService: CreateReactionService,
-    private readonly _deleteReactionService: DeleteReactionService,
-    @Inject(REACTION_SERVICE) private readonly _clientKafka: ClientKafka
+    private readonly _deleteReactionService: DeleteReactionService
   ) {}
 
   @ApiOperation({ summary: 'Create reaction.' })
@@ -26,11 +27,7 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
   ): Promise<boolean> {
-    const reactionDto = await this._createReactionService.createReaction(
-      userDto,
-      createReactionDto
-    );
-    this._clientKafka.emit(TOPIC_REACTION_CREATED, JSON.stringify(reactionDto));
+    await this._createReactionService.createReaction(userDto, createReactionDto);
     return true;
   }
 

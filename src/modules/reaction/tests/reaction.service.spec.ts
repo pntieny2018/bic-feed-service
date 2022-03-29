@@ -31,6 +31,8 @@ import { PostReactionModel } from '../../../database/models/post-reaction.model'
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CommonReactionService } from '../services';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { NotificationModule } from '../../../notification';
 
 describe('ReactionService', () => {
   let createReactionService: CreateReactionService;
@@ -57,7 +59,13 @@ describe('ReactionService', () => {
           useClass: jest.fn(),
         },
         {
-          provide: RedisService,
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
+        {
+          provide: NotificationModule,
           useClass: jest.fn(),
         },
         {
@@ -397,6 +405,10 @@ describe('ReactionService', () => {
         const userServiceGetSpy = jest
           .spyOn(userService, 'get')
           .mockResolvedValue(mockUserSharedDtoData);
+        const mockPostModelFindOneData = createMock<PostModel>(mockPostCanReact);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostModelFindOneData);
         const groupServiceIsMemberOfSomeGroupsSpy = jest
           .spyOn(groupService, 'isMemberOfSomeGroups')
           .mockReturnValue(true);
@@ -412,6 +424,7 @@ describe('ReactionService', () => {
         expect(postGroupModelFindAllSpy).toBeCalledTimes(1);
         expect(userServiceGetSpy).toBeCalledTimes(1);
         expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
       });
 
       it('Create comment reaction failed because of non-existed commentId', async () => {

@@ -4,7 +4,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreateReactionService, DeleteReactionService } from '../services';
 import { mockCreateReactionDto, mockDeleteReactionDto, mockUserDto } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
-import { REACTION_SERVICE } from '../reaction.constant';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { PostModel } from '../../../database/models/post.model';
@@ -16,6 +15,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CommonReactionService } from '../services';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 
 describe('ReactionController', () => {
   let createReactionService: CreateReactionService;
@@ -32,14 +32,14 @@ describe('ReactionController', () => {
         CreateReactionService,
         DeleteReactionService,
         {
-          provide: REACTION_SERVICE,
+          provide: RedisService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: InternalEventEmitterService,
           useValue: {
             emit: jest.fn(),
           },
-        },
-        {
-          provide: RedisService,
-          useClass: jest.fn(),
         },
         {
           provide: getModelToken(PostReactionModel),
