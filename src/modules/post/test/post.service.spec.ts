@@ -1,3 +1,10 @@
+import { PostResponseDto } from './../dto/responses/post.dto';
+import { PageDto } from './../../../common/dto/pagination/page.dto';
+import { CommentResponseDto } from './../../comment/dto/response/comment.response.dto';
+import { GetPostDto } from './../dto/requests/get-post.dto';
+import { mockedGroups } from './mocks/groups.mock';
+import { mockPostGroup } from './../../reaction/tests/mocks/input.mock';
+import { GroupSharedDto } from './../../../shared/group/dto/group-shared.dto';
 import { DeletedPostEvent, UpdatedPostEvent } from '../../../events/post';
 import { MentionableType } from '../../../common/constants';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -5,8 +12,11 @@ import { PostService } from '../post.service';
 import { IPost, PostModel } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { plainToClass } from 'class-transformer';
-import { mockedPostList, mockedCreatePostDto, mockedUpdatePostDto } from './mocks/post-list.mock';
+import { plainToClass, plainToInstance } from 'class-transformer';
+import { mockedPostList } from './mocks/post-list.mock';
+import { mockedCreatePostDto } from './mocks/create-post.mock';
+import { mockedUpdatePostDto } from './mocks/update-post.mock';
+
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { BadRequestException, ForbiddenException, forwardRef, HttpException, NotFoundException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
@@ -29,6 +39,7 @@ import { AuthorityService } from '../../authority';
 import { PostPolicyService } from '../post-policy.service';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import post from '../../../listeners/post';
+import { mockedComments, mockedPostResponse } from './mocks/post-response.mock';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -74,12 +85,15 @@ describe('PostService', () => {
           provide: UserService,
           useValue: {
             get: jest.fn(),
+            getMany: jest.fn(),
           },
         },
         {
           provide: GroupService,
           useValue: {
             get: jest.fn(),
+            getMany: jest.fn(),
+            isMemberOfGroups: jest.fn()
           },
         },
         {
@@ -645,6 +659,80 @@ describe('PostService', () => {
       } catch (e) {
         expect(e).toBeInstanceOf(BadRequestException);
       }
+    });
+  });
+
+  describe('getPost', () => {
+    const postData = mockedPostList[0];
+    const getPostDto: GetPostDto = {
+      commentLimit: 1,
+      childCommentLimit: 1,
+    }
+    
+    it('Should get post successfully', async () => {      
+      postModelMock.findOne.mockResolvedValueOnce({
+        ...postData,
+        toJSON: () => postData,
+      })
+      commentService.getComments = jest.fn().mockResolvedValueOnce(mockedComments)
+      mentionService.bindMentionsToPosts = jest.fn();
+      authorityService.allowAccess = jest.fn();
+      postService.bindActorToPost = jest.fn().mockImplementationOnce(() => {
+        postData['actor'] = mockedUserAuth; 
+      });
+      postService.bindAudienceToPost = jest.fn().mockImplementationOnce(() => {
+        postData['audience'] = mockedPostResponse.audience;
+      });
+      postService.bindAudienceToPost = jest.fn();
+      const result = await postService.getPost(postData.id, mockedUserAuth, getPostDto);
+      expect(result.comments).toStrictEqual(mockedComments);
+    });
+    it('Post not found', async () => {      
+      postModelMock.findOne.mockResolvedValueOnce(null)
+      try {
+      await postService.getPost(postData.id, mockedUserAuth, getPostDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(NotFoundException);
+      }
+    });
+
+    it('Catch ForbiddenException when access a post in invalid group', async () => {      
+      postModelMock.findOne.mockResolvedValueOnce({
+        ...postData,
+        toJSON: () => postData,
+      });
+      authorityService.allowAccess = jest.fn().mockRejectedValueOnce(new ForbiddenException('You do not have permission to perform this action !'))      
+      try {
+        await postService.getPost(postData.id, mockedUserAuth, getPostDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(ForbiddenException);
+      }
+    });
+  });
+
+  describe('bindActorToPost', () => {
+    const postData = { createdBy: mockedUserAuth.id, actor: null };
+    it('Should bind actor successfully', async () => {
+      userService.getMany = jest.fn().mockResolvedValueOnce([mockedUserAuth])
+      await postService.bindActorToPost([postData]);
+      expect(postData.actor).toStrictEqual(mockedUserAuth);
+    });
+  });
+
+  describe('bindAudienceToPost', () => {
+    const groups = mockedGroups;
+    const postData = {
+      audience: null,
+      groups: [
+        {
+          groupId: mockedGroups[0].id
+        }
+      ] 
+    };
+    it('Should bind audience successfully', async () => {
+      groupService.getMany = jest.fn().mockResolvedValueOnce([groups[0]])
+      await postService.bindAudienceToPost([postData]);
+      expect(postData.audience.groups).toStrictEqual([groups[0]]);
     });
   });
 });

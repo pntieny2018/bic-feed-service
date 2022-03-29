@@ -1,3 +1,4 @@
+import { UserMentionDto } from './../../../mention/dto/user-mention.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { PageDto } from '../../../../common/dto';
@@ -74,11 +75,13 @@ export class PostResponseDto {
   public actor: UserSharedDto;
 
   @ApiProperty({
-    description: 'Array of user',
-    type: UserSharedDto,
+    type: UserMentionDto,
+    additionalProperties: {
+      type: 'object',
+    },
   })
   @Expose()
-  public mentions: UserSharedDto[];
+  public mentions?: UserMentionDto;
 
   @ApiProperty({
     description: 'Total number of comments',

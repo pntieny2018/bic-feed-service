@@ -1,5 +1,5 @@
-import { MentionModel } from './mention.model';
-import { MediaType } from './media.model';
+import { MentionModel, IMention } from './mention.model';
+import { MediaType, IMedia } from './media.model';
 import { DataTypes, Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
@@ -16,19 +16,16 @@ import {
   UpdatedAt,
   Sequelize,
 } from 'sequelize-typescript';
-import { CommentModel } from './comment.model';
+import { CommentModel, IComment } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
-import { PostGroupModel } from './post-group.model';
+import { PostGroupModel, IPostGroup } from './post-group.model';
 import { PostReactionModel } from './post-reaction.model';
 import { Literal } from 'sequelize/types/utils';
 import sequelize from 'sequelize';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { PostContentDto } from '../../modules/post/dto/common/post-content.dto';
-import { FileDto, ImageDto, VideoDto } from '../../modules/post/dto/common/media.dto';
-import { plainToClass, plainToInstance } from 'class-transformer';
 import { MentionableType } from '../../common/constants';
 
 export interface IPost {
@@ -45,10 +42,10 @@ export interface IPost {
   canComment: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  comments?: CommentModel[];
-  media?: MediaModel[];
-  groups?: PostGroupModel[];
-  mentions?: MentionModel[];
+  comments?: IComment[];
+  media?: IMedia[];
+  groups?: IPostGroup[];
+  mentions?: IMention[];
   mentionIds?: number[];
 }
 @Table({

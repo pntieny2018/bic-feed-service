@@ -1,12 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
-import { mockedCreatePostDto, mockedPostList, mockedUpdatePostDto } from './mocks/post-list.mock';
+import { mockedPostList } from './mocks/post-list.mock';
+import { mockedCreatePostDto } from './mocks/create-post.mock';
+import { mockedUpdatePostDto } from './mocks/update-post.mock';
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { UserDto } from '../../auth';
 import { createMock } from '@golevelup/ts-jest';
 import { GetPostDto } from '../dto/requests';
-
+	
+jest.mock('../post.service');
 describe('PostController', () => {
   let postService: PostService;
   let postController: PostController;
@@ -50,9 +53,10 @@ describe('PostController', () => {
         commentLimit: 1,
         childCommentLimit: 1
       }
-      const result = await postController.getPost(userDto, 1, getPostDto);
+      const result = await postController.getPost(userDto, 1, getPostDto);      
       expect(postService.getPost).toBeCalledTimes(1);
-      expect(result).toBe(true);
+      expect(postService.getPost).toBeCalledWith(1, userDto, getPostDto);
+     // expect(result).toBe(true); 
     });
   });
 

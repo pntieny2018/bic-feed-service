@@ -77,7 +77,11 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async getPost(postId: number, user: UserDto, getPostDto: GetPostDto) {
+  public async getPost(
+    postId: number,
+    user: UserDto,
+    getPostDto: GetPostDto
+  ): Promise<PostResponseDto> {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -114,6 +118,9 @@ export class PostService {
       ],
     });
 
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
     await this._authorityService.allowAccess(user, post);
 
     const comments = await this._commentService.getComments(
@@ -380,11 +387,14 @@ export class PostService {
       await this._mentionService.bindMentionsToPosts([postJson]);
       await this.bindActorToPost([postJson]);
       await this.bindAudienceToPost([postJson]);
-      const { id, content, commentsCount, actor, mentions, audience, setting } =
+      const { id, content, commentsCount, mentions, actor, audience, setting } =
         this._classTransformer.plainToInstance(PostResponseDto, postJson, {
           excludeExtraneousValues: true,
         });
-
+      const mentionsConverted = [];
+      for (const i in mentions) {
+        mentionsConverted.push(Object.values(mentions[i]));
+      }
       this._eventEmitter.emit(
         PublishedPostEvent.event,
         new PublishedPostEvent({
@@ -393,7 +403,7 @@ export class PostService {
           content,
           commentsCount,
           actor,
-          mentions,
+          mentions: mentionsConverted,
           audience,
           setting,
         })
