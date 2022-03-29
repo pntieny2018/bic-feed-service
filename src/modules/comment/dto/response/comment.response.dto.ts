@@ -42,6 +42,9 @@ export class CommentResponseDto {
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }
+    if (typeof value === 'object') {
+      return value;
+    }
     return new MediaFilterResponseDto([], [], []);
   })
   @Expose()

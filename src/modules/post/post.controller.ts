@@ -1,17 +1,39 @@
 import { AuthUser } from '../auth';
-import { Controller, Delete, Get, Post, Body, Param, ParseIntPipe, Put } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Body,
+  Param,
+  ParseIntPipe,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
 import { PostService } from './post.service';
-import { CreatePostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto } from './dto/requests';
 import { GenericApiOkResponse } from '../../common/decorators';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { UserDto } from '../auth';
+import { PostResponseDto } from './dto/responses';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
 @Controller('posts')
 export class PostController {
   public constructor(private _postService: PostService) {}
+
+  @ApiOperation({ summary: 'Get post detail' })
+  @GenericApiOkResponse(PostResponseDto)
+  @Get('/:postId')
+  public getPost(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseIntPipe) postId: number,
+    @Query() getPostDto: GetPostDto
+  ): Promise<PostResponseDto> {
+    return this._postService.getPost(postId, user, getPostDto);
+  }
 
   @ApiOperation({ summary: 'Create post' })
   @GenericApiOkResponse(Boolean, 'Create post successfully')

@@ -284,7 +284,7 @@ export class MediaService {
     media.forEach((media: IMedia) => {
       const TypeMediaDto =
         media.type === 'file' ? FileDto : media.type === 'image' ? ImageDto : VideoDto;
-      const typeMediaDto = plainToInstance(TypeMediaDto, media);
+      const typeMediaDto = plainToInstance(TypeMediaDto, media, { excludeExtraneousValues: true });
       mediaTypes[`${media.type}s`].push(typeMediaDto);
     });
     return mediaTypes;

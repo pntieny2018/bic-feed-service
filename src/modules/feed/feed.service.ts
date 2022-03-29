@@ -123,7 +123,7 @@ export class FeedService {
           ['createdAt', 'DESC'],
         ],
       });
-
+      console.log('rows=', rows);
       const posts = await this._convertToFeedPostDto(rows);
 
       return new PageDto(posts, {
@@ -213,7 +213,7 @@ export class FeedService {
         }
       );
 
-      //post.commentCount = parseInt(row['commentsCount'] ?? 0);
+      //post.commentsCount = parseInt(row['commentsCount'] ?? 0);
 
       post.mentions = row.mentions.map((mention) => {
         const mentionedUser = userSharedDtos.find((u) => u.id === mention.userId);

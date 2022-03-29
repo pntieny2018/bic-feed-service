@@ -99,6 +99,32 @@ export class MentionService {
   }
 
   /**
+   * Bind mention to post
+   * @param posts any[]
+   */
+  public async bindMentionsToPosts(posts: any[]): Promise<void> {
+    const userIds: number[] = [];
+
+    for (const post of posts) {
+      if (post.mentions && post.mentions.length) {
+        userIds.push(...post.mentions.map((m) => m.userId));
+      }
+    }
+
+    const usersInfo = await this.resolveMentions(userIds);
+
+    const convert = (usersData): UserMentionDto[] =>
+      usersData.map((userData) => ({
+        [userData.username]: userData,
+      }));
+
+    for (const post of posts) {
+      if (post.mentions && post.mentions.length) {
+        post.mentions = convert(post.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
+      }
+    }
+  }
+  /**
    * Delete/Insert mention by entity
    * @param userIds Array of User ID
    * @param mentionableType Post or comment

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CommentController } from './comment.controller';
 import { CommentService } from './comment.service';
 import { DatabaseModule } from '../../database';
@@ -13,7 +13,7 @@ import { GroupModule } from '../../shared/group';
   imports: [
     DatabaseModule,
     AuthorityModule,
-    PostModule,
+    forwardRef(() => PostModule),
     UserModule,
     MentionModule,
     MediaModule,

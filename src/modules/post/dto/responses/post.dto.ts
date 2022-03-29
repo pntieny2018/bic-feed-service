@@ -1,10 +1,16 @@
-import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
+import { UserMentionDto } from './../../../mention/dto/user-mention.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
-import { IsArray } from 'class-validator';
-import { PostContentDto } from '../common/post-content.dto';
-import { PostSettingDto } from '../common/post-setting.dto';
-import { ReactionCountDto } from '../common/reaction-count.dto';
+import { Expose, Transform, Type } from 'class-transformer';
+import { PageDto } from '../../../../common/dto';
+import { IPostReaction } from '../../../../database/models/post-reaction.model';
+import { UserSharedDto } from '../../../../shared/user/dto';
+import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
+import { MediaService } from '../../../media';
+import { MediaFilterResponseDto } from '../../../media/dto/response';
+import { PostContentDto } from '../../../post/dto/common/post-content.dto';
+import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { AudienceDto } from '../common/audience.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -15,17 +21,42 @@ export class PostResponseDto {
   public id: number;
 
   @ApiProperty({
-    description: 'Keyword search',
+    description: 'Content',
     type: String,
   })
   @Expose()
-  public data: PostContentDto;
+  public content: string;
+
+  @ApiProperty({
+    description: 'Array of files, images, videos',
+    type: MediaFilterResponseDto,
+  })
+  @Expose()
+  @Transform(({ value }) => {
+    if (value && value.length) {
+      return MediaService.filterMediaType(value);
+    }
+    return new MediaFilterResponseDto([], [], []);
+  })
+  public media?: MediaFilterResponseDto;
 
   @ApiProperty({
     description: 'Setting post',
     type: PostSettingDto,
   })
   @Expose()
+  @Transform(({ obj, value }) => {
+    if (!value) {
+      return {
+        canReact: obj.canReact,
+        canComment: obj.canComment,
+        canShare: obj.canShare,
+        isImportant: obj.isImportant,
+        importantExpiredAt: obj.importantExpiredAt,
+      };
+    }
+    return value;
+  })
   public setting: PostSettingDto;
 
   @ApiProperty({
@@ -44,25 +75,65 @@ export class PostResponseDto {
   public actor: UserSharedDto;
 
   @ApiProperty({
-    description: 'Array of user',
-    type: UserSharedDto,
+    type: UserMentionDto,
+    additionalProperties: {
+      type: 'object',
+    },
   })
   @Expose()
-  public mentions: UserSharedDto[];
+  public mentions?: UserMentionDto;
 
   @ApiProperty({
     description: 'Total number of comments',
     type: Number,
   })
   @Expose()
-  public commentCount: number;
+  public commentsCount: number;
 
   @ApiProperty({
-    description: 'Array of reaction count',
-    type: Boolean,
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+    },
+  })
+  @Transform(({ value }) => {
+    if (value && value !== '1=' && typeof value === 'string') {
+      const rawReactionsCount: string = (value as string).substring(1);
+      const [s1, s2] = rawReactionsCount.split('=');
+      const reactionsName = s1.split(',');
+      const total = s2.split(',');
+      const reactionsCount = {};
+      reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
+      return reactionsCount;
+    }
+    return null;
   })
   @Expose()
-  @Type(() => ReactionCountDto)
-  @IsArray()
-  public reactionCount: ReactionCountDto[] = [];
+  public reactionsCount?: Record<string, Record<string, number>>;
+
+  @ApiProperty({
+    type: Date,
+  })
+  @Expose()
+  public createdAt: Date;
+
+  @ApiProperty({
+    type: AudienceDto,
+  })
+  @Expose()
+  public audience: AudienceDto;
+
+  @ApiProperty({
+    type: [ReactionResponseDto],
+  })
+  @Expose()
+  public ownerReactions?: ReactionResponseDto[] = [];
+
+  //@ApiProperty({ type: PageDto<CommentResponseDto>, isArray: true })
+  @Expose()
+  public comments: PageDto<CommentResponseDto>;
+
+  public constructor(data: Partial<PostResponseDto>) {
+    Object.assign(this, data);
+  }
 }
