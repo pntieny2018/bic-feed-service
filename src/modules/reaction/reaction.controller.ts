@@ -5,10 +5,14 @@ import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 import { REACTION_SERVICE, TOPIC_REACTION_CREATED } from './reaction.constant';
 import { ClientKafka } from '@nestjs/microservices';
+import { APP_VERSION } from '../../common/constants';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
-@Controller('reactions')
+@Controller({
+  path: 'reactions',
+  version: APP_VERSION,
+})
 export class ReactionController {
   public constructor(
     private readonly _createReactionService: CreateReactionService,
