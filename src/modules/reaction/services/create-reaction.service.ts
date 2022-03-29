@@ -239,6 +239,12 @@ export class CreateReactionService {
         canReact: true,
         isDraft: false,
       },
+      include: [
+        {
+          model: PostGroupModel,
+          required: true,
+        },
+      ],
     });
     return [!!post === true, post];
   }
@@ -275,6 +281,12 @@ export class CreateReactionService {
       where: {
         id: postId,
       },
+      include: [
+        {
+          model: PostGroupModel,
+          required: true,
+        },
+      ],
     });
     if (!!post === false) {
       throw new Error('Database error: Comment is belong to a non-existed post.');
