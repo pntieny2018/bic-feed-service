@@ -1,3 +1,4 @@
+import { PageDto } from './../../common/dto/pagination/page.dto';
 import { MentionableType } from '../../common/constants';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from '../../shared/user';
@@ -34,16 +35,12 @@ import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
-import { triggerAsyncId } from 'async_hooks';
-import sequelize from 'sequelize';
 import { CommentService } from '../comment/comment.service';
 import { UserDto } from '../auth';
 import { ClassTransformer, plainToClass, plainToInstance } from 'class-transformer';
 import { PostResponseDto } from './dto/responses';
-import { AudienceDto } from './dto/common/audience.dto';
-import { UserSharedDto } from '../../shared/user/dto';
 import { AuthorityService } from '../authority';
-import post from '../../listeners/post';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 
 @Injectable()
 export class PostService {
@@ -69,12 +66,72 @@ export class PostService {
     private _commentService: CommentService,
     private _authorityService: AuthorityService
   ) {}
+  /**
+   * Get Draft Posts
+   * @param authUserId auth user ID
+   * @param getDraftPostDto GetDraftPostDto
+   * @returns Promise resolve PageDto<PostResponseDto>
+   * @throws HttpException
+   */
+  public async getDraftPosts(
+    authUserId: number,
+    getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { limit, offset, order } = getDraftPostDto;
+    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+      where: {
+        createdBy: authUserId,
+        isDraft: true,
+      },
+      attributes: {
+        include: [PostModel.loadReactionsCount()],
+      },
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'audienceGroup',
+          attributes: ['groupId', 'postId'],
+          required: true,
+        },
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+        {
+          model: MentionModel,
+          required: false,
+        },
+      ],
+      offset: offset,
+      limit: limit,
+      order: [['createdAt', order]],
+    });
+
+    const jsonPosts = rows.map((r) => r.toJSON());
+    this._mentionService.bindMentionsToPosts(jsonPosts);
+    this.bindActorToPost(jsonPosts);
+    this.bindAudienceToPost(jsonPosts);
+
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<PostResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
+  }
 
   /**
    * Get Post
    * @param postId number
    * @param user UserDto
-   * @returns Promise resolve boolean
+   * @param getPostDto GetPostDto
+   * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
   public async getPost(

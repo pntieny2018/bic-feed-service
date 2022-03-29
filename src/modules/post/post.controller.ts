@@ -1,3 +1,4 @@
+import { PageDto } from './../../common/dto/pagination/page.dto';
 import { AuthUser } from '../auth';
 import {
   Controller,
@@ -17,6 +18,7 @@ import { GenericApiOkResponse } from '../../common/decorators';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -33,6 +35,16 @@ export class PostController {
     @Query() getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     return this._postService.getPost(postId, user, getPostDto);
+  }
+
+  @ApiOperation({ summary: 'Get post detail' })
+  @GenericApiOkResponse(PostResponseDto)
+  @Get('/draft')
+  public getDraftPosts(
+    @AuthUser() user: UserDto,
+    @Query() getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._postService.getDraftPosts(user.id, getDraftPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })

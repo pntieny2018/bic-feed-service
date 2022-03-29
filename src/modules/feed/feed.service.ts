@@ -123,7 +123,7 @@ export class FeedService {
           ['createdAt', 'DESC'],
         ],
       });
-      console.log('rows=', rows);
+
       const posts = await this._convertToFeedPostDto(rows);
 
       return new PageDto(posts, {
