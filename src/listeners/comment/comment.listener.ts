@@ -14,19 +14,19 @@ export class CommentListener {
 
   @On(CommentHasBeenCreatedEvent)
   public async onCommentHasBeenCreated(event: CommentHasBeenCreatedEvent): Promise<void> {
-    this._logger.log(event);
+    this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
     this._notificationService.publishCommentNotification<any>(null);
   }
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
     this._logger.log(event);
-    this._notificationService.publishCommentNotification<any>(null);
+    // this._notificationService.publishCommentNotification<any>(null);
   }
 
   @On(CommentHasBeenDeletedEvent)
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
     this._logger.log(event);
-    this._notificationService.publishCommentNotification<any>(null);
+    // this._notificationService.publishCommentNotification<any>(null);
   }
 }
