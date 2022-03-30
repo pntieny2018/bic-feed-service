@@ -1,3 +1,4 @@
+import { PageDto } from './../../common/dto/pagination/page.dto';
 import { MentionableType } from '../../common/constants';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from '../../shared/user';
@@ -34,16 +35,12 @@ import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
-import { triggerAsyncId } from 'async_hooks';
-import sequelize from 'sequelize';
 import { CommentService } from '../comment/comment.service';
 import { UserDto } from '../auth';
 import { ClassTransformer, plainToClass, plainToInstance } from 'class-transformer';
 import { PostResponseDto } from './dto/responses';
-import { AudienceDto } from './dto/common/audience.dto';
-import { UserSharedDto } from '../../shared/user/dto';
 import { AuthorityService } from '../authority';
-import post from '../../listeners/post';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 
 @Injectable()
 export class PostService {
@@ -69,12 +66,72 @@ export class PostService {
     private _commentService: CommentService,
     private _authorityService: AuthorityService
   ) {}
+  /**
+   * Get Draft Posts
+   * @param authUserId auth user ID
+   * @param getDraftPostDto GetDraftPostDto
+   * @returns Promise resolve PageDto<PostResponseDto>
+   * @throws HttpException
+   */
+  public async getDraftPosts(
+    authUserId: number,
+    getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { limit, offset, order } = getDraftPostDto;
+    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+      where: {
+        createdBy: authUserId,
+        isDraft: true,
+      },
+      attributes: {
+        exclude: ['commentsCount'],
+      },
+      include: [
+        {
+          model: PostGroupModel,
+          attributes: ['groupId'],
+          required: false,
+        },
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          required: false,
+        },
+        {
+          model: MentionModel,
+          required: false,
+        },
+      ],
+      offset: offset,
+      limit: limit,
+      order: [['createdAt', order]],
+    });
+
+    const jsonPosts = rows.map((r) => r.toJSON());
+    await this._mentionService.bindMentionsToPosts(jsonPosts);
+    await this.bindActorToPost(jsonPosts);
+    await this.bindAudienceToPost(jsonPosts);
+
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<PostResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
+  }
 
   /**
    * Get Post
    * @param postId number
    * @param user UserDto
-   * @returns Promise resolve boolean
+   * @param getPostDto GetPostDto
+   * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
   public async getPost(
@@ -154,6 +211,7 @@ export class PostService {
    * @returns Promise resolve void
    * @throws HttpException
    */
+
   public async bindAudienceToPost(posts: any[]): Promise<void> {
     const groupIds = [];
     for (const post of posts) {
@@ -161,11 +219,14 @@ export class PostService {
         groupIds.push(...post.groups.map((m) => m.groupId));
       }
     }
-    const groups = await this._groupService.getMany(groupIds);
+    const dataGroups = await this._groupService.getMany(groupIds);
+
     for (const post of posts) {
+      let groups = [];
       if (post.groups && post.groups.length) {
-        post.audience = { groups: post.groups.map((v) => groups.find((u) => u.id === v.groupId)) };
+        groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
       }
+      post.audience = { groups };
     }
   }
 
@@ -181,6 +242,7 @@ export class PostService {
       userIds.push(post.createdBy);
     }
     const users = await this._userService.getMany(userIds);
+
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
     }
