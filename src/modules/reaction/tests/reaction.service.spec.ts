@@ -33,6 +33,7 @@ import { ReactionDto } from '../dto/reaction.dto';
 import { CommonReactionService } from '../services';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { NotificationModule } from '../../../notification';
+import { ReactionEnum } from '../reaction.enum';
 
 describe('ReactionService', () => {
   let createReactionService: CreateReactionService;
@@ -191,6 +192,64 @@ describe('ReactionService', () => {
         expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
       });
 
+      it('Create post reaction successfully - react on existed reaction kind of the post.', async () => {
+        const input = {
+          reactionName: mock15ReactionOnAPost[0].reactionName,
+          target: ReactionEnum.POST,
+          targetId: mock15ReactionOnAPost[0].postId,
+        };
+        const mockDataCreated = createMock<PostReactionModel>(mock15ReactionOnAPost[0]);
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
+        const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
+        const postReactionModelFindAllSpy = jest
+          .spyOn(postReactionModel, 'findAll')
+          .mockResolvedValue(mock15ReactionOnAPostData);
+        const mockPostData = createMock<PostModel>(mockPostCanReact);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostData);
+        const commonReactionIsExistedPostReaction = jest
+          .spyOn(commonReactionService, 'isExistedPostReaction')
+          .mockResolvedValue(false);
+        const mockPostGroupData = createMock<PostGroupModel[]>(mockPostGroup);
+        const postGroupModelFindAllSpy = jest
+          .spyOn(postGroupModel, 'findAll')
+          .mockResolvedValue(mockPostGroupData);
+        const mockUserSharedDtoData = createMock<UserSharedDto>(mockUserSharedDto);
+        const userServiceGetSpy = jest
+          .spyOn(userService, 'get')
+          .mockResolvedValue(mockUserSharedDtoData);
+        const groupServiceIsMemberOfSomeGroupsSpy = jest
+          .spyOn(groupService, 'isMemberOfSomeGroups')
+          .mockReturnValue(true);
+        const response: ReactionDto = {
+          ...input,
+          userId: mockUserDto.id,
+        };
+        expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(response);
+        expect(postReactionModelCreateSpy).toBeCalledTimes(1);
+        expect(commonReactionIsExistedPostReaction).toBeCalledTimes(1);
+        expect(postReactionModelFindAllSpy).toBeCalledTimes(1);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
+        expect(postGroupModelFindAllSpy).toBeCalledTimes(1);
+        expect(userServiceGetSpy).toBeCalledTimes(1);
+        expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
+      });
+
+      it('Create post reaction failed because of not match reaction type', async () => {
+        const mockWrongTargetCreateReactionDto = {
+          ...mockCreateReactionDto[0],
+          target: 'POSTS' as ReactionEnum,
+        };
+        try {
+          await createReactionService.createReaction(mockUserDto, mockWrongTargetCreateReactionDto);
+        } catch (e) {
+          expect(e.message).toEqual('Reaction type not match.');
+        }
+      });
+
       it('Create post reaction failed because of non-existed postId', async () => {
         const input = mockCreateReactionDto[0];
         const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
@@ -273,6 +332,54 @@ describe('ReactionService', () => {
         expect(commonReactionIsExistedPostReaction).toBeCalledTimes(1);
         expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
         expect(postModelFindOneSpy).toBeCalledTimes(0);
+        expect(postGroupModelFindAllSpy).toBeCalledTimes(0);
+        expect(userServiceGetSpy).toBeCalledTimes(0);
+        expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(0);
+      });
+
+      it('Create post reaction failed because of non-permit reacting post', async () => {
+        const input = mockCreateReactionDto[0];
+        const mockDataCreated = createMock<PostReactionModel>({
+          id: 1,
+          postId: input.targetId,
+          reactionName: input.reactionName,
+          createdBy: mockUserDto.id,
+        });
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
+        const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
+        const postReactionModelFindAllSpy = jest
+          .spyOn(postReactionModel, 'findAll')
+          .mockResolvedValue(mock15ReactionOnAPostData);
+        const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(null);
+        const commonReactionIsExistedPostReaction = jest
+          .spyOn(commonReactionService, 'isExistedPostReaction')
+          .mockResolvedValue(false);
+        const mockPostGroupData = createMock<PostGroupModel[]>(mockPostGroup);
+        const postGroupModelFindAllSpy = jest
+          .spyOn(postGroupModel, 'findAll')
+          .mockResolvedValue(mockPostGroupData);
+        const mockUserSharedDtoData = createMock<UserSharedDto>(mockUserSharedDto);
+        const userServiceGetSpy = jest
+          .spyOn(userService, 'get')
+          .mockResolvedValue(mockUserSharedDtoData);
+        const groupServiceIsMemberOfSomeGroupsSpy = jest
+          .spyOn(groupService, 'isMemberOfSomeGroups')
+          .mockReturnValue(true);
+        const response: ReactionDto = {
+          ...input,
+          userId: mockUserDto.id,
+        };
+        try {
+          await createReactionService.createReaction(mockUserDto, input);
+        } catch (e) {
+          expect(e.message).toEqual('Can not create reaction.');
+        }
+        expect(postReactionModelCreateSpy).toBeCalledTimes(0);
+        expect(commonReactionIsExistedPostReaction).toBeCalledTimes(1);
+        expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
         expect(postGroupModelFindAllSpy).toBeCalledTimes(0);
         expect(userServiceGetSpy).toBeCalledTimes(0);
         expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(0);
@@ -371,6 +478,54 @@ describe('ReactionService', () => {
         expect(userServiceGetSpy).toBeCalledTimes(1);
         expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
       });
+
+      it('Create post reaction failed because can not get user data on cache so can not check whether user is in the group', async () => {
+        const input = mockCreateReactionDto[0];
+        const mockDataCreated = createMock<PostReactionModel>({
+          id: 1,
+          postId: input.targetId,
+          reactionName: input.reactionName,
+          createdBy: mockUserDto.id,
+        });
+        const postReactionModelCreateSpy = jest
+          .spyOn(postReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
+        const mock15ReactionOnAPostData = createMock<PostReactionModel[]>(mock15ReactionOnAPost);
+        const postReactionModelFindAllSpy = jest
+          .spyOn(postReactionModel, 'findAll')
+          .mockResolvedValue(mock15ReactionOnAPostData);
+        const mockPostData = createMock<PostModel>(mockPostCanReact);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostData);
+        const commonReactionIsExistedPostReaction = jest
+          .spyOn(commonReactionService, 'isExistedPostReaction')
+          .mockResolvedValue(false);
+        const mockPostGroupData = createMock<PostGroupModel[]>(mockPostGroup);
+        const postGroupModelFindAllSpy = jest
+          .spyOn(postGroupModel, 'findAll')
+          .mockResolvedValue(mockPostGroupData);
+        const userServiceGetSpy = jest.spyOn(userService, 'get').mockResolvedValue(null);
+        const groupServiceIsMemberOfSomeGroupsSpy = jest
+          .spyOn(groupService, 'isMemberOfSomeGroups')
+          .mockReturnValue(true);
+        const response: ReactionDto = {
+          ...input,
+          userId: mockUserDto.id,
+        };
+        try {
+          await createReactionService.createReaction(mockUserDto, input);
+        } catch (e) {
+          expect(e.message).toEqual('Can not create reaction.');
+        }
+        expect(postReactionModelCreateSpy).toBeCalledTimes(0);
+        expect(commonReactionIsExistedPostReaction).toBeCalledTimes(1);
+        expect(postReactionModelFindAllSpy).toBeCalledTimes(0);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
+        expect(postGroupModelFindAllSpy).toBeCalledTimes(1);
+        expect(userServiceGetSpy).toBeCalledTimes(1);
+        expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(0);
+      });
     });
 
     describe('Create comment reaction', () => {
@@ -427,11 +582,63 @@ describe('ReactionService', () => {
         expect(postModelFindOneSpy).toBeCalledTimes(1);
       });
 
-      it('Create comment reaction failed because of non-existed commentId', async () => {
+      it('Create comment reaction failed because of non-existed comment', async () => {
         const input = mockCreateReactionDto[1];
+        const mockDataCreated = createMock<CommentReactionModel>({
+          id: 1,
+          commentId: input.targetId,
+          reactionName: input.reactionName,
+          createdBy: mockUserDto.id,
+        });
         const commentReactionModelCreateSpy = jest
           .spyOn(commentReactionModel, 'create')
-          .mockRejectedValue(new Error('commentId is not existed. foreign key constraint'));
+          .mockResolvedValue(mockDataCreated);
+        const mock15ReactionOnACommentData =
+          createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
+        const commentReactionModelFindAllSpy = jest
+          .spyOn(commentReactionModel, 'findAll')
+          .mockResolvedValue(mock15ReactionOnACommentData);
+        const commonReactionIsExistedCommentReaction = jest
+          .spyOn(commonReactionService, 'isExistedCommentReaction')
+          .mockResolvedValue(false);
+        const mockCommentData = createMock<CommentModel>(mockComment);
+        const commentModelFindOneSpy = jest.spyOn(commentModel, 'findOne').mockResolvedValue(null);
+        const mockPostGroupData = createMock<PostGroupModel[]>(mockPostGroup);
+        const postGroupModelFindAllSpy = jest
+          .spyOn(postGroupModel, 'findAll')
+          .mockResolvedValue(mockPostGroupData);
+        const mockUserSharedDtoData = createMock<UserSharedDto>(mockUserSharedDto);
+        const userServiceGetSpy = jest
+          .spyOn(userService, 'get')
+          .mockResolvedValue(mockUserSharedDtoData);
+        const groupServiceIsMemberOfSomeGroupsSpy = jest
+          .spyOn(groupService, 'isMemberOfSomeGroups')
+          .mockReturnValue(true);
+        try {
+          await createReactionService.createReaction(mockUserDto, input);
+        } catch (e) {
+          expect(e.message).toBe('Can not create reaction.');
+        }
+        expect(commentReactionModelCreateSpy).toBeCalledTimes(0);
+        expect(commonReactionIsExistedCommentReaction).toBeCalledTimes(1);
+        expect(commentReactionModelFindAllSpy).toBeCalledTimes(0);
+        expect(commentModelFindOneSpy).toBeCalledTimes(1);
+        expect(postGroupModelFindAllSpy).toBeCalledTimes(0);
+        expect(userServiceGetSpy).toBeCalledTimes(0);
+        expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(0);
+      });
+
+      it('Create comment reaction failed because of wrong non-existed postId', async () => {
+        const input = mockCreateReactionDto[1];
+        const mockDataCreated = createMock<CommentReactionModel>({
+          id: 1,
+          commentId: input.targetId,
+          reactionName: input.reactionName,
+          createdBy: mockUserDto.id,
+        });
+        const commentReactionModelCreateSpy = jest
+          .spyOn(commentReactionModel, 'create')
+          .mockResolvedValue(mockDataCreated);
         const mock15ReactionOnACommentData =
           createMock<CommentReactionModel[]>(mock15ReactionOnAComment);
         const commentReactionModelFindAllSpy = jest
@@ -452,21 +659,27 @@ describe('ReactionService', () => {
         const userServiceGetSpy = jest
           .spyOn(userService, 'get')
           .mockResolvedValue(mockUserSharedDtoData);
+        const postModelFindOneSpy = jest.spyOn(postModel, 'findOne').mockResolvedValue(null);
         const groupServiceIsMemberOfSomeGroupsSpy = jest
           .spyOn(groupService, 'isMemberOfSomeGroups')
           .mockReturnValue(true);
+        const response: ReactionDto = {
+          ...input,
+          userId: mockUserDto.id,
+        };
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
-          expect(e.message).toBe('Can not create reaction.');
+          expect(e.message).toEqual('Can not create reaction.');
         }
-        expect(commentReactionModelCreateSpy).toBeCalledTimes(1);
+        expect(commentReactionModelCreateSpy).toBeCalledTimes(0);
         expect(commonReactionIsExistedCommentReaction).toBeCalledTimes(1);
-        expect(commentReactionModelFindAllSpy).toBeCalledTimes(1);
+        expect(commentReactionModelFindAllSpy).toBeCalledTimes(0);
         expect(commentModelFindOneSpy).toBeCalledTimes(1);
-        expect(postGroupModelFindAllSpy).toBeCalledTimes(1);
-        expect(userServiceGetSpy).toBeCalledTimes(1);
-        expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
+        expect(postGroupModelFindAllSpy).toBeCalledTimes(0);
+        expect(userServiceGetSpy).toBeCalledTimes(0);
+        expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(0);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
       });
 
       it('Create comment reaction failed because of existed reaction', async () => {
@@ -540,6 +753,10 @@ describe('ReactionService', () => {
         const commentModelFindOneSpy = jest
           .spyOn(commentModel, 'findOne')
           .mockResolvedValue(mockCommentData);
+        const mockPostModelFindOneData = createMock<PostModel>(mockPostCanReact);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostModelFindOneData);
         const mockPostGroupData = createMock<PostGroupModel[]>(mockPostGroup);
         const postGroupModelFindAllSpy = jest
           .spyOn(postGroupModel, 'findAll')
@@ -563,6 +780,7 @@ describe('ReactionService', () => {
         expect(postGroupModelFindAllSpy).toBeCalledTimes(1);
         expect(userServiceGetSpy).toBeCalledTimes(1);
         expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
       });
 
       it('Create comment reaction failed because user is not in the group that contain the post having the comment.', async () => {
@@ -588,6 +806,10 @@ describe('ReactionService', () => {
         const commentModelFindOneSpy = jest
           .spyOn(commentModel, 'findOne')
           .mockResolvedValue(mockCommentData);
+        const mockPostModelFindOneData = createMock<PostModel>(mockPostCanReact);
+        const postModelFindOneSpy = jest
+          .spyOn(postModel, 'findOne')
+          .mockResolvedValue(mockPostModelFindOneData);
         const mockPostGroupData = createMock<PostGroupModel[]>(mockPostGroup);
         const postGroupModelFindAllSpy = jest
           .spyOn(postGroupModel, 'findAll')
@@ -611,6 +833,7 @@ describe('ReactionService', () => {
         expect(postGroupModelFindAllSpy).toBeCalledTimes(1);
         expect(userServiceGetSpy).toBeCalledTimes(1);
         expect(groupServiceIsMemberOfSomeGroupsSpy).toBeCalledTimes(1);
+        expect(postModelFindOneSpy).toBeCalledTimes(1);
       });
     });
   });
@@ -627,6 +850,25 @@ describe('ReactionService', () => {
           .mockResolvedValue(mockmockPostReactionModelFindOne);
         expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
         expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
+      });
+
+      it('Delete post reaction failed because of reaction type not match. "POSTS"', async () => {
+        const input = {
+          ...mockDeleteReactionDto[0],
+          target: 'POSTS' as ReactionEnum,
+        };
+        const mockmockPostReactionModelFindOne = createMock<PostReactionModel>(
+          mockPostReactionModelFindOne as PostReactionModel
+        );
+        const postReactionModelFindOneSpy = jest
+          .spyOn(postReactionModel, 'findOne')
+          .mockResolvedValue(mockmockPostReactionModelFindOne);
+        try {
+          await deleteReactionService.deleteReaction(mockUserDto, input);
+        } catch (e) {
+          expect(e.message).toEqual('Reaction type not match.');
+        }
+        expect(postReactionModelFindOneSpy).toBeCalledTimes(0);
       });
 
       it('Delete post reaction failed because of non-existed such reaction', async () => {
@@ -702,6 +944,38 @@ describe('ReactionService', () => {
         }
         expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
       });
+    });
+  });
+
+  describe('Common reaction', () => {
+    it('Return true if post reaction is existed', async () => {
+      const mockPostReactionModelFindOneData = createMock<PostReactionModel>(
+        mockPostReactionModelFindOne
+      );
+      const spyPostReactionModelFindOne = jest
+        .spyOn(postReactionModel, 'findOne')
+        .mockResolvedValue(mockPostReactionModelFindOneData);
+      const value = await commonReactionService.isExistedPostReaction(
+        mockUserDto.id,
+        mockCreateReactionDto[0]
+      );
+      expect(value).toEqual(true);
+      expect(spyPostReactionModelFindOne).toBeCalledTimes(1);
+    });
+
+    it('Return true if comment reaction is existed', async () => {
+      const mockCommentReactionModelFindOneData = createMock<CommentReactionModel>(
+        mockCommentReactionModelFindOne
+      );
+      const spyCommentReactionModelFindOne = jest
+        .spyOn(commentReactionModel, 'findOne')
+        .mockResolvedValue(mockCommentReactionModelFindOneData);
+      const value = await commonReactionService.isExistedCommentReaction(
+        mockUserDto.id,
+        mockCreateReactionDto[0]
+      );
+      expect(value).toEqual(true);
+      expect(spyCommentReactionModelFindOne).toBeCalledTimes(1);
     });
   });
 });
