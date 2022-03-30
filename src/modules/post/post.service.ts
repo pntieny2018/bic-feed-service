@@ -5,7 +5,7 @@ import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
@@ -25,7 +25,7 @@ import {
   UpdatedPostEvent,
 } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { ArrayHelper } from '../../common/helpers';
+import { ArrayHelper, ElasticsearchHelper } from '../../common/helpers';
 import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -41,6 +41,7 @@ import { ClassTransformer, plainToClass, plainToInstance } from 'class-transform
 import { PostResponseDto } from './dto/responses';
 import { AuthorityService } from '../authority';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @Injectable()
 export class PostService {
@@ -64,8 +65,122 @@ export class PostService {
     private _mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     private _commentService: CommentService,
-    private _authorityService: AuthorityService
+    private _authorityService: AuthorityService,
+    private _searchService: ElasticsearchService
   ) {}
+
+  /**
+   * Get Draft Posts
+   * @param authUserId auth user ID
+   * @param getDraftPostDto GetDraftPostDto
+   * @returns Promise resolve PageDto<PostResponseDto>
+   * @throws HttpException
+   */
+  public async searchPosts(authUserId: number, searchPostsDto: SearchPostsDto) {
+    const { important, startTime, endTime, content, actors, limit, offset, order } = searchPostsDto;
+    const user = await this._userService.get(authUserId);
+    if (!user || user.groups.length === 0) {
+      return new PageDto<PostResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+    const groupIds = user.groups;
+
+    // search post
+    const query = {
+      bool: {
+        must: [],
+        filter: [],
+        should: [],
+      },
+    };
+
+    if (actors && actors.length) {
+      query.bool.filter.push({
+        terms: {
+          actor: actors,
+        },
+      });
+    }
+
+    // if (filter.audience?.groups) {
+    //   query.bool.filter.push({
+    //     terms: {
+    //       'audience.groups': filter.audience.groups,
+    //     },
+    //   });
+    // }
+
+    if (content) {
+      query.bool.should.push({
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        dis_max: {
+          queries: [
+            {
+              match: {
+                content: content,
+              },
+            },
+          ],
+        },
+      });
+      //query.bool['minimum_should_match'] = SEARCH_CONFIG.MINIMUM_SHOULD_MATCH;
+    }
+
+    if (startTime || endTime) {
+      const filterTime = {
+        range: {
+          time: {},
+        },
+      };
+
+      if (startTime) filterTime.range.time['gte'] = startTime;
+      if (endTime) filterTime.range.time['lte'] = endTime;
+
+      query.bool.must.push(filterTime);
+    }
+    const payload = {
+      index: ElasticsearchHelper.INDEX.POST,
+      body: {
+        query,
+      },
+    };
+
+    if (offset) {
+      payload['from'] = offset;
+    }
+
+    if (limit) {
+      payload['size'] = limit;
+    }
+
+    const { body } = await this._searchService.search(payload);
+
+    const hits = body.hits.hits;
+    const posts = hits.map((item) => {
+      const source = item._source;
+      source['id'] = item._id;
+      if (content && item.highlight && item.highlight['content'].length != 0 && source.data) {
+        source.data.highlight = item.highlight['content'][0]; //highlight['data.content'][0] has only one element if highlight = unified
+      }
+      return source;
+    });
+
+    this.bindActorToPost(posts);
+    this.bindAudienceToPost(posts);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<PostResponseDto>(result, {
+      total: 1,
+      limit,
+      offset,
+    });
+  }
+
   /**
    * Get Draft Posts
    * @param authUserId auth user ID
@@ -317,6 +432,7 @@ export class PostService {
           content: post.content,
           media: { files, videos, images },
           actor: creator,
+          createdAt: post.createdAt,
           mentions,
           audience,
           setting,
@@ -406,6 +522,7 @@ export class PostService {
             mentions,
             audience,
             setting,
+            createdAt: post.createdAt,
           },
         })
       );
@@ -449,7 +566,7 @@ export class PostService {
       await this._mentionService.bindMentionsToPosts([postJson]);
       await this.bindActorToPost([postJson]);
       await this.bindAudienceToPost([postJson]);
-      const { id, content, commentsCount, mentions, actor, audience, setting } =
+      const { id, content, commentsCount, mentions, actor, media, audience, setting } =
         this._classTransformer.plainToInstance(PostResponseDto, postJson, {
           excludeExtraneousValues: true,
         });
@@ -463,11 +580,13 @@ export class PostService {
           id,
           isDraft: false,
           content,
+          media,
           commentsCount,
           actor,
           mentions: mentionsConverted,
           audience,
           setting,
+          createdAt: post.createdAt,
         })
       );
 

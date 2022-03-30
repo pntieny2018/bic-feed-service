@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
 import { PostService } from './post.service';
-import { CreatePostDto, GetPostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
 import { GenericApiOkResponse } from '../../common/decorators';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { UserDto } from '../auth';
@@ -25,6 +25,13 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 @Controller('posts')
 export class PostController {
   public constructor(private _postService: PostService) {}
+
+  @ApiOperation({ summary: 'Search posts' })
+  @GenericApiOkResponse(PostResponseDto)
+  @Get('/')
+  public searchPost(@AuthUser() user: UserDto, @Query() searchPostsDto: SearchPostsDto) {
+    return this._postService.searchPosts(user.id, searchPostsDto);
+  }
 
   @ApiOperation({ summary: 'Get post detail' })
   @GenericApiOkResponse(PostResponseDto)

@@ -12,4 +12,5 @@ export interface IPostEventPayload {
   actor: UserSharedDto;
   setting: PostSettingDto;
   media?: MediaFilterResponseDto;
+  createdAt: Date;
 }

@@ -1,10 +1,7 @@
 import { PostResponseDto } from './../dto/responses/post.dto';
 import { PageDto } from './../../../common/dto/pagination/page.dto';
-import { CommentResponseDto } from './../../comment/dto/response/comment.response.dto';
 import { GetPostDto } from './../dto/requests/get-post.dto';
 import { mockedGroups } from './mocks/groups.mock';
-import { mockPostGroup } from './../../reaction/tests/mocks/input.mock';
-import { GroupSharedDto } from './../../../shared/group/dto/group-shared.dto';
 import { DeletedPostEvent, UpdatedPostEvent } from '../../../events/post';
 import { MentionableType } from '../../../common/constants';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -12,7 +9,6 @@ import { PostService } from '../post.service';
 import { IPost, PostModel } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { plainToClass, plainToInstance } from 'class-transformer';
 import { mockedPostList } from './mocks/post-list.mock';
 import { mockedCreatePostDto } from './mocks/create-post.mock';
 import { mockedUpdatePostDto } from './mocks/update-post.mock';
@@ -31,16 +27,14 @@ import { MentionService } from '../../mention';
 import { Transaction } from 'sequelize';
 import { CreatedPostEvent } from '../../../events/post';
 import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PublishedPostEvent } from '../../../events/post';
-import { MentionModel } from '../../../database/models/mention.model';
 import { EntityIdDto } from '../../../common/dto';
 import { CommentModule, CommentService } from '../../comment';
 import { AuthorityService } from '../../authority';
 import { PostPolicyService } from '../post-policy.service';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import post from '../../../listeners/post';
 import { mockedComments, mockedPostResponse } from './mocks/post-response.mock';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -63,6 +57,12 @@ describe('PostService', () => {
       providers: [
         PostService,
         PostPolicyService, 
+        {
+          provide: ElasticsearchService,
+          useValue: {
+            search: jest.fn(),
+          },
+        },
         {
           provide: AuthorityService,
           useValue: {
@@ -239,6 +239,7 @@ describe('PostService', () => {
           mentions: mockedCreatePostDto.mentions,
           audience: mockedCreatePostDto.audience,
           setting: mockedCreatePostDto.setting,
+          createdAt: mockedDataCreatePost.createdAt,
         })
       );
 
@@ -349,6 +350,7 @@ describe('PostService', () => {
             mentions: mockedUpdatePostDto.mentions,
             audience: mockedUpdatePostDto.audience,
             setting: mockedUpdatePostDto.setting,
+            createdAt: mockedDataUpdatePost.createdAt,
           },
         })
       );
