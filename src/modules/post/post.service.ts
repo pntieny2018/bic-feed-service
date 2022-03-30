@@ -89,20 +89,29 @@ export class PostService {
       include: [
         {
           model: PostGroupModel,
-          as: 'audienceGroup',
-          attributes: ['groupId', 'postId'],
-          required: true,
+          attributes: ['groupId'],
+          required: false,
         },
         {
           model: MediaModel,
           through: {
             attributes: [],
           },
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
           required: false,
         },
         {
           model: MentionModel,
           required: false,
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: authUserId,
+          },
+          attributes: ['id', 'reactionName'],
         },
       ],
       offset: offset,
@@ -111,9 +120,9 @@ export class PostService {
     });
 
     const jsonPosts = rows.map((r) => r.toJSON());
-    this._mentionService.bindMentionsToPosts(jsonPosts);
-    this.bindActorToPost(jsonPosts);
-    this.bindAudienceToPost(jsonPosts);
+    await this._mentionService.bindMentionsToPosts(jsonPosts);
+    await this.bindActorToPost(jsonPosts);
+    await this.bindAudienceToPost(jsonPosts);
 
     const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
@@ -211,6 +220,7 @@ export class PostService {
    * @returns Promise resolve void
    * @throws HttpException
    */
+
   public async bindAudienceToPost(posts: any[]): Promise<void> {
     const groupIds = [];
     for (const post of posts) {
@@ -218,11 +228,14 @@ export class PostService {
         groupIds.push(...post.groups.map((m) => m.groupId));
       }
     }
-    const groups = await this._groupService.getMany(groupIds);
+    const dataGroups = await this._groupService.getMany(groupIds);
+
     for (const post of posts) {
+      let groups = [];
       if (post.groups && post.groups.length) {
-        post.audience = { groups: post.groups.map((v) => groups.find((u) => u.id === v.groupId)) };
+        groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
       }
+      post.audience = { groups };
     }
   }
 
@@ -238,6 +251,7 @@ export class PostService {
       userIds.push(post.createdBy);
     }
     const users = await this._userService.getMany(userIds);
+
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
     }

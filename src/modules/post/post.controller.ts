@@ -28,6 +28,16 @@ export class PostController {
 
   @ApiOperation({ summary: 'Get post detail' })
   @GenericApiOkResponse(PostResponseDto)
+  @Get('/draft')
+  public getDraftPosts(
+    @AuthUser() user: UserDto,
+    @Query() getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._postService.getDraftPosts(user.id, getDraftPostDto);
+  }
+
+  @ApiOperation({ summary: 'Get post detail' })
+  @GenericApiOkResponse(PostResponseDto)
   @Get('/:postId')
   public getPost(
     @AuthUser() user: UserDto,
@@ -35,16 +45,6 @@ export class PostController {
     @Query() getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     return this._postService.getPost(postId, user, getPostDto);
-  }
-
-  @ApiOperation({ summary: 'Get post detail' })
-  @GenericApiOkResponse(PostResponseDto)
-  @Get('/draft')
-  public getDraftPosts(
-    @AuthUser() user: UserDto,
-    @Query() getDraftPostDto: GetDraftPostDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.getDraftPosts(user.id, getDraftPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })
