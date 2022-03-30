@@ -153,6 +153,7 @@ export class CreateReactionService {
       }
 
       const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
+      const post = await this._getPost(postId);
       const isUserInPostGroups = await this._isUserInPostGroups(userId, postId);
       if (isUserInPostGroups === false) {
         throw new Error("User is not in the post's groups.");
@@ -173,7 +174,7 @@ export class CreateReactionService {
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
-      const post = await this._getPost(postId);
+
       this._commonReactionService.createEvent(reactionDto, post.toJSON(), comment.toJSON());
 
       return reactionDto;
@@ -261,11 +262,8 @@ export class CreateReactionService {
         id: commentId,
       },
     });
-    if (!!comment.postId === false) {
-      throw new Error('Database error: Comment is not belong to any post.');
-    }
-    if (!!comment === false) {
-      throw new Error('Comment is not existed.');
+    if (comment === null || !!comment.postId === false) {
+      throw new Error("Database error: comment is not existed or comment's postId is zero-value.");
     }
     return [comment.postId, comment];
   }
