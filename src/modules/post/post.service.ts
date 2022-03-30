@@ -84,7 +84,7 @@ export class PostService {
         isDraft: true,
       },
       attributes: {
-        include: [PostModel.loadReactionsCount()],
+        exclude: ['commentsCount'],
       },
       include: [
         {
@@ -103,15 +103,6 @@ export class PostService {
         {
           model: MentionModel,
           required: false,
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: authUserId,
-          },
-          attributes: ['id', 'reactionName'],
         },
       ],
       offset: offset,
