@@ -1,13 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
-import { RedisModule } from '@app/redis';
-import { mockedCreatePostDto, mockedPostList, mockedUpdatePostDto } from './mocks/post-list.mock';
+import { mockedPostList } from './mocks/post-list.mock';
+import { mockedCreatePostDto } from './mocks/create-post.mock';
+import { mockedUpdatePostDto } from './mocks/update-post.mock';
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { UserDto } from '../../auth';
 import { createMock } from '@golevelup/ts-jest';
-import { CreatePostDto } from '../dto/requests';
-
+import { GetPostDto } from '../dto/requests';
+import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
+	
+jest.mock('../post.service');
 describe('PostController', () => {
   let postService: PostService;
   let postController: PostController;
@@ -17,15 +20,20 @@ describe('PostController', () => {
   });
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      imports: [RedisModule],
       controllers: [PostController],
       providers: [
         {
           provide: PostService,
           useValue: {
             createPost: jest.fn(),
+            updatePost: jest.fn(),
+            deletePost: jest.fn(), 
+            publishPost: jest.fn(), 
+            getPost: jest.fn(),
+            getDraftPosts: jest.fn()
           },
-        },
+        }
+        
       ],
     }).compile();
 
@@ -38,6 +46,32 @@ describe('PostController', () => {
   });
   it('should be defined', () => {
     expect(postController).toBeDefined();
+  });
+
+  describe('getPost', () => {
+    it('Get draft post successfully', async () => {
+      postService.createPost = jest.fn().mockResolvedValue(true);
+      const getDraftPostsDto: GetDraftPostDto = {
+        limit: 1,
+        offset: 1
+      }
+      const result = await postController.getDraftPosts(userDto, getDraftPostsDto);      
+      expect(postService.getDraftPosts).toBeCalledTimes(1);
+      expect(postService.getDraftPosts).toBeCalledWith(userDto, getDraftPostsDto);
+    });
+  });
+
+  describe('getPost', () => {
+    it('Get post successfully', async () => {
+      postService.createPost = jest.fn().mockResolvedValue(true);
+      const getPostDto: GetPostDto = {
+        commentLimit: 1,
+        childCommentLimit: 1
+      }
+      const result = await postController.getPost(userDto, 1, getPostDto);      
+      expect(postService.getPost).toBeCalledTimes(1);
+      expect(postService.getPost).toBeCalledWith(1, userDto, getPostDto);
+    });
   });
 
   describe('createPost', () => {

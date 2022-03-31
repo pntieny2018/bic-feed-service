@@ -213,7 +213,7 @@ export class FeedService {
         }
       );
 
-      //post.commentCount = parseInt(row['commentsCount'] ?? 0);
+      //post.commentsCount = parseInt(row['commentsCount'] ?? 0);
 
       post.mentions = row.mentions.map((mention) => {
         const mentionedUser = userSharedDtos.find((u) => u.id === mention.userId);

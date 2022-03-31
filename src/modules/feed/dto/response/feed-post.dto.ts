@@ -54,7 +54,7 @@ export class FeedPostDto {
     type: Number,
   })
   @Expose()
-  public commentCount: number;
+  public commentsCount: number;
 
   @ApiProperty({
     description: 'Array of reaction count',

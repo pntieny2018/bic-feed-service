@@ -1,13 +1,16 @@
+import { PageDto } from './../../common/dto/pagination/page.dto';
 import { MentionableType } from '../../common/constants';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto } from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -23,7 +26,7 @@ import {
 } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper } from '../../common/helpers';
-import { EntityIdDto } from '../../common/dto';
+import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
@@ -32,6 +35,12 @@ import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
+import { CommentService } from '../comment/comment.service';
+import { UserDto } from '../auth';
+import { ClassTransformer, plainToClass, plainToInstance } from 'class-transformer';
+import { PostResponseDto } from './dto/responses';
+import { AuthorityService } from '../authority';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 
 @Injectable()
 export class PostService {
@@ -40,7 +49,7 @@ export class PostService {
    * @private
    */
   private _logger = new Logger(PostService.name);
-
+  private _classTransformer = new ClassTransformer();
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
@@ -52,8 +61,192 @@ export class PostService {
     private _userService: UserService,
     private _groupService: GroupService,
     private _mediaService: MediaService,
-    private _mentionService: MentionService
+    private _mentionService: MentionService,
+    @Inject(forwardRef(() => CommentService))
+    private _commentService: CommentService,
+    private _authorityService: AuthorityService
   ) {}
+  /**
+   * Get Draft Posts
+   * @param authUserId auth user ID
+   * @param getDraftPostDto GetDraftPostDto
+   * @returns Promise resolve PageDto<PostResponseDto>
+   * @throws HttpException
+   */
+  public async getDraftPosts(
+    authUserId: number,
+    getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { limit, offset, order } = getDraftPostDto;
+    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+      where: {
+        createdBy: authUserId,
+        isDraft: true,
+      },
+      attributes: {
+        exclude: ['commentsCount'],
+      },
+      include: [
+        {
+          model: PostGroupModel,
+          attributes: ['groupId'],
+          required: false,
+        },
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          required: false,
+        },
+        {
+          model: MentionModel,
+          required: false,
+        },
+      ],
+      offset: offset,
+      limit: limit,
+      order: [['createdAt', order]],
+    });
+
+    const jsonPosts = rows.map((r) => r.toJSON());
+    await this._mentionService.bindMentionsToPosts(jsonPosts);
+    await this.bindActorToPost(jsonPosts);
+    await this.bindAudienceToPost(jsonPosts);
+
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<PostResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
+  }
+
+  /**
+   * Get Post
+   * @param postId number
+   * @param user UserDto
+   * @param getPostDto GetPostDto
+   * @returns Promise resolve PostResponseDto
+   * @throws HttpException
+   */
+  public async getPost(
+    postId: number,
+    user: UserDto,
+    getPostDto: GetPostDto
+  ): Promise<PostResponseDto> {
+    const post = await this._postModel.findOne({
+      attributes: {
+        exclude: ['updatedBy'],
+        include: [PostModel.loadReactionsCount()],
+      },
+      where: { id: postId },
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+          attributes: ['userId'],
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: user.id,
+          },
+        },
+      ],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    await this._authorityService.allowAccess(user, post);
+
+    const comments = await this._commentService.getComments(
+      user,
+      {
+        postId,
+        childLimit: getPostDto.childCommentLimit,
+        order: getPostDto.commentOrder,
+        limit: getPostDto.commentLimit,
+      },
+      false
+    );
+    const postJson = post.toJSON();
+    await this._mentionService.bindMentionsToPosts([postJson]);
+    await this.bindActorToPost([postJson]);
+    await this.bindAudienceToPost([postJson]);
+    const result = this._classTransformer.plainToInstance(
+      PostResponseDto,
+      { ...postJson, comments },
+      {
+        excludeExtraneousValues: true,
+      }
+    );
+
+    return result;
+  }
+
+  /**
+   * Bind Audience To Post.groups
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+
+  public async bindAudienceToPost(posts: any[]): Promise<void> {
+    const groupIds = [];
+    for (const post of posts) {
+      if (post.groups && post.groups.length) {
+        groupIds.push(...post.groups.map((m) => m.groupId));
+      }
+    }
+    const dataGroups = await this._groupService.getMany(groupIds);
+
+    for (const post of posts) {
+      let groups = [];
+      if (post.groups && post.groups.length) {
+        groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
+      }
+      post.audience = { groups };
+    }
+  }
+
+  /**
+   * Bind Actor info to post.createdBy
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindActorToPost(posts: any[]): Promise<void> {
+    const userIds = [];
+    for (const post of posts) {
+      userIds.push(post.createdBy);
+    }
+    const users = await this._userService.getMany(userIds);
+
+    for (const post of posts) {
+      post.actor = users.find((i) => i.id === post.createdBy);
+    }
+  }
 
   /**
    * Create Post
@@ -65,7 +258,7 @@ export class PostService {
   public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { isDraft, data, setting, mentions, audience } = createPostDto;
+      const { isDraft, content, media, setting, mentions, audience } = createPostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
@@ -82,13 +275,13 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, videos, images } = data;
+      const { files, videos, images } = media;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
       const post = await this._postModel.create({
         isDraft,
-        content: data.content,
+        content,
         createdBy: authUserId,
         updatedBy: authUserId,
         isImportant: setting.isImportant,
@@ -121,7 +314,8 @@ export class PostService {
           id: post.id,
           isDraft,
           commentsCount: post.commentsCount,
-          data,
+          content: post.content,
+          media: { files, videos, images },
           actor: creator,
           mentions,
           audience,
@@ -153,7 +347,7 @@ export class PostService {
   ): Promise<boolean> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { data, setting, mentions, audience } = updatePostDto;
+      const { content, media, setting, mentions, audience } = updatePostDto;
       const creator = await this._userService.get(authUserId);
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
@@ -174,13 +368,13 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, videos, images } = data;
+      const { files, videos, images } = media;
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
       await this._postModel.update(
         {
-          content: data.content,
+          content,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
           importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
@@ -206,7 +400,8 @@ export class PostService {
             id: post.id,
             isDraft: post.isDraft,
             commentsCount: post.commentsCount,
-            data,
+            content: post.content,
+            media: { files, videos, images },
             actor: creator,
             mentions,
             audience,
@@ -250,25 +445,28 @@ export class PostService {
           },
         }
       );
-      const authInfo = await this._userService.get(authUserId);
-      const { setting, id, data, groups, mentions, commentsCount } = post;
-      const mentionIds = mentions.map((i) => i.userId);
-      const dataMentions = await this._mentionService.resolveMentions(mentionIds);
-      const groupIds = groups.map((i) => i.groupId);
-      const dataGroups = await this._groupService.getMany(groupIds);
-
+      const postJson = post.toJSON();
+      await this._mentionService.bindMentionsToPosts([postJson]);
+      await this.bindActorToPost([postJson]);
+      await this.bindAudienceToPost([postJson]);
+      const { id, content, commentsCount, mentions, actor, audience, setting } =
+        this._classTransformer.plainToInstance(PostResponseDto, postJson, {
+          excludeExtraneousValues: true,
+        });
+      const mentionsConverted = [];
+      for (const i in mentions) {
+        mentionsConverted.push(Object.values(mentions[i]));
+      }
       this._eventEmitter.emit(
         PublishedPostEvent.event,
         new PublishedPostEvent({
           id,
           isDraft: false,
-          data,
+          content,
           commentsCount,
-          actor: authInfo,
-          mentions: dataMentions,
-          audience: {
-            groups: dataGroups,
-          },
+          actor,
+          mentions: mentionsConverted,
+          audience,
           setting,
         })
       );
@@ -279,7 +477,6 @@ export class PostService {
       throw error;
     }
   }
-
   /**
    * Check post exist and owner
    * @param post Post model

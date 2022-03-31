@@ -20,5 +20,5 @@ export class PostGroupModel extends Model implements IPostGroup {
   public groupId: number;
 
   @BelongsTo(() => PostModel)
-  public post: PostModel;
+  public post?: PostModel;
 }

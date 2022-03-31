@@ -1,5 +1,5 @@
-import { MentionModel } from './mention.model';
-import { MediaType } from './media.model';
+import { MentionModel, IMention } from './mention.model';
+import { MediaType, IMedia } from './media.model';
 import { DataTypes, Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
@@ -16,19 +16,16 @@ import {
   UpdatedAt,
   Sequelize,
 } from 'sequelize-typescript';
-import { CommentModel } from './comment.model';
+import { CommentModel, IComment } from './comment.model';
 import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
-import { PostGroupModel } from './post-group.model';
+import { PostGroupModel, IPostGroup } from './post-group.model';
 import { PostReactionModel } from './post-reaction.model';
 import { Literal } from 'sequelize/types/utils';
 import sequelize from 'sequelize';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { PostContentDto } from '../../modules/post/dto/common/post-content.dto';
-import { FileDto, ImageDto, VideoDto } from '../../modules/post/dto/common/media.dto';
-import { plainToClass, plainToInstance } from 'class-transformer';
 import { MentionableType } from '../../common/constants';
 
 export interface IPost {
@@ -45,10 +42,11 @@ export interface IPost {
   canComment: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  comments?: CommentModel[];
-  media?: MediaModel[];
-  groups?: PostGroupModel[];
-  mentions?: MentionModel[];
+  comments?: IComment[];
+  media?: IMedia[];
+  groups?: IPostGroup[];
+  mentions?: IMention[];
+  mentionIds?: number[];
 }
 @Table({
   tableName: 'posts',
@@ -120,7 +118,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 
   @HasMany(() => PostGroupModel)
-  public groups: PostGroupModel[] = [];
+  public groups: PostGroupModel[];
 
   @HasMany(() => PostReactionModel)
   public reactions: PostReactionModel[];
@@ -135,48 +133,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     foreignKey: 'postId',
   })
   public postReactions: PostReactionModel[];
-
-  public get setting(): {
-    canReact: boolean;
-    canComment: boolean;
-    canShare: boolean;
-    isImportant: boolean;
-    importantExpiredAt: Date;
-  } {
-    return {
-      canReact: this.getDataValue('canReact'),
-      canComment: this.getDataValue('canComment'),
-      canShare: this.getDataValue('canShare'),
-      isImportant: this.getDataValue('isImportant'),
-      importantExpiredAt: this.getDataValue('importantExpiredAt'),
-    };
-  }
-
-  public get data(): PostContentDto {
-    const mediaList = this.media ?? [];
-    const result = {
-      content: this.getDataValue('content'),
-      images: [],
-      files: [],
-      videos: [],
-    };
-
-    mediaList.forEach((media) => {
-      switch (media.type) {
-        case MediaType.IMAGE:
-          result.images.push(plainToClass(ImageDto, media, { excludeExtraneousValues: true }));
-          break;
-        case MediaType.VIDEO:
-          result.images.push(plainToClass(VideoDto, media, { excludeExtraneousValues: true }));
-          break;
-        case MediaType.FILE:
-          result.images.push(plainToClass(FileDto, media, { excludeExtraneousValues: true }));
-          break;
-      }
-    });
-
-    return result;
-  }
 
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();

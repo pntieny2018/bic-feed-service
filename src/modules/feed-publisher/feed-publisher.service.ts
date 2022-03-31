@@ -2,8 +2,8 @@ import { Op } from 'sequelize';
 import { FollowService } from '../follow';
 import { InjectModel } from '@nestjs/sequelize';
 import { Injectable, Logger } from '@nestjs/common';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
+import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { GetUserIdsResponseDto } from '../follow/dto/response/get-user-ids-response.dto';
 
 @Injectable()
@@ -30,7 +30,7 @@ export class FeedPublisherService {
   }
 
   /**
-   *
+   * Attach post for any NewsFeed
    * @param userIds Array<Number>
    * @param postId Array<Number>
    */

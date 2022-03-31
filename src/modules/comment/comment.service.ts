@@ -25,7 +25,7 @@ import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { CommentResponseDto } from './dto/response/comment.response.dto';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
@@ -36,6 +36,7 @@ export class CommentService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
+    @Inject(forwardRef(() => PostService))
     private _postService: PostService,
     private _userService: UserService,
     private _mediaService: MediaService,
@@ -317,7 +318,8 @@ export class CommentService {
    */
   public async getComments(
     user: UserDto,
-    getCommentDto: GetCommentDto
+    getCommentDto: GetCommentDto,
+    checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug(
       `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(getCommentDto)}`
@@ -326,15 +328,17 @@ export class CommentService {
     const conditions = {};
     const offset = {};
 
-    const post = await this._postService.findPost({
-      postId: getCommentDto.postId,
-    });
+    if (checkAccess) {
+      const post = await this._postService.findPost({
+        postId: getCommentDto.postId,
+      });
 
-    await this._authorityService.allowAccess(user, post);
+      await this._authorityService.allowAccess(user, post);
+    }
 
     conditions['postId'] = getCommentDto.postId;
 
-    conditions['parentId'] = getCommentDto.parentId;
+    conditions['parentId'] = getCommentDto.parentId ?? 0;
 
     if (getCommentDto.offset || getCommentDto.offset === 0) {
       offset['offset'] = getCommentDto.offset;
@@ -419,7 +423,6 @@ export class CommentService {
       order: [['createdAt', getCommentDto.order]],
     });
     const response = rows.map((r) => r.toJSON());
-
     await this._mentionService.bindMentionsToComment(response);
 
     await this.bindUserToComment(response);

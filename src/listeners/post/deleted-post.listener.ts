@@ -4,6 +4,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { DeletedPostEvent } from '../../events/post';
 import { FeedPublisherService } from '../../modules/feed-publisher';
+
 @Injectable()
 export class DeletedPostListener {
   private _logger = new Logger(DeletedPostListener.name);

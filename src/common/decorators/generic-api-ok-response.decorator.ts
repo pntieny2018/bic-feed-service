@@ -26,7 +26,7 @@ function ResponseDtoMixinClass<T extends ClassType>(resourceCls: T): ClassType {
 
 export function GenericApiOkResponse<TModel extends Type>(
   model: TModel,
-  description: string
+  description?: string
 ): MethodDecorator {
   return applyDecorators(
     ApiOkResponse({

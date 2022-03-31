@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { PostContentDto } from '../common/post-content.dto';
 import { PostSettingDto } from '../common/post-setting.dto';
+import { MediaFilterResponseDto } from '../../../media/dto/response';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -24,14 +25,22 @@ export class CreatePostDto {
   public audience: AudienceDto;
 
   @ApiProperty({
+    description: 'Content of post',
+    type: String,
+  })
+  @IsOptional()
+  @Type(() => String)
+  public content: string = null;
+
+  @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
     type: PostContentDto,
     required: false,
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => PostContentDto)
-  public data: PostContentDto = { content: null, files: [], images: [], videos: [] };
+  @Type(() => MediaFilterResponseDto)
+  public media: MediaFilterResponseDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
     description: 'Setting post',

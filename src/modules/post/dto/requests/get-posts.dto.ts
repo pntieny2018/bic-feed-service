@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class GetPostDto {
+export class GetPostsDto {
   @ApiProperty({
     description: 'Sort recent search by created time',
     enum: ['asc', 'desc'],
