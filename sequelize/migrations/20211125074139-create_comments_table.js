@@ -23,6 +23,11 @@ module.exports = {
           allowNull: false,
           defaultValue: 0,
         },
+        total_reply: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          defaultValue: 0,
+        },
         created_by: {
           type: Sequelize.INTEGER,
           allowNull: false,

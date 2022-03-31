@@ -2,7 +2,7 @@ import { CommentHasBeenUpdated } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 import { CommentHasBeenUpdatedEventPayload } from './payload';
 
-export class CommentHasBeenUpdatedEvent implements IEvent {
+export class CommentHasBeenUpdatedEvent implements IEvent<CommentHasBeenUpdatedEventPayload> {
   protected static event = CommentHasBeenUpdated;
 
   public payload: CommentHasBeenUpdatedEventPayload;

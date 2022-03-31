@@ -2,7 +2,7 @@ import { ReactionHasBeenCreated } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 import { CreatedReactionEventPayload } from './payload';
 
-export class CreatedReactionEvent implements IEvent {
+export class CreatedReactionEvent implements IEvent<CreatedReactionEventPayload> {
   public static event = ReactionHasBeenCreated;
 
   public payload: CreatedReactionEventPayload;

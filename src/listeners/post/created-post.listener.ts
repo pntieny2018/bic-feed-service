@@ -10,7 +10,7 @@ export class CreatedPostListener {
   public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
 
   @OnEvent(CreatedPostEvent.event)
-  public async onPostCreated(createdPostEvent: CreatedPostEvent): Promise<boolean> {
+  public async onPostCreated(createdPostEvent: CreatedPostEvent): Promise<void> {
     const { isDraft, id, data, setting, audience } = createdPostEvent.payload;
     if (isDraft) return;
 
@@ -29,10 +29,8 @@ export class CreatedPostListener {
         id: `${id}`,
         body: dataIndex,
       });
-      return true;
     } catch (error) {
       this._logger.error(error, error?.stack);
-      return false;
     }
   }
 }
