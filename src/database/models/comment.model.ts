@@ -1,4 +1,6 @@
 import {
+  AfterCreate,
+  AfterDestroy,
   AllowNull,
   AutoIncrement,
   BelongsTo,
@@ -11,21 +13,26 @@ import {
   Length,
   Model,
   PrimaryKey,
-  Sequelize,
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize';
+import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
 import { IMedia, MediaModel } from './media.model';
-import { IMention, MentionModel } from './mention.model';
-import { Literal } from 'sequelize/types/utils';
 import { StringHelper } from '../../common/helpers';
+import { IMention, MentionModel } from './mention.model';
+import { UserDataShareDto } from '../../shared/user/dto';
 import { MentionableType } from '../../common/constants';
+import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
 import { BelongsToManyAddAssociationsMixin, Optional } from 'sequelize';
-import { getDatabaseConfig } from '../../config/database';
-import { UserDataShareDto } from '../../shared/user/dto';
+
+export enum ActionEnum {
+  INCREMENT = 'increment',
+  DECREMENT = 'decrement',
+}
 
 export interface IComment {
   id: number;
@@ -41,6 +48,7 @@ export interface IComment {
   media?: IMedia[];
   mentions?: IMention[];
   child?: IComment[];
+  totalReply?: number;
   reactionsCount?: string;
 }
 
@@ -69,6 +77,9 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @Length({ max: 5000 })
   @Column
   public content: string;
+
+  @Column
+  public totalReply?: number;
 
   @Column
   public createdBy: number;
@@ -117,7 +128,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
    * load reactions count to comment
    * @param alias String
    */
-  public static loadReactionsCount(alias?: string): [Literal, string] {
+  public static loadReactionsCount(alias = 'reactionsCount'): [Literal, string] {
     const { schema } = getDatabaseConfig();
     return [
       Sequelize.literal(`(
@@ -139,7 +150,63 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
                        ) AS RC
                   GROUP BY 1
                )`),
-      alias ? alias : 'reactionsCount',
+      alias,
     ];
+  }
+
+  @AfterCreate
+  public static async onCommentCreated(comment: CommentModel): Promise<void> {
+    await CommentModel._updateCommentCountForPost(
+      comment.sequelize,
+      comment.postId,
+      ActionEnum.INCREMENT
+    );
+    await CommentModel._updateChildCommentCount(comment, ActionEnum.INCREMENT);
+  }
+
+  @AfterDestroy
+  public static async onCommentDeleted(comment: CommentModel): Promise<void> {
+    await CommentModel._updateCommentCountForPost(
+      comment.sequelize,
+      comment.postId,
+      ActionEnum.DECREMENT
+    );
+    await CommentModel._updateChildCommentCount(comment, ActionEnum.DECREMENT);
+  }
+
+  /**
+   * Update Child Comment Count
+   * @param comment CommentModel
+   * @param action ActionEnum
+   * @private
+   */
+  private static async _updateChildCommentCount(
+    comment: CommentModel,
+    action: ActionEnum
+  ): Promise<void> {
+    if (comment.parentId && comment.parentId > 0) {
+      const parentComment = await comment.sequelize
+        .model(CommentModel.name)
+        .findByPk(comment.parentId);
+      await parentComment[action]('totalReply');
+    }
+  }
+
+  /**
+   * Update Comment Count For Post
+   * @param sequelize Sequelize
+   * @param postId Number
+   * @param action ActionEnum
+   * @private
+   */
+  private static async _updateCommentCountForPost(
+    sequelize: Sequelize,
+    postId: number,
+    action: ActionEnum
+  ): Promise<void> {
+    const post = await sequelize.model(PostModel.name).findByPk(postId);
+    if (post) {
+      await post[action]('comments_count');
+    }
   }
 }

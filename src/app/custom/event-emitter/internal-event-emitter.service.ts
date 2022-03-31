@@ -6,7 +6,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 export class InternalEventEmitterService {
   public constructor(private _eventEmitter: EventEmitter2) {}
 
-  public emit(event: IEvent): void {
+  public emit(event: IEvent<unknown>): void {
     const eventName = event.getEventName();
     this._eventEmitter.emit(eventName, event);
   }

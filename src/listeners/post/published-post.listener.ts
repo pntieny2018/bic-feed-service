@@ -3,10 +3,14 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { PublishedPostEvent } from '../../events/post';
+import { FeedPublisherService } from '../../modules/feed-publisher';
 @Injectable()
 export class PublishedPostListener {
   private _logger = new Logger(PublishedPostListener.name);
-  public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
+  public constructor(
+    private readonly _elasticsearchService: ElasticsearchService,
+    private readonly _feedPublisherService: FeedPublisherService
+  ) {}
 
   @OnEvent(PublishedPostEvent.event)
   public async onPostPublished(publishedPostEvent: PublishedPostEvent): Promise<boolean> {
@@ -45,10 +49,12 @@ export class PublishedPostListener {
         body: dataIndex,
       });
 
-      return true;
+      // Fanout to write post to all news feed of user follow group audience
+      await this._feedPublisherService.fanoutOnWrite(id, {
+        attached: audience.groups.map((g) => g.id),
+      });
     } catch (error) {
       this._logger.error(error, error?.stack);
-      return false;
     }
   }
 }

@@ -25,7 +25,7 @@ export class FeedController {
     return this._feedService.getTimeline(userDto, getTimelineDto);
   }
 
-  @ApiOperation({ summary: 'Get timeline in a group.' })
+  @ApiOperation({ summary: 'Get newsfeed of user' })
   @ApiOkResponse({
     description: 'Get timeline in a group successfully.',
     type: PageDto,
