@@ -15,9 +15,15 @@ export class ReactionListener {
   public onCreatedReactionEvent(event: CreateReactionInternalEvent): void {
     this._logger.log(event);
 
+    const createReactionEventPayload: CreateReactionEventPayload = {
+      reaction: event.payload.reaction,
+      post: event.payload.post,
+      comment: event.payload.comment,
+    };
+
     const kafkaCreatedReactionMessage: NotificationPayloadDto<CreateReactionEventPayload> = {
       actor: event.payload.userSharedDto,
-      data: event.payload,
+      data: createReactionEventPayload,
     };
 
     this._notificationService.publishReactionNotification<CreateReactionEventPayload>(
