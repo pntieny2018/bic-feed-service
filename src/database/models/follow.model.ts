@@ -1,9 +1,10 @@
-import { AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AutoIncrement, Column, CreatedAt, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 export interface IFollow {
   id: number;
   userId: number;
   groupId: number;
+  createdAt?: Date;
 }
 
 @Table({
@@ -21,4 +22,8 @@ export class FollowModel extends Model<IFollow, Omit<IFollow, 'id'>> {
 
   @Column
   public groupId: number;
+
+  @CreatedAt
+  @Column
+  public createdAt: Date;
 }

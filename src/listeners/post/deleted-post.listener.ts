@@ -3,10 +3,15 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { DeletedPostEvent } from '../../events/post';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+
 @Injectable()
 export class DeletedPostListener {
   private _logger = new Logger(DeletedPostListener.name);
-  public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
+  public constructor(
+    private readonly _elasticsearchService: ElasticsearchService,
+    private readonly _feedPublisherService: FeedPublisherService
+  ) {}
 
   @OnEvent(DeletedPostEvent.event)
   public async onPostDeleted(updatedPostEvent: DeletedPostEvent): Promise<boolean> {
@@ -22,6 +27,8 @@ export class DeletedPostListener {
         index,
         id: `${id}`,
       });
+      await this._feedPublisherService.detachPostForAllNewsFeed(id);
+
       return true;
     } catch (error) {
       this._logger.error(error, error?.stack);

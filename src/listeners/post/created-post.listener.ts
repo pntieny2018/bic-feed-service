@@ -30,10 +30,8 @@ export class CreatedPostListener {
         id: `${id}`,
         body: dataIndex,
       });
-      return true;
     } catch (error) {
       this._logger.error(error, error?.stack);
-      return false;
     }
   }
 }
