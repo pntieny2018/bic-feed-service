@@ -1,15 +1,15 @@
 import { Expose } from 'class-transformer';
-import { IsNotEmpty } from 'class-validator';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 import { CreateReactionDto } from './request';
 
 export class ReactionDto extends CreateReactionDto {
   @IsNotEmpty()
+  @IsNumber()
   @Expose()
-  public userSharedDto: UserSharedDto;
+  public userId: number;
 
-  public constructor(createReactionDto: CreateReactionDto, userSharedDto: UserSharedDto) {
+  public constructor(createReactionDto: CreateReactionDto, userId: number) {
     super(createReactionDto);
-    this.userSharedDto = userSharedDto;
+    this.userId = userId;
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { CreateReactionEvent } from '../../events/reaction';
+import { CreateReactionInternalEvent } from '../../events/reaction';
 import { CreateReactionEventPayload } from '../../events/reaction/payload';
 import { NotificationService } from '../../notification';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
@@ -11,12 +11,12 @@ export class ReactionListener {
 
   public constructor(private readonly _notificationService: NotificationService) {}
 
-  @On(CreateReactionEvent)
-  public onCreatedReactionEvent(event: CreateReactionEvent): void {
+  @On(CreateReactionInternalEvent)
+  public onCreatedReactionEvent(event: CreateReactionInternalEvent): void {
     this._logger.log(event);
 
     const kafkaCreatedReactionMessage: NotificationPayloadDto<CreateReactionEventPayload> = {
-      actor: event.payload.reaction.userSharedDto,
+      actor: event.payload.userSharedDto,
       data: event.payload,
     };
 

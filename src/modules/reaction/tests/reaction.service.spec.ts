@@ -180,7 +180,7 @@ describe('ReactionService', () => {
           .mockReturnValue(true);
         const response: ReactionDto = {
           ...input,
-          userSharedDto: mockUserSharedDto,
+          userId: mockUserDto.id,
         };
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(response);
         expect(postReactionModelCreateSpy).toBeCalledTimes(1);
@@ -226,7 +226,7 @@ describe('ReactionService', () => {
           .mockReturnValue(true);
         const response: ReactionDto = {
           ...input,
-          userSharedDto: mockUserSharedDto,
+          userId: mockUserDto.id,
         };
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(response);
         expect(postReactionModelCreateSpy).toBeCalledTimes(1);
@@ -367,6 +367,10 @@ describe('ReactionService', () => {
         const groupServiceIsMemberOfSomeGroupsSpy = jest
           .spyOn(groupService, 'isMemberOfSomeGroups')
           .mockReturnValue(true);
+        const response: ReactionDto = {
+          ...input,
+          userId: mockUserDto.id,
+        };
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
@@ -505,6 +509,10 @@ describe('ReactionService', () => {
         const groupServiceIsMemberOfSomeGroupsSpy = jest
           .spyOn(groupService, 'isMemberOfSomeGroups')
           .mockReturnValue(true);
+        const response: ReactionDto = {
+          ...input,
+          userId: mockUserDto.id,
+        };
         try {
           await createReactionService.createReaction(mockUserDto, input);
         } catch (e) {
@@ -561,7 +569,7 @@ describe('ReactionService', () => {
           .mockReturnValue(true);
         const response: ReactionDto = {
           ...input,
-          userSharedDto: mockUserSharedDto,
+          userId: mockUserDto.id,
         };
         expect(await createReactionService.createReaction(mockUserDto, input)).toEqual(response);
         expect(commentReactionModelCreateSpy).toBeCalledTimes(1);
@@ -657,7 +665,7 @@ describe('ReactionService', () => {
           .mockReturnValue(true);
         const response: ReactionDto = {
           ...input,
-          userSharedDto: mockUserSharedDto,
+          userId: mockUserDto.id,
         };
         try {
           await createReactionService.createReaction(mockUserDto, input);

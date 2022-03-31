@@ -103,8 +103,8 @@ export class CreateReactionService {
         createdBy: userId,
       });
 
-      const reactionDto = new ReactionDto(createReactionDto, userSharedDto);
-      this._commonReactionService.createEvent(reactionDto, post.toJSON());
+      const reactionDto = new ReactionDto(createReactionDto, userId);
+      this._commonReactionService.createEvent(userSharedDto, reactionDto, post.toJSON());
 
       return reactionDto;
     } catch (e) {
@@ -176,9 +176,14 @@ export class CreateReactionService {
         createdBy: userId,
       });
 
-      const reactionDto = new ReactionDto(createReactionDto, userSharedDto);
+      const reactionDto = new ReactionDto(createReactionDto, userId);
 
-      this._commonReactionService.createEvent(reactionDto, post.toJSON(), comment.toJSON());
+      this._commonReactionService.createEvent(
+        userSharedDto,
+        reactionDto,
+        post.toJSON(),
+        comment.toJSON()
+      );
 
       return reactionDto;
     } catch (e) {
