@@ -16,7 +16,7 @@ import { mockGetTimelineOutput } from './mocks/output.mock';
 class EPostModel extends PostModel {
   public reactionsCount: string;
 
-  public commentsCount: string;
+  public commentsCount: number;
 
   public isNowImportant: number;
 

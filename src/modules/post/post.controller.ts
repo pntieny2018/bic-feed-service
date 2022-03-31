@@ -29,7 +29,10 @@ export class PostController {
   @ApiOperation({ summary: 'Search posts' })
   @GenericApiOkResponse(PostResponseDto)
   @Get('/')
-  public searchPost(@AuthUser() user: UserDto, @Query() searchPostsDto: SearchPostsDto) {
+  public searchPosts(
+    @AuthUser() user: UserDto,
+    @Query() searchPostsDto: SearchPostsDto
+  ): Promise<PageDto<PostResponseDto>> {
     return this._postService.searchPosts(user.id, searchPostsDto);
   }
 

@@ -13,4 +13,5 @@ export interface IPostEventPayload {
   setting: PostSettingDto;
   media?: MediaFilterResponseDto;
   createdAt: Date;
+  createdBy: number;
 }

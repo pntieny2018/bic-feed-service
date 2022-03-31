@@ -11,7 +11,7 @@ export class UpdatedPostListener {
   @OnEvent(UpdatedPostEvent.event)
   public async onPostUpdated(updatedPostEvent: UpdatedPostEvent): Promise<boolean> {
     this._logger.debug(`Event: ${updatedPostEvent}`);
-    const { id, content, media, commentsCount, mentions, isDraft, setting, audience } = updatedPostEvent.payload.updatedPost;
+    const { id, content, media, commentsCount, mentions, isDraft, setting, audience, createdBy } = updatedPostEvent.payload.updatedPost;
     if (isDraft) return false;
 
     // send message to kafka
@@ -26,6 +26,7 @@ export class UpdatedPostListener {
         mentions,
         audience,
         setting,
+        createdBy,
       };
       await this._elasticsearchService.update({
         index,

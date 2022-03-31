@@ -76,8 +76,11 @@ export class PostService {
    * @returns Promise resolve PageDto<PostResponseDto>
    * @throws HttpException
    */
-  public async searchPosts(authUserId: number, searchPostsDto: SearchPostsDto) {
-    const { important, startTime, endTime, content, actors, limit, offset, order } = searchPostsDto;
+  public async searchPosts(
+    authUserId: number,
+    searchPostsDto: SearchPostsDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { content, limit, offset } = searchPostsDto;
     const user = await this._userService.get(authUserId);
     if (!user || user.groups.length === 0) {
       return new PageDto<PostResponseDto>([], {
@@ -87,100 +90,146 @@ export class PostService {
       });
     }
     const groupIds = user.groups;
-
-    // search post
-    const query = {
-      bool: {
-        must: [],
-        filter: [],
-        should: [],
-      },
-    };
-
-    if (actors && actors.length) {
-      query.bool.filter.push({
-        terms: {
-          actor: actors,
-        },
-      });
-    }
-
-    // if (filter.audience?.groups) {
-    //   query.bool.filter.push({
-    //     terms: {
-    //       'audience.groups': filter.audience.groups,
-    //     },
-    //   });
-    // }
-
-    if (content) {
-      query.bool.should.push({
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        dis_max: {
-          queries: [
-            {
-              match: {
-                content: content,
-              },
-            },
-          ],
-        },
-      });
-      //query.bool['minimum_should_match'] = SEARCH_CONFIG.MINIMUM_SHOULD_MATCH;
-    }
-
-    if (startTime || endTime) {
-      const filterTime = {
-        range: {
-          time: {},
-        },
-      };
-
-      if (startTime) filterTime.range.time['gte'] = startTime;
-      if (endTime) filterTime.range.time['lte'] = endTime;
-
-      query.bool.must.push(filterTime);
-    }
-    const payload = {
-      index: ElasticsearchHelper.INDEX.POST,
-      body: {
-        query,
-      },
-    };
-
-    if (offset) {
-      payload['from'] = offset;
-    }
-
-    if (limit) {
-      payload['size'] = limit;
-    }
-
-    const { body } = await this._searchService.search(payload);
-
-    const hits = body.hits.hits;
+    const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
+    const response = await this._searchService.search(payload);
+    const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
       const source = item._source;
       source['id'] = item._id;
-      if (content && item.highlight && item.highlight['content'].length != 0 && source.data) {
-        source.data.highlight = item.highlight['content'][0]; //highlight['data.content'][0] has only one element if highlight = unified
+      if (content && item.highlight && item.highlight['content'].length != 0 && source.content) {
+        source.highlight = item.highlight['content'][0];
       }
       return source;
     });
 
-    this.bindActorToPost(posts);
-    this.bindAudienceToPost(posts);
+    await this.bindActorToPost(posts);
+    await this.bindAudienceToPost(posts);
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
 
     return new PageDto<PostResponseDto>(result, {
-      total: 1,
+      total: response.body.hits.total.value,
       limit,
       offset,
     });
   }
+  /**
+   *
+   * @param authUserId
+   * @param getDraftPostDto
+   * @returns
+   */
+  public async getPayloadSearch(
+    { startTime, endTime, content, actors, limit, offset }: SearchPostsDto,
+    groupIds: number[]
+  ): Promise<{
+    index: string;
+    body: any;
+    from: number;
+    size: number;
+  }> {
+    // search post
+    const body = {
+      query: {
+        bool: {
+          must: [],
+          filter: [],
+          should: [],
+        },
+      },
+    };
 
+    if (actors && actors.length) {
+      body.query.bool.filter.push({
+        terms: {
+          createdBy: actors,
+        },
+      });
+    }
+
+    if (groupIds.length) {
+      body.query.bool.filter.push({
+        terms: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'audience.groups.id': groupIds,
+        },
+      });
+    }
+
+    if (content) {
+      body.query.bool.should.push({
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        dis_max: {
+          queries: [
+            {
+              match: { content },
+            },
+            {
+              match: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'content.ascii': {
+                  query: content,
+                  boost: 0.6,
+                },
+              },
+            },
+            {
+              match: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'content.ngram': {
+                  query: content,
+                  boost: 0.3,
+                },
+              },
+            },
+          ],
+        },
+      });
+      body.query.bool['minimum_should_match'] = 1;
+      body['highlight'] = {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        pre_tags: ['=='],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        post_tags: ['=='],
+        fields: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          content: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            matched_fields: ['content', 'content.ascii', 'content.ngram'],
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            type: 'fvh',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            number_of_fragments: 0,
+          },
+        },
+      };
+
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      body['sort'] = [{ _score: 'desc' }, { createdBy: 'desc' }];
+    } else {
+      body['sort'] = [{ createdBy: 'desc' }];
+    }
+
+    if (startTime || endTime) {
+      const filterTime = {
+        range: {
+          createdAt: {},
+        },
+      };
+
+      if (startTime) filterTime.range.createdAt['gte'] = startTime;
+      if (endTime) filterTime.range.createdAt['lte'] = endTime;
+      body.query.bool.must.push(filterTime);
+    }
+    const payload = {
+      index: ElasticsearchHelper.INDEX.POST,
+      body,
+      from: offset,
+      size: limit,
+    };
+    return payload;
+  }
   /**
    * Get Draft Posts
    * @param authUserId auth user ID
@@ -341,6 +390,11 @@ export class PostService {
       if (post.groups && post.groups.length) {
         groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
       }
+
+      //bind for elasticsearch
+      if (post.audience?.groups && post.audience.groups.length) {
+        groups = post.audience.groups.map((v) => dataGroups.find((u) => u.id === v.id));
+      }
       post.audience = { groups };
     }
   }
@@ -436,6 +490,7 @@ export class PostService {
           mentions,
           audience,
           setting,
+          createdBy: post.createdBy,
         })
       );
       await transaction.commit();
@@ -523,6 +578,7 @@ export class PostService {
             audience,
             setting,
             createdAt: post.createdAt,
+            createdBy: post.createdBy,
           },
         })
       );
@@ -587,6 +643,7 @@ export class PostService {
           audience,
           setting,
           createdAt: post.createdAt,
+          createdBy: post.createdBy,
         })
       );
 

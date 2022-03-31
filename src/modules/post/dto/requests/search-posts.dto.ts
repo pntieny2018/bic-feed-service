@@ -43,7 +43,7 @@ export class SearchPostsDto extends PageOptionsDto {
   })
   @IsOptional()
   @IsDateString()
-  public startTime: string;
+  public startTime?: string;
 
   @ApiProperty({
     description: 'filter posts created_time < end_time',
@@ -51,5 +51,5 @@ export class SearchPostsDto extends PageOptionsDto {
   })
   @IsOptional()
   @IsDateString()
-  public endTime: string;
+  public endTime?: string;
 }

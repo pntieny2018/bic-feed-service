@@ -7,7 +7,7 @@ import { mockedUpdatePostDto } from './mocks/update-post.mock';
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { UserDto } from '../../auth';
 import { createMock } from '@golevelup/ts-jest';
-import { GetPostDto } from '../dto/requests';
+import { GetPostDto, SearchPostsDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 	
 jest.mock('../post.service');
@@ -30,7 +30,8 @@ describe('PostController', () => {
             deletePost: jest.fn(), 
             publishPost: jest.fn(), 
             getPost: jest.fn(),
-            getDraftPosts: jest.fn()
+            getDraftPosts: jest.fn(),
+            searchPosts: jest.fn()
           },
         }
         
@@ -48,9 +49,21 @@ describe('PostController', () => {
     expect(postController).toBeDefined();
   });
 
+  describe('searchPosts', () => {
+    it('Should call searchPosts', async () => {
+      postService.searchPosts = jest.fn().mockResolvedValue(true);
+      const searchPostsDto: SearchPostsDto = {
+        content: 'a'
+      }
+      const result = await postController.searchPosts(userDto, searchPostsDto);      
+      expect(postService.searchPosts).toBeCalledTimes(1);
+      expect(postService.searchPosts).toBeCalledWith(userDto.id, searchPostsDto);
+    });
+  });
+
   describe('getPost', () => {
     it('Get draft post successfully', async () => {
-      postService.createPost = jest.fn().mockResolvedValue(true);
+      postService.getDraftPosts = jest.fn().mockResolvedValue(true);
       const getDraftPostsDto: GetDraftPostDto = {
         limit: 1,
         offset: 1

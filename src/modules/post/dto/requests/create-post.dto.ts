@@ -10,7 +10,6 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { PostContentDto } from '../common/post-content.dto';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 
@@ -34,7 +33,7 @@ export class CreatePostDto {
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
-    type: PostContentDto,
+    type: MediaFilterResponseDto,
     required: false,
   })
   @IsOptional()
