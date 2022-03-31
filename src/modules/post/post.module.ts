@@ -9,6 +9,7 @@ import { PostPolicyService } from './post-policy.service';
 import { GroupModule } from '../../shared/group';
 import { CommentModule } from '../comment';
 import { AuthorityModule } from '../authority';
+import { LibModule } from '../../app/lib.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuthorityModule } from '../authority';
     MediaModule,
     MentionModule,
     AuthorityModule,
+    LibModule,
     forwardRef(() => CommentModule),
   ],
   controllers: [PostController],

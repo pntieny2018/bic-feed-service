@@ -1,5 +1,9 @@
 import { Expose } from 'class-transformer';
 
+export class GetUserIdsResponseData {
+  @Expose()
+  public userIds: number[];
+}
 export class GetUserIdsResponseDto {
   @Expose()
   public limit: number;
@@ -15,9 +19,4 @@ export class GetUserIdsResponseDto {
     this.followedAt = followedAt;
     this.data = data;
   }
-}
-
-export class GetUserIdsResponseData {
-  @Expose()
-  public userIds: number[];
 }

@@ -1,5 +1,4 @@
 import { MentionableType } from './../../../../common/constants/model.constant';
-import { IPost } from '../../../../database/models/post.model';
 export const mockedPostList = [
   {
     id: 1,

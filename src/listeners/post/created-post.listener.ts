@@ -11,7 +11,18 @@ export class CreatedPostListener {
 
   @OnEvent(CreatedPostEvent.event)
   public async onPostCreated(createdPostEvent: CreatedPostEvent): Promise<boolean> {
-    const { isDraft, id, content, media, setting, audience } = createdPostEvent.payload;
+    const {
+      isDraft,
+      id,
+      content,
+      commentsCount,
+      media,
+      mentions,
+      setting,
+      audience,
+      createdAt,
+      createdBy,
+    } = createdPostEvent.payload;
     if (isDraft) return;
 
     // send message to kafka
@@ -20,10 +31,14 @@ export class CreatedPostListener {
     try {
       const dataIndex = {
         id,
-        audience,
+        commentsCount,
         content,
         media,
+        mentions,
+        audience,
         setting,
+        createdAt,
+        createdBy,
       };
       await this._elasticsearchService.index({
         index,

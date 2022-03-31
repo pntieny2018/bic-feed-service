@@ -2,12 +2,10 @@ import { UserMentionDto } from './../../../mention/dto/user-mention.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { PageDto } from '../../../../common/dto';
-import { IPostReaction } from '../../../../database/models/post-reaction.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
 import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
-import { PostContentDto } from '../../../post/dto/common/post-content.dto';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceDto } from '../common/audience.dto';
@@ -26,6 +24,13 @@ export class PostResponseDto {
   })
   @Expose()
   public content: string;
+
+  @ApiProperty({
+    description: 'Highlight',
+    type: String,
+  })
+  @Expose()
+  public highlight?: string;
 
   @ApiProperty({
     description: 'Array of files, images, videos',
