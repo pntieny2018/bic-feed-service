@@ -5,7 +5,7 @@ import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
@@ -25,7 +25,7 @@ import {
   UpdatedPostEvent,
 } from '../../events/post';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { ArrayHelper } from '../../common/helpers';
+import { ArrayHelper, ElasticsearchHelper } from '../../common/helpers';
 import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -41,6 +41,7 @@ import { ClassTransformer, plainToClass, plainToInstance } from 'class-transform
 import { PostResponseDto } from './dto/responses';
 import { AuthorityService } from '../authority';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @Injectable()
 export class PostService {
@@ -64,8 +65,171 @@ export class PostService {
     private _mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     private _commentService: CommentService,
-    private _authorityService: AuthorityService
+    private _authorityService: AuthorityService,
+    private _searchService: ElasticsearchService
   ) {}
+
+  /**
+   * Get Draft Posts
+   * @param authUserId auth user ID
+   * @param getDraftPostDto GetDraftPostDto
+   * @returns Promise resolve PageDto<PostResponseDto>
+   * @throws HttpException
+   */
+  public async searchPosts(
+    authUserId: number,
+    searchPostsDto: SearchPostsDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { content, limit, offset } = searchPostsDto;
+    const user = await this._userService.get(authUserId);
+    if (!user || user.groups.length === 0) {
+      return new PageDto<PostResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+    const groupIds = user.groups;
+    const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
+    const response = await this._searchService.search(payload);
+    const hits = response.body.hits.hits;
+    const posts = hits.map((item) => {
+      const source = item._source;
+      source['id'] = item._id;
+      if (content && item.highlight && item.highlight['content'].length != 0 && source.content) {
+        source.highlight = item.highlight['content'][0];
+      }
+      return source;
+    });
+
+    await this.bindActorToPost(posts);
+    await this.bindAudienceToPost(posts);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<PostResponseDto>(result, {
+      total: response.body.hits.total.value,
+      limit,
+      offset,
+    });
+  }
+  /**
+   *
+   * @param authUserId
+   * @param getDraftPostDto
+   * @returns
+   */
+  public async getPayloadSearch(
+    { startTime, endTime, content, actors, limit, offset }: SearchPostsDto,
+    groupIds: number[]
+  ): Promise<{
+    index: string;
+    body: any;
+    from: number;
+    size: number;
+  }> {
+    // search post
+    const body = {
+      query: {
+        bool: {
+          must: [],
+          filter: [],
+          should: [],
+        },
+      },
+    };
+
+    if (actors && actors.length) {
+      body.query.bool.filter.push({
+        terms: {
+          createdBy: actors,
+        },
+      });
+    }
+
+    if (groupIds.length) {
+      body.query.bool.filter.push({
+        terms: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'audience.groups.id': groupIds,
+        },
+      });
+    }
+
+    if (content) {
+      body.query.bool.should.push({
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        dis_max: {
+          queries: [
+            {
+              match: { content },
+            },
+            {
+              match: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'content.ascii': {
+                  query: content,
+                  boost: 0.6,
+                },
+              },
+            },
+            {
+              match: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'content.ngram': {
+                  query: content,
+                  boost: 0.3,
+                },
+              },
+            },
+          ],
+        },
+      });
+      body.query.bool['minimum_should_match'] = 1;
+      body['highlight'] = {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        pre_tags: ['=='],
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        post_tags: ['=='],
+        fields: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          content: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            matched_fields: ['content', 'content.ascii', 'content.ngram'],
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            type: 'fvh',
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            number_of_fragments: 0,
+          },
+        },
+      };
+
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      body['sort'] = [{ _score: 'desc' }, { createdBy: 'desc' }];
+    } else {
+      body['sort'] = [{ createdBy: 'desc' }];
+    }
+
+    if (startTime || endTime) {
+      const filterTime = {
+        range: {
+          createdAt: {},
+        },
+      };
+
+      if (startTime) filterTime.range.createdAt['gte'] = startTime;
+      if (endTime) filterTime.range.createdAt['lte'] = endTime;
+      body.query.bool.must.push(filterTime);
+    }
+    const payload = {
+      index: ElasticsearchHelper.INDEX.POST,
+      body,
+      from: offset,
+      size: limit,
+    };
+    return payload;
+  }
   /**
    * Get Draft Posts
    * @param authUserId auth user ID
@@ -226,6 +390,11 @@ export class PostService {
       if (post.groups && post.groups.length) {
         groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
       }
+
+      //bind for elasticsearch
+      if (post.audience?.groups && post.audience.groups.length) {
+        groups = post.audience.groups.map((v) => dataGroups.find((u) => u.id === v.id));
+      }
       post.audience = { groups };
     }
   }
@@ -317,9 +486,11 @@ export class PostService {
           content: post.content,
           media: { files, videos, images },
           actor: creator,
+          createdAt: post.createdAt,
           mentions,
           audience,
           setting,
+          createdBy: post.createdBy,
         })
       );
       await transaction.commit();
@@ -406,6 +577,8 @@ export class PostService {
             mentions,
             audience,
             setting,
+            createdAt: post.createdAt,
+            createdBy: post.createdBy,
           },
         })
       );
@@ -449,7 +622,7 @@ export class PostService {
       await this._mentionService.bindMentionsToPosts([postJson]);
       await this.bindActorToPost([postJson]);
       await this.bindAudienceToPost([postJson]);
-      const { id, content, commentsCount, mentions, actor, audience, setting } =
+      const { id, content, commentsCount, mentions, actor, media, audience, setting } =
         this._classTransformer.plainToInstance(PostResponseDto, postJson, {
           excludeExtraneousValues: true,
         });
@@ -463,11 +636,14 @@ export class PostService {
           id,
           isDraft: false,
           content,
+          media,
           commentsCount,
           actor,
           mentions: mentionsConverted,
           audience,
           setting,
+          createdAt: post.createdAt,
+          createdBy: post.createdBy,
         })
       );
 

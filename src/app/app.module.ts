@@ -11,7 +11,7 @@ import { MentionModule } from '../modules/mention';
 import { NotificationModule } from '../notification';
 import { ReactionModule } from '../modules/reaction';
 import { AuthorityModule } from '../modules/authority';
-import { FeedGeneratorModule } from '../feed-generator';
+import { FeedGeneratorModule } from '../modules/feed-generator';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
