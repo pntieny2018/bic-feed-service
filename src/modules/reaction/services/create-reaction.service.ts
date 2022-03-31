@@ -14,6 +14,7 @@ import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
 import { CommonReactionService } from './common-reaction.service';
 import { ReactionDto } from '../dto/reaction.dto';
+import { UserSharedDto } from '../../../shared/user/dto';
 
 @Injectable()
 export class CreateReactionService {
@@ -82,7 +83,8 @@ export class CreateReactionService {
         throw new Error('Post does not permit to react.');
       }
 
-      const isUserInPostGroups = await this._isUserInPostGroups(userId, postId);
+      const userSharedDto = await this._userService.get(userId);
+      const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
         throw new Error("User is not in the post's groups");
       }
@@ -101,7 +103,7 @@ export class CreateReactionService {
         createdBy: userId,
       });
 
-      const reactionDto = new ReactionDto(createReactionDto, userId);
+      const reactionDto = new ReactionDto(createReactionDto, userSharedDto);
       this._commonReactionService.createEvent(reactionDto, post.toJSON());
 
       return reactionDto;
@@ -154,7 +156,8 @@ export class CreateReactionService {
 
       const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
       const post = await this._getPost(postId);
-      const isUserInPostGroups = await this._isUserInPostGroups(userId, postId);
+      const userSharedDto = await this._userService.get(userId);
+      const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
         throw new Error("User is not in the post's groups.");
       }
@@ -173,7 +176,7 @@ export class CreateReactionService {
         createdBy: userId,
       });
 
-      const reactionDto = new ReactionDto(createReactionDto, userId);
+      const reactionDto = new ReactionDto(createReactionDto, userSharedDto);
 
       this._commonReactionService.createEvent(reactionDto, post.toJSON(), comment.toJSON());
 
@@ -295,19 +298,23 @@ export class CreateReactionService {
   /**
    *
    * Is user in post's groups
-   * @param userId number
+   * @param userSharedDto UserSharedDto
    * @param postId number
    * @returns Promise resolve boolean
    */
-  private async _isUserInPostGroups(userId: number, postId: number): Promise<boolean> {
+  private async _isUserInPostGroups(
+    userSharedDto: UserSharedDto,
+    postId: number
+  ): Promise<boolean> {
     const postGroups = await this._postGroupModel.findAll<PostGroupModel>({
       where: {
         postId: postId,
       },
     });
-    const userSharedDto = await this._userService.get(userId);
     if (!!userSharedDto === false) {
-      throw new Error('Can not get user data by UserService.');
+      throw new Error(
+        'Can not get data of user on cache. Unable to check whether user is in the group.'
+      );
     }
     const groupIds = postGroups.map((postGroup: PostGroupModel) => postGroup.groupId);
     const userGroupIds = userSharedDto.groups;

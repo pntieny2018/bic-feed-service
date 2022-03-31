@@ -1,1 +1,1 @@
-export * from './created-reaction-event.payload';
+export * from './create-reaction-event.payload';
