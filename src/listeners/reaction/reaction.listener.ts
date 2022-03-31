@@ -23,6 +23,7 @@ export class ReactionListener {
 
     const kafkaCreatedReactionMessage: NotificationPayloadDto<CreateReactionEventPayload> = {
       actor: event.payload.userSharedDto,
+      event: event.getEventName(),
       data: createReactionEventPayload,
     };
 
