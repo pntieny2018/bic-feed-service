@@ -16,6 +16,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CommonReactionService } from '../services';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { mockUserSharedDto } from './mocks/input.mock';
 
 describe('ReactionController', () => {
   let createReactionService: CreateReactionService;
@@ -109,7 +110,7 @@ describe('ReactionController', () => {
         const input = mockCreateReactionDto[0];
         const response = createMock<ReactionDto>({
           ...input,
-          userId: mockUserDto.id,
+          userSharedDto: mockUserSharedDto,
         });
         const createReactionServiceCreateReactionSpy = jest
           .spyOn(createReactionService, 'createReaction')
@@ -139,7 +140,7 @@ describe('ReactionController', () => {
         const input = mockCreateReactionDto[1];
         const response = createMock<ReactionDto>({
           ...input,
-          userId: mockUserDto.id,
+          userSharedDto: mockUserSharedDto,
         });
         const createReactionServiceCreateCommentSpy = jest
           .spyOn(createReactionService, 'createReaction')

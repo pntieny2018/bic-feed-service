@@ -185,7 +185,7 @@ export const mockPostGroup = [
 ];
 
 export const mockUserSharedDto = {
-  userId: 33,
+  id: 33,
   username: 'username33',
   fullname: 'fullname33',
   avatar: 'http://abc.com',
@@ -193,7 +193,7 @@ export const mockUserSharedDto = {
 };
 
 export const mockUserSharedDtoNotInTheGroup = {
-  userId: 33,
+  id: 33,
   username: 'username33',
   fullname: 'fullname33',
   avatar: 'http://abc.com',
