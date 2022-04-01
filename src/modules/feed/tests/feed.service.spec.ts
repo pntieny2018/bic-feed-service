@@ -19,12 +19,6 @@ class EPostModel extends PostModel {
   public commentsCount: number;
 
   public isNowImportant: number;
-
-  public belongToGroup: Array<object>;
-
-  public audienceGroup: Array<object>;
-
-  public ownerReactions: Array<object>;
 }
 
 describe('FeedService', () => {

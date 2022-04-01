@@ -24,7 +24,6 @@ import { CommentResponseDto } from './dto/response/comment.response.dto';
 @ApiSecurity('authorization')
 @Controller({
   path: 'comments',
-  version: APP_VERSION,
 })
 export class CommentController {
   private _logger = new Logger(CommentController.name);

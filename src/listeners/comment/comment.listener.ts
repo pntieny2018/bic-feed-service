@@ -1,3 +1,4 @@
+import { PostService } from './../../modules/post/post.service';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
@@ -14,7 +15,8 @@ export class CommentListener {
   private _logger = new Logger(CommentListener.name);
   public constructor(
     private _notificationService: NotificationService,
-    private _elasticsearchService: ElasticsearchService
+    private _elasticsearchService: ElasticsearchService,
+    private _postService: PostService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
@@ -24,18 +26,15 @@ export class CommentListener {
 
     const index = ElasticsearchHelper.INDEX.POST;
     const { post } = event.payload;
-    try {
-      const dataUpdate = {
-        commentsCount: post.commentsCount + 1,
-      };
-      await this._elasticsearchService.update({
-        index,
-        id: `${post.id}`,
-        body: { doc: dataUpdate },
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-    }
+    // await this._elasticsearchService.update({
+    //   index,
+    //   id: `${post.id}`,
+    //   body: {
+    //     doc: {
+    //       commentsCount: post.commentsCount + 1,
+    //     },
+    //   },
+    // });
   }
 
   @On(CommentHasBeenUpdatedEvent)
@@ -47,20 +46,16 @@ export class CommentListener {
   @On(CommentHasBeenDeletedEvent)
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
     this._logger.log(event);
-    const index = ElasticsearchHelper.INDEX.POST;
     const { post } = event.payload;
-    try {
-      const dataUpdate = {
-        commentsCount: post.commentsCount - 1,
-      };
-      await this._elasticsearchService.update({
-        index,
-        id: `${post.id}`,
-        body: { doc: dataUpdate },
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-    }
+
+    const index = ElasticsearchHelper.INDEX.POST;
+
+    // const commentCount = this._postService.getCommentCountByPost(post.id);
+    // await this._elasticsearchService.update({
+    //   index,
+    //   id: `${post.id}`,
+    //   body: { doc: { commentsCount: commentCount } },
+    // });
     // this._notificationService.publishCommentNotification<any>(null);
   }
 }

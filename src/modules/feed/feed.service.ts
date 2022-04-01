@@ -1,14 +1,15 @@
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
+import { PostResponseDto } from './../post/dto/responses/post.dto';
+import { ClassTransformer } from 'class-transformer';
+import { MentionService } from './../mention/mention.service';
+import { GroupService } from './../../shared/group/group.service';
+import { PostService } from './../post/post.service';
 import { Op } from 'sequelize';
 import sequelize from 'sequelize';
-import { UserDto } from '../auth';
-import { MediaService } from '../media';
-import { FeedRanking } from './feed.enum';
 import { PageDto } from '../../common/dto';
-import { FeedPostDto } from './dto/response';
 import { GetTimelineDto } from './dto/request';
 import { UserService } from '../../shared/user';
 import { InjectModel } from '@nestjs/sequelize';
-import { PAGING_DEFAULT_LIMIT } from '../../common/constants';
 import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { IPost, PostModel } from '../../database/models/post.model';
@@ -20,120 +21,164 @@ import { IPostReaction, PostReactionModel } from '../../database/models/post-rea
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
-
+  private _classTransformer = new ClassTransformer();
   public constructor(
     private readonly _userService: UserService,
+    private readonly _groupService: GroupService,
+    private readonly _mentionService: MentionService,
+    private readonly _postService: PostService,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
 
   /**
    * Get timeline
-   * @param userDto UserDto
+   * @param authUserId number
    * @param getTimelineDto GetTimelineDto
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
-  public getTimeline(
-    userDto: UserDto,
-    getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<FeedPostDto>> {
-    const { id } = userDto;
+  public async getTimeline(authUserId: number, getTimelineDto: GetTimelineDto) {
+    //get child groups by groupId
+    const groupIds = [1];
+    const { limit, offset, groupId } = getTimelineDto;
+    const constraints = FeedService._getIdConstrains(getTimelineDto);
+    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+      where: {
+        ...constraints,
+      },
+      attributes: {
+        include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
+      },
+      include: [
+        {
+          model: PostGroupModel,
+          attributes: ['groupId', 'postId'],
+          where: {
+            groupId: groupIds,
+          },
+          required: true,
+        },
+        {
+          model: PostGroupModel,
+          attributes: ['groupId', 'postId'],
+          required: true,
+        },
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+        {
+          model: MentionModel,
+          required: false,
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          where: {
+            createdBy: authUserId,
+          },
+          required: false,
+        },
+      ],
+      offset: offset,
+      limit: limit,
+      order: [
+        [sequelize.col('isNowImportant'), 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
+    });
+    const jsonPosts = rows.map((r) => r.toJSON());
+    await this._mentionService.bindMentionsToPosts(jsonPosts);
+    await this._postService.bindActorToPost(jsonPosts);
+    await this._postService.bindAudienceToPost(jsonPosts);
 
-    switch (getTimelineDto.ranking) {
-      case FeedRanking.IMPORTANT:
-        return this._getImportantRankingTimeline(id, getTimelineDto);
-      default:
-        throw new HttpException('Ranking algorithm type not match.', HttpStatus.NOT_FOUND);
-    }
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<PostResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
   }
 
   /**
-   * Get important ranking timeline
-   * @param userId number
-   * @param getTimelineDto GetTimelineDto
+   * Get newsfeed
+   * @param authUserId number
+   * @param getNewsFeedDto GetTimelineDto
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
-  private async _getImportantRankingTimeline(
-    userId: number,
-    getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<FeedPostDto>> {
-    const { limit, offset, groupId } = getTimelineDto;
-    const constraints = FeedService._getIdConstrains(getTimelineDto);
-    try {
-      const { rows } = await this._postModel.findAndCountAll<PostModel>({
-        where: {
-          ...constraints,
+  public async getNewsFeed(authUserId: number, getNewsFeedDto: GetNewsFeedDto) {
+    //get child groups by groupId
+    const { limit, offset } = getNewsFeedDto;
+    const constraints = FeedService._getIdConstrains(getNewsFeedDto);
+    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+      where: {
+        ...constraints,
+      },
+      attributes: {
+        include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
+      },
+      include: [
+        {
+          model: UserNewsFeedModel,
+          attributes: ['userId'],
+          where: {
+            userId: authUserId,
+          },
+          required: true,
         },
-        attributes: {
-          include: [
-            PostModel.loadReactionsCount(),
-            PostModel.loadCommentsCount(),
-            PostModel.importantPostsFirstCondition(),
-          ],
+        {
+          model: PostGroupModel,
+          attributes: ['groupId', 'postId'],
+          required: true,
         },
-        include: [
-          {
-            model: PostGroupModel,
-            attributes: ['groupId', 'postId'],
-            as: 'belongToGroup',
-            where: {
-              groupId: groupId,
-            },
-            required: true,
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
           },
-          {
-            model: UserNewsFeedModel,
-            attributes: ['userId', 'postId'],
-            where: {
-              userId: userId,
-            },
-            required: true,
+          required: false,
+        },
+        {
+          model: MentionModel,
+          required: false,
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          where: {
+            createdBy: authUserId,
           },
-          {
-            model: PostGroupModel,
-            as: 'audienceGroup',
-            attributes: ['groupId', 'postId'],
-            required: true,
-          },
-          {
-            model: MediaModel,
-            through: {
-              attributes: [],
-            },
-            required: false,
-          },
-          {
-            model: MentionModel,
-            required: false,
-          },
-          {
-            model: PostReactionModel,
-            as: 'ownerReactions',
-            where: {
-              createdBy: userId,
-            },
-            required: false,
-          },
-        ],
-        offset: offset,
-        limit: limit,
-        order: [
-          [sequelize.col('isNowImportant'), 'DESC'],
-          ['createdAt', 'DESC'],
-        ],
-      });
+          required: false,
+        },
+      ],
+      offset: offset,
+      limit: limit,
+      order: [
+        [sequelize.col('isNowImportant'), 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
+    });
+    const jsonPosts = rows.map((r) => r.toJSON());
+    await this._mentionService.bindMentionsToPosts(jsonPosts);
+    await this._postService.bindActorToPost(jsonPosts);
+    await this._postService.bindAudienceToPost(jsonPosts);
 
-      const posts = await this._convertToFeedPostDto(rows);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
 
-      return new PageDto(posts, {
-        offset: offset + limit,
-        limit: PAGING_DEFAULT_LIMIT,
-      });
-    } catch (e) {
-      this._logger.error(e, e?.stack);
-      throw new HttpException('Can not get timeline.', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return new PageDto<PostResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
   }
 
   /**
@@ -141,7 +186,7 @@ export class FeedService {
    * @param getTimelineDto GetTimelineDto
    * @returns object
    */
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto): object {
+  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): object {
     const constraints = {};
     if (getTimelineDto.idGT) {
       constraints['id'] = {
@@ -169,85 +214,4 @@ export class FeedService {
     }
     return constraints;
   }
-
-  /**
-   * Convert to FeedPostDto
-   * @param rows PostModel[]
-   * @returns Promise resolve FeedPostDto[]
-   */
-  private async _convertToFeedPostDto(rows: PostModel[]): Promise<FeedPostDto[]> {
-    const userIds = FeedService._getUserIds(rows);
-    const userSharedDtos = (await this._userService.getMany(userIds)).filter(Boolean);
-    return rows.map((row: PostModel) => {
-      row = row.toJSON();
-      const post = new FeedPostDto();
-
-      post.id = row.id;
-      post.isDraft = row.isDraft;
-
-      post.actor = userSharedDtos.find((u) => u.id === row.createdBy);
-
-      post.createdAt = row.createdAt;
-
-      const mediaTypes = MediaService.filterMediaType(row.media);
-      post.data = {
-        content: row.content,
-        ...mediaTypes,
-      };
-
-      post.audience = {
-        groups: (row['audienceGroup'] ?? []).reduce((groupIds: number[], e: PostGroupModel) => {
-          groupIds.push(e.groupId);
-          return groupIds;
-        }, []),
-      };
-
-      post.reactionsCount = PostModel.parseAggregatedReaction(row['reactionsCount']);
-      post.ownerReactions = (row['ownerReactions'] ?? []).map(
-        (e: PostReactionModel): IPostReaction => {
-          return {
-            id: e.id,
-            reactionName: e.reactionName,
-            createdAt: e.createdAt,
-          };
-        }
-      );
-
-      //post.commentsCount = parseInt(row['commentsCount'] ?? 0);
-
-      post.mentions = row.mentions.map((mention) => {
-        const mentionedUser = userSharedDtos.find((u) => u.id === mention.userId);
-        return mentionedUser;
-      });
-
-      post.setting = {
-        canReact: row.canReact,
-        canShare: row.canShare,
-        canComment: row.canComment,
-        isImportant: row.isImportant,
-        importantExpiredAt: row.importantExpiredAt,
-      };
-
-      return post;
-    });
-  }
-
-  /**
-   * Get userIds
-   * @param rows IPost[]
-   * @returns number[]
-   */
-  private static _getUserIds(rows: IPost[]): number[] {
-    const userIds: number[] = [];
-    rows.forEach((row) => {
-      userIds.push(row.createdBy);
-      const mentions = row.mentions ?? [];
-      mentions.forEach((mention) => {
-        userIds.push(mention.userId);
-      });
-    });
-    return userIds;
-  }
-
-  public async getNewsFeed() {}
 }

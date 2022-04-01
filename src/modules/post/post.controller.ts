@@ -53,8 +53,9 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
     @Query() getPostDto: GetPostDto
-  ): Promise<PostResponseDto> {
-    return this._postService.getPost(postId, user, getPostDto);
+  ) {
+    this._postService.getCommentCountByPost(postId);
+    //return this._postService.getPost(postId, user, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })

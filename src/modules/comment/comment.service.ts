@@ -66,7 +66,6 @@ export class CommentService {
         createCommentDto
       )},replyId: ${replyId} `
     );
-
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
@@ -75,14 +74,14 @@ export class CommentService {
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
-
+    console.log('xxxx');
     const transaction = await this._sequelizeConnection.transaction();
-
     try {
       const comment = await this._commentModel.create({
         createdBy: user.id,
+        updatedBy: user.id,
         parentId: replyId,
-        content: createCommentDto.data.content,
+        content: createCommentDto.content,
         postId: post.id,
       });
 
@@ -102,11 +101,10 @@ export class CommentService {
           }))
         );
       }
-
       const media = [
-        ...createCommentDto.data.files,
-        ...createCommentDto.data.images,
-        ...createCommentDto.data.videos,
+        ...createCommentDto.media.files,
+        ...createCommentDto.media.images,
+        ...createCommentDto.media.videos,
       ];
 
       if (media.length) {
@@ -180,34 +178,28 @@ export class CommentService {
     try {
       await comment.update({
         updatedBy: user.id,
-        content: updateCommentDto.data.content,
+        content: updateCommentDto.content,
       });
-
       const updateMentions = updateCommentDto.mentions;
 
-      if (updateMentions.length) {
-        const userIds = updateMentions.map((u) => u.id);
-
+      const userMentionIds = updateMentions.map((u) => u.id);
+      if (userMentionIds.length) {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
-
-        await this._mentionService.checkValidMentions(groupAudienceIds, userIds);
-
-        await this._mentionService.setMention(userIds, MentionableType.COMMENT, comment.id);
+        await this._mentionService.checkValidMentions(groupAudienceIds, userMentionIds);
       }
+      await this._mentionService.setMention(userMentionIds, MentionableType.COMMENT, comment.id);
 
       const media = [
-        ...updateCommentDto.data.files,
-        ...updateCommentDto.data.images,
-        ...updateCommentDto.data.videos,
+        ...updateCommentDto.media.files,
+        ...updateCommentDto.media.images,
+        ...updateCommentDto.media.videos,
       ];
 
-      if (media.length) {
-        const mediaIds = media.map((m) => m.id);
-
+      const mediaIds = media.map((m) => m.id);
+      if (mediaIds.length) {
         await this._mediaService.checkValidMedia(mediaIds, user.id);
-
-        await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds);
       }
+      await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds);
 
       const commentResponse = await this.getComment(user, commentId);
 
@@ -466,7 +458,7 @@ export class CommentService {
     const transaction = await this._sequelizeConnection.transaction();
 
     try {
-      await this._mediaService.destroyCommentMedia(user, commentId);
+      await this._mediaService.sync(commentId, EntityType.COMMENT, []);
 
       await this._mentionService.destroy({
         commentId: commentId,

@@ -13,6 +13,7 @@ import { ArrayHelper } from '../../common/helpers';
 import { Op, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { getDatabaseConfig } from '../../config/database';
+import { ResourcePatternTypes } from '@nestjs/microservices/external/kafka.interface';
 
 @Injectable()
 export class MentionService {
@@ -54,7 +55,6 @@ export class MentionService {
   public async resolveMentions(userIds: number[]): Promise<UserSharedDto[]> {
     if (!userIds.length) return [];
     const users = await this._userService.getMany(userIds);
-
     return plainToInstance(UserSharedDto, users, {
       excludeExtraneousValues: true,
     });
@@ -80,9 +80,11 @@ export class MentionService {
 
     const usersInfo = await this.resolveMentions(userIds);
     const convert = (usersData): UserMentionDto[] =>
-      usersData.map((userData) => ({
-        [userData.username]: userData,
-      }));
+      usersData
+        .filter((i) => i !== null && i !== undefined)
+        .map((userData) => ({
+          [userData.username]: userData,
+        }));
 
     for (const comment of commentsResponse) {
       if (comment.mentions && comment.mentions.length) {
@@ -112,7 +114,6 @@ export class MentionService {
     }
 
     const usersInfo = await this.resolveMentions(userIds);
-
     const convert = (usersData): UserMentionDto[] =>
       usersData.map((userData) => ({
         [userData.username]: userData,
@@ -120,7 +121,12 @@ export class MentionService {
 
     for (const post of posts) {
       if (post.mentions && post.mentions.length) {
-        post.mentions = convert(post.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
+        const mentions = [];
+        post.mentions.forEach((mention) => {
+          const user = usersInfo.find((u) => u.id === mention.userId);
+          if (user) mentions.push(user);
+        });
+        post.mentions = convert(mentions);
       }
     }
   }

@@ -11,8 +11,8 @@ describe('CreateCommentPipe', function () {
     const response = createCommentPipe.transform({
       postId: 1,
       mentions: null,
-      data: {
-        content: null,
+      content: null,
+      media: {        
         images: null,
         videos: null,
         files: null,
@@ -22,8 +22,8 @@ describe('CreateCommentPipe', function () {
     expect(response).toEqual({
       postId: 1,
       mentions: [],
-      data: {
-        content: null,
+      content: null,
+      media: {        
         images: [],
         videos: [],
         files: [],
@@ -34,7 +34,8 @@ describe('CreateCommentPipe', function () {
   it('CreateCommentPipe.transform should set default value when missing key', () => {
     const response = createCommentPipe.transform({
       postId: 1,
-      data: {
+      content: null,
+      media: {
         files: null,
       },
     });
@@ -42,8 +43,8 @@ describe('CreateCommentPipe', function () {
     expect(response).toEqual({
       postId: 1,
       mentions: [],
-      data: {
-        content: null,
+      content: null,
+      media: {        
         images: [],
         videos: [],
         files: [],

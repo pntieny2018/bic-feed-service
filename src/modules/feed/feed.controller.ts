@@ -1,9 +1,9 @@
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
-import { FeedPostDto } from './dto/response';
 import { FeedService } from './feed.service';
 
 @ApiTags('Feeds')
@@ -19,10 +19,10 @@ export class FeedController {
   })
   @Get('/timeline')
   public async getTimeline(
-    @AuthUser() userDto: UserDto,
+    @AuthUser() authUser: UserDto,
     @Query() getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<FeedPostDto>> {
-    return this._feedService.getTimeline(userDto, getTimelineDto);
+  ) {
+    return this._feedService.getTimeline(authUser.id, getTimelineDto);
   }
 
   @ApiOperation({ summary: 'Get newsfeed of user' })
@@ -32,9 +32,9 @@ export class FeedController {
   })
   @Get('/newsfeed')
   public async getNewsFeed(
-    @AuthUser() userDto: UserDto,
-    @Query() getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<FeedPostDto>> {
-    return this._feedService.getTimeline(userDto, getTimelineDto);
+    @AuthUser() authUser: UserDto,
+    @Query() getNewsFeedDto: GetNewsFeedDto
+  ) {
+    return this._feedService.getNewsFeed(authUser.id, getNewsFeedDto);
   }
 }

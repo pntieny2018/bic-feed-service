@@ -116,8 +116,8 @@ export class PostService {
   }
   /**
    *
-   * @param authUserId
-   * @param getDraftPostDto
+   * @param SearchPostsDto
+   * @param groupIds
    * @returns
    */
   public async getPayloadSearch(
@@ -384,16 +384,17 @@ export class PostService {
       }
     }
     const dataGroups = await this._groupService.getMany(groupIds);
-
     for (const post of posts) {
       let groups = [];
-      if (post.groups && post.groups.length) {
-        groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
-      }
-
-      //bind for elasticsearch
-      if (post.audience?.groups && post.audience.groups.length) {
-        groups = post.audience.groups.map((v) => dataGroups.find((u) => u.id === v.id));
+      let postGroups = post.groups;
+      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
+      if (postGroups && postGroups.length) {
+        const mappedGroups = [];
+        postGroups.forEach((group) => {
+          const dataGroup = dataGroups.find((i) => i.id === group.id);
+          if (dataGroup) mappedGroups.push(dataGroup);
+        });
+        groups = mappedGroups;
       }
       post.audience = { groups };
     }
@@ -411,7 +412,6 @@ export class PostService {
       userIds.push(post.createdBy);
     }
     const users = await this._userService.getMany(userIds);
-
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
     }
@@ -857,5 +857,15 @@ export class PostService {
       throw new BadRequestException('The post does not exist !');
     }
     return post.toJSON();
+  }
+
+  public async getCommentCountByPost(postId: number): Promise<number> {
+    const post = await this._postModel.findOne({
+      attributes: {
+        include: [PostModel.loadCommentsCount()],
+      },
+      where: { id: postId },
+    });
+    return post.commentsCount ?? 0;
   }
 }

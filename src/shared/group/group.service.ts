@@ -12,7 +12,11 @@ export class GroupService {
 
   public async getMany(groupIds: number[]): Promise<GroupSharedDto[]> {
     const keys = [...new Set(groupIds)].map((groupId) => `GS:${groupId}`);
-    if (keys.length) return await this._store.mget(keys);
+    if (keys.length) {
+      const groups = await this._store.mget(keys);
+      const filterNotNull = groups.filter((g) => g !== null);
+      return filterNotNull;
+    }
     return [];
   }
 
