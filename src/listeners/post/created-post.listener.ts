@@ -1,3 +1,4 @@
+import { NotificationService } from './../../notification/notification.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -7,7 +8,10 @@ import { CreatedPostEvent } from '../../events/post';
 @Injectable()
 export class CreatedPostListener {
   private _logger = new Logger(CreatedPostListener.name);
-  public constructor(private readonly _elasticsearchService: ElasticsearchService) {}
+  public constructor(
+    private readonly _notificationService: NotificationService,
+    private readonly _elasticsearchService: ElasticsearchService
+  ) {}
 
   @OnEvent(CreatedPostEvent.event)
   public async onPostCreated(createdPostEvent: CreatedPostEvent): Promise<boolean> {
@@ -24,8 +28,6 @@ export class CreatedPostListener {
       createdBy,
     } = createdPostEvent.payload;
     if (isDraft) return;
-
-    // send message to kafka
 
     const index = ElasticsearchHelper.INDEX.POST;
     try {

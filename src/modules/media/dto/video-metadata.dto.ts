@@ -8,6 +8,7 @@ export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
+  @IsNotEmpty()
   public id: number;
 
   @ApiProperty({
@@ -15,17 +16,24 @@ export class VideoMetadataDto implements IDocumentMetadata {
     description: 'Video name',
     example: 'ba7339bc-5204-4009-9d43-89b6d2787747.mp4',
   })
-  @IsNotEmpty()
   @IsString()
   @Transform((params) => basename(params.value))
-  public name: string;
+  @IsOptional()
+  public name?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'URL',
+  })
+  @IsString()
+  @IsOptional()
+  public url?: string;
 
   @ApiProperty({
     required: false,
     description: 'Origin video name',
     example: 'example.mp4',
   })
-  @IsNotEmpty()
   @IsString()
   @IsOptional()
   @Expose({ name: 'origin_name' })

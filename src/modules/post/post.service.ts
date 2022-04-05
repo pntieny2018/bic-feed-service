@@ -116,8 +116,8 @@ export class PostService {
   }
   /**
    *
-   * @param authUserId
-   * @param getDraftPostDto
+   * @param SearchPostsDto
+   * @param groupIds
    * @returns
    */
   public async getPayloadSearch(
@@ -301,7 +301,7 @@ export class PostService {
   public async getPost(
     postId: number,
     user: UserDto,
-    getPostDto: GetPostDto
+    getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
     const post = await this._postModel.findOne({
       attributes: {
@@ -384,16 +384,17 @@ export class PostService {
       }
     }
     const dataGroups = await this._groupService.getMany(groupIds);
-
     for (const post of posts) {
       let groups = [];
-      if (post.groups && post.groups.length) {
-        groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
-      }
-
-      //bind for elasticsearch
-      if (post.audience?.groups && post.audience.groups.length) {
-        groups = post.audience.groups.map((v) => dataGroups.find((u) => u.id === v.id));
+      let postGroups = post.groups;
+      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
+      if (postGroups && postGroups.length) {
+        const mappedGroups = [];
+        postGroups.forEach((group) => {
+          const dataGroup = dataGroups.find((i) => i.id === group.id);
+          if (dataGroup) mappedGroups.push(dataGroup);
+        });
+        groups = mappedGroups;
       }
       post.audience = { groups };
     }
@@ -411,7 +412,6 @@ export class PostService {
       userIds.push(post.createdBy);
     }
     const users = await this._userService.getMany(userIds);
-
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
     }
@@ -513,9 +513,10 @@ export class PostService {
    */
   public async updatePost(
     postId: number,
-    authUserId: number,
+    user: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
+    const authUserId = user.id;
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
@@ -543,6 +544,8 @@ export class PostService {
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
+      //Get old post
+      const oldPost = await this.getPost(postId, user);
       await this._postModel.update(
         {
           content,
@@ -564,9 +567,25 @@ export class PostService {
       await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
       await this.setGroupByPost(groupIds, post.id);
 
+      const mentionsConverted = [];
+      for (const i in oldPost.mentions) {
+        mentionsConverted.push(Object.values(mentions[i]));
+      }
       this._eventEmitter.emit(
         UpdatedPostEvent.event,
         new UpdatedPostEvent({
+          oldPost: {
+            id: oldPost.id,
+            isDraft: oldPost.isDraft,
+            commentsCount: oldPost.commentsCount,
+            content: oldPost.content,
+            media: oldPost.media,
+            actor: oldPost.actor,
+            mentions: mentionsConverted,
+            audience: oldPost.audience,
+            setting: oldPost.setting,
+            createdAt: oldPost.createdAt,
+          },
           updatedPost: {
             id: post.id,
             isDraft: post.isDraft,
@@ -578,7 +597,6 @@ export class PostService {
             audience,
             setting,
             createdAt: post.createdAt,
-            createdBy: post.createdBy,
           },
         })
       );

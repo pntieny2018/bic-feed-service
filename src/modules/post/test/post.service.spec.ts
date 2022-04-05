@@ -323,7 +323,7 @@ describe('PostService', () => {
       postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
       postGroupModelMock.bulkCreate.mockResolvedValueOnce(true);
 
-      const result = await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth.id, mockedUpdatePostDto);
+      const result = await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedUpdatePostDto);
       expect(result).toBe(true); 
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1)
@@ -381,7 +381,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(null);
 
       try {
-        await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth.id, mockedUpdatePostDto);
+        await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedUpdatePostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(BadRequestException);
       }
@@ -391,7 +391,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(false);
       try {
-        await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth.id, mockedUpdatePostDto);
+        await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedUpdatePostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(BadRequestException);
       }
@@ -409,7 +409,7 @@ describe('PostService', () => {
       try {
         await postService.updatePost(
           mockedDataUpdatePost.id,
-          mockedUserAuth.id,
+          mockedUserAuth,
           mockedCreatePostDto
         );
 
@@ -429,7 +429,7 @@ describe('PostService', () => {
       try {
         await postService.updatePost(
           mockedDataUpdatePost.id,
-          mockedUserAuth.id,
+          mockedUserAuth,
           mockedUpdatePostDto
         );
       } catch (error) {
@@ -443,10 +443,11 @@ describe('PostService', () => {
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
+      mockedUserAuth.id += 1;
       try {
         await postService.updatePost(
           mockedDataUpdatePost.id,
-          mockedUserAuth.id + 1,
+          mockedUserAuth,
           mockedUpdatePostDto
         );
       } catch (error) {

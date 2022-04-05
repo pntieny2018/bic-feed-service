@@ -8,6 +8,7 @@ export class FileMetadataDto implements IDocumentMetadata {
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
+  @IsNotEmpty()
   public id: number;
 
   @ApiProperty({
@@ -15,10 +16,18 @@ export class FileMetadataDto implements IDocumentMetadata {
     description: 'File name',
     example: 'ba7339bc-5204-4009-9d43-89b6d2787747.txt',
   })
-  @IsNotEmpty()
   @IsString()
+  @IsOptional()
   @Transform((params) => basename(params.value))
-  public name: string;
+  public name?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'URL',
+  })
+  @IsString()
+  @IsOptional()
+  public url?: string;
 
   @ApiProperty({
     required: false,

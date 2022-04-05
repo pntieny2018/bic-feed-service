@@ -19,12 +19,6 @@ class EPostModel extends PostModel {
   public commentsCount: number;
 
   public isNowImportant: number;
-
-  public belongToGroup: Array<object>;
-
-  public audienceGroup: Array<object>;
-
-  public ownerReactions: Array<object>;
 }
 
 describe('FeedService', () => {
@@ -73,7 +67,7 @@ describe('FeedService', () => {
 
   describe('User get timeline', () => {
     it('Should get successfully with predefined timeline', async () => {
-      const input = createMock<PostModel[]>(mockPostModelFindAndCountAll as EPostModel[]);
+      const input = createMock<PostModel[]>(mockPostModelFindAndCountAll);
       input.forEach((e) => {
         e.toJSON = () => e;
       });
@@ -83,7 +77,7 @@ describe('FeedService', () => {
       const userServiceGetManySpy = jest
         .spyOn(userService, 'getMany')
         .mockResolvedValue(mockUserServiceGetManyResult);
-      const result = await feedService.getTimeline(mockUserDto, mockGetTimeLineDto);
+      const result = await feedService.getTimeline(mockUserDto.id, mockGetTimeLineDto);
       const rawResult = instanceToPlain(result);
       expect(rawResult).toEqual(mockGetTimelineOutput);
       expect(postModelFindAndCountAllSpy).toBeCalledTimes(1);
@@ -98,7 +92,7 @@ describe('FeedService', () => {
       const userServiceGetManySpy = jest
         .spyOn(userService, 'getMany')
         .mockResolvedValue(mockUserServiceGetManyResult);
-      const result = await feedService.getTimeline(mockUserDto, mockGetTimeLineDto);
+      const result = await feedService.getTimeline(mockUserDto.id, mockGetTimeLineDto);
       expect(result.data).toEqual([]);
       expect(postModelFindAndCountAllSpy).toBeCalledTimes(1);
       expect(userServiceGetManySpy).toBeCalledTimes(1);

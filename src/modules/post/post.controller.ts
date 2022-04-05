@@ -75,7 +75,7 @@ export class PostController {
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createPostDto: UpdatePostDto
   ): Promise<boolean> {
-    return this._postService.updatePost(postId, user.id, createPostDto);
+    return this._postService.updatePost(postId, user, createPostDto);
   }
 
   @ApiOperation({ summary: 'Publish post' })
