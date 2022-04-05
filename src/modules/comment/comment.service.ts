@@ -74,7 +74,6 @@ export class CommentService {
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
-    console.log('xxxx');
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const comment = await this._commentModel.create({
@@ -513,5 +512,12 @@ export class CommentService {
         }
       }
     }
+  }
+
+  public async getCommentCountByPost(postId: number): Promise<number> {
+    const count = await this._commentModel.count({
+      where: { postId },
+    });
+    return count;
   }
 }

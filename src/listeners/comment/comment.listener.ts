@@ -1,4 +1,4 @@
-import { PostService } from './../../modules/post/post.service';
+import { CommentService } from './../../modules/comment/comment.service';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
@@ -16,7 +16,7 @@ export class CommentListener {
   public constructor(
     private _notificationService: NotificationService,
     private _elasticsearchService: ElasticsearchService,
-    private _postService: PostService
+    private _commentService: CommentService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
@@ -24,22 +24,15 @@ export class CommentListener {
     this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
     this._notificationService.publishCommentNotification<any>(null);
 
-    const index = ElasticsearchHelper.INDEX.POST;
     const { post } = event.payload;
-    // await this._elasticsearchService.update({
-    //   index,
-    //   id: `${post.id}`,
-    //   body: {
-    //     doc: {
-    //       commentsCount: post.commentsCount + 1,
-    //     },
-    //   },
-    // });
+    this._syncCommentCountToSearch(post.id);
   }
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
     this._logger.log(event);
+    const { post } = event.payload;
+    this._syncCommentCountToSearch(post.id);
     // this._notificationService.publishCommentNotification<any>(null);
   }
 
@@ -48,14 +41,17 @@ export class CommentListener {
     this._logger.log(event);
     const { post } = event.payload;
 
-    const index = ElasticsearchHelper.INDEX.POST;
-
-    // const commentCount = this._postService.getCommentCountByPost(post.id);
-    // await this._elasticsearchService.update({
-    //   index,
-    //   id: `${post.id}`,
-    //   body: { doc: { commentsCount: commentCount } },
-    // });
+    this._syncCommentCountToSearch(post.id);
     // this._notificationService.publishCommentNotification<any>(null);
+  }
+
+  private async _syncCommentCountToSearch(postId: number): Promise<void> {
+    const index = ElasticsearchHelper.INDEX.POST;
+    const commentCount = this._commentService.getCommentCountByPost(postId);
+    await this._elasticsearchService.update({
+      index,
+      id: `${postId}`,
+      body: { doc: { commentsCount: commentCount } },
+    });
   }
 }

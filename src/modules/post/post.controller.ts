@@ -53,9 +53,8 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
     @Query() getPostDto: GetPostDto
-  ) {
-    this._postService.getCommentCountByPost(postId);
-    //return this._postService.getPost(postId, user, getPostDto);
+  ): Promise<PostResponseDto> {
+    return this._postService.getPost(postId, user, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })
@@ -76,7 +75,7 @@ export class PostController {
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createPostDto: UpdatePostDto
   ): Promise<boolean> {
-    return this._postService.updatePost(postId, user.id, createPostDto);
+    return this._postService.updatePost(postId, user, createPostDto);
   }
 
   @ApiOperation({ summary: 'Publish post' })

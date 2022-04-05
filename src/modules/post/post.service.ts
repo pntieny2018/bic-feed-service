@@ -301,7 +301,7 @@ export class PostService {
   public async getPost(
     postId: number,
     user: UserDto,
-    getPostDto: GetPostDto
+    getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
     const post = await this._postModel.findOne({
       attributes: {
@@ -513,9 +513,10 @@ export class PostService {
    */
   public async updatePost(
     postId: number,
-    authUserId: number,
+    user: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
+    const authUserId = user.id;
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
@@ -543,6 +544,8 @@ export class PostService {
       const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
 
+      //Get old post
+      const oldPost = await this.getPost(postId, user);
       await this._postModel.update(
         {
           content,
@@ -564,9 +567,25 @@ export class PostService {
       await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
       await this.setGroupByPost(groupIds, post.id);
 
+      const mentionsConverted = [];
+      for (const i in oldPost.mentions) {
+        mentionsConverted.push(Object.values(mentions[i]));
+      }
       this._eventEmitter.emit(
         UpdatedPostEvent.event,
         new UpdatedPostEvent({
+          oldPost: {
+            id: oldPost.id,
+            isDraft: oldPost.isDraft,
+            commentsCount: oldPost.commentsCount,
+            content: oldPost.content,
+            media: oldPost.media,
+            actor: oldPost.actor,
+            mentions: mentionsConverted,
+            audience: oldPost.audience,
+            setting: oldPost.setting,
+            createdAt: oldPost.createdAt,
+          },
           updatedPost: {
             id: post.id,
             isDraft: post.isDraft,
@@ -578,7 +597,6 @@ export class PostService {
             audience,
             setting,
             createdAt: post.createdAt,
-            createdBy: post.createdBy,
           },
         })
       );
@@ -857,15 +875,5 @@ export class PostService {
       throw new BadRequestException('The post does not exist !');
     }
     return post.toJSON();
-  }
-
-  public async getCommentCountByPost(postId: number): Promise<number> {
-    const post = await this._postModel.findOne({
-      attributes: {
-        include: [PostModel.loadCommentsCount()],
-      },
-      where: { id: postId },
-    });
-    return post.commentsCount ?? 0;
   }
 }
