@@ -139,7 +139,7 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src/modules/feed"
+      "<rootDir>/src/modules/post"
     ],
     "moduleNameMapper": {
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

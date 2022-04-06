@@ -42,6 +42,7 @@ import { PostResponseDto } from './dto/responses';
 import { AuthorityService } from '../authority';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { EntityType } from '../media/media.constants';
 
 @Injectable()
 export class PostService {
@@ -424,15 +425,15 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createPost(authUserId: number, createPostDto: CreatePostDto): Promise<boolean> {
+  public async createPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { isDraft, content, media, setting, mentions, audience } = createPostDto;
-      const creator = await this._userService.get(authUserId);
+      const authUserId = authUser.id;
+      const creator = authUser.profile;
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
       }
-
       const { groups } = audience;
       const groupIds = groups.map((i) => i.id);
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
@@ -445,8 +446,8 @@ export class PostService {
       }
 
       const { files, videos, images } = media;
-      const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
+      const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const post = await this._postModel.create({
         isDraft,
@@ -460,9 +461,9 @@ export class PostService {
         canReact: setting.canReact,
       });
 
-      if (unitMediaIds.length) {
-        await post.addMedia(unitMediaIds);
-        await this._mediaService.activeMedia(unitMediaIds, authUserId);
+      if (uniqueMediaIds.length) {
+        await post.addMedia(uniqueMediaIds);
+        await this._mediaService.activeMedia(uniqueMediaIds, authUserId);
       }
 
       this.addPostGroup(groupIds, post.id);
@@ -477,25 +478,9 @@ export class PostService {
         );
       }
 
-      this._eventEmitter.emit(
-        CreatedPostEvent.event,
-        new CreatedPostEvent({
-          id: post.id,
-          isDraft,
-          commentsCount: post.commentsCount,
-          content: post.content,
-          media: { files, videos, images },
-          actor: creator,
-          createdAt: post.createdAt,
-          mentions,
-          audience,
-          setting,
-          createdBy: post.createdBy,
-        })
-      );
       await transaction.commit();
 
-      return true;
+      return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
@@ -513,13 +498,14 @@ export class PostService {
    */
   public async updatePost(
     postId: number,
-    authUserId: number,
+    authUser: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
-      const creator = await this._userService.get(authUserId);
+      const authUserId = authUser.id;
+      const creator = authUser.profile;
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
       }
@@ -531,17 +517,14 @@ export class PostService {
         throw new BadRequestException('You can not create post in this groups');
       }
 
-      const post = await this._postModel.findOne({ where: { id: postId } });
-      await this._checkPostExistAndOwner(post, authUserId);
-
       const mentionUserIds = mentions.map((i) => i.id);
       if (mentionUserIds.length) {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
       const { files, videos, images } = media;
-      const unitMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(unitMediaIds, authUserId);
+      const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       await this._postModel.update(
         {
@@ -560,28 +543,9 @@ export class PostService {
           },
         }
       );
-      await this._mediaService.setMediaByPost(unitMediaIds, postId);
-      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, post.id);
-      await this.setGroupByPost(groupIds, post.id);
-
-      this._eventEmitter.emit(
-        UpdatedPostEvent.event,
-        new UpdatedPostEvent({
-          updatedPost: {
-            id: post.id,
-            isDraft: post.isDraft,
-            commentsCount: post.commentsCount,
-            content: post.content,
-            media: { files, videos, images },
-            actor: creator,
-            mentions,
-            audience,
-            setting,
-            createdAt: post.createdAt,
-            createdBy: post.createdBy,
-          },
-        })
-      );
+      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds);
+      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, postId);
+      await this.setGroupByPost(groupIds, postId);
       await transaction.commit();
 
       return true;
@@ -605,7 +569,7 @@ export class PostService {
         where: { id: postId },
         include: [MentionModel, MediaModel, PostGroupModel],
       });
-      await this._checkPostExistAndOwner(post, authUserId);
+      await this.checkPostExistAndOwner(post, authUserId);
 
       await this._postModel.update(
         {
@@ -630,23 +594,6 @@ export class PostService {
       for (const i in mentions) {
         mentionsConverted.push(Object.values(mentions[i]));
       }
-      this._eventEmitter.emit(
-        PublishedPostEvent.event,
-        new PublishedPostEvent({
-          id,
-          isDraft: false,
-          content,
-          media,
-          commentsCount,
-          actor,
-          mentions: mentionsConverted,
-          audience,
-          setting,
-          createdAt: post.createdAt,
-          createdBy: post.createdBy,
-        })
-      );
-
       return true;
     } catch (error) {
       this._logger.error(error, error?.stack);
@@ -660,7 +607,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  private async _checkPostExistAndOwner(post, authUserId): Promise<boolean> {
+  public async checkPostExistAndOwner(post, authUserId): Promise<boolean> {
     if (!post) {
       throw new NotFoundException('The post not found');
     }
@@ -705,9 +652,9 @@ export class PostService {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
-      //await this._checkPostExistAndOwner(post, authUserId);
+      //await this.checkPostExistAndOwner(post, authUserId);
       await this._mentionService.setMention([], MentionableType.POST, postId);
-      await this._mediaService.setMediaByPost([], postId);
+      await this._mediaService.sync(postId, EntityType.POST, []);
       await this.setGroupByPost([], postId);
       await this._postModel.destroy({
         where: {

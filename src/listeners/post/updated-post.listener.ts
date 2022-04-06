@@ -16,7 +16,7 @@ export class UpdatedPostListener {
   public async onPostUpdated(updatedPostEvent: UpdatedPostEvent): Promise<boolean> {
     this._logger.debug(`Event: ${updatedPostEvent}`);
     const { oldPost } = updatedPostEvent.payload;
-    const { id, content, media, isDraft, setting, audience, createdBy, commentsCount, mentions } = updatedPostEvent.payload.updatedPost;
+    const { id, content, media, isDraft, setting, audience, actor, commentsCount, mentions } = updatedPostEvent.payload.updatedPost;
 
     if (isDraft) return false;
 
@@ -32,7 +32,7 @@ export class UpdatedPostListener {
         mentions,
         audience,
         setting,
-        createdBy,
+        actor,
       };
       await this._elasticsearchService.update({
         index,

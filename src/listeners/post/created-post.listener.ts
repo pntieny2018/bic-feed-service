@@ -11,42 +11,6 @@ export class CreatedPostListener {
 
   @OnEvent(CreatedPostEvent.event)
   public async onPostCreated(createdPostEvent: CreatedPostEvent): Promise<boolean> {
-    const {
-      isDraft,
-      id,
-      content,
-      commentsCount,
-      media,
-      mentions,
-      setting,
-      audience,
-      createdAt,
-      createdBy,
-    } = createdPostEvent.payload;
-    if (isDraft) return;
-
-    // send message to kafka
-
-    const index = ElasticsearchHelper.INDEX.POST;
-    try {
-      const dataIndex = {
-        id,
-        commentsCount,
-        content,
-        media,
-        mentions,
-        audience,
-        setting,
-        createdAt,
-        createdBy,
-      };
-      await this._elasticsearchService.index({
-        index,
-        id: `${id}`,
-        body: dataIndex,
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-    }
+    return;
   }
 }

@@ -114,39 +114,6 @@ export class MediaService {
   }
 
   /**
-   * Delete/Insert and update isDraft for media of post
-   * @param mediaIds Array of Media ID
-   * @param postId PostID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async setMediaByPost(mediaIds: number[], postId: number): Promise<boolean> {
-    const currentPostMediaList = await this._postMediaModel.findAll({
-      where: { postId },
-    });
-    const currentMediaIds = currentPostMediaList.map((i) => i.mediaId);
-
-    const deleteIds = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
-    if (deleteIds.length) {
-      await this._postMediaModel.destroy({
-        where: { postId, mediaId: deleteIds },
-      });
-    }
-
-    const addIds = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
-    if (addIds.length) {
-      await this._postMediaModel.bulkCreate(
-        addIds.map((mediaId) => ({
-          postId,
-          mediaId,
-        }))
-      );
-    }
-    await this.updateMediaDraft([...deleteIds, ...addIds]);
-    return true;
-  }
-
-  /**
    * Update Media.isDraft, called when update Post
    * @param mediaIds Array of Media ID
    * @returns Promise resolve boolean
