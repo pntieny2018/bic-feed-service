@@ -1,3 +1,4 @@
+import { CommentService } from './../../modules/comment/comment.service';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
@@ -14,7 +15,8 @@ export class CommentListener {
   private _logger = new Logger(CommentListener.name);
   public constructor(
     private _notificationService: NotificationService,
-    private _elasticsearchService: ElasticsearchService
+    private _elasticsearchService: ElasticsearchService,
+    private _commentService: CommentService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
@@ -22,45 +24,34 @@ export class CommentListener {
     this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
     this._notificationService.publishCommentNotification<any>(null);
 
-    const index = ElasticsearchHelper.INDEX.POST;
     const { post } = event.payload;
-    try {
-      const dataUpdate = {
-        commentsCount: post.commentsCount + 1,
-      };
-      await this._elasticsearchService.update({
-        index,
-        id: `${post.id}`,
-        body: { doc: dataUpdate },
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-    }
+    this._syncCommentCountToSearch(post.id);
   }
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
     this._logger.log(event);
+    const { post } = event.payload;
+    this._syncCommentCountToSearch(post.id);
     // this._notificationService.publishCommentNotification<any>(null);
   }
 
   @On(CommentHasBeenDeletedEvent)
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
     this._logger.log(event);
-    const index = ElasticsearchHelper.INDEX.POST;
     const { post } = event.payload;
-    try {
-      const dataUpdate = {
-        commentsCount: post.commentsCount - 1,
-      };
-      await this._elasticsearchService.update({
-        index,
-        id: `${post.id}`,
-        body: { doc: dataUpdate },
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-    }
+
+    this._syncCommentCountToSearch(post.id);
     // this._notificationService.publishCommentNotification<any>(null);
+  }
+
+  private async _syncCommentCountToSearch(postId: number): Promise<void> {
+    const index = ElasticsearchHelper.INDEX.POST;
+    const commentCount = this._commentService.getCommentCountByPost(postId);
+    await this._elasticsearchService.update({
+      index,
+      id: `${postId}`,
+      body: { doc: { commentsCount: commentCount } },
+    });
   }
 }

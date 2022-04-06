@@ -4,20 +4,20 @@ import { PipeTransform, Injectable } from '@nestjs/common';
 @Injectable()
 export class CreateCommentPipe implements PipeTransform {
   public transform(createCommentDto: CreateCommentDto): CreateCommentDto {
-    if (!createCommentDto.data.content) {
-      createCommentDto.data.content = null;
+    if (!createCommentDto.content) {
+      createCommentDto.content = null;
     }
     if (!createCommentDto.mentions) {
       createCommentDto.mentions = [];
     }
-    if (!createCommentDto.data.files) {
-      createCommentDto.data.files = [];
+    if (!createCommentDto.media.files) {
+      createCommentDto.media.files = [];
     }
-    if (!createCommentDto.data.videos) {
-      createCommentDto.data.videos = [];
+    if (!createCommentDto.media.videos) {
+      createCommentDto.media.videos = [];
     }
-    if (!createCommentDto.data.images) {
-      createCommentDto.data.images = [];
+    if (!createCommentDto.media.images) {
+      createCommentDto.media.images = [];
     }
     return createCommentDto;
   }

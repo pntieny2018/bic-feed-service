@@ -16,7 +16,9 @@ import { CommentMediaModel } from '../../database/models/comment-media.model';
 import { EntityType } from './media.constants';
 import { getDatabaseConfig } from '../../config/database';
 import { RemoveMediaDto } from './dto';
-import { FileDto, ImageDto, VideoDto } from '../post/dto/common/media.dto';
+import { FileMetadataDto } from '../media/dto/file-metadata.dto';
+import { ImageMetadataDto } from '../media/dto/image-metadata.dto';
+import { VideoMetadataDto } from '../media/dto/video-metadata.dto';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
 
@@ -122,15 +124,17 @@ export class MediaService {
   public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
     const { schema } = getDatabaseConfig();
     const postMedia = PostMediaModel.tableName;
+    const commentMedia = CommentMediaModel.tableName;
     if (mediaIds.length === 0) return true;
     const query = ` UPDATE ${schema}.media
                 SET is_draft = tmp.not_has_post
                 FROM (
                   SELECT media.id, 
-                  CASE WHEN COUNT(${postMedia}.post_id) > 0 THEN false ELSE true
+                  CASE WHEN COUNT(${postMedia}.post_id) + COUNT(${commentMedia}.comment_id) > 0 THEN false ELSE true
                   END as not_has_post
                   FROM ${schema}.media
                   LEFT JOIN ${schema}.${postMedia} ON ${postMedia}.media_id = media.id
+                  LEFT JOIN ${schema}.${commentMedia} ON ${commentMedia}.media_id = media.id
                   WHERE media.id IN (:mediaIds)
                   GROUP BY media.id
                 ) as tmp 
@@ -154,13 +158,13 @@ export class MediaService {
     const condition =
       entityType === EntityType.POST
         ? {
-            attributes: ['id'],
+            attributes: ['mediaId'],
             where: {
               postId: entityId,
             },
           }
         : {
-            attributes: ['id'],
+            attributes: ['mediaId'],
             where: {
               commentId: entityId,
             },
@@ -220,6 +224,8 @@ export class MediaService {
             getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
           ));
     }
+
+    await this.updateMediaDraft([...changes.detached, ...changes.detached]);
   }
 
   public destroyCommentMedia(user: UserDto, commentId: number): Promise<void> {
@@ -250,7 +256,11 @@ export class MediaService {
     };
     media.forEach((media: IMedia) => {
       const TypeMediaDto =
-        media.type === 'file' ? FileDto : media.type === 'image' ? ImageDto : VideoDto;
+        media.type === 'file'
+          ? FileMetadataDto
+          : media.type === 'image'
+          ? ImageMetadataDto
+          : VideoMetadataDto;
       const typeMediaDto = plainToInstance(TypeMediaDto, media, { excludeExtraneousValues: true });
       mediaTypes[`${media.type}s`].push(typeMediaDto);
     });

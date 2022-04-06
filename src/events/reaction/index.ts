@@ -1,1 +1,1 @@
-export * from './created-reaction.event';
+export * from './create-reaction-internal.event';

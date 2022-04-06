@@ -4,8 +4,9 @@ import { CommentResponseDto } from '../../dto/response/comment.response.dto';
 
 const createTextCommentDto: CreateCommentDto = {
   postId: 1,
-  data: {
-    content: 'create text comment',
+  content: 'create text comment',
+  media: {
+    
     files: [],
     images: [],
     videos: [],
@@ -14,8 +15,8 @@ const createTextCommentDto: CreateCommentDto = {
 
 const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
   postId: 1,
-  data: {
-    content: 'create text mention comment @bret.josh',
+  content: 'create text mention comment @bret.josh',
+  media: {    
     files: [],
     images: [],
     videos: [],
@@ -25,8 +26,8 @@ const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
 
 const createCommentWithPostNotFoundDto: CreateCommentDto = {
   postId: 2,
-  data: {
-    content: 'create text comment',
+  content: 'create text comment',
+  media: {
     files: [],
     images: [],
     videos: [],
@@ -35,8 +36,8 @@ const createCommentWithPostNotFoundDto: CreateCommentDto = {
 
 const createMediaNotFoundCommentDto: CreateCommentDto = {
   postId: 1,
-  data: {
-    content: 'hello @caitlyn.back',
+  content: 'hello @caitlyn.back',
+  media: {    
     files: [
       {
         id: 1,
@@ -65,8 +66,8 @@ const createMediaNotFoundCommentDto: CreateCommentDto = {
 
 const createCommentDto: CreateCommentDto = {
   postId: 1,
-  data: {
-    content: 'hello @caitlyn.back',
+  content: 'hello @caitlyn.back',
+  media: {    
     files: [],
     images: [
       {
@@ -91,8 +92,8 @@ const createCommentDto: CreateCommentDto = {
 
 const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
   postId: 1,
-  data: {
-    content: 'create text mention comment @caitlyn.back',
+  content: 'create text mention comment @caitlyn.back',
+  media: {
     files: [],
     images: [],
     videos: [],

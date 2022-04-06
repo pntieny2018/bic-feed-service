@@ -5,7 +5,8 @@ import { CommentReactionModel } from '../../../database/models/comment-reaction.
 import { IComment } from '../../../database/models/comment.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { IPost } from '../../../database/models/post.model';
-import { CreatedReactionEvent } from '../../../events/reaction';
+import { CreateReactionInternalEvent } from '../../../events/reaction';
+import { UserSharedDto } from '../../../shared/user/dto';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CreateReactionDto } from '../dto/request';
 
@@ -62,18 +63,25 @@ export class CommonReactionService {
 
   /**
    * Create event
+   * @param userSharedDto UserSharedDto
    * @param reaction ReactionDto
    * @param post IPost
    * @param comment IComment
    * @returns void
    */
-  public createEvent(reaction: ReactionDto, post: IPost, comment?: IComment): void {
-    const createdReactionEvent = new CreatedReactionEvent({
+  public createEvent(
+    userSharedDto: UserSharedDto,
+    reaction: ReactionDto,
+    post: IPost,
+    comment?: IComment
+  ): void {
+    const createReactionInternalEvent = new CreateReactionInternalEvent({
+      userSharedDto: userSharedDto,
       reaction: reaction,
       post: post,
       comment: comment,
     });
 
-    this._internalEventEmitterService.emit(createdReactionEvent);
+    this._internalEventEmitterService.emit(createReactionInternalEvent);
   }
 }

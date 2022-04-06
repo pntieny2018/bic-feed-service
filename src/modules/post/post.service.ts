@@ -117,8 +117,8 @@ export class PostService {
   }
   /**
    *
-   * @param authUserId
-   * @param getDraftPostDto
+   * @param SearchPostsDto
+   * @param groupIds
    * @returns
    */
   public async getPayloadSearch(
@@ -302,7 +302,7 @@ export class PostService {
   public async getPost(
     postId: number,
     user: UserDto,
-    getPostDto: GetPostDto
+    getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
     const post = await this._postModel.findOne({
       attributes: {
@@ -385,16 +385,17 @@ export class PostService {
       }
     }
     const dataGroups = await this._groupService.getMany(groupIds);
-
     for (const post of posts) {
       let groups = [];
-      if (post.groups && post.groups.length) {
-        groups = post.groups.map((v) => dataGroups.find((u) => u.id === v.groupId));
-      }
-
-      //bind for elasticsearch
-      if (post.audience?.groups && post.audience.groups.length) {
-        groups = post.audience.groups.map((v) => dataGroups.find((u) => u.id === v.id));
+      let postGroups = post.groups;
+      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
+      if (postGroups && postGroups.length) {
+        const mappedGroups = [];
+        postGroups.forEach((group) => {
+          const dataGroup = dataGroups.find((i) => i.id === group.id);
+          if (dataGroup) mappedGroups.push(dataGroup);
+        });
+        groups = mappedGroups;
       }
       post.audience = { groups };
     }
@@ -412,7 +413,6 @@ export class PostService {
       userIds.push(post.createdBy);
     }
     const users = await this._userService.getMany(userIds);
-
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
     }
@@ -501,6 +501,7 @@ export class PostService {
     authUser: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
+    const authUserId = authUser.id;
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;

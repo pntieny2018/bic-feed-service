@@ -444,6 +444,7 @@ describe('PostService', () => {
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
+      mockedUserAuth.id += 1;
       try {
         mockedUserAuth.id += 1;
         await postService.updatePost(

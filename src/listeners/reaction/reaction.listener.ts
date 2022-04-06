@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { CreatedReactionEvent } from '../../events/reaction';
-import { CreatedReactionEventPayload } from '../../events/reaction/payload';
+import { CreateReactionInternalEvent } from '../../events/reaction';
+import { CreateReactionEventPayload } from '../../events/reaction/payload';
 import { NotificationService } from '../../notification';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 
@@ -11,16 +11,23 @@ export class ReactionListener {
 
   public constructor(private readonly _notificationService: NotificationService) {}
 
-  @On(CreatedReactionEvent)
-  public onCreatedReactionEvent(event: CreatedReactionEvent): void {
+  @On(CreateReactionInternalEvent)
+  public onCreatedReactionEvent(event: CreateReactionInternalEvent): void {
     this._logger.log(event);
 
-    const kafkaCreatedReactionMessage: NotificationPayloadDto<CreatedReactionEventPayload> = {
-      actor: event.payload.reaction.userId,
-      data: event.payload,
+    const createReactionEventPayload: CreateReactionEventPayload = {
+      reaction: event.payload.reaction,
+      post: event.payload.post,
+      comment: event.payload.comment,
     };
 
-    this._notificationService.publishReactionNotification<CreatedReactionEventPayload>(
+    const kafkaCreatedReactionMessage: NotificationPayloadDto<CreateReactionEventPayload> = {
+      actor: event.payload.userSharedDto,
+      event: event.getEventName(),
+      data: createReactionEventPayload,
+    };
+
+    this._notificationService.publishReactionNotification<CreateReactionEventPayload>(
       kafkaCreatedReactionMessage
     );
   }

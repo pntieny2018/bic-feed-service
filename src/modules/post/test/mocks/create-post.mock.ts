@@ -8,8 +8,16 @@ export const mockedCreatePostDto: CreatePostDto = {
         id: 1,
       },
     ],
-    images: [],
-    videos: [],
+    images: [
+      {
+        id: 1,
+      },
+    ],
+    videos: [
+      {
+        id: 1,
+      },
+    ],
   },
   setting: {
     canReact: true,

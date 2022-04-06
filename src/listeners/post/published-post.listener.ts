@@ -1,3 +1,4 @@
+import { NotificationService } from './../../notification/notification.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -8,6 +9,7 @@ import { FeedPublisherService } from '../../modules/feed-publisher';
 export class PublishedPostListener {
   private _logger = new Logger(PublishedPostListener.name);
   public constructor(
+    private readonly _notificationService: NotificationService,
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService
   ) {}
@@ -29,7 +31,11 @@ export class PublishedPostListener {
     } = publishedPostEvent.payload;
     if (isDraft) return;
 
-    // send message to kafka
+    // this._notificationService.publishPostNotification({
+    //   actor: 1,
+    //   data: publishedPostEvent.payload,
+    // });
+
     const index = ElasticsearchHelper.INDEX.POST;
     try {
       const dataIndex = {
