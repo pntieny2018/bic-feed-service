@@ -76,6 +76,7 @@ describe('PostService', () => {
           provide: CommentService,
           useValue: {
             getComments: jest.fn(),
+            deleteCommentsByPost: jest.fn()
           },
         },
         {
@@ -200,7 +201,6 @@ describe('PostService', () => {
       postGroupModelMock.bulkCreate.mockResolvedValueOnce(true);
 
       const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
-      console.log('result=', result);
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1);
 
@@ -426,12 +426,14 @@ describe('PostService', () => {
       postModelMock.destroy.mockResolvedValueOnce(mockedDataDeletePost);
 
       const result = await postService.deletePost(mockedDataDeletePost.id, mockedDataDeletePost.createdBy);
-      expect(result).toBe(true);
-     
+      expect(result).toStrictEqual(mockedDataDeletePost);
+    
       expect(postModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
+      expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
+      expect(commentService.deleteCommentsByPost).toHaveBeenCalledWith(mockedDataDeletePost.id);
       expect(transactionMock.commit).toBeCalledTimes(1);
       const [ condition ] = postModelMock.destroy.mock.calls[0];
       expect(condition.where).toStrictEqual({

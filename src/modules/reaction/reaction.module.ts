@@ -10,5 +10,6 @@ import { CreateReactionService, DeleteReactionService, CommonReactionService } f
   imports: [DatabaseModule, UserModule, GroupModule, NotificationModule],
   controllers: [ReactionController],
   providers: [CreateReactionService, DeleteReactionService, CommonReactionService],
+  exports: [DeleteReactionService],
 })
 export class ReactionModule {}

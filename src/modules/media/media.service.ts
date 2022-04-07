@@ -266,4 +266,33 @@ export class MediaService {
     });
     return mediaTypes;
   }
+
+  public async deleteMediaByEntityIds(entityIds: number[], entityType: EntityType): Promise<void> {
+    const condition =
+      entityType === EntityType.POST
+        ? {
+            attributes: ['mediaId'],
+            where: {
+              postId: entityIds,
+            },
+          }
+        : {
+            attributes: ['mediaId'],
+            where: {
+              commentId: entityIds,
+            },
+          };
+
+    const media = await (entityType === EntityType.POST
+      ? this._postMediaModel.findAll(condition)
+      : this._commentMediaModel.findAll(condition));
+
+    const mediaIds = media.map((m) => m.mediaId);
+
+    await (entityType === EntityType.POST
+      ? this._postMediaModel.destroy({ where: { postId: entityIds } })
+      : this._commentMediaModel.destroy({ where: { commentId: entityIds } }));
+
+    await this.updateMediaDraft(mediaIds);
+  }
 }

@@ -39,6 +39,7 @@ export class PostResponseDto {
   @Expose()
   @Transform(({ value }) => {
     if (
+      typeof value === 'object' &&
       value.hasOwnProperty('files') &&
       value.hasOwnProperty('images') &&
       value.hasOwnProperty('videos')
@@ -88,8 +89,19 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: UserMentionDto,
-    additionalProperties: {
-      type: 'object',
+    example: {
+      dangdiep: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      tuine: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
     },
   })
   @Expose()
@@ -104,8 +116,19 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: 'object',
-    additionalProperties: {
-      type: 'object',
+    example: {
+      0: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      1: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
     },
   })
   @Transform(({ value }) => {

@@ -360,7 +360,6 @@ export class PostService {
     await this._mentionService.bindMentionsToPosts([postJson]);
     await this.bindActorToPost([postJson]);
     await this.bindAudienceToPost([postJson]);
-    console.log('postJson=', postJson)
     const result = this._classTransformer.plainToInstance(
       PostResponseDto,
       { ...postJson, comments },
@@ -638,7 +637,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: number, authUserId: number): Promise<boolean> {
+  public async deletePost(postId: number, authUserId: number): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
@@ -652,10 +651,10 @@ export class PostService {
           createdBy: authUserId,
         },
       });
-      this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(post));
+      await this._commentService.deleteCommentsByPost(postId);
       transaction.commit();
 
-      return true;
+      return post;
     } catch (error) {
       this._logger.error(error, error?.stack);
       transaction.rollback();

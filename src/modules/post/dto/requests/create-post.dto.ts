@@ -17,6 +17,14 @@ export class CreatePostDto {
   @ApiProperty({
     description: 'Audience',
     type: AudienceDto,
+    example: {
+      users: [],
+      groups: [
+        {
+          id: 1,
+        },
+      ],
+    },
   })
   @IsNotEmpty()
   @ValidateNested({ each: true })
@@ -26,6 +34,7 @@ export class CreatePostDto {
   @ApiProperty({
     description: 'Content of post',
     type: String,
+    example: 'Bla bla bla...',
   })
   @IsOptional()
   @Type(() => String)
@@ -35,6 +44,17 @@ export class CreatePostDto {
     description: 'Post data, includes content, images, files, videos',
     type: MediaDto,
     required: false,
+    example: {
+      images: [
+        {
+          id: 1,
+          url: 'https://google.com',
+          name: 'FIle name 1',
+        },
+      ],
+      videos: [],
+      files: [],
+    },
   })
   @IsOptional()
   @ValidateNested({ each: true })
@@ -45,6 +65,13 @@ export class CreatePostDto {
     description: 'Setting post',
     type: PostSettingDto,
     required: false,
+    example: {
+      canShare: true,
+      canReact: true,
+      canComment: true,
+      isImportant: false,
+      importantExpiredAt: null,
+    },
   })
   @IsOptional()
   @ValidateNested({ each: true })
@@ -62,6 +89,16 @@ export class CreatePostDto {
     type: UserSharedDto,
     isArray: true,
     required: false,
+    example: [
+      {
+        id: 1,
+        username: 'username1',
+      },
+      {
+        id: 2,
+        username: 'username1',
+      },
+    ],
   })
   @IsOptional()
   @ValidateNested({ each: true })

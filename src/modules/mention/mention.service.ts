@@ -205,4 +205,13 @@ export class MentionService {
       });
     }
   }
+
+  public async deleteMentionByEntityIds(
+    entityIds: number[],
+    mentionableType: MentionableType
+  ): Promise<number> {
+    return this._mentionModel.destroy({
+      where: { entityId: entityIds, mentionableType },
+    });
+  }
 }

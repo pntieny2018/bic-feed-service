@@ -20,7 +20,7 @@ import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CreatedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
+import { CreatedPostEvent, DeletedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -40,7 +40,7 @@ export class PostController {
     return this._postService.searchPosts(user, searchPostsDto);
   }
 
-  @ApiOperation({ summary: 'Get post detail' })
+  @ApiOperation({ summary: 'Get draft posts' })
   @ApiOkResponse({
     type: PostResponseDto,
   })
@@ -129,16 +129,20 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Publish post' })
+  @ApiOperation({ summary: 'Delete post' })
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete post successfully',
   })
   @Delete('/:id')
-  public deletePost(
+  public async deletePost(
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) postId: number
   ): Promise<boolean> {
-    return this._postService.deletePost(postId, user.id);
+    const postDeleted = await this._postService.deletePost(postId, user.id);
+    if (postDeleted) {
+      this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(postDeleted));
+      return true;
+    }
   }
 }

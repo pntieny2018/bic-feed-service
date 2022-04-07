@@ -10,7 +10,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { GetPostDto, SearchPostsDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CreatedPostEvent } from '../../../events/post';
+import { CreatedPostEvent, DeletedPostEvent } from '../../../events/post';
 import { mockedPostResponse } from './mocks/response/post.response.mock';
 	
 jest.mock('../post.service');
@@ -93,24 +93,6 @@ describe('PostController', () => {
       const result = await postController.getPost(userDto, 1, getPostDto);      
       expect(postService.getPost).toBeCalledTimes(1);
       expect(postService.getPost).toBeCalledWith(1, userDto, getPostDto);
-      //expect(eventEmitter.emit).toBeCalledTimes(1);
-      // expect(eventEmitter.emit).toBeCalledWith(
-      //   CreatedPostEvent.event,
-      //   new CreatedPostEvent({
-      //     id: mockedDataCreatePost.id,
-      //     isDraft: mockedCreatePostDto.isDraft,
-      //     content: mockedCreatePostDto.content,
-      //     media: mockedCreatePostDto.media,
-      //     commentsCount: mockedDataCreatePost.commentsCount,
-      //     actor: mockedUserAuth,
-      //     mentions: mockedCreatePostDto.mentions,
-      //     audience: mockedCreatePostDto.audience,
-      //     setting: mockedCreatePostDto.setting,
-      //     createdAt: mockedDataCreatePost.createdAt,
-      //     createdBy: mockedDataCreatePost.createdBy,
-      //   })
-      // );
-
     });
   });
 
@@ -158,12 +140,18 @@ describe('PostController', () => {
 
   describe('deletePost', () => {
     it('Delete post successfully', async () => {
-      postService.deletePost = jest.fn().mockResolvedValue(true);
-      const mockedDataUpdatePost = mockedPostList[0];
-      const result = await postController.deletePost(userDto, mockedDataUpdatePost.id);
+      const mockedPostDeleted = mockedPostList[0];
+      postService.deletePost = jest.fn().mockResolvedValue(mockedPostDeleted);
+      const result = await postController.deletePost(userDto, mockedPostDeleted.id);
       expect(postService.deletePost).toBeCalledTimes(1);
-      expect(postService.deletePost).toBeCalledWith(mockedDataUpdatePost.id, userDto.id);
+      expect(postService.deletePost).toBeCalledWith(mockedPostDeleted.id, userDto.id);
       expect(result).toBe(true);
+
+      expect(eventEmitter.emit).toBeCalledTimes(1);
+      expect(eventEmitter.emit).toBeCalledWith(
+        DeletedPostEvent.event,
+        new DeletedPostEvent(mockedPostDeleted)
+      );
     });
   });
 });
