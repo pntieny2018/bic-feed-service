@@ -51,10 +51,10 @@ export class UpdatedPostListener {
   }
 
   private _fanout(postId: number, currentGroupIds: number[], oldGroupIds: number[]): void {
+    return;
     const differenceGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds);
     const attachedGroupIds = differenceGroupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     const detachedGroupIds = differenceGroupIds.filter((groupId) => oldGroupIds.includes(groupId));
-
     this._feedPublisherService
       .fanoutOnWrite(postId, {
         attached: attachedGroupIds,

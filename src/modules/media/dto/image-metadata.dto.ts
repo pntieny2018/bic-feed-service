@@ -1,7 +1,7 @@
 import { basename } from 'path';
 import { ApiProperty } from '@nestjs/swagger';
 import { IDocumentMetadata } from './interfaces';
-import { Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class ImageMetadataDto implements IDocumentMetadata {
@@ -9,6 +9,7 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
+  @Expose()
   public id: number;
 
   @ApiProperty({
@@ -19,6 +20,7 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @IsString()
   @IsOptional()
   @Transform((params) => basename(params.value))
+  @Expose()
   public name?: string;
 
   @ApiProperty({
@@ -27,6 +29,7 @@ export class ImageMetadataDto implements IDocumentMetadata {
   })
   @IsString()
   @IsOptional()
+  @Expose()
   public url?: string;
 
   @ApiProperty({
@@ -36,6 +39,7 @@ export class ImageMetadataDto implements IDocumentMetadata {
   })
   @IsString()
   @IsOptional()
+  @Expose()
   public originName?: string;
 
   @ApiProperty({
@@ -46,6 +50,7 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
+  @Expose()
   public width?: number;
 
   @ApiProperty({
@@ -56,5 +61,6 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @Type(() => Number)
   @IsNumber()
   @IsOptional()
+  @Expose()
   public height?: number;
 }

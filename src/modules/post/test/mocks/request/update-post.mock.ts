@@ -1,26 +1,14 @@
-import { CreatePostDto } from '../../dto/requests';
+import { UpdatePostDto } from '../../../dto/requests/update-post.dto';
 
-export const mockedCreatePostDto: CreatePostDto = {
+export const mockedUpdatePostDto: UpdatePostDto = {
   content: 'aaaa',
   media: {
-    files: [
-      {
-        id: 1,
-      },
-    ],
-    images: [
-      {
-        id: 1,
-      },
-    ],
-    videos: [
-      {
-        id: 1,
-      },
-    ],
+    files: [],
+    images: [],
+    videos: [],
   },
   setting: {
-    canReact: true,
+    canReact: false,
     canComment: true,
     canShare: true,
     isImportant: false,

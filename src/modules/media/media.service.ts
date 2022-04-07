@@ -218,7 +218,7 @@ export class MediaService {
     if (changes.detached.length) {
       await (entityType === EntityType.POST
         ? this._postMediaModel.destroy(
-            getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
+            getDetachedData(changes.detached, 'postId', entityId, 'mediaId')
           )
         : this._commentMediaModel.destroy(
             getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')

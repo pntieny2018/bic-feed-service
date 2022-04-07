@@ -38,6 +38,13 @@ export class PostResponseDto {
   })
   @Expose()
   @Transform(({ value }) => {
+    if (
+      value.hasOwnProperty('files') &&
+      value.hasOwnProperty('images') &&
+      value.hasOwnProperty('videos')
+    ) {
+      return value;
+    }
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }

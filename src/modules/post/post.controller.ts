@@ -37,7 +37,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Query() searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.searchPosts(user.id, searchPostsDto);
+    return this._postService.searchPosts(user, searchPostsDto);
   }
 
   @ApiOperation({ summary: 'Get post detail' })

@@ -1,5 +1,5 @@
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { PostResponseDto } from './../post/dto/responses/post.dto';
+import { PostResponseDto } from './../post/dto/responses/post.response.dto';
 import { ClassTransformer } from 'class-transformer';
 import { MentionService } from './../mention/mention.service';
 import { GroupService } from './../../shared/group/group.service';
