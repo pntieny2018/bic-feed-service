@@ -14,13 +14,22 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
     }
     return next.handle().pipe(
       map((data) => {
-        return {
-          code: StatusCode.OK,
-          data: data,
-          meta: {
-            message: message,
-          },
-        };
+        return typeof data === 'object' && data.hasOwnProperty('data')
+          ? {
+              code: StatusCode.OK,
+              ...data,
+              meta: {
+                message: message,
+                ...data?.meta,
+              },
+            }
+          : {
+              code: StatusCode.OK,
+              data,
+              meta: {
+                message: message,
+              },
+            };
       })
     );
   }

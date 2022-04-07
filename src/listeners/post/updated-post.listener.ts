@@ -16,8 +16,7 @@ export class UpdatedPostListener {
   public async onPostUpdated(updatedPostEvent: UpdatedPostEvent): Promise<boolean> {
     this._logger.debug(`Event: ${updatedPostEvent}`);
     const { oldPost } = updatedPostEvent.payload;
-    const { id, content, media, isDraft, setting, audience, createdBy, commentsCount, mentions } =
-      updatedPostEvent.payload.updatedPost;
+    const { id, content, media, isDraft, setting, audience, actor, commentsCount, mentions } = updatedPostEvent.payload.updatedPost;
 
     if (isDraft) return false;
 
@@ -33,7 +32,7 @@ export class UpdatedPostListener {
         mentions,
         audience,
         setting,
-        createdBy,
+        actor,
       };
       await this._elasticsearchService.update({
         index,
@@ -52,10 +51,10 @@ export class UpdatedPostListener {
   }
 
   private _fanout(postId: number, currentGroupIds: number[], oldGroupIds: number[]): void {
+    return;
     const differenceGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds);
     const attachedGroupIds = differenceGroupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     const detachedGroupIds = differenceGroupIds.filter((groupId) => oldGroupIds.includes(groupId));
-
     this._feedPublisherService
       .fanoutOnWrite(postId, {
         attached: attachedGroupIds,

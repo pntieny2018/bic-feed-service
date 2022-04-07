@@ -19,7 +19,6 @@ export class AudienceDto {
   public users?: UserSharedDto[] = [];
 
   @ApiProperty({
-    default: [1],
     type: GroupSharedDto,
     isArray: true,
     description: 'Array of group',

@@ -116,39 +116,6 @@ export class MediaService {
   }
 
   /**
-   * Delete/Insert and update isDraft for media of post
-   * @param mediaIds Array of Media ID
-   * @param postId PostID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async setMediaByPost(mediaIds: number[], postId: number): Promise<boolean> {
-    const currentPostMediaList = await this._postMediaModel.findAll({
-      where: { postId },
-    });
-    const currentMediaIds = currentPostMediaList.map((i) => i.mediaId);
-
-    const deleteIds = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
-    if (deleteIds.length) {
-      await this._postMediaModel.destroy({
-        where: { postId, mediaId: deleteIds },
-      });
-    }
-
-    const addIds = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
-    if (addIds.length) {
-      await this._postMediaModel.bulkCreate(
-        addIds.map((mediaId) => ({
-          postId,
-          mediaId,
-        }))
-      );
-    }
-    await this.updateMediaDraft([...deleteIds, ...addIds]);
-    return true;
-  }
-
-  /**
    * Update Media.isDraft, called when update Post
    * @param mediaIds Array of Media ID
    * @returns Promise resolve boolean
@@ -251,7 +218,7 @@ export class MediaService {
     if (changes.detached.length) {
       await (entityType === EntityType.POST
         ? this._postMediaModel.destroy(
-            getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
+            getDetachedData(changes.detached, 'postId', entityId, 'mediaId')
           )
         : this._commentMediaModel.destroy(
             getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
@@ -298,5 +265,34 @@ export class MediaService {
       mediaTypes[`${media.type}s`].push(typeMediaDto);
     });
     return mediaTypes;
+  }
+
+  public async deleteMediaByEntityIds(entityIds: number[], entityType: EntityType): Promise<void> {
+    const condition =
+      entityType === EntityType.POST
+        ? {
+            attributes: ['mediaId'],
+            where: {
+              postId: entityIds,
+            },
+          }
+        : {
+            attributes: ['mediaId'],
+            where: {
+              commentId: entityIds,
+            },
+          };
+
+    const media = await (entityType === EntityType.POST
+      ? this._postMediaModel.findAll(condition)
+      : this._commentMediaModel.findAll(condition));
+
+    const mediaIds = media.map((m) => m.mediaId);
+
+    await (entityType === EntityType.POST
+      ? this._postMediaModel.destroy({ where: { postId: entityIds } })
+      : this._commentMediaModel.destroy({ where: { commentId: entityIds } }));
+
+    await this.updateMediaDraft(mediaIds);
   }
 }

@@ -1,4 +1,4 @@
-import { UserMentionDto } from './../../../mention/dto/user-mention.dto';
+import { UserMentionDto } from '../../../mention/dto/user-mention.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { PageDto } from '../../../../common/dto';
@@ -6,7 +6,7 @@ import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
 import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
-import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { PostSettingDto } from '../common/post-setting.dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceDto } from '../common/audience.dto';
 
@@ -38,6 +38,14 @@ export class PostResponseDto {
   })
   @Expose()
   @Transform(({ value }) => {
+    if (
+      typeof value === 'object' &&
+      value.hasOwnProperty('files') &&
+      value.hasOwnProperty('images') &&
+      value.hasOwnProperty('videos')
+    ) {
+      return value;
+    }
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }
@@ -81,8 +89,19 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: UserMentionDto,
-    additionalProperties: {
-      type: 'object',
+    example: {
+      dangdiep: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      tuine: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
     },
   })
   @Expose()
@@ -97,8 +116,19 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: 'object',
-    additionalProperties: {
-      type: 'object',
+    example: {
+      0: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      1: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
     },
   })
   @Transform(({ value }) => {
@@ -121,6 +151,12 @@ export class PostResponseDto {
   })
   @Expose()
   public createdAt: Date;
+
+  @ApiProperty({
+    type: Number,
+  })
+  @Expose()
+  public createdBy: number;
 
   @ApiProperty({
     type: AudienceDto,

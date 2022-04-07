@@ -23,4 +23,8 @@ export class GetPostDto {
   })
   @IsOptional()
   public childCommentLimit?: number = 10;
+
+  public constructor(data: Partial<GetPostDto> = {}) {
+    Object.assign(this, data);
+  }
 }

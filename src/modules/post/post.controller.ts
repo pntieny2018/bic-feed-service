@@ -10,34 +10,40 @@ import {
   ParseIntPipe,
   Put,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiSecurity, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { PostService } from './post.service';
 import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
-import { GenericApiOkResponse } from '../../common/decorators';
 import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CreatedPostEvent, DeletedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
 @Controller('posts')
 export class PostController {
-  public constructor(private _postService: PostService) {}
+  public constructor(private _postService: PostService, private _eventEmitter: EventEmitter2) {}
 
   @ApiOperation({ summary: 'Search posts' })
-  @GenericApiOkResponse(PostResponseDto)
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
   @Get('/')
   public searchPosts(
     @AuthUser() user: UserDto,
     @Query() searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.searchPosts(user.id, searchPostsDto);
+    return this._postService.searchPosts(user, searchPostsDto);
   }
 
-  @ApiOperation({ summary: 'Get post detail' })
-  @GenericApiOkResponse(PostResponseDto)
+  @ApiOperation({ summary: 'Get draft posts' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
   @Get('/draft')
   public getDraftPosts(
     @AuthUser() user: UserDto,
@@ -47,7 +53,9 @@ export class PostController {
   }
 
   @ApiOperation({ summary: 'Get post detail' })
-  @GenericApiOkResponse(PostResponseDto)
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
   @Get('/:postId')
   public getPost(
     @AuthUser() user: UserDto,
@@ -58,41 +66,83 @@ export class PostController {
   }
 
   @ApiOperation({ summary: 'Create post' })
-  @GenericApiOkResponse(Boolean, 'Create post successfully')
+  @ApiOkResponse({
+    type: PostResponseDto,
+    description: 'Create post successfully',
+  })
   @Post('/')
-  public createPost(
+  public async createPost(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
-  ): Promise<boolean> {
-    return this._postService.createPost(user.id, createPostDto);
+  ): Promise<PostResponseDto> {
+    const created = await this._postService.createPost(user, createPostDto);
+    if (created) {
+      const post = await this._postService.getPost(created.id, user, new GetPostDto());
+      this._eventEmitter.emit(CreatedPostEvent.event, new CreatedPostEvent(post));
+      return post;
+    }
   }
 
   @ApiOperation({ summary: 'Update post' })
-  @GenericApiOkResponse(Boolean, 'Update post successfully')
+  @ApiOkResponse({
+    type: PostResponseDto,
+    description: 'Update post successfully',
+  })
   @Put('/:postId')
-  public updatePost(
+  public async updatePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createPostDto: UpdatePostDto
-  ): Promise<boolean> {
-    return this._postService.updatePost(postId, user, createPostDto);
+  ): Promise<PostResponseDto> {
+    const currentPost = await this._postService.getPost(postId, user, new GetPostDto());
+    await this._postService.checkPostExistAndOwner(currentPost, user.id);
+
+    const isUpdated = await this._postService.updatePost(postId, user, createPostDto);
+    if (isUpdated) {
+      const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
+      this._eventEmitter.emit(
+        UpdatedPostEvent.event,
+        new UpdatedPostEvent({
+          oldPost: currentPost,
+          updatedPost: postUpdated,
+        })
+      );
+      return postUpdated;
+    }
   }
 
   @ApiOperation({ summary: 'Publish post' })
-  @GenericApiOkResponse(Boolean, 'Publish post successfully')
+  @ApiOkResponse({
+    type: PostResponseDto,
+    description: 'Publish post successfully',
+  })
   @Put('/:postId/publish')
-  public publishPost(
+  public async publishPost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number
-  ): Promise<boolean> {
-    return this._postService.publishPost(postId, user.id);
+  ): Promise<PostResponseDto> {
+    const isPublished = await this._postService.publishPost(postId, user.id);
+    if (isPublished) {
+      const post = await this._postService.getPost(postId, user, new GetPostDto());
+      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(post));
+      return post;
+    }
   }
 
+  @ApiOperation({ summary: 'Delete post' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Delete post successfully',
+  })
   @Delete('/:id')
-  public deletePost(
+  public async deletePost(
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) postId: number
   ): Promise<boolean> {
-    return this._postService.deletePost(postId, user.id);
+    const postDeleted = await this._postService.deletePost(postId, user.id);
+    if (postDeleted) {
+      this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(postDeleted));
+      return true;
+    }
   }
 }

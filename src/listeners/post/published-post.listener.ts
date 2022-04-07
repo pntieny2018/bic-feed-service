@@ -27,7 +27,7 @@ export class PublishedPostListener {
       setting,
       audience,
       createdAt,
-      createdBy,
+      actor,
     } = publishedPostEvent.payload;
     if (isDraft) return;
 
@@ -47,7 +47,7 @@ export class PublishedPostListener {
         audience,
         setting,
         createdAt,
-        createdBy,
+        actor,
       };
       await this._elasticsearchService.index({
         index,
