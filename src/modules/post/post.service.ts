@@ -794,4 +794,20 @@ export class PostService {
     }
     return post.toJSON();
   }
+
+  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<number[]> {
+    try {
+      const posts = await this._postGroupModel.findAll({
+        where: {
+          groupId: groupId,
+        },
+        limit: take,
+        order: ['createdAt', 'DESC'],
+      });
+      return posts.map((p) => p.postId);
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      return [];
+    }
+  }
 }

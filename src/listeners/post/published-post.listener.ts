@@ -1,10 +1,11 @@
-import { NotificationService } from './../../notification/notification.service';
+import { NotificationService } from '../../notification';
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { PublishedPostEvent } from '../../events/post';
 import { FeedPublisherService } from '../../modules/feed-publisher';
+
 @Injectable()
 export class PublishedPostListener {
   private _logger = new Logger(PublishedPostListener.name);
@@ -60,9 +61,12 @@ export class PublishedPostListener {
       });
 
       // Fanout to write post to all news feed of user follow group audience
-      // await this._feedPublisherService.fanoutOnWrite(id, {
-      //   attached: audience.groups.map((g) => g.id),
-      // });
+      await this._feedPublisherService.fanoutOnWrite(
+        actor.id,
+        id,
+        audience.groups.map((g) => g.id),
+        [0]
+      );
     } catch (error) {
       this._logger.error(error, error?.stack);
     }

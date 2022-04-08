@@ -51,7 +51,8 @@ export class UpdatedPostListener {
       });
 
       // Fanout to attach or detach post to all news feed of user follow group audience
-      this._fanout(
+      this._feedPublisherService.fanoutOnWrite(
+        actor.id,
         id,
         audience.groups.map((g) => g.id),
         oldPost.audience.groups.map((g) => g.id)
@@ -59,24 +60,5 @@ export class UpdatedPostListener {
     } catch (error) {
       this._logger.error(error, error?.stack);
     }
-  }
-
-  private _fanout(postId: number, currentGroupIds: number[], oldGroupIds: number[]): void {
-    return;
-    const differenceGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds);
-    const attachedGroupIds = differenceGroupIds.filter((groupId) => !oldGroupIds.includes(groupId));
-    const detachedGroupIds = differenceGroupIds.filter((groupId) => oldGroupIds.includes(groupId));
-    this._feedPublisherService
-      .fanoutOnWrite(postId, {
-        attached: attachedGroupIds,
-      })
-      .catch((ex) => this._logger.error(ex, ex.stack));
-
-    this._feedPublisherService
-      .fanoutOnWrite(postId, {
-        detached: detachedGroupIds,
-        current: currentGroupIds,
-      })
-      .catch((ex) => this._logger.error(ex, ex.stack));
   }
 }
