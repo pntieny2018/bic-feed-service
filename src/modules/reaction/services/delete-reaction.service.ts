@@ -114,4 +114,19 @@ export class DeleteReactionService {
       throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  /**
+   * Delete reaction by commentIds
+   * @param userId number
+   * @param deleteReactionDto DeleteReactionDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async deleteReactionByCommentIds(commentIds: number[]): Promise<number> {
+    return await this._commentReactionModel.destroy({
+      where: {
+        commentId: commentIds,
+      },
+    });
+  }
 }

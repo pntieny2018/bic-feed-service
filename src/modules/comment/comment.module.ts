@@ -8,6 +8,7 @@ import { PostModule } from '../post';
 import { AuthorityModule } from '../authority';
 import { MediaModule } from '../media';
 import { GroupModule } from '../../shared/group';
+import { ReactionModule } from '../reaction';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { GroupModule } from '../../shared/group';
     MentionModule,
     MediaModule,
     GroupModule,
+    ReactionModule,
   ],
   controllers: [CommentController],
   providers: [CommentService],

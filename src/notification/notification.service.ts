@@ -12,14 +12,23 @@ export class NotificationService {
   ) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer.emit(TOPIC.POST_NOTIFICATION, payload);
+    return this._postProducer.emit(
+      `${process.env.KAFKA_ENV + '.' + TOPIC.POST_NOTIFICATION}`,
+      payload
+    );
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._commentProducer.emit(TOPIC.COMMENT_NOTIFICATION, payload);
+    return this._commentProducer.emit(
+      `${process.env.KAFKA_ENV + '.' + TOPIC.COMMENT_NOTIFICATION}`,
+      payload
+    );
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._reactionProducer.emit(TOPIC.REACTION_NOTIFICATION, payload);
+    return this._reactionProducer.emit(
+      `${process.env.KAFKA_ENV + '.' + TOPIC.REACTION_NOTIFICATION}`,
+      payload
+    );
   }
 }

@@ -36,9 +36,7 @@ export class RecentSearchService {
     createdBy: number,
     getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
-    const limit = getRecentSearchPostDto.limit ?? DEFAULT_RECENT_SEARCH_ITEMS_NUMBER;
-    const target = getRecentSearchPostDto.target ?? RecentSearchType.ALL;
-    const sort = getRecentSearchPostDto.sort ?? 'desc';
+    const { limit, offset, target } = getRecentSearchPostDto;
     const filter = target === RecentSearchType.ALL ? {} : { target };
     try {
       const recentSearches = await this._recentSearchModel.findAll({
@@ -49,7 +47,8 @@ export class RecentSearchService {
           ...filter,
         },
         limit: limit,
-        order: [['updatedAt', sort]],
+        offset,
+        order: [['updatedAt', getRecentSearchPostDto.order]],
       });
       return plainToClass(
         RecentSearchesDto,

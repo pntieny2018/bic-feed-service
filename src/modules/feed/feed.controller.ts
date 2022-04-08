@@ -5,6 +5,7 @@ import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedService } from './feed.service';
+import { PostResponseDto } from '../post/dto/responses';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -21,7 +22,7 @@ export class FeedController {
   public async getTimeline(
     @AuthUser() authUser: UserDto,
     @Query() getTimelineDto: GetTimelineDto
-  ) {
+  ): Promise<PageDto<PostResponseDto>> {
     return this._feedService.getTimeline(authUser.id, getTimelineDto);
   }
 
@@ -34,7 +35,7 @@ export class FeedController {
   public async getNewsFeed(
     @AuthUser() authUser: UserDto,
     @Query() getNewsFeedDto: GetNewsFeedDto
-  ) {
+  ): Promise<PageDto<PostResponseDto>> {
     return this._feedService.getNewsFeed(authUser.id, getNewsFeedDto);
   }
 }

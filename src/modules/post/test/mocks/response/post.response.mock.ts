@@ -1,9 +1,7 @@
-import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
-import { PageDto } from '../../../../common/dto/pagination/page.dto';
-import { PostResponseDto } from '../../dto/responses';
-import { mockedUserAuth } from './user-auth.mock';
+import { CommentResponseDto } from '../../../../comment/dto/response/comment.response.dto';
+import { PageDto } from '../../../../../common/dto/pagination/page.dto';
 export const mockedComments: PageDto<CommentResponseDto> = {
-  data: [
+  list: [
     {
       ownerReactions: [],
       id: 1,
@@ -56,11 +54,19 @@ export const mockedComments: PageDto<CommentResponseDto> = {
 export const mockedPostResponse = {
   ownerReactions: [],
   id: 1,
-  content: 'sdfds sdfdsfdf',
+  content: 'aaaa',
   media: {
-    videos: [],
-    images: [],
     files: [],
+    videos: [],
+    images: [
+      {
+        id: 1,
+        name: 'image 0',
+        url: 'https://google.com',
+        width: null,
+        height: null,
+      },
+    ],
   },
   setting: {
     canReact: true,
@@ -69,28 +75,34 @@ export const mockedPostResponse = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  isDraft: false,
-  actor: mockedUserAuth,
+  isDraft: true,
+  actor: {
+    id: 59,
+    username: 'trangha',
+    fullname: 'Hà Phạm Diễm Trang',
+  },
   mentions: [
     {
-      aaa: {
+      admin: {
         id: 1,
-        username: 'aaa',
-        fullname: 'aaaaa',
+        username: 'admin',
+        fullname: 'Bein Admin 1',
+      },
+    },
+    {
+      vinc: {
+        id: 2,
+        username: 'vinc',
+        fullname: 'Nhâm Chấn Vĩ',
       },
     },
   ],
-  commentsCount: 1,
+  commentsCount: 0,
   reactionsCount: null,
-  createdAt: new Date(),
+  createdAt: '2022-04-07T03:46:32.790Z',
+  createdBy: 59,
   audience: {
-    groups: [
-      {
-        id: 1,
-        name: 'aaa',
-        icon: 'aaaaa',
-      },
-    ],
+    groups: [],
   },
   comments: mockedComments,
 };

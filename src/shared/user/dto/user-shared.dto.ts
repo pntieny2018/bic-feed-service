@@ -17,7 +17,7 @@ export class UserDataShareDto {
   })
   @Expose()
   @IsOptional()
-  public username: string;
+  public username?: string;
 
   @ApiProperty({
     description: 'Fullname',
@@ -25,17 +25,17 @@ export class UserDataShareDto {
   })
   @Expose()
   @IsOptional()
-  public fullname: string;
+  public fullname?: string;
 
   @ApiProperty({
     description: 'Avatar',
     type: String,
   })
-  //@Expose()
+  @Expose()
   @IsOptional()
-  public avatar: string;
+  public avatar?: string;
 }
 
 export class UserSharedDto extends UserDataShareDto {
-  public groups: number[];
+  public groups?: number[];
 }

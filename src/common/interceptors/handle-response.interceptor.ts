@@ -16,7 +16,7 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
       map((data) => {
         return {
           code: StatusCode.OK,
-          data: data,
+          data,
           meta: {
             message: message,
           },

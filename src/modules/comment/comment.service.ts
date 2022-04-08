@@ -31,6 +31,7 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { PostModel } from '../../database/models/post.model';
 import { ExceptionHelper } from '../../common/helpers';
+import { DeleteReactionService } from '../reaction/services';
 
 @Injectable()
 export class CommentService {
@@ -46,6 +47,7 @@ export class CommentService {
     private _mentionService: MentionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
+    private _deleteReactionService: DeleteReactionService,
     private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel
@@ -536,9 +538,29 @@ export class CommentService {
     }
   }
 
+  /**
+   * Count total number of comments by PostID
+   * @param postId number
+   * @returns Promise resolve number
+   */
   public async getCommentCountByPost(postId: number): Promise<number> {
     return await this._commentModel.count({
       where: { postId },
     });
+  }
+
+  /**
+   * Delete all comments by postID
+   * @param postId number
+   * @returns Promise resolve boolean
+   */
+  public async deleteCommentsByPost(postId: number): Promise<void> {
+    const comments = await this._commentModel.findAll({
+      where: { postId },
+    });
+    const commentIds = comments.map((i) => i.id);
+    this._mediaService.deleteMediaByEntityIds(commentIds, EntityType.COMMENT);
+    this._mentionService.deleteMentionByEntityIds(commentIds, MentionableType.COMMENT);
+    this._deleteReactionService.deleteReactionByCommentIds(commentIds);
   }
 }

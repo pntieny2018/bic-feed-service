@@ -7,14 +7,14 @@ export class PageDto<T> {
   @IsArray()
   @ApiProperty({ isArray: true })
   @Expose()
-  public data: T[];
+  public list: T[];
 
   @ApiProperty({ type: () => PageMetaDto })
   @Expose()
   public meta: PageMetaDto;
 
   public constructor(data: T[], meta: PageMetaDto) {
-    this.data = data;
+    this.list = data;
     this.meta = meta;
   }
 }

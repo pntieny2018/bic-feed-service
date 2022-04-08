@@ -1,14 +1,18 @@
-import { UpdatePostDto } from '../../dto/requests/update-post.dto';
+import { CreatePostDto } from '../../../dto/requests';
 
-export const mockedUpdatePostDto: UpdatePostDto = {
+export const mockedCreatePostDto: CreatePostDto = {
   content: 'aaaa',
   media: {
-    files: [],
+    files: [
+      {
+        id: 1,
+      },
+    ],
     images: [],
     videos: [],
   },
   setting: {
-    canReact: false,
+    canReact: true,
     canComment: true,
     canShare: true,
     isImportant: false,
@@ -17,13 +21,15 @@ export const mockedUpdatePostDto: UpdatePostDto = {
   mentions: [
     {
       id: 1,
-      username: 'abcd',
-      fullname: 'abcd',
-      avatar: 'asdfsdf',
-      groups: [1],
+      username: 'username1',
+    },
+    {
+      id: 2,
+      username: 'username1',
     },
   ],
   audience: {
+    users: [],
     groups: [
       {
         id: 1,
@@ -32,5 +38,5 @@ export const mockedUpdatePostDto: UpdatePostDto = {
       },
     ],
   },
-  isDraft: false,
+  isDraft: true,
 };

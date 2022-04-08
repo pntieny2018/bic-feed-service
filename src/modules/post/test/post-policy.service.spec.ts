@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostPolicyService } from '../post-policy.service';
-import { mockedPostList } from './mocks/post-list.mock';
+import { mockedPostList } from './mocks/data/post-list.mock';
 import { IPost, PostModel } from '../../../database/models/post.model';
 import { PostAllow } from '..';
 import { BadRequestException } from '@nestjs/common';
