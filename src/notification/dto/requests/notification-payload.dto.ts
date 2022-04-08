@@ -1,7 +1,10 @@
 import { UserSharedDto } from '../../../shared/user/dto';
 
 export class NotificationPayloadDto<T> {
-  public actor: UserSharedDto;
-  public event: string;
-  public data: T;
+  public key: string;
+  public value: {
+    actor: UserSharedDto;
+    event: string;
+    data: T;
+  };
 }

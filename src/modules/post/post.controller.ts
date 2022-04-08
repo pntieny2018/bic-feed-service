@@ -20,7 +20,12 @@ import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CreatedPostEvent, DeletedPostEvent, PublishedPostEvent, UpdatedPostEvent } from '../../events/post';
+import {
+  CreatedPostEvent,
+  DeletedPostEvent,
+  PublishedPostEvent,
+  UpdatedPostEvent,
+} from '../../events/post';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -78,7 +83,7 @@ export class PostController {
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
       const post = await this._postService.getPost(created.id, user, new GetPostDto());
-      this._eventEmitter.emit(CreatedPostEvent.event, new CreatedPostEvent(post));
+      this._eventEmitter.emit(CreatedPostEvent.event, new CreatedPostEvent(post, user.profile));
       return post;
     }
   }
@@ -102,10 +107,13 @@ export class PostController {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
         UpdatedPostEvent.event,
-        new UpdatedPostEvent({
-          oldPost: currentPost,
-          updatedPost: postUpdated,
-        })
+        new UpdatedPostEvent(
+          {
+            oldPost: currentPost,
+            newPost: postUpdated,
+          },
+          user.profile
+        )
       );
       return postUpdated;
     }
@@ -124,7 +132,7 @@ export class PostController {
     const isPublished = await this._postService.publishPost(postId, user.id);
     if (isPublished) {
       const post = await this._postService.getPost(postId, user, new GetPostDto());
-      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(post));
+      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(post, user.profile));
       return post;
     }
   }
@@ -141,7 +149,10 @@ export class PostController {
   ): Promise<boolean> {
     const postDeleted = await this._postService.deletePost(postId, user.id);
     if (postDeleted) {
-      this._eventEmitter.emit(DeletedPostEvent.event, new DeletedPostEvent(postDeleted));
+      this._eventEmitter.emit(
+        DeletedPostEvent.event,
+        new DeletedPostEvent(postDeleted, user.profile)
+      );
       return true;
     }
   }

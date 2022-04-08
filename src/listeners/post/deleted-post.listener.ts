@@ -4,13 +4,15 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { DeletedPostEvent } from '../../events/post';
 import { FeedPublisherService } from '../../modules/feed-publisher';
+import { NotificationService } from '../../notification';
 
 @Injectable()
 export class DeletedPostListener {
   private _logger = new Logger(DeletedPostListener.name);
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
-    private readonly _feedPublisherService: FeedPublisherService
+    private readonly _feedPublisherService: FeedPublisherService,
+    private readonly _notificationService: NotificationService
   ) {}
 
   @OnEvent(DeletedPostEvent.event)
@@ -19,8 +21,6 @@ export class DeletedPostListener {
     const { id, isDraft } = updatedPostEvent.payload;
     if (isDraft) return false;
 
-    // send message to kafka
-
     const index = ElasticsearchHelper.INDEX.POST;
     try {
       await this._elasticsearchService.delete({
@@ -28,6 +28,15 @@ export class DeletedPostListener {
         id: `${id}`,
       });
       await this._feedPublisherService.detachPostForAllNewsFeed(id);
+
+      this._notificationService.publishPostNotification({
+        key: `${updatedPostEvent.payload.id}`,
+        value: {
+          actor: updatedPostEvent.actor,
+          event: DeletedPostEvent.event,
+          data: updatedPostEvent.payload,
+        },
+      });
 
       return true;
     } catch (error) {

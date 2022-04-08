@@ -31,10 +31,14 @@ export class PublishedPostListener {
     } = publishedPostEvent.payload;
     if (isDraft) return;
 
-    // this._notificationService.publishPostNotification({
-    //   actor: 1,
-    //   data: publishedPostEvent.payload,
-    // });
+    this._notificationService.publishPostNotification({
+      key: `${publishedPostEvent.payload.id}`,
+      value: {
+        actor: publishedPostEvent.actor,
+        event: PublishedPostEvent.event,
+        data: publishedPostEvent.payload,
+      },
+    });
 
     const index = ElasticsearchHelper.INDEX.POST;
     try {
@@ -56,9 +60,9 @@ export class PublishedPostListener {
       });
 
       // Fanout to write post to all news feed of user follow group audience
-      await this._feedPublisherService.fanoutOnWrite(id, {
-        attached: audience.groups.map((g) => g.id),
-      });
+      // await this._feedPublisherService.fanoutOnWrite(id, {
+      //   attached: audience.groups.map((g) => g.id),
+      // });
     } catch (error) {
       this._logger.error(error, error?.stack);
     }
