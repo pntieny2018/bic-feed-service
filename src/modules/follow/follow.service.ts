@@ -1,12 +1,13 @@
 import { Op } from 'sequelize';
-import { InjectModel } from '@nestjs/sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { getDatabaseConfig } from '../../config/database';
 import { CreateFollowDto, UnfollowDto } from './dto/requests';
 import { FollowModel } from '../../database/models/follow.model';
-import { GetUserIdsResponseDto } from './dto/response/get-user-ids-response.dto';
-import { GetFollowedCondition, GetUserIdsDto } from './dto/requests/get-user-ids.dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
 
 @Injectable()
 export class FollowService {
@@ -14,7 +15,11 @@ export class FollowService {
 
   private _logger = new Logger(FollowService.name);
 
-  public constructor(@InjectModel(FollowModel) private _followModel: typeof FollowModel) {}
+  public constructor(
+    @InjectConnection() private _sequelize: Sequelize,
+    private _eventEmitter: InternalEventEmitterService,
+    @InjectModel(FollowModel) private _followModel: typeof FollowModel
+  ) {}
 
   /**
    * Make user follow  group
@@ -22,7 +27,7 @@ export class FollowService {
    * @returns Promise resolve Array<FollowModel>
    * @throws RpcException
    */
-  public async follow(createFollowDto: CreateFollowDto): Promise<FollowModel[]> {
+  public async follow(createFollowDto: CreateFollowDto): Promise<void> {
     try {
       const bulkCreateData = createFollowDto.userIds
         .map((userId) =>
@@ -32,7 +37,8 @@ export class FollowService {
           }))
         )
         .flat();
-      return await this._followModel.bulkCreate(bulkCreateData);
+      await this._followModel.bulkCreate(bulkCreateData);
+      this._eventEmitter.emit(new UsersHasBeenFollowedEvent(createFollowDto));
     } catch (ex) {
       throw new RpcException("Can't follow");
     }
@@ -44,9 +50,9 @@ export class FollowService {
    * @returns Promise resolve Number
    * @throws RpcException
    */
-  public async unfollow(unfollowDto: UnfollowDto): Promise<number> {
+  public async unfollow(unfollowDto: UnfollowDto): Promise<void> {
     try {
-      return await this._followModel.destroy({
+      await this._followModel.destroy({
         where: {
           groupId: unfollowDto.groupId,
           userId: {
@@ -54,122 +60,74 @@ export class FollowService {
           },
         },
       });
+      this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
     } catch (ex) {
       throw new RpcException("Can't unfollow");
     }
   }
 
   /**
-   * Get user follows
+   * Get unique user follows
+   * @param ignoreUserIds Array<Number>
+   * @param targetGroupIds Array<Number>
    * @param groupIds Array<Number>
-   * @param followedAt
+   * @param followId Number
    * @param limit Number
-   * @returns Promise resolve GetUsersFollowDto
    */
-  public async getUserFollows(
+  public async getUniqueUserFollows(
+    ignoreUserIds: number[],
+    targetGroupIds: number[],
     groupIds: number[],
-    followedAt: Date = null,
-    limit = 100
-  ): Promise<GetUserIdsResponseDto> {
-    let followedAtCondition: any = {
-      createdAt: {
-        [Op.gt]: followedAt,
-      },
-    };
-
-    if (!followedAt) {
-      followedAtCondition = {};
-    }
-
-    const follows = await this._followModel.findAll({
-      attributes: ['userId', 'createdAt'],
-      where: {
-        groupId: {
-          [Op.in]: groupIds,
-        },
-        ...followedAtCondition,
-      },
-      order: [['createdAt', 'ASC']],
-      limit: limit,
-    });
-
-    const jsonData = follows.map((f) => f.toJSON());
-    const userIds = jsonData.map((u) => u.userId);
-    const followedAtResponse = jsonData[jsonData.length - 1].createdAt;
-
-    return new GetUserIdsResponseDto(limit, followedAtResponse.toISOString(), {
-      userIds: userIds,
-    });
-  }
-
-  /**
-   * Find user ids, who should remove post in newsfeed
-   * @param getUserIdsDto GetUserIdsDto
-   * @param followedAt Date
-   * @param limit Number
-   * @returns Promise resolve Array<Number>
-   */
-  public async getUserIdsWhenUpdatedGroupAudience(
-    getUserIdsDto: GetUserIdsDto,
-    followedAt: Date = null,
-    limit = 100
-  ): Promise<GetUserIdsResponseDto> {
+    followId = 0,
+    limit = 1000
+  ): Promise<{
+    userIds: number[];
+    latestFollowId: number;
+  }> {
     try {
       const schema = this._databaseConfig.schema;
 
-      const followedAtCondition = FollowService._makeFollowedCondition(followedAt);
-
-      const userIdsRaw = await this._followModel.sequelize.query(
-        `
-                    SELECT user_id  FROM ${schema}.${this._followModel.tableName}
-                        WHERE user_id NOT IN (
-                            SELECT user_id FROM ${schema}.${this._followModel.tableName} 
-                            WHERE group_id IN $current
-                        )
-                        AND user_id IN (
-                            SELECT user_id FROM ${schema}.${this._followModel.tableName}  
-                            WHERE group_id IN $detached
-                        )
-                        ${followedAtCondition.condition}
-                        LIMIT $limit
-                        ORDER BY created_at DESC
-          `,
+      const rows = await this._sequelize.query(
+        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
+                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
+                   AS duplicate_count
+                   FROM ${schema}.${this._followModel.tableName} 
+                   WHERE group_id IN  (${targetGroupIds.join(',')})  
+              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1 
+                WHERE duplicate_count = 1 
+                AND NOT EXISTS (
+                  SELECT user_id FROM  ${schema}.${this._followModel.tableName}  tb2 
+                  WHERE group_id IN  (${groupIds.join(',')}
+                ) 
+                AND tb1.user_id = tb2.user_id )  
+                AND id > $followId  limit $limit ;
+             `,
         {
           bind: {
-            current: getUserIdsDto.currentGroupIds,
-            detached: getUserIdsDto.detachedGroupIds,
+            followId: followId,
             limit: limit,
-            ...followedAtCondition.bind,
           },
         }
       );
-      if (userIdsRaw[0].length) {
-        const followedAtResponse = userIdsRaw[0][userIdsRaw[0].length - 1]['created_at'];
-
-        const userIds = userIdsRaw[0].map((u) => u['user_id']);
-        return new GetUserIdsResponseDto(limit, followedAtResponse, {
+      const userIds = rows[0].map((r) => r['user_id']);
+      if (userIds.length) {
+        return {
           userIds: userIds,
-        });
+          latestFollowId: rows[0][rows[0].length - 1]['id'],
+        };
       }
 
-      return new GetUserIdsResponseDto(limit, null, {
+      return {
         userIds: [],
-      });
-    } catch (e) {
-      this._logger.error(e, e.stack);
+        latestFollowId: 0,
+      };
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
 
-      return new GetUserIdsResponseDto(limit, null, {
+      return {
         userIds: [],
-      });
+        latestFollowId: 0,
+      };
     }
-  }
-
-  private static _makeFollowedCondition(followedAt: Date = null): GetFollowedCondition {
-    if (!followedAt) {
-      return new GetFollowedCondition('', {});
-    }
-    return new GetFollowedCondition('AND created_at > $followedAt', {
-      followedAt: followedAt,
-    });
   }
 }

@@ -19,10 +19,14 @@ import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { APP_VERSION } from '../../common/constants';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
-@Controller('posts')
+@Controller({
+  version: APP_VERSION,
+  path: 'posts',
+})
 export class PostController {
   public constructor(private _postService: PostService) {}
 

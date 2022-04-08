@@ -4,10 +4,13 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Injectable, Logger } from '@nestjs/common';
 import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { GetUserIdsResponseDto } from '../follow/dto/response/get-user-ids-response.dto';
+import { ArrayHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
 
 @Injectable()
 export class FeedPublisherService {
+  private _databaseConfig = getDatabaseConfig();
+
   private _logger = new Logger(FeedPublisherService.name);
   public constructor(
     private _followService: FollowService,
@@ -36,13 +39,17 @@ export class FeedPublisherService {
    */
   public async attachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
     this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
-
+    const schema = this._databaseConfig.schema;
     try {
-      await this._userNewsFeedModel.bulkCreate(
-        userIds.map((userId) => ({
-          userId: userId,
-          postId: postId,
-        }))
+      const data = userIds
+        .map((userId) => {
+          return `(${userId},${postId})`;
+        })
+        .join(',');
+
+      await this._userNewsFeedModel.sequelize.query(
+        `INSERT INTO ${schema}.${this._userNewsFeedModel.tableName} (user_id,post_id) 
+             VALUES ${data} ON CONFLICT  (user_id,post_id) DO NOTHING;`
       );
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
@@ -83,36 +90,105 @@ export class FeedPublisherService {
     }
   }
 
-  public async fanoutOnWrite(
+  protected async processFanout(
+    userId: number,
     postId: number,
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
-    this._logger.debug(`[writeFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
-    let followedAt = null;
+    this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
+    let latestFollowId = 0;
+    const { old, attached, detached, current } = changeGroupAudienceDto;
+    let followers: {
+      userIds: number[];
+      latestFollowId: number;
+    };
 
     while (true) {
-      const groupAttachedIds = changeGroupAudienceDto.attached;
-      const groupDetachedIds = changeGroupAudienceDto.detached;
-      let userFollows: GetUserIdsResponseDto;
-      if (groupAttachedIds.length) {
-        userFollows = await this._followService.getUserFollows(groupAttachedIds, followedAt);
-        await this.attachPostForAnyNewsFeed(userFollows.data.userIds, postId);
-      }
+      try {
+        if (attached.length) {
+          // if attached new group
+          // I will only get users who are in the new group but not in the old groups
+          followers = await this._followService.getUniqueUserFollows(
+            [0],
+            attached,
+            old,
+            latestFollowId
+          );
+          if (followers.userIds.length) {
+            await this.attachPostForAnyNewsFeed(followers.userIds, postId);
+          }
+        }
 
-      if (groupDetachedIds.length) {
-        userFollows = await this._followService.getUserIdsWhenUpdatedGroupAudience(
-          {
-            currentGroupIds: changeGroupAudienceDto.current,
-            detachedGroupIds: changeGroupAudienceDto.detached,
-          },
-          followedAt
-        );
-        await this.detachPostForAnyNewsFeed(userFollows.data.userIds, postId);
-      }
-      followedAt = userFollows.followedAt;
+        if (detached.length) {
+          /**
+           ** attached group
+           ** detach group and attach new group
+           ** replace group
+           */
+          // I will only get users who are in the attached group but not in the old groups
+          followers = await this._followService.getUniqueUserFollows(
+            [0],
+            detached,
+            current,
+            latestFollowId
+          );
+          if (followers.userIds.length) {
+            await this.detachPostForAnyNewsFeed(followers.userIds, postId);
+          }
+        }
+        latestFollowId = followers?.latestFollowId ?? 0;
+        if (!followers?.userIds?.length) {
+          break;
+        }
+      } catch (ex) {
+        this._logger.error(ex, ex.stack);
 
-      if (!followedAt) {
         break;
+      }
+    }
+  }
+
+  public fanoutOnWrite(
+    createdBy: number,
+    postId: number,
+    currentGroupIds: number[],
+    oldGroupIds: number[]
+  ): void {
+    const differenceGroupIds = [
+      ...ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds),
+      ...ArrayHelper.differenceArrNumber(oldGroupIds, currentGroupIds),
+    ];
+    if (differenceGroupIds.length) {
+      const attachedGroupIds = differenceGroupIds.filter(
+        (groupId) => !oldGroupIds.includes(groupId)
+      );
+      const detachedGroupIds = differenceGroupIds.filter((groupId) =>
+        oldGroupIds.includes(groupId)
+      );
+
+      if (attachedGroupIds.length > 0 && detachedGroupIds.length == 0) {
+        this.processFanout(createdBy, postId, {
+          attached: attachedGroupIds,
+          old: oldGroupIds,
+          detached: [],
+        }).catch((ex) => this._logger.error(ex, ex.stack));
+      } else if (detachedGroupIds.length > 0) {
+        if (attachedGroupIds.length > 0) {
+          this.processFanout(createdBy, postId, {
+            attached: attachedGroupIds,
+            old: [
+              ...currentGroupIds.filter((id) => !attachedGroupIds.includes(id)),
+              ...detachedGroupIds,
+            ],
+            detached: [],
+          }).catch((ex) => this._logger.error(ex, ex.stack));
+        }
+        if (detachedGroupIds[0] != 0)
+          this.processFanout(createdBy, postId, {
+            attached: [],
+            detached: detachedGroupIds,
+            current: currentGroupIds,
+          }).catch((ex) => this._logger.error(ex, ex.stack));
       }
     }
   }
