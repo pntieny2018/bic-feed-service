@@ -6,7 +6,6 @@ const createTextCommentDto: CreateCommentDto = {
   postId: 1,
   content: 'create text comment',
   media: {
-    
     files: [],
     images: [],
     videos: [],
@@ -16,7 +15,7 @@ const createTextCommentDto: CreateCommentDto = {
 const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
   postId: 1,
   content: 'create text mention comment @bret.josh',
-  media: {    
+  media: {
     files: [],
     images: [],
     videos: [],
@@ -37,7 +36,7 @@ const createCommentWithPostNotFoundDto: CreateCommentDto = {
 const createMediaNotFoundCommentDto: CreateCommentDto = {
   postId: 1,
   content: 'hello @caitlyn.back',
-  media: {    
+  media: {
     files: [
       {
         id: 1,
@@ -67,7 +66,7 @@ const createMediaNotFoundCommentDto: CreateCommentDto = {
 const createCommentDto: CreateCommentDto = {
   postId: 1,
   content: 'hello @caitlyn.back',
-  media: {    
+  media: {
     files: [],
     images: [
       {

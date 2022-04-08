@@ -20,4 +20,6 @@ export class GroupSharedDto {
   })
   @IsOptional()
   public icon: string;
+
+  public child?: number[] = [];
 }

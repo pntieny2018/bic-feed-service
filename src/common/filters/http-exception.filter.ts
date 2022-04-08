@@ -2,7 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from
 import { Response } from 'express';
 import { ResponseDto } from '../dto';
 import { StatusCode } from '../enum';
-import { ValidatorException } from '../exceptions';
+import { LogicException, ValidatorException } from '../exceptions';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -13,6 +13,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     if (exception instanceof ValidatorException) {
       return this.handleValidatorException(exception, response);
+    } else if (exception instanceof LogicException) {
+      return this.handleLogicException(exception, response);
     } else if (exception instanceof HttpException) {
       return this.handleHttpException(exception, response);
     } else {
@@ -77,6 +79,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
         meta: {
           message: message,
           errors: exception.getResponse(),
+          stack: this._getStack(exception),
+        },
+      })
+    );
+  }
+
+  /**
+   * Handle LogicException
+   * @param exception
+   * @param response
+   */
+  protected handleLogicException(exception: LogicException, response: Response): Response {
+    return response.status(HttpStatus.BAD_REQUEST).json(
+      new ResponseDto({
+        code: StatusCode.BAD_REQUEST,
+        meta: {
+          message: exception.id,
           stack: this._getStack(exception),
         },
       })

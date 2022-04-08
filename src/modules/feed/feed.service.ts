@@ -15,7 +15,7 @@ import { MentionModel } from '../../database/models/mention.model';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 
 @Injectable()
@@ -37,12 +37,18 @@ export class FeedService {
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
-  public async getTimeline(authUserId: number, getTimelineDto: GetTimelineDto) {
-    //get child groups by groupId
-    const groupIds = [1];
+  public async getTimeline(
+    authUserId: number,
+    getTimelineDto: GetTimelineDto
+  ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, groupId } = getTimelineDto;
+    const group = await this._groupService.get(groupId);
+    if (!group) {
+      throw new BadRequestException(`Group ${groupId} not found`);
+    }
+    const groupIds = [groupId, ...group.child];
     const constraints = FeedService._getIdConstrains(getTimelineDto);
-    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+    const rows = await this._postModel.findAll<PostModel>({
       where: {
         ...constraints,
       },
@@ -90,6 +96,23 @@ export class FeedService {
         ['createdAt', 'DESC'],
       ],
     });
+
+    const total = await this._postModel.count({
+      where: {
+        ...constraints,
+      },
+      include: [
+        {
+          model: PostGroupModel,
+          attributes: ['groupId', 'postId'],
+          where: {
+            groupId: groupIds,
+          },
+          required: true,
+        },
+      ],
+      distinct: true,
+    });
     const jsonPosts = rows.map((r) => r.toJSON());
     await this._mentionService.bindMentionsToPosts(jsonPosts);
     await this._postService.bindActorToPost(jsonPosts);
@@ -100,7 +123,7 @@ export class FeedService {
     });
 
     return new PageDto<PostResponseDto>(result, {
-      total: count,
+      total,
       limit,
       offset,
     });
@@ -113,11 +136,14 @@ export class FeedService {
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
-  public async getNewsFeed(authUserId: number, getNewsFeedDto: GetNewsFeedDto) {
+  public async getNewsFeed(
+    authUserId: number,
+    getNewsFeedDto: GetNewsFeedDto
+  ): Promise<PageDto<PostResponseDto>> {
     //get child groups by groupId
     const { limit, offset } = getNewsFeedDto;
     const constraints = FeedService._getIdConstrains(getNewsFeedDto);
-    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+    const rows = await this._postModel.findAll<PostModel>({
       where: {
         ...constraints,
       },
@@ -165,6 +191,24 @@ export class FeedService {
         ['createdAt', 'DESC'],
       ],
     });
+
+    const total = await this._postModel.count({
+      where: {
+        ...constraints,
+      },
+      include: [
+        {
+          model: UserNewsFeedModel,
+          attributes: ['userId'],
+          where: {
+            userId: authUserId,
+          },
+          required: true,
+        },
+      ],
+      distinct: true,
+    });
+
     const jsonPosts = rows.map((r) => r.toJSON());
     await this._mentionService.bindMentionsToPosts(jsonPosts);
     await this._postService.bindActorToPost(jsonPosts);
@@ -175,7 +219,7 @@ export class FeedService {
     });
 
     return new PageDto<PostResponseDto>(result, {
-      total: count,
+      total,
       limit,
       offset,
     });
