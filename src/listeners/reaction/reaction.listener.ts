@@ -22,9 +22,12 @@ export class ReactionListener {
     };
 
     const kafkaCreatedReactionMessage: NotificationPayloadDto<CreateReactionEventPayload> = {
-      actor: event.payload.userSharedDto,
-      event: event.getEventName(),
-      data: createReactionEventPayload,
+      key: `${createReactionEventPayload.post.id}`,
+      value: {
+        actor: event.payload.userSharedDto,
+        event: event.getEventName(),
+        data: createReactionEventPayload,
+      },
     };
 
     this._notificationService.publishReactionNotification<CreateReactionEventPayload>(

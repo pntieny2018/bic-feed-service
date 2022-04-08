@@ -5,6 +5,7 @@ import { RecentSearchType } from '../../recent-search-type.constants';
 
 export class RecentSearchesDto {
   @ApiProperty({
+    enum: RecentSearchType,
     description: 'Target entity',
   })
   @Expose()
@@ -12,6 +13,8 @@ export class RecentSearchesDto {
 
   @ApiProperty({
     description: 'List recent search',
+    type: RecentSearchDto,
+    isArray: true,
   })
   @Type(() => RecentSearchDto)
   @Expose()
