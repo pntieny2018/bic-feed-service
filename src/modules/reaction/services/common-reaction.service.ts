@@ -74,7 +74,7 @@ export class CommonReactionService {
   public createCreateReactionEvent(
     userSharedDto: UserSharedDto,
     reaction: ReactionDto,
-    post?: IPost,
+    post: IPost,
     comment?: IComment
   ): void {
     const createReactionInternalEvent = new CreateReactionInternalEvent({
