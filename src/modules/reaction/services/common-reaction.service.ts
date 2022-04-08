@@ -5,7 +5,7 @@ import { CommentReactionModel } from '../../../database/models/comment-reaction.
 import { IComment } from '../../../database/models/comment.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { IPost } from '../../../database/models/post.model';
-import { CreateReactionInternalEvent } from '../../../events/reaction';
+import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../../events/reaction';
 import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
 import { ReactionDto } from '../dto/reaction.dto';
@@ -64,14 +64,14 @@ export class CommonReactionService {
   }
 
   /**
-   * Create event
+   * Create create-reaction event
    * @param userSharedDto UserSharedDto
    * @param reaction ReactionDto
    * @param post IPost
    * @param comment IComment
    * @returns void
    */
-  public createEvent(
+  public createCreateReactionEvent(
     userSharedDto: UserSharedDto,
     reaction: ReactionDto,
     post?: IPost,
@@ -88,19 +88,17 @@ export class CommonReactionService {
   }
 
   /**
-   * Create delete reaction event
+   * Create delete-reaction event
    * @param userId number
    * @param reaction ReactionDto
    * @returns Promise resolve void
    */
   public async createDeleteReactionEvent(userId: number, reaction: ReactionDto): Promise<void> {
     const userSharedDto = await this._userService.get(userId);
-    this.createEvent(
-      {
-        ...(userSharedDto ?? {}),
-        id: userId,
-      },
-      reaction
-    );
+    const deleteReactionInternalEvent = new DeleteReactionInternalEvent({
+      userSharedDto: userSharedDto,
+      reaction: reaction,
+    });
+    this._internalEventEmitterService.emit(deleteReactionInternalEvent);
   }
 }

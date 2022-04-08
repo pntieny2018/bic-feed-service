@@ -104,7 +104,11 @@ export class CreateReactionService {
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
-      this._commonReactionService.createEvent(userSharedDto, reactionDto, post.toJSON());
+      this._commonReactionService.createCreateReactionEvent(
+        userSharedDto,
+        reactionDto,
+        post.toJSON()
+      );
 
       return reactionDto;
     } catch (e) {
@@ -178,7 +182,7 @@ export class CreateReactionService {
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
 
-      this._commonReactionService.createEvent(
+      this._commonReactionService.createCreateReactionEvent(
         userSharedDto,
         reactionDto,
         post.toJSON(),

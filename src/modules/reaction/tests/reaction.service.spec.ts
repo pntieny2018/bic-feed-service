@@ -848,6 +848,7 @@ describe('ReactionService', () => {
         const postReactionModelFindOneSpy = jest
           .spyOn(postReactionModel, 'findOne')
           .mockResolvedValue(mockmockPostReactionModelFindOne);
+        jest.spyOn(commonReactionService, 'createDeleteReactionEvent').mockResolvedValue();
         expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
         expect(postReactionModelFindOneSpy).toBeCalledTimes(1);
       });
@@ -911,6 +912,7 @@ describe('ReactionService', () => {
         const commentReactionModelFindOneSpy = jest
           .spyOn(commentReactionModel, 'findOne')
           .mockResolvedValue(mockmockCommentReactionModelFindOne);
+        jest.spyOn(commonReactionService, 'createDeleteReactionEvent').mockResolvedValue();
         expect(await deleteReactionService.deleteReaction(mockUserDto, input)).toEqual(true);
         expect(commentReactionModelFindOneSpy).toBeCalledTimes(1);
       });

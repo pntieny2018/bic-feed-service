@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { CreateReactionInternalEvent } from '../../events/reaction';
-import { CreateReactionEventPayload } from '../../events/reaction/payload';
+import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
+import { ReactionEventPayload } from '../../events/reaction/payload';
 import { NotificationService } from '../../notification';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 
@@ -15,14 +15,14 @@ export class ReactionListener {
   public onCreatedReactionEvent(event: CreateReactionInternalEvent): void {
     this._logger.log(event);
 
-    const createReactionEventPayload: CreateReactionEventPayload = {
+    const createReactionEventPayload: ReactionEventPayload = {
       reaction: event.payload.reaction,
       post: event.payload.post,
       comment: event.payload.comment,
     };
 
-    const kafkaCreatedReactionMessage: NotificationPayloadDto<CreateReactionEventPayload> = {
-      key: `${createReactionEventPayload.post.id}`,
+    const kafkaCreateReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
+      key: event.getEventName(),
       value: {
         actor: event.payload.userSharedDto,
         event: event.getEventName(),
@@ -30,8 +30,26 @@ export class ReactionListener {
       },
     };
 
-    this._notificationService.publishReactionNotification<CreateReactionEventPayload>(
-      kafkaCreatedReactionMessage
+    this._notificationService.publishReactionNotification<ReactionEventPayload>(
+      kafkaCreateReactionMessage
+    );
+  }
+
+  @On(DeleteReactionInternalEvent)
+  public onDeleteReactionEvent(event: DeleteReactionInternalEvent): void {
+    const deleteReactionEventPayload: ReactionEventPayload = {
+      reaction: event.payload.reaction,
+    };
+    const kafkaDeleteReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
+      key: event.getEventName(),
+      value: {
+        actor: event.payload.userSharedDto,
+        event: event.getEventName(),
+        data: deleteReactionEventPayload,
+      },
+    };
+    this._notificationService.publishReactionNotification<ReactionEventPayload>(
+      kafkaDeleteReactionMessage
     );
   }
 }
