@@ -12,6 +12,9 @@ export const getDatabaseConfig = (): IDatabaseConfig => ({
   isDebug: process.env.DB_DEBUG,
   ssl: process.env.DB_SSL === 'true',
   pool: {
-    idle: 5,
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
   },
 });

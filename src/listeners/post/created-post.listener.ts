@@ -1,4 +1,4 @@
-import { NotificationService } from './../../notification/notification.service';
+import { NotificationService } from '../../notification';
 import { Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { OnEvent } from '@nestjs/event-emitter';

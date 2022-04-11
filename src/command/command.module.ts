@@ -13,6 +13,7 @@ import { CommentModule } from '../modules/comment';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { InternalEventEmitterModule } from '../app/custom/event-emitter';
+import { FeedPublisherModule } from '../modules/feed-publisher';
 
 @Module({
   imports: [
@@ -47,13 +48,14 @@ import { InternalEventEmitterModule } from '../app/custom/event-emitter';
     }),
     InternalEventEmitterModule,
     DatabaseModule,
-    CommentModule,
-    PostModule,
-    MediaModule,
-    UserModule,
-    GroupModule,
-    MentionModule,
+    FeedPublisherModule,
+    // CommentModule,
+    // PostModule,
+    // MediaModule,
+    // UserModule,
+    // GroupModule,
+    // MentionModule,
   ],
-  providers: [SeedCommand, SequelizeTinkerCommand],
+  providers: [SequelizeTinkerCommand],
 })
 export class CommandModule {}
