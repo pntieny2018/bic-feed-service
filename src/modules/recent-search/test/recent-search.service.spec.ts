@@ -13,6 +13,7 @@ import { mockedRecentSearchList } from './mocks/recent-search-list.mock';
 import { HttpException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { SentryService } from '@app/sentry';
+import { OrderEnum } from '../../../common/dto';
 
 describe('RecentSearchService', () => {
   let recentSearchService: RecentSearchService;
@@ -236,44 +237,17 @@ describe('RecentSearchService', () => {
   describe('Get recent search', () => {
     const createdBy = 1;
     const defaultColumnSort = 'updatedAt';
-    const sort = 'desc';
-    it('Should return a list without any params', async () => {
-      const target = RecentSearchType.ALL;
-      const limit = DEFAULT_RECENT_SEARCH_ITEMS_NUMBER;
-
-      recentSearchModelMock.findAll.mockResolvedValueOnce(mockedRecentSearchList);
-
-      const result = await recentSearchService.get(createdBy, {});
-      expect(result).toStrictEqual(
-        plainToClass(
-          RecentSearchesDto,
-          {
-            target,
-            recentSearches: mockedRecentSearchList,
-          },
-          { excludeExtraneousValues: true }
-        )
-      );
-
-      const queryArgFindUsers: any = recentSearchModelMock.findAll.mock.calls[0][0];
-      expect(queryArgFindUsers.limit).toBe(limit);
-      expect(queryArgFindUsers.where).toStrictEqual({
-        createdBy,
-      });
-      expect(queryArgFindUsers.order).toStrictEqual([[defaultColumnSort, sort]]);
-
-      recentSearchModelMock.findAll.mockClear();
-    });
-
+    const sort = OrderEnum.DESC;
     it('Should be return empty list', async () => {
       const target = 'post' as RecentSearchType;
+      const order = OrderEnum.DESC
       const limit = 2;
 
       recentSearchModelMock.findAll.mockResolvedValueOnce([]);
 
       const result = await recentSearchService.get(createdBy, {
         limit,
-        sort,
+        order,
         target,
       });
       expect(result).toStrictEqual(

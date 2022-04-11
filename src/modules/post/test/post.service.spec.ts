@@ -589,7 +589,7 @@ describe('PostService', () => {
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 
-      expect(result.data[0]).toBeInstanceOf(PostResponseDto);
+      expect(result.list[0]).toBeInstanceOf(PostResponseDto);
     });
     it('Should return []', async () => { 
       const searchDto: SearchPostsDto = {
@@ -602,7 +602,7 @@ describe('PostService', () => {
       expect(elasticSearchService.search).not.toBeCalled();
       expect(result).toBeInstanceOf(PageDto);
   
-      expect(result.data).toStrictEqual([]);
+      expect(result.list).toStrictEqual([]);
     });
   });
   describe('getPayloadSearch', () => {
@@ -824,7 +824,7 @@ describe('PostService', () => {
       expect(postService.bindAudienceToPost).toBeCalledWith([postData]); 
       expect(result).toBeInstanceOf(PageDto);
 
-      expect(result.data[0]).toBeInstanceOf(PostResponseDto);
+      expect(result.list[0]).toBeInstanceOf(PostResponseDto);
     });
 
   });

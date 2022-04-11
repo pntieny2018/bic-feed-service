@@ -172,7 +172,7 @@ export class PostResponseDto {
 
   //@ApiProperty({ type: PageDto<CommentResponseDto>, isArray: true })
   @Expose()
-  public comments: PageDto<CommentResponseDto>;
+  public comments?: PageDto<CommentResponseDto>;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
