@@ -291,8 +291,8 @@ describe('CommentService', () => {
           commentModel.findOne.mockResolvedValue(null);
 
           await commentService.update(authUserNotInGroupContainPostMock, 1, {
-            data: {
-              content: 'create text comment',
+            content: 'create text comment',
+            media: {
               files: [],
               images: [],
               videos: [],
@@ -341,8 +341,8 @@ describe('CommentService', () => {
             throw new ForbiddenException('You do not have permission to perform this action !');
           });
           await commentService.update(authUserNotInGroupContainPostMock, 1, {
-            data: {
-              content: 'create text comment',
+            content: 'create text comment',
+            media: {
               files: [],
               images: [],
               videos: [],
@@ -711,9 +711,9 @@ describe('CommentService', () => {
 
           expect(response).toBeInstanceOf(PageDto);
 
-          expect(response.data[0]).toBeInstanceOf(CommentResponseDto);
+          expect(response.list[0]).toBeInstanceOf(CommentResponseDto);
 
-          expect(response.data[0]).toEqual(expectResponse);
+          expect(response.list[0]).toEqual(expectResponse);
         } catch (e) {
           throw e;
         }

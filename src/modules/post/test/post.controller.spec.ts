@@ -150,7 +150,7 @@ describe('PostController', () => {
       expect(eventEmitter.emit).toBeCalledTimes(1);
       expect(eventEmitter.emit).toBeCalledWith(
         DeletedPostEvent.event,
-        new DeletedPostEvent(mockedPostDeleted)
+        new DeletedPostEvent(mockedPostDeleted, mockedUserAuth)
       );
     });
   });
