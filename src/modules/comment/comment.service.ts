@@ -29,7 +29,9 @@ import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@ne
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { CommonReactionService, DeleteReactionService } from '../reaction/services';
+import { PostModel } from '../../database/models/post.model';
+import { ExceptionHelper } from '../../common/helpers';
+import { DeleteReactionService } from '../reaction/services';
 
 @Injectable()
 export class CommentService {
@@ -68,14 +70,33 @@ export class CommentService {
         createCommentDto
       )},replyId: ${replyId} `
     );
-    const post = await this._postService.findPost({
-      postId: createCommentDto.postId,
-    });
+
+    let post;
+
+    if (replyId > 0) {
+      const parentComment = await this._commentModel.findOne({
+        include: [{ model: PostModel, as: 'post' }],
+        where: {
+          id: replyId,
+        },
+      });
+      post = parentComment.post;
+
+      if (!parentComment || !post) {
+        ExceptionHelper.throwBadRequestException(`Reply comment not found`);
+      }
+    } else {
+      post = await this._postService.findPost({
+        postId: createCommentDto.postId,
+      });
+    }
+
     // check user can access
     this._authorityService.allowAccess(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
+
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const comment = await this._commentModel.create({
@@ -307,6 +328,7 @@ export class CommentService {
    * Get comment list
    * @param user UserDto
    * @param getCommentDto GetCommentDto
+   * @param checkAccess Boolean
    * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getComments(
@@ -522,10 +544,9 @@ export class CommentService {
    * @returns Promise resolve number
    */
   public async getCommentCountByPost(postId: number): Promise<number> {
-    const count = await this._commentModel.count({
+    return await this._commentModel.count({
       where: { postId },
     });
-    return count;
   }
 
   /**

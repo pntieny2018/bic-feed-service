@@ -1,4 +1,4 @@
-import { CommentService } from './../../modules/comment/comment.service';
+import { CommentService } from '../../modules/comment';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,

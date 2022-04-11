@@ -5,6 +5,7 @@ import { PostReactionModel } from '../../../database/models/post-reaction.model'
 import { UserDto } from '../../auth';
 import { DeleteReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
+import { CommonReactionService } from './common-reaction.service';
 
 @Injectable()
 export class DeleteReactionService {
@@ -13,7 +14,8 @@ export class DeleteReactionService {
   public constructor(
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
-    private readonly _commentReactionModel: typeof CommentReactionModel
+    private readonly _commentReactionModel: typeof CommentReactionModel,
+    private readonly _commonReactionService: CommonReactionService
   ) {}
 
   /**
@@ -68,6 +70,13 @@ export class DeleteReactionService {
         },
       });
 
+      await this._commonReactionService.createDeleteReactionEvent(userId, {
+        userId: userId,
+        reactionName: existedReaction.reactionName,
+        target: ReactionEnum.POST,
+        targetId: existedReaction.postId,
+      });
+
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
@@ -108,6 +117,13 @@ export class DeleteReactionService {
         },
       });
 
+      await this._commonReactionService.createDeleteReactionEvent(userId, {
+        userId: userId,
+        reactionName: existedReaction.reactionName,
+        target: ReactionEnum.COMMENT,
+        targetId: existedReaction.commentId,
+      });
+
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
@@ -117,8 +133,7 @@ export class DeleteReactionService {
 
   /**
    * Delete reaction by commentIds
-   * @param userId number
-   * @param deleteReactionDto DeleteReactionDto
+   * @param commentIds number[]
    * @returns Promise resolve boolean
    * @throws HttpException
    */

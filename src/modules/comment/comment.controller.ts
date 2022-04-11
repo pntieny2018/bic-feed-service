@@ -23,6 +23,7 @@ import { CommentResponseDto } from './dto/response/comment.response.dto';
 @ApiTags('Comment')
 @ApiSecurity('authorization')
 @Controller({
+  version: APP_VERSION,
   path: 'comments',
 })
 export class CommentController {

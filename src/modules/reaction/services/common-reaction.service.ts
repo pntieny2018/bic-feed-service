@@ -5,7 +5,8 @@ import { CommentReactionModel } from '../../../database/models/comment-reaction.
 import { IComment } from '../../../database/models/comment.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { IPost } from '../../../database/models/post.model';
-import { CreateReactionInternalEvent } from '../../../events/reaction';
+import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../../events/reaction';
+import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CreateReactionDto } from '../dto/request';
@@ -16,7 +17,8 @@ export class CommonReactionService {
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _internalEventEmitterService: InternalEventEmitterService
+    private readonly _internalEventEmitterService: InternalEventEmitterService,
+    private readonly _userService: UserService
   ) {}
 
   /**
@@ -62,14 +64,14 @@ export class CommonReactionService {
   }
 
   /**
-   * Create event
+   * Create create-reaction event
    * @param userSharedDto UserSharedDto
    * @param reaction ReactionDto
    * @param post IPost
    * @param comment IComment
    * @returns void
    */
-  public createEvent(
+  public createCreateReactionEvent(
     userSharedDto: UserSharedDto,
     reaction: ReactionDto,
     post: IPost,
@@ -83,5 +85,20 @@ export class CommonReactionService {
     });
 
     this._internalEventEmitterService.emit(createReactionInternalEvent);
+  }
+
+  /**
+   * Create delete-reaction event
+   * @param userId number
+   * @param reaction ReactionDto
+   * @returns Promise resolve void
+   */
+  public async createDeleteReactionEvent(userId: number, reaction: ReactionDto): Promise<void> {
+    const userSharedDto = await this._userService.get(userId);
+    const deleteReactionInternalEvent = new DeleteReactionInternalEvent({
+      userSharedDto: userSharedDto,
+      reaction: reaction,
+    });
+    this._internalEventEmitterService.emit(deleteReactionInternalEvent);
   }
 }

@@ -15,6 +15,8 @@ import { FeedGeneratorModule } from '../modules/feed-generator';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
+import { AppController } from './app.controller';
+import { FeedPublisherModule } from '../modules/feed-publisher';
 
 @Module({
   imports: [
@@ -34,13 +36,15 @@ import { RecentSearchModule } from '../modules/recent-search';
     RecentSearchModule,
     NotificationModule,
     FeedGeneratorModule,
+    FeedPublisherModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(AuthMiddleware)
-      .exclude('/api/document/**', '/api/health-check', '/api/')
+      .exclude('/api/health-check', 'api/v1/follows', 'api/v1/app')
       .forRoutes('*');
   }
 }

@@ -105,7 +105,7 @@ export class PostService {
 
     await this.bindActorToPost(posts);
     await this.bindAudienceToPost(posts);
-   // console.log('posts=', JSON.stringify(posts, null, 4));
+    // console.log('posts=', JSON.stringify(posts, null, 4));
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
@@ -618,7 +618,7 @@ export class PostService {
     const postTable = PostModel.tableName;
     const commentTable = CommentModel.tableName;
     const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
-      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = 19
+      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = ${postId}
     );`;
     await this._sequelizeConnection.query(query, {
       replacements: {
@@ -793,5 +793,21 @@ export class PostService {
       throw new BadRequestException('The post does not exist !');
     }
     return post.toJSON();
+  }
+
+  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<number[]> {
+    try {
+      const posts = await this._postGroupModel.findAll({
+        where: {
+          groupId: groupId,
+        },
+        limit: take,
+        order: ['createdAt', 'DESC'],
+      });
+      return posts.map((p) => p.postId);
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      return [];
+    }
   }
 }

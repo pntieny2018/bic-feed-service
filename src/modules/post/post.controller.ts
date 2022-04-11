@@ -1,4 +1,4 @@
-import { PageDto } from './../../common/dto/pagination/page.dto';
+import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
 import {
   Controller,
@@ -10,15 +10,14 @@ import {
   ParseIntPipe,
   Put,
   Query,
-  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiSecurity, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { PostService } from './post.service';
-import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
-import { UpdatePostDto } from './dto/requests/update-post.dto';
+import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
 import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { APP_VERSION } from '../../common/constants';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CreatedPostEvent,
@@ -29,7 +28,10 @@ import {
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
-@Controller('posts')
+@Controller({
+  version: APP_VERSION,
+  path: 'posts',
+})
 export class PostController {
   public constructor(private _postService: PostService, private _eventEmitter: EventEmitter2) {}
 
