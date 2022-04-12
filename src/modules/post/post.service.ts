@@ -226,7 +226,26 @@ export class PostService {
       };
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      body['sort'] = [{ _score: 'desc' }, { createdAt: 'desc' }];
+      body['sort'] = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          _script: {
+            type: 'number',
+            script: {
+              lang: 'painless',
+              source:
+                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+              params: {
+                time: Date.now(),
+              },
+            },
+            order: 'desc',
+          },
+        },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        { _score: 'desc' },
+        { createdAt: 'desc' },
+      ];
     } else {
       //body['sort'] = [];
       body['sort'] = [

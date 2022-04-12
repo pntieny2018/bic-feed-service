@@ -31,9 +31,10 @@ export class SearchPostsDto extends PageOptionsDto {
     type: Boolean,
     description: 'Important',
     required: false,
+    default: null,
   })
-  @IsOptional()
   @Transform(({ value }) => value == 'true')
+  @IsOptional()
   @IsBoolean()
   public important?: boolean;
 
