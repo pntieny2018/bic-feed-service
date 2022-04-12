@@ -196,7 +196,7 @@ describe('PostService', () => {
     it('Create post successfully', async () => {
       const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
       const { files, videos, images } = mockedCreatePostDto.media;
-      const groupIds = mockedCreatePostDto.audience.groups.map((i) => i.id)
+      const {groupIds} = mockedCreatePostDto.audience;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
 
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
@@ -295,7 +295,7 @@ describe('PostService', () => {
     it('Update post successfully', async () => {
       const { files, videos, images } = mockedUpdatePostDto.media;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
-      const groupIds = mockedUpdatePostDto.audience.groups.map((i) => i.id);
+      const { groupIds } = mockedUpdatePostDto.audience;
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);

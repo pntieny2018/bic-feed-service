@@ -441,8 +441,7 @@ export class PostService {
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
       }
-      const { groups } = audience;
-      const groupIds = groups.map((i) => i.id);
+      const { groupIds } = audience;
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
         throw new BadRequestException('You can not create post in this groups');
@@ -518,8 +517,7 @@ export class PostService {
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
 
-      const { groups } = audience;
-      const groupIds = groups.map((i) => i.id);
+      const { groupIds } = audience;
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
         throw new BadRequestException('You can not create post in this groups');

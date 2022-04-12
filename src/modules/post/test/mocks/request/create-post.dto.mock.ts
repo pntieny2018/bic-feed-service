@@ -29,14 +29,8 @@ export const mockedCreatePostDto: CreatePostDto = {
     },
   ],
   audience: {
-    users: [],
-    groups: [
-      {
-        id: 1,
-        name: 'abcd',
-        icon: 'aaaa',
-      },
-    ],
+    userIds: [],
+    groupIds: [1],
   },
   isDraft: true,
 };
