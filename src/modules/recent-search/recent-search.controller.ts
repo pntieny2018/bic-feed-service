@@ -6,10 +6,14 @@ import { CleanRecentSearchesDto } from './dto/requests/clean-recent-searches.dto
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { Controller, Delete, Get, Post, Query, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { AuthUser, UserDto } from '../auth';
+import { APP_VERSION } from '../../common/constants';
 
 @ApiSecurity('authorization')
 @ApiTags('Recent Searches')
-@Controller('recent-searches')
+@Controller({
+  path: 'recent-searches',
+  version: APP_VERSION,
+})
 export class RecentSearchController {
   public constructor(private _recentSearchService: RecentSearchService) {}
 
