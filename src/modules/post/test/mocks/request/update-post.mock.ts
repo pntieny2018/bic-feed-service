@@ -24,13 +24,7 @@ export const mockedUpdatePostDto: UpdatePostDto = {
     },
   ],
   audience: {
-    groups: [
-      {
-        id: 1,
-        name: 'abcd',
-        icon: 'aaaa',
-      },
-    ],
+    groupIds: [1],
   },
   isDraft: false,
 };

@@ -1,5 +1,4 @@
 import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
-import { AudienceDto } from './../common/audience.dto';
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -12,24 +11,21 @@ import {
 } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
+import { AudienceRequestDto } from './audience.request.dto';
 
 export class CreatePostDto {
   @ApiProperty({
     description: 'Audience',
-    type: AudienceDto,
+    type: AudienceRequestDto,
     example: {
-      users: [],
-      groups: [
-        {
-          id: 1,
-        },
-      ],
+      userIds: [],
+      groupIds: [1],
     },
   })
   @IsNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => AudienceDto)
-  public audience: AudienceDto;
+  @Type(() => AudienceRequestDto)
+  public audience: AudienceRequestDto;
 
   @ApiProperty({
     description: 'Content of post',

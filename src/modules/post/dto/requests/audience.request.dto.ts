@@ -4,28 +4,26 @@ import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, ValidateNested } from '
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { GroupSharedDto } from '../../../../shared/group/dto/group-shared.dto';
 
-export class AudienceDto {
+export class AudienceRequestDto {
   @ApiProperty({
     default: [],
-    type: UserSharedDto,
+    type: Number,
     required: false,
     isArray: true,
     description: 'Array of user',
   })
   @IsOptional()
   @IsArray()
-  @Type(() => UserSharedDto)
   @ValidateNested({ each: true })
-  public users?: UserSharedDto[] = [];
+  public userIds?: number[] = [];
 
   @ApiProperty({
-    type: GroupSharedDto,
+    type: Number,
     isArray: true,
     description: 'Array of group',
   })
   @ValidateNested({ each: true })
   @IsNotEmpty()
   @ArrayNotEmpty()
-  @Type(() => GroupSharedDto)
-  public groups: GroupSharedDto[];
+  public groupIds: number[];
 }

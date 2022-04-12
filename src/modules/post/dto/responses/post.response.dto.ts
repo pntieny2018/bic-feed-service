@@ -8,7 +8,7 @@ import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
-import { AudienceDto } from '../common/audience.dto';
+import { AudienceResponseDto } from './audience.response.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -159,10 +159,10 @@ export class PostResponseDto {
   public createdBy: number;
 
   @ApiProperty({
-    type: AudienceDto,
+    type: AudienceResponseDto,
   })
   @Expose()
-  public audience: AudienceDto;
+  public audience: AudienceResponseDto;
 
   @ApiProperty({
     type: [ReactionResponseDto],
