@@ -559,8 +559,11 @@ export class CommentService {
       where: { postId },
     });
     const commentIds = comments.map((i) => i.id);
-    this._mediaService.deleteMediaByEntityIds(commentIds, EntityType.COMMENT);
-    this._mentionService.deleteMentionByEntityIds(commentIds, MentionableType.COMMENT);
-    this._deleteReactionService.deleteReactionByCommentIds(commentIds);
+    await this._mediaService.deleteMediaByEntityIds(commentIds, EntityType.COMMENT);
+    await this._mentionService.deleteMentionByEntityIds(commentIds, MentionableType.COMMENT);
+    await this._deleteReactionService.deleteReactionByCommentIds(commentIds);
+    await this._commentModel.destroy({
+      where: { id: commentIds },
+    });
   }
 }
