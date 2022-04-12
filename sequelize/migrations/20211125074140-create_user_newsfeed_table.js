@@ -20,7 +20,6 @@ module.exports = {
         post_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
-          references: { model: 'posts', key: 'id' },
         },
         created_at: {
           type: Sequelize.DATE,
@@ -32,7 +31,7 @@ module.exports = {
         schema: schemaName,
       }
     );
-    await queryInterface.addIndex('user_post_index', ['user_id', 'post_id'], {
+    await queryInterface.addIndex(tableName, 'user_post_index', ['user_id', 'post_id'], {
       unique: true,
     });
   },

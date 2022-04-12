@@ -28,6 +28,7 @@ import { CommentResponseDto } from '../dto/response/comment.response.dto';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
 import { getCommentMock, getCommentRawMock, getCommentsMock } from './mocks/get-comments.mock';
+import { DeleteReactionService } from '../../reaction/services';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -40,6 +41,7 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
+  let deleteReactionService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -104,6 +106,12 @@ describe('CommentService', () => {
             getMany: jest.fn(),
             bindUserToComment: jest.fn(),
           },
+        },
+        {
+          provide: DeleteReactionService,
+          useValue: {
+            deleteReactionByCommentIds: jest.fn()
+          }
         },
         {
           provide: Sequelize,
@@ -559,7 +567,7 @@ describe('CommentService', () => {
 
       authorityService.allowAccess.mockReturnThis();
 
-      mediaService.destroyCommentMedia.mockResolvedValue({});
+      mediaService.sync.mockResolvedValue({});
 
       mentionService.destroy.mockResolvedValue({});
 
@@ -572,7 +580,7 @@ describe('CommentService', () => {
       expect(commentModel.findOne).toBeCalled();
       expect(postService.findPost).toBeCalled();
       expect(authorityService.allowAccess).toBeCalled();
-      expect(mediaService.destroyCommentMedia).toBeCalled();
+      expect(mediaService.sync).toBeCalled();
       expect(mentionService.destroy).toBeCalled();
       // expect(trxCommit).toBeCalled();
       expect(deletedFlag).toBeTruthy();
@@ -601,7 +609,7 @@ describe('CommentService', () => {
 
       authorityService.allowAccess.mockReturnValue({});
 
-      mediaService.destroyCommentMedia.mockReturnValue(Promise.resolve());
+      mediaService.sync.mockReturnValue(Promise.resolve());
 
       mentionService.destroy.mockReturnValue(Promise.resolve());
 
@@ -614,7 +622,7 @@ describe('CommentService', () => {
       expect(commentModel.findOne).toBeCalled();
       expect(postService.findPost).toBeCalled();
       expect(authorityService.allowAccess).toBeCalled();
-      expect(mediaService.destroyCommentMedia).toBeCalled();
+      expect(mediaService.sync).toBeCalled();
       expect(mentionService.destroy).toBeCalled();
       expect(loggerSpy).toBeCalled();
       // expect(trxRollback).toBeCalled();
