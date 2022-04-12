@@ -3,6 +3,7 @@ import {
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
+
 import { Op } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
@@ -14,6 +15,7 @@ import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
+import { CommentResponseDto } from './dto/response';
 import { EntityType } from '../media/media.constants';
 import { MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
@@ -24,14 +26,16 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
-import { CommentResponseDto } from './dto/response/comment.response.dto';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { ExceptionHelper } from '../../common/helpers';
 import { DeleteReactionService } from '../reaction/services';
+import { getDatabaseConfig } from '../../config/database';
+import { FollowModel } from '../../database/models/follow.model';
+import { FollowService } from '../follow';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class CommentService {
@@ -50,7 +54,8 @@ export class CommentService {
     private _deleteReactionService: DeleteReactionService,
     private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
-    @InjectModel(CommentModel) private _commentModel: typeof CommentModel
+    @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
+    private _followService: FollowService
   ) {}
 
   /**
@@ -72,19 +77,26 @@ export class CommentService {
     );
 
     let post;
-
+    let isReply = false;
     if (replyId > 0) {
+      isReply = true;
       const parentComment = await this._commentModel.findOne({
-        include: [{ model: PostModel, as: 'post' }],
+        include: [
+          { model: PostModel, as: 'post' },
+          {
+            model: MentionModel,
+            as: 'mentions',
+          },
+        ],
         where: {
           id: replyId,
         },
       });
-      post = parentComment.post;
 
-      if (!parentComment || !post) {
+      if (!parentComment || !parentComment.post) {
         ExceptionHelper.throwBadRequestException(`Reply comment not found`);
       }
+      post = parentComment.toJSON().post;
     } else {
       post = await this._postService.findPost({
         postId: createCommentDto.postId,
@@ -143,8 +155,9 @@ export class CommentService {
 
       this._eventEmitter.emit(
         new CommentHasBeenCreatedEvent({
-          comment: comment,
+          isReply: isReply,
           post: post,
+          commentResponse: commentResponse,
         })
       );
 
@@ -195,6 +208,8 @@ export class CommentService {
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
 
+    const oldComment = comment.toJSON();
+
     const transaction = await this._sequelizeConnection.transaction();
 
     try {
@@ -229,8 +244,10 @@ export class CommentService {
 
       this._eventEmitter.emit(
         new CommentHasBeenUpdatedEvent({
-          comment: comment,
+          newComment: comment.toJSON(),
+          oldComment: oldComment,
           post: post,
+          commentResponse: commentResponse,
         })
       );
 
@@ -487,13 +504,15 @@ export class CommentService {
         commentId: commentId,
       });
 
+      await this._deleteReactionService.deleteReactionByCommentIds([commentId]);
+
       await comment.destroy();
 
       await transaction.commit();
 
       this._eventEmitter.emit(
         new CommentHasBeenDeletedEvent({
-          comment: comment,
+          comment: comment.toJSON(),
           post: post,
         })
       );
@@ -559,11 +578,281 @@ export class CommentService {
       where: { postId },
     });
     const commentIds = comments.map((i) => i.id);
-    await this._mediaService.deleteMediaByEntityIds(commentIds, EntityType.COMMENT);
-    await this._mentionService.deleteMentionByEntityIds(commentIds, MentionableType.COMMENT);
-    await this._deleteReactionService.deleteReactionByCommentIds(commentIds);
+
+    this._mediaService
+      .deleteMediaByEntityIds(commentIds, EntityType.COMMENT)
+      .catch((ex) => this._logger.error(ex, ex.stack));
+    this._mentionService
+      .deleteMentionByEntityIds(commentIds, MentionableType.COMMENT)
+      .catch((ex) => this._logger.error(ex, ex.stack));
+    this._deleteReactionService
+      .deleteReactionByCommentIds(commentIds)
+      .catch((ex) => this._logger.error(ex, ex.stack));
     await this._commentModel.destroy({
       where: { id: commentIds },
     });
+  }
+
+  /**
+   * Get recipient when updated comment
+   * @param oldMentions Array<Number>
+   * @param newMentions Array<Number>
+   * @protected
+   */
+  public async getRecipientWhenUpdatedComment(
+    oldMentions: number[] = [],
+    newMentions: number[] = []
+  ): Promise<{
+    mentionedUserIds: number[];
+  }> {
+    const validMentionUserIds = newMentions.filter((userId) => !oldMentions.includes(userId));
+
+    return {
+      mentionedUserIds: validMentionUserIds,
+    };
+  }
+
+  /**
+   * Get recipient when reply to comment.
+   *** I'll be executed when the listeners handle comment created post.
+   * @param userId Number
+   * @param groupIds Array<Number>
+   * @param parentId Number
+   * @param currentMentionedUserIds Array<Number>
+   * @param limit Number
+   * @protected
+   * @returns Promise {commentedUserIds: number[];mentionedUserIds: number[]; }
+   */
+  public async getRecipientWhenRepliedComment(
+    userId: number,
+    groupIds: number[],
+    parentId: number,
+    currentMentionedUserIds: number[],
+    limit = 50
+  ): Promise<{
+    parentCommentActor: number;
+    currentMentionedUserIds: number[];
+    parentMentionedUserIds: number[];
+    repliedUserIds: number[];
+    mentionedInRepliedCommentUserIds: number[];
+  }> {
+    const { schema } = getDatabaseConfig();
+
+    const parentComment = await this._commentModel.findOne({
+      include: [
+        {
+          model: MentionModel,
+          required: true,
+        },
+      ],
+      where: {
+        id: parentId,
+        createdBy: {
+          [Op.in]: Sequelize.literal(
+            `( select user_id from ${schema}.${
+              FollowModel.tableName
+            } where group_id in (${groupIds.join(',')}) )`
+          ),
+        },
+      },
+    });
+
+    const recentComments = await this._commentModel.findAll({
+      include: [
+        {
+          model: MentionModel,
+          required: true,
+        },
+      ],
+      where: {
+        parentId: parentComment.id,
+        createdBy: {
+          [Op.in]: Sequelize.literal(
+            `( select user_id from ${schema}.${
+              FollowModel.tableName
+            } where group_id in (${groupIds.join(',')}) )`
+          ),
+        },
+      },
+      order: [['createdAt', 'DESC']],
+      limit,
+    });
+    const parentMentionedUserIds = parentComment.mentions.map((m) => m.userId);
+
+    const mentionedInRepliedCommentUserIds: number[] = [];
+
+    const repliedUserIds = recentComments.map((c) => {
+      mentionedInRepliedCommentUserIds.push(...c.mentions.map((m) => m.userId));
+      return c.createdBy;
+    });
+
+    // priority
+    //  1. mentioned you in a comment.
+    //  2. replied to a comment you're mentioned.
+    //  3. also replied to a comment you replied.
+    //  4. replied to a comment you're mentioned.
+
+    const ignoreUserId: number[] = [userId, parentComment.createdBy, ...currentMentionedUserIds];
+
+    const filterParentMentionedUserIds = parentMentionedUserIds.filter((userId) => {
+      return !ignoreUserId.includes(userId);
+    });
+    ignoreUserId.push(...filterParentMentionedUserIds);
+
+    const filterRepliedUserIds = repliedUserIds.filter((userId) => {
+      return !ignoreUserId.includes(userId);
+    });
+
+    ignoreUserId.push(...filterRepliedUserIds);
+
+    const filterMentionedInRepliedCommentUserIds = mentionedInRepliedCommentUserIds.filter(
+      (userId) => {
+        return !ignoreUserId.includes(userId);
+      }
+    );
+
+    return {
+      parentCommentActor: parentComment.createdBy,
+      currentMentionedUserIds: [...new Set(currentMentionedUserIds)],
+      parentMentionedUserIds: [...new Set(filterParentMentionedUserIds)],
+      repliedUserIds: [...new Set(filterRepliedUserIds)],
+      mentionedInRepliedCommentUserIds: [...new Set(filterMentionedInRepliedCommentUserIds)],
+    };
+  }
+
+  /**
+   * Get recipient when reply to comment.
+   *** I'll be executed when the listeners handle comment created post.
+   * @param userId Number
+   * @param parentId Number
+   * @param currentMentionedUserIds Array<Number>
+   * @param post PostResponseDto
+   * @param limit Number
+   * @protected
+   * @returns Promise {postOwnerId: number;mentionedPostUserId: number[]; rootCommentedUserIds: number[];rootMentionedUserIds: number[];}
+   */
+  public async getRecipientWhenCreatedCommentForPost(
+    userId: number,
+    parentId: number,
+    currentMentionedUserIds: number[],
+    post: IPost,
+    limit = 50
+  ): Promise<{
+    postOwnerId: number;
+    mentionedPostUserId: number[];
+    rootCommentedUserIds: number[];
+    rootMentionedUserIds: number[];
+    currentMentionedUserIds: number[];
+  }> {
+    this._logger.debug(`[getRecipientWhenCreatedCommentForPost] ${JSON.stringify(post)}`);
+    try {
+      const { schema } = getDatabaseConfig();
+
+      const groupIds = post.groups.map((g) => g.groupId);
+
+      // get app comments. Ignore user request
+      const rootComments = await this._commentModel.findAll({
+        include: [
+          {
+            model: MentionModel,
+            required: false,
+          },
+        ],
+        where: {
+          parentId: 0,
+          postId: post.id,
+          createdBy: {
+            [Op.in]: Sequelize.literal(
+              `( select user_id from ${schema}.${
+                FollowModel.tableName
+              } where group_id in (${groupIds.join(',')}) )`
+            ),
+          },
+        },
+        order: [['createdAt', 'DESC']],
+        limit,
+      });
+
+      let rootMentionedUserIds: number[] = [];
+
+      const rootCommentedUserIds: number[] = [];
+
+      rootComments.forEach((comment) => {
+        comment = comment.toJSON();
+        if (!comment.mentions) {
+          comment.mentions = [];
+        }
+        const mentionedUserInComment = comment.mentions
+          .map((m) => m.userId)
+          .filter((id) => id != userId && id != post.createdBy);
+
+        rootMentionedUserIds.push(...mentionedUserInComment);
+        if (comment.createdBy != userId && comment.createdBy != post.createdBy) {
+          rootCommentedUserIds.push(comment.createdBy);
+        }
+      });
+
+      rootMentionedUserIds = rootMentionedUserIds.filter(
+        (id) => !currentMentionedUserIds.includes(id)
+      );
+
+      const mentionedUserIdsPost = post.mentions.map((m) => m.userId);
+
+      const ignoreUserId = await this._followService.getUsersNotInGroups(
+        [post.createdBy, ...mentionedUserIdsPost],
+        groupIds
+      );
+      ignoreUserId.push(userId);
+
+      let postOwner = post.createdBy;
+
+      if (ignoreUserId.includes(post.createdBy)) {
+        postOwner = null;
+      }
+      // priority
+      //  1. mentioned you in a comment.
+      //  2. commented to a post you're mentioned.
+      //  3. also commented on a post.
+      //  4. commented to a post you're mentioned.
+
+      const filterCurrentMentionedUserIds = currentMentionedUserIds.filter(
+        (userId) => !ignoreUserId.includes(userId)
+      );
+
+      ignoreUserId.push(...filterCurrentMentionedUserIds);
+
+      const filterMentionedPostUserId = mentionedUserIdsPost.filter((userId) => {
+        return !ignoreUserId.includes(userId);
+      });
+
+      ignoreUserId.push(...filterMentionedPostUserId);
+
+      const filterRootMentionedUserIds = rootMentionedUserIds.filter((userId) => {
+        return !ignoreUserId.includes(userId);
+      });
+
+      ignoreUserId.push(...filterRootMentionedUserIds);
+
+      const filterRootCommentedUserIds = rootCommentedUserIds.filter((userId) => {
+        return !ignoreUserId.includes(userId);
+      });
+
+      return {
+        postOwnerId: postOwner,
+        mentionedPostUserId: [...new Set(filterMentionedPostUserId)],
+        rootCommentedUserIds: [...new Set(filterRootCommentedUserIds)],
+        rootMentionedUserIds: [...new Set(filterRootMentionedUserIds)],
+        currentMentionedUserIds: [...new Set(filterCurrentMentionedUserIds)],
+      };
+    } catch (e) {
+      this._logger.error(e, e.stack);
+      return {
+        postOwnerId: null,
+        mentionedPostUserId: [],
+        rootCommentedUserIds: [],
+        rootMentionedUserIds: [],
+        currentMentionedUserIds: [],
+      };
+    }
   }
 }

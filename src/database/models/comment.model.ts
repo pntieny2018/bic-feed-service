@@ -110,7 +110,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       [StringHelper.camelToSnakeCase('mentionableType')]: MentionableType.COMMENT,
     },
   })
-  public mentions: MentionModel[];
+  public mentions: MentionModel[] = [];
 
   @HasMany(() => CommentModel, {
     foreignKey: {

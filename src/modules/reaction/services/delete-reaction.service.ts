@@ -136,6 +136,7 @@ export class DeleteReactionService {
    * @param commentIds number[]
    * @returns Promise resolve boolean
    * @throws HttpException
+   * @param commentIds
    */
   public async deleteReactionByCommentIds(commentIds: number[]): Promise<number> {
     return await this._commentReactionModel.destroy({
