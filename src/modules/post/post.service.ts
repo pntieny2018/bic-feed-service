@@ -125,7 +125,7 @@ export class PostService {
    * @returns
    */
   public async getPayloadSearch(
-    { startTime, endTime, content, actors, limit, offset }: SearchPostsDto,
+    { startTime, endTime, content, actors, important, limit, offset }: SearchPostsDto,
     groupIds: number[]
   ): Promise<{
     index: string;
@@ -158,6 +158,21 @@ export class PostService {
         terms: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           'audience.groups.id': groupIds,
+        },
+      });
+    }
+
+    if (important) {
+      body.query.bool.must.push({
+        term: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'setting.isImportant': true,
+        },
+      });
+      body.query.bool.must.push({
+        range: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'setting.importantExpiredAt': { gt: new Date().toISOString() },
         },
       });
     }
@@ -213,7 +228,25 @@ export class PostService {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       body['sort'] = [{ _score: 'desc' }, { createdAt: 'desc' }];
     } else {
-      body['sort'] = [{ createdAt: 'desc' }];
+      //body['sort'] = [];
+      body['sort'] = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          _script: {
+            type: 'number',
+            script: {
+              lang: 'painless',
+              source:
+                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+              params: {
+                time: Date.now(),
+              },
+            },
+            order: 'desc',
+          },
+        },
+        { createdAt: 'desc' },
+      ];
     }
 
     if (startTime || endTime) {
@@ -573,6 +606,9 @@ export class PostService {
     try {
       const post = await this._postModel.findByPk(postId);
       await this.checkPostExistAndOwner(post, authUserId);
+      if (post.content === null) {
+        throw new BadRequestException('Post content can not null');
+      }
       await this._postModel.update(
         {
           isDraft: false,

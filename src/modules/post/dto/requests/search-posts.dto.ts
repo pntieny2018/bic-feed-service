@@ -27,15 +27,15 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsString()
   public content?: string;
 
-  // @ApiProperty({
-  //   type: Boolean,
-  //   description: 'Important',
-  //   required: false,
-  // })
-  // @IsOptional()
-  // @Transform(({ value }) => value == 'true')
-  // @IsBoolean()
-  // public important?: boolean;
+  @ApiProperty({
+    type: Boolean,
+    description: 'Important',
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value == 'true')
+  @IsBoolean()
+  public important?: boolean;
 
   @ApiProperty({
     description: 'filter posts created_time > start_time',
