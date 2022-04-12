@@ -85,7 +85,7 @@ export class DeleteReactionService {
         throw new HttpException('Reaction not found.', HttpStatus.NOT_FOUND);
       }
 
-      throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -137,7 +137,7 @@ export class DeleteReactionService {
         throw new HttpException('Reaction not found.', HttpStatus.NOT_FOUND);
       }
 
-      throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 

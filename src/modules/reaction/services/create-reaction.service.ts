@@ -115,7 +115,7 @@ export class CreateReactionService {
       return plainToInstance(ReactionResponseDto, postReaction, { excludeExtraneousValues: true });
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -195,7 +195,7 @@ export class CreateReactionService {
       });
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
