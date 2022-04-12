@@ -140,7 +140,6 @@ export class FeedService {
     authUserId: number,
     getNewsFeedDto: GetNewsFeedDto
   ): Promise<PageDto<PostResponseDto>> {
-    //get child groups by groupId
     const { limit, offset } = getNewsFeedDto;
     const constraints = FeedService._getIdConstrains(getNewsFeedDto);
     const rows = await this._postModel.findAll<PostModel>({

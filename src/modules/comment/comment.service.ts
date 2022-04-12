@@ -578,6 +578,7 @@ export class CommentService {
       where: { postId },
     });
     const commentIds = comments.map((i) => i.id);
+
     this._mediaService
       .deleteMediaByEntityIds(commentIds, EntityType.COMMENT)
       .catch((ex) => this._logger.error(ex, ex.stack));
@@ -587,6 +588,9 @@ export class CommentService {
     this._deleteReactionService
       .deleteReactionByCommentIds(commentIds)
       .catch((ex) => this._logger.error(ex, ex.stack));
+    await this._commentModel.destroy({
+      where: { id: commentIds },
+    });
   }
 
   /**

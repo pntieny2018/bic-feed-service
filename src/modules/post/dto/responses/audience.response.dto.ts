@@ -4,7 +4,7 @@ import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, ValidateNested } from '
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { GroupSharedDto } from '../../../../shared/group/dto/group-shared.dto';
 
-export class AudienceDto {
+export class AudienceResponseDto {
   @ApiProperty({
     default: [],
     type: UserSharedDto,

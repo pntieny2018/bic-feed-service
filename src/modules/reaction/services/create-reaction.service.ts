@@ -1,20 +1,28 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreateReactionDto } from '../dto/request';
-import { PostReactionModel } from '../../../database/models/post-reaction.model';
-import { ReactionEnum } from '../reaction.enum';
-import { UserDto } from '../../auth';
-import { REACTION_KIND_LIMIT } from '../reaction.constant';
+import { plainToInstance } from 'class-transformer';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
-import { PostModel } from '../../../database/models/post.model';
-import { PostGroupModel } from '../../../database/models/post-group.model';
 import { CommentModel } from '../../../database/models/comment.model';
-import { UserService } from '../../../shared/user';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { PostReactionModel } from '../../../database/models/post-reaction.model';
+import { PostModel } from '../../../database/models/post.model';
 import { GroupService } from '../../../shared/group';
-import { CommonReactionService } from './common-reaction.service';
-import { ReactionDto } from '../dto/reaction.dto';
+import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../auth';
+import { ReactionDto } from '../dto/reaction.dto';
+import { CreateReactionDto } from '../dto/request';
+import { ReactionResponseDto } from '../dto/response';
+import { REACTION_KIND_LIMIT } from '../reaction.constant';
+import { ReactionEnum } from '../reaction.enum';
+import { CommonReactionService } from './common-reaction.service';
+import { LogicException } from '../../../common/exceptions';
 
 @Injectable()
 export class CreateReactionService {
@@ -45,7 +53,7 @@ export class CreateReactionService {
   public createReaction(
     userDto: UserDto,
     createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
+  ): Promise<ReactionResponseDto> {
     const { id } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
@@ -53,7 +61,7 @@ export class CreateReactionService {
       case ReactionEnum.COMMENT:
         return this._createCommentReaction(id, createReactionDto);
       default:
-        throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Reaction type not match.');
     }
   }
 
@@ -61,13 +69,13 @@ export class CreateReactionService {
    * Create post reaction
    * @param userId number
    * @param createReactionDto CreateReactionDto
-   * @returns Promise resolve boolean
+   * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createPostReaction(
     userId: number,
     createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
+  ): Promise<ReactionResponseDto> {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const isExistedPostReaction = await this._commonReactionService.isExistedPostReaction(
@@ -75,18 +83,18 @@ export class CreateReactionService {
         createReactionDto
       );
       if (isExistedPostReaction === true) {
-        throw new Error('Reaction is existed.');
+        throw new LogicException('Reaction is existed.');
       }
 
       const [canReact, post] = await this._canReactPost(postId);
       if (canReact === false) {
-        throw new Error('Post does not permit to react.');
+        throw new LogicException('Post does not permit to react.');
       }
 
       const userSharedDto = await this._userService.get(userId);
       const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
-        throw new Error("User is not in the post's groups");
+        throw new ForbiddenException("User is not in the post's groups");
       }
 
       const willExceedPostReactionKindLimit = await this._willExceedPostReactionKindLimit(
@@ -94,22 +102,26 @@ export class CreateReactionService {
         reactionName
       );
       if (willExceedPostReactionKindLimit === true) {
-        throw new Error('Exceed reaction kind limit on a post.');
+        throw new LogicException('Exceed reaction kind limit on a post.');
       }
 
-      await this._postReactionModel.create<PostReactionModel>({
+      const postReaction = await this._postReactionModel.create<PostReactionModel>({
         postId: postId,
         reactionName: reactionName,
         createdBy: userId,
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
-      this._commonReactionService.createEvent(userSharedDto, reactionDto, post.toJSON());
+      this._commonReactionService.createCreateReactionEvent(
+        userSharedDto,
+        reactionDto,
+        post.toJSON()
+      );
 
-      return reactionDto;
+      return plainToInstance(ReactionResponseDto, postReaction, { excludeExtraneousValues: true });
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -137,13 +149,13 @@ export class CreateReactionService {
    * Create comment reaction
    * @param userId number
    * @param createReactionDto CreateReactionDto
-   * @returns Promise resolve boolean
+   * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createCommentReaction(
     userId: number,
     createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
+  ): Promise<ReactionResponseDto> {
     const { reactionName, targetId: commentId } = createReactionDto;
     try {
       const isExistedCommentReaction = await this._commonReactionService.isExistedCommentReaction(
@@ -151,7 +163,7 @@ export class CreateReactionService {
         createReactionDto
       );
       if (isExistedCommentReaction === true) {
-        throw new Error('Reaction is existed.');
+        throw new LogicException('Reaction is existed.');
       }
 
       const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
@@ -159,7 +171,7 @@ export class CreateReactionService {
       const userSharedDto = await this._userService.get(userId);
       const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
-        throw new Error("User is not in the post's groups.");
+        throw new ForbiddenException("User is not in the post's groups.");
       }
 
       const willExceedCommentReactionKindLimit = await this._willExceedCommentReactionKindLimit(
@@ -167,28 +179,29 @@ export class CreateReactionService {
         reactionName
       );
       if (willExceedCommentReactionKindLimit === true) {
-        throw new Error('Exceed reaction kind limit on a comment.');
+        throw new LogicException('Exceed reaction kind limit on a comment.');
       }
 
-      await this._commentReactionModel.create<CommentReactionModel>({
+      const commentReaction = await this._commentReactionModel.create<CommentReactionModel>({
         commentId: commentId,
         reactionName: reactionName,
         createdBy: userId,
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
-
-      this._commonReactionService.createEvent(
+      this._commonReactionService.createCreateReactionEvent(
         userSharedDto,
         reactionDto,
         post.toJSON(),
         comment.toJSON()
       );
 
-      return reactionDto;
+      return plainToInstance(ReactionResponseDto, commentReaction, {
+        excludeExtraneousValues: true,
+      });
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -271,7 +284,9 @@ export class CreateReactionService {
       },
     });
     if (comment === null || !!comment.postId === false) {
-      throw new Error("Database error: comment is not existed or comment's postId is zero-value.");
+      throw new InternalServerErrorException(
+        "Database error: comment is not existed or comment's postId is zero-value."
+      );
     }
     return [comment.postId, comment];
   }
@@ -295,7 +310,9 @@ export class CreateReactionService {
       ],
     });
     if (!!post === false) {
-      throw new Error('Database error: Comment is belong to a non-existed post.');
+      throw new InternalServerErrorException(
+        'Database error: Comment is belong to a non-existed post.'
+      );
     }
     return post;
   }
@@ -317,7 +334,7 @@ export class CreateReactionService {
       },
     });
     if (!!userSharedDto === false) {
-      throw new Error(
+      throw new InternalServerErrorException(
         'Can not get data of user on cache. Unable to check whether user is in the group.'
       );
     }

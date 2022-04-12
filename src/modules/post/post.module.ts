@@ -10,6 +10,7 @@ import { GroupModule } from '../../shared/group';
 import { CommentModule } from '../comment';
 import { AuthorityModule } from '../authority';
 import { LibModule } from '../../app/lib.module';
+import { ReactionModule } from '../reaction';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LibModule } from '../../app/lib.module';
     GroupModule,
     MediaModule,
     MentionModule,
+    ReactionModule,
     AuthorityModule,
     LibModule,
     forwardRef(() => CommentModule),

@@ -52,7 +52,13 @@ export class MediaController {
     @Body('uploadType') uploadType: UploadType
   ): Promise<any> {
     const url = await this._uploadService.upload(file, uploadType);
-    return this._mediaService.create(user, url, MediaType.IMAGE);
+    return this._mediaService.create(user, {
+      url,
+      name: url.split('/').pop(),
+      uploadType,
+      originName: file.originalname,
+      extension: file.originalname.split('.').pop(),
+    });
   }
 
   @ApiOperation({ summary: 'Delete Media' })

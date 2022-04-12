@@ -39,6 +39,7 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
+import { DeleteReactionService } from '../../reaction/services';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -50,6 +51,7 @@ describe('PostService', () => {
   let mediaService: MediaService;
   let mentionService: MentionService;
   let commentService: CommentService;
+  let deleteReactionService: DeleteReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
   let transactionMock;
@@ -105,6 +107,12 @@ describe('PostService', () => {
             getMany: jest.fn(),
             isMemberOfGroups: jest.fn()
           },
+        },
+        {
+          provide: DeleteReactionService,
+          useValue: {
+            deleteReactionByPostIds: jest.fn()
+          }
         },
         {
           provide: MediaService,
@@ -164,6 +172,7 @@ describe('PostService', () => {
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
     commentService = moduleRef.get<CommentService>(CommentService);
+    deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
     
@@ -187,7 +196,7 @@ describe('PostService', () => {
     it('Create post successfully', async () => {
       const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
       const { files, videos, images } = mockedCreatePostDto.media;
-      const groupIds = mockedCreatePostDto.audience.groups.map((i) => i.id)
+      const {groupIds} = mockedCreatePostDto.audience;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
 
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
@@ -286,7 +295,7 @@ describe('PostService', () => {
     it('Update post successfully', async () => {
       const { files, videos, images } = mockedUpdatePostDto.media;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
-      const groupIds = mockedUpdatePostDto.audience.groups.map((i) => i.id);
+      const { groupIds } = mockedUpdatePostDto.audience;
       const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
@@ -432,6 +441,8 @@ describe('PostService', () => {
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
+      expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledWith(mockedDataDeletePost.id);
       expect(transactionMock.commit).toBeCalledTimes(1);
@@ -589,7 +600,7 @@ describe('PostService', () => {
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 
-      expect(result.data[0]).toBeInstanceOf(PostResponseDto);
+      expect(result.list[0]).toBeInstanceOf(PostResponseDto);
     });
     it('Should return []', async () => { 
       const searchDto: SearchPostsDto = {
@@ -602,7 +613,7 @@ describe('PostService', () => {
       expect(elasticSearchService.search).not.toBeCalled();
       expect(result).toBeInstanceOf(PageDto);
   
-      expect(result.data).toStrictEqual([]);
+      expect(result.list).toStrictEqual([]);
     });
   });
   describe('getPayloadSearch', () => {
@@ -628,7 +639,7 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdBy': 'desc' }]
+          sort: [{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -651,7 +662,7 @@ describe('PostService', () => {
               filter: [
                 {
                   terms: {
-                    'createdBy': [1]
+                    'actor.id': [1]
                   }
                 },
                 {
@@ -664,7 +675,7 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdBy': 'desc' }]
+          sort: [{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -705,7 +716,7 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdBy': 'desc' }]
+          sort: [{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -784,7 +795,7 @@ describe('PostService', () => {
                   }
               }
           },
-          sort: [{"_score": "desc" },{ 'createdBy': 'desc' }]
+          sort: [{"_score": "desc" },{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -824,7 +835,7 @@ describe('PostService', () => {
       expect(postService.bindAudienceToPost).toBeCalledWith([postData]); 
       expect(result).toBeInstanceOf(PageDto);
 
-      expect(result.data[0]).toBeInstanceOf(PostResponseDto);
+      expect(result.list[0]).toBeInstanceOf(PostResponseDto);
     });
 
   });

@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FeedService } from '../feed.service';
 import { PostModel } from '../../../database/models/post.model';
-import { mockGetTimeLineDto, mockUserDto } from './mocks/input.mock';
-import { mockGetTimelineOutput } from './mocks/output.mock';
 import { FeedController } from '../feed.controller';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { GetTimelineDto } from '../dto/request';
+import { mockedUserAuth } from './mocks/data/user-auth.data.mock';
+import { GetNewsFeedDto } from '../dto/request/get-newsfeed.dto';
 
 describe('FeedController', () => {
   let feedController: FeedController;
@@ -18,6 +19,7 @@ describe('FeedController', () => {
           provide: FeedService,
           useValue: {
             getTimeline: jest.fn(),
+            getNewsFeed: jest.fn()
           },
         },
       ],
@@ -36,14 +38,23 @@ describe('FeedController', () => {
     jest.clearAllMocks();
   });
 
-  describe('User get timeline', () => {
-    it('Should get successfully with predefined timeline', async () => {
-      const feedServiceGetTimeLineSpy = jest
-        .spyOn(feedService, 'getTimeline')
-        .mockResolvedValue(mockGetTimelineOutput);
-      const result = await feedController.getTimeline(mockUserDto, mockGetTimeLineDto);
-      expect(result).toEqual(mockGetTimelineOutput);
-      expect(feedServiceGetTimeLineSpy).toBeCalledTimes(1);
+  describe('getTimeline', () => {
+    it('Should get timeline successfully', async () => {
+      const getTimelineDto: GetTimelineDto = {
+        groupId: 1
+      }
+      const result = await feedController.getTimeline(mockedUserAuth, getTimelineDto);      
+      expect(feedService.getTimeline).toBeCalledTimes(1);
+      expect(feedService.getTimeline).toBeCalledWith(mockedUserAuth.id, getTimelineDto);
+    });
+  });
+
+  describe('getNewsFeed', () => {
+    it('Should get getNewsFeed successfully', async () => {
+      const getNewsFeedDto: GetNewsFeedDto = {}
+      const result = await feedController.getNewsFeed(mockedUserAuth, getNewsFeedDto);      
+      expect(feedService.getNewsFeed).toBeCalledTimes(1);
+      expect(feedService.getNewsFeed).toBeCalledWith(mockedUserAuth.id, getNewsFeedDto);
     });
   });
 });

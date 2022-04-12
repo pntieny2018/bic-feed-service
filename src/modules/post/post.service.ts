@@ -15,35 +15,30 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MediaService } from '../media/media.service';
-import { GroupService } from '../../shared/group/group.service';
+import { MediaService } from '../media';
+import { GroupService } from '../../shared/group';
 import { MentionService } from '../mention';
-import {
-  CreatedPostEvent,
-  DeletedPostEvent,
-  PublishedPostEvent,
-  UpdatedPostEvent,
-} from '../../events/post';
+
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper, ElasticsearchHelper } from '../../common/helpers';
-import { EntityIdDto, OrderEnum } from '../../common/dto';
+import { EntityIdDto } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { UpdatePostDto } from './dto/requests/update-post.dto';
+import { UpdatePostDto } from './dto/requests';
 import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { getDatabaseConfig } from '../../config/database';
-import { Op, QueryTypes } from 'sequelize';
-import { CommentService } from '../comment/comment.service';
+import { QueryTypes } from 'sequelize';
+import { CommentService } from '../comment';
 import { UserDto } from '../auth';
-import { ClassTransformer, plainToClass, plainToInstance } from 'class-transformer';
+import { ClassTransformer } from 'class-transformer';
 import { PostResponseDto } from './dto/responses';
 import { AuthorityService } from '../authority';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
-import { FollowModel } from '../../database/models/follow.model';
+import { DeleteReactionService } from '../reaction/services';
 
 @Injectable()
 export class PostService {
@@ -68,7 +63,8 @@ export class PostService {
     @Inject(forwardRef(() => CommentService))
     private _commentService: CommentService,
     private _authorityService: AuthorityService,
-    private _searchService: ElasticsearchService
+    private _searchService: ElasticsearchService,
+    private _deleteReactionService: DeleteReactionService
   ) {}
 
   /**
@@ -146,7 +142,8 @@ export class PostService {
     if (actors && actors.length) {
       body.query.bool.filter.push({
         terms: {
-          createdBy: actors,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'actor.id': actors,
         },
       });
     }
@@ -209,9 +206,9 @@ export class PostService {
       };
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      body['sort'] = [{ _score: 'desc' }, { createdBy: 'desc' }];
+      body['sort'] = [{ _score: 'desc' }, { createdAt: 'desc' }];
     } else {
-      body['sort'] = [{ createdBy: 'desc' }];
+      body['sort'] = [{ createdAt: 'desc' }];
     }
 
     if (startTime || endTime) {
@@ -439,8 +436,7 @@ export class PostService {
       if (!creator) {
         throw new BadRequestException(`UserID ${authUserId} not found`);
       }
-      const { groups } = audience;
-      const groupIds = groups.map((i) => i.id);
+      const { groupIds } = audience;
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
         throw new BadRequestException('You can not create post in this groups');
@@ -516,8 +512,7 @@ export class PostService {
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
 
-      const { groups } = audience;
-      const groupIds = groups.map((i) => i.id);
+      const { groupIds } = audience;
       const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
         throw new BadRequestException('You can not create post in this groups');
@@ -646,13 +641,14 @@ export class PostService {
       await this._mentionService.setMention([], MentionableType.POST, postId);
       await this._mediaService.sync(postId, EntityType.POST, []);
       await this.setGroupByPost([], postId);
+      await this._deleteReactionService.deleteReactionByPostIds([postId]);
+      await this._commentService.deleteCommentsByPost(postId);
       await this._postModel.destroy({
         where: {
           id: postId,
           createdBy: authUserId,
         },
       });
-      await this._commentService.deleteCommentsByPost(postId);
       transaction.commit();
 
       return post;

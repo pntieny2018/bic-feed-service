@@ -1,21 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 
 export class ReactionResponseDto {
   @ApiProperty()
+  @Expose()
   public id: number;
 
   @ApiProperty()
-  public reactionName: number;
+  @Expose()
+  public reactionName: string;
 
   @ApiProperty()
-  public userId: number;
-
-  @ApiProperty()
-  public commentId: number;
-
-  @ApiProperty()
+  @Expose()
   public createdBy: number;
 
   @ApiProperty()
+  @Expose()
   public createdAt: Date;
 }

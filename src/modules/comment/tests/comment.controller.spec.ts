@@ -101,9 +101,7 @@ describe('CommentController', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
       await controller.update(authUserMock, 1, {
-        data: {
-          content: '1,2,3',
-        },
+        content: '1,2,3',
       });
       expect(logSpy).toBeCalled();
     });
@@ -111,9 +109,7 @@ describe('CommentController', () => {
     it('CommentService.update should be called', async () => {
       commentService.update.mockResolvedValue([]);
       await controller.update(authUserMock, 1, {
-        data: {
-          content: '1,2,3',
-        },
+        content: '1,2,3',
       });
       expect(commentService.update).toBeCalled();
     });
