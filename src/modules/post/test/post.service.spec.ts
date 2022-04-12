@@ -39,6 +39,7 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
+import { DeleteReactionService } from '../../reaction/services';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -50,6 +51,7 @@ describe('PostService', () => {
   let mediaService: MediaService;
   let mentionService: MentionService;
   let commentService: CommentService;
+  let deleteReactionService: DeleteReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
   let transactionMock;
@@ -105,6 +107,12 @@ describe('PostService', () => {
             getMany: jest.fn(),
             isMemberOfGroups: jest.fn()
           },
+        },
+        {
+          provide: DeleteReactionService,
+          useValue: {
+            deleteReactionByPostIds: jest.fn()
+          }
         },
         {
           provide: MediaService,
@@ -164,6 +172,7 @@ describe('PostService', () => {
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
     commentService = moduleRef.get<CommentService>(CommentService);
+    deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
     
@@ -432,6 +441,8 @@ describe('PostService', () => {
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
+      expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledWith(mockedDataDeletePost.id);
       expect(transactionMock.commit).toBeCalledTimes(1);
@@ -628,7 +639,7 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdBy': 'desc' }]
+          sort: [{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -651,7 +662,7 @@ describe('PostService', () => {
               filter: [
                 {
                   terms: {
-                    'createdBy': [1]
+                    'actor.id': [1]
                   }
                 },
                 {
@@ -664,7 +675,7 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdBy': 'desc' }]
+          sort: [{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -705,7 +716,7 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdBy': 'desc' }]
+          sort: [{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
@@ -784,7 +795,7 @@ describe('PostService', () => {
                   }
               }
           },
-          sort: [{"_score": "desc" },{ 'createdBy': 'desc' }]
+          sort: [{"_score": "desc" },{ 'createdAt': 'desc' }]
         },
         from: 0,
         size: 1,
