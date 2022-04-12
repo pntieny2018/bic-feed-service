@@ -31,7 +31,8 @@ module.exports = {
         schema: schemaName,
       }
     );
-    await queryInterface.addIndex(tableName, 'user_post_index', ['user_id', 'post_id'], {
+    await queryInterface.addIndex(tableName, ['user_id', 'post_id'], {
+      name: 'user_post_index',
       unique: true,
     });
   },
