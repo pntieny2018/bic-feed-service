@@ -1,22 +1,21 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { CreateReactionDto } from '../dto/request';
-import { PostReactionModel } from '../../../database/models/post-reaction.model';
-import { ReactionEnum } from '../reaction.enum';
-import { UserDto } from '../../auth';
-import { REACTION_KIND_LIMIT } from '../reaction.constant';
-import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
-import { PostModel } from '../../../database/models/post.model';
-import { PostGroupModel } from '../../../database/models/post-group.model';
-import { CommentModel } from '../../../database/models/comment.model';
-import { UserService } from '../../../shared/user';
-import { GroupService } from '../../../shared/group';
-import { CommonReactionService } from './common-reaction.service';
-import { ReactionDto } from '../dto/reaction.dto';
-import { UserSharedDto } from '../../../shared/user/dto';
 import { plainToInstance } from 'class-transformer';
+import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import { CommentModel } from '../../../database/models/comment.model';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { PostReactionModel } from '../../../database/models/post-reaction.model';
+import { PostModel } from '../../../database/models/post.model';
+import { GroupService } from '../../../shared/group';
+import { UserService } from '../../../shared/user';
+import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../auth';
+import { ReactionDto } from '../dto/reaction.dto';
+import { CreateReactionDto } from '../dto/request';
 import { ReactionResponseDto } from '../dto/response';
+import { REACTION_KIND_LIMIT } from '../reaction.constant';
+import { ReactionEnum } from '../reaction.enum';
+import { CommonReactionService } from './common-reaction.service';
 
 @Injectable()
 export class CreateReactionService {
@@ -55,7 +54,7 @@ export class CreateReactionService {
       case ReactionEnum.COMMENT:
         return this._createCommentReaction(id, createReactionDto);
       default:
-        throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Reaction type not match.');
     }
   }
 
