@@ -384,7 +384,7 @@ describe('PostService', () => {
   describe('publishPost', () => {
     const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
     const authUserId = mockedDataUpdatePost.createdBy;
-    it('Publish post successfully', async () => {
+    it('Should return result successfully', async () => {
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
 
       postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
@@ -404,7 +404,17 @@ describe('PostService', () => {
       });
     });
  
-    it('Post not found', async () => {
+    it('Should catch BadRequestException if content is null', async () => {
+      mockedDataUpdatePost.content = null;
+      postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost); 
+      try {
+        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+      }
+    });
+
+    it('Should catch NotFoundException if post not found', async () => {
       
       postModelMock.findByPk.mockResolvedValueOnce(null); 
       try {
@@ -414,7 +424,7 @@ describe('PostService', () => {
       }
     });
 
-    it('Not owner', async () => {
+    it('Should catch ForbiddenException if user is not owner', async () => {
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
@@ -639,7 +649,24 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -675,7 +702,24 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -716,7 +760,24 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -795,7 +856,25 @@ describe('PostService', () => {
                   }
               }
           },
-          sort: [{"_score": "desc" },{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            {"_score": "desc" },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
