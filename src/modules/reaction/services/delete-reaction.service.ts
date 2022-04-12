@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
@@ -57,11 +57,11 @@ export class DeleteReactionService {
       });
 
       if (!!existedReaction === false) {
-        throw new Error('Reaction id is not existed.');
+        throw new NotFoundException('Reaction id not found.');
       }
 
       if (existedReaction.createdBy !== userId) {
-        throw new Error('Reaction is not created by user.');
+        throw new ForbiddenException('Reaction is not created by user.');
       }
 
       await this._postReactionModel.destroy<PostReactionModel>({
@@ -80,11 +80,6 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-
-      if (e?.message === 'Reaction id is not existed.') {
-        throw new NotFoundException('Reaction id not found.');
-      }
-
       throw e;
     }
   }
@@ -109,11 +104,11 @@ export class DeleteReactionService {
       });
 
       if (!!existedReaction === false) {
-        throw new Error('Reaction id is not existed.');
+        throw new NotFoundException('Reaction id not found.');
       }
 
       if (existedReaction.createdBy !== userId) {
-        throw new Error('Reaction is not created by user.');
+        throw new ForbiddenException('Reaction is not created by user.');
       }
 
       await this._commentReactionModel.destroy<CommentReactionModel>({
@@ -132,11 +127,6 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-
-      if (e?.message === 'Reaction id is not existed.') {
-        throw new NotFoundException('Reaction id not found.');
-      }
-
       throw e;
     }
   }

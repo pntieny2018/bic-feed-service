@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { plainToInstance } from 'class-transformer';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
@@ -16,6 +22,7 @@ import { ReactionResponseDto } from '../dto/response';
 import { REACTION_KIND_LIMIT } from '../reaction.constant';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
+import { LogicException } from '../../../common/exceptions';
 
 @Injectable()
 export class CreateReactionService {
@@ -76,18 +83,18 @@ export class CreateReactionService {
         createReactionDto
       );
       if (isExistedPostReaction === true) {
-        throw new Error('Reaction is existed.');
+        throw new LogicException('Reaction is existed.');
       }
 
       const [canReact, post] = await this._canReactPost(postId);
       if (canReact === false) {
-        throw new Error('Post does not permit to react.');
+        throw new LogicException('Post does not permit to react.');
       }
 
       const userSharedDto = await this._userService.get(userId);
       const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
-        throw new Error("User is not in the post's groups");
+        throw new ForbiddenException("User is not in the post's groups");
       }
 
       const willExceedPostReactionKindLimit = await this._willExceedPostReactionKindLimit(
@@ -95,7 +102,7 @@ export class CreateReactionService {
         reactionName
       );
       if (willExceedPostReactionKindLimit === true) {
-        throw new Error('Exceed reaction kind limit on a post.');
+        throw new LogicException('Exceed reaction kind limit on a post.');
       }
 
       const postReaction = await this._postReactionModel.create<PostReactionModel>({
@@ -156,7 +163,7 @@ export class CreateReactionService {
         createReactionDto
       );
       if (isExistedCommentReaction === true) {
-        throw new Error('Reaction is existed.');
+        throw new LogicException('Reaction is existed.');
       }
 
       const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
@@ -164,7 +171,7 @@ export class CreateReactionService {
       const userSharedDto = await this._userService.get(userId);
       const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
-        throw new Error("User is not in the post's groups.");
+        throw new ForbiddenException("User is not in the post's groups.");
       }
 
       const willExceedCommentReactionKindLimit = await this._willExceedCommentReactionKindLimit(
@@ -172,7 +179,7 @@ export class CreateReactionService {
         reactionName
       );
       if (willExceedCommentReactionKindLimit === true) {
-        throw new Error('Exceed reaction kind limit on a comment.');
+        throw new LogicException('Exceed reaction kind limit on a comment.');
       }
 
       const commentReaction = await this._commentReactionModel.create<CommentReactionModel>({
@@ -277,7 +284,9 @@ export class CreateReactionService {
       },
     });
     if (comment === null || !!comment.postId === false) {
-      throw new Error("Database error: comment is not existed or comment's postId is zero-value.");
+      throw new InternalServerErrorException(
+        "Database error: comment is not existed or comment's postId is zero-value."
+      );
     }
     return [comment.postId, comment];
   }
@@ -301,7 +310,9 @@ export class CreateReactionService {
       ],
     });
     if (!!post === false) {
-      throw new Error('Database error: Comment is belong to a non-existed post.');
+      throw new InternalServerErrorException(
+        'Database error: Comment is belong to a non-existed post.'
+      );
     }
     return post;
   }
@@ -323,7 +334,7 @@ export class CreateReactionService {
       },
     });
     if (!!userSharedDto === false) {
-      throw new Error(
+      throw new InternalServerErrorException(
         'Can not get data of user on cache. Unable to check whether user is in the group.'
       );
     }
