@@ -15,6 +15,8 @@ import { GroupService } from '../../../shared/group';
 import { CommonReactionService } from './common-reaction.service';
 import { ReactionDto } from '../dto/reaction.dto';
 import { UserSharedDto } from '../../../shared/user/dto';
+import { plainToInstance } from 'class-transformer';
+import { ReactionResponseDto } from '../dto/response';
 
 @Injectable()
 export class CreateReactionService {
@@ -45,7 +47,7 @@ export class CreateReactionService {
   public createReaction(
     userDto: UserDto,
     createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
+  ): Promise<ReactionResponseDto> {
     const { id } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
@@ -61,13 +63,13 @@ export class CreateReactionService {
    * Create post reaction
    * @param userId number
    * @param createReactionDto CreateReactionDto
-   * @returns Promise resolve boolean
+   * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createPostReaction(
     userId: number,
     createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
+  ): Promise<ReactionResponseDto> {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const isExistedPostReaction = await this._commonReactionService.isExistedPostReaction(
@@ -97,7 +99,7 @@ export class CreateReactionService {
         throw new Error('Exceed reaction kind limit on a post.');
       }
 
-      await this._postReactionModel.create<PostReactionModel>({
+      const postReaction = await this._postReactionModel.create<PostReactionModel>({
         postId: postId,
         reactionName: reactionName,
         createdBy: userId,
@@ -110,7 +112,7 @@ export class CreateReactionService {
         post.toJSON()
       );
 
-      return reactionDto;
+      return plainToInstance(ReactionResponseDto, postReaction, { excludeExtraneousValues: true });
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -141,13 +143,13 @@ export class CreateReactionService {
    * Create comment reaction
    * @param userId number
    * @param createReactionDto CreateReactionDto
-   * @returns Promise resolve boolean
+   * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createCommentReaction(
     userId: number,
     createReactionDto: CreateReactionDto
-  ): Promise<ReactionDto> {
+  ): Promise<ReactionResponseDto> {
     const { reactionName, targetId: commentId } = createReactionDto;
     try {
       const isExistedCommentReaction = await this._commonReactionService.isExistedCommentReaction(
@@ -174,14 +176,13 @@ export class CreateReactionService {
         throw new Error('Exceed reaction kind limit on a comment.');
       }
 
-      await this._commentReactionModel.create<CommentReactionModel>({
+      const commentReaction = await this._commentReactionModel.create<CommentReactionModel>({
         commentId: commentId,
         reactionName: reactionName,
         createdBy: userId,
       });
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
-
       this._commonReactionService.createCreateReactionEvent(
         userSharedDto,
         reactionDto,
@@ -189,7 +190,9 @@ export class CreateReactionService {
         comment.toJSON()
       );
 
-      return reactionDto;
+      return plainToInstance(ReactionResponseDto, commentReaction, {
+        excludeExtraneousValues: true,
+      });
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR);

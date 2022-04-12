@@ -80,6 +80,11 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
+
+      if (e?.message === 'Reaction id is not existed.') {
+        throw new HttpException('Reaction not found.', HttpStatus.NOT_FOUND);
+      }
+
       throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -127,6 +132,11 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
+
+      if (e?.message === 'Reaction id is not existed.') {
+        throw new HttpException('Reaction not found.', HttpStatus.NOT_FOUND);
+      }
+
       throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
