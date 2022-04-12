@@ -21,6 +21,7 @@ import { ImageMetadataDto } from '../media/dto/image-metadata.dto';
 import { VideoMetadataDto } from '../media/dto/video-metadata.dto';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
+import { UploadType } from '../upload/dto/requests/upload.dto';
 
 @Injectable()
 export class MediaService {
@@ -38,12 +39,25 @@ export class MediaService {
    * @param url String
    * @param mediaType MediaType
    */
-  public async create(user: UserDto, url: string, mediaType: MediaType): Promise<any> {
+  public async create(
+    user: UserDto,
+    {
+      url,
+      uploadType,
+      name,
+      originName,
+      extension,
+    }: { url: string; uploadType: UploadType; name: string; originName: string; extension: string }
+  ): Promise<any> {
     try {
+      const typeArr = uploadType.split('_');
       return await this._mediaModel.create({
+        name,
+        originName,
         createdBy: user.id,
-        url: url,
-        type: mediaType,
+        url,
+        extension,
+        type: typeArr[1] as MediaType,
       });
     } catch (ex) {
       throw new InternalServerErrorException("Can't create media");
