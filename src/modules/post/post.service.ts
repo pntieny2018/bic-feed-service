@@ -647,13 +647,13 @@ export class PostService {
       await this._mediaService.sync(postId, EntityType.POST, []);
       await this.setGroupByPost([], postId);
       await this._deleteReactionService.deleteReactionByPostIds([postId]);
+      await this._commentService.deleteCommentsByPost(postId);
       await this._postModel.destroy({
         where: {
           id: postId,
           createdBy: authUserId,
         },
       });
-      await this._commentService.deleteCommentsByPost(postId);
       transaction.commit();
 
       return post;
