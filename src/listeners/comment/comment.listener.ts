@@ -47,7 +47,7 @@ export class CommentListener {
 
   private async _syncCommentCountToSearch(postId: number): Promise<void> {
     const index = ElasticsearchHelper.INDEX.POST;
-    const commentCount = this._commentService.getCommentCountByPost(postId);
+    const commentCount = await this._commentService.getCommentCountByPost(postId);
     await this._elasticsearchService.update({
       index,
       id: `${postId}`,

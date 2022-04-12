@@ -145,7 +145,8 @@ export class PostService {
     if (actors && actors.length) {
       body.query.bool.filter.push({
         terms: {
-          createdBy: actors,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'actor.id': actors,
         },
       });
     }
@@ -208,9 +209,9 @@ export class PostService {
       };
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      body['sort'] = [{ _score: 'desc' }, { createdBy: 'desc' }];
+      body['sort'] = [{ _score: 'desc' }, { createdAt: 'desc' }];
     } else {
-      body['sort'] = [{ createdBy: 'desc' }];
+      body['sort'] = [{ createdAt: 'desc' }];
     }
 
     if (startTime || endTime) {

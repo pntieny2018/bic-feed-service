@@ -17,10 +17,24 @@ export class CreateCommentDto {
   @IsNotEmpty()
   public content: string;
 
-  @ApiProperty({ type: MediaDto })
-  @ValidateNested()
-  @Type(() => MediaDto)
+  @ApiProperty({
+    description: 'Post data, includes content, images, files, videos',
+    type: MediaDto,
+    required: false,
+    example: {
+      images: [
+        {
+          id: 1,
+          url: 'https://google.com',
+          name: 'FIle name 1',
+        },
+      ],
+      videos: [],
+      files: [],
+    },
+  })
   @IsOptional()
+  @ValidateNested({ each: true })
   public media?: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({ type: [UserDataShareDto], required: false })
