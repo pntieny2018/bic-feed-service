@@ -43,6 +43,7 @@ import { AuthorityService } from '../authority';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
+import { DeleteReactionService } from '../reaction/services';
 
 @Injectable()
 export class PostService {
@@ -67,7 +68,8 @@ export class PostService {
     @Inject(forwardRef(() => CommentService))
     private _commentService: CommentService,
     private _authorityService: AuthorityService,
-    private _searchService: ElasticsearchService
+    private _searchService: ElasticsearchService,
+    private _deleteReactionService: DeleteReactionService
   ) {}
 
   /**
@@ -646,6 +648,7 @@ export class PostService {
       await this._mentionService.setMention([], MentionableType.POST, postId);
       await this._mediaService.sync(postId, EntityType.POST, []);
       await this.setGroupByPost([], postId);
+      await this._deleteReactionService.deleteReactionByPostIds([postId]);
       await this._postModel.destroy({
         where: {
           id: postId,
