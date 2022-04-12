@@ -9,11 +9,13 @@ import { AuthorityModule } from '../authority';
 import { MediaModule } from '../media';
 import { GroupModule } from '../../shared/group';
 import { ReactionModule } from '../reaction';
+import { FollowModule } from '../follow';
 
 @Module({
   imports: [
     DatabaseModule,
     AuthorityModule,
+    FollowModule,
     forwardRef(() => PostModule),
     UserModule,
     MentionModule,

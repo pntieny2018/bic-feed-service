@@ -1,7 +1,8 @@
 import { IPost } from '../../../database/models/post.model';
-import { IComment } from '../../../database/models/comment.model';
+import { CommentResponseDto } from '../../../modules/comment/dto/response';
 
 export class CommentHasBeenCreatedEventPayload {
+  public isReply: boolean;
   public post: IPost;
-  public comment: IComment;
+  public commentResponse: CommentResponseDto;
 }

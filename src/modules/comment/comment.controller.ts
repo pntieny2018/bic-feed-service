@@ -13,12 +13,12 @@ import {
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { CommentService } from './comment.service';
+import { CommentResponseDto } from './dto/response';
 import { APP_VERSION } from '../../common/constants';
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
 import { CreateCommentDto, GetCommentDto } from './dto/requests';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { CommentResponseDto } from './dto/response/comment.response.dto';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')

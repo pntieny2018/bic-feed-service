@@ -117,10 +117,9 @@ export class DeleteReactionService {
 
   /**
    * Delete reaction by commentIds
-   * @param userId number
-   * @param deleteReactionDto DeleteReactionDto
    * @returns Promise resolve boolean
    * @throws HttpException
+   * @param commentIds
    */
   public async deleteReactionByCommentIds(commentIds: number[]): Promise<number> {
     return await this._commentReactionModel.destroy({

@@ -6,6 +6,7 @@ export class GetUserFollowsDto {
   @ApiProperty({
     description: 'user will be ignore to collection',
     type: [Number],
+    required: false,
   })
   @IsNumberString({}, { each: true })
   @Type(() => Array)
@@ -15,7 +16,7 @@ export class GetUserFollowsDto {
     }
     return value;
   })
-  public ignoreUserIds: number[];
+  public ignoreUserIds: number[] = [0];
 
   @ApiProperty({
     type: [Number],

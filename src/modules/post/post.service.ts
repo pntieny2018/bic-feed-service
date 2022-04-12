@@ -34,7 +34,7 @@ import { UpdatePostDto } from './dto/requests/update-post.dto';
 import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { getDatabaseConfig } from '../../config/database';
-import { QueryTypes } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment/comment.service';
 import { UserDto } from '../auth';
 import { ClassTransformer, plainToClass, plainToInstance } from 'class-transformer';
@@ -43,6 +43,7 @@ import { AuthorityService } from '../authority';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
+import { FollowModel } from '../../database/models/follow.model';
 
 @Injectable()
 export class PostService {
@@ -720,6 +721,10 @@ export class PostService {
             model: PostGroupModel,
             as: 'groups',
             attributes: ['groupId'],
+          },
+          {
+            model: MentionModel,
+            as: 'mentions',
           },
         ],
         where: {

@@ -1,11 +1,11 @@
-export const POST_PRODUCER = 'post_notification_producer';
+export const POST_PRODUCER = 'post_producer';
 
-export const REACTION_PRODUCER = 'reaction_notification_producer';
+export const REACTION_PRODUCER = 'reaction_producer';
 
-export const COMMENT_PRODUCER = 'comment_notification_producer';
+export const COMMENT_PRODUCER = 'comment_producer';
 
 export const TOPIC = {
-  POST_NOTIFICATION: 'post_notification',
-  COMMENT_NOTIFICATION: 'comment_notification',
-  REACTION_NOTIFICATION: 'reaction_notification',
+  POST: 'bein_stream.post',
+  COMMENT: 'bein_stream.comment',
+  REACTION: 'bein_stream.reaction',
 };
