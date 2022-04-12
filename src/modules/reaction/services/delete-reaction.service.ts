@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
@@ -33,7 +33,7 @@ export class DeleteReactionService {
       case ReactionEnum.COMMENT:
         return this._deleteCommentReaction(id, deleteReactionDto);
       default:
-        throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Reaction type not match.');
     }
   }
 
@@ -80,7 +80,12 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+
+      if (e?.message === 'Reaction id is not existed.') {
+        throw new NotFoundException('Reaction id not found.');
+      }
+
+      throw e;
     }
   }
 
@@ -127,7 +132,12 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+
+      if (e?.message === 'Reaction id is not existed.') {
+        throw new NotFoundException('Reaction id not found.');
+      }
+
+      throw e;
     }
   }
 
