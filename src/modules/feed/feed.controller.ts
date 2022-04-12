@@ -6,10 +6,14 @@ import { AuthUser, UserDto } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedService } from './feed.service';
 import { PostResponseDto } from '../post/dto/responses';
+import { APP_VERSION } from '../../common/constants';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
-@Controller('feeds')
+@Controller({
+  version: APP_VERSION,
+  path: 'feeds',
+})
 export class FeedController {
   public constructor(private readonly _feedService: FeedService) {}
 
