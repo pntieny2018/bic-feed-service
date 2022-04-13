@@ -652,7 +652,7 @@ export class CommentService {
       include: [
         {
           model: MentionModel,
-          required: true,
+          required: false,
         },
       ],
       where: {
@@ -667,6 +667,10 @@ export class CommentService {
       },
     });
 
+    if (!parentComment) {
+      ExceptionHelper.throwNotFoundException(`Parent comment ${parentId} not found`);
+    }
+
     const recentComments = await this._commentModel.findAll({
       include: [
         {
@@ -675,7 +679,7 @@ export class CommentService {
         },
       ],
       where: {
-        parentId: parentComment.id,
+        parentId: parentId,
         createdBy: {
           [Op.in]: Sequelize.literal(
             `( select user_id from ${schema}.${
