@@ -118,6 +118,7 @@ describe('PostService', () => {
           provide: MediaService,
           useValue: {
             checkValidMedia: jest.fn(),
+            countMediaByPost: jest.fn(),
           },
         },
         {
@@ -386,7 +387,7 @@ describe('PostService', () => {
     const authUserId = mockedDataUpdatePost.createdBy;
     it('Should return result successfully', async () => {
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
-
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
       
       const result = await postService.publishPost(mockedDataUpdatePost.id, authUserId);
@@ -407,6 +408,7 @@ describe('PostService', () => {
     it('Should catch BadRequestException if content is null', async () => {
       mockedDataUpdatePost.content = null;
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost); 
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
@@ -416,7 +418,7 @@ describe('PostService', () => {
 
     it('Should catch NotFoundException if post not found', async () => {
       
-      postModelMock.findByPk.mockResolvedValueOnce(null); 
+      postModelMock.findByPk.mockResolvedValueOnce(null);
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
@@ -426,6 +428,7 @@ describe('PostService', () => {
 
     it('Should catch ForbiddenException if user is not owner', async () => {
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {

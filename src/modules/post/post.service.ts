@@ -620,9 +620,12 @@ export class PostService {
     try {
       const post = await this._postModel.findByPk(postId);
       await this.checkPostExistAndOwner(post, authUserId);
-      if (post.content === null) {
-        throw new BadRequestException('Post content can not null');
+      const countMedia = await this._mediaService.countMediaByPost(postId);
+
+      if (post.content === null && countMedia === 0) {
+        throw new BadRequestException('Post content or media can not empty');
       }
+
       await this._postModel.update(
         {
           isDraft: false,
