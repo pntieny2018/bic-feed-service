@@ -39,7 +39,6 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
 import { DeleteReactionService } from '../reaction/services';
-import { find } from 'rxjs';
 
 @Injectable()
 export class PostService {
