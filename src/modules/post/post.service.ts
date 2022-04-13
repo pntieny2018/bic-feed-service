@@ -39,6 +39,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
 import { DeleteReactionService } from '../reaction/services';
+import { find } from 'rxjs';
 
 @Injectable()
 export class PostService {
@@ -102,7 +103,7 @@ export class PostService {
 
     await this.bindActorToPost(posts);
     await this.bindAudienceToPost(posts);
-    // console.log('posts=', JSON.stringify(posts, null, 4));
+    await this.bindCommentsCount(posts);
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
@@ -469,6 +470,27 @@ export class PostService {
     const users = await this._userService.getMany(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
+    }
+  }
+  /**
+   * Bind commentsCount info to post
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindCommentsCount(posts: any[]): Promise<void> {
+    const postIds = [];
+    for (const post of posts) {
+      postIds.push(post.id);
+    }
+    const result = await this._postModel.findAll({
+      raw: true,
+      attributes: ['id', 'commentsCount'],
+      where: { id: postIds },
+    });
+    for (const post of posts) {
+      const findPost = result.find((i) => i.id == post.id);
+      post.commentsCount = findPost?.commentsCount || 0;
     }
   }
 
