@@ -101,9 +101,12 @@ export class PostService {
       return source;
     });
 
-    await this.bindActorToPost(posts);
-    await this.bindAudienceToPost(posts);
-    await this.bindCommentsCount(posts);
+    await Promise.all([
+      this.bindActorToPost(posts),
+      this.bindAudienceToPost(posts),
+      this.bindCommentsCount(posts),
+    ]);
+
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
@@ -326,12 +329,12 @@ export class PostService {
       limit: limit,
       order: [['createdAt', order]],
     });
-
     const jsonPosts = rows.map((r) => r.toJSON());
-    await this._mentionService.bindMentionsToPosts(jsonPosts);
-    await this.bindActorToPost(jsonPosts);
-    await this.bindAudienceToPost(jsonPosts);
-
+    await Promise.all([
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+      this.bindAudienceToPost(jsonPosts),
+    ]);
     const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
@@ -407,13 +410,16 @@ export class PostService {
       },
       false
     );
-    const postJson = post.toJSON();
-    await this._mentionService.bindMentionsToPosts([postJson]);
-    await this.bindActorToPost([postJson]);
-    await this.bindAudienceToPost([postJson]);
+    const jsonPost = post.toJSON();
+    await Promise.all([
+      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.bindActorToPost([jsonPost]),
+      this.bindAudienceToPost([jsonPost]),
+    ]);
+
     const result = this._classTransformer.plainToInstance(
       PostResponseDto,
-      { ...postJson, comments },
+      { ...jsonPost, comments },
       {
         excludeExtraneousValues: true,
       }
