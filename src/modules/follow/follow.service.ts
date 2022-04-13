@@ -115,10 +115,10 @@ export class FollowService {
               ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1 
                 WHERE duplicate_count = 1 
                 AND NOT EXISTS (
-                  SELECT user_id FROM  ${schema}.${this._followModel.tableName}  tb2 
-                  WHERE group_id IN  (${groupIds.join(',')}
-                ) 
-                AND tb1.user_id = tb2.user_id )  
+                  SELECT user_id FROM  ${schema}.${this._followModel.tableName} tb2 
+                  WHERE group_id IN (${groupIds.join(',')})
+                  AND tb1.user_id = tb2.user_id 
+                )
                 AND id > $followId  limit $limit ;
              `,
         {
