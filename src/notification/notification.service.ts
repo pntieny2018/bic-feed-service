@@ -12,6 +12,7 @@ export class NotificationService {
   ) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
+    console.log('topie=====', `${process.env.KAFKA_ENV + '.' + TOPIC.POST_NOTIFICATION}`);
     return this._postProducer.emit(
       `${process.env.KAFKA_ENV + '.' + TOPIC.POST_NOTIFICATION}`,
       payload
