@@ -30,8 +30,6 @@ export class CommentListener {
 
     const { post, isReply, commentResponse } = event.payload;
 
-    this._syncCommentCountToSearch(post.id).catch((ex) => this._logger.error(ex, ex.stack));
-
     let relatedParties;
     const mentions = Object.values(commentResponse.mentions).map((u) => u.id);
     if (!isReply) {
@@ -75,8 +73,6 @@ export class CommentListener {
     this._logger.log(event);
     const { post, newComment, oldComment, commentResponse } = event.payload;
 
-    this._syncCommentCountToSearch(post.id).catch((ex) => this._logger.error(ex, ex.stack));
-
     const relatedParties = await this._commentService.getRecipientWhenUpdatedComment(
       oldComment.mentions.map((m) => m.userId),
       newComment.mentions.map((m) => m.userId)
@@ -100,8 +96,6 @@ export class CommentListener {
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
     const { post, comment } = event.payload;
 
-    this._syncCommentCountToSearch(post.id).catch((ex) => this._logger.error(ex, ex.stack));
-
     this._notificationService.publishCommentNotification<DeletedCommentPayloadDto>({
       key: post.id.toString(),
       value: {
@@ -111,16 +105,6 @@ export class CommentListener {
           commentId: comment.id,
         },
       },
-    });
-  }
-
-  private async _syncCommentCountToSearch(postId: number): Promise<void> {
-    const index = ElasticsearchHelper.INDEX.POST;
-    const commentCount = await this._commentService.getCommentCountByPost(postId);
-    await this._elasticsearchService.update({
-      index,
-      id: `${postId}`,
-      body: { doc: { commentsCount: commentCount } },
     });
   }
 }
