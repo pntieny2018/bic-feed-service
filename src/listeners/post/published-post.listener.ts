@@ -31,7 +31,6 @@ export class PublishedPostListener {
       actor,
     } = publishedPostEvent.payload;
     if (isDraft) return;
-
     this._notificationService.publishPostNotification({
       key: `${publishedPostEvent.payload.id}`,
       value: {

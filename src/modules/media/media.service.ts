@@ -309,4 +309,10 @@ export class MediaService {
 
     await this.updateMediaDraft(mediaIds);
   }
+
+  public async countMediaByPost(postId: number): Promise<number> {
+    return await this._postMediaModel.count({
+      where: { postId },
+    });
+  }
 }

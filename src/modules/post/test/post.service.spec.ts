@@ -118,6 +118,7 @@ describe('PostService', () => {
           provide: MediaService,
           useValue: {
             checkValidMedia: jest.fn(),
+            countMediaByPost: jest.fn(),
           },
         },
         {
@@ -149,6 +150,7 @@ describe('PostService', () => {
             findByPk: jest.fn(),
             addMedia: jest.fn(),
             destroy: jest.fn(),
+            findAll: jest.fn(),
             findAndCountAll: jest.fn()
           },
         },
@@ -384,9 +386,9 @@ describe('PostService', () => {
   describe('publishPost', () => {
     const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
     const authUserId = mockedDataUpdatePost.createdBy;
-    it('Publish post successfully', async () => {
+    it('Should return result successfully', async () => {
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
-
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
       
       const result = await postService.publishPost(mockedDataUpdatePost.id, authUserId);
@@ -404,9 +406,20 @@ describe('PostService', () => {
       });
     });
  
-    it('Post not found', async () => {
+    it('Should catch BadRequestException if content is null', async () => {
+      mockedDataUpdatePost.content = null;
+      postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost); 
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      try {
+        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+      }
+    });
+
+    it('Should catch NotFoundException if post not found', async () => {
       
-      postModelMock.findByPk.mockResolvedValueOnce(null); 
+      postModelMock.findByPk.mockResolvedValueOnce(null);
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
@@ -414,8 +427,9 @@ describe('PostService', () => {
       }
     });
 
-    it('Not owner', async () => {
+    it('Should catch ForbiddenException if user is not owner', async () => {
       postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
@@ -589,6 +603,7 @@ describe('PostService', () => {
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
+      postService.bindCommentsCount = jest.fn();
       const result = await postService.searchPosts(mockedUserAuth, searchDto);
       expect(postService.getPayloadSearch).toBeCalledTimes(1);
       expect(elasticSearchService.search).toBeCalledTimes(1);
@@ -597,6 +612,7 @@ describe('PostService', () => {
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(postService.bindCommentsCount).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 
@@ -639,7 +655,24 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -675,7 +708,24 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -716,7 +766,24 @@ describe('PostService', () => {
               should: []
             }
           },
-          sort: [{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -795,7 +862,25 @@ describe('PostService', () => {
                   }
               }
           },
-          sort: [{"_score": "desc" },{ 'createdAt': 'desc' }]
+          sort: [
+            {
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              _script: {
+                type: 'number',
+                script: {
+                  lang: 'painless',
+                  source:
+                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+                  params: {
+                    time: Date.now(),
+                  },
+                },
+                order: 'desc',
+              },
+            },
+            {"_score": "desc" },
+            { 'createdAt': 'desc' }
+          ]
         },
         from: 0,
         size: 1,
@@ -889,6 +974,15 @@ describe('PostService', () => {
       userService.getMany = jest.fn().mockResolvedValueOnce(mockedUsers)
       await postService.bindActorToPost(posts);
       expect(posts[0].actor).toStrictEqual(mockedUsers[0]);
+    });
+  });
+
+  describe('bindCommentsCount', () => {
+    const posts = [{ id: mockedPostList[0].id, commentsCount: 0 }];
+    it('Should bind actor successfully', async () => {
+      postModelMock.findAll.mockResolvedValueOnce(posts)
+      await postService.bindCommentsCount(posts);
+      expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
 

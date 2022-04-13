@@ -100,9 +100,12 @@ export class PostService {
       return source;
     });
 
-    await this.bindActorToPost(posts);
-    await this.bindAudienceToPost(posts);
-    // console.log('posts=', JSON.stringify(posts, null, 4));
+    await Promise.all([
+      this.bindActorToPost(posts),
+      this.bindAudienceToPost(posts),
+      this.bindCommentsCount(posts),
+    ]);
+
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
@@ -120,7 +123,7 @@ export class PostService {
    * @returns
    */
   public async getPayloadSearch(
-    { startTime, endTime, content, actors, limit, offset }: SearchPostsDto,
+    { startTime, endTime, content, actors, important, limit, offset }: SearchPostsDto,
     groupIds: number[]
   ): Promise<{
     index: string;
@@ -153,6 +156,21 @@ export class PostService {
         terms: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           'audience.groups.id': groupIds,
+        },
+      });
+    }
+
+    if (important) {
+      body.query.bool.must.push({
+        term: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'setting.isImportant': true,
+        },
+      });
+      body.query.bool.must.push({
+        range: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          'setting.importantExpiredAt': { gt: new Date().toISOString() },
         },
       });
     }
@@ -206,9 +224,46 @@ export class PostService {
       };
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      body['sort'] = [{ _score: 'desc' }, { createdAt: 'desc' }];
+      body['sort'] = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          _script: {
+            type: 'number',
+            script: {
+              lang: 'painless',
+              source:
+                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+              params: {
+                time: Date.now(),
+              },
+            },
+            order: 'desc',
+          },
+        },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        { _score: 'desc' },
+        { createdAt: 'desc' },
+      ];
     } else {
-      body['sort'] = [{ createdAt: 'desc' }];
+      //body['sort'] = [];
+      body['sort'] = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          _script: {
+            type: 'number',
+            script: {
+              lang: 'painless',
+              source:
+                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
+              params: {
+                time: Date.now(),
+              },
+            },
+            order: 'desc',
+          },
+        },
+        { createdAt: 'desc' },
+      ];
     }
 
     if (startTime || endTime) {
@@ -273,12 +328,12 @@ export class PostService {
       limit: limit,
       order: [['createdAt', order]],
     });
-
     const jsonPosts = rows.map((r) => r.toJSON());
-    await this._mentionService.bindMentionsToPosts(jsonPosts);
-    await this.bindActorToPost(jsonPosts);
-    await this.bindAudienceToPost(jsonPosts);
-
+    await Promise.all([
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+      this.bindAudienceToPost(jsonPosts),
+    ]);
     const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
@@ -354,13 +409,16 @@ export class PostService {
       },
       false
     );
-    const postJson = post.toJSON();
-    await this._mentionService.bindMentionsToPosts([postJson]);
-    await this.bindActorToPost([postJson]);
-    await this.bindAudienceToPost([postJson]);
+    const jsonPost = post.toJSON();
+    await Promise.all([
+      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.bindActorToPost([jsonPost]),
+      this.bindAudienceToPost([jsonPost]),
+    ]);
+
     const result = this._classTransformer.plainToInstance(
       PostResponseDto,
-      { ...postJson, comments },
+      { ...jsonPost, comments },
       {
         excludeExtraneousValues: true,
       }
@@ -417,6 +475,27 @@ export class PostService {
     const users = await this._userService.getMany(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
+    }
+  }
+  /**
+   * Bind commentsCount info to post
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindCommentsCount(posts: any[]): Promise<void> {
+    const postIds = [];
+    for (const post of posts) {
+      postIds.push(post.id);
+    }
+    const result = await this._postModel.findAll({
+      raw: true,
+      attributes: ['id', 'commentsCount'],
+      where: { id: postIds },
+    });
+    for (const post of posts) {
+      const findPost = result.find((i) => i.id == post.id);
+      post.commentsCount = findPost?.commentsCount || 0;
     }
   }
 
@@ -568,6 +647,12 @@ export class PostService {
     try {
       const post = await this._postModel.findByPk(postId);
       await this.checkPostExistAndOwner(post, authUserId);
+      const countMedia = await this._mediaService.countMediaByPost(postId);
+
+      if (post.content === null && countMedia === 0) {
+        throw new BadRequestException('Post content or media can not empty');
+      }
+
       await this._postModel.update(
         {
           isDraft: false,
