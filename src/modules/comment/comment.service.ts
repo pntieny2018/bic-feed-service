@@ -36,6 +36,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { FollowModel } from '../../database/models/follow.model';
 import { FollowService } from '../follow';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { PostGroupModel } from '../../database/models/post-group.model';
 
 @Injectable()
 export class CommentService {
@@ -82,7 +83,16 @@ export class CommentService {
       isReply = true;
       const parentComment = await this._commentModel.findOne({
         include: [
-          { model: PostModel, as: 'post' },
+          {
+            model: PostModel,
+            as: 'post',
+            include: [
+              {
+                model: PostGroupModel,
+                as: 'groups',
+              },
+            ],
+          },
           {
             model: MentionModel,
             as: 'mentions',
