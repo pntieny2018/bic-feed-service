@@ -5,6 +5,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { PublishedPostEvent } from '../../events/post';
 import { FeedPublisherService } from '../../modules/feed-publisher';
+import { PostHasBeenCreated } from '../../common/constants';
 
 @Injectable()
 export class PublishedPostListener {
@@ -35,7 +36,7 @@ export class PublishedPostListener {
       key: `${publishedPostEvent.payload.id}`,
       value: {
         actor: publishedPostEvent.actor,
-        event: PublishedPostEvent.event,
+        event: PostHasBeenCreated,
         data: publishedPostEvent.payload,
       },
     });

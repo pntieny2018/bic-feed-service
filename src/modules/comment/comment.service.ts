@@ -516,6 +516,12 @@ export class CommentService {
 
       await this._deleteReactionService.deleteReactionByCommentIds([commentId]);
 
+      await this._commentModel.destroy({
+        where: {
+          parentId: comment.id,
+        },
+      });
+
       await comment.destroy();
 
       await transaction.commit();

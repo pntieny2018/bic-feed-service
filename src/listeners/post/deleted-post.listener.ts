@@ -5,6 +5,7 @@ import { ElasticsearchHelper } from '../../common/helpers';
 import { DeletedPostEvent } from '../../events/post';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { NotificationService } from '../../notification';
+import { PostHasBeenDeleted } from '../../common/constants';
 
 @Injectable()
 export class DeletedPostListener {
@@ -33,7 +34,7 @@ export class DeletedPostListener {
         key: `${updatedPostEvent.payload.id}`,
         value: {
           actor: updatedPostEvent.actor,
-          event: DeletedPostEvent.event,
+          event: PostHasBeenDeleted,
           data: updatedPostEvent.payload,
         },
       });
