@@ -30,10 +30,9 @@ export class FollowController {
     userIds: number[];
     latestFollowId: number;
   }> {
-    return this._followService.getUniqueUserFollows(
+    return this._followService.filterUserFollows(
       getUserFollowsDto.ignoreUserIds,
       getUserFollowsDto.groupIds,
-      [],
       getUserFollowsDto.followId,
       getUserFollowsDto.limit
     );

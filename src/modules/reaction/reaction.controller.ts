@@ -4,6 +4,7 @@ import { CreateReactionService, DeleteReactionService } from './services';
 import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
+import { ReactionResponseDto } from './dto/response';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -20,15 +21,14 @@ export class ReactionController {
   @ApiOperation({ summary: 'Create reaction.' })
   @ApiOkResponse({
     description: 'Create reaction successfully',
-    type: Boolean,
+    type: ReactionResponseDto,
   })
   @Post('/')
   public async create(
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
-  ): Promise<boolean> {
-    await this._createReactionService.createReaction(userDto, createReactionDto);
-    return true;
+  ): Promise<ReactionResponseDto> {
+    return this._createReactionService.createReaction(userDto, createReactionDto);
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })

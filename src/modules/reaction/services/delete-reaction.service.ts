@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
@@ -33,7 +33,7 @@ export class DeleteReactionService {
       case ReactionEnum.COMMENT:
         return this._deleteCommentReaction(id, deleteReactionDto);
       default:
-        throw new HttpException('Reaction type not match.', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Reaction type not match.');
     }
   }
 
@@ -57,11 +57,11 @@ export class DeleteReactionService {
       });
 
       if (!!existedReaction === false) {
-        throw new Error('Reaction id is not existed.');
+        throw new NotFoundException('Reaction id not found.');
       }
 
       if (existedReaction.createdBy !== userId) {
-        throw new Error('Reaction is not created by user.');
+        throw new ForbiddenException('Reaction is not created by user.');
       }
 
       await this._postReactionModel.destroy<PostReactionModel>({
@@ -80,7 +80,7 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -104,11 +104,11 @@ export class DeleteReactionService {
       });
 
       if (!!existedReaction === false) {
-        throw new Error('Reaction id is not existed.');
+        throw new NotFoundException('Reaction id not found.');
       }
 
       if (existedReaction.createdBy !== userId) {
-        throw new Error('Reaction is not created by user.');
+        throw new ForbiddenException('Reaction is not created by user.');
       }
 
       await this._commentReactionModel.destroy<CommentReactionModel>({
@@ -127,7 +127,7 @@ export class DeleteReactionService {
       return true;
     } catch (e) {
       this._logger.error(e, e?.stack);
-      throw new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -136,6 +136,7 @@ export class DeleteReactionService {
    * @param commentIds number[]
    * @returns Promise resolve boolean
    * @throws HttpException
+   * @param commentIds
    */
   public async deleteReactionByCommentIds(commentIds: number[]): Promise<number> {
     return await this._commentReactionModel.destroy({

@@ -34,6 +34,14 @@ export class UserDataShareDto {
   @Expose()
   @IsOptional()
   public avatar?: string;
+
+  @ApiProperty({
+    description: 'Email',
+    type: String,
+  })
+  @Expose()
+  @IsOptional()
+  public email?: string;
 }
 
 export class UserSharedDto extends UserDataShareDto {

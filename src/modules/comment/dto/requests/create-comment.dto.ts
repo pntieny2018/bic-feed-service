@@ -1,4 +1,4 @@
-import { MediaDto } from '../../../media/dto/media.dto';
+import { MediaDto } from '../../../media/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, ValidateNested } from 'class-validator';
