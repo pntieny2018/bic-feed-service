@@ -5,6 +5,7 @@ import { ArrayHelper, ElasticsearchHelper } from '../../common/helpers';
 import { UpdatedPostEvent } from '../../events/post';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { NotificationService } from '../../notification';
+import { PostHasBeenUpdated } from '../../common/constants';
 @Injectable()
 export class UpdatedPostListener {
   private _logger = new Logger(UpdatedPostListener.name);
@@ -45,7 +46,7 @@ export class UpdatedPostListener {
         key: `${updatedPostEvent.payload.newPost.id}`,
         value: {
           actor: updatedPostEvent.actor,
-          event: UpdatedPostEvent.event,
+          event: PostHasBeenUpdated,
           data: updatedPostEvent.payload,
         },
       });
