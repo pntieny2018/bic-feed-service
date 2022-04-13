@@ -79,12 +79,15 @@ export class MentionService {
     }
 
     const usersInfo = await this.resolveMentions(userIds);
-    const convert = (usersData): UserMentionDto[] =>
+    const convert = (usersData: any[]): UserMentionDto => {
+      const replacement = {};
       usersData
         .filter((i) => i !== null && i !== undefined)
-        .map((userData) => ({
-          [userData.username]: userData,
-        }));
+        .forEach((user) => {
+          replacement[user.username] = user;
+        });
+      return replacement;
+    };
 
     for (const comment of commentsResponse) {
       if (comment.mentions && comment.mentions.length) {
