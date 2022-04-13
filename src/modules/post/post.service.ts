@@ -619,9 +619,7 @@ export class PostService {
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
       const post = await this._postModel.findByPk(postId);
-      if (!post) {
-        throw new NotFoundException('Post not found');
-      }
+      await this.checkPostExistAndOwner(post, authUserId);
       const countMedia = await this._mediaService.countMediaByPost(postId);
 
       if (post.content === null && countMedia === 0) {
