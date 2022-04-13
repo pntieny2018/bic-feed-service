@@ -51,6 +51,9 @@ export class FeedService {
     const rows = await this._postModel.findAll<PostModel>({
       where: {
         ...constraints,
+        ...{
+          isDraft: false,
+        },
       },
       attributes: {
         include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
@@ -145,6 +148,9 @@ export class FeedService {
     const rows = await this._postModel.findAll<PostModel>({
       where: {
         ...constraints,
+        ...{
+          isDraft: false,
+        },
       },
       attributes: {
         include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
