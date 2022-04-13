@@ -723,11 +723,13 @@ export class PostService {
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
       await this.checkPostExistAndOwner(post, authUserId);
-      await this._mentionService.setMention([], MentionableType.POST, postId);
-      await this._mediaService.sync(postId, EntityType.POST, []);
-      await this.setGroupByPost([], postId);
-      await this._deleteReactionService.deleteReactionByPostIds([postId]);
-      await this._commentService.deleteCommentsByPost(postId);
+      await Promise.all([
+        this._mentionService.setMention([], MentionableType.POST, postId),
+        this._mediaService.sync(postId, EntityType.POST, []),
+        this.setGroupByPost([], postId),
+        this._deleteReactionService.deleteReactionByPostIds([postId]),
+        this._commentService.deleteCommentsByPost(postId),
+      ]);
       await this._postModel.destroy({
         where: {
           id: postId,

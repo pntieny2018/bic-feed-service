@@ -19,12 +19,8 @@ import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { APP_VERSION } from '../../common/constants';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  CreatedPostEvent,
-  DeletedPostEvent,
-  PublishedPostEvent,
-  UpdatedPostEvent,
-} from '../../events/post';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -33,7 +29,10 @@ import {
   path: 'posts',
 })
 export class PostController {
-  public constructor(private _postService: PostService, private _eventEmitter: EventEmitter2) {}
+  public constructor(
+    private _postService: PostService,
+    private _eventEmitter: InternalEventEmitterService
+  ) {}
 
   @ApiOperation({ summary: 'Search posts' })
   @ApiOkResponse({
@@ -85,7 +84,6 @@ export class PostController {
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
       const post = await this._postService.getPost(created.id, user, new GetPostDto());
-      this._eventEmitter.emit(CreatedPostEvent.event, new CreatedPostEvent(post, user.profile));
       return post;
     }
   }
@@ -101,22 +99,20 @@ export class PostController {
     @Param('postId', ParseIntPipe) postId: number,
     @Body() createPostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const currentPost = await this._postService.getPost(postId, user, new GetPostDto());
-    await this._postService.checkPostExistAndOwner(currentPost, user.id);
+    const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
+    await this._postService.checkPostExistAndOwner(postBefore, user.id);
 
     const isUpdated = await this._postService.updatePost(postId, user, createPostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
-        UpdatedPostEvent.event,
-        new UpdatedPostEvent(
-          {
-            oldPost: currentPost,
-            newPost: postUpdated,
-          },
-          user.profile
-        )
+        new PostHasBeenUpdatedEvent({
+          oldPost: postBefore,
+          newPost: postUpdated,
+          actor: user.profile,
+        })
       );
+
       return postUpdated;
     }
   }
@@ -134,7 +130,12 @@ export class PostController {
     const isPublished = await this._postService.publishPost(postId, user.id);
     if (isPublished) {
       const post = await this._postService.getPost(postId, user, new GetPostDto());
-      this._eventEmitter.emit(PublishedPostEvent.event, new PublishedPostEvent(post, user.profile));
+      this._eventEmitter.emit(
+        new PostHasBeenPublishedEvent({
+          post: post,
+          actor: user.profile,
+        })
+      );
       return post;
     }
   }
@@ -152,8 +153,10 @@ export class PostController {
     const postDeleted = await this._postService.deletePost(postId, user.id);
     if (postDeleted) {
       this._eventEmitter.emit(
-        DeletedPostEvent.event,
-        new DeletedPostEvent(postDeleted, user.profile)
+        new PostHasBeenDeletedEvent({
+          post: postDeleted,
+          actor: user.profile,
+        })
       );
       return true;
     }
