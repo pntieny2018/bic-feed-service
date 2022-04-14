@@ -36,7 +36,7 @@ export class FeedService {
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
-    @InjectModel(PostModel)
+    @InjectModel(UserNewsFeedModel)
     private _newsFeedModel: typeof UserNewsFeedModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
