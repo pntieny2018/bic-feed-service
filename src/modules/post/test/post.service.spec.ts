@@ -38,6 +38,7 @@ import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
 import { DeleteReactionService } from '../../reaction/services';
+import { FeedService } from '../../feed/feed.service';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -49,6 +50,7 @@ describe('PostService', () => {
   let mediaService: MediaService;
   let mentionService: MentionService;
   let commentService: CommentService;
+  let feedService: FeedService;
   let deleteReactionService: DeleteReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
@@ -77,6 +79,12 @@ describe('PostService', () => {
           useValue: {
             getComments: jest.fn(),
             deleteCommentsByPost: jest.fn()
+          },
+        },
+        {
+          provide: FeedService,
+          useValue: {
+            deleteNewsFeedByPost: jest.fn()
           },
         },
         {
@@ -172,6 +180,7 @@ describe('PostService', () => {
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
     commentService = moduleRef.get<CommentService>(CommentService);
+    feedService = moduleRef.get<FeedService>(FeedService);
     deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
@@ -452,6 +461,7 @@ describe('PostService', () => {
       expect(postModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
+      expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
       expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
       

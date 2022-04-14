@@ -1,7 +1,7 @@
 import { MentionModule } from '../mention/mention.module';
 import { GroupModule } from '../../shared/group/group.module';
 import { PostModule } from '../post/post.module';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
 import { CanReadTimelineConstraint } from './validations/decorators';
@@ -9,8 +9,9 @@ import { DatabaseModule } from '../../database';
 import { UserModule } from '../../shared/user';
 
 @Module({
-  imports: [DatabaseModule, UserModule, PostModule, GroupModule, MentionModule],
+  imports: [DatabaseModule, UserModule, forwardRef(() => PostModule), GroupModule, MentionModule],
   providers: [FeedService, CanReadTimelineConstraint],
   controllers: [FeedController],
+  exports: [FeedService],
 })
 export class FeedModule {}
