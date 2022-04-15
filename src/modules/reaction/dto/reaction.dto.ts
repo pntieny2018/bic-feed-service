@@ -11,14 +11,19 @@ export class ReactionDto extends CreateReactionDto {
   @IsNotEmpty()
   @IsDate()
   @Expose()
-  public createdAt: Date;
+  public createdAt?: Date;
+
+  @IsNumber()
+  @Expose()
+  public reactionId: number;
 
   public constructor(
     createReactionDto: CreateReactionDto,
-    { userId, createdAt }: { userId: number; createdAt: Date }
+    { userId, createdAt, reactionId }: { userId: number; createdAt: Date; reactionId: number }
   ) {
     super(createReactionDto);
     this.userId = userId;
     this.createdAt = createdAt;
+    this.reactionId = reactionId;
   }
 }

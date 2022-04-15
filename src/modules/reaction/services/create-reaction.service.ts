@@ -114,6 +114,7 @@ export class CreateReactionService {
       const reactionDto = new ReactionDto(createReactionDto, {
         userId: userId,
         createdAt: postReaction.createdAt,
+        reactionId: postReaction.id,
       });
       this._commonReactionService.createCreateReactionEvent(
         userDto,
@@ -195,6 +196,7 @@ export class CreateReactionService {
       const reactionDto = new ReactionDto(createReactionDto, {
         userId: userId,
         createdAt: commentReaction.createdAt,
+        reactionId: commentReaction.id,
       });
       this._commonReactionService.createCreateReactionEvent(
         userDto,

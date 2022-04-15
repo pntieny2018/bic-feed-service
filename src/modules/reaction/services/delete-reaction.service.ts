@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { UserDto } from '../../auth';
+import { ReactionDto } from '../dto/reaction.dto';
 import { DeleteReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
@@ -72,12 +73,18 @@ export class DeleteReactionService {
 
       await this._commonReactionService.createDeleteReactionEvent(
         userDto,
-        {
-          userId: userId,
-          reactionName: existedReaction.reactionName,
-          target: ReactionEnum.POST,
-          targetId: existedReaction.postId,
-        },
+        new ReactionDto(
+          {
+            reactionName: existedReaction.reactionName,
+            target: ReactionEnum.POST,
+            targetId: existedReaction.postId,
+          },
+          {
+            userId: userDto.id,
+            createdAt: existedReaction.createdAt,
+            reactionId: existedReaction.id,
+          }
+        ),
         existedReaction.postId
       );
 
@@ -124,12 +131,18 @@ export class DeleteReactionService {
 
       await this._commonReactionService.createDeleteReactionEvent(
         userDto,
-        {
-          userId: userId,
-          reactionName: existedReaction.reactionName,
-          target: ReactionEnum.COMMENT,
-          targetId: existedReaction.commentId,
-        },
+        new ReactionDto(
+          {
+            reactionName: existedReaction.reactionName,
+            target: ReactionEnum.POST,
+            targetId: existedReaction.commentId,
+          },
+          {
+            userId: userDto.id,
+            createdAt: existedReaction.createdAt,
+            reactionId: existedReaction.id,
+          }
+        ),
         null,
         existedReaction.commentId
       );
