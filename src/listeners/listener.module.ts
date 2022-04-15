@@ -1,5 +1,5 @@
 import { CommentModule } from './../modules/comment/comment.module';
-import postListeners from './post';
+import { PostListener } from './post';
 import { Module } from '@nestjs/common';
 import { CommentListener } from './comment';
 import { PostModule } from '../modules/post';
@@ -10,6 +10,6 @@ import { FeedPublisherModule } from '../modules/feed-publisher';
 
 @Module({
   imports: [LibModule, PostModule, CommentModule, NotificationModule, FeedPublisherModule],
-  providers: [...postListeners, CommentListener, ReactionListener],
+  providers: [PostListener, CommentListener, ReactionListener],
 })
 export class ListenerModule {}

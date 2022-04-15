@@ -1,4 +1,3 @@
-export * from './created-post.event';
-export * from './published-post.event';
-export * from './deleted-post.event';
-export * from './updated-post.event';
+export * from './post-has-been-deleted.event';
+export * from './post-has-been-updated.event';
+export * from './post-has-been-published.event';

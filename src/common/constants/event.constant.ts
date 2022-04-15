@@ -3,7 +3,7 @@ export const PostWillBeCreated = 'post.will.be.created';
 export const PostWillBeUpdated = 'post.will.be.updated';
 export const PostWillBeDeleted = 'post.will.be.deleted';
 
-export const PostHasBeenCreated = 'post.has.been.created';
+export const PostHasBeenPublished = 'post.has.been.published';
 export const PostHasBeenUpdated = 'post.has.been.updated';
 export const PostHasBeenDeleted = 'post.has.been.deleted';
 

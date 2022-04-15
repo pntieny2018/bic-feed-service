@@ -15,7 +15,15 @@ import { MentionModel } from '../../database/models/mention.model';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 
 @Injectable()
@@ -26,7 +34,10 @@ export class FeedService {
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
+    @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
+    @InjectModel(UserNewsFeedModel)
+    private _newsFeedModel: typeof UserNewsFeedModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel
   ) {}
 
@@ -51,6 +62,9 @@ export class FeedService {
     const rows = await this._postModel.findAll<PostModel>({
       where: {
         ...constraints,
+        ...{
+          isDraft: false,
+        },
       },
       attributes: {
         include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
@@ -145,6 +159,9 @@ export class FeedService {
     const rows = await this._postModel.findAll<PostModel>({
       where: {
         ...constraints,
+        ...{
+          isDraft: false,
+        },
       },
       attributes: {
         include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
@@ -256,5 +273,14 @@ export class FeedService {
       };
     }
     return constraints;
+  }
+
+  /**
+   * Delete newsfeed by post
+   * @param getTimelineDto GetTimelineDto
+   * @returns object
+   */
+  public async deleteNewsFeedByPost(postId: number): Promise<number> {
+    return await this._newsFeedModel.destroy({ where: { postId } });
   }
 }

@@ -39,6 +39,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
 import { DeleteReactionService } from '../reaction/services';
+import { FeedService } from '../feed/feed.service';
 
 @Injectable()
 export class PostService {
@@ -64,7 +65,9 @@ export class PostService {
     private _commentService: CommentService,
     private _authorityService: AuthorityService,
     private _searchService: ElasticsearchService,
-    private _deleteReactionService: DeleteReactionService
+    private _deleteReactionService: DeleteReactionService,
+    @Inject(forwardRef(() => FeedService))
+    private _feedService: FeedService
   ) {}
 
   /**
@@ -723,11 +726,14 @@ export class PostService {
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
       await this.checkPostExistAndOwner(post, authUserId);
-      await this._mentionService.setMention([], MentionableType.POST, postId);
-      await this._mediaService.sync(postId, EntityType.POST, []);
-      await this.setGroupByPost([], postId);
-      await this._deleteReactionService.deleteReactionByPostIds([postId]);
-      await this._commentService.deleteCommentsByPost(postId);
+      await Promise.all([
+        this._mentionService.setMention([], MentionableType.POST, postId),
+        this._mediaService.sync(postId, EntityType.POST, []),
+        this.setGroupByPost([], postId),
+        this._deleteReactionService.deleteReactionByPostIds([postId]),
+        this._commentService.deleteCommentsByPost(postId),
+        this._feedService.deleteNewsFeedByPost(postId),
+      ]);
       await this._postModel.destroy({
         where: {
           id: postId,
