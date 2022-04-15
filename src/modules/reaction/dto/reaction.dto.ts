@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsDate, IsNotEmpty, IsNumber } from 'class-validator';
 import { CreateReactionDto } from './request';
 
 export class ReactionDto extends CreateReactionDto {
@@ -8,8 +8,17 @@ export class ReactionDto extends CreateReactionDto {
   @Expose()
   public userId: number;
 
-  public constructor(createReactionDto: CreateReactionDto, userId: number) {
+  @IsNotEmpty()
+  @IsDate()
+  @Expose()
+  public createdAt: Date;
+
+  public constructor(
+    createReactionDto: CreateReactionDto,
+    { userId, createdAt }: { userId: number; createdAt: Date }
+  ) {
     super(createReactionDto);
     this.userId = userId;
+    this.createdAt = createdAt;
   }
 }
