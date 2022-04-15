@@ -1,9 +1,9 @@
-import { CommentResponseDto } from '../../../modules/comment/dto/response';
-import { PostResponseDto } from '../../../modules/post/dto/responses';
+import { IComment } from '../../../database/models/comment.model';
+import { IPost } from '../../../database/models/post.model';
 import { ReactionDto } from '../../../modules/reaction/dto/reaction.dto';
 
 export class ReactionEventPayload {
   public reaction: ReactionDto;
-  public post?: PostResponseDto;
-  public comment?: CommentResponseDto;
+  public post?: IPost;
+  public comment?: IComment;
 }

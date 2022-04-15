@@ -21,7 +21,7 @@ import { FollowModule } from '../follow';
     MentionModule,
     MediaModule,
     GroupModule,
-    forwardRef(() => ReactionModule),
+    ReactionModule,
   ],
   controllers: [CommentController],
   providers: [CommentService],

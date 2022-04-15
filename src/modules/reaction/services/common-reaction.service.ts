@@ -1,18 +1,17 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import { CommentModel } from '../../../database/models/comment.model';
+import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
+import { PostModel } from '../../../database/models/post.model';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../../events/reaction';
 import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
 import { UserDto } from '../../auth';
-import { CommentService } from '../../comment';
-import { GetPostDto } from '../../post/dto/requests';
-import { PostService } from '../../post/post.service';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CreateReactionDto } from '../dto/request';
-import { ReactionEnum } from '../reaction.enum';
 
 @Injectable()
 export class CommonReactionService {
@@ -20,12 +19,10 @@ export class CommonReactionService {
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
+    @InjectModel(CommentModel) private readonly _commentModel: typeof CommentModel,
+    @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     private readonly _internalEventEmitterService: InternalEventEmitterService,
-    private readonly _userService: UserService,
-    @Inject(forwardRef(() => PostService))
-    private readonly _postService: PostService,
-    @Inject(forwardRef(() => CommentService))
-    private readonly _commentService: CommentService
+    private readonly _userService: UserService
   ) {}
 
   /**
@@ -72,33 +69,26 @@ export class CommonReactionService {
 
   /**
    * Create create-reaction events
-   * @param userDto UserDto
    * @param userSharedDto UserSharedDto
    * @param reaction ReactionDto
    * @param postId number
    * @param commentId number
-   * @returns void
+   * @returns Promise resolve void
    */
   public async createCreateReactionEvent(
-    userDto: UserDto,
     userSharedDto: UserSharedDto,
     reaction: ReactionDto,
     postId: number,
     commentId?: number
   ): Promise<void> {
-    const postResponseDto = await this._postService.getPost(
-      postId,
-      userDto,
-      new GetPostDto({ commentLimit: 0, childCommentLimit: 0 })
-    );
-    const commentResponseDto =
-      !!commentId === false ? null : await this._commentService.getComment(userDto, commentId, 0);
+    const comment = !!commentId ? await this.getComment(commentId) : null;
+    const post = await this.getPost(postId ?? comment?.postId);
 
     const createReactionInternalEvent = new CreateReactionInternalEvent({
       userSharedDto: userSharedDto,
       reaction: reaction,
-      post: postResponseDto,
-      comment: commentResponseDto,
+      post: post.toJSON(),
+      comment: comment?.toJSON(),
     });
 
     this._internalEventEmitterService.emit(createReactionInternalEvent);
@@ -108,6 +98,8 @@ export class CommonReactionService {
    * Create delete-reaction event
    * @param userDto UserDto
    * @param reaction ReactionDto
+   * @param postId number
+   * @param commentId number
    * @returns Promise resolve void
    */
   public async createDeleteReactionEvent(
@@ -116,27 +108,56 @@ export class CommonReactionService {
     postId: number,
     commentId?: number
   ): Promise<void> {
+    const comment = !!commentId ? await this.getComment(commentId) : null;
+    const post = await this.getPost(postId ?? comment?.postId);
     const userSharedDto = await this._userService.get(userDto.id);
-
-    let post = null;
-    let comment = null;
-
-    if (reaction.target === ReactionEnum.POST) {
-      post = await this._postService.getPost(
-        postId,
-        userDto,
-        new GetPostDto({ commentLimit: 0, childCommentLimit: 0 })
-      );
-    } else {
-      comment = await this._commentService.getComment(userDto, commentId, 0);
-    }
 
     const deleteReactionInternalEvent = new DeleteReactionInternalEvent({
       userSharedDto: userSharedDto,
       reaction: reaction,
-      post: post,
-      comment: comment,
+      post: post.toJSON(),
+      comment: comment?.toJSON(),
     });
     this._internalEventEmitterService.emit(deleteReactionInternalEvent);
+  }
+
+  /**
+   * Get post with groups and reactionsCount by id
+   * @param postId number
+   * @returns Promise resolve PostModel
+   */
+  public async getPost(postId: number): Promise<PostModel> {
+    const post = await this._postModel.findOne<PostModel>({
+      attributes: {
+        include: [PostModel.loadReactionsCount()],
+      },
+      where: {
+        id: postId,
+      },
+      include: [
+        {
+          model: PostGroupModel,
+          required: true,
+        },
+      ],
+    });
+    return post;
+  }
+
+  /**
+   * Get comment with reactionsCount
+   * @param commentId number
+   * @returns Promise resolve CommentModel
+   */
+  public async getComment(commentId: number): Promise<CommentModel> {
+    const comment = await this._commentModel.findOne<CommentModel>({
+      attributes: {
+        include: [CommentModel.loadReactionsCount()],
+      },
+      where: {
+        id: commentId,
+      },
+    });
+    return comment;
   }
 }

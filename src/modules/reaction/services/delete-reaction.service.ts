@@ -134,7 +134,7 @@ export class DeleteReactionService {
         new ReactionDto(
           {
             reactionName: existedReaction.reactionName,
-            target: ReactionEnum.POST,
+            target: ReactionEnum.COMMENT,
             targetId: existedReaction.commentId,
           },
           {

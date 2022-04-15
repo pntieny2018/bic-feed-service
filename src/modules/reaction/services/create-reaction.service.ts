@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { plainToInstance } from 'class-transformer';
+import { LogicException } from '../../../common/exceptions';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
-import { CommentModel } from '../../../database/models/comment.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { PostModel } from '../../../database/models/post.model';
@@ -22,7 +22,6 @@ import { ReactionResponseDto } from '../dto/response';
 import { REACTION_KIND_LIMIT } from '../reaction.constant';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
-import { LogicException } from '../../../common/exceptions';
 
 @Injectable()
 export class CreateReactionService {
@@ -37,8 +36,6 @@ export class CreateReactionService {
     private readonly _postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     private readonly _postGroupModel: typeof PostGroupModel,
-    @InjectModel(CommentModel)
-    private readonly _commentModel: typeof CommentModel,
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     private readonly _commonReactionService: CommonReactionService
@@ -86,7 +83,7 @@ export class CreateReactionService {
         throw new LogicException('Reaction is existed.');
       }
 
-      const [canReact, post] = await this._canReactPost(postId);
+      const canReact = await this._canReactPost(postId);
       if (canReact === false) {
         throw new LogicException('Post does not permit to react.');
       }
@@ -116,12 +113,10 @@ export class CreateReactionService {
         createdAt: postReaction.createdAt,
         reactionId: postReaction.id,
       });
-      this._commonReactionService.createCreateReactionEvent(
-        userDto,
-        userSharedDto,
-        reactionDto,
-        postId
-      );
+
+      this._commonReactionService
+        .createCreateReactionEvent(userSharedDto, reactionDto, postId)
+        .catch((e) => this._logger.error(e, e?.stack));
 
       return plainToInstance(ReactionResponseDto, postReaction, { excludeExtraneousValues: true });
     } catch (e) {
@@ -172,7 +167,7 @@ export class CreateReactionService {
         throw new LogicException('Reaction is existed.');
       }
 
-      const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
+      const { postId } = await this._commonReactionService.getComment(commentId);
       const userSharedDto = await this._userService.get(userId);
       const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
@@ -198,13 +193,10 @@ export class CreateReactionService {
         createdAt: commentReaction.createdAt,
         reactionId: commentReaction.id,
       });
-      this._commonReactionService.createCreateReactionEvent(
-        userDto,
-        userSharedDto,
-        reactionDto,
-        postId,
-        comment.id
-      );
+
+      this._commonReactionService
+        .createCreateReactionEvent(userSharedDto, reactionDto, postId, commentId)
+        .catch((e) => this._logger.error(e, e?.stack));
 
       return plainToInstance(ReactionResponseDto, commentReaction, {
         excludeExtraneousValues: true,
@@ -261,44 +253,17 @@ export class CreateReactionService {
   /**
    * Can react post by checking the fields **canReact** and **isDraft**
    * @param postId number
-   * @returns Promise resolve [boolean, PostModel]
-   * @throws Error
+   * @returns Promise resolve boolean
    */
-  private async _canReactPost(postId: number): Promise<[boolean, PostModel]> {
+  private async _canReactPost(postId: number): Promise<boolean> {
     const post = await this._postModel.findOne<PostModel>({
       where: {
         id: postId,
         canReact: true,
         isDraft: false,
       },
-      include: [
-        {
-          model: PostGroupModel,
-          required: true,
-        },
-      ],
     });
-    return [!!post === true, post];
-  }
-
-  /**
-   * Get postId of a comment and comment
-   * @param commentId number
-   * @returns Promise resolve [number, CommentModel]
-   * @throws Error
-   */
-  private async _getPostIdOfCommentAndComment(commentId: number): Promise<[number, CommentModel]> {
-    const comment = await this._commentModel.findOne<CommentModel>({
-      where: {
-        id: commentId,
-      },
-    });
-    if (comment === null || !!comment.postId === false) {
-      throw new InternalServerErrorException(
-        "Database error: comment is not existed or comment's postId is zero-value."
-      );
-    }
-    return [comment.postId, comment];
+    return !!post;
   }
 
   /**
