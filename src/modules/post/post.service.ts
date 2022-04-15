@@ -104,7 +104,7 @@ export class PostService {
     });
 
     await Promise.all([
-      this.bindActorToPost(posts),
+      //this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
       this.bindCommentsCount(posts),
     ]);
