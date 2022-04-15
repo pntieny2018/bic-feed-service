@@ -6,6 +6,6 @@ import { UserSharedDto } from '../../../shared/user/dto';
 export class DeleteReactionEventInternalPayload {
   public userSharedDto: UserSharedDto;
   public reaction: ReactionDto;
-  public post?: IPost;
+  public post: IPost;
   public comment?: IComment;
 }
