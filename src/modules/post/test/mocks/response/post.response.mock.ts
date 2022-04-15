@@ -5,6 +5,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
     {
       ownerReactions: [],
       id: 1,
+      totalReply: 0,
       actor: {
         id: 59,
         username: 'aaa',
@@ -41,6 +42,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
             images: [],
             files: [],
           },
+          totalReply: 0,
           reactionsCount: null,
         },
       ],
