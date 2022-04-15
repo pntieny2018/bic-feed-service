@@ -25,6 +25,10 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
+  public totalReply = 0;
+
+  @ApiProperty()
+  @Expose()
   public content?: string;
 
   @ApiProperty()
