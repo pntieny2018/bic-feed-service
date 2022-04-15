@@ -54,12 +54,11 @@ export class CreateReactionService {
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
-    const { id } = userDto;
     switch (createReactionDto.target) {
       case ReactionEnum.POST:
-        return this._createPostReaction(id, createReactionDto);
+        return this._createPostReaction(userDto, createReactionDto);
       case ReactionEnum.COMMENT:
-        return this._createCommentReaction(id, createReactionDto);
+        return this._createCommentReaction(userDto, createReactionDto);
       default:
         throw new NotFoundException('Reaction type not match.');
     }
@@ -67,15 +66,16 @@ export class CreateReactionService {
 
   /**
    * Create post reaction
-   * @param userId number
+   * @param userDto UserDto
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createPostReaction(
-    userId: number,
+    userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
+    const { id: userId } = userDto;
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const isExistedPostReaction = await this._commonReactionService.isExistedPostReaction(
@@ -113,9 +113,10 @@ export class CreateReactionService {
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
       this._commonReactionService.createCreateReactionEvent(
+        userDto,
         userSharedDto,
         reactionDto,
-        post.toJSON()
+        postId
       );
 
       return plainToInstance(ReactionResponseDto, postReaction, { excludeExtraneousValues: true });
@@ -147,15 +148,16 @@ export class CreateReactionService {
 
   /**
    * Create comment reaction
-   * @param userId number
+   * @param userDto UserDto
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createCommentReaction(
-    userId: number,
+    userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
+    const { id: userId } = userDto;
     const { reactionName, targetId: commentId } = createReactionDto;
     try {
       const isExistedCommentReaction = await this._commonReactionService.isExistedCommentReaction(
@@ -167,7 +169,6 @@ export class CreateReactionService {
       }
 
       const [postId, comment] = await this._getPostIdOfCommentAndComment(commentId);
-      const post = await this._getPost(postId);
       const userSharedDto = await this._userService.get(userId);
       const isUserInPostGroups = await this._isUserInPostGroups(userSharedDto, postId);
       if (isUserInPostGroups === false) {
@@ -190,10 +191,11 @@ export class CreateReactionService {
 
       const reactionDto = new ReactionDto(createReactionDto, userId);
       this._commonReactionService.createCreateReactionEvent(
+        userDto,
         userSharedDto,
         reactionDto,
-        post.toJSON(),
-        comment.toJSON()
+        postId,
+        comment.id
       );
 
       return plainToInstance(ReactionResponseDto, commentReaction, {
@@ -289,32 +291,6 @@ export class CreateReactionService {
       );
     }
     return [comment.postId, comment];
-  }
-
-  /**
-   * Get post by id
-   * @param postId number
-   * @returns Promise resolve PostModel
-   * @throws Error
-   */
-  private async _getPost(postId: number): Promise<PostModel> {
-    const post = await this._postModel.findOne<PostModel>({
-      where: {
-        id: postId,
-      },
-      include: [
-        {
-          model: PostGroupModel,
-          required: true,
-        },
-      ],
-    });
-    if (!!post === false) {
-      throw new InternalServerErrorException(
-        'Database error: Comment is belong to a non-existed post.'
-      );
-    }
-    return post;
   }
 
   /**

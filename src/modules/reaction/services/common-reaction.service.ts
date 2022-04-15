@@ -1,15 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
-import { IComment } from '../../../database/models/comment.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
-import { IPost } from '../../../database/models/post.model';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../../events/reaction';
 import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../auth';
+import { CommentService } from '../../comment';
+import { GetPostDto } from '../../post/dto/requests';
+import { PostService } from '../../post/post.service';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CreateReactionDto } from '../dto/request';
+import { ReactionEnum } from '../reaction.enum';
 
 @Injectable()
 export class CommonReactionService {
@@ -18,7 +21,11 @@ export class CommonReactionService {
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     private readonly _internalEventEmitterService: InternalEventEmitterService,
-    private readonly _userService: UserService
+    private readonly _userService: UserService,
+    @Inject(forwardRef(() => PostService))
+    private readonly _postService: PostService,
+    @Inject(forwardRef(() => CommentService))
+    private readonly _commentService: CommentService
   ) {}
 
   /**
@@ -64,24 +71,34 @@ export class CommonReactionService {
   }
 
   /**
-   * Create create-reaction event
+   * Create create-reaction events
+   * @param userDto UserDto
    * @param userSharedDto UserSharedDto
    * @param reaction ReactionDto
-   * @param post IPost
-   * @param comment IComment
+   * @param postId number
+   * @param commentId number
    * @returns void
    */
-  public createCreateReactionEvent(
+  public async createCreateReactionEvent(
+    userDto: UserDto,
     userSharedDto: UserSharedDto,
     reaction: ReactionDto,
-    post: IPost,
-    comment?: IComment
-  ): void {
+    postId: number,
+    commentId?: number
+  ): Promise<void> {
+    const postResponseDto = await this._postService.getPost(
+      postId,
+      userDto,
+      new GetPostDto({ commentLimit: 0, childCommentLimit: 0 })
+    );
+    const commentResponseDto =
+      !!commentId === false ? null : await this._commentService.getComment(userDto, commentId, 0);
+
     const createReactionInternalEvent = new CreateReactionInternalEvent({
       userSharedDto: userSharedDto,
       reaction: reaction,
-      post: post,
-      comment: comment,
+      post: postResponseDto,
+      comment: commentResponseDto,
     });
 
     this._internalEventEmitterService.emit(createReactionInternalEvent);
@@ -89,15 +106,36 @@ export class CommonReactionService {
 
   /**
    * Create delete-reaction event
-   * @param userId number
+   * @param userDto UserDto
    * @param reaction ReactionDto
    * @returns Promise resolve void
    */
-  public async createDeleteReactionEvent(userId: number, reaction: ReactionDto): Promise<void> {
-    const userSharedDto = await this._userService.get(userId);
+  public async createDeleteReactionEvent(
+    userDto: UserDto,
+    reaction: ReactionDto,
+    postId: number,
+    commentId?: number
+  ): Promise<void> {
+    const userSharedDto = await this._userService.get(userDto.id);
+
+    let post = null;
+    let comment = null;
+
+    if (reaction.target === ReactionEnum.POST) {
+      post = await this._postService.getPost(
+        postId,
+        userDto,
+        new GetPostDto({ commentLimit: 0, childCommentLimit: 0 })
+      );
+    } else {
+      comment = await this._commentService.getComment(userDto, commentId, 0);
+    }
+
     const deleteReactionInternalEvent = new DeleteReactionInternalEvent({
       userSharedDto: userSharedDto,
       reaction: reaction,
+      post: post,
+      comment: comment,
     });
     this._internalEventEmitterService.emit(deleteReactionInternalEvent);
   }

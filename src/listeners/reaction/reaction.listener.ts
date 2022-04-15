@@ -39,6 +39,8 @@ export class ReactionListener {
   public onDeleteReactionEvent(event: DeleteReactionInternalEvent): void {
     const deleteReactionEventPayload: ReactionEventPayload = {
       reaction: event.payload.reaction,
+      post: event.payload.post,
+      comment: event.payload.comment,
     };
     const kafkaDeleteReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
       key: event.getEventName(),
