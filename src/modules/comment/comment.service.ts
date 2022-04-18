@@ -529,6 +529,7 @@ export class CommentService {
         where: {
           parentId: comment.id,
         },
+        individualHooks: true,
       });
 
       await comment.destroy();
@@ -599,6 +600,7 @@ export class CommentService {
    * @returns Promise resolve boolean
    */
   public async deleteCommentsByPost(postId: number): Promise<void> {
+    const { schema } = getDatabaseConfig();
     const comments = await this._commentModel.findAll({
       where: { postId },
     });
@@ -613,9 +615,10 @@ export class CommentService {
     this._deleteReactionService
       .deleteReactionByCommentIds(commentIds)
       .catch((ex) => this._logger.error(ex, ex.stack));
-    await this._commentModel.destroy({
-      where: { id: commentIds },
-    });
+    //ignore AfterBulkDelete hook of sequelize
+    await this._commentModel.sequelize.query(
+      `DELETE * FROM ${schema}.${this._commentModel.tableName} WHERE id IN(${commentIds.join(',')})`
+    );
   }
 
   /**

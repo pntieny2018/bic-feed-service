@@ -101,7 +101,7 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
           : {};
         return {
           redisOptions: {
-            db: redisConfig.db,
+            keyPrefix: redisConfig.prefix,
             host: redisConfig.host,
             port: redisConfig.port,
             password: redisConfig.password,
