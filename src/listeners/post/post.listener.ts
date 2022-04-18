@@ -31,8 +31,6 @@ export class PostListener {
         .delete({ index, id: `${post.id}` })
         .catch((e) => this._logger.debug(e));
 
-      await this._feedPublisherService.detachPostForAllNewsFeed(post.id);
-
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {

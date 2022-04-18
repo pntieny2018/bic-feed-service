@@ -78,18 +78,6 @@ export class FeedPublisherService {
     }
   }
 
-  public async detachPostForAllNewsFeed(postId: number): Promise<void> {
-    try {
-      await this._userNewsFeedModel.destroy({
-        where: {
-          postId: postId,
-        },
-      });
-    } catch (ex) {
-      this._logger.debug(ex, ex.stack);
-    }
-  }
-
   protected async processFanout(
     userId: number,
     postId: number,
