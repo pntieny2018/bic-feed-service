@@ -16,6 +16,7 @@ RUN export NODE_OPTIONS="--max-old-space-size=5120"
 
 RUN nest build
 
+
 FROM node:16.14 as production
 
 ARG NODE_ENV=production
@@ -30,7 +31,7 @@ COPY yarn.lock ./
 
 RUN yarn --production
 
-RUN yarn add @nestjs/swagger swagger-ui-express typescript ts-node
+RUN yarn add @nestjs/swagger swagger-ui-express typescript ts-node  source-map-support
 
 COPY --from=development /usr/src/app/dist ./dist
 

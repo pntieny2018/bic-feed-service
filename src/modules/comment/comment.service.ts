@@ -681,7 +681,7 @@ export class CommentService {
       include: [
         {
           model: MentionModel,
-          required: true,
+          required: false,
         },
       ],
       where: {
@@ -697,6 +697,7 @@ export class CommentService {
       order: [['createdAt', 'DESC']],
       limit,
     });
+
     const parentMentionedUserIds = parentComment.mentions.map((m) => m.userId);
 
     const mentionedInRepliedCommentUserIds: number[] = [];
@@ -733,7 +734,7 @@ export class CommentService {
 
     return {
       parentCommentActor: parentComment.createdBy,
-      currentMentionedUserIds: [...new Set(currentMentionedUserIds)],
+      currentMentionedUserIds: currentMentionedUserIds,
       parentMentionedUserIds: [...new Set(filterParentMentionedUserIds)],
       repliedUserIds: [...new Set(filterRepliedUserIds)],
       mentionedInRepliedCommentUserIds: [...new Set(filterMentionedInRepliedCommentUserIds)],

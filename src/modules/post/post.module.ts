@@ -16,7 +16,6 @@ import { FeedModule } from '../feed';
 @Module({
   imports: [
     DatabaseModule,
-    PostModule,
     UserModule,
     GroupModule,
     MediaModule,
