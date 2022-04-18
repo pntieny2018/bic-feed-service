@@ -4,4 +4,5 @@ export interface IRedisConfig {
   port: number;
   password: string;
   ssl: boolean;
+  prefix: string;
 }

@@ -21,7 +21,7 @@ import { MentionService } from '../mention';
 
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { ArrayHelper, ElasticsearchHelper } from '../../common/helpers';
-import { EntityIdDto } from '../../common/dto';
+import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
@@ -104,7 +104,7 @@ export class PostService {
     });
 
     await Promise.all([
-      this.bindActorToPost(posts),
+      //this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
       this.bindCommentsCount(posts),
     ]);
@@ -407,7 +407,7 @@ export class PostService {
       {
         postId,
         childLimit: getPostDto.childCommentLimit,
-        order: getPostDto.commentOrder,
+        order: OrderEnum.DESC,
         limit: getPostDto.commentLimit,
       },
       false

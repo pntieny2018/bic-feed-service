@@ -102,6 +102,7 @@ const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
 
 export const createdComment: CommentResponseDto = {
   id: 1,
+  totalReply: 0,
   actor: {
     id: 1,
     fullname: 'Martine Baumbach',

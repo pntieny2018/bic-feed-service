@@ -47,6 +47,7 @@ export interface IPost {
   groups?: IPostGroup[];
   mentions?: IMention[];
   mentionIds?: number[];
+  reactionsCount?: string;
 }
 @Table({
   tableName: 'posts',
@@ -133,6 +134,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     foreignKey: 'postId',
   })
   public postReactions: PostReactionModel[];
+
+  public reactionsCount: string;
 
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
