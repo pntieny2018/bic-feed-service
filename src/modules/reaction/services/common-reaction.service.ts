@@ -1,17 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import {
+  CommentReactionModel,
+  ICommentReaction,
+} from '../../../database/models/comment-reaction.model';
 import { CommentModel } from '../../../database/models/comment.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PostReactionModel } from '../../../database/models/post-reaction.model';
+import { IPostReaction, PostReactionModel } from '../../../database/models/post-reaction.model';
 import { PostModel } from '../../../database/models/post.model';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../../events/reaction';
 import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
 import { UserDto } from '../../auth';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CreateReactionDto } from '../dto/request';
+import { CreateReactionDto, GetReactionDto } from '../dto/request';
+import { ReactionEnum } from '../reaction.enum';
+import { ReactionResponseDto, ReactionsResponseDto } from '../dto/response';
+import { Op } from 'sequelize';
+import { ObjectHelper } from '../../../common/helpers';
 
 @Injectable()
 export class CommonReactionService {
@@ -159,5 +166,71 @@ export class CommonReactionService {
       },
     });
     return comment;
+  }
+
+  public async getReactions(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
+    const response = new ReactionsResponseDto();
+    const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
+    switch (target) {
+      case ReactionEnum.POST:
+        const rsp = await this._postReactionModel.findAll({
+          where: {
+            reactionName: reactionName,
+            postId: targetId,
+            id: {
+              [Op.gt]: latestId,
+            },
+          },
+          limit: limit,
+          order: [['createdAt', order]],
+        });
+        const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
+        return {
+          list: await this._bindActorToReaction(reactionsPost),
+          limit: limit,
+          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : 0,
+        };
+      case ReactionEnum.COMMENT:
+        const rsc = await this._commentReactionModel.findAll({
+          where: {
+            reactionName: reactionName,
+            commentId: targetId,
+            id: {
+              [Op.gt]: latestId,
+            },
+          },
+          limit: limit,
+          order: [['createdAt', order]],
+        });
+
+        const reactionsComment = (rsc ?? []).map((r) => r.toJSON());
+        return {
+          list: await this._bindActorToReaction(reactionsComment),
+          limit: limit,
+          latestId:
+            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : 0,
+        };
+    }
+
+    return response;
+  }
+
+  private async _bindActorToReaction(
+    reactions: IPostReaction[] | ICommentReaction[]
+  ): Promise<ReactionResponseDto[]> {
+    const actorIds = reactions.map((r) => r.createdBy);
+    const actors = await this._userService.getMany(actorIds);
+    return reactions.map(
+      (r): ReactionResponseDto => ({
+        id: r.id,
+        actor: ObjectHelper.omit(
+          ['groups'],
+          actors.find((a) => a.id == r.createdBy)
+        ) as any,
+        reactionName: r.reactionName,
+        createdAt: r.createdAt,
+        createdBy: r.createdBy,
+      })
+    );
   }
 }

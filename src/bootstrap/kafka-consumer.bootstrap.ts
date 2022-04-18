@@ -18,6 +18,6 @@ export class KafkaConsumerBootstrap {
       transport: Transport.KAFKA,
       options: defaultConfig,
     });
-    await app.startAllMicroservices();
+    app.startAllMicroservices();
   }
 }
