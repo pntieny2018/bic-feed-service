@@ -449,7 +449,16 @@ export class CommentService {
               as: 'mentions',
               required: false,
             },
+            {
+              model: CommentReactionModel,
+              as: 'ownerReactions',
+              required: false,
+              where: {
+                createdBy: user.id,
+              },
+            },
           ],
+          order: [['createdAt', getCommentDto.order]],
         },
         {
           model: CommentReactionModel,
