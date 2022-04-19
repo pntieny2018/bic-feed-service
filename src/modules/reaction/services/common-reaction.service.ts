@@ -20,6 +20,7 @@ import { ReactionEnum } from '../reaction.enum';
 import { ReactionResponseDto, ReactionsResponseDto } from '../dto/response';
 import { Op } from 'sequelize';
 import { ObjectHelper } from '../../../common/helpers';
+import { getDatabaseConfig } from '../../../config/database';
 
 @Injectable()
 export class CommonReactionService {
@@ -248,15 +249,16 @@ export class CommonReactionService {
     for (const post of posts) {
       postIds.push(post.id);
     }
-
+    const { schema } = getDatabaseConfig();
+    const postReactionTable = PostReactionModel.tableName;
     const query = `SELECT 
-      feed.posts_reactions.post_id as "postId",
-         COUNT(feed.posts_reactions.id ) as total,
-         feed.posts_reactions.reaction_name as "reactionName",
-         MIN(feed.posts_reactions.created_at) as "date"
-      FROM   feed.posts_reactions
-      WHERE  feed.posts_reactions.post_id IN(:postIds)
-      GROUP BY feed.posts_reactions.post_id, feed.posts_reactions.reaction_name
+      ${schema}.${postReactionTable}.post_id as "postId",
+         COUNT(${schema}.${postReactionTable}.id ) as total,
+         ${schema}.${postReactionTable}.reaction_name as "reactionName",
+         MIN(${schema}.${postReactionTable}.created_at) as "date"
+      FROM   ${schema}.${postReactionTable}
+      WHERE  ${schema}.${postReactionTable}.post_id IN(:postIds)
+      GROUP BY ${schema}.${postReactionTable}.post_id, ${schema}.${postReactionTable}.reaction_name
       ORDER BY date ASC`;
     const reactions: any[] = await this._sequelizeConnection.query(query, {
       replacements: {

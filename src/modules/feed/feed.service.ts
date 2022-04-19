@@ -116,11 +116,10 @@ export class FeedService {
       type: QueryTypes.SELECT,
       raw: true,
     });
-    console.log('rows=', rows);
     const posts = this.groupPosts(rows);
-    
     const hasNextPage = posts.length === limit + 1 ? true : false;
     const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
+    console.log('posts=', JSON.stringify(posts, null, 4));
     await Promise.all([
       this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
       this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
