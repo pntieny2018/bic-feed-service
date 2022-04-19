@@ -58,7 +58,6 @@ export class CreatePostDto {
     },
   })
   @IsNotEmpty()
-  @IsNotEmpty()
   @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
   @Type(() => MediaDto)

@@ -1,7 +1,7 @@
 import { MediaDto } from '../../../media/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 
 export class CreateCommentDto {
@@ -15,6 +15,10 @@ export class CreateCommentDto {
   @ApiProperty({ type: String })
   @Type(() => String)
   @IsNotEmpty()
+  @ValidateIf(
+    (o) =>
+      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+  )
   public content: string;
 
   @ApiProperty({
@@ -33,8 +37,10 @@ export class CreateCommentDto {
       files: [],
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
+  @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
+  @Type(() => MediaDto)
   public media?: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({ type: [UserDataShareDto], required: false })
