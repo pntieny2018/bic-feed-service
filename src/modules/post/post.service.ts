@@ -702,8 +702,8 @@ export class PostService {
     const postTable = PostModel.tableName;
     const commentTable = CommentModel.tableName;
     const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
-      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = ${postId}
-    );`;
+      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = :postId
+    ) WHERE post_id = :postId;`;
     await this._sequelizeConnection.query(query, {
       replacements: {
         postId,
