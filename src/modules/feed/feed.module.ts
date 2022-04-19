@@ -7,9 +7,17 @@ import { FeedController } from './feed.controller';
 import { CanReadTimelineConstraint } from './validations/decorators';
 import { DatabaseModule } from '../../database';
 import { UserModule } from '../../shared/user';
+import { ReactionModule } from '../reaction';
 
 @Module({
-  imports: [DatabaseModule, UserModule, forwardRef(() => PostModule), GroupModule, MentionModule],
+  imports: [
+    DatabaseModule,
+    UserModule,
+    forwardRef(() => PostModule),
+    GroupModule,
+    MentionModule,
+    ReactionModule,
+  ],
   providers: [FeedService, CanReadTimelineConstraint],
   controllers: [FeedController],
   exports: [FeedService],
