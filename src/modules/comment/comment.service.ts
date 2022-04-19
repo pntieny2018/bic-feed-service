@@ -511,30 +511,30 @@ export class CommentService {
     const post = await this._postService.findPost({
       commentId: commentId,
     });
-
     await this._authorityService.allowAccess(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
 
     try {
-      await this._mediaService.sync(commentId, EntityType.COMMENT, []);
+      await Promise.all([
+        this._mediaService.sync(commentId, EntityType.COMMENT, []),
 
-      await this._mentionService.destroy({
-        commentId: commentId,
-      });
+        this._mentionService.destroy({
+          commentId: commentId,
+        }),
 
-      await this._deleteReactionService.deleteReactionByCommentIds([commentId]);
+        this._deleteReactionService.deleteReactionByCommentIds([commentId]),
+      ]);
 
       await this._commentModel.destroy({
         where: {
           parentId: comment.id,
         },
+        individualHooks: true,
       });
 
       await comment.destroy();
-
       await transaction.commit();
-
       this._eventEmitter.emit(
         new CommentHasBeenDeletedEvent({
           comment: comment.toJSON(),
@@ -599,6 +599,7 @@ export class CommentService {
    * @returns Promise resolve boolean
    */
   public async deleteCommentsByPost(postId: number): Promise<void> {
+    const { schema } = getDatabaseConfig();
     const comments = await this._commentModel.findAll({
       where: { postId },
     });
@@ -613,9 +614,10 @@ export class CommentService {
     this._deleteReactionService
       .deleteReactionByCommentIds(commentIds)
       .catch((ex) => this._logger.error(ex, ex.stack));
-    await this._commentModel.destroy({
-      where: { id: commentIds },
-    });
+    //ignore AfterBulkDelete hook of sequelize
+    await this._commentModel.sequelize.query(
+      `DELETE * FROM ${schema}.${this._commentModel.tableName} WHERE id IN(${commentIds.join(',')})`
+    );
   }
 
   /**

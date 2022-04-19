@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
+import { UserDataShareDto } from '../../../../shared/user/dto';
 
 export class ReactionResponseDto {
   @ApiProperty()
@@ -11,8 +12,12 @@ export class ReactionResponseDto {
   public reactionName: string;
 
   @ApiProperty()
-  @Expose()
+  @Exclude()
   public createdBy: number;
+
+  @ApiProperty()
+  @Expose()
+  public actor: UserDataShareDto = null;
 
   @ApiProperty()
   @Expose()

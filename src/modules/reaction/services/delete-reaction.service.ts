@@ -4,9 +4,12 @@ import { CommentReactionModel } from '../../../database/models/comment-reaction.
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { UserDto } from '../../auth';
 import { ReactionDto } from '../dto/reaction.dto';
-import { DeleteReactionDto } from '../dto/request';
+import { DeleteReactionDto, JobReactionDataDto, ReactionAction } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
+import { IRedisConfig } from '../../../config/redis';
+import Bull, { Job } from 'bull';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DeleteReactionService {
@@ -16,9 +19,67 @@ export class DeleteReactionService {
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _commonReactionService: CommonReactionService
+    private readonly _commonReactionService: CommonReactionService,
+    private readonly _configService: ConfigService
   ) {}
 
+  public async addToQueueDeleteReaction(
+    userDto: UserDto,
+    deleteReactionDto: DeleteReactionDto
+  ): Promise<void> {
+    let reaction;
+    if (deleteReactionDto.target === ReactionEnum.POST) {
+      reaction = await this._postReactionModel.findByPk(deleteReactionDto.reactionId);
+    } else {
+      reaction = await this._commentReactionModel.findByPk(deleteReactionDto.reactionId);
+    }
+    if (!reaction) {
+      return;
+    }
+    const targetId =
+      deleteReactionDto.target === ReactionEnum.POST ? reaction.postId : reaction.commentId;
+
+    const redisConfig = this._configService.get<IRedisConfig>('redis');
+
+    const queueName = `Q${deleteReactionDto.target.toString()}:${targetId}`;
+
+    const sslConfig = redisConfig.ssl
+      ? {
+          tls: {
+            host: redisConfig.host,
+            port: redisConfig.port,
+            password: redisConfig.password,
+          },
+        }
+      : {};
+
+    const queue = new Bull(queueName, {
+      redis: {
+        keyPrefix: redisConfig.prefix,
+        host: redisConfig.host,
+        port: redisConfig.port,
+        password: redisConfig.password,
+        ...sslConfig,
+      },
+    });
+
+    queue.add(
+      {
+        userDto,
+        deleteReactionDto,
+      },
+      {
+        removeOnComplete: true,
+        removeOnFail: true,
+      }
+    );
+
+    queue.process((job: Job<JobReactionDataDto>) => {
+      if (job.data.action === ReactionAction.DELETE) {
+        this.deleteReaction(job.data.userDto, job.data.deleteReactionDto);
+      }
+    });
+  }
   /**
    * Delete reaction
    * @param userDto UserDto

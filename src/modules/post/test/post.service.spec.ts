@@ -505,14 +505,6 @@ describe('PostService', () => {
     });
   });
 
-  describe('updateCommentCountByPost', () => {
-    it('Should excute query', async () => {
-      sequelize.query = jest.fn();
-      await postService.updateCommentCountByPost(1); 
-      expect(sequelize.query).toBeCalledTimes(1);
-    });
-  });
-
   describe('addPostGroup', () => {
     it('Return if parameter is empty', async () => {
       const result = await postService.addPostGroup([],1); 

@@ -12,7 +12,7 @@ export class UserService {
    * @returns Promise resolve user info
    */
   public async get(userId: number): Promise<UserSharedDto> {
-    return await this._store.get<UserSharedDto>(`US:${userId}`);
+    return await this._store.get<UserSharedDto>(`SU:${userId}`);
   }
 
   /**
@@ -21,11 +21,10 @@ export class UserService {
    * @returns Promise resolve users info
    */
   public async getMany(userIds: number[]): Promise<UserSharedDto[]> {
-    const keys = [...new Set(userIds)].map((userId) => `US:${userId}`);
+    const keys = [...new Set(userIds)].map((userId) => `SU:${userId}`);
     if (keys.length) {
       const users = await this._store.mget(keys);
-      const filterNotNull = users.filter((i) => i !== null);
-      return filterNotNull;
+      return users.filter((i) => i !== null);
     }
     return [];
   }

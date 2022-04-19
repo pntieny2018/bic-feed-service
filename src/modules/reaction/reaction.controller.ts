@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
-import { CreateReactionService, DeleteReactionService } from './services';
+import { CommonReactionService, CreateReactionService, DeleteReactionService } from './services';
 import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
-import { ReactionResponseDto } from './dto/response';
+import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
+import { GetReactionDto } from './dto/request';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -13,10 +14,26 @@ import { ReactionResponseDto } from './dto/response';
   version: APP_VERSION,
 })
 export class ReactionController {
+  private _logger = new Logger(ReactionController.name);
+
   public constructor(
+    private readonly _commonReactionService: CommonReactionService,
     private readonly _createReactionService: CreateReactionService,
     private readonly _deleteReactionService: DeleteReactionService
   ) {}
+
+  @Get('/')
+  @ApiOperation({ summary: 'Get reaction.' })
+  @ApiOkResponse({
+    description: 'Get reaction successfully',
+    type: ReactionsResponseDto,
+  })
+  public get(
+    @AuthUser() userDto: UserDto,
+    @Query() getReactionDto: GetReactionDto
+  ): Promise<ReactionsResponseDto> {
+    return this._commonReactionService.getReactions(getReactionDto);
+  }
 
   @ApiOperation({ summary: 'Create reaction.' })
   @ApiOkResponse({
@@ -24,11 +41,14 @@ export class ReactionController {
     type: ReactionResponseDto,
   })
   @Post('/')
-  public async create(
+  public create(
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
-  ): Promise<ReactionResponseDto> {
-    return this._createReactionService.createReaction(userDto, createReactionDto);
+  ): boolean {
+    this._createReactionService
+      .addToQueueCreateReaction(userDto, createReactionDto)
+      .catch((ex) => this._logger.error(ex, ex.stack));
+    return true;
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
@@ -37,10 +57,13 @@ export class ReactionController {
     type: Boolean,
   })
   @Delete('/')
-  public async delete(
+  public delete(
     @AuthUser() userDto: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
-  ): Promise<boolean> {
-    return this._deleteReactionService.deleteReaction(userDto, deleteReactionDto);
+  ): boolean {
+    this._deleteReactionService
+      .addToQueueDeleteReaction(userDto, deleteReactionDto)
+      .catch((ex) => this._logger.error(ex, ex.stack));
+    return true;
   }
 }
