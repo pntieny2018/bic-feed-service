@@ -28,6 +28,7 @@ import { IPostReaction, PostReactionModel } from '../../database/models/post-rea
 import { getDatabaseConfig } from '../../config/database';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommonReactionService } from '../reaction/services';
+import { UserDto } from '../auth';
 
 @Injectable()
 export class FeedService {
@@ -47,220 +48,116 @@ export class FeedService {
   ) {}
 
   /**
-   * Get timeline
-   * @param authUserId number
+   * Get NewsFeed
+   * @param authUser number
    * @param getTimelineDto GetTimelineDto
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
-  public async getTimeline(
-    authUserId: number,
-    getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, groupId } = getTimelineDto;
-    const group = await this._groupService.get(groupId);
-    if (!group) {
-      throw new BadRequestException(`Group ${groupId} not found`);
-    }
-    const groupIds = [groupId, ...group.child];
-    const constraints = FeedService._getIdConstrains(getTimelineDto);
-    const rows = await this._postModel.findAll<PostModel>({
-      where: {
-        ...constraints,
-        ...{
-          isDraft: false,
-        },
-      },
-      attributes: {
-        include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
-      },
-      include: [
-        {
-          model: PostGroupModel,
-          attributes: ['groupId', 'postId'],
-          where: {
-            groupId: groupIds,
-          },
-          required: true,
-        },
-        {
-          model: PostGroupModel,
-          attributes: ['groupId', 'postId'],
-          required: true,
-        },
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          required: false,
-        },
-        {
-          model: MentionModel,
-          required: false,
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          where: {
-            createdBy: authUserId,
-          },
-          required: false,
-        },
-      ],
-      offset: offset,
-      limit: limit,
-      order: [
-        [sequelize.col('isNowImportant'), 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
-    });
-
-    const total = await this._postModel.count({
-      where: {
-        ...constraints,
-      },
-      include: [
-        {
-          model: PostGroupModel,
-          attributes: ['groupId', 'postId'],
-          where: {
-            groupId: groupIds,
-          },
-          required: true,
-        },
-      ],
-      distinct: true,
-    });
-    const jsonPosts = rows.map((r) => r.toJSON());
-    await this._mentionService.bindMentionsToPosts(jsonPosts);
-    await this._postService.bindActorToPost(jsonPosts);
-    await this._postService.bindAudienceToPost(jsonPosts);
-
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      total,
-      limit,
-      offset,
-    });
-  }
-
-  /**
-   * Get newsfeed
-   * @param authUserId number
-   * @param getNewsFeedDto GetTimelineDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
-   */
-  public async getNewsFeed(
-    authUserId: number,
-    getNewsFeedDto: GetNewsFeedDto
-  ): Promise<PageDto<PostResponseDto>> {
+  public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { limit, offset } = getNewsFeedDto;
+
+    const groupIds = authUser.profile.groups;
+    const authUserId = authUser.id;
     const constraints = FeedService._getIdConstrains(getNewsFeedDto);
-    const rows = await this._postModel.findAll<PostModel>({
-      where: {
-        ...constraints,
-        ...{
-          isDraft: false,
-        },
+    const { idGT, idGTE, idLT, idLTE } = getNewsFeedDto;
+    const { schema } = getDatabaseConfig();
+    const postTable = PostModel.tableName;
+    const userNewsFeedModel = UserNewsFeedModel.tableName;
+    const mentionTable = MentionModel.tableName;
+    const postReactionTable = PostReactionModel.tableName;
+    const mediaTable = MediaModel.tableName;
+    const postMediaTable = PostMediaModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
+    const query = `SELECT 
+    "PostModel".*,
+    "groups"."group_id" as "groupId",
+    "mentions"."user_id" as "userId",
+    "ownerReactions"."reaction_name" as "reactionName",
+    "ownerReactions"."id" as "postReactionId",
+    "media"."id" as "mediaId",
+    "media"."url",
+    "media"."name",
+    "media"."type"
+    FROM (
+      SELECT 
+      "p"."id", 
+      "p"."comments_count" AS "commentsCount", 
+      "p"."is_important" AS "isImportant", 
+      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
+      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
+      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+      "createdAt", "p"."updated_at" AS "updatedAt",
+      CASE WHEN "p"."important_expired_at" > NOW() THEN 1 ELSE 0 END AS "isNowImportant" 
+      FROM ${schema}.${postTable} AS "p" 
+      INNER JOIN ${schema}.${userNewsFeedModel} AS "u" ON "u"."post_id" = "p"."id"
+      WHERE "p"."is_draft" = false AND "u"."user_id" = :authUserId ${constraints}
+      GROUP BY p.id
+      OFFSET :offset LIMIT :limit
+    ) AS "PostModel"
+      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
+      LEFT OUTER JOIN ( 
+        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
+        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
+      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
+      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+    const rows: any[] = await this._sequelizeConnection.query(query, {
+      replacements: {
+        offset,
+        limit: limit + 1,
+        authUserId,
+        groupIds,
+        idGT,
+        idGTE,
+        idLT,
+        idLTE,
       },
-      attributes: {
-        include: [PostModel.loadReactionsCount(), PostModel.importantPostsFirstCondition()],
-      },
-      include: [
-        {
-          model: UserNewsFeedModel,
-          attributes: ['userId'],
-          where: {
-            userId: authUserId,
-          },
-          required: true,
-        },
-        {
-          model: PostGroupModel,
-          attributes: ['groupId', 'postId'],
-          required: true,
-        },
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          required: false,
-        },
-        {
-          model: MentionModel,
-          required: false,
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          where: {
-            createdBy: authUserId,
-          },
-          required: false,
-        },
-      ],
-      offset: offset,
-      limit: limit,
-      order: [
-        [sequelize.col('isNowImportant'), 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
+      type: QueryTypes.SELECT,
+      raw: true,
     });
-
-    const total = await this._postModel.count({
-      where: {
-        ...constraints,
-      },
-      include: [
-        {
-          model: UserNewsFeedModel,
-          attributes: ['userId'],
-          where: {
-            userId: authUserId,
-          },
-          required: true,
-        },
-      ],
-      distinct: true,
-    });
-
-    const jsonPosts = rows.map((r) => r.toJSON());
-    await this._mentionService.bindMentionsToPosts(jsonPosts);
-    await this._postService.bindActorToPost(jsonPosts);
-    await this._postService.bindAudienceToPost(jsonPosts);
-
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+    console.log('rows=', rows);
+    const posts = this.groupPosts(rows);
+    
+    const hasNextPage = posts.length === limit + 1 ? true : false;
+    const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
+    await Promise.all([
+      this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
+      this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
+      this._postService.bindActorToPost(rowsRemovedLatestElm),
+      this._postService.bindAudienceToPost(rowsRemovedLatestElm),
+    ]);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
       excludeExtraneousValues: true,
     });
 
     return new PageDto<PostResponseDto>(result, {
-      total,
       limit,
       offset,
+      hasNextPage,
     });
   }
 
   /**
-   * Get Timelinev2
-   * @param authUserId number
+   * Get Timeline
+   * @param authUser UserDto
    * @param getTimelineDto GetTimelineDto
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
-  public async getTimelinev2(authUserId: number, getTimelineDto: GetTimelineDto): Promise<any> {
+  public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
     const { limit, offset, groupId } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = [groupId, ...group.child];
+    const groupIds = [groupId, ...group.child].filter((groupId) =>
+      authUser.profile.groups.includes(groupId)
+    );
 
+    const authUserId = authUser.id;
+    const constraints = FeedService._getIdConstrains(getTimelineDto);
+    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -274,7 +171,7 @@ export class FeedService {
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
-    "media"."id",
+    "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
     "media"."type"
@@ -290,7 +187,7 @@ export class FeedService {
       CASE WHEN "p"."important_expired_at" > NOW() THEN 1 ELSE 0 END AS "isNowImportant" 
       FROM ${schema}.${postTable} AS "p" 
       INNER JOIN ${schema}.${postGroupTable} AS "g" ON "g"."post_id" = "p"."id"
-      WHERE "p"."is_draft" = false AND "g"."group_id" IN (:groupIds)
+      WHERE "p"."is_draft" = false AND "g"."group_id" IN (:groupIds) ${constraints}
       GROUP BY p.id
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
@@ -307,6 +204,10 @@ export class FeedService {
         offset,
         limit: limit + 1,
         authUserId,
+        idGT,
+        idGTE,
+        idLT,
+        idLTE,
       },
       type: QueryTypes.SELECT,
       raw: true,
@@ -337,31 +238,19 @@ export class FeedService {
    * @param getTimelineDto GetTimelineDto
    * @returns object
    */
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): object {
-    const constraints = {};
+  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+    let constraints = '';
     if (getTimelineDto.idGT) {
-      constraints['id'] = {
-        [Op.gt]: getTimelineDto.idGT,
-        ...constraints['id'],
-      };
+      constraints += 'AND p.id > :idGT';
     }
     if (getTimelineDto.idGTE) {
-      constraints['id'] = {
-        [Op.gte]: getTimelineDto.idGTE,
-        ...constraints['id'],
-      };
+      constraints += 'p.id >= :idGT';
     }
     if (getTimelineDto.idLT) {
-      constraints['id'] = {
-        [Op.lt]: getTimelineDto.idLT,
-        ...constraints['id'],
-      };
+      constraints += 'p.id < :idGT';
     }
     if (getTimelineDto.idLTE) {
-      constraints['id'] = {
-        [Op.lte]: getTimelineDto.idLTE,
-        ...constraints['id'],
-      };
+      constraints += 'p.id <= :idGT';
     }
     return constraints;
   }
@@ -377,6 +266,8 @@ export class FeedService {
 
   public groupPosts(posts: any[]): any[] {
     const result = [];
+    console.log(`=====Total row= ${posts.length}`);
+    let x = 1;
     posts.forEach((post) => {
       const {
         id,
@@ -394,6 +285,7 @@ export class FeedService {
         isNowImportant,
       } = post;
       const postAdded = result.find((i) => i.id === post.id);
+      
       if (!postAdded) {
         result.push({
           id,
@@ -420,6 +312,7 @@ export class FeedService {
             },
           ],
         });
+        console.log(`=====Added ${post.id}`);
         return;
       }
       if (!postAdded.groups.find((g) => g.groupId === post.groupId)) {
@@ -435,6 +328,7 @@ export class FeedService {
           name: post.name,
         });
       }
+      x++;
     });
     return result;
   }

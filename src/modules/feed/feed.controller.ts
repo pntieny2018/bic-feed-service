@@ -27,7 +27,7 @@ export class FeedController {
     @AuthUser() authUser: UserDto,
     @Query() getTimelineDto: GetTimelineDto
   ): Promise<any> {
-    return this._feedService.getTimelinev2(authUser.id, getTimelineDto);
+    return this._feedService.getTimeline(authUser, getTimelineDto);
   }
 
   @ApiOperation({ summary: 'Get newsfeed of user' })
@@ -40,6 +40,6 @@ export class FeedController {
     @AuthUser() authUser: UserDto,
     @Query() getNewsFeedDto: GetNewsFeedDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._feedService.getNewsFeed(authUser.id, getNewsFeedDto);
+    return this._feedService.getNewsFeed(authUser, getNewsFeedDto);
   }
 }
