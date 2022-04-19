@@ -252,7 +252,7 @@ export class CommonReactionService {
     }
 
     const query = `SELECT 
-      feed.posts_reactions.post_id as "postId",
+      ${schema}.${this._postReactionModel.tableName}.post_id as "postId",
          COUNT(${schema}.${this._postReactionModel.tableName}.id ) as total,
          ${schema}.${this._postReactionModel.tableName}.reaction_name as "reactionName",
          MIN(${schema}.${this._postReactionModel.tableName}.created_at) as "date"
