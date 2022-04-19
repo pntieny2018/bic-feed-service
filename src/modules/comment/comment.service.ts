@@ -517,13 +517,15 @@ export class CommentService {
     const transaction = await this._sequelizeConnection.transaction();
 
     try {
-      await this._mediaService.sync(commentId, EntityType.COMMENT, []);
+      await Promise.all([
+        this._mediaService.sync(commentId, EntityType.COMMENT, []),
 
-      await this._mentionService.destroy({
-        commentId: commentId,
-      });
+        this._mentionService.destroy({
+          commentId: commentId,
+        }),
 
-      await this._deleteReactionService.deleteReactionByCommentIds([commentId]);
+        this._deleteReactionService.deleteReactionByCommentIds([commentId]),
+      ]);
 
       await this._commentModel.destroy({
         where: {
@@ -533,9 +535,7 @@ export class CommentService {
       });
 
       await comment.destroy();
-
       await transaction.commit();
-
       this._eventEmitter.emit(
         new CommentHasBeenDeletedEvent({
           comment: comment.toJSON(),

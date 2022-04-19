@@ -17,7 +17,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Sequelize } from 'sequelize';
+import { QueryTypes, Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
 import { IMedia, MediaModel } from './media.model';
@@ -167,11 +167,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @AfterDestroy
   public static async onCommentDeleted(comment: CommentModel): Promise<void> {
-    await CommentModel._updateCommentCountForPost(
-      comment.sequelize,
-      comment.postId,
-      ActionEnum.DECREMENT
-    );
+    await CommentModel._updateCommentCountByPost(comment.sequelize, comment.postId);
     await CommentModel._updateChildCommentCount(comment, ActionEnum.DECREMENT);
   }
   /**
@@ -212,5 +208,31 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         by: total,
       });
     }
+  }
+
+  /**
+   * Update comments count
+   * @param postId Post ID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  private static async _updateCommentCountByPost(
+    sequelize: Sequelize,
+    postId: number
+  ): Promise<boolean> {
+    const { schema } = getDatabaseConfig();
+    const postTable = PostModel.tableName;
+    const commentTable = CommentModel.tableName;
+    const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
+        SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = :postId
+      ) WHERE id = :postId;`;
+    await sequelize.query(query, {
+      replacements: {
+        postId,
+      },
+      type: QueryTypes.UPDATE,
+      raw: true,
+    });
+    return true;
   }
 }
