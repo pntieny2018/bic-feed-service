@@ -1,5 +1,4 @@
 import {
-  AfterBulkDestroy,
   AfterCreate,
   AfterDestroy,
   AllowNull,
@@ -17,7 +16,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { QueryTypes, Sequelize } from 'sequelize';
+import { Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
 import { IMedia, MediaModel } from './media.model';
@@ -167,9 +166,14 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @AfterDestroy
   public static async onCommentDeleted(comment: CommentModel): Promise<void> {
-    await CommentModel._updateCommentCountByPost(comment.sequelize, comment.postId);
+    await CommentModel._updateCommentCountForPost(
+      comment.sequelize,
+      comment.postId,
+      ActionEnum.DECREMENT
+    );
     await CommentModel._updateChildCommentCount(comment, ActionEnum.DECREMENT);
   }
+
   /**
    * Update Child Comment Count
    * @param comment CommentModel
@@ -193,46 +197,16 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
    * @param sequelize Sequelize
    * @param postId Number
    * @param action ActionEnum
-   * @param total Number
    * @private
    */
   private static async _updateCommentCountForPost(
     sequelize: Sequelize,
     postId: number,
-    action: ActionEnum,
-    total = 1
+    action: ActionEnum
   ): Promise<void> {
     const post = await sequelize.model(PostModel.name).findByPk(postId);
     if (post) {
-      await post[action]('comments_count', {
-        by: total,
-      });
+      await post[action]('comments_count');
     }
-  }
-
-  /**
-   * Update comments count
-   * @param postId Post ID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  private static async _updateCommentCountByPost(
-    sequelize: Sequelize,
-    postId: number
-  ): Promise<boolean> {
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const commentTable = CommentModel.tableName;
-    const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
-        SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = :postId
-      ) WHERE id = :postId;`;
-    await sequelize.query(query, {
-      replacements: {
-        postId,
-      },
-      type: QueryTypes.UPDATE,
-      raw: true,
-    });
-    return true;
   }
 }

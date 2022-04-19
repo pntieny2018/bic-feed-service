@@ -511,7 +511,6 @@ export class CommentService {
     const post = await this._postService.findPost({
       commentId: commentId,
     });
-
     await this._authorityService.allowAccess(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
