@@ -116,9 +116,8 @@ export class FeedService {
       type: QueryTypes.SELECT,
       raw: true,
     });
-    console.log('rows=', rows);
     const posts = this.groupPosts(rows);
-    
+
     const hasNextPage = posts.length === limit + 1 ? true : false;
     const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
     await Promise.all([
