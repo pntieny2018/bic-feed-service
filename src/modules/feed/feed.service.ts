@@ -266,8 +266,6 @@ export class FeedService {
 
   public groupPosts(posts: any[]): any[] {
     const result = [];
-    console.log(`=====Total row= ${posts.length}`);
-    let x = 1;
     posts.forEach((post) => {
       const {
         id,
@@ -285,7 +283,6 @@ export class FeedService {
         isNowImportant,
       } = post;
       const postAdded = result.find((i) => i.id === post.id);
-      
       if (!postAdded) {
         result.push({
           id,
@@ -312,7 +309,6 @@ export class FeedService {
             },
           ],
         });
-        console.log(`=====Added ${post.id}`);
         return;
       }
       if (!postAdded.groups.find((g) => g.groupId === post.groupId)) {
@@ -328,7 +324,6 @@ export class FeedService {
           name: post.name,
         });
       }
-      x++;
     });
     return result;
   }
