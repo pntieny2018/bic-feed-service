@@ -8,10 +8,12 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
+  IsObject,
 } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
+import { UserMentionDto } from '../../../mention/dto';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -81,26 +83,35 @@ export class CreatePostDto {
   };
 
   @ApiProperty({
-    description: 'Mention',
-    type: UserSharedDto,
-    isArray: true,
-    required: false,
-    example: [
-      {
+    type: UserMentionDto,
+    example: {
+      dangdiep: {
         id: 1,
-        username: 'username1',
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
       },
-      {
+      tuine: {
         id: 2,
-        username: 'username1',
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
       },
-    ],
+    },
   })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => UserSharedDto)
-  @IsArray()
-  public mentions?: UserSharedDto[] = [];
+  @Type(() => UserMentionDto)
+  @Transform(({ value }) => {
+    if (typeof value === 'object') {
+      const mentionUserIds = [];
+      for (const property in value) {
+        if (value[property]?.id) mentionUserIds.push(value[property].id);
+      }
+      return mentionUserIds;
+    }
+    return value;
+  })
+  public mentions?: number[];
 
   @ApiProperty({
     description: 'To know draft post or not',

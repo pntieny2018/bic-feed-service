@@ -129,18 +129,17 @@ export class CommentService {
         postId: post.id,
       });
 
-      const usersMentions = createCommentDto.mentions;
+      const userMentionIds = createCommentDto.mentions;
 
-      if (usersMentions.length) {
-        const userMentionIds = usersMentions.map((u) => u.id);
+      if (userMentionIds.length) {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
 
         await this._mentionService.checkValidMentions(groupAudienceIds, userMentionIds);
 
         await this._mentionService.create(
-          usersMentions.map((user) => ({
+          userMentionIds.map((userId) => ({
             entityId: comment.id,
-            userId: user.id,
+            userId,
             mentionableType: MentionableType.COMMENT,
           }))
         );
@@ -227,9 +226,8 @@ export class CommentService {
         updatedBy: user.id,
         content: updateCommentDto.content,
       });
-      const updateMentions = updateCommentDto.mentions;
+      const userMentionIds = updateCommentDto.mentions;
 
-      const userMentionIds = updateMentions.map((u) => u.id);
       if (userMentionIds.length) {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
         await this._mentionService.checkValidMentions(groupAudienceIds, userMentionIds);

@@ -222,7 +222,7 @@ describe('PostService', () => {
      
       expect(groupService.isMemberOfGroups).toBeCalledTimes(1);
 
-      const mentionUserIds = mockedCreatePostDto.mentions.map((i) => i.id);
+      const mentionUserIds = mockedCreatePostDto.mentions;
       expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mentionUserIds)
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
 
@@ -234,7 +234,7 @@ describe('PostService', () => {
       expect(mediaService.activeMedia).toBeCalledWith(mediaIds, mockedUserAuth.id)
       expect(mentionService.create).toBeCalledWith(mockedCreatePostDto.mentions.map((i) => ({
         entityId: mockedDataCreatePost.id,
-        userId: i.id,
+        userId: i,
         mentionableType: MentionableType.POST,
       })))
       expect(postService.addPostGroup).toBeCalledTimes(1)
@@ -305,7 +305,7 @@ describe('PostService', () => {
       const { files, videos, images } = mockedUpdatePostDto.media;
       let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       const { groupIds } = mockedUpdatePostDto.audience;
-      const mentionUserIds = mockedUpdatePostDto.mentions.map((i) => i.id);
+      const mentionUserIds = mockedUpdatePostDto.mentions;
       postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true); 
@@ -601,7 +601,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       postService.getPayloadSearch = jest.fn();
 
-      postService.bindActorToPost = jest.fn();
+      //postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
       postService.bindCommentsCount = jest.fn();
       const result = await postService.searchPosts(mockedUserAuth, searchDto);
@@ -609,8 +609,8 @@ describe('PostService', () => {
       expect(elasticSearchService.search).toBeCalledTimes(1);
       expect(postService.getPayloadSearch).toBeCalledWith(searchDto, mockedUserAuth.profile.groups);
 
-      expect(postService.bindActorToPost).toBeCalledTimes(1);
-      expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
+      //expect(postService.bindActorToPost).toBeCalledTimes(1);
+      //expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
       expect(postService.bindCommentsCount).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);

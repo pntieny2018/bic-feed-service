@@ -1,8 +1,9 @@
 import { MediaDto } from '../../../media/dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, ValidateNested } from 'class-validator';
 import { UserDataShareDto } from '../../../../shared/user/dto';
+import { UserMentionDto } from '../../../mention/dto';
 
 export class CreateCommentDto {
   @ApiProperty({
@@ -37,7 +38,34 @@ export class CreateCommentDto {
   @ValidateNested({ each: true })
   public media?: MediaDto = { files: [], images: [], videos: [] };
 
-  @ApiProperty({ type: [UserDataShareDto], required: false })
-  @Type(() => UserDataShareDto)
-  public mentions?: UserDataShareDto[] = [];
+  @ApiProperty({
+    type: UserMentionDto,
+    example: {
+      dangdiep: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      tuine: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
+    },
+  })
+  @IsOptional()
+  @Type(() => UserMentionDto)
+  @Transform(({ value }) => {
+    if (typeof value === 'object') {
+      const mentionUserIds = [];
+      for (const property in value) {
+        if (value[property]?.id) mentionUserIds.push(value[property].id);
+      }
+      return mentionUserIds;
+    }
+    return value;
+  })
+  public mentions?: number[] = [];
 }

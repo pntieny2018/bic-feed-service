@@ -117,10 +117,6 @@ export class MentionService {
     }
 
     const usersInfo = await this.resolveMentions(userIds);
-    const convert = (usersData): UserMentionDto[] =>
-      usersData.map((userData) => ({
-        [userData.username]: userData,
-      }));
 
     for (const post of posts) {
       if (post.mentions && post.mentions.length) {
@@ -129,7 +125,7 @@ export class MentionService {
           const user = usersInfo.find((u) => u.id === mention.userId);
           if (user) mentions.push(user);
         });
-        post.mentions = convert(mentions);
+        post.mentions = mentions.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
       }
     }
   }
