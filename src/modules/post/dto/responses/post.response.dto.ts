@@ -141,6 +141,7 @@ export class PostResponseDto {
       reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
       return reactionsCount;
     }
+    if (Array.isArray(value)) return value;
     return null;
   })
   @Expose()

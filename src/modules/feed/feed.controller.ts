@@ -26,8 +26,8 @@ export class FeedController {
   public async getTimeline(
     @AuthUser() authUser: UserDto,
     @Query() getTimelineDto: GetTimelineDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._feedService.getTimeline(authUser.id, getTimelineDto);
+  ): Promise<any> {
+    return this._feedService.getTimelinev2(authUser.id, getTimelineDto);
   }
 
   @ApiOperation({ summary: 'Get newsfeed of user' })

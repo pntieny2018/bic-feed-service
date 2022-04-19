@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
 
   ClassValidatorBootstrap.init(app, AppModule);
   SwaggerBootstrap.init(app, configService);
-  await KafkaConsumerBootstrap.init(app, configService);
+  //await KafkaConsumerBootstrap.init(app, configService);
   await AppBootstrap.init(app, configService);
 }
 
