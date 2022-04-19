@@ -65,6 +65,7 @@ export class DeleteReactionService {
 
     queue.add(
       {
+        action: ReactionAction.DELETE,
         userDto,
         deleteReactionDto,
       },
@@ -73,11 +74,14 @@ export class DeleteReactionService {
         removeOnFail: true,
       }
     );
-
-    queue.process((job: Job<JobReactionDataDto>) => {
+    queue.process(async (job: Job<JobReactionDataDto>) => {
       if (job.data.action === ReactionAction.DELETE) {
-        this.deleteReaction(job.data.userDto, job.data.deleteReactionDto);
+        return await this.deleteReaction(job.data.userDto, job.data.deleteReactionDto);
       }
+      return;
+    });
+    queue.on('completed', (job, result) => {
+      this._logger.debug(`\n ${job.queue.name} Job completed with result:`, result);
     });
   }
   /**
