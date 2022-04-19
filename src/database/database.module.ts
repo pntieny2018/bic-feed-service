@@ -24,7 +24,7 @@ import { IDatabaseConfig } from '../config/database';
             schema: databaseConfig.schema,
           },
           logging: true,
-          benchmark: true,
+          benchmark: false,
           logQueryParameters: true,
           native: databaseConfig.ssl,
           ssl: databaseConfig.ssl,
