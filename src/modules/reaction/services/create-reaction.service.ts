@@ -73,19 +73,23 @@ export class CreateReactionService {
 
     queue.add(
       {
+        action: ReactionAction.CREATE,
         userDto,
         createReactionDto,
       },
       {
-        removeOnComplete: true,
-        removeOnFail: true,
+        removeOnComplete: false,
+        removeOnFail: false,
       }
     );
-
-    queue.process(REACTION_KIND_LIMIT, (job: Job<JobReactionDataDto>) => {
+    queue.process(async (job: Job<JobReactionDataDto>) => {
       if (job.data.action === ReactionAction.CREATE) {
-        this.createReaction(job.data.userDto, job.data.createReactionDto);
+        return await this.createReaction(job.data.userDto, job.data.createReactionDto);
       }
+      return;
+    });
+    queue.on('completed', (job, result) => {
+      this._logger.debug(`\n ${job.queue.name} Job completed with result:`, result);
     });
   }
   /**
