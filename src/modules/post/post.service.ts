@@ -692,29 +692,6 @@ export class PostService {
   }
 
   /**
-   * Update comments count
-   * @param postId Post ID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateCommentCountByPost(postId: number): Promise<boolean> {
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const commentTable = CommentModel.tableName;
-    const query = ` UPDATE ${schema}.${postTable} SET comments_count = (
-      SELECT COUNT(id) FROM ${schema}.${commentTable} WHERE post_id = ${postId}
-    );`;
-    await this._sequelizeConnection.query(query, {
-      replacements: {
-        postId,
-      },
-      type: QueryTypes.UPDATE,
-      raw: true,
-    });
-    return true;
-  }
-
-  /**
    * Delete post by id
    * @param postId postID
    * @param authUserId auth user ID

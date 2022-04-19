@@ -1,5 +1,4 @@
 import {
-  AfterBulkDestroy,
   AfterCreate,
   AfterDestroy,
   AllowNull,
@@ -174,6 +173,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     );
     await CommentModel._updateChildCommentCount(comment, ActionEnum.DECREMENT);
   }
+
   /**
    * Update Child Comment Count
    * @param comment CommentModel
@@ -197,20 +197,16 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
    * @param sequelize Sequelize
    * @param postId Number
    * @param action ActionEnum
-   * @param total Number
    * @private
    */
   private static async _updateCommentCountForPost(
     sequelize: Sequelize,
     postId: number,
-    action: ActionEnum,
-    total = 1
+    action: ActionEnum
   ): Promise<void> {
     const post = await sequelize.model(PostModel.name).findByPk(postId);
     if (post) {
-      await post[action]('comments_count', {
-        by: total,
-      });
+      await post[action]('comments_count');
     }
   }
 }
