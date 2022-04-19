@@ -122,7 +122,9 @@ export class FeedService {
 
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
-    const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
+    const rowsRemovedLatestElm = hasNextPage
+      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
+      : posts;
 
     await Promise.all([
       this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
@@ -157,7 +159,13 @@ export class FeedService {
     const groupIds = [groupId, ...group.child].filter((groupId) =>
       authUser.profile.groups.includes(groupId)
     );
-
+    if (groupIds.length === 0) {
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
     const authUserId = authUser.id;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
     const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
@@ -218,7 +226,9 @@ export class FeedService {
 
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
-    const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
+    const rowsRemovedLatestElm = hasNextPage
+      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
+      : posts;
     await Promise.all([
       this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
       this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
@@ -247,13 +257,13 @@ export class FeedService {
       constraints += 'AND p.id > :idGT';
     }
     if (getTimelineDto.idGTE) {
-      constraints += 'p.id >= :idGT';
+      constraints += 'AND p.id >= :idGTE';
     }
     if (getTimelineDto.idLT) {
-      constraints += 'p.id < :idGT';
+      constraints += 'AND p.id < :idLT';
     }
     if (getTimelineDto.idLTE) {
-      constraints += 'p.id <= :idGT';
+      constraints += 'AND p.id <= :idLTE';
     }
     return constraints;
   }
