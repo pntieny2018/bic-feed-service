@@ -32,6 +32,8 @@ module.exports = {
         schema: schemaName,
       }
     );
+    await queryInterface.addIndex(tableName, ['mentionable_type']);
+    await queryInterface.addIndex(tableName, ['entity_id']);
   },
 
   down: async (queryInterface) => {

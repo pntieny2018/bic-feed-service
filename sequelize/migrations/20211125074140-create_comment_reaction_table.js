@@ -36,7 +36,9 @@ module.exports = {
         schema: schemaName,
       }
     );
-    await queryInterface.addIndex(tableName, ['comment_id']);
+    await queryInterface.addIndex(tableName, ['comment_id', 'reaction_name', 'created_by'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

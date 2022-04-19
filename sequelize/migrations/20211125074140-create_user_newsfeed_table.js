@@ -32,7 +32,6 @@ module.exports = {
       }
     );
     await queryInterface.addIndex(tableName, ['user_id', 'post_id'], {
-      name: 'user_post_index',
       unique: true,
     });
   },
