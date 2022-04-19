@@ -250,6 +250,7 @@ export class CommonReactionService {
     for (const post of posts) {
       postIds.push(post.id);
     }
+    if (postIds.length === 0) return;
     const postReactionTable = PostReactionModel.tableName;
     const query = `SELECT 
       ${schema}.${postReactionTable}.post_id as "postId",
