@@ -16,6 +16,7 @@ import { mockedTimelineResponse } from './mocks/response/timeline.response.mock'
 import { mockedNewsFeed } from './mocks/data/newsfeed.data.mock';
 import { mockedNewsFeedResponse } from './mocks/response/newsfeed.response.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
+import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
 
 class EPostModel extends PostModel {
   public reactionsCount: string;
@@ -27,7 +28,7 @@ class EPostModel extends PostModel {
 
 describe('FeedService', () => {
   let feedService: FeedService;
-  let postModelMock;
+  let postModelMock, feedModelMock;
   let userService: UserService;
   let groupService: GroupService;
   let mentionService: MentionService;
@@ -63,6 +64,12 @@ describe('FeedService', () => {
           }
         },
         {
+          provide: getModelToken(UserNewsFeedModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
+        {
           provide: getModelToken(PostModel),
           useValue: {
             findAll: jest.fn(),
@@ -83,6 +90,7 @@ describe('FeedService', () => {
     groupService = module.get<GroupService>(GroupService);
     mentionService = module.get<MentionService>(MentionService);
     postModelMock = module.get<typeof PostModel>(getModelToken(PostModel));
+    feedModelMock = module.get<typeof UserNewsFeedModel>(getModelToken(UserNewsFeedModel));
   });
 
   it('should be defined', () => {
