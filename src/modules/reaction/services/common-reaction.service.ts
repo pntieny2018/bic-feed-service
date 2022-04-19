@@ -245,11 +245,11 @@ export class CommonReactionService {
    * @throws HttpException
    */
   public async bindReactionToPosts(posts: any[]): Promise<void> {
+    const { schema } = getDatabaseConfig();
     const postIds = [];
     for (const post of posts) {
       postIds.push(post.id);
     }
-    const { schema } = getDatabaseConfig();
     const postReactionTable = PostReactionModel.tableName;
     const query = `SELECT 
       ${schema}.${postReactionTable}.post_id as "postId",

@@ -9,6 +9,7 @@ import {
   IsArray,
   ValidateNested,
   IsObject,
+  ValidateIf,
 } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
@@ -34,7 +35,11 @@ export class CreatePostDto {
     type: String,
     example: 'Bla bla bla...',
   })
-  @IsOptional()
+  @IsNotEmpty()
+  @ValidateIf(
+    (o) =>
+      o.media?.images.length === 0 && o.media?.videos.length === 0 && o.media?.files.length === 0
+  )
   @Type(() => String)
   public content: string = null;
 
@@ -54,7 +59,8 @@ export class CreatePostDto {
       files: [],
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
+  @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
   public media: MediaDto = { files: [], images: [], videos: [] };

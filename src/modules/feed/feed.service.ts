@@ -130,7 +130,6 @@ export class FeedService {
       this._postService.bindActorToPost(rowsRemovedLatestElm),
       this._postService.bindAudienceToPost(rowsRemovedLatestElm),
     ]);
-    console.log('posts=', rowsRemovedLatestElm);
     const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
       excludeExtraneousValues: true,
     });

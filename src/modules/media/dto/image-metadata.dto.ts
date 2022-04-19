@@ -19,7 +19,7 @@ export class ImageMetadataDto implements IDocumentMetadata {
   })
   @IsString()
   @IsOptional()
-  @Transform((params) => basename(params.value))
+  @Transform((params) => (params.value ? basename(`${params.value}`) : null))
   @Expose()
   public name?: string;
 
