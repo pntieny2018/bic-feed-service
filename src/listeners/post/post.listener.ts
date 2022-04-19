@@ -21,7 +21,7 @@ export class PostListener {
 
   @On(PostHasBeenDeletedEvent)
   public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
-    this._logger.debug(`Event: ${event}`);
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
@@ -49,7 +49,7 @@ export class PostListener {
 
   @On(PostHasBeenPublishedEvent)
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
-    this._logger.debug(`Event: ${event}`);
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { post, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       post;
@@ -94,7 +94,7 @@ export class PostListener {
 
   @On(PostHasBeenUpdatedEvent)
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
-    this._logger.debug(`Event: ${event}`);
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       newPost;

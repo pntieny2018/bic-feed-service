@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { QueryTypes, Sequelize } from 'sequelize';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import {
   CommentReactionModel,
@@ -29,7 +30,9 @@ export class CommonReactionService {
     @InjectModel(CommentModel) private readonly _commentModel: typeof CommentModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     private readonly _internalEventEmitterService: InternalEventEmitterService,
-    private readonly _userService: UserService
+    private readonly _userService: UserService,
+    @InjectConnection()
+    private _sequelizeConnection: Sequelize
   ) {}
 
   /**
@@ -232,5 +235,40 @@ export class CommonReactionService {
         createdBy: r.createdBy,
       })
     );
+  }
+
+  /**
+   * Bind commentsCount info to post
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindReactionToPosts(posts: any[]): Promise<void> {
+    const postIds = [];
+    for (const post of posts) {
+      postIds.push(post.id);
+    }
+
+    const query = `SELECT 
+      feed.posts_reactions.post_id as "postId",
+         COUNT(feed.posts_reactions.id ) as total,
+         feed.posts_reactions.reaction_name as "reactionName",
+         MIN(feed.posts_reactions.created_at) as "date"
+      FROM   feed.posts_reactions
+      WHERE  feed.posts_reactions.post_id IN(:postIds)
+      GROUP BY feed.posts_reactions.post_id, feed.posts_reactions.reaction_name
+      ORDER BY date ASC`;
+    const reactions: any[] = await this._sequelizeConnection.query(query, {
+      replacements: {
+        postIds,
+      },
+      type: QueryTypes.SELECT,
+      raw: true,
+    });
+    for (const post of posts) {
+      post.reactionsCount = reactions.filter((i) => {
+        return i.postId === post.id;
+      });
+    }
   }
 }
