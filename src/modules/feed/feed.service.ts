@@ -56,20 +56,20 @@ export class FeedService {
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { limit, offset } = getNewsFeedDto;
-
-    const groupIds = authUser.profile.groups;
-    const authUserId = authUser.id;
-    const constraints = FeedService._getIdConstrains(getNewsFeedDto);
-    const { idGT, idGTE, idLT, idLTE } = getNewsFeedDto;
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const userNewsFeedModel = UserNewsFeedModel.tableName;
-    const mentionTable = MentionModel.tableName;
-    const postReactionTable = PostReactionModel.tableName;
-    const mediaTable = MediaModel.tableName;
-    const postMediaTable = PostMediaModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
-    const query = `SELECT 
+    try {
+      const groupIds = authUser.profile.groups;
+      const authUserId = authUser.id;
+      const constraints = FeedService._getIdConstrains(getNewsFeedDto);
+      const { idGT, idGTE, idLT, idLTE } = getNewsFeedDto;
+      const { schema } = getDatabaseConfig();
+      const postTable = PostModel.tableName;
+      const userNewsFeedModel = UserNewsFeedModel.tableName;
+      const mentionTable = MentionModel.tableName;
+      const postReactionTable = PostReactionModel.tableName;
+      const mediaTable = MediaModel.tableName;
+      const postMediaTable = PostMediaModel.tableName;
+      const postGroupTable = PostGroupModel.tableName;
+      const query = `SELECT 
     "PostModel".*,
     "groups"."group_id" as "groupId",
     "mentions"."user_id" as "userId",
@@ -105,42 +105,49 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
-    const rows: any[] = await this._sequelizeConnection.query(query, {
-      replacements: {
+      const rows: any[] = await this._sequelizeConnection.query(query, {
+        replacements: {
+          offset,
+          limit: limit + 1,
+          authUserId,
+          groupIds,
+          idGT,
+          idGTE,
+          idLT,
+          idLTE,
+        },
+        type: QueryTypes.SELECT,
+        raw: true,
+      });
+
+      const posts = this.groupPosts(rows);
+      const hasNextPage = posts.length === limit + 1 ? true : false;
+      const rowsRemovedLatestElm = hasNextPage
+        ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
+        : posts;
+
+      await Promise.all([
+        this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
+        this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
+        this._postService.bindActorToPost(rowsRemovedLatestElm),
+        this._postService.bindAudienceToPost(rowsRemovedLatestElm),
+      ]);
+      const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
+        excludeExtraneousValues: true,
+      });
+      return new PageDto<PostResponseDto>(result, {
+        limit,
         offset,
-        limit: limit + 1,
-        authUserId,
-        groupIds,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
-      },
-      type: QueryTypes.SELECT,
-      raw: true,
-    });
-
-    const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1 ? true : false;
-    const rowsRemovedLatestElm = hasNextPage
-      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
-      : posts;
-
-    await Promise.all([
-      this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
-      this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
-      this._postService.bindActorToPost(rowsRemovedLatestElm),
-      this._postService.bindAudienceToPost(rowsRemovedLatestElm),
-    ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      limit,
-      offset,
-      hasNextPage,
-    });
+        hasNextPage,
+      });
+    } catch (e) {
+      this._logger.error(e);
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
   }
 
   /**
