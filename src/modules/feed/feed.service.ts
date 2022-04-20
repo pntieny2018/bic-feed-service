@@ -141,12 +141,7 @@ export class FeedService {
         hasNextPage,
       });
     } catch (e) {
-      this._logger.error(e);
-      return new PageDto<PostResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
+      this._logger.error(e, e.stack);
     }
   }
 
