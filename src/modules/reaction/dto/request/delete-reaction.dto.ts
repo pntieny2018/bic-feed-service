@@ -13,5 +13,11 @@ export class DeleteReactionDto {
   @IsNumber()
   @IsNotEmpty()
   @Expose()
+  public targetId: number;
+
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  @IsNotEmpty()
+  @Expose()
   public reactionId: number;
 }
