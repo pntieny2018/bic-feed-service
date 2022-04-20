@@ -1,5 +1,7 @@
 import {
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -25,6 +27,7 @@ import { CommonReactionService } from './common-reaction.service';
 import Bull, { Job } from 'bull';
 import { ConfigService } from '@nestjs/config';
 import { IRedisConfig } from '../../../config/redis';
+import { DeleteReactionService } from './delete-reaction.service';
 
 @Injectable()
 export class CreateReactionService {
@@ -42,7 +45,9 @@ export class CreateReactionService {
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     private readonly _commonReactionService: CommonReactionService,
-    private readonly _configService: ConfigService
+    private readonly _configService: ConfigService,
+    @Inject(forwardRef(() => DeleteReactionService))
+    private readonly _deleteReactionService: DeleteReactionService
   ) {}
 
   public async addToQueueCreateReaction(
@@ -78,13 +83,19 @@ export class CreateReactionService {
         createReactionDto,
       },
       {
-        removeOnComplete: false,
-        removeOnFail: false,
+        removeOnComplete: true,
+        removeOnFail: true,
       }
     );
     queue.process(async (job: Job<JobReactionDataDto>) => {
       if (job.data.action === ReactionAction.CREATE) {
         return await this.createReaction(job.data.userDto, job.data.createReactionDto);
+      } else if (job.data.action === ReactionAction.DELETE) {
+        //FIXME: will refactor after done phase 2
+        return await this._deleteReactionService.deleteReaction(
+          job.data.userDto,
+          job.data.deleteReactionDto
+        );
       }
       return;
     });

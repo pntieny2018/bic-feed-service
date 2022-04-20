@@ -47,7 +47,17 @@ export class MediaService {
       name,
       originName,
       extension,
-    }: { url: string; uploadType: UploadType; name: string; originName: string; extension: string }
+      width,
+      height,
+    }: {
+      url: string;
+      uploadType: UploadType;
+      name: string;
+      originName: string;
+      extension: string;
+      width: number;
+      height: number;
+    }
   ): Promise<any> {
     try {
       const typeArr = uploadType.split('_');
@@ -58,6 +68,8 @@ export class MediaService {
         url,
         extension,
         type: typeArr[1] as MediaType,
+        width: width,
+        height: height,
       });
     } catch (ex) {
       throw new InternalServerErrorException("Can't create media");
@@ -276,7 +288,7 @@ export class MediaService {
           ? ImageMetadataDto
           : VideoMetadataDto;
       const typeMediaDto = plainToInstance(TypeMediaDto, media, { excludeExtraneousValues: true });
-      mediaTypes[`${media.type}s`].push(typeMediaDto);
+      if (mediaTypes[`${media.type}s`]) mediaTypes[`${media.type}s`].push(typeMediaDto);
     });
     return mediaTypes;
   }

@@ -55,26 +55,27 @@ export class FeedService {
    * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { limit, offset } = getNewsFeedDto;
-
-    const groupIds = authUser.profile.groups;
-    const authUserId = authUser.id;
-    const constraints = FeedService._getIdConstrains(getNewsFeedDto);
-    const { idGT, idGTE, idLT, idLTE } = getNewsFeedDto;
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const userNewsFeedModel = UserNewsFeedModel.tableName;
-    const mentionTable = MentionModel.tableName;
-    const postReactionTable = PostReactionModel.tableName;
-    const mediaTable = MediaModel.tableName;
-    const postMediaTable = PostMediaModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
-    const query = `SELECT 
+    const { limit, offset, order } = getNewsFeedDto;
+    try {
+      const groupIds = authUser.profile.groups;
+      const authUserId = authUser.id;
+      const constraints = FeedService._getIdConstrains(getNewsFeedDto);
+      const { idGT, idGTE, idLT, idLTE } = getNewsFeedDto;
+      const { schema } = getDatabaseConfig();
+      const postTable = PostModel.tableName;
+      const userNewsFeedModel = UserNewsFeedModel.tableName;
+      const mentionTable = MentionModel.tableName;
+      const postReactionTable = PostReactionModel.tableName;
+      const mediaTable = MediaModel.tableName;
+      const postMediaTable = PostMediaModel.tableName;
+      const postGroupTable = PostGroupModel.tableName;
+      const query = `SELECT 
     "PostModel".*,
     "groups"."group_id" as "groupId",
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
@@ -104,43 +105,51 @@ export class FeedService {
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
-    const rows: any[] = await this._sequelizeConnection.query(query, {
-      replacements: {
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."isNowImportant" DESC, "PostModel"."createdAt" ${order}`;
+
+      const rows: any[] = await this._sequelizeConnection.query(query, {
+        replacements: {
+          offset,
+          limit: limit + 1,
+          authUserId,
+          groupIds,
+          idGT,
+          idGTE,
+          idLT,
+          idLTE,
+        },
+        type: QueryTypes.SELECT,
+      });
+
+      const posts = this.groupPosts(rows);
+      const hasNextPage = posts.length === limit + 1 ? true : false;
+      const rowsRemovedLatestElm = hasNextPage
+        ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
+        : posts;
+
+      await Promise.all([
+        this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
+        this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
+        this._postService.bindActorToPost(rowsRemovedLatestElm),
+        this._postService.bindAudienceToPost(rowsRemovedLatestElm),
+      ]);
+      const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
+        excludeExtraneousValues: true,
+      });
+      return new PageDto<PostResponseDto>(result, {
+        limit,
         offset,
-        limit: limit + 1,
-        authUserId,
-        groupIds,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
-      },
-      type: QueryTypes.SELECT,
-      raw: true,
-    });
-
-    const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1 ? true : false;
-    const rowsRemovedLatestElm = hasNextPage
-      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
-      : posts;
-
-    await Promise.all([
-      this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
-      this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
-      this._postService.bindActorToPost(rowsRemovedLatestElm),
-      this._postService.bindAudienceToPost(rowsRemovedLatestElm),
-    ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      limit,
-      offset,
-      hasNextPage,
-    });
+        hasNextPage,
+      });
+    } catch (e) {
+      this._logger.error(e, e.stack);
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
   }
 
   /**
@@ -151,7 +160,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { limit, offset, groupId } = getTimelineDto;
+    const { limit, offset, order, groupId } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -182,14 +191,18 @@ export class FeedService {
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
-    "media"."type"
+    "media"."type",
+    "media"."width",
+    "media"."height",
+    "media"."extension"
     FROM (
       SELECT 
       "p"."id", 
-      "p"."comments_count" AS "commentsCount", 
+      "p"."comments_count" AS "commentsCount",
       "p"."is_important" AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
@@ -208,7 +221,8 @@ export class FeedService {
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."isNowImportant" DESC, "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -221,9 +235,7 @@ export class FeedService {
         idLTE,
       },
       type: QueryTypes.SELECT,
-      raw: true,
     });
-
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
     const rowsRemovedLatestElm = hasNextPage
@@ -286,6 +298,7 @@ export class FeedService {
         isImportant,
         importantExpiredAt,
         isDraft,
+        content,
         canComment,
         canReact,
         canShare,
@@ -299,6 +312,16 @@ export class FeedService {
       if (!postAdded) {
         const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
         const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const ownerReactions =
+          post.postReactionId === null
+            ? []
+            : [
+                {
+                  id: post.postReactionId,
+                  reactionName: post.reactionName,
+                  createdAt: post.reactCreatedAt,
+                },
+              ];
         const media =
           post.mediaId === null
             ? []
@@ -319,6 +342,7 @@ export class FeedService {
           isImportant,
           importantExpiredAt,
           isDraft,
+          content,
           canComment,
           canReact,
           canShare,
@@ -330,16 +354,27 @@ export class FeedService {
           groups,
           mentions,
           media,
+          ownerReactions,
         });
         return;
       }
-      if (!postAdded.groups.find((g) => g.groupId === post.groupId && post.groupId !== null)) {
+      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
         postAdded.groups.push({ groupId: post.groupId });
       }
-      if (!postAdded.mentions.find((m) => m.userId === post.userId && post.userId !== null)) {
+      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
         postAdded.mentions.push({ userId: post.userId });
       }
-      if (!postAdded.media.find((m) => m.id === post.mediaId && post.mediaId !== null)) {
+      if (
+        post.postReactionId !== null &&
+        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
+      ) {
+        postAdded.ownerReactions.push({
+          id: post.postReactionId,
+          reactionName: post.reactionName,
+          createdAt: post.reactCreatedAt,
+        });
+      }
+      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
         postAdded.media.push({
           id: post.mediaId,
           url: post.url,
