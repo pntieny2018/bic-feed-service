@@ -23,7 +23,7 @@ import { APP_VERSION } from '../../common/constants';
 import { MediaService } from './media.service';
 import { AuthUser, UserDto } from '../auth';
 import { ResponseMessages } from '../../common/decorators';
-import { MediaType } from '../../database/models/media.model';
+import { MediaHelper } from './media.helper';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -52,12 +52,22 @@ export class MediaController {
     @Body('uploadType') uploadType: UploadType
   ): Promise<any> {
     const url = await this._uploadService.upload(file, uploadType);
+
+    let width = 0;
+    let height = 0;
+    if (file.mimetype.includes('image') || file.mimetype.includes('video')) {
+      const des = await MediaHelper.getDimensions(file.buffer);
+      width = des.width;
+      height = des.height;
+    }
     return this._mediaService.create(user, {
       url,
       name: url.split('/').pop(),
       uploadType,
       originName: file.originalname,
-      extension: file.originalname.split('.').pop(),
+      extension: file.mimetype.split('/').pop(),
+      width,
+      height,
     });
   }
 
