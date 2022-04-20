@@ -97,7 +97,7 @@ export class FeedService {
       INNER JOIN ${schema}.${userNewsFeedModel} AS "u" ON "u"."post_id" = "p"."id"
       WHERE "p"."is_draft" = false AND "u"."user_id" = :authUserId ${constraints}
       GROUP BY p.id
-      ORDER BY "isNowImportant" DESC, "createdAt" :order
+      ORDER BY "isNowImportant" DESC
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
@@ -107,7 +107,7 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
-      console.log('order=== ', order);
+
       const rows: any[] = await this._sequelizeConnection.query(query, {
         replacements: {
           offset,
@@ -118,7 +118,6 @@ export class FeedService {
           idGTE,
           idLT,
           idLTE,
-          order: `${order}`,
         },
         type: QueryTypes.SELECT,
       });
@@ -145,6 +144,11 @@ export class FeedService {
       });
     } catch (e) {
       this._logger.error(e, e.stack);
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
     }
   }
 
