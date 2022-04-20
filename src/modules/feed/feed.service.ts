@@ -186,11 +186,14 @@ export class FeedService {
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
-    "media"."type"
+    "media"."type",
+    "media"."width",
+    "media"."height",
+    "media"."extension"
     FROM (
       SELECT 
       "p"."id", 
-      "p"."comments_count" AS "commentsCount", 
+      "p"."comments_count" AS "commentsCount",
       "p"."is_important" AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
@@ -285,6 +288,7 @@ export class FeedService {
         isImportant,
         importantExpiredAt,
         isDraft,
+        content,
         canComment,
         canReact,
         canShare,
@@ -318,6 +322,7 @@ export class FeedService {
           isImportant,
           importantExpiredAt,
           isDraft,
+          content,
           canComment,
           canReact,
           canShare,
