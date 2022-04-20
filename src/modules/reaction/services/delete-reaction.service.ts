@@ -1,4 +1,11 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
@@ -10,6 +17,7 @@ import { CommonReactionService } from './common-reaction.service';
 import { IRedisConfig } from '../../../config/redis';
 import Bull, { Job } from 'bull';
 import { ConfigService } from '@nestjs/config';
+import { CreateReactionService } from './create-reaction.service';
 
 @Injectable()
 export class DeleteReactionService {
@@ -20,7 +28,9 @@ export class DeleteReactionService {
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     private readonly _commonReactionService: CommonReactionService,
-    private readonly _configService: ConfigService
+    private readonly _configService: ConfigService,
+    @Inject(forwardRef(() => CreateReactionService))
+    private readonly _createReactionService: CreateReactionService
   ) {}
 
   public async addToQueueDeleteReaction(
@@ -77,6 +87,12 @@ export class DeleteReactionService {
     queue.process(async (job: Job<JobReactionDataDto>) => {
       if (job.data.action === ReactionAction.DELETE) {
         return await this.deleteReaction(job.data.userDto, job.data.deleteReactionDto);
+      } else if (job.data.action === ReactionAction.CREATE) {
+        //FIXME: will refactor after done phase 2
+        return await this._createReactionService.createReaction(
+          job.data.userDto,
+          job.data.createReactionDto
+        );
       }
       return;
     });
