@@ -186,7 +186,10 @@ export class FeedService {
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
-    "media"."type"
+    "media"."type",
+    "media"."width",
+    "media"."height",
+    "media"."extension"
     FROM (
       SELECT 
       "p"."id", 
