@@ -512,7 +512,7 @@ export class PostService {
   public async createPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { isDraft, content, media, setting, mentions, audience } = createPostDto;
+      const { content, media, setting, mentions, audience } = createPostDto;
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
@@ -533,7 +533,7 @@ export class PostService {
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const post = await this._postModel.create({
-        isDraft,
+        isDraft: true,
         content,
         createdBy: authUserId,
         updatedBy: authUserId,

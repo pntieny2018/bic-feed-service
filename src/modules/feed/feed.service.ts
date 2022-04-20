@@ -55,7 +55,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { limit, offset } = getNewsFeedDto;
+    const { limit, offset, order } = getNewsFeedDto;
     try {
       const groupIds = authUser.profile.groups;
       const authUserId = authUser.id;
@@ -75,6 +75,7 @@ export class FeedService {
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
@@ -104,7 +105,9 @@ export class FeedService {
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."isNowImportant" DESC, "PostModel"."createdAt" ${order}`;
+
       const rows: any[] = await this._sequelizeConnection.query(query, {
         replacements: {
           offset,
@@ -141,6 +144,11 @@ export class FeedService {
       });
     } catch (e) {
       this._logger.error(e, e.stack);
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
     }
   }
 
@@ -152,7 +160,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { limit, offset, groupId } = getTimelineDto;
+    const { limit, offset, order, groupId } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -183,6 +191,7 @@ export class FeedService {
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
@@ -212,7 +221,8 @@ export class FeedService {
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."isNowImportant" DESC, "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -302,6 +312,16 @@ export class FeedService {
       if (!postAdded) {
         const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
         const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const ownerReactions =
+          post.postReactionId === null
+            ? []
+            : [
+                {
+                  id: post.postReactionId,
+                  reactionName: post.reactionName,
+                  createdAt: post.reactCreatedAt,
+                },
+              ];
         const media =
           post.mediaId === null
             ? []
@@ -334,6 +354,7 @@ export class FeedService {
           groups,
           mentions,
           media,
+          ownerReactions,
         });
         return;
       }
@@ -342,6 +363,16 @@ export class FeedService {
       }
       if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
         postAdded.mentions.push({ userId: post.userId });
+      }
+      if (
+        post.postReactionId !== null &&
+        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
+      ) {
+        postAdded.ownerReactions.push({
+          id: post.postReactionId,
+          reactionName: post.reactionName,
+          createdAt: post.reactCreatedAt,
+        });
       }
       if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
         postAdded.media.push({
