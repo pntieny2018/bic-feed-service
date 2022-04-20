@@ -276,7 +276,7 @@ export class MediaService {
           ? ImageMetadataDto
           : VideoMetadataDto;
       const typeMediaDto = plainToInstance(TypeMediaDto, media, { excludeExtraneousValues: true });
-      mediaTypes[`${media.type}s`].push(typeMediaDto);
+      if (mediaTypes[`${media.type}s`]) mediaTypes[`${media.type}s`].push(typeMediaDto);
     });
     return mediaTypes;
   }

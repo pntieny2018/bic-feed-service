@@ -117,7 +117,6 @@ export class FeedService {
           idLTE,
         },
         type: QueryTypes.SELECT,
-        raw: true,
       });
 
       const posts = this.groupPosts(rows);
@@ -223,9 +222,7 @@ export class FeedService {
         idLTE,
       },
       type: QueryTypes.SELECT,
-      raw: true,
     });
-
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
     const rowsRemovedLatestElm = hasNextPage
@@ -335,13 +332,13 @@ export class FeedService {
         });
         return;
       }
-      if (!postAdded.groups.find((g) => g.groupId === post.groupId && post.groupId !== null)) {
+      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
         postAdded.groups.push({ groupId: post.groupId });
       }
-      if (!postAdded.mentions.find((m) => m.userId === post.userId && post.userId !== null)) {
+      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
         postAdded.mentions.push({ userId: post.userId });
       }
-      if (!postAdded.media.find((m) => m.id === post.mediaId && post.mediaId !== null)) {
+      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
         postAdded.media.push({
           id: post.mediaId,
           url: post.url,
