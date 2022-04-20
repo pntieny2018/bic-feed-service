@@ -296,10 +296,10 @@ export class FeedService {
       } = post;
       const postAdded = result.find((i) => i.id === post.id);
       if (!postAdded) {
-        const groups = post.groupId == null ? [] : [{ groupId: post.groupId }];
-        const mentions = post.userId == null ? [] : [{ userId: post.userId }];
+        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
+        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
         const media =
-          post.mediaId == null
+          post.mediaId === null
             ? []
             : [
                 {
