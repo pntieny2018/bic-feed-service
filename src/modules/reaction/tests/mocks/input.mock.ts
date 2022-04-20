@@ -19,10 +19,12 @@ export const mockDeleteReactionDto: DeleteReactionDto[] = [
   {
     target: ReactionEnum.POST,
     reactionId: 1,
+    targetId: 0,
   },
   {
     target: ReactionEnum.COMMENT,
     reactionId: 2,
+    targetId: 0,
   },
 ];
 
