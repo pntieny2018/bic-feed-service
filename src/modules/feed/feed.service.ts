@@ -55,7 +55,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { limit, offset } = getNewsFeedDto;
+    const { limit, offset, order } = getNewsFeedDto;
     try {
       const groupIds = authUser.profile.groups;
       const authUserId = authUser.id;
@@ -75,6 +75,7 @@ export class FeedService {
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
@@ -96,6 +97,7 @@ export class FeedService {
       INNER JOIN ${schema}.${userNewsFeedModel} AS "u" ON "u"."post_id" = "p"."id"
       WHERE "p"."is_draft" = false AND "u"."user_id" = :authUserId ${constraints}
       GROUP BY p.id
+      ORDER BY "isNowImportant" DESC, "createdAt" :order
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
@@ -105,6 +107,7 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+      console.log('order=== ', order);
       const rows: any[] = await this._sequelizeConnection.query(query, {
         replacements: {
           offset,
@@ -115,6 +118,7 @@ export class FeedService {
           idGTE,
           idLT,
           idLTE,
+          order: `${order}`,
         },
         type: QueryTypes.SELECT,
       });
@@ -183,6 +187,7 @@ export class FeedService {
     "mentions"."user_id" as "userId",
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
@@ -302,6 +307,16 @@ export class FeedService {
       if (!postAdded) {
         const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
         const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const ownerReactions =
+          post.postReactionId === null
+            ? []
+            : [
+                {
+                  id: post.postReactionId,
+                  reactionName: post.reactionName,
+                  createdAt: post.reactCreatedAt,
+                },
+              ];
         const media =
           post.mediaId === null
             ? []
@@ -334,6 +349,7 @@ export class FeedService {
           groups,
           mentions,
           media,
+          ownerReactions,
         });
         return;
       }
@@ -342,6 +358,16 @@ export class FeedService {
       }
       if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
         postAdded.mentions.push({ userId: post.userId });
+      }
+      if (
+        post.postReactionId !== null &&
+        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
+      ) {
+        postAdded.ownerReactions.push({
+          id: post.postReactionId,
+          reactionName: post.reactionName,
+          createdAt: post.reactCreatedAt,
+        });
       }
       if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
         postAdded.media.push({

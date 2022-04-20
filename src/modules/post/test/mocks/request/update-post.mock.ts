@@ -18,5 +18,4 @@ export const mockedUpdatePostDto: UpdatePostDto = {
   audience: {
     groupIds: [1],
   },
-  isDraft: false,
 };

@@ -35,11 +35,7 @@ export class CreatePostDto {
     type: String,
     example: 'Bla bla bla...',
   })
-  @IsNotEmpty()
-  @ValidateIf(
-    (o) =>
-      o.media?.images.length === 0 && o.media?.videos.length === 0 && o.media?.files.length === 0
-  )
+  @IsOptional()
   @Type(() => String)
   public content: string = null;
 
@@ -59,8 +55,7 @@ export class CreatePostDto {
       files: [],
     },
   })
-  @IsNotEmpty()
-  @ValidateIf((o) => o.content === null || o.content == undefined)
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
   public media: MediaDto = { files: [], images: [], videos: [] };
@@ -117,14 +112,5 @@ export class CreatePostDto {
     }
     return value;
   })
-  public mentions?: number[];
-
-  @ApiProperty({
-    description: 'To know draft post or not',
-    type: Boolean,
-    default: true,
-  })
-  @IsBoolean()
-  @IsOptional()
-  public isDraft = true;
+  public mentions?: number[] = [];
 }
