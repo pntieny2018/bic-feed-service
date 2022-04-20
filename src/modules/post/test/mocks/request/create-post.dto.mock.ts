@@ -23,5 +23,4 @@ export const mockedCreatePostDto: CreatePostDto = {
     userIds: [],
     groupIds: [1],
   },
-  isDraft: true,
 };
