@@ -97,7 +97,6 @@ export class FeedService {
       INNER JOIN ${schema}.${userNewsFeedModel} AS "u" ON "u"."post_id" = "p"."id"
       WHERE "p"."is_draft" = false AND "u"."user_id" = :authUserId ${constraints}
       GROUP BY p.id
-      ORDER BY "isNowImportant" DESC
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
@@ -106,7 +105,8 @@ export class FeedService {
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."isNowImportant" DESC, "PostModel"."createdAt" ${order}`;
 
       const rows: any[] = await this._sequelizeConnection.query(query, {
         replacements: {
@@ -160,7 +160,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { limit, offset, groupId } = getTimelineDto;
+    const { limit, offset, order, groupId } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -221,7 +221,8 @@ export class FeedService {
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId`;
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."isNowImportant" DESC, "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
