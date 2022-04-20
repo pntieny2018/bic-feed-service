@@ -83,8 +83,8 @@ export class CreateReactionService {
         createReactionDto,
       },
       {
-        removeOnComplete: false,
-        removeOnFail: false,
+        removeOnComplete: true,
+        removeOnFail: true,
       }
     );
     queue.process(async (job: Job<JobReactionDataDto>) => {

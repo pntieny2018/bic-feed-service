@@ -37,21 +37,9 @@ export class DeleteReactionService {
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<void> {
-    let reaction;
-    if (deleteReactionDto.target === ReactionEnum.POST) {
-      reaction = await this._postReactionModel.findByPk(deleteReactionDto.reactionId);
-    } else {
-      reaction = await this._commentReactionModel.findByPk(deleteReactionDto.reactionId);
-    }
-    if (!reaction) {
-      return;
-    }
-    const targetId =
-      deleteReactionDto.target === ReactionEnum.POST ? reaction.postId : reaction.commentId;
-
     const redisConfig = this._configService.get<IRedisConfig>('redis');
 
-    const queueName = `Q${deleteReactionDto.target.toString()}:${targetId}`;
+    const queueName = `Q${deleteReactionDto.target.toString()}:${deleteReactionDto.targetId}`;
 
     const sslConfig = redisConfig.ssl
       ? {
