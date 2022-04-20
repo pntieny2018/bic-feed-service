@@ -5,6 +5,7 @@ import {
   BelongsToMany,
   Column,
   CreatedAt,
+  Default,
   HasMany,
   Model,
   PrimaryKey,
@@ -77,9 +78,11 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @Column
   public originName?: string;
 
+  @Default(0)
   @Column
   public width?: number;
 
+  @Default(0)
   @Column
   public height?: number;
 

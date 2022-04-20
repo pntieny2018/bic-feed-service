@@ -37,7 +37,6 @@ export class UploadService {
     const key = this.getKey(uploadType, {
       extension: path.extname(file.originalname),
     });
-
     const bucket = this._s3Config.userSharingAssetsBucket;
 
     await this._storage.send(
