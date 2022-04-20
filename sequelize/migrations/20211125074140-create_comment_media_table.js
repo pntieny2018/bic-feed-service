@@ -25,6 +25,9 @@ module.exports = {
         schema: schemaName,
       }
     );
+    await queryInterface.addIndex(tableName, ['media_id', 'comment_id'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

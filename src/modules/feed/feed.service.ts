@@ -78,7 +78,10 @@ export class FeedService {
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
-    "media"."type"
+    "media"."type",
+    "media"."width",
+    "media"."height",
+    "media"."extension"
     FROM (
       SELECT 
       "p"."id", 
@@ -116,10 +119,13 @@ export class FeedService {
       type: QueryTypes.SELECT,
       raw: true,
     });
-    const posts = this.groupPosts(rows);
 
+    const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
-    const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
+    const rowsRemovedLatestElm = hasNextPage
+      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
+      : posts;
+
     await Promise.all([
       this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
       this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
@@ -153,7 +159,13 @@ export class FeedService {
     const groupIds = [groupId, ...group.child].filter((groupId) =>
       authUser.profile.groups.includes(groupId)
     );
-
+    if (groupIds.length === 0) {
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
     const authUserId = authUser.id;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
     const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
@@ -214,7 +226,9 @@ export class FeedService {
 
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
-    const rowsRemovedLatestElm = posts.filter((p) => p.id !== posts[posts.length - 1].id);
+    const rowsRemovedLatestElm = hasNextPage
+      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
+      : posts;
     await Promise.all([
       this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
       this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
@@ -243,13 +257,13 @@ export class FeedService {
       constraints += 'AND p.id > :idGT';
     }
     if (getTimelineDto.idGTE) {
-      constraints += 'p.id >= :idGT';
+      constraints += 'AND p.id >= :idGTE';
     }
     if (getTimelineDto.idLT) {
-      constraints += 'p.id < :idGT';
+      constraints += 'AND p.id < :idLT';
     }
     if (getTimelineDto.idLTE) {
-      constraints += 'p.id <= :idGT';
+      constraints += 'AND p.id <= :idLTE';
     }
     return constraints;
   }
@@ -283,6 +297,22 @@ export class FeedService {
       } = post;
       const postAdded = result.find((i) => i.id === post.id);
       if (!postAdded) {
+        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
+        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const media =
+          post.mediaId === null
+            ? []
+            : [
+                {
+                  id: post.mediaId,
+                  url: post.url,
+                  name: post.name,
+                  type: post.type,
+                  width: post.width,
+                  height: post.height,
+                  extension: post.extension,
+                },
+              ];
         result.push({
           id,
           commentsCount,
@@ -297,30 +327,26 @@ export class FeedService {
           createdAt,
           updatedAt,
           isNowImportant,
-          groups: [{ groupId: post.groupId }],
-          mentions: [{ userId: post.userId }],
-          media: [
-            {
-              id: post.mediaId,
-              url: post.url,
-              name: post.name,
-              type: post.type,
-            },
-          ],
+          groups,
+          mentions,
+          media,
         });
         return;
       }
-      if (!postAdded.groups.find((g) => g.groupId === post.groupId)) {
+      if (!postAdded.groups.find((g) => g.groupId === post.groupId && post.groupId !== null)) {
         postAdded.groups.push({ groupId: post.groupId });
       }
-      if (!postAdded.mentions.find((m) => m.userId === post.userId)) {
+      if (!postAdded.mentions.find((m) => m.userId === post.userId && post.userId !== null)) {
         postAdded.mentions.push({ userId: post.userId });
       }
-      if (!postAdded.media.find((m) => m.id === post.mediaId)) {
+      if (!postAdded.media.find((m) => m.id === post.mediaId && post.mediaId !== null)) {
         postAdded.media.push({
           id: post.mediaId,
           url: post.url,
           name: post.name,
+          width: post.width,
+          height: post.height,
+          extension: post.extension,
         });
       }
     });

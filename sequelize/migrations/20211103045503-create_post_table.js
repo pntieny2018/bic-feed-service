@@ -72,6 +72,9 @@ module.exports = {
         schema: schemaName,
       }
     );
+
+    await queryInterface.addIndex(tableName, ['created_by']);
+    await queryInterface.addIndex(tableName, ['is_draft']);
   },
 
   down: async (queryInterface) => {

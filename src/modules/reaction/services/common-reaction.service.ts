@@ -250,16 +250,16 @@ export class CommonReactionService {
     for (const post of posts) {
       postIds.push(post.id);
     }
-
+    if (postIds.length === 0) return;
+    const postReactionTable = PostReactionModel.tableName;
     const query = `SELECT 
-      ${schema}.${this._postReactionModel.tableName}.post_id as "postId",
-         COUNT(${schema}.${this._postReactionModel.tableName}.id ) as total,
-         ${schema}.${this._postReactionModel.tableName}.reaction_name as "reactionName",
-         MIN(${schema}.${this._postReactionModel.tableName}.created_at) as "date"
-      FROM   ${schema}.${this._postReactionModel.tableName}
-      WHERE  ${schema}.${this._postReactionModel.tableName}.post_id IN(:postIds)
-      GROUP BY ${schema}.${this._postReactionModel.tableName}.post_id, 
-      ${schema}.${this._postReactionModel.tableName}.reaction_name
+      ${schema}.${postReactionTable}.post_id as "postId",
+         COUNT(${schema}.${postReactionTable}.id ) as total,
+         ${schema}.${postReactionTable}.reaction_name as "reactionName",
+         MIN(${schema}.${postReactionTable}.created_at) as "date"
+      FROM   ${schema}.${postReactionTable}
+      WHERE  ${schema}.${postReactionTable}.post_id IN(:postIds)
+      GROUP BY ${schema}.${postReactionTable}.post_id, ${schema}.${postReactionTable}.reaction_name
       ORDER BY date ASC`;
     const reactions: any[] = await this._sequelizeConnection.query(query, {
       replacements: {

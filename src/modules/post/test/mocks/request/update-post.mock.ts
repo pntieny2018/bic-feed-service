@@ -14,15 +14,7 @@ export const mockedUpdatePostDto: UpdatePostDto = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  mentions: [
-    {
-      id: 1,
-      username: 'abcd',
-      fullname: 'abcd',
-      avatar: 'asdfsdf',
-      groups: [1],
-    },
-  ],
+  mentions: [1],
   audience: {
     groupIds: [1],
   },

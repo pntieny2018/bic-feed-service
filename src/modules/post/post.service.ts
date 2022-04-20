@@ -523,7 +523,7 @@ export class PostService {
       if (!isMember) {
         throw new BadRequestException('You can not create post in this groups');
       }
-      const mentionUserIds = mentions.map((i) => i.id);
+      const mentionUserIds = mentions;
       if (mentionUserIds.length) {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
@@ -600,7 +600,7 @@ export class PostService {
         throw new BadRequestException('You can not create post in this groups');
       }
 
-      const mentionUserIds = mentions.map((i) => i.id);
+      const mentionUserIds = mentions;
       if (mentionUserIds.length) {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
