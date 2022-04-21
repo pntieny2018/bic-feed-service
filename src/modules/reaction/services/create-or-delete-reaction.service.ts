@@ -79,16 +79,5 @@ export class CreateOrDeleteReactionService {
         }
       )
       .catch((ex) => this._logger.error(ex, ex.stack));
-
-    queue.on('failed', (job, result) => {
-      this._logger.debug(
-        `${job.queue.name}-${job.id} Job failed with result: ${JSON.stringify(result)}`
-      );
-    });
-    queue.on('completed', (job, result) => {
-      this._logger.debug(
-        `${job.queue.name}-${job.id} Job completed with result: ${JSON.stringify(result)}`
-      );
-    });
   }
 }
