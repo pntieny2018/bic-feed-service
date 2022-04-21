@@ -1,6 +1,3 @@
-import { UserDto } from '../auth';
-import { FindOptions, Op, QueryTypes } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import {
   HttpException,
   HttpStatus,
@@ -8,20 +5,22 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostMediaModel } from '../../database/models/post-media.model';
-import { ArrayHelper } from '../../common/helpers';
-import { CommentMediaModel } from '../../database/models/comment-media.model';
+import { UserDto } from '../auth';
+import { FileMetadataDto, ImageMetadataDto, RemoveMediaDto, VideoMetadataDto } from './dto';
 import { EntityType } from './media.constants';
-import { getDatabaseConfig } from '../../config/database';
-import { RemoveMediaDto } from './dto';
-import { FileMetadataDto } from '../media/dto/file-metadata.dto';
-import { ImageMetadataDto } from '../media/dto/image-metadata.dto';
-import { VideoMetadataDto } from '../media/dto/video-metadata.dto';
+import { Sequelize } from 'sequelize-typescript';
+import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
+import { FindOptions, Op, QueryTypes } from 'sequelize';
+import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { PostMediaModel } from '../../database/models/post-media.model';
+import { CommentMediaModel } from '../../database/models/comment-media.model';
+import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class MediaService {
@@ -59,6 +58,17 @@ export class MediaService {
       height: number;
     }
   ): Promise<any> {
+    this._logger.debug(
+      `[create]: ${JSON.stringify(user)} ${JSON.stringify({
+        url,
+        uploadType,
+        name,
+        originName,
+        extension,
+        width,
+        height,
+      })}`
+    );
     try {
       const typeArr = uploadType.split('_');
       return await this._mediaModel.create({
@@ -82,7 +92,39 @@ export class MediaService {
    * @param removeMediaDto RemoveMediaDto
    */
   public async destroy(user: UserDto, removeMediaDto: RemoveMediaDto): Promise<any> {
-    return null;
+    const trx = await this._sequelizeConnection.transaction();
+    try {
+      if (removeMediaDto.postId) {
+        await this._postMediaModel.destroy({
+          where: {
+            mediaId: removeMediaDto.mediaIds,
+            postId: removeMediaDto.postId,
+          },
+        });
+      }
+
+      if (removeMediaDto.commentId) {
+        await this._commentMediaModel.destroy({
+          where: {
+            mediaId: removeMediaDto.mediaIds,
+            commentId: removeMediaDto.commentId,
+          },
+        });
+      }
+
+      await this._mediaModel.destroy({
+        where: {
+          id: removeMediaDto.mediaIds,
+        },
+      });
+
+      await trx.commit();
+      return true;
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      await trx.rollback();
+      throw new LogicException(HTTP_STATUS_ID.API_MEDIA_DELETE_ERROR);
+    }
   }
 
   /**
@@ -90,9 +132,7 @@ export class MediaService {
    * @param options FindOptions
    */
   public async getMediaList(options?: FindOptions<IMedia>): Promise<MediaModel[]> {
-    const result = await this._mediaModel.findAll(options);
-
-    return result;
+    return await this._mediaModel.findAll(options);
   }
 
   /**

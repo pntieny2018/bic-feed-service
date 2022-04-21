@@ -1,39 +1,30 @@
-import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { PostResponseDto } from './../post/dto/responses/post.response.dto';
-import { ClassTransformer } from 'class-transformer';
-import { MentionService } from './../mention/mention.service';
-import { GroupService } from './../../shared/group/group.service';
-import { PostService } from './../post/post.service';
-import { Op, QueryTypes, Sequelize } from 'sequelize';
-import sequelize from 'sequelize';
+import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { UserDto } from '../auth';
 import { PageDto } from '../../common/dto';
+import { MentionService } from '../mention';
 import { GetTimelineDto } from './dto/request';
-import { UserService } from '../../shared/user';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { GroupService } from '../../shared/group';
+import { PostService } from '../post/post.service';
+import { QueryTypes, Sequelize } from 'sequelize';
+import { ClassTransformer } from 'class-transformer';
+import { PostResponseDto } from '../post/dto/responses';
+import { getDatabaseConfig } from '../../config/database';
+import { CommonReactionService } from '../reaction/services';
+import { PostModel } from '../../database/models/post.model';
 import { MediaModel } from '../../database/models/media.model';
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
-import { IPost, PostModel } from '../../database/models/post.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import {
-  BadRequestException,
-  forwardRef,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
-import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { getDatabaseConfig } from '../../config/database';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
-import { CommonReactionService } from '../reaction/services';
-import { UserDto } from '../auth';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
   private _classTransformer = new ClassTransformer();
+
   public constructor(
     private readonly _commonReaction: CommonReactionService,
     private readonly _groupService: GroupService,
@@ -49,8 +40,8 @@ export class FeedService {
 
   /**
    * Get NewsFeed
-   * @param authUser number
-   * @param getTimelineDto GetTimelineDto
+   * @param authUser Number
+   * @param getNewsFeedDto GetNewsFeedDto
    * @returns Promise resolve PageDto
    * @throws HttpException
    */
@@ -123,7 +114,8 @@ export class FeedService {
       });
 
       const posts = this.groupPosts(rows);
-      const hasNextPage = posts.length === limit + 1 ? true : false;
+
+      const hasNextPage = posts.length === limit + 1;
       const rowsRemovedLatestElm = hasNextPage
         ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
         : posts;
@@ -237,7 +229,8 @@ export class FeedService {
       type: QueryTypes.SELECT,
     });
     const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1 ? true : false;
+
+    const hasNextPage = posts.length === limit + 1;
     const rowsRemovedLatestElm = hasNextPage
       ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
       : posts;
@@ -282,7 +275,7 @@ export class FeedService {
 
   /**
    * Delete newsfeed by post
-   * @param getTimelineDto GetTimelineDto
+   * @param postId
    * @returns object
    */
   public async deleteNewsFeedByPost(postId: number): Promise<number> {
