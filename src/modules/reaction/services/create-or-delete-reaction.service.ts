@@ -1,4 +1,4 @@
-import { Job } from 'bull';
+import { Job } from 'bullmq';
 import { UserDto } from '../../auth';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -29,15 +29,7 @@ export class CreateOrDeleteReactionService {
   ): Promise<void> {
     const queueName = `reaction:${payload.target.toString().toLowerCase()}:${payload.targetId}`;
     const redisConfig = this._configService.get<IRedisConfig>('redis');
-    const sslConfig = redisConfig.ssl
-      ? {
-          tls: {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            password: redisConfig.password,
-          },
-        }
-      : {};
+
     const queue = findOrRegisterQueue(
       queueName,
       async (job: Job<JobReactionDataDto>) => {
@@ -52,21 +44,14 @@ export class CreateOrDeleteReactionService {
             job.data.payload as any
           );
         }
-        return;
+        return Promise.reject('Action not found !');
       },
-      {
-        redis: {
-          keyPrefix: redisConfig.prefix,
-          host: redisConfig.host,
-          port: redisConfig.port,
-          password: redisConfig.password,
-          ...sslConfig,
-        },
-      }
+      redisConfig
     );
 
     queue
       .add(
+        `reaction:${payload['reactionName'] ?? 'del'}`,
         {
           userDto,
           payload: payload,

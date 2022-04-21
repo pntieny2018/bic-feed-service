@@ -44,6 +44,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
           },
           totalReply: 0,
           reactionsCount: null,
+          ownerReactions: null,
         },
       ],
     },
