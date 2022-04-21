@@ -58,7 +58,7 @@ export class CommentResponseDto {
     type: [ReactionResponseDto],
   })
   @Expose()
-  public ownerReactions?: ReactionResponseDto[] = [];
+  public ownerReactions: ReactionResponseDto[] = [];
 
   @ApiProperty({
     type: 'object',
