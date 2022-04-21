@@ -57,6 +57,7 @@ export class DeleteReactionService {
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<boolean> {
+    this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
     const { id: userId } = userDto;
     const { reactionId } = deleteReactionDto;
     try {

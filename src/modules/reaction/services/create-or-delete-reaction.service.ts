@@ -1,11 +1,16 @@
-import Bull, { Job } from 'bull';
+import { Job } from 'bull';
 import { UserDto } from '../../auth';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IRedisConfig } from '../../../config/redis';
 import { DeleteReactionService } from './delete-reaction.service';
 import { CreateReactionService } from './create-reaction.service';
-import { CreateReactionDto, DeleteReactionDto, JobReactionDataDto } from '../dto/request';
+import {
+  ActionReaction,
+  CreateReactionDto,
+  DeleteReactionDto,
+  JobReactionDataDto,
+} from '../dto/request';
 import { findOrRegisterQueue } from '../../../jobs';
 
 @Injectable()
@@ -36,15 +41,15 @@ export class CreateOrDeleteReactionService {
     const queue = findOrRegisterQueue(
       queueName,
       async (job: Job<JobReactionDataDto>) => {
-        if (job.data.payload instanceof CreateReactionDto) {
+        if (job.data.action === ActionReaction.ADD) {
           return await this._createReactionService.createReaction(
             job.data.userDto,
-            job.data.payload
+            job.data.payload as any
           );
-        } else if (job.data.payload instanceof DeleteReactionDto) {
+        } else if (job.data.action === ActionReaction.REMOVE) {
           return await this._deleteReactionService.deleteReaction(
             job.data.userDto,
-            job.data.payload
+            job.data.payload as any
           );
         }
         return;
@@ -64,6 +69,7 @@ export class CreateOrDeleteReactionService {
       {
         userDto,
         payload: payload,
+        action: payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE,
       },
       {
         removeOnComplete: false,
