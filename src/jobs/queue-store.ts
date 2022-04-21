@@ -1,4 +1,7 @@
-import Bull, { Queue, QueueOptions } from 'bull';
+import { Queue, Worker } from 'bullmq';
+import { IRedisConfig } from '../config/redis';
+import { REACTION_KIND_LIMIT } from '../modules/reaction/reaction.constant';
+import Redis from 'ioredis';
 
 export function getDynamicQueues(): Map<string, Queue> {
   if (!global.DynamicQueues) {
@@ -10,33 +13,55 @@ export function getDynamicQueues(): Map<string, Queue> {
 export function findOrRegisterQueue(
   queueName: string,
   jobHandle: (...args: any[]) => any,
-  options?: QueueOptions
+  options?: IRedisConfig
 ): Queue {
   const queues = getDynamicQueues();
   if (queues.has(queueName)) {
     return queues.get(queueName);
   }
-  const queue = new Bull(queueName, options);
 
-  queue.process(jobHandle);
+  const sslConfig = options.ssl
+    ? {
+        tls: {
+          host: options.host,
+          port: options.port,
+          password: options.password,
+        },
+      }
+    : {};
+
+  const redisConnection = new Redis({
+    keyPrefix: options.prefix,
+    host: options.host,
+    port: options.port,
+    password: options.password,
+    maxRetriesPerRequest: null,
+    ...sslConfig,
+  });
+
+  const queue = new Queue(queueName, {
+    connection: redisConnection,
+    sharedConnection: true,
+  });
 
   queues.set(queueName, queue);
 
-  queue.on('failed', (job, result) => {
+  const worker = new Worker(queueName, jobHandle, {
+    concurrency: REACTION_KIND_LIMIT,
+    connection: redisConnection,
+    sharedConnection: true,
+  });
+
+  worker.on('failed', (job, result) => {
     process.stdout.write(
-      `[ReactionQueue] ${job.queue.name}-${job.id} Job failed with result: ${JSON.stringify(
-        result
-      )} \n`
+      `[ReactionQueue] ${job.id} Job failed with result: ${JSON.stringify(result)} \n`
     );
   });
 
-  queue.on('completed', (job, result) => {
+  worker.on('completed', (job, result) => {
     process.stdout.write(
-      `[ReactionQueue] ${job.queue.name}-${job.id} Job completed with result: ${JSON.stringify(
-        result
-      )} \n`
+      `[ReactionQueue] ${job.id} Job completed with result: ${JSON.stringify(result)} \n`
     );
   });
-
   return queue;
 }
