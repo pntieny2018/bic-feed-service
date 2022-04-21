@@ -20,7 +20,6 @@ export class ReactionListener {
       post: event.payload.post,
       comment: event.payload.comment,
     };
-
     const kafkaCreateReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
       key: event.getEventName(),
       value: {
