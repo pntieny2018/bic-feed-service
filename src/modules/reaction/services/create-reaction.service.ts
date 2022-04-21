@@ -19,15 +19,12 @@ import { UserService } from '../../../shared/user';
 import { UserSharedDto } from '../../../shared/user/dto';
 import { UserDto } from '../../auth';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CreateReactionDto, JobReactionDataDto, ReactionAction } from '../dto/request';
+import { CreateReactionDto } from '../dto/request';
 import { ReactionResponseDto } from '../dto/response';
 import { REACTION_KIND_LIMIT } from '../reaction.constant';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
-import Bull, { Job } from 'bull';
 import { ConfigService } from '@nestjs/config';
-import { IRedisConfig } from '../../../config/redis';
-import { DeleteReactionService } from './delete-reaction.service';
 
 @Injectable()
 export class CreateReactionService {
@@ -45,64 +42,9 @@ export class CreateReactionService {
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     private readonly _commonReactionService: CommonReactionService,
-    private readonly _configService: ConfigService,
-    @Inject(forwardRef(() => DeleteReactionService))
-    private readonly _deleteReactionService: DeleteReactionService
+    private readonly _configService: ConfigService
   ) {}
 
-  public async addToQueueCreateReaction(
-    userDto: UserDto,
-    createReactionDto: CreateReactionDto
-  ): Promise<void> {
-    const queueName = `Q${createReactionDto.target.toString()}:${createReactionDto.targetId}`;
-    const redisConfig = this._configService.get<IRedisConfig>('redis');
-    const sslConfig = redisConfig.ssl
-      ? {
-          tls: {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            password: redisConfig.password,
-          },
-        }
-      : {};
-
-    const queue = new Bull(queueName, {
-      redis: {
-        keyPrefix: redisConfig.prefix,
-        host: redisConfig.host,
-        port: redisConfig.port,
-        password: redisConfig.password,
-        ...sslConfig,
-      },
-    });
-
-    queue.add(
-      {
-        action: ReactionAction.CREATE,
-        userDto,
-        createReactionDto,
-      },
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-      }
-    );
-    queue.process(async (job: Job<JobReactionDataDto>) => {
-      if (job.data.action === ReactionAction.CREATE) {
-        return await this.createReaction(job.data.userDto, job.data.createReactionDto);
-      } else if (job.data.action === ReactionAction.DELETE) {
-        //FIXME: will refactor after done phase 2
-        return await this._deleteReactionService.deleteReaction(
-          job.data.userDto,
-          job.data.deleteReactionDto
-        );
-      }
-      return;
-    });
-    queue.on('completed', (job, result) => {
-      this._logger.debug(`\n ${job.queue.name} Job completed with result:`, result);
-    });
-  }
   /**
    * Create reaction
    * @param userDto UserDto
