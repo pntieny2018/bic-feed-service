@@ -31,7 +31,6 @@ export function findOrRegisterQueue(
     : {};
 
   const redisConnection = new Redis({
-    keyPrefix: options.prefix,
     host: options.host,
     port: options.port,
     password: options.password,
@@ -40,6 +39,7 @@ export function findOrRegisterQueue(
   });
 
   const queue = new Queue(queueName, {
+    prefix: options.prefix,
     connection: redisConnection,
     sharedConnection: true,
   });
