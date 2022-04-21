@@ -12,6 +12,7 @@ import {
   JobReactionDataDto,
 } from '../dto/request';
 import { findOrRegisterQueue } from '../../../jobs';
+import { REACTION_KIND_LIMIT } from '../reaction.constant';
 
 @Injectable()
 export class CreateOrDeleteReactionService {
@@ -65,36 +66,28 @@ export class CreateOrDeleteReactionService {
       }
     );
 
-    await queue.add(
-      {
-        userDto,
-        payload: payload,
-        action: payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE,
-      },
-      {
-        removeOnComplete: false,
-        removeOnFail: false,
-      }
-    );
+    queue
+      .add(
+        {
+          userDto,
+          payload: payload,
+          action: payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE,
+        },
+        {
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      )
+      .catch((ex) => this._logger.error(ex, ex.stack));
 
     queue.on('failed', (job, result) => {
       this._logger.debug(
-        `${job.queue.name}-${job.id} Job active with result: ${JSON.stringify(result)}`
-      );
-    });
-    queue.on('progress', (job, result) => {
-      this._logger.debug(
-        `${job.queue.name}-${job.id} Job active with result: ${JSON.stringify(result)}`
+        `${job.queue.name}-${job.id} Job failed with result: ${JSON.stringify(result)}`
       );
     });
     queue.on('completed', (job, result) => {
       this._logger.debug(
         `${job.queue.name}-${job.id} Job completed with result: ${JSON.stringify(result)}`
-      );
-    });
-    queue.on('active', (job, result) => {
-      this._logger.debug(
-        `${job.queue.name}-${job.id} Job active with result: ${JSON.stringify(result)}`
       );
     });
   }
