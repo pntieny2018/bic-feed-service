@@ -44,18 +44,23 @@ export class CreateOrDeleteReactionService {
             job.data.payload as any
           );
         }
-        return Promise.reject('Action not found !');
+        return 'Action not found !';
       },
       redisConfig
     );
 
+    const action =
+      payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE;
+
+    const jobName = `reaction:${action}:${new Date().toISOString()}`;
+
     queue
       .add(
-        `reaction:${payload['reactionName'] ?? 'del'}`,
+        jobName,
         {
           userDto,
           payload: payload,
-          action: payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE,
+          action: action,
         },
         {
           removeOnComplete: true,
