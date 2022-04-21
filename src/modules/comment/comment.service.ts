@@ -612,10 +612,14 @@ export class CommentService {
     this._deleteReactionService
       .deleteReactionByCommentIds(commentIds)
       .catch((ex) => this._logger.error(ex, ex.stack));
-    //ignore AfterBulkDelete hook of sequelize
-    await this._commentModel.sequelize.query(
-      `DELETE FROM ${schema}.${this._commentModel.tableName} WHERE id IN(${commentIds.join(',')})`
-    );
+
+    await this._commentModel.destroy({
+      where: {
+        id: {
+          [Op.in]: commentIds,
+        },
+      },
+    });
   }
 
   /**
