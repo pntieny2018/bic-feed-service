@@ -53,7 +53,6 @@ export class CreateOrDeleteReactionService {
       payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE;
 
     const jobName = `reaction:${action}:${new Date().toISOString()}`;
-
     queue
       .add(
         jobName,

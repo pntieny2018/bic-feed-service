@@ -1,7 +1,7 @@
+import Redis from 'ioredis';
 import { Queue, Worker } from 'bullmq';
 import { IRedisConfig } from '../config/redis';
 import { REACTION_KIND_LIMIT } from '../modules/reaction/reaction.constant';
-import Redis from 'ioredis';
 
 export function getDynamicQueues(): Map<string, Queue> {
   if (!global.DynamicQueues) {
@@ -39,7 +39,7 @@ export function findOrRegisterQueue(
   });
 
   const queue = new Queue(queueName, {
-    prefix: options.prefix,
+    // prefix: options.prefix,
     connection: redisConnection,
     sharedConnection: true,
   });
@@ -63,5 +63,6 @@ export function findOrRegisterQueue(
       `[ReactionQueue] ${job.id} Job completed with result: ${JSON.stringify(result)} \n`
     );
   });
+
   return queue;
 }
