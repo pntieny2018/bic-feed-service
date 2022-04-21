@@ -1,7 +1,9 @@
 import { UserDto } from '../auth';
+import { Injectable } from '@nestjs/common';
 import { GroupService } from '../../shared/group';
 import { IPost } from '../../database/models/post.model';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class AuthorityService {
@@ -14,7 +16,7 @@ export class AuthorityService {
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
-      throw new ForbiddenException('You do not have permission to perform this action !');
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
   }
 }

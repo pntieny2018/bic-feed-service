@@ -9,6 +9,8 @@ import { TokenExpiredError } from 'jsonwebtoken';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../../shared/user';
 import { ClassTransformer } from 'class-transformer';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class AuthService {
@@ -47,27 +49,37 @@ export class AuthService {
     const kid = decodedJwt['header']['kid'];
     const pem = pems[kid];
     if (!pem) {
-      throw new UnauthorizedException('Unauthorized');
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
+    let payload;
+
     try {
-      const payload = await jwt.verify(token, pem);
-
-      const user = this._classTransformer.plainToInstance(UserDto, {
-        email: payload['email'],
-        username: payload['custom:username'],
-        id: parseInt(payload['custom:bein_user_id']),
-        staffRole: payload['custom:bein_staff_role'],
-      });
-
-      user.profile = await this._userService.get(user.id);
-      return user;
+      payload = await jwt.verify(token, pem);
     } catch (e) {
       this._logger.error(e, e.stack);
-      let message = 'Unauthorized';
       if (e instanceof TokenExpiredError) {
-        message = 'Auth token expired';
+        throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
       }
-      throw new UnauthorizedException(message);
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
+
+    if (!payload) {
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    }
+
+    const user = this._classTransformer.plainToInstance(UserDto, {
+      email: payload['email'],
+      username: payload['custom:username'],
+      id: parseInt(payload['custom:bein_user_id']),
+      staffRole: payload['custom:bein_staff_role'],
+    });
+
+    user.profile = await this._userService.get(user.id);
+
+    if (!user.profile) {
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    }
+
+    return user;
   }
 }

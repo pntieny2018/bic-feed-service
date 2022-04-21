@@ -17,7 +17,7 @@ import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
 import { CommentResponseDto } from './dto/response';
 import { EntityType } from '../media/media.constants';
-import { MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
@@ -104,7 +104,7 @@ export class CommentService {
       });
 
       if (!parentComment || !parentComment.post) {
-        ExceptionHelper.throwBadRequestException(`Reply comment not found`);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
       }
       post = parentComment.toJSON().post;
     } else {
@@ -204,7 +204,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      throw new BadRequestException(`Comment ${commentId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -279,7 +279,7 @@ export class CommentService {
     commentId: number,
     childLimit = 25
   ): Promise<CommentResponseDto> {
-    this._logger.debug(`[getComment] ,commentId: ${commentId} `);
+    this._logger.debug(`[getComment] commentId: ${commentId} `);
 
     const response = await this._commentModel.findOne({
       where: {
@@ -335,7 +335,7 @@ export class CommentService {
     });
 
     if (!response) {
-      throw new BadRequestException(`Comment ${commentId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const rawComment = response.toJSON();
@@ -503,7 +503,7 @@ export class CommentService {
       },
     });
     if (!comment) {
-      throw new BadRequestException(`Comment ${commentId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -597,7 +597,6 @@ export class CommentService {
    * @returns Promise resolve boolean
    */
   public async deleteCommentsByPost(postId: number): Promise<void> {
-    const { schema } = getDatabaseConfig();
     const comments = await this._commentModel.findAll({
       where: { postId },
     });

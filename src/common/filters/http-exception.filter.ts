@@ -1,8 +1,8 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ResponseDto } from '../dto';
-import { StatusCode } from '../enum';
+import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
 import { LogicException, ValidatorException } from '../exceptions';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -29,10 +29,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
-    let code = StatusCode.INTERNAL_SERVER_ERROR;
+    let code = HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR;
 
     if (status < HttpStatus.INTERNAL_SERVER_ERROR) {
-      code = StatusCode.BAD_REQUEST;
+      code = HTTP_STATUS_ID.API_VALIDATION_ERROR;
     }
     return response.status(status).json(
       new ResponseDto({
@@ -53,7 +53,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   protected handleUnKnowException(exception: Error, response: Response): Response {
     return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
       new ResponseDto({
-        code: StatusCode.INTERNAL_SERVER_ERROR,
+        code: HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR,
         meta: {
           message: exception['message'],
           stack: this._getStack(exception),
@@ -75,7 +75,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
     return response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
-        code: StatusCode.BAD_REQUEST,
+        code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
         meta: {
           message: message,
           errors: exception.getResponse(),
@@ -91,11 +91,25 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param response
    */
   protected handleLogicException(exception: LogicException, response: Response): Response {
-    return response.status(HttpStatus.BAD_REQUEST).json(
+    let status = HttpStatus.BAD_REQUEST;
+
+    switch (exception.id) {
+      case HTTP_STATUS_ID.API_UNAUTHORIZED:
+        status = HttpStatus.UNAUTHORIZED;
+        break;
+      case HTTP_STATUS_ID.API_FORBIDDEN:
+        status = HttpStatus.FORBIDDEN;
+        break;
+      case HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR:
+        status = HttpStatus.INTERNAL_SERVER_ERROR;
+        break;
+    }
+
+    return response.status(status).json(
       new ResponseDto({
-        code: StatusCode.BAD_REQUEST,
+        code: exception.id,
         meta: {
-          message: exception.id,
+          message: HTTP_MESSAGES[exception.id],
           stack: this._getStack(exception),
         },
       })
