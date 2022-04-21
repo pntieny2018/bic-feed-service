@@ -11,13 +11,10 @@ import { CommentReactionModel } from '../../../database/models/comment-reaction.
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { UserDto } from '../../auth';
 import { ReactionDto } from '../dto/reaction.dto';
-import { DeleteReactionDto, JobReactionDataDto, ReactionAction } from '../dto/request';
+import { DeleteReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
-import { IRedisConfig } from '../../../config/redis';
-import Bull, { Job } from 'bull';
 import { ConfigService } from '@nestjs/config';
-import { CreateReactionService } from './create-reaction.service';
 
 @Injectable()
 export class DeleteReactionService {
@@ -28,66 +25,9 @@ export class DeleteReactionService {
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     private readonly _commonReactionService: CommonReactionService,
-    private readonly _configService: ConfigService,
-    @Inject(forwardRef(() => CreateReactionService))
-    private readonly _createReactionService: CreateReactionService
+    private readonly _configService: ConfigService
   ) {}
 
-  public async addToQueueDeleteReaction(
-    userDto: UserDto,
-    deleteReactionDto: DeleteReactionDto
-  ): Promise<void> {
-    const redisConfig = this._configService.get<IRedisConfig>('redis');
-
-    const queueName = `Q${deleteReactionDto.target.toString()}:${deleteReactionDto.targetId}`;
-
-    const sslConfig = redisConfig.ssl
-      ? {
-          tls: {
-            host: redisConfig.host,
-            port: redisConfig.port,
-            password: redisConfig.password,
-          },
-        }
-      : {};
-
-    const queue = new Bull(queueName, {
-      redis: {
-        keyPrefix: redisConfig.prefix,
-        host: redisConfig.host,
-        port: redisConfig.port,
-        password: redisConfig.password,
-        ...sslConfig,
-      },
-    });
-
-    queue.add(
-      {
-        action: ReactionAction.DELETE,
-        userDto,
-        deleteReactionDto,
-      },
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-      }
-    );
-    queue.process(async (job: Job<JobReactionDataDto>) => {
-      if (job.data.action === ReactionAction.DELETE) {
-        return await this.deleteReaction(job.data.userDto, job.data.deleteReactionDto);
-      } else if (job.data.action === ReactionAction.CREATE) {
-        //FIXME: will refactor after done phase 2
-        return await this._createReactionService.createReaction(
-          job.data.userDto,
-          job.data.createReactionDto
-        );
-      }
-      return;
-    });
-    queue.on('completed', (job, result) => {
-      this._logger.debug(`\n ${job.queue.name} Job completed with result:`, result);
-    });
-  }
   /**
    * Delete reaction
    * @param userDto UserDto
