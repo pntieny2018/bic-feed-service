@@ -76,6 +76,7 @@ export class CreateReactionService {
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
+    this._logger.debug(`[_createPostReaction]: ${JSON.stringify(createReactionDto)}`);
     const { id: userId } = userDto;
     const { reactionName, targetId: postId } = createReactionDto;
     try {
