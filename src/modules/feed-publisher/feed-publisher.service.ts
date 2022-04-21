@@ -130,7 +130,6 @@ export class FeedPublisherService {
         }
       } catch (ex) {
         this._logger.error(ex, ex.stack);
-
         break;
       }
     }

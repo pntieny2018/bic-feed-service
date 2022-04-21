@@ -19,6 +19,7 @@ import { CreateCommentPipe, GetCommentsPipe } from './pipes';
 import { CreateCommentDto, GetCommentDto } from './dto/requests';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ResponseMessages } from '../../common/decorators';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -32,6 +33,9 @@ export class CommentController {
   public constructor(private _commentService: CommentService) {}
 
   @ApiOperation({ summary: 'Get comment list' })
+  @ResponseMessages({
+    success: 'Get comments successfully',
+  })
   @Get('/')
   public getList(
     @AuthUser() user: UserDto,
@@ -45,6 +49,9 @@ export class CommentController {
   @ApiOkResponse({
     type: CommentResponseDto,
     description: 'Create comment successfully',
+  })
+  @ResponseMessages({
+    success: 'Create comment successfully',
   })
   @Post('/')
   public create(
@@ -62,6 +69,9 @@ export class CommentController {
     type: CommentResponseDto,
     description: 'Create reply comment successfully',
   })
+  @ResponseMessages({
+    success: 'Create reply comment successfully',
+  })
   @Post('/:commentId/reply')
   public reply(
     @AuthUser() user: UserDto,
@@ -77,6 +87,9 @@ export class CommentController {
     type: CommentResponseDto,
     description: 'Get comment successfully',
   })
+  @ResponseMessages({
+    success: 'Get comment successfully',
+  })
   @Get('/:commentId')
   public get(
     @AuthUser() user: UserDto,
@@ -90,6 +103,9 @@ export class CommentController {
   @ApiOkResponse({
     type: CommentResponseDto,
     description: 'Update comment successfully',
+  })
+  @ResponseMessages({
+    success: 'Update comment successfully',
   })
   @Put('/:commentId')
   public update(
@@ -105,6 +121,9 @@ export class CommentController {
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete comment successfully',
+  })
+  @ResponseMessages({
+    success: 'Delete comment successfully',
   })
   @Delete('/:commentId')
   public destroy(

@@ -2,7 +2,10 @@ import { IAppConfig } from '../config/app';
 import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from '../common/filters';
 import { INestApplication, Logger, VersioningType } from '@nestjs/common';
-import { HandleResponseInterceptor } from '../common/interceptors';
+import {
+  HandleResponseInterceptor,
+  InjectMessageResponseInterceptor,
+} from '../common/interceptors';
 
 export class AppBootstrap {
   /**

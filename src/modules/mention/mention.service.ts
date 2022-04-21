@@ -1,19 +1,18 @@
-import { RemoveMentionDto, UserMentionDto } from './dto';
+import { Op, QueryTypes } from 'sequelize';
 import { Injectable } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { UserService } from '../../shared/user';
+import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
+import { ArrayHelper } from '../../common/helpers';
+import { plainToInstance } from 'class-transformer';
 import { UserSharedDto } from '../../shared/user/dto';
+import { RemoveMentionDto, UserMentionDto } from './dto';
+import { MentionableType } from '../../common/constants';
 import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
-import { IMention, MentionModel } from '../../database/models/mention.model';
-import { plainToInstance } from 'class-transformer';
-import { MentionableType } from '../../common/constants';
-import { ArrayHelper } from '../../common/helpers';
-import { Op, QueryTypes } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import { getDatabaseConfig } from '../../config/database';
-import { ResourcePatternTypes } from '@nestjs/microservices/external/kafka.interface';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { IMention, MentionModel } from '../../database/models/mention.model';
 
 @Injectable()
 export class MentionService {
