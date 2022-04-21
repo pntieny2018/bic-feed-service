@@ -22,5 +22,21 @@ export function findOrRegisterQueue(
 
   queues.set(queueName, queue);
 
+  queue.on('failed', (job, result) => {
+    process.stdout.write(
+      `[ReactionQueue] ${job.queue.name}-${job.id} Job failed with result: ${JSON.stringify(
+        result
+      )} \n`
+    );
+  });
+
+  queue.on('completed', (job, result) => {
+    process.stdout.write(
+      `[ReactionQueue] ${job.queue.name}-${job.id} Job completed with result: ${JSON.stringify(
+        result
+      )} \n`
+    );
+  });
+
   return queue;
 }

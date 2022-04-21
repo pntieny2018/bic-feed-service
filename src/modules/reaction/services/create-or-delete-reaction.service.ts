@@ -12,7 +12,6 @@ import {
   JobReactionDataDto,
 } from '../dto/request';
 import { findOrRegisterQueue } from '../../../jobs';
-import { REACTION_KIND_LIMIT } from '../reaction.constant';
 
 @Injectable()
 export class CreateOrDeleteReactionService {
