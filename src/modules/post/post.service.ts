@@ -592,8 +592,13 @@ export class PostService {
           },
         }
       );
-      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds);
-      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, postId);
+      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
+      await this._mentionService.setMention(
+        mentionUserIds,
+        MentionableType.POST,
+        postId,
+        transaction
+      );
       await this.setGroupByPost(groupIds, postId);
       await transaction.commit();
 
@@ -673,18 +678,19 @@ export class PostService {
       const post = await this._postModel.findOne({ where: { id: postId } });
       await this.checkPostExistAndOwner(post, authUserId);
       await Promise.all([
-        this._mentionService.setMention([], MentionableType.POST, postId),
-        this._mediaService.sync(postId, EntityType.POST, []),
+        this._mentionService.setMention([], MentionableType.POST, postId, transaction),
+        this._mediaService.sync(postId, EntityType.POST, [], transaction),
         this.setGroupByPost([], postId),
         this._deleteReactionService.deleteReactionByPostIds([postId]),
-        this._commentService.deleteCommentsByPost(postId),
-        this._feedService.deleteNewsFeedByPost(postId),
+        this._commentService.deleteCommentsByPost(postId, transaction),
+        this._feedService.deleteNewsFeedByPost(postId, transaction),
       ]);
       await this._postModel.destroy({
         where: {
           id: postId,
           createdBy: authUserId,
         },
+        transaction: transaction,
       });
       await transaction.commit();
       return post;
