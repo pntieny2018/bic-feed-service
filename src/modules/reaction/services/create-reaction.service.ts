@@ -293,7 +293,9 @@ export class CreateReactionService {
       );
     }
     const groupIds = postGroups.map((postGroup: PostGroupModel) => postGroup.groupId);
+
     const userGroupIds = userSharedDto.groups;
+
     return this._groupService.isMemberOfSomeGroups(groupIds, userGroupIds);
   }
 }
