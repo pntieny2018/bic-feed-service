@@ -6,4 +6,5 @@ export const getRedisConfig = (): IRedisConfig => ({
   port: parseInt(process.env.REDIS_PORT),
   password: process.env.REDIS_PASSWORD,
   ssl: process.env.REDIS_SSL === 'true',
+  prefix: process.env.REDIS_ENV === 'dev' ? '' : 'sbx',
 });

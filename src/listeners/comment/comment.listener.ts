@@ -70,7 +70,7 @@ export class CommentListener {
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
-    this._logger.log(event);
+    this._logger.debug(`[CommentHasBeenUpdatedEvent]: ${JSON.stringify(event)}`);
     const { post, newComment, oldComment, commentResponse } = event.payload;
 
     const relatedParties = await this._commentService.getRecipientWhenUpdatedComment(
@@ -79,7 +79,7 @@ export class CommentListener {
     );
 
     this._notificationService.publishCommentNotification<UpdatedCommentPayloadDto>({
-      key: post.id.toString(),
+      key: `${post.id}`,
       value: {
         actor: commentResponse.actor,
         event: event.getEventName(),
@@ -94,10 +94,11 @@ export class CommentListener {
 
   @On(CommentHasBeenDeletedEvent)
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
+    this._logger.debug(`[CommentHasBeenDeletedEvent]: ${JSON.stringify(event)}`);
     const { post, comment } = event.payload;
 
     this._notificationService.publishCommentNotification<DeletedCommentPayloadDto>({
-      key: post.id.toString(),
+      key: `${post.id}`,
       value: {
         actor: null,
         event: event.getEventName(),

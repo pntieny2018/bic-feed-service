@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bein-stream-backend-api
+  namespace: default
+  labels:
+    app: bein-stream-backend-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bein-stream-backend-api
+  template:
+    metadata:
+      labels:
+        app: bein-stream-backend-api
+    spec:
+      containers:
+        - name: bein-stream-backend-api
+          image: beingroup/bein-stream-backend-api-stg:$COMMIT_SHA1
+          imagePullPolicy: Always
+          command: ['sh', '-c']
+          args: ['npx sequelize-cli db:migrate && node dist/src/main.js']
+          ports:
+            - containerPort: 3001
+              name: http
+
+          # Limit the resources for the container
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: '1'
+            requests:
+              memory: 256Mi
+              cpu: '0.2'
+
+          # Use all environment variables defined in the stg-stream-configmap and stg-stream-secret 
+          envFrom:
+            - configMapRef:
+                name: stg-stream-configmap
+            - secretRef:
+                name: stg-stream-secret
+
+      # Docker credentials to access theBein private registry
+      imagePullSecrets:
+        - name: dockerhubregistrykey

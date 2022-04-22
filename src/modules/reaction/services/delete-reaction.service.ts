@@ -1,11 +1,20 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { UserDto } from '../../auth';
+import { ReactionDto } from '../dto/reaction.dto';
 import { DeleteReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DeleteReactionService {
@@ -15,7 +24,8 @@ export class DeleteReactionService {
     @InjectModel(PostReactionModel) private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _commonReactionService: CommonReactionService
+    private readonly _commonReactionService: CommonReactionService,
+    private readonly _configService: ConfigService
   ) {}
 
   /**
@@ -26,12 +36,11 @@ export class DeleteReactionService {
    * @throws HttpException
    */
   public deleteReaction(userDto: UserDto, deleteReactionDto: DeleteReactionDto): Promise<boolean> {
-    const { id } = userDto;
     switch (deleteReactionDto.target) {
       case ReactionEnum.POST:
-        return this._deletePostReaction(id, deleteReactionDto);
+        return this._deletePostReaction(userDto, deleteReactionDto);
       case ReactionEnum.COMMENT:
-        return this._deleteCommentReaction(id, deleteReactionDto);
+        return this._deleteCommentReaction(userDto, deleteReactionDto);
       default:
         throw new NotFoundException('Reaction type not match.');
     }
@@ -39,15 +48,17 @@ export class DeleteReactionService {
 
   /**
    * Delete post reaction
-   * @param userId number
+   * @param userDto UserDto
    * @param deleteReactionDto DeleteReactionDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deletePostReaction(
-    userId: number,
+    userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<boolean> {
+    this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
+    const { id: userId } = userDto;
     const { reactionId } = deleteReactionDto;
     try {
       const existedReaction = await this._postReactionModel.findOne<PostReactionModel>({
@@ -70,12 +81,22 @@ export class DeleteReactionService {
         },
       });
 
-      await this._commonReactionService.createDeleteReactionEvent(userId, {
-        userId: userId,
-        reactionName: existedReaction.reactionName,
-        target: ReactionEnum.POST,
-        targetId: existedReaction.postId,
-      });
+      await this._commonReactionService.createDeleteReactionEvent(
+        userDto,
+        new ReactionDto(
+          {
+            reactionName: existedReaction.reactionName,
+            target: ReactionEnum.POST,
+            targetId: existedReaction.postId,
+          },
+          {
+            userId: userDto.id,
+            createdAt: existedReaction.createdAt,
+            reactionId: existedReaction.id,
+          }
+        ),
+        existedReaction.postId
+      );
 
       return true;
     } catch (e) {
@@ -86,15 +107,16 @@ export class DeleteReactionService {
 
   /**
    * Delete comment reaction
-   * @param userId number
+   * @param userDto UserDto
    * @param deleteReactionDto DeleteReactionDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deleteCommentReaction(
-    userId: number,
+    userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<boolean> {
+    const { id: userId } = userDto;
     const { reactionId } = deleteReactionDto;
     try {
       const existedReaction = await this._commentReactionModel.findOne<CommentReactionModel>({
@@ -117,12 +139,23 @@ export class DeleteReactionService {
         },
       });
 
-      await this._commonReactionService.createDeleteReactionEvent(userId, {
-        userId: userId,
-        reactionName: existedReaction.reactionName,
-        target: ReactionEnum.COMMENT,
-        targetId: existedReaction.commentId,
-      });
+      await this._commonReactionService.createDeleteReactionEvent(
+        userDto,
+        new ReactionDto(
+          {
+            reactionName: existedReaction.reactionName,
+            target: ReactionEnum.COMMENT,
+            targetId: existedReaction.commentId,
+          },
+          {
+            userId: userDto.id,
+            createdAt: existedReaction.createdAt,
+            reactionId: existedReaction.id,
+          }
+        ),
+        null,
+        existedReaction.commentId
+      );
 
       return true;
     } catch (e) {

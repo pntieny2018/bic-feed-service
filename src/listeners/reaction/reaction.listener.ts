@@ -13,14 +13,13 @@ export class ReactionListener {
 
   @On(CreateReactionInternalEvent)
   public onCreatedReactionEvent(event: CreateReactionInternalEvent): void {
-    this._logger.log(event);
+    this._logger.debug(`[onCreatedReactionEvent]: ${JSON.stringify(event)}`);
 
     const createReactionEventPayload: ReactionEventPayload = {
       reaction: event.payload.reaction,
       post: event.payload.post,
       comment: event.payload.comment,
     };
-
     const kafkaCreateReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
       key: event.getEventName(),
       value: {
@@ -37,8 +36,11 @@ export class ReactionListener {
 
   @On(DeleteReactionInternalEvent)
   public onDeleteReactionEvent(event: DeleteReactionInternalEvent): void {
+    this._logger.debug(`[onDeleteReactionEvent]: ${JSON.stringify(event)}`);
     const deleteReactionEventPayload: ReactionEventPayload = {
       reaction: event.payload.reaction,
+      post: event.payload.post,
+      comment: event.payload.comment,
     };
     const kafkaDeleteReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
       key: event.getEventName(),

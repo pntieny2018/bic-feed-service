@@ -4,12 +4,27 @@ import { NotificationModule } from '../../notification';
 import { GroupModule } from '../../shared/group';
 import { UserModule } from '../../shared/user';
 import { ReactionController } from './reaction.controller';
-import { CreateReactionService, DeleteReactionService, CommonReactionService } from './services';
+import {
+  CommonReactionService,
+  CreateOrDeleteReactionService,
+  CreateReactionService,
+  DeleteReactionService,
+} from './services';
 
 @Module({
   imports: [DatabaseModule, UserModule, GroupModule, NotificationModule],
   controllers: [ReactionController],
-  providers: [CreateReactionService, DeleteReactionService, CommonReactionService],
-  exports: [DeleteReactionService],
+  providers: [
+    CreateReactionService,
+    DeleteReactionService,
+    CommonReactionService,
+    CreateOrDeleteReactionService,
+  ],
+  exports: [
+    CommonReactionService,
+    CreateReactionService,
+    DeleteReactionService,
+    CreateOrDeleteReactionService,
+  ],
 })
 export class ReactionModule {}

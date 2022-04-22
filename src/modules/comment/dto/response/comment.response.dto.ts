@@ -25,6 +25,10 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
+  public totalReply = 0;
+
+  @ApiProperty()
+  @Expose()
   public content?: string;
 
   @ApiProperty()
@@ -54,7 +58,7 @@ export class CommentResponseDto {
     type: [ReactionResponseDto],
   })
   @Expose()
-  public ownerReactions?: ReactionResponseDto[] = [];
+  public ownerReactions: ReactionResponseDto[] = [];
 
   @ApiProperty({
     type: 'object',

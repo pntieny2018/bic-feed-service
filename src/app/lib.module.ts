@@ -11,7 +11,6 @@ import { RewriteFrames } from '@sentry/integrations';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from '../database';
 import { ScheduleModule } from '@nestjs/schedule';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { IElasticsearchConfig } from '../config/elasticsearch';
 import { InternalEventEmitterModule } from './custom/event-emitter';
@@ -101,7 +100,7 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
           : {};
         return {
           redisOptions: {
-            db: redisConfig.db,
+            keyPrefix: redisConfig.prefix,
             host: redisConfig.host,
             port: redisConfig.port,
             password: redisConfig.password,

@@ -17,7 +17,7 @@ import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
 import { CommentResponseDto } from './dto/response';
 import { EntityType } from '../media/media.constants';
-import { MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
@@ -104,7 +104,7 @@ export class CommentService {
       });
 
       if (!parentComment || !parentComment.post) {
-        ExceptionHelper.throwBadRequestException(`Reply comment not found`);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
       }
       post = parentComment.toJSON().post;
     } else {
@@ -129,18 +129,17 @@ export class CommentService {
         postId: post.id,
       });
 
-      const usersMentions = createCommentDto.mentions;
+      const userMentionIds = createCommentDto.mentions;
 
-      if (usersMentions.length) {
-        const userMentionIds = usersMentions.map((u) => u.id);
+      if (userMentionIds.length) {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
 
         await this._mentionService.checkValidMentions(groupAudienceIds, userMentionIds);
 
         await this._mentionService.create(
-          usersMentions.map((user) => ({
+          userMentionIds.map((userId) => ({
             entityId: comment.id,
-            userId: user.id,
+            userId,
             mentionableType: MentionableType.COMMENT,
           }))
         );
@@ -205,7 +204,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      throw new BadRequestException(`Comment ${commentId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -227,9 +226,8 @@ export class CommentService {
         updatedBy: user.id,
         content: updateCommentDto.content,
       });
-      const updateMentions = updateCommentDto.mentions;
+      const userMentionIds = updateCommentDto.mentions;
 
-      const userMentionIds = updateMentions.map((u) => u.id);
       if (userMentionIds.length) {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
         await this._mentionService.checkValidMentions(groupAudienceIds, userMentionIds);
@@ -281,7 +279,7 @@ export class CommentService {
     commentId: number,
     childLimit = 25
   ): Promise<CommentResponseDto> {
-    this._logger.debug(`[getComment] ,commentId: ${commentId} `);
+    this._logger.debug(`[getComment] commentId: ${commentId} `);
 
     const response = await this._commentModel.findOne({
       where: {
@@ -337,7 +335,7 @@ export class CommentService {
     });
 
     if (!response) {
-      throw new BadRequestException(`Comment ${commentId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const rawComment = response.toJSON();
@@ -449,7 +447,16 @@ export class CommentService {
               as: 'mentions',
               required: false,
             },
+            {
+              model: CommentReactionModel,
+              as: 'ownerReactions',
+              required: false,
+              where: {
+                createdBy: user.id,
+              },
+            },
           ],
+          order: [['createdAt', getCommentDto.order]],
         },
         {
           model: CommentReactionModel,
@@ -496,36 +503,36 @@ export class CommentService {
       },
     });
     if (!comment) {
-      throw new BadRequestException(`Comment ${commentId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const post = await this._postService.findPost({
       commentId: commentId,
     });
-
     await this._authorityService.allowAccess(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
 
     try {
-      await this._mediaService.sync(commentId, EntityType.COMMENT, []);
+      await Promise.all([
+        this._mediaService.sync(commentId, EntityType.COMMENT, []),
 
-      await this._mentionService.destroy({
-        commentId: commentId,
-      });
+        this._mentionService.destroy({
+          commentId: commentId,
+        }),
 
-      await this._deleteReactionService.deleteReactionByCommentIds([commentId]);
+        this._deleteReactionService.deleteReactionByCommentIds([commentId]),
+      ]);
 
       await this._commentModel.destroy({
         where: {
           parentId: comment.id,
         },
+        individualHooks: true,
       });
 
       await comment.destroy();
-
       await transaction.commit();
-
       this._eventEmitter.emit(
         new CommentHasBeenDeletedEvent({
           comment: comment.toJSON(),
@@ -604,8 +611,13 @@ export class CommentService {
     this._deleteReactionService
       .deleteReactionByCommentIds(commentIds)
       .catch((ex) => this._logger.error(ex, ex.stack));
+
     await this._commentModel.destroy({
-      where: { id: commentIds },
+      where: {
+        id: {
+          [Op.in]: commentIds,
+        },
+      },
     });
   }
 

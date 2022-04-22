@@ -13,7 +13,7 @@ export class ResponseMeta {
 
 export class ResponseDto<T> {
   @ApiProperty()
-  public code: number;
+  public code: any;
 
   public data: T;
 

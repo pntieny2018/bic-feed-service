@@ -7,17 +7,16 @@ export class GroupService {
   public constructor(private _store: RedisService) {}
 
   public async get(groupId: number): Promise<GroupSharedDto> {
-    const group = await this._store.get<GroupSharedDto>(`GS:${groupId}`);
-    if (!group.child) group.child = [];
+    const group = await this._store.get<GroupSharedDto>(`SG:${groupId}`);
+    if (group !== null && !group?.child) group.child = [];
     return group;
   }
 
   public async getMany(groupIds: number[]): Promise<GroupSharedDto[]> {
-    const keys = [...new Set(groupIds)].map((groupId) => `GS:${groupId}`);
+    const keys = [...new Set(groupIds)].map((groupId) => `SG:${groupId}`);
     if (keys.length) {
       const groups = await this._store.mget(keys);
-      const filterNotNull = groups.filter((g) => g !== null);
-      return filterNotNull;
+      return groups.filter((g) => g !== null);
     }
     return [];
   }

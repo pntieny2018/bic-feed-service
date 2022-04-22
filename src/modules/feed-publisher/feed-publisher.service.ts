@@ -78,18 +78,6 @@ export class FeedPublisherService {
     }
   }
 
-  public async detachPostForAllNewsFeed(postId: number): Promise<void> {
-    try {
-      await this._userNewsFeedModel.destroy({
-        where: {
-          postId: postId,
-        },
-      });
-    } catch (ex) {
-      this._logger.debug(ex, ex.stack);
-    }
-  }
-
   protected async processFanout(
     userId: number,
     postId: number,
@@ -142,7 +130,6 @@ export class FeedPublisherService {
         }
       } catch (ex) {
         this._logger.error(ex, ex.stack);
-
         break;
       }
     }
@@ -154,10 +141,14 @@ export class FeedPublisherService {
     currentGroupIds: number[],
     oldGroupIds: number[]
   ): void {
+    this._logger.debug(
+      `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
+    );
     const differenceGroupIds = [
       ...ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds),
       ...ArrayHelper.differenceArrNumber(oldGroupIds, currentGroupIds),
     ];
+    this._logger.debug(`[fanoutOnWrite]: differenceGroupIds: ${differenceGroupIds}`);
     if (differenceGroupIds.length) {
       const attachedGroupIds = differenceGroupIds.filter(
         (groupId) => !oldGroupIds.includes(groupId)
@@ -165,6 +156,9 @@ export class FeedPublisherService {
       const detachedGroupIds = differenceGroupIds.filter((groupId) =>
         oldGroupIds.includes(groupId)
       );
+
+      this._logger.debug(`[fanoutOnWrite]: attachedGroupIds: ${attachedGroupIds}`);
+      this._logger.debug(`[fanoutOnWrite]: detachedGroupIds: ${detachedGroupIds}`);
 
       if (attachedGroupIds.length > 0 && detachedGroupIds.length == 0) {
         this.processFanout(createdBy, postId, {

@@ -18,19 +18,9 @@ export const mockedCreatePostDto: CreatePostDto = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  mentions: [
-    {
-      id: 1,
-      username: 'username1',
-    },
-    {
-      id: 2,
-      username: 'username1',
-    },
-  ],
+  mentions: [1, 2],
   audience: {
     userIds: [],
     groupIds: [1],
   },
-  isDraft: true,
 };

@@ -20,7 +20,7 @@ const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
     images: [],
     videos: [],
   },
-  mentions: [userMentionInGroupMock],
+  mentions: [userMentionInGroupMock.id],
 };
 
 const createCommentWithPostNotFoundDto: CreateCommentDto = {
@@ -79,14 +79,7 @@ const createCommentDto: CreateCommentDto = {
     ],
     videos: [],
   },
-  mentions: [
-    {
-      id: 3,
-      fullname: 'Caitlyn Back',
-      username: 'caitlyn.back',
-      avatar: 'https://bein.group/back.png',
-    },
-  ],
+  mentions: [3],
 };
 
 const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
@@ -97,17 +90,19 @@ const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
     images: [],
     videos: [],
   },
-  mentions: [userMentionNotInGroupMock],
+  mentions: [userMentionNotInGroupMock.id],
 };
 
 export const createdComment: CommentResponseDto = {
   id: 1,
+  totalReply: 0,
   actor: {
     id: 1,
     fullname: 'Martine Baumbach',
     username: 'martine.baumbach',
     avatar: 'https://bein.group/baumbach.png',
   },
+  ownerReactions: null,
   parentId: 0,
   postId: 2,
   content: 'hello @caitlyn.back',
