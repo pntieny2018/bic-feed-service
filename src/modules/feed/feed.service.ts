@@ -5,7 +5,7 @@ import { MentionService } from '../mention';
 import { GetTimelineDto } from './dto/request';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { QueryTypes, Sequelize } from 'sequelize';
+import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { PostResponseDto } from '../post/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
@@ -275,11 +275,12 @@ export class FeedService {
 
   /**
    * Delete newsfeed by post
-   * @param postId
+   * @param postId number
+   * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: number): Promise<number> {
-    return await this._newsFeedModel.destroy({ where: { postId } });
+  public async deleteNewsFeedByPost(postId: number, transaction: Transaction): Promise<number> {
+    return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 
   public groupPosts(posts: any[]): any[] {

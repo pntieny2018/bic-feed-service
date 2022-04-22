@@ -12,7 +12,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { FindOptions, Op, QueryTypes } from 'sequelize';
+import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -184,10 +184,11 @@ export class MediaService {
   /**
    * Update Media.isDraft, called when update Post
    * @param mediaIds Array of Media ID
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
+  public async updateMediaDraft(mediaIds: number[], transaction: Transaction): Promise<boolean> {
     const { schema } = getDatabaseConfig();
     const postMedia = PostMediaModel.tableName;
     const commentMedia = CommentMediaModel.tableName;
@@ -211,11 +212,17 @@ export class MediaService {
       },
       type: QueryTypes.UPDATE,
       raw: true,
+      transaction: transaction,
     });
     return true;
   }
 
-  public async sync(entityId: number, entityType: EntityType, mediaIds: number[]): Promise<void> {
+  public async sync(
+    entityId: number,
+    entityType: EntityType,
+    mediaIds: number[],
+    transaction: Transaction
+  ): Promise<void> {
     const changes = {
       attached: [],
       detached: [],
@@ -269,12 +276,14 @@ export class MediaService {
           [Op.in]: data,
         },
       },
+      transaction: transaction,
     });
 
     if (changes.attached.length) {
       await (entityType === EntityType.POST
         ? this._postMediaModel.bulkCreate(
-            getAttachedData(changes.attached, 'postId', entityId, 'mediaId')
+            getAttachedData(changes.attached, 'postId', entityId, 'mediaId'),
+            { transaction }
           )
         : this._commentMediaModel.bulkCreate(
             getAttachedData(changes.attached, 'commentId', entityId, 'mediaId')
@@ -291,7 +300,7 @@ export class MediaService {
           ));
     }
 
-    await this.updateMediaDraft([...changes.detached, ...changes.detached]);
+    await this.updateMediaDraft([...changes.detached, ...changes.detached], transaction);
   }
 
   public destroyCommentMedia(user: UserDto, commentId: number): Promise<void> {
@@ -333,7 +342,11 @@ export class MediaService {
     return mediaTypes;
   }
 
-  public async deleteMediaByEntityIds(entityIds: number[], entityType: EntityType): Promise<void> {
+  public async deleteMediaByEntityIds(
+    entityIds: number[],
+    entityType: EntityType,
+    transaction: Transaction
+  ): Promise<void> {
     const condition =
       entityType === EntityType.POST
         ? {
@@ -356,10 +369,13 @@ export class MediaService {
     const mediaIds = media.map((m) => m.mediaId);
 
     await (entityType === EntityType.POST
-      ? this._postMediaModel.destroy({ where: { postId: entityIds } })
-      : this._commentMediaModel.destroy({ where: { commentId: entityIds } }));
+      ? this._postMediaModel.destroy({ where: { postId: entityIds }, transaction: transaction })
+      : this._commentMediaModel.destroy({
+          where: { commentId: entityIds },
+          transaction: transaction,
+        }));
 
-    await this.updateMediaDraft(mediaIds);
+    await this.updateMediaDraft(mediaIds, transaction);
   }
 
   public async countMediaByPost(postId: number): Promise<number> {
