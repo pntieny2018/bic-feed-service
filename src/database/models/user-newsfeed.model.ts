@@ -1,6 +1,5 @@
 import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
-
 export interface IUserNewsFeed {
   userId: number;
   postId: number;
