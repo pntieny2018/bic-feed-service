@@ -1,3 +1,17 @@
+import { PageDto } from './../../common/dto/pagination/page.dto';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { IPost, PostModel } from '../../database/models/post.model';
+import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
+import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -7,27 +21,24 @@ import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
-import { FeedService } from '../feed/feed.service';
 import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { DeleteReactionService } from '../reaction/services';
-import { MediaModel } from '../../database/models/media.model';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
-import { MentionModel } from '../../database/models/mention.model';
-import { CommentModel } from '../../database/models/comment.model';
-import { IPost, PostModel } from '../../database/models/post.model';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { FeedService } from '../feed/feed.service';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
-import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { MediaModel } from '../../database/models/media.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { EntityIdDto, OrderEnum } from '../../common/dto';
+import { CommentModel } from '../../database/models/comment.model';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { QueryTypes } from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -44,7 +55,8 @@ export class PostService {
     private _postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
-    private _eventEmitter: EventEmitter2,
+    @InjectModel(UserMarkReadPostModel)
+    private _userMarkReadPostModel: typeof UserMarkReadPostModel,
     private _userService: UserService,
     private _groupService: GroupService,
     private _mediaService: MediaService,
@@ -592,8 +604,13 @@ export class PostService {
           },
         }
       );
-      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds);
-      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, postId);
+      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
+      await this._mentionService.setMention(
+        mentionUserIds,
+        MentionableType.POST,
+        postId,
+        transaction
+      );
       await this.setGroupByPost(groupIds, postId);
       await transaction.commit();
 
@@ -673,18 +690,20 @@ export class PostService {
       const post = await this._postModel.findOne({ where: { id: postId } });
       await this.checkPostExistAndOwner(post, authUserId);
       await Promise.all([
-        this._mentionService.setMention([], MentionableType.POST, postId),
-        this._mediaService.sync(postId, EntityType.POST, []),
+        this._mentionService.setMention([], MentionableType.POST, postId, transaction),
+        this._mediaService.sync(postId, EntityType.POST, [], transaction),
         this.setGroupByPost([], postId),
         this._deleteReactionService.deleteReactionByPostIds([postId]),
-        this._commentService.deleteCommentsByPost(postId),
-        this._feedService.deleteNewsFeedByPost(postId),
+        this._commentService.deleteCommentsByPost(postId, transaction),
+        this._feedService.deleteNewsFeedByPost(postId, transaction),
+        this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
       ]);
       await this._postModel.destroy({
         where: {
           id: postId,
           createdBy: authUserId,
         },
+        transaction: transaction,
       });
       await transaction.commit();
       return post;
@@ -846,5 +865,84 @@ export class PostService {
       this._logger.error(ex, ex.stack);
       return [];
     }
+  }
+
+  public async markReadPost(postId: number, userId: number): Promise<void> {
+    try {
+      const readPost = await this._userMarkReadPostModel.findOne({
+        where: {
+          postId,
+          userId,
+        },
+      });
+      if (!readPost) {
+        await this._userMarkReadPostModel.create({
+          postId,
+          userId,
+        });
+      }
+      return;
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER);
+    }
+  }
+
+  public async getTotalImportantPostInGroups(
+    userId: number,
+    groupIds: number[],
+    constraints: string
+  ): Promise<number> {
+    const query = `SELECT COUNT(*) as total
+    FROM feed.posts as p
+    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    AND NOT EXISTS (
+        SELECT 1
+        FROM feed.users_mark_read_posts as u
+        WHERE u.user_id = :userId AND u.post_id = p.id
+      )
+    AND EXISTS(
+        SELECT 1
+        from feed.posts_groups AS g
+        WHERE g.post_id = p.id
+        AND g.group_id IN(:groupIds)
+      )
+    ${constraints}`;
+    const result: any = await this._sequelizeConnection.query(query, {
+      replacements: {
+        groupIds,
+        userId,
+      },
+      type: QueryTypes.SELECT,
+    });
+    return result[0].total;
+  }
+
+  public async getTotalImportantPostInNewsFeed(
+    userId: number,
+    constraints: string
+  ): Promise<number> {
+    const query = `SELECT COUNT(*) as total
+    FROM feed.posts as p
+    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    AND NOT EXISTS (
+        SELECT 1
+        FROM feed.users_mark_read_posts as u
+        WHERE u.user_id = :userId AND u.post_id = p.id
+      )
+    AND EXISTS(
+        SELECT 1
+        from feed.user_newsfeed AS u
+        WHERE u.post_id = p.id
+        AND u.user_id = :userId
+      )
+    ${constraints}`;
+    const result: any = await this._sequelizeConnection.query(query, {
+      replacements: {
+        userId,
+      },
+      type: QueryTypes.SELECT,
+    });
+    return result[0].total;
   }
 }

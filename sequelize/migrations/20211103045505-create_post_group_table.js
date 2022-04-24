@@ -38,6 +38,7 @@ module.exports = {
     await queryInterface.addIndex(tableName, ['group_id', 'post_id'], {
       unique: true,
     });
+    await queryInterface.addIndex(tableName, ['group_id']);
   },
 
   down: async (queryInterface) => {

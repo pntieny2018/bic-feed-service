@@ -94,6 +94,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.BAD_REQUEST;
 
     switch (exception.id) {
+      case HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED:
       case HTTP_STATUS_ID.API_UNAUTHORIZED:
         status = HttpStatus.UNAUTHORIZED;
         break;

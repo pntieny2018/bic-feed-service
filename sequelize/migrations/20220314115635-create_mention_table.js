@@ -34,6 +34,9 @@ module.exports = {
     );
     await queryInterface.addIndex(tableName, ['mentionable_type']);
     await queryInterface.addIndex(tableName, ['entity_id']);
+    await queryInterface.addIndex(tableName, ['mentionable_type', 'entity_id', 'user_id'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

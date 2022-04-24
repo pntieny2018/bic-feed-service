@@ -1,4 +1,3 @@
-import { Op, QueryTypes } from 'sequelize';
 import { Injectable } from '@nestjs/common';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
@@ -6,6 +5,7 @@ import { GroupService } from '../../shared/group';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { UserSharedDto } from '../../shared/user/dto';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { RemoveMentionDto, UserMentionDto } from './dto';
 import { MentionableType } from '../../common/constants';
 import { LogicException } from '../../common/exceptions';
@@ -41,8 +41,15 @@ export class MentionService {
   /**
    * Create mentions
    * @param mentions  IMention[]
+   * @param transaction Sequelize
    */
-  public async create(mentions: IMention[]): Promise<MentionModel[]> {
+  public async create(
+    mentions: IMention[],
+    transaction: Transaction = null
+  ): Promise<MentionModel[]> {
+    if (transaction) {
+      return await this._mentionModel.bulkCreate(mentions, { transaction });
+    }
     return await this._mentionModel.bulkCreate(mentions);
   }
 
@@ -133,13 +140,15 @@ export class MentionService {
    * @param userIds Array of User ID
    * @param mentionableType Post or comment
    * @param entityId Post ID or Comment ID
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async setMention(
     userIds: number[],
     mentionableType: MentionableType,
-    entityId: number
+    entityId: number,
+    transaction: Transaction
   ): Promise<boolean> {
     const currentMentions = await this._mentionModel.findAll({
       where: { mentionableType, entityId },
@@ -150,6 +159,7 @@ export class MentionService {
     if (deleteUserIds.length) {
       await this._mentionModel.destroy({
         where: { mentionableType, entityId, userId: deleteUserIds },
+        transaction: transaction,
       });
     }
 
@@ -160,13 +170,16 @@ export class MentionService {
           mentionableType,
           entityId,
           userId,
-        }))
+        })),
+        {
+          transaction: transaction,
+        }
       );
     }
     return true;
   }
 
-  public async destroy(removeMentionDto: RemoveMentionDto): Promise<any> {
+  public async destroy(removeMentionDto: RemoveMentionDto, transaction: Transaction): Promise<any> {
     const databaseConfig = getDatabaseConfig();
 
     if (removeMentionDto.commentId) {
@@ -177,6 +190,7 @@ export class MentionService {
           bind: {
             commentId: removeMentionDto.commentId,
           },
+          transaction: transaction,
         }
       );
     }
@@ -189,6 +203,7 @@ export class MentionService {
           bind: {
             postId: removeMentionDto.postId,
           },
+          transaction: transaction,
         }
       );
     }
@@ -200,16 +215,19 @@ export class MentionService {
             [Op.in]: removeMentionDto.mentionIds,
           },
         },
+        transaction: transaction,
       });
     }
   }
 
   public async deleteMentionByEntityIds(
     entityIds: number[],
-    mentionableType: MentionableType
+    mentionableType: MentionableType,
+    transaction: Transaction
   ): Promise<number> {
     return this._mentionModel.destroy({
       where: { entityId: entityIds, mentionableType },
+      transaction: transaction,
     });
   }
 }

@@ -74,7 +74,8 @@ module.exports = {
     );
 
     await queryInterface.addIndex(tableName, ['created_by']);
-    await queryInterface.addIndex(tableName, ['is_draft']);
+    await queryInterface.addIndex(tableName, ['is_draft', 'is_important', 'created_at']);
+    await queryInterface.addIndex(tableName, ['important_expired_at']);
   },
 
   down: async (queryInterface) => {

@@ -2,24 +2,23 @@
 require('dotenv').config();
 
 const schemaName = process.env.POSTGRES_SCHEMA;
-const tableName = 'user_newsfeed';
+const tableName = 'users_mark_read_posts';
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
       tableName,
       {
-        id: {
-          primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
-        },
         user_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          primaryKey: true,
         },
         post_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          primaryKey: true,
+          references: { model: 'posts', key: 'id' },
         },
         created_at: {
           type: Sequelize.DATE,
@@ -31,14 +30,12 @@ module.exports = {
         schema: schemaName,
       }
     );
-    await queryInterface.addIndex(tableName, ['post_id', 'user_id'], {
+    await queryInterface.addIndex(tableName, ['user_id', 'post_id'], {
       unique: true,
     });
-    await queryInterface.addIndex(tableName, ['user_id']);
   },
 
   down: async (queryInterface) => {
-    await queryInterface.removeIndex(tableName, 'user_post_index');
     await queryInterface.dropTable(tableName);
   },
 };

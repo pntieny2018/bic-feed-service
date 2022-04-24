@@ -15,6 +15,7 @@ import { DeleteReactionDto } from '../dto/request';
 import { ReactionEnum } from '../reaction.enum';
 import { CommonReactionService } from './common-reaction.service';
 import { ConfigService } from '@nestjs/config';
+import { Transaction } from 'sequelize';
 
 @Injectable()
 export class DeleteReactionService {
@@ -170,12 +171,17 @@ export class DeleteReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    * @param commentIds
+   * @param transaction Transaction
    */
-  public async deleteReactionByCommentIds(commentIds: number[]): Promise<number> {
+  public async deleteReactionByCommentIds(
+    commentIds: number[],
+    transaction: Transaction
+  ): Promise<number> {
     return await this._commentReactionModel.destroy({
       where: {
         commentId: commentIds,
       },
+      transaction: transaction,
     });
   }
 
