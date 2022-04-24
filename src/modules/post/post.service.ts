@@ -3,7 +3,6 @@ import { MentionableType } from '../../common/constants';
 import { Sequelize } from 'sequelize-typescript';
 import { UserService } from '../../shared/user';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
 import {
@@ -40,6 +39,7 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
 import { DeleteReactionService } from '../reaction/services';
 import { FeedService } from '../feed/feed.service';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 
 @Injectable()
 export class PostService {
@@ -56,7 +56,8 @@ export class PostService {
     private _postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
-    private _eventEmitter: EventEmitter2,
+    @InjectModel(UserMarkReadPostModel)
+    private _userMarkReadPostModel: typeof UserMarkReadPostModel,
     private _userService: UserService,
     private _groupService: GroupService,
     private _mediaService: MediaService,
@@ -710,6 +711,7 @@ export class PostService {
         this._deleteReactionService.deleteReactionByPostIds([postId]),
         this._commentService.deleteCommentsByPost(postId),
         this._feedService.deleteNewsFeedByPost(postId),
+        this._userMarkReadPostModel.destroy({ where: { postId } }),
       ]);
       await this._postModel.destroy({
         where: {
@@ -878,5 +880,84 @@ export class PostService {
       this._logger.error(ex, ex.stack);
       return [];
     }
+  }
+
+  public async markReadPost(postId: number, userId: number): Promise<void> {
+    try {
+      const readPost = await this._userMarkReadPostModel.findOne({
+        where: {
+          postId,
+          userId,
+        },
+      });
+      if (!readPost) {
+        await this._userMarkReadPostModel.create({
+          postId,
+          userId,
+        });
+      }
+      return;
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      throw new BadRequestException('Invalid data');
+    }
+  }
+
+  public async getTotalImportantPostInGroups(
+    userId: number,
+    groupIds: number[],
+    constraints: string
+  ): Promise<number> {
+    const query = `SELECT COUNT(*) as total
+    FROM feed.posts as p
+    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    AND NOT EXISTS (
+        SELECT 1
+        FROM feed.users_mark_read_posts as u
+        WHERE u.user_id = :userId AND u.post_id = p.id
+      )
+    AND EXISTS(
+        SELECT 1
+        from feed.posts_groups AS g
+        WHERE g.post_id = p.id
+        AND g.group_id IN(:groupIds)
+      )
+    ${constraints}`;
+    const result: any = await this._sequelizeConnection.query(query, {
+      replacements: {
+        groupIds,
+        userId,
+      },
+      type: QueryTypes.SELECT,
+    });
+    return result[0].total;
+  }
+
+  public async getTotalImportantPostInNewsFeed(
+    userId: number,
+    constraints: string
+  ): Promise<number> {
+    const query = `SELECT COUNT(*) as total
+    FROM feed.posts as p
+    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    AND NOT EXISTS (
+        SELECT 1
+        FROM feed.users_mark_read_posts as u
+        WHERE u.user_id = :userId AND u.post_id = p.id
+      )
+    AND EXISTS(
+        SELECT 1
+        from feed.user_newsfeed AS u
+        WHERE u.post_id = p.id
+        AND u.user_id = :userId
+      )
+    ${constraints}`;
+    const result: any = await this._sequelizeConnection.query(query, {
+      replacements: {
+        userId,
+      },
+      type: QueryTypes.SELECT,
+    });
+    return result[0].total;
   }
 }

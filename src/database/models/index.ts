@@ -10,6 +10,7 @@ import { UserNewsFeedModel } from './user-newsfeed.model';
 import { MentionModel } from './mention.model';
 import { PostGroupModel } from './post-group.model';
 import { FollowModel } from './follow.model';
+import { UserMarkReadPostModel } from './user-mark-read-post.model';
 
 export default [
   PostModel,
@@ -24,4 +25,5 @@ export default [
   UserNewsFeedModel,
   MentionModel,
   FollowModel,
+  UserMarkReadPostModel,
 ];

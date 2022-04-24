@@ -18,9 +18,12 @@ import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { APP_VERSION } from '../../common/constants';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -160,5 +163,18 @@ export class PostController {
       );
       return true;
     }
+  }
+
+  @ApiOperation({ summary: 'Mark important post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Put('/:id/mark-as-read')
+  public async markReadPost(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseIntPipe) postId: number
+  ): Promise<boolean> {
+    await this._postService.markReadPost(postId, user.id);
+    return true;
   }
 }

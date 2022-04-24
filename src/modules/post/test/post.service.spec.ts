@@ -39,11 +39,13 @@ import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
 import { DeleteReactionService } from '../../reaction/services';
 import { FeedService } from '../../feed/feed.service';
+import { UserMarkedImportantPostModel } from '../../../database/models/user-mark-read-post.model';
 
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
   let postGroupModelMock;
+  let userMarkedImportantPostModelMock;
   let sentryService: SentryService;
   let userService: UserService;
   let groupService: GroupService;
@@ -168,12 +170,20 @@ describe('PostService', () => {
             destroy: jest.fn()
           },
         },
+        {
+          provide: getModelToken(UserMarkedImportantPostModel),
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn()
+          }
+        }
       ],
     }).compile();
 
     postService = moduleRef.get<PostService>(PostService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
+    userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkedImportantPostModel>(getModelToken(UserMarkedImportantPostModel));
     sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
@@ -246,7 +256,7 @@ describe('PostService', () => {
       //add Reaction
       expect(createPostQuery).toStrictEqual({
         content: mockedCreatePostDto.content,
-        isDraft: mockedCreatePostDto.isDraft,
+        isDraft: true,
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,
         isImportant: mockedCreatePostDto.setting.isImportant,
