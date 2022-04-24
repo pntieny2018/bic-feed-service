@@ -884,7 +884,7 @@ export class PostService {
       return;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-      throw new BadRequestException('Invalid data');
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER);
     }
   }
 
