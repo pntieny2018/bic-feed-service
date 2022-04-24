@@ -1,30 +1,22 @@
-import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { PostResponseDto } from './../post/dto/responses/post.response.dto';
-import { ClassTransformer } from 'class-transformer';
-import { MentionService } from './../mention/mention.service';
-import { GroupService } from './../../shared/group/group.service';
-import { PostService } from './../post/post.service';
-import { Op, Order, QueryTypes, Sequelize } from 'sequelize';
 import sequelize from 'sequelize';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { GetTimelineDto } from './dto/request';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { MentionService } from '../mention';
+import { GroupService } from '../../shared/group';
+import { PostService } from '../post/post.service';
+import { QueryTypes, Sequelize, Transaction } from 'sequelize';
+import { ClassTransformer } from 'class-transformer';
+import { PostResponseDto } from '../post/dto/responses';
+import { getDatabaseConfig } from '../../config/database';
+import { PostModel } from '../../database/models/post.model';
 import { MediaModel } from '../../database/models/media.model';
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
-import { IPost, PostModel } from '../../database/models/post.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import {
-  BadRequestException,
-  forwardRef,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
-import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { getDatabaseConfig } from '../../config/database';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommonReactionService } from '../reaction/services';
 import { UserDto } from '../auth';
@@ -34,6 +26,7 @@ import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
   private _classTransformer = new ClassTransformer();
+
   public constructor(
     private readonly _commonReaction: CommonReactionService,
     private readonly _groupService: GroupService,
@@ -239,11 +232,12 @@ export class FeedService {
 
   /**
    * Delete newsfeed by post
-   * @param getTimelineDto GetTimelineDto
+   * @param postId number
+   * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: number): Promise<number> {
-    return await this._newsFeedModel.destroy({ where: { postId } });
+  public async deleteNewsFeedByPost(postId: number, transaction: Transaction): Promise<number> {
+    return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 
   public groupPosts(posts: any[]): any[] {

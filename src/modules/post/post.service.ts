@@ -1,10 +1,8 @@
 import { PageDto } from './../../common/dto/pagination/page.dto';
-import { MentionableType } from '../../common/constants';
-import { Sequelize } from 'sequelize-typescript';
-import { UserService } from '../../shared/user';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto, SearchPostsDto } from './dto/requests';
+import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
@@ -14,32 +12,33 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MediaService } from '../media';
-import { GroupService } from '../../shared/group';
-import { MentionService } from '../mention';
-
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { ArrayHelper, ElasticsearchHelper } from '../../common/helpers';
-import { EntityIdDto, OrderEnum } from '../../common/dto';
-import { CommentModel } from '../../database/models/comment.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { UpdatePostDto } from './dto/requests';
-import { MentionModel } from '../../database/models/mention.model';
-import { MediaModel } from '../../database/models/media.model';
-import { getDatabaseConfig } from '../../config/database';
-import { QueryTypes } from 'sequelize';
-import { CommentService } from '../comment';
 import { UserDto } from '../auth';
-import { ClassTransformer } from 'class-transformer';
-import { PostResponseDto } from './dto/responses';
+import { MediaService } from '../media';
+import { MentionService } from '../mention';
+import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { UserService } from '../../shared/user';
+import { Sequelize } from 'sequelize-typescript';
+import { PostResponseDto } from './dto/responses';
+import { GroupService } from '../../shared/group';
+import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { LogicException } from '../../common/exceptions';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { DeleteReactionService } from '../reaction/services';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { MediaModel } from '../../database/models/media.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { EntityIdDto, OrderEnum } from '../../common/dto';
+import { CommentModel } from '../../database/models/comment.model';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { QueryTypes } from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -73,10 +72,10 @@ export class PostService {
 
   /**
    * Get Draft Posts
-   * @param authUserId auth user ID
-   * @param getDraftPostDto GetDraftPostDto
-   * @returns Promise resolve PageDto<PostResponseDto>
    * @throws HttpException
+   * @param authUser UserDto
+   * @param searchPostsDto SearchPostsDto
+   * @returns Promise resolve PageDto<PostResponseDto>
    */
   public async searchPosts(
     authUser: UserDto,
@@ -149,8 +148,7 @@ export class PostService {
     if (actors && actors.length) {
       body.query.bool.filter.push({
         terms: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'actor.id': actors,
+          ['actor.id']: actors,
         },
       });
     }
@@ -158,8 +156,7 @@ export class PostService {
     if (groupIds.length) {
       body.query.bool.filter.push({
         terms: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'audience.groups.id': groupIds,
+          ['audience.groups.id']: groupIds,
         },
       });
     }
@@ -167,30 +164,26 @@ export class PostService {
     if (important) {
       body.query.bool.must.push({
         term: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'setting.isImportant': true,
+          ['setting.isImportant']: true,
         },
       });
       body.query.bool.must.push({
         range: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          'setting.importantExpiredAt': { gt: new Date().toISOString() },
+          ['setting.importantExpiredAt']: { gt: new Date().toISOString() },
         },
       });
     }
 
     if (content) {
       body.query.bool.should.push({
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        dis_max: {
+        ['dis_max']: {
           queries: [
             {
               match: { content },
             },
             {
               match: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'content.ascii': {
+                ['content.ascii']: {
                   query: content,
                   boost: 0.6,
                 },
@@ -198,8 +191,7 @@ export class PostService {
             },
             {
               match: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'content.ngram': {
+                ['content.ngram']: {
                   query: content,
                   boost: 0.3,
                 },
@@ -210,28 +202,20 @@ export class PostService {
       });
       body.query.bool['minimum_should_match'] = 1;
       body['highlight'] = {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        pre_tags: ['=='],
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        post_tags: ['=='],
+        ['pre_tags']: ['=='],
+        ['post_tags']: ['=='],
         fields: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           content: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            matched_fields: ['content', 'content.ascii', 'content.ngram'],
-            // eslint-disable-next-line @typescript-eslint/naming-convention
+            ['matched_fields']: ['content', 'content.ascii', 'content.ngram'],
             type: 'fvh',
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            number_of_fragments: 0,
+            ['number_of_fragments']: 0,
           },
         },
       };
 
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       body['sort'] = [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _script: {
+          ['_script']: {
             type: 'number',
             script: {
               lang: 'painless',
@@ -244,16 +228,13 @@ export class PostService {
             order: 'desc',
           },
         },
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        { _score: 'desc' },
+        { ['_score']: 'desc' },
         { createdAt: 'desc' },
       ];
     } else {
-      //body['sort'] = [];
       body['sort'] = [
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          _script: {
+          ['_script']: {
             type: 'number',
             script: {
               lang: 'painless',
@@ -281,13 +262,12 @@ export class PostService {
       if (endTime) filterTime.range.createdAt['lte'] = endTime;
       body.query.bool.must.push(filterTime);
     }
-    const payload = {
+    return {
       index: ElasticsearchHelper.INDEX.POST,
       body,
       from: offset,
       size: limit,
     };
-    return payload;
   }
   /**
    * Get Draft Posts
@@ -420,19 +400,17 @@ export class PostService {
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this._classTransformer.plainToInstance(
+    return this._classTransformer.plainToInstance(
       PostResponseDto,
       { ...jsonPost, comments },
       {
         excludeExtraneousValues: true,
       }
     );
-
-    return result;
   }
 
   /**
-   * Bind Audience To Post.groups
+   * Bind Audience To Post.Groups
    * @param posts Array of post
    * @returns Promise resolve void
    * @throws HttpException
@@ -517,16 +495,15 @@ export class PostService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        throw new BadRequestException(`UserID ${authUserId} not found`);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_EXISTING);
       }
       const { groupIds } = audience;
-      const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
+      const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
-        throw new BadRequestException('You can not create post in this groups');
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
       }
-      const mentionUserIds = mentions;
-      if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
+      if (mentions.length) {
+        await this._mentionService.checkValidMentions(groupIds, mentions);
       }
 
       const { files, videos, images } = media;
@@ -550,11 +527,11 @@ export class PostService {
         await this._mediaService.activeMedia(uniqueMediaIds, authUserId);
       }
 
-      this.addPostGroup(groupIds, post.id);
+      this.addPostGroup(groupIds, post.id).catch((ex) => this._logger.error(ex, ex.stack));
 
-      if (mentionUserIds.length) {
+      if (mentions.length) {
         await this._mentionService.create(
-          mentionUserIds.map((userId) => ({
+          mentions.map((userId) => ({
             entityId: post.id,
             userId,
             mentionableType: MentionableType.POST,
@@ -575,8 +552,8 @@ export class PostService {
   /**
    * Update Post except isDraft
    * @param postId postID
-   * @param authUserId userID
-   * @param createPostDto UpdatePostDto
+   * @param authUser UserDto
+   * @param updatePostDto UpdatePostDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
@@ -588,7 +565,7 @@ export class PostService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      throw new BadRequestException(`UserID ${authUserId} not found`);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_EXISTING);
     }
 
     const transaction = await this._sequelizeConnection.transaction();
@@ -596,9 +573,9 @@ export class PostService {
       const { content, media, setting, mentions, audience } = updatePostDto;
 
       const { groupIds } = audience;
-      const isMember = await this._groupService.isMemberOfGroups(groupIds, creator.groups);
+      const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
       if (!isMember) {
-        throw new BadRequestException('You can not create post in this groups');
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
       }
 
       const mentionUserIds = mentions;
@@ -627,8 +604,13 @@ export class PostService {
           },
         }
       );
-      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds);
-      await this._mentionService.setMention(mentionUserIds, MentionableType.POST, postId);
+      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
+      await this._mentionService.setMention(
+        mentionUserIds,
+        MentionableType.POST,
+        postId,
+        transaction
+      );
       await this.setGroupByPost(groupIds, postId);
       await transaction.commit();
 
@@ -654,7 +636,7 @@ export class PostService {
       const countMedia = await this._mediaService.countMediaByPost(postId);
 
       if (post.content === null && countMedia === 0) {
-        throw new BadRequestException('Post content or media can not empty');
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
       }
 
       await this._postModel.update(
@@ -676,18 +658,21 @@ export class PostService {
   }
   /**
    * Check post exist and owner
-   * @param post Post model
+   * @param post PostResponseDto
    * @param authUserId Auth userID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkPostExistAndOwner(post, authUserId): Promise<boolean> {
+  public async checkPostExistAndOwner(
+    post: PostResponseDto | PostModel | IPost,
+    authUserId: number
+  ): Promise<boolean> {
     if (!post) {
-      throw new NotFoundException('The post not found');
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
 
     if (post.createdBy !== authUserId) {
-      throw new ForbiddenException('Access denied');
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
     return true;
   }
@@ -705,26 +690,26 @@ export class PostService {
       const post = await this._postModel.findOne({ where: { id: postId } });
       await this.checkPostExistAndOwner(post, authUserId);
       await Promise.all([
-        this._mentionService.setMention([], MentionableType.POST, postId),
-        this._mediaService.sync(postId, EntityType.POST, []),
+        this._mentionService.setMention([], MentionableType.POST, postId, transaction),
+        this._mediaService.sync(postId, EntityType.POST, [], transaction),
         this.setGroupByPost([], postId),
         this._deleteReactionService.deleteReactionByPostIds([postId]),
-        this._commentService.deleteCommentsByPost(postId),
-        this._feedService.deleteNewsFeedByPost(postId),
-        this._userMarkReadPostModel.destroy({ where: { postId } }),
+        this._commentService.deleteCommentsByPost(postId, transaction),
+        this._feedService.deleteNewsFeedByPost(postId, transaction),
+        this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
       ]);
       await this._postModel.destroy({
         where: {
           id: postId,
           createdBy: authUserId,
         },
+        transaction: transaction,
       });
-      transaction.commit();
-
+      await transaction.commit();
       return post;
     } catch (error) {
       this._logger.error(error, error?.stack);
-      transaction.rollback();
+      await transaction.rollback();
       throw error;
     }
   }
@@ -861,7 +846,7 @@ export class PostService {
     const post = await this._postModel.findOne(conditions);
 
     if (!post) {
-      throw new BadRequestException('The post does not exist !');
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
     return post.toJSON();
   }

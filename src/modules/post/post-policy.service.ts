@@ -1,6 +1,8 @@
 import { IPost } from '../../database/models/post.model';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PostAllow } from './post.constants';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class PostPolicyService {
@@ -18,7 +20,7 @@ export class PostPolicyService {
    */
   public allow(post: IPost, action: PostAllow): void {
     if (!post[action]) {
-      throw new BadRequestException(`You can't ${action} this post`);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
     }
   }
 }

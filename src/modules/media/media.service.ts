@@ -1,6 +1,3 @@
-import { UserDto } from '../auth';
-import { FindOptions, Op, QueryTypes } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import {
   HttpException,
   HttpStatus,
@@ -8,20 +5,22 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostMediaModel } from '../../database/models/post-media.model';
-import { ArrayHelper } from '../../common/helpers';
-import { CommentMediaModel } from '../../database/models/comment-media.model';
+import { UserDto } from '../auth';
+import { FileMetadataDto, ImageMetadataDto, RemoveMediaDto, VideoMetadataDto } from './dto';
 import { EntityType } from './media.constants';
-import { getDatabaseConfig } from '../../config/database';
-import { RemoveMediaDto } from './dto';
-import { FileMetadataDto } from '../media/dto/file-metadata.dto';
-import { ImageMetadataDto } from '../media/dto/image-metadata.dto';
-import { VideoMetadataDto } from '../media/dto/video-metadata.dto';
+import { Sequelize } from 'sequelize-typescript';
+import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
+import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
+import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { PostMediaModel } from '../../database/models/post-media.model';
+import { CommentMediaModel } from '../../database/models/comment-media.model';
+import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class MediaService {
@@ -59,6 +58,17 @@ export class MediaService {
       height: number;
     }
   ): Promise<any> {
+    this._logger.debug(
+      `[create]: ${JSON.stringify(user)} ${JSON.stringify({
+        url,
+        uploadType,
+        name,
+        originName,
+        extension,
+        width,
+        height,
+      })}`
+    );
     try {
       const typeArr = uploadType.split('_');
       return await this._mediaModel.create({
@@ -82,7 +92,39 @@ export class MediaService {
    * @param removeMediaDto RemoveMediaDto
    */
   public async destroy(user: UserDto, removeMediaDto: RemoveMediaDto): Promise<any> {
-    return null;
+    const trx = await this._sequelizeConnection.transaction();
+    try {
+      if (removeMediaDto.postId) {
+        await this._postMediaModel.destroy({
+          where: {
+            mediaId: removeMediaDto.mediaIds,
+            postId: removeMediaDto.postId,
+          },
+        });
+      }
+
+      if (removeMediaDto.commentId) {
+        await this._commentMediaModel.destroy({
+          where: {
+            mediaId: removeMediaDto.mediaIds,
+            commentId: removeMediaDto.commentId,
+          },
+        });
+      }
+
+      await this._mediaModel.destroy({
+        where: {
+          id: removeMediaDto.mediaIds,
+        },
+      });
+
+      await trx.commit();
+      return true;
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      await trx.rollback();
+      throw new LogicException(HTTP_STATUS_ID.API_MEDIA_DELETE_ERROR);
+    }
   }
 
   /**
@@ -90,9 +132,7 @@ export class MediaService {
    * @param options FindOptions
    */
   public async getMediaList(options?: FindOptions<IMedia>): Promise<MediaModel[]> {
-    const result = await this._mediaModel.findAll(options);
-
-    return result;
+    return await this._mediaModel.findAll(options);
   }
 
   /**
@@ -144,10 +184,11 @@ export class MediaService {
   /**
    * Update Media.isDraft, called when update Post
    * @param mediaIds Array of Media ID
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async updateMediaDraft(mediaIds: number[]): Promise<boolean> {
+  public async updateMediaDraft(mediaIds: number[], transaction: Transaction): Promise<boolean> {
     const { schema } = getDatabaseConfig();
     const postMedia = PostMediaModel.tableName;
     const commentMedia = CommentMediaModel.tableName;
@@ -171,11 +212,17 @@ export class MediaService {
       },
       type: QueryTypes.UPDATE,
       raw: true,
+      transaction: transaction,
     });
     return true;
   }
 
-  public async sync(entityId: number, entityType: EntityType, mediaIds: number[]): Promise<void> {
+  public async sync(
+    entityId: number,
+    entityType: EntityType,
+    mediaIds: number[],
+    transaction: Transaction
+  ): Promise<void> {
     const changes = {
       attached: [],
       detached: [],
@@ -229,12 +276,14 @@ export class MediaService {
           [Op.in]: data,
         },
       },
+      transaction: transaction,
     });
 
     if (changes.attached.length) {
       await (entityType === EntityType.POST
         ? this._postMediaModel.bulkCreate(
-            getAttachedData(changes.attached, 'postId', entityId, 'mediaId')
+            getAttachedData(changes.attached, 'postId', entityId, 'mediaId'),
+            { transaction }
           )
         : this._commentMediaModel.bulkCreate(
             getAttachedData(changes.attached, 'commentId', entityId, 'mediaId')
@@ -251,7 +300,7 @@ export class MediaService {
           ));
     }
 
-    await this.updateMediaDraft([...changes.detached, ...changes.detached]);
+    await this.updateMediaDraft([...changes.detached, ...changes.detached], transaction);
   }
 
   public destroyCommentMedia(user: UserDto, commentId: number): Promise<void> {
@@ -293,7 +342,11 @@ export class MediaService {
     return mediaTypes;
   }
 
-  public async deleteMediaByEntityIds(entityIds: number[], entityType: EntityType): Promise<void> {
+  public async deleteMediaByEntityIds(
+    entityIds: number[],
+    entityType: EntityType,
+    transaction: Transaction
+  ): Promise<void> {
     const condition =
       entityType === EntityType.POST
         ? {
@@ -316,10 +369,13 @@ export class MediaService {
     const mediaIds = media.map((m) => m.mediaId);
 
     await (entityType === EntityType.POST
-      ? this._postMediaModel.destroy({ where: { postId: entityIds } })
-      : this._commentMediaModel.destroy({ where: { commentId: entityIds } }));
+      ? this._postMediaModel.destroy({ where: { postId: entityIds }, transaction: transaction })
+      : this._commentMediaModel.destroy({
+          where: { commentId: entityIds },
+          transaction: transaction,
+        }));
 
-    await this.updateMediaDraft(mediaIds);
+    await this.updateMediaDraft(mediaIds, transaction);
   }
 
   public async countMediaByPost(postId: number): Promise<number> {

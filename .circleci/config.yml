@@ -1,4 +1,17 @@
 version: 2.1
+parameters:
+  run_workflow_sbx:
+    default: true
+    type: boolean
+
+  run_workflow_stg:
+    default: true
+    type: boolean
+
+  run_workflow_pro:
+    default: true
+    type: boolean
+
 jobs:
   sbx:
     docker:
@@ -102,7 +115,8 @@ jobs:
 
 workflows:
   version: 2
-  sbx-stg-pro:
+  Sandbox:
+    when: << pipeline.parameters.run_workflow_sbx >>
     jobs:
       - sbx:
           filters:
@@ -111,6 +125,9 @@ workflows:
           context:
             - bein-backend-general
             - bein-backend-sbx
+  Staging:
+    when: << pipeline.parameters.run_workflow_stg >>
+    jobs:
       - stg:
           filters:
             branches:
@@ -118,6 +135,9 @@ workflows:
           context:
             - bein-backend-general
             - bein-backend-stg
+  Production:
+    when: << pipeline.parameters.run_workflow_pro >>
+    jobs:
       - pro:
           filters:
             branches:

@@ -1,9 +1,3 @@
-import { RecentSearchType, LIMIT_TOTAL_RECENT_SEARCH } from './recent-search-type.constants';
-import { InjectModel } from '@nestjs/sequelize';
-import { plainToClass } from 'class-transformer';
-import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
-import { RecentSearchModel } from '../../database/models/recent-search.model';
-import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import {
   HttpException,
   HttpStatus,
@@ -11,7 +5,12 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { DEFAULT_RECENT_SEARCH_ITEMS_NUMBER } from '.';
+import { InjectModel } from '@nestjs/sequelize';
+import { plainToClass } from 'class-transformer';
+import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
+import { RecentSearchModel } from '../../database/models/recent-search.model';
+import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
+import { LIMIT_TOTAL_RECENT_SEARCH, RecentSearchType } from './recent-search-type.constants';
 
 @Injectable()
 export class RecentSearchService {
@@ -95,13 +94,11 @@ export class RecentSearchService {
         await recentSearch.save();
       }
       // Check and delete if need
-      this.needDeleteRecentSearchOverLimit(createdBy);
+      await this.needDeleteRecentSearchOverLimit(createdBy);
 
-      const result = plainToClass(RecentSearchDto, recentSearch, {
+      return plainToClass(RecentSearchDto, recentSearch, {
         excludeExtraneousValues: true,
       });
-
-      return result;
     } catch (error) {
       this._logger.error(error, error?.stack);
       //this._sentryService.captureException(error);

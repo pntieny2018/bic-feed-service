@@ -1,20 +1,19 @@
 import { PageDto } from '../../common/dto';
-import { AuthUser } from '../auth';
+import { AuthUser, UserDto } from '../auth';
 import {
+  Body,
   Controller,
   Delete,
   Get,
-  Post,
-  Body,
   Param,
   ParseIntPipe,
+  Post,
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiSecurity, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PostService } from './post.service';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { UserDto } from '../auth';
 import { PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { APP_VERSION } from '../../common/constants';
@@ -86,8 +85,7 @@ export class PostController {
   ): Promise<PostResponseDto> {
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
-      const post = await this._postService.getPost(created.id, user, new GetPostDto());
-      return post;
+      return await this._postService.getPost(created.id, user, new GetPostDto());
     }
   }
 

@@ -79,7 +79,7 @@ export class CommentListener {
     );
 
     this._notificationService.publishCommentNotification<UpdatedCommentPayloadDto>({
-      key: post.id.toString(),
+      key: `${post.id}`,
       value: {
         actor: commentResponse.actor,
         event: event.getEventName(),
@@ -98,7 +98,7 @@ export class CommentListener {
     const { post, comment } = event.payload;
 
     this._notificationService.publishCommentNotification<DeletedCommentPayloadDto>({
-      key: post.id.toString(),
+      key: `${post.id}`,
       value: {
         actor: null,
         event: event.getEventName(),

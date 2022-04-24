@@ -1,6 +1,11 @@
 import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
-import { CommonReactionService, CreateReactionService, DeleteReactionService } from './services';
+import {
+  CommonReactionService,
+  CreateOrDeleteReactionService,
+  CreateReactionService,
+  DeleteReactionService,
+} from './services';
 import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
@@ -18,8 +23,7 @@ export class ReactionController {
 
   public constructor(
     private readonly _commonReactionService: CommonReactionService,
-    private readonly _createReactionService: CreateReactionService,
-    private readonly _deleteReactionService: DeleteReactionService
+    private readonly _createOrDeleteReactionService: CreateOrDeleteReactionService
   ) {}
 
   @Get('/')
@@ -45,8 +49,8 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
   ): boolean {
-    this._createReactionService
-      .addToQueueCreateReaction(userDto, createReactionDto)
+    this._createOrDeleteReactionService
+      .addToQueueReaction(userDto, createReactionDto)
       .catch((ex) => this._logger.error(ex, ex.stack));
     return true;
   }
@@ -61,8 +65,8 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
   ): boolean {
-    this._deleteReactionService
-      .addToQueueDeleteReaction(userDto, deleteReactionDto)
+    this._createOrDeleteReactionService
+      .addToQueueReaction(userDto, deleteReactionDto)
       .catch((ex) => this._logger.error(ex, ex.stack));
     return true;
   }

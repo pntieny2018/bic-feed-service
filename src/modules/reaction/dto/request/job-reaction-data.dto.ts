@@ -1,13 +1,12 @@
 import { UserDto } from '../../../auth';
 import { CreateReactionDto } from './create-reaction.dto';
 import { DeleteReactionDto } from './delete-reaction.dto';
-export enum ReactionAction {
-  CREATE = 'CREATE',
-  DELETE = 'DELETE',
+export enum ActionReaction {
+  ADD = 'add',
+  REMOVE = 'remove',
 }
 export class JobReactionDataDto {
-  public action: ReactionAction;
   public userDto: UserDto;
-  public createReactionDto?: CreateReactionDto;
-  public deleteReactionDto?: DeleteReactionDto;
+  public payload: CreateReactionDto | DeleteReactionDto;
+  public action: ActionReaction;
 }

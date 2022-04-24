@@ -21,6 +21,9 @@ import { ReactionResponseDto, ReactionsResponseDto } from '../dto/response';
 import { Op } from 'sequelize';
 import { ObjectHelper } from '../../../common/helpers';
 import { getDatabaseConfig } from '../../../config/database';
+import { NotificationPayloadDto } from '../../../notification/dto/requests/notification-payload.dto';
+import { ReactionEventPayload } from '../../../events/reaction/payload';
+import { NotificationService } from '../../../notification';
 
 @Injectable()
 export class CommonReactionService {
@@ -33,7 +36,8 @@ export class CommonReactionService {
     private readonly _internalEventEmitterService: InternalEventEmitterService,
     private readonly _userService: UserService,
     @InjectConnection()
-    private _sequelizeConnection: Sequelize
+    private _sequelizeConnection: Sequelize,
+    private readonly _notificationService: NotificationService
   ) {}
 
   /**
@@ -95,14 +99,30 @@ export class CommonReactionService {
     const comment = !!commentId ? await this.getComment(commentId) : null;
     const post = await this.getPost(postId ?? comment?.postId);
 
-    const createReactionInternalEvent = new CreateReactionInternalEvent({
-      userSharedDto: userSharedDto,
-      reaction: reaction,
-      post: post.toJSON(),
-      comment: comment?.toJSON(),
-    });
+    // const createReactionInternalEvent = new CreateReactionInternalEvent({
+    //   userSharedDto: userSharedDto,
+    //   reaction: reaction,
+    //   post: post.toJSON(),
+    //   comment: comment?.toJSON(),
+    // });
 
-    this._internalEventEmitterService.emit(createReactionInternalEvent);
+    // this._internalEventEmitterService.emit(createReactionInternalEvent);
+    const kafkaCreateReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
+      key: comment ? `c_${comment.id}` : `p_${post.id}`,
+      value: {
+        actor: userSharedDto,
+        event: CreateReactionInternalEvent.event,
+        data: {
+          reaction: reaction,
+          post: post.toJSON(),
+          comment: comment?.toJSON(),
+        },
+      },
+    };
+
+    this._notificationService.publishReactionNotification<ReactionEventPayload>(
+      kafkaCreateReactionMessage
+    );
   }
 
   /**
@@ -123,13 +143,29 @@ export class CommonReactionService {
     const post = await this.getPost(postId ?? comment?.postId);
     const userSharedDto = await this._userService.get(userDto.id);
 
-    const deleteReactionInternalEvent = new DeleteReactionInternalEvent({
-      userSharedDto: userSharedDto,
-      reaction: reaction,
-      post: post.toJSON(),
-      comment: comment?.toJSON(),
-    });
-    this._internalEventEmitterService.emit(deleteReactionInternalEvent);
+    // const deleteReactionInternalEvent = new DeleteReactionInternalEvent({
+    //   userSharedDto: userSharedDto,
+    //   reaction: reaction,
+    //   post: post.toJSON(),
+    //   comment: comment?.toJSON(),
+    // });
+    // this._internalEventEmitterService.emit(deleteReactionInternalEvent);
+
+    const kafkaDeleteReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
+      key: comment ? `c_${comment.id}` : `p_${post.id}`,
+      value: {
+        actor: userSharedDto,
+        event: DeleteReactionInternalEvent.event,
+        data: {
+          reaction: reaction,
+          post: post.toJSON(),
+          comment: comment?.toJSON(),
+        },
+      },
+    };
+    this._notificationService.publishReactionNotification<ReactionEventPayload>(
+      kafkaDeleteReactionMessage
+    );
   }
 
   /**

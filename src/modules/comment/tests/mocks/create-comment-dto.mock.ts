@@ -102,6 +102,7 @@ export const createdComment: CommentResponseDto = {
     username: 'martine.baumbach',
     avatar: 'https://bein.group/baumbach.png',
   },
+  ownerReactions: null,
   parentId: 0,
   postId: 2,
   content: 'hello @caitlyn.back',
