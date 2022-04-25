@@ -219,7 +219,10 @@ export class ReactionService {
 
       const reaction = plainToInstance(ReactionResponseDto, {
         ...ObjectHelper.omit(['createdBy'], postReaction),
-        actor: ObjectHelper.omit(['groups'], userDto),
+        actor: {
+          ...ObjectHelper.omit(['groups'], userDto.profile),
+          email: userDto.email,
+        },
       });
 
       const activity = this._reactionNotificationService.createPayload(TypeActivity.POST, {
@@ -275,20 +278,24 @@ export class ReactionService {
         reactionName: reactionName,
         createdBy: userId,
       });
-
       const reaction = plainToInstance(ReactionResponseDto, {
-        ...ObjectHelper.omit(['createdBy'], commentReaction),
-        actor: ObjectHelper.omit(['groups'], userDto),
+        id: commentReaction.id,
+        reactionName: commentReaction.reactionName,
+        createdAt: commentReaction.createdAt,
+        actor: {
+          ...ObjectHelper.omit(['groups'], userDto.profile),
+          email: userDto.email,
+        },
       });
 
-      const type = comment.parent ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+      const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
       const activity = this._reactionNotificationService.createPayload(type, {
         reaction: reaction,
         post: post,
         comment,
       });
-      this._logger.debug(JSON.stringify(activity));
+      this._logger.debug(JSON.stringify(activity, null, 4));
       return reaction;
     } catch (e) {
       this._logger.error(e, e?.stack);

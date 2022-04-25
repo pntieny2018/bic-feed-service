@@ -18,12 +18,12 @@ export class ReactionNotificationService {
     const activityObject: ActivityObject = {
       id: post.id,
       actor: ObjectHelper.omit(['groups', 'email'], post.actor) as any,
-      audience: post.audience.groups,
+      audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       reaction: {
         id: reaction.id,
         createdAt: reaction.createdAt,
         reactionName: reaction.reactionName,
-        actor: ObjectHelper.omit(['groups', 'email'], reaction.actor) as any,
+        actor: reaction.actor as any,
       },
       reactionsCount: post.reactionsCount,
       createdAt: post.createdAt,
@@ -47,7 +47,7 @@ export class ReactionNotificationService {
     const activityObject: ActivityObject = {
       id: post.id,
       actor: ObjectHelper.omit(['groups'], post.actor) as any,
-      audience: post.audience.groups,
+      audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       comment: {
         id: comment.id,
         actor: ObjectHelper.omit(['groups'], comment.actor) as any,
@@ -81,11 +81,10 @@ export class ReactionNotificationService {
     reaction: ReactionResponseDto
   ): NotificationActivity {
     const parentComment = comment.parent;
-
     const activityObject: ActivityObject = {
       id: post.id,
       actor: ObjectHelper.omit(['groups'], post.actor) as any,
-      audience: post.audience.groups,
+      audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       comment: {
         id: parentComment.id,
         actor: ObjectHelper.omit(['groups'], parentComment.actor) as any,

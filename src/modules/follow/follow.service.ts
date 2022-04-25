@@ -81,7 +81,6 @@ export class FollowService {
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
-    console.log(targetIds);
     return ArrayHelper.differenceArrNumber(userIds, targetIds);
   }
 

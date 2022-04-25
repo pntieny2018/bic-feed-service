@@ -16,7 +16,7 @@ import { CommentService } from './comment.service';
 import { CommentResponseDto } from './dto/response';
 import { APP_VERSION } from '../../common/constants';
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
-import { CreateCommentDto, GetCommentDto } from './dto/requests';
+import { CreateCommentDto, CreateReplyCommentDto, GetCommentDto } from './dto/requests';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
@@ -76,10 +76,17 @@ export class CommentController {
   public reply(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
-    @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
+    @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
   ): Promise<any> {
     this._logger.debug('reply comment');
-    return this._commentService.create(user, createCommentDto, commentId);
+    return this._commentService.create(
+      user,
+      {
+        ...createReplyCommentDto,
+        postId: 0,
+      },
+      commentId
+    );
   }
 
   @ApiOperation({ summary: 'Get comment' })

@@ -21,6 +21,7 @@ export const HTTP_STATUS_ID = {
   API_POST_PUBLISH_ERROR: 'api.posts.publish.app_error',
   API_POST_UPDATE_ERROR: 'api.posts.update.app_error',
   API_POST_DELETE_ERROR: 'api.posts.delete.app_error',
+  API_POST_MARK_READ_ERROR: 'api.posts.mark_as_read.app_error',
 
   //MEDIA
   API_MEDIA_CREATE_ERROR: 'api.media.create.app_error',
@@ -55,4 +56,5 @@ export const HTTP_STATUS_ID = {
   APP_REACTION_UNIQUE: 'app.reaction.unique.app_error',
   APP_REACTION_RATE_LIMIT_KIND: 'app.reaction.rate_limit.kind.app_error',
   APP_AUTH_TOKEN_EXPIRED: 'app.auth_token.expired',
+  APP_POST_AS_READ_INVALID_PARAMETER: 'app.post.invalid_parameter',
 };

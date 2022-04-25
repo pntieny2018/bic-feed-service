@@ -103,8 +103,10 @@ export class CommentService {
           id: replyId,
         },
       });
-
-      if (!parentComment || !parentComment.post) {
+      if (!parentComment.post) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      }
+      if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
       }
       post = parentComment.toJSON().post;
@@ -264,9 +266,9 @@ export class CommentService {
       }
       await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
 
-      const commentResponse = await this.getComment(user, commentId);
-
       await transaction.commit();
+
+      const commentResponse = await this.getComment(user, commentId);
 
       this._eventEmitter.emit(
         new CommentHasBeenUpdatedEvent({
@@ -912,51 +914,40 @@ export class CommentService {
   }
 
   public async findComment(commentId: number): Promise<CommentResponseDto> {
-    const response = await this._commentModel.findOne({
-      where: {
-        id: commentId,
-      },
-      include: [
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
+    const get = async (cid: number): Promise<CommentModel> => {
+      return await this._commentModel.findOne({
+        where: {
+          id: cid,
+        },
+        include: [
+          {
+            model: MediaModel,
+            through: {
+              attributes: [],
+            },
+            required: false,
           },
-          required: false,
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-        },
-        {
-          association: 'parent',
-          as: 'parentComment',
-          required: false,
-          include: [
-            {
-              model: MediaModel,
-              through: {
-                attributes: [],
-              },
-              required: false,
-            },
-            {
-              model: MentionModel,
-              as: 'mentions',
-              required: false,
-            },
-          ],
-        },
-      ],
-    });
+          {
+            model: MentionModel,
+            as: 'mentions',
+            required: false,
+          },
+        ],
+      });
+    };
+    const response = await get(commentId);
 
     if (!response) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
-
     const rawComment = response.toJSON();
 
+    if (rawComment.parentId) {
+      const parentComment = await get(rawComment.parentId);
+      if (parentComment) {
+        rawComment.parent = parentComment.toJSON();
+      }
+    }
     await this._mentionService.bindMentionsToComment([rawComment]);
 
     await this.bindUserToComment([rawComment]);

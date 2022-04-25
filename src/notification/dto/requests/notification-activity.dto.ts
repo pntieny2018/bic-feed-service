@@ -22,6 +22,9 @@ export class ActorObject {
   public email?: string;
 }
 
+export class MentionObject {
+  [index: string]: ActorObject[];
+}
 export class MediaObject {
   public images: any[];
   public videos: any[];
@@ -50,6 +53,7 @@ export class CommentObject {
   public actor: ActorObject;
   public content?: string;
   public media?: MediaObject;
+  public mentions?: MentionObject;
   public reaction?: ReactionObject;
   public child?: CommentObject;
   public createdAt: Date;
