@@ -161,7 +161,7 @@ export class FeedService {
         limit,
         order,
         groupIds,
-        authUserId,
+        authUser,
         isImportant: true,
         idGT,
         idGTE,
@@ -176,7 +176,7 @@ export class FeedService {
         limit: Math.min(limit, limit + offset - totalImportantPosts),
         order,
         groupIds,
-        authUserId,
+        authUser,
         isImportant: false,
         idGT,
         idGTE,
@@ -343,7 +343,7 @@ export class FeedService {
     offset,
     limit,
     order,
-    authUserId,
+    authUser,
     groupIds,
     isImportant,
     idGT,
@@ -354,7 +354,7 @@ export class FeedService {
     offset: number;
     limit: number;
     order: OrderEnum;
-    authUserId: number;
+    authUser: UserDto;
     groupIds: number[];
     isImportant: boolean;
     idGT?: number;
@@ -372,6 +372,8 @@ export class FeedService {
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
 
+    const authUserId = authUser.id;
+    const allGroupIdsOfUser = authUser.profile.groups;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
         SELECT 1
@@ -414,7 +416,7 @@ export class FeedService {
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
-      INNER JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
+      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:allGroupIdsOfUser)
       LEFT OUTER JOIN ( 
         ${schema}.${postMediaTable} AS "media->PostMediaModel" 
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
@@ -425,6 +427,7 @@ export class FeedService {
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
+        allGroupIdsOfUser,
         offset,
         limit: limit,
         authUserId,
