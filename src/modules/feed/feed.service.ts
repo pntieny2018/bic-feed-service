@@ -75,7 +75,7 @@ export class FeedService {
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset + limit > totalImportantPosts) {
+      if (offset + limit - 1 > totalImportantPosts) {
         normalPostsExc = this._getNewsFeedData({
           offset: Math.max(0, offset - totalImportantPosts),
           limit: Math.min(limit, limit + offset - totalImportantPosts),
@@ -170,7 +170,7 @@ export class FeedService {
       });
     }
     let normalPostsExc = Promise.resolve([]);
-    if (offset >= totalImportantPosts) {
+    if (offset + limit - 1 > totalImportantPosts) {
       normalPostsExc = this._getTimelineData({
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit, limit + offset - totalImportantPosts),
