@@ -52,7 +52,7 @@ export class FeedService {
     const limit = getNewsFeedDto.limit + 1;
     try {
       const groupIds = authUser.profile.groups;
-      const authUserId = 999999; //authUser.id;
+      const authUserId = authUser.id;
       const constraints = FeedService._getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
@@ -75,7 +75,7 @@ export class FeedService {
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset >= totalImportantPosts) {
+      if (offset + limit - 1 > totalImportantPosts) {
         normalPostsExc = this._getNewsFeedData({
           offset: Math.max(0, offset - totalImportantPosts),
           limit: Math.min(limit, limit + offset - totalImportantPosts),
@@ -170,7 +170,7 @@ export class FeedService {
       });
     }
     let normalPostsExc = Promise.resolve([]);
-    if (offset >= totalImportantPosts) {
+    if (offset + limit - 1 > totalImportantPosts) {
       normalPostsExc = this._getTimelineData({
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit, limit + offset - totalImportantPosts),
@@ -421,7 +421,7 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      `;
+      ORDER BY "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -521,6 +521,7 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."createdAt" ${order}
       `;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
