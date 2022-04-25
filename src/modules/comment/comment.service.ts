@@ -102,10 +102,13 @@ export class CommentService {
           id: replyId,
         },
       });
-
-      if (!parentComment || !parentComment.post) {
+      if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
       }
+      if (!parentComment.post) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      }
+
       post = parentComment.toJSON().post;
     } else {
       post = await this._postService.findPost({
@@ -165,9 +168,9 @@ export class CommentService {
         await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
       }
 
-      const commentResponse = await this.getComment(user, comment.id);
-
       await transaction.commit();
+
+      const commentResponse = await this.getComment(user, comment.id);
 
       this._eventEmitter.emit(
         new CommentHasBeenCreatedEvent({
@@ -263,9 +266,9 @@ export class CommentService {
       }
       await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
 
-      const commentResponse = await this.getComment(user, commentId);
-
       await transaction.commit();
+
+      const commentResponse = await this.getComment(user, commentId);
 
       this._eventEmitter.emit(
         new CommentHasBeenUpdatedEvent({
