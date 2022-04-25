@@ -421,7 +421,7 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      `;
+      ORDER BY "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -521,6 +521,7 @@ export class FeedService {
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."createdAt" ${order}
       `;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
