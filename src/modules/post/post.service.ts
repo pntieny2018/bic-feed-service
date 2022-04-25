@@ -522,9 +522,7 @@ export class PostService {
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      this.addPostGroup(groupIds, post.id, transaction).catch((ex) =>
-        this._logger.error(ex, ex.stack)
-      );
+      await this.addPostGroup(groupIds, post.id, transaction);
 
       if (mentions.length) {
         await this._mentionService.create(
