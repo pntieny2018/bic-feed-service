@@ -52,7 +52,7 @@ export class FeedService {
     const limit = getNewsFeedDto.limit + 1;
     try {
       const groupIds = authUser.profile.groups;
-      const authUserId = 999999; //authUser.id;
+      const authUserId = authUser.id;
       const constraints = FeedService._getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
