@@ -51,5 +51,8 @@ export const HTTP_STATUS_ID = {
   APP_COMMENT_REPLY_EXISTING: 'app.comment.reply.existing.app_error',
   APP_POST_SETTING_DISABLE: 'app.post.setting.disable.app_error',
   APP_POST_EXISTING: 'app.post.existing.app_error',
+  APP_REACTION_EXISTING: 'app.reaction.existing.app_error',
+  APP_REACTION_UNIQUE: 'app.reaction.unique.app_error',
+  APP_REACTION_RATE_LIMIT_KIND: 'app.reaction.rate_limit.kind.app_error',
   APP_AUTH_TOKEN_EXPIRED: 'app.auth_token.expired',
 };

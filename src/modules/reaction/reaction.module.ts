@@ -1,30 +1,25 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database';
 import { NotificationModule } from '../../notification';
 import { GroupModule } from '../../shared/group';
 import { UserModule } from '../../shared/user';
 import { ReactionController } from './reaction.controller';
-import {
-  CommonReactionService,
-  CreateOrDeleteReactionService,
-  CreateReactionService,
-  DeleteReactionService,
-} from './services';
+import { ReactionService } from './reaction.service';
+import { PostModule } from '../post';
+import { CommentModule } from '../comment';
+import { ReactionNotificationService } from './reaction-notification.service';
 
 @Module({
-  imports: [DatabaseModule, UserModule, GroupModule, NotificationModule],
+  imports: [
+    DatabaseModule,
+    UserModule,
+    GroupModule,
+    forwardRef(() => PostModule),
+    forwardRef(() => CommentModule),
+    NotificationModule,
+  ],
   controllers: [ReactionController],
-  providers: [
-    CreateReactionService,
-    DeleteReactionService,
-    CommonReactionService,
-    CreateOrDeleteReactionService,
-  ],
-  exports: [
-    CommonReactionService,
-    CreateReactionService,
-    DeleteReactionService,
-    CreateOrDeleteReactionService,
-  ],
+  providers: [ReactionService, ReactionNotificationService],
+  exports: [ReactionService, ReactionNotificationService],
 })
 export class ReactionModule {}

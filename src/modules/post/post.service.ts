@@ -13,7 +13,6 @@ import { EntityType } from '../media/media.constants';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { DeleteReactionService } from '../reaction/services';
 import { MediaModel } from '../../database/models/media.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
@@ -21,13 +20,14 @@ import { MentionModel } from '../../database/models/mention.model';
 import { CommentModel } from '../../database/models/comment.model';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ReactionService } from '../reaction';
 
 @Injectable()
 export class PostService {
@@ -36,7 +36,13 @@ export class PostService {
    * @private
    */
   private _logger = new Logger(PostService.name);
+
+  /**
+   *  ClassTransformer
+   * @private
+   */
   private _classTransformer = new ClassTransformer();
+
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
@@ -53,7 +59,7 @@ export class PostService {
     private _commentService: CommentService,
     private _authorityService: AuthorityService,
     private _searchService: ElasticsearchService,
-    private _deleteReactionService: DeleteReactionService,
+    private _reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     private _feedService: FeedService
   ) {}
@@ -367,8 +373,9 @@ export class PostService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
+
     await this._authorityService.allowAccess(user, post);
 
     const comments = await this._commentService.getComments(
@@ -681,7 +688,7 @@ export class PostService {
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
         this.setGroupByPost([], postId),
-        this._deleteReactionService.deleteReactionByPostIds([postId]),
+        this._reactionService.deleteReactionByPostIds([postId]),
         this._commentService.deleteCommentsByPost(postId, transaction),
         this._feedService.deleteNewsFeedByPost(postId, transaction),
       ]);

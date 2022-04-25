@@ -17,6 +17,7 @@ import { AuthMiddleware, AuthModule } from '../modules/auth';
 import { RecentSearchModule } from '../modules/recent-search';
 import { AppController } from './app.controller';
 import { FeedPublisherModule } from '../modules/feed-publisher';
+import { JobService } from '../jobs';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FeedPublisherModule } from '../modules/feed-publisher';
     FeedPublisherModule,
   ],
   controllers: [AppController],
+  providers: [JobService],
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {

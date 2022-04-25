@@ -11,4 +11,5 @@ export const HTTP_MESSAGES = {
   [HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING]: 'Unable to find the comment to reply',
   [HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY]: 'Content or media of post is empty',
   [HTTP_STATUS_ID.APP_POST_EXISTING]: 'Unable to find the post',
+  [HTTP_STATUS_ID.APP_REACTION_EXISTING]: 'Exceed reaction kind limit',
 };

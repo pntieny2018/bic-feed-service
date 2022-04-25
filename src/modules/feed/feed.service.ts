@@ -9,7 +9,6 @@ import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { PostResponseDto } from '../post/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
-import { CommonReactionService } from '../reaction/services';
 import { PostModel } from '../../database/models/post.model';
 import { MediaModel } from '../../database/models/media.model';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
@@ -19,6 +18,7 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
+import { ReactionService } from '../reaction';
 
 @Injectable()
 export class FeedService {
@@ -26,7 +26,7 @@ export class FeedService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    private readonly _commonReaction: CommonReactionService,
+    private readonly _reactionService: ReactionService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
@@ -121,7 +121,7 @@ export class FeedService {
         : posts;
 
       await Promise.all([
-        this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
+        this._reactionService.bindReactionToPosts(rowsRemovedLatestElm),
         this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
         this._postService.bindActorToPost(rowsRemovedLatestElm),
         this._postService.bindAudienceToPost(rowsRemovedLatestElm),
@@ -235,7 +235,7 @@ export class FeedService {
       ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
       : posts;
     await Promise.all([
-      this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
+      this._reactionService.bindReactionToPosts(rowsRemovedLatestElm),
       this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
       this._postService.bindActorToPost(rowsRemovedLatestElm),
       this._postService.bindAudienceToPost(rowsRemovedLatestElm),

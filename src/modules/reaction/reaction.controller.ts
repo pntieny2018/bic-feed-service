@@ -1,16 +1,11 @@
 import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
-import {
-  CommonReactionService,
-  CreateOrDeleteReactionService,
-  CreateReactionService,
-  DeleteReactionService,
-} from './services';
 import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
 import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { GetReactionDto } from './dto/request';
+import { ReactionService } from './reaction.service';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -21,10 +16,7 @@ import { GetReactionDto } from './dto/request';
 export class ReactionController {
   private _logger = new Logger(ReactionController.name);
 
-  public constructor(
-    private readonly _commonReactionService: CommonReactionService,
-    private readonly _createOrDeleteReactionService: CreateOrDeleteReactionService
-  ) {}
+  public constructor(private readonly _reactionService: ReactionService) {}
 
   @Get('/')
   @ApiOperation({ summary: 'Get reaction.' })
@@ -36,7 +28,7 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Query() getReactionDto: GetReactionDto
   ): Promise<ReactionsResponseDto> {
-    return this._commonReactionService.getReactions(getReactionDto);
+    return this._reactionService.getReactions(getReactionDto);
   }
 
   @ApiOperation({ summary: 'Create reaction.' })
@@ -49,7 +41,7 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
   ): boolean {
-    this._createOrDeleteReactionService
+    this._reactionService
       .addToQueueReaction(userDto, createReactionDto)
       .catch((ex) => this._logger.error(ex, ex.stack));
     return true;
@@ -65,7 +57,7 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
   ): boolean {
-    this._createOrDeleteReactionService
+    this._reactionService
       .addToQueueReaction(userDto, deleteReactionDto)
       .catch((ex) => this._logger.error(ex, ex.stack));
     return true;

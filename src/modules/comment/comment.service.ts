@@ -31,12 +31,13 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { ExceptionHelper } from '../../common/helpers';
-import { DeleteReactionService } from '../reaction/services';
+import { ReactionService } from '../reaction';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel } from '../../database/models/follow.model';
 import { FollowService } from '../follow';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { LogicException } from '../../common/exceptions';
 
 @Injectable()
 export class CommentService {
@@ -50,9 +51,9 @@ export class CommentService {
     private _mediaService: MediaService,
     private _groupService: GroupService,
     private _mentionService: MentionService,
+    private _reactionService: ReactionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
-    private _deleteReactionService: DeleteReactionService,
     private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
@@ -541,7 +542,7 @@ export class CommentService {
           transaction
         ),
 
-        this._deleteReactionService.deleteReactionByCommentIds([commentId], transaction),
+        this._reactionService.deleteReactionByCommentIds([commentId], transaction),
       ]);
 
       await this._commentModel.destroy({
@@ -580,6 +581,9 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
+      if (comment.parent) {
+        actorIds.push(comment.parent.createdBy);
+      }
       if (comment.child && comment.child.length) {
         for (const cm of comment.child) {
           actorIds.push(cm.createdBy);
@@ -595,6 +599,10 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
+
+      if (comment.parent) {
+        comment.parent.actor = actorsInfo.find((u) => u.id === comment.parent.createdBy);
+      }
       if (comment.child && comment.child.length) {
         for (const cm of comment.child) {
           cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
@@ -622,7 +630,7 @@ export class CommentService {
         MentionableType.COMMENT,
         transaction
       ),
-      this._deleteReactionService.deleteReactionByCommentIds(commentIds, transaction),
+      this._reactionService.deleteReactionByCommentIds(commentIds, transaction),
     ]).catch((ex) => this._logger.error(ex, ex.stack));
 
     await this._commentModel.destroy({
@@ -901,5 +909,59 @@ export class CommentService {
         currentMentionedUserIds: [],
       };
     }
+  }
+
+  public async findComment(commentId: number): Promise<CommentResponseDto> {
+    const response = await this._commentModel.findOne({
+      where: {
+        id: commentId,
+      },
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+        },
+        {
+          model: CommentModel,
+          as: 'parent',
+          include: [
+            {
+              model: MediaModel,
+              through: {
+                attributes: [],
+              },
+              required: false,
+            },
+            {
+              model: MentionModel,
+              as: 'mentions',
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!response) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+    }
+
+    const rawComment = response.toJSON();
+
+    await this._mentionService.bindMentionsToComment([rawComment]);
+
+    await this.bindUserToComment([rawComment]);
+
+    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
+      excludeExtraneousValues: true,
+    });
   }
 }

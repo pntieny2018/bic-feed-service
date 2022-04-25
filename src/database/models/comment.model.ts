@@ -10,6 +10,7 @@ import {
   Default,
   ForeignKey,
   HasMany,
+  HasOne,
   Length,
   Model,
   PrimaryKey,
@@ -39,6 +40,7 @@ export interface IComment {
   actor: UserDataShareDto;
   postId: number;
   parentId?: number;
+  parent?: IComment;
   content?: string;
   createdBy: number;
   updatedBy: number;
@@ -111,6 +113,14 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     },
   })
   public mentions: MentionModel[] = [];
+
+  @HasOne(() => CommentModel, {
+    foreignKey: {
+      allowNull: true,
+      name: 'parentId',
+    },
+  })
+  public parent?: CommentModel;
 
   @HasMany(() => CommentModel, {
     foreignKey: {

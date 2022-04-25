@@ -1,13 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber } from 'class-validator';
 import { ReactionEnum } from '../../reaction.enum';
+import { emoji } from 'node-emoji';
 
 export class CreateReactionDto {
-  @ApiProperty({ example: 'smile' })
+  @ApiProperty({ example: 'smile', description: Object.keys(emoji).join(',') })
   @IsNotEmpty()
   @Expose()
-  public reactionName: string;
+  @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
+  reactionName: string;
 
   @ApiProperty({ example: 'POST' })
   @IsNotEmpty()

@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 import { UserSharedDto } from '../../../../shared/user/dto';
-import { GroupSharedDto } from '../../../../shared/group/dto/group-shared.dto';
+import { GroupSharedDto } from '../../../../shared/group/dto';
+import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 
 export class AudienceResponseDto {
   @ApiProperty({

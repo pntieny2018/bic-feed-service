@@ -98,6 +98,7 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
               },
             }
           : {};
+
         return {
           redisOptions: {
             keyPrefix: redisConfig.prefix,
