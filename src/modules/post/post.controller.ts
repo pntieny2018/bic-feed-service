@@ -13,8 +13,14 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PostService } from './post.service';
-import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { PostResponseDto } from './dto/responses';
+import {
+  CreatePostDto,
+  GetPostDto,
+  GetPostEditedHistoryDto,
+  SearchPostsDto,
+  UpdatePostDto,
+} from './dto/requests';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { APP_VERSION } from '../../common/constants';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
@@ -46,6 +52,19 @@ export class PostController {
     @Query() searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._postService.searchPosts(user, searchPostsDto);
+  }
+
+  @ApiOperation({ summary: 'Get post edited history' })
+  @ApiOkResponse({
+    type: PostEditedHistoryDto,
+  })
+  @Get('/:postId/edited-history')
+  public getPostEditedHistory(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseIntPipe) postId: number,
+    @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
+  ): Promise<PageDto<PostEditedHistoryDto>> {
+    return this._postService.getPostEditedHistory(user, postId, getPostEditedHistoryDto);
   }
 
   @ApiOperation({ summary: 'Get draft posts' })

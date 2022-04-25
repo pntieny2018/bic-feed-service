@@ -2,7 +2,13 @@ import { PageDto } from './../../common/dto/pagination/page.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
+import {
+  CreatePostDto,
+  GetPostDto,
+  GetPostEditedHistoryDto,
+  SearchPostsDto,
+  UpdatePostDto,
+} from './dto/requests';
 import {
   BadRequestException,
   ForbiddenException,
@@ -19,7 +25,7 @@ import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
-import { PostResponseDto } from './dto/responses';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
@@ -944,5 +950,61 @@ export class PostService {
       type: QueryTypes.SELECT,
     });
     return result[0].total;
+  }
+
+  public async getPostEditedHistory(
+    user: UserDto,
+    postId: number,
+    getPostEditedHistoryDto: GetPostEditedHistoryDto
+  ): Promise<PageDto<any>> {
+    const { size, endTime } = getPostEditedHistoryDto;
+
+    const postEditedHistoryIndex = ElasticsearchHelper.INDEX.POST_EDITED_HISTORY;
+
+    const body = {
+      query: {
+        bool: {
+          must: [],
+          filter: [],
+          should: [],
+        },
+      },
+    };
+
+    body.query.bool.must.push({
+      match: {
+        postId: postId,
+      },
+    });
+
+    if (endTime) {
+      body.query.bool.filter.push({
+        range: {
+          editedAt: {
+            lt: endTime,
+          },
+        },
+      });
+    }
+
+    const result = await this._searchService.search({
+      index: postEditedHistoryIndex,
+      size: size,
+      sort: 'editedAt:desc',
+      body: body,
+    });
+
+    const hits = result.body.hits.hits;
+    const posts = hits.map((item): PostEditedHistoryDto => {
+      const source = item._source;
+      return {
+        postId: source.postId,
+        content: source.content,
+        media: source.media,
+        editedAt: source.editedAt,
+      };
+    });
+
+    return new PageDto(posts, { limit: size });
   }
 }
