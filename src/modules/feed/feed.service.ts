@@ -75,7 +75,7 @@ export class FeedService {
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset >= totalImportantPosts) {
+      if (offset + limit > totalImportantPosts) {
         normalPostsExc = this._getNewsFeedData({
           offset: Math.max(0, offset - totalImportantPosts),
           limit: Math.min(limit, limit + offset - totalImportantPosts),
