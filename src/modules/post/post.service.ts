@@ -205,42 +205,9 @@ export class PostService {
         },
       };
 
-      body['sort'] = [
-        {
-          ['_script']: {
-            type: 'number',
-            script: {
-              lang: 'painless',
-              source:
-                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-              params: {
-                time: Date.now(),
-              },
-            },
-            order: 'desc',
-          },
-        },
-        { ['_score']: 'desc' },
-        { createdAt: 'desc' },
-      ];
+      body['sort'] = [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
     } else {
-      body['sort'] = [
-        {
-          ['_script']: {
-            type: 'number',
-            script: {
-              lang: 'painless',
-              source:
-                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-              params: {
-                time: Date.now(),
-              },
-            },
-            order: 'desc',
-          },
-        },
-        { createdAt: 'desc' },
-      ];
+      body['sort'] = [{ createdAt: 'desc' }];
     }
 
     if (startTime || endTime) {
