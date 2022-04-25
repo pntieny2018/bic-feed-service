@@ -166,9 +166,9 @@ export class CommentService {
         await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
       }
 
-      const commentResponse = await this.getComment(user, comment.id);
-
       await transaction.commit();
+
+      const commentResponse = await this.getComment(user, comment.id);
 
       this._eventEmitter.emit(
         new CommentHasBeenCreatedEvent({
@@ -353,7 +353,7 @@ export class CommentService {
     });
 
     if (!response) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const rawComment = response.toJSON();
@@ -930,8 +930,9 @@ export class CommentService {
           required: false,
         },
         {
-          model: CommentModel,
-          as: 'parent',
+          association: 'parent',
+          as: 'parentComment',
+          required: false,
           include: [
             {
               model: MediaModel,

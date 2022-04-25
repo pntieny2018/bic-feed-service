@@ -114,12 +114,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   })
   public mentions: MentionModel[] = [];
 
-  @HasOne(() => CommentModel, {
-    foreignKey: {
-      allowNull: true,
-      name: 'parentId',
-    },
-  })
   public parent?: CommentModel;
 
   @HasMany(() => CommentModel, {
