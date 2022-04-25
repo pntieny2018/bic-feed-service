@@ -39,6 +39,7 @@ import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { QueryTypes } from 'sequelize';
+import { getDatabaseConfig } from '../../config/database';
 
 @Injectable()
 export class PostService {
@@ -893,17 +894,18 @@ export class PostService {
     groupIds: number[],
     constraints: string
   ): Promise<number> {
+    const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
-    FROM feed.posts as p
+    FROM ${schema}.posts as p
     WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
-        FROM feed.users_mark_read_posts as u
+        FROM ${schema}.users_mark_read_posts as u
         WHERE u.user_id = :userId AND u.post_id = p.id
       )
     AND EXISTS(
         SELECT 1
-        from feed.posts_groups AS g
+        from ${schema}.posts_groups AS g
         WHERE g.post_id = p.id
         AND g.group_id IN(:groupIds)
       )
@@ -922,17 +924,18 @@ export class PostService {
     userId: number,
     constraints: string
   ): Promise<number> {
+    const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
-    FROM feed.posts as p
+    FROM ${schema}.posts as p
     WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
-        FROM feed.users_mark_read_posts as u
+        FROM ${schema}.users_mark_read_posts as u
         WHERE u.user_id = :userId AND u.post_id = p.id
       )
     AND EXISTS(
         SELECT 1
-        from feed.user_newsfeed AS u
+        from ${schema}.user_newsfeed AS u
         WHERE u.post_id = p.id
         AND u.user_id = :userId
       )
