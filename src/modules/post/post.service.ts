@@ -3,15 +3,7 @@ import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import {
-  BadRequestException,
-  ForbiddenException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -23,7 +15,6 @@ import { PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { DeleteReactionService } from '../reaction/services';
@@ -38,7 +29,7 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 
 @Injectable()
@@ -512,24 +503,28 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
-      const post = await this._postModel.create({
-        isDraft: true,
-        content,
-        createdBy: authUserId,
-        updatedBy: authUserId,
-        isImportant: setting.isImportant,
-        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-        canShare: setting.canShare,
-        canComment: setting.canComment,
-        canReact: setting.canReact,
-      });
+      const post = await this._postModel.create(
+        {
+          isDraft: true,
+          content,
+          createdBy: authUserId,
+          updatedBy: authUserId,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
+        },
+        { transaction }
+      );
 
       if (uniqueMediaIds.length) {
-        await post.addMedia(uniqueMediaIds);
-        await this._mediaService.activeMedia(uniqueMediaIds, authUserId);
+        await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      this.addPostGroup(groupIds, post.id).catch((ex) => this._logger.error(ex, ex.stack));
+      this.addPostGroup(groupIds, post.id, transaction).catch((ex) =>
+        this._logger.error(ex, ex.stack)
+      );
 
       if (mentions.length) {
         await this._mentionService.create(
@@ -537,7 +532,8 @@ export class PostService {
             entityId: post.id,
             userId,
             mentionableType: MentionableType.POST,
-          }))
+          })),
+          transaction
         );
       }
 
@@ -604,6 +600,7 @@ export class PostService {
             id: postId,
             createdBy: authUserId,
           },
+          transaction,
         }
       );
       await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
@@ -613,7 +610,7 @@ export class PostService {
         postId,
         transaction
       );
-      await this.setGroupByPost(groupIds, postId);
+      await this.setGroupByPost(groupIds, postId, transaction);
       await transaction.commit();
 
       return true;
@@ -694,8 +691,8 @@ export class PostService {
       await Promise.all([
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
-        this.setGroupByPost([], postId),
-        this._deleteReactionService.deleteReactionByPostIds([postId]),
+        this.setGroupByPost([], postId, transaction),
+        this._deleteReactionService.deleteReactionByPostIds([postId], transaction),
         this._commentService.deleteCommentsByPost(postId, transaction),
         this._feedService.deleteNewsFeedByPost(postId, transaction),
         this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
@@ -723,13 +720,17 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+  public async addPostGroup(
+    groupIds: number[],
+    postId: number,
+    transaction: Transaction
+  ): Promise<boolean> {
     if (groupIds.length === 0) return true;
     const postGroupDataCreate = groupIds.map((groupId) => ({
       postId: postId,
       groupId,
     }));
-    await this._postGroupModel.bulkCreate(postGroupDataCreate);
+    await this._postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
     return true;
   }
 
@@ -740,7 +741,11 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setGroupByPost(groupIds: number[], postId: number): Promise<boolean> {
+  public async setGroupByPost(
+    groupIds: number[],
+    postId: number,
+    transaction: Transaction
+  ): Promise<boolean> {
     const currentGroups = await this._postGroupModel.findAll({
       where: { postId },
     });
@@ -750,6 +755,7 @@ export class PostService {
     if (deleteGroupIds.length) {
       await this._postGroupModel.destroy({
         where: { groupId: deleteGroupIds, postId },
+        transaction,
       });
     }
 
@@ -759,7 +765,8 @@ export class PostService {
         addGroupIds.map((groupId) => ({
           postId,
           groupId,
-        }))
+        })),
+        { transaction }
       );
     }
     return true;

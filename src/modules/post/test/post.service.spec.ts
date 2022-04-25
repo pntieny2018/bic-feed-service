@@ -175,7 +175,8 @@ describe('PostService', () => {
           provide: getModelToken(UserMarkReadPostModel),
           useValue: {
             findOne: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            destroy: jest.fn(),
           }
         }
       ],
@@ -337,8 +338,8 @@ describe('PostService', () => {
       expect(sequelize.transaction).toBeCalledTimes(1);
 
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
-      expect(mediaService.sync).toHaveBeenCalledWith(mockedDataUpdatePost.id, EntityType.POST, mediaIds);      
-      expect(mentionService.setMention).toBeCalledWith(mentionUserIds, MentionableType.POST, mockedDataUpdatePost.id)
+      expect(mediaService.sync).toHaveBeenCalledWith(mockedDataUpdatePost.id, EntityType.POST, mediaIds, transactionMock);      
+      expect(mentionService.setMention).toBeCalledWith(mentionUserIds, MentionableType.POST, mockedDataUpdatePost.id, transactionMock)
 
       expect(postService.setGroupByPost).toBeCalledTimes(1)
       expect(postService.setGroupByPost).toHaveBeenCalledWith(groupIds, mockedDataUpdatePost.id)
@@ -475,9 +476,9 @@ describe('PostService', () => {
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
       expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
-      expect(commentService.deleteCommentsByPost).toHaveBeenCalledWith(mockedDataDeletePost.id);
       expect(transactionMock.commit).toBeCalledTimes(1);
       const [ condition ] = postModelMock.destroy.mock.calls[0];
       expect(condition.where).toStrictEqual({
