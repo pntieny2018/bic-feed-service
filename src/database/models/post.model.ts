@@ -81,7 +81,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public canShare: boolean;
 
   @AllowNull(true)
-  @Length({ max: 5000 })
   @Column
   public content: string;
 

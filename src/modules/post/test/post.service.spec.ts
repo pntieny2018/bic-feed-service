@@ -39,7 +39,8 @@ import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
 import { DeleteReactionService } from '../../reaction/services';
 import { FeedService } from '../../feed/feed.service';
-import { UserMarkedImportantPostModel } from '../../../database/models/user-mark-read-post.model';
+import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
+import { LogicException } from '../../../common/exceptions';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -171,10 +172,11 @@ describe('PostService', () => {
           },
         },
         {
-          provide: getModelToken(UserMarkedImportantPostModel),
+          provide: getModelToken(UserMarkReadPostModel),
           useValue: {
             findOne: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            destroy: jest.fn(),
           }
         }
       ],
@@ -183,7 +185,7 @@ describe('PostService', () => {
     postService = moduleRef.get<PostService>(PostService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
-    userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkedImportantPostModel>(getModelToken(UserMarkedImportantPostModel));
+    userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(getModelToken(UserMarkReadPostModel));
     sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
@@ -276,7 +278,7 @@ describe('PostService', () => {
       try {
         const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -286,7 +288,7 @@ describe('PostService', () => {
       try {
         const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -336,8 +338,8 @@ describe('PostService', () => {
       expect(sequelize.transaction).toBeCalledTimes(1);
 
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
-      expect(mediaService.sync).toHaveBeenCalledWith(mockedDataUpdatePost.id, EntityType.POST, mediaIds);      
-      expect(mentionService.setMention).toBeCalledWith(mentionUserIds, MentionableType.POST, mockedDataUpdatePost.id)
+      expect(mediaService.sync).toHaveBeenCalledWith(mockedDataUpdatePost.id, EntityType.POST, mediaIds, transactionMock);      
+      expect(mentionService.setMention).toBeCalledWith(mentionUserIds, MentionableType.POST, mockedDataUpdatePost.id, transactionMock)
 
       expect(postService.setGroupByPost).toBeCalledTimes(1)
       expect(postService.setGroupByPost).toHaveBeenCalledWith(groupIds, mockedDataUpdatePost.id)
@@ -364,7 +366,7 @@ describe('PostService', () => {
       try {
         await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuthNullProfile, mockedUpdatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -373,7 +375,7 @@ describe('PostService', () => {
       try {
         await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedUpdatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -430,7 +432,7 @@ describe('PostService', () => {
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
+        expect(error).toBeInstanceOf(LogicException);
       }
     });
 
@@ -440,7 +442,7 @@ describe('PostService', () => {
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
-        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error).toBeInstanceOf(LogicException);
       }
     });
 
@@ -450,7 +452,7 @@ describe('PostService', () => {
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
-        expect(error).toBeInstanceOf(ForbiddenException);
+        expect(error).toBeInstanceOf(LogicException);
       }
     });
   });
@@ -474,9 +476,9 @@ describe('PostService', () => {
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
       expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
-      expect(commentService.deleteCommentsByPost).toHaveBeenCalledWith(mockedDataDeletePost.id);
       expect(transactionMock.commit).toBeCalledTimes(1);
       const [ condition ] = postModelMock.destroy.mock.calls[0];
       expect(condition.where).toStrictEqual({
@@ -501,7 +503,7 @@ describe('PostService', () => {
       try {
         await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth.id + 1);
       } catch (e) {
-        expect(e).toBeInstanceOf(ForbiddenException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -510,7 +512,7 @@ describe('PostService', () => {
       try {
         await postService.deletePost(1, 1);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException); 
+        expect(e).toBeInstanceOf(LogicException); 
       }
     });
   });
@@ -588,7 +590,7 @@ describe('PostService', () => {
       try {
         const result = await postService.findPost(entity);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
   });
@@ -960,7 +962,7 @@ describe('PostService', () => {
       try {
       await postService.getPost(postData.id, mockedUserAuth, getPostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -969,11 +971,11 @@ describe('PostService', () => {
         ...postData,
         toJSON: () => postData,
       });
-      authorityService.allowAccess = jest.fn().mockRejectedValueOnce(new ForbiddenException('You do not have permission to perform this action !'))      
+      authorityService.allowAccess = jest.fn().mockRejectedValueOnce(new LogicException('You do not have permission to perform this action !'))      
       try {
         await postService.getPost(postData.id, mockedUserAuth, getPostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(ForbiddenException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
   });

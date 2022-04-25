@@ -52,7 +52,7 @@ export class FeedService {
     const limit = getNewsFeedDto.limit + 1;
     try {
       const groupIds = authUser.profile.groups;
-      const authUserId = 999999; //authUser.id;
+      const authUserId = authUser.id;
       const constraints = FeedService._getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
@@ -64,7 +64,6 @@ export class FeedService {
           offset,
           limit,
           order,
-          groupIds,
           authUserId,
           isImportant: true,
           idGT,
@@ -75,12 +74,11 @@ export class FeedService {
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset >= totalImportantPosts) {
+      if (offset + limit - 1 > totalImportantPosts) {
         normalPostsExc = this._getNewsFeedData({
           offset: Math.max(0, offset - totalImportantPosts),
           limit: Math.min(limit, limit + offset - totalImportantPosts),
           order,
-          groupIds,
           authUserId,
           isImportant: false,
           idGT,
@@ -161,7 +159,7 @@ export class FeedService {
         limit,
         order,
         groupIds,
-        authUserId,
+        authUser,
         isImportant: true,
         idGT,
         idGTE,
@@ -170,13 +168,13 @@ export class FeedService {
       });
     }
     let normalPostsExc = Promise.resolve([]);
-    if (offset >= totalImportantPosts) {
+    if (offset + limit - 1 > totalImportantPosts) {
       normalPostsExc = this._getTimelineData({
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit, limit + offset - totalImportantPosts),
         order,
         groupIds,
-        authUserId,
+        authUser,
         isImportant: false,
         idGT,
         idGTE,
@@ -343,7 +341,7 @@ export class FeedService {
     offset,
     limit,
     order,
-    authUserId,
+    authUser,
     groupIds,
     isImportant,
     idGT,
@@ -354,7 +352,7 @@ export class FeedService {
     offset: number;
     limit: number;
     order: OrderEnum;
-    authUserId: number;
+    authUser: UserDto;
     groupIds: number[];
     isImportant: boolean;
     idGT?: number;
@@ -372,6 +370,7 @@ export class FeedService {
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
 
+    const authUserId = authUser.id;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
         SELECT 1
@@ -414,14 +413,14 @@ export class FeedService {
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
-      INNER JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
+      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
       LEFT OUTER JOIN ( 
         ${schema}.${postMediaTable} AS "media->PostMediaModel" 
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      `;
+      ORDER BY "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -444,7 +443,6 @@ export class FeedService {
     limit,
     order,
     authUserId,
-    groupIds,
     isImportant,
     idGT,
     idGTE,
@@ -455,7 +453,6 @@ export class FeedService {
     limit: number;
     order: OrderEnum;
     authUserId: number;
-    groupIds: number[];
     isImportant: boolean;
     idGT?: number;
     idGTE?: any;
@@ -514,17 +511,17 @@ export class FeedService {
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
-      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id" AND "groups"."group_id" IN (:groupIds)
+      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
       LEFT OUTER JOIN ( 
         ${schema}.${postMediaTable} AS "media->PostMediaModel" 
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."createdAt" ${order}
       `;
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
-        groupIds,
         offset,
         limit: limit,
         authUserId,

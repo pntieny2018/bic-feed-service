@@ -54,4 +54,5 @@ export const HTTP_STATUS_ID = {
   APP_POST_EXISTING: 'app.post.existing.app_error',
   APP_AUTH_TOKEN_EXPIRED: 'app.auth_token.expired',
   APP_POST_AS_READ_INVALID_PARAMETER: 'app.post.invalid_parameter',
+  APP_POST_NOT_FOUND: 'app.post.not_found',
 };

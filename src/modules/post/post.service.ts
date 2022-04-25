@@ -29,7 +29,6 @@ import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { DeleteReactionService } from '../reaction/services';
@@ -44,7 +43,8 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { EntityIdDto, OrderEnum } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Transaction } from 'sequelize';
+import { getDatabaseConfig } from '../../config/database';
 
 @Injectable()
 export class PostService {
@@ -219,42 +219,9 @@ export class PostService {
         },
       };
 
-      body['sort'] = [
-        {
-          ['_script']: {
-            type: 'number',
-            script: {
-              lang: 'painless',
-              source:
-                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-              params: {
-                time: Date.now(),
-              },
-            },
-            order: 'desc',
-          },
-        },
-        { ['_score']: 'desc' },
-        { createdAt: 'desc' },
-      ];
+      body['sort'] = [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
     } else {
-      body['sort'] = [
-        {
-          ['_script']: {
-            type: 'number',
-            script: {
-              lang: 'painless',
-              source:
-                "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-              params: {
-                time: Date.now(),
-              },
-            },
-            order: 'desc',
-          },
-        },
-        { createdAt: 'desc' },
-      ];
+      body['sort'] = [{ createdAt: 'desc' }];
     }
 
     if (startTime || endTime) {
@@ -385,7 +352,8 @@ export class PostService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      //throw new NotFoundException('Post not found');
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     await this._authorityService.allowAccess(user, post);
 
@@ -516,24 +484,26 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
-      const post = await this._postModel.create({
-        isDraft: true,
-        content,
-        createdBy: authUserId,
-        updatedBy: authUserId,
-        isImportant: setting.isImportant,
-        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-        canShare: setting.canShare,
-        canComment: setting.canComment,
-        canReact: setting.canReact,
-      });
+      const post = await this._postModel.create(
+        {
+          isDraft: true,
+          content,
+          createdBy: authUserId,
+          updatedBy: authUserId,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
+        },
+        { transaction }
+      );
 
       if (uniqueMediaIds.length) {
-        await post.addMedia(uniqueMediaIds);
-        await this._mediaService.activeMedia(uniqueMediaIds, authUserId);
+        await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      this.addPostGroup(groupIds, post.id).catch((ex) => this._logger.error(ex, ex.stack));
+      await this.addPostGroup(groupIds, post.id, transaction);
 
       if (mentions.length) {
         await this._mentionService.create(
@@ -541,7 +511,8 @@ export class PostService {
             entityId: post.id,
             userId,
             mentionableType: MentionableType.POST,
-          }))
+          })),
+          transaction
         );
       }
 
@@ -608,6 +579,7 @@ export class PostService {
             id: postId,
             createdBy: authUserId,
           },
+          transaction,
         }
       );
       await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
@@ -617,7 +589,7 @@ export class PostService {
         postId,
         transaction
       );
-      await this.setGroupByPost(groupIds, postId);
+      await this.setGroupByPost(groupIds, postId, transaction);
       await transaction.commit();
 
       return true;
@@ -698,8 +670,8 @@ export class PostService {
       await Promise.all([
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
-        this.setGroupByPost([], postId),
-        this._deleteReactionService.deleteReactionByPostIds([postId]),
+        this.setGroupByPost([], postId, transaction),
+        this._deleteReactionService.deleteReactionByPostIds([postId], transaction),
         this._commentService.deleteCommentsByPost(postId, transaction),
         this._feedService.deleteNewsFeedByPost(postId, transaction),
         this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
@@ -727,13 +699,17 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostGroup(groupIds: number[], postId: number): Promise<boolean> {
+  public async addPostGroup(
+    groupIds: number[],
+    postId: number,
+    transaction: Transaction
+  ): Promise<boolean> {
     if (groupIds.length === 0) return true;
     const postGroupDataCreate = groupIds.map((groupId) => ({
       postId: postId,
       groupId,
     }));
-    await this._postGroupModel.bulkCreate(postGroupDataCreate);
+    await this._postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
     return true;
   }
 
@@ -744,7 +720,11 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setGroupByPost(groupIds: number[], postId: number): Promise<boolean> {
+  public async setGroupByPost(
+    groupIds: number[],
+    postId: number,
+    transaction: Transaction
+  ): Promise<boolean> {
     const currentGroups = await this._postGroupModel.findAll({
       where: { postId },
     });
@@ -754,6 +734,7 @@ export class PostService {
     if (deleteGroupIds.length) {
       await this._postGroupModel.destroy({
         where: { groupId: deleteGroupIds, postId },
+        transaction,
       });
     }
 
@@ -763,7 +744,8 @@ export class PostService {
         addGroupIds.map((groupId) => ({
           postId,
           groupId,
-        }))
+        })),
+        { transaction }
       );
     }
     return true;
@@ -899,17 +881,18 @@ export class PostService {
     groupIds: number[],
     constraints: string
   ): Promise<number> {
+    const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
-    FROM feed.posts as p
+    FROM ${schema}.posts as p
     WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
-        FROM feed.users_mark_read_posts as u
+        FROM ${schema}.users_mark_read_posts as u
         WHERE u.user_id = :userId AND u.post_id = p.id
       )
     AND EXISTS(
         SELECT 1
-        from feed.posts_groups AS g
+        from ${schema}.posts_groups AS g
         WHERE g.post_id = p.id
         AND g.group_id IN(:groupIds)
       )
@@ -928,17 +911,18 @@ export class PostService {
     userId: number,
     constraints: string
   ): Promise<number> {
+    const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
-    FROM feed.posts as p
+    FROM ${schema}.posts as p
     WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
-        FROM feed.users_mark_read_posts as u
+        FROM ${schema}.users_mark_read_posts as u
         WHERE u.user_id = :userId AND u.post_id = p.id
       )
     AND EXISTS(
         SELECT 1
-        from feed.user_newsfeed AS u
+        from ${schema}.user_newsfeed AS u
         WHERE u.post_id = p.id
         AND u.user_id = :userId
       )

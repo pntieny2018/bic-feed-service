@@ -1,11 +1,4 @@
-import {
-  ForbiddenException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
@@ -188,14 +181,19 @@ export class DeleteReactionService {
   /**
    * Delete reaction by postIds
    * @param postIds number[]
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteReactionByPostIds(postIds: number[]): Promise<number> {
+  public async deleteReactionByPostIds(
+    postIds: number[],
+    transaction: Transaction
+  ): Promise<number> {
     return await this._postReactionModel.destroy({
       where: {
         postId: postIds,
       },
+      transaction,
     });
   }
 }
