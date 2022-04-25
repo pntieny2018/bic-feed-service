@@ -1,11 +1,4 @@
-import {
-  ForbiddenException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
