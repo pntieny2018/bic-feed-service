@@ -17,7 +17,7 @@ export class GetPostEditedHistoryDto {
     type: String,
     default: '2022-04-17T02:35:30.947+07',
   })
-  @IsOptional()
   @IsDateString()
+  @IsOptional()
   public endTime?: string;
 }

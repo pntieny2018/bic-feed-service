@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import { IsDateString } from 'class-validator';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 
 export class PostEditedHistoryDto {
@@ -25,10 +26,11 @@ export class PostEditedHistoryDto {
   public media?: MediaFilterResponseDto;
 
   @ApiProperty({
-    description: 'editedAt',
-    type: Date,
+    description: 'Edited at',
+    type: String,
     default: '2022-04-17T02:35:30.947+07',
   })
+  @IsDateString()
   @Expose()
-  public editedAt: Date;
+  public editedAt: string;
 }
