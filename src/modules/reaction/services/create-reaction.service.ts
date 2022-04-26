@@ -119,9 +119,11 @@ export class CreateReactionService {
         reactionId: postReaction.id,
       });
 
-      this._commonReactionService
-        .createCreateReactionEvent(userSharedDto, reactionDto, postId)
-        .catch((e) => this._logger.error(e, e?.stack));
+      await this._commonReactionService.createCreateReactionEvent(
+        userSharedDto,
+        reactionDto,
+        postId
+      );
 
       return plainToInstance(ReactionResponseDto, postReaction, { excludeExtraneousValues: true });
     } catch (e) {
@@ -199,9 +201,12 @@ export class CreateReactionService {
         reactionId: commentReaction.id,
       });
 
-      this._commonReactionService
-        .createCreateReactionEvent(userSharedDto, reactionDto, postId, commentId)
-        .catch((e) => this._logger.error(e, e?.stack));
+      await this._commonReactionService.createCreateReactionEvent(
+        userSharedDto,
+        reactionDto,
+        postId,
+        commentId
+      );
 
       return plainToInstance(ReactionResponseDto, commentReaction, {
         excludeExtraneousValues: true,
