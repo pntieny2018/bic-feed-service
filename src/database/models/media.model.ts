@@ -16,6 +16,8 @@ import { PostMediaModel } from './post-media.model';
 import { PostModel } from './post.model';
 import { CommentMediaModel } from './comment-media.model';
 import { ApiProperty } from '@nestjs/swagger';
+import { PostEditedHistoryModel } from './post-edited-history.model';
+import { PostEditedHistoryMediaModel } from './post-edited-history-media.model';
 
 export enum MediaType {
   VIDEO = 'video',
@@ -71,6 +73,9 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @BelongsToMany(() => CommentModel, () => CommentMediaModel)
   public comments: CommentModel[];
+
+  @BelongsToMany(() => PostEditedHistoryModel, () => PostEditedHistoryMediaModel)
+  public postEditedHistory: PostEditedHistoryModel[];
 
   @Column
   public name: string;

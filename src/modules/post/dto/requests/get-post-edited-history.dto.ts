@@ -1,16 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsOptional } from 'class-validator';
+import { PageOptionsDto } from '../../../../common/dto';
 
-export class GetPostEditedHistoryDto {
-  @ApiProperty({
-    description: 'Maximum number of post-edited.',
-    required: false,
-    type: Number,
-    default: 10,
-  })
-  @IsOptional()
-  public size: number;
-
+export class GetPostEditedHistoryDto extends PageOptionsDto {
   @ApiProperty({
     description: 'Upper bound editedAt timestamp.',
     required: false,

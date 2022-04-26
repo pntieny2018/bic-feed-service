@@ -1,7 +1,35 @@
-import { PageDto } from './../../common/dto/pagination/page.dto';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
+import { Op, QueryTypes, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { EntityIdDto, OrderEnum } from '../../common/dto';
+import { LogicException } from '../../common/exceptions';
+import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { CommentModel } from '../../database/models/comment.model';
+import { MediaModel } from '../../database/models/media.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { PostEditedHistoryMediaModel } from '../../database/models/post-edited-history-media.model';
+import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { IPost, PostModel } from '../../database/models/post.model';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { GroupService } from '../../shared/group';
+import { UserService } from '../../shared/user';
+import { UserDto } from '../auth';
+import { AuthorityService } from '../authority';
+import { CommentService } from '../comment';
+import { FeedService } from '../feed/feed.service';
+import { MediaService } from '../media';
+import { EntityType } from '../media/media.constants';
+import { MentionService } from '../mention';
+import { DeleteReactionService } from '../reaction/services';
+import { PageDto } from './../../common/dto/pagination/page.dto';
 import {
   CreatePostDto,
   GetPostDto,
@@ -9,42 +37,8 @@ import {
   SearchPostsDto,
   UpdatePostDto,
 } from './dto/requests';
-import {
-  BadRequestException,
-  ForbiddenException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { UserDto } from '../auth';
-import { MediaService } from '../media';
-import { MentionService } from '../mention';
-import { CommentService } from '../comment';
-import { AuthorityService } from '../authority';
-import { UserService } from '../../shared/user';
-import { Sequelize } from 'sequelize-typescript';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
-import { GroupService } from '../../shared/group';
-import { ClassTransformer } from 'class-transformer';
-import { EntityType } from '../media/media.constants';
-import { LogicException } from '../../common/exceptions';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { DeleteReactionService } from '../reaction/services';
-import { FeedService } from '../feed/feed.service';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { MediaModel } from '../../database/models/media.model';
-import { MentionModel } from '../../database/models/mention.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { EntityIdDto, OrderEnum } from '../../common/dto';
-import { CommentModel } from '../../database/models/comment.model';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { QueryTypes, Transaction } from 'sequelize';
-import { getDatabaseConfig } from '../../config/database';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 
 @Injectable()
 export class PostService {
@@ -73,7 +67,11 @@ export class PostService {
     private _searchService: ElasticsearchService,
     private _deleteReactionService: DeleteReactionService,
     @Inject(forwardRef(() => FeedService))
-    private _feedService: FeedService
+    private _feedService: FeedService,
+    @InjectModel(PostEditedHistoryModel)
+    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
+    @InjectModel(PostEditedHistoryMediaModel)
+    private readonly _postEditedHistoryMediaModel: typeof PostEditedHistoryMediaModel
   ) {}
 
   /**
@@ -518,11 +516,55 @@ export class PostService {
 
       await transaction.commit();
 
+      this._savePostEditedHistory(post.id, uniqueMediaIds).catch((e) =>
+        this._logger.error(e, e?.stack)
+      );
+
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
+    }
+  }
+
+  /**
+   * Save post edited history
+   * @param postId number
+   * @param uniqueMediaIds number[]
+   */
+  private async _savePostEditedHistory(postId: number, uniqueMediaIds: number[]): Promise<void> {
+    const post = await this._postModel.findOne({
+      where: {
+        id: postId,
+      },
+    });
+
+    const transaction = await this._sequelizeConnection.transaction();
+
+    try {
+      const postEditedHistory = await this._postEditedHistoryModel.create(
+        {
+          postId: postId,
+          content: post.content,
+          editedAt: post.updatedAt ?? post.createdAt,
+        },
+        { transaction: transaction }
+      );
+
+      const rawPostEditedHistoryMedia = uniqueMediaIds.map((e: number) => ({
+        postEditedHistoryId: postEditedHistory.id,
+        mediaId: e,
+      }));
+
+      await this._postEditedHistoryMediaModel.bulkCreate(rawPostEditedHistoryMedia, {
+        transaction: transaction,
+      });
+
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
     }
   }
 
@@ -591,6 +633,10 @@ export class PostService {
       );
       await this.setGroupByPost(groupIds, postId, transaction);
       await transaction.commit();
+
+      this._savePostEditedHistory(postId, uniqueMediaIds).catch((e) =>
+        this._logger.error(e, e?.stack)
+      );
 
       return true;
     } catch (error) {
@@ -675,6 +721,7 @@ export class PostService {
         this._commentService.deleteCommentsByPost(postId, transaction),
         this._feedService.deleteNewsFeedByPost(postId, transaction),
         this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+        this._deletePostEditedHistory(postId),
       ]);
       await this._postModel.destroy({
         where: {
@@ -684,12 +731,41 @@ export class PostService {
         transaction: transaction,
       });
       await transaction.commit();
+
       return post;
     } catch (error) {
       this._logger.error(error, error?.stack);
       await transaction.rollback();
       throw error;
     }
+  }
+
+  /**
+   * Delete post edited history
+   * @param postId number
+   */
+  private async _deletePostEditedHistory(postId: number): Promise<void> {
+    const postEditedHistoryRows = await this._postEditedHistoryModel.findAll({
+      where: {
+        postId: postId,
+      },
+    });
+
+    const postEditedHistoryIds = postEditedHistoryRows.map((e): number => e.id);
+
+    await this._postEditedHistoryMediaModel.destroy({
+      where: {
+        postEditedHistoryId: {
+          [Op.in]: postEditedHistoryIds,
+        },
+      },
+    });
+
+    await this._postEditedHistoryModel.destroy({
+      where: {
+        postId: postId,
+      },
+    });
   }
 
   /**
@@ -936,59 +1012,84 @@ export class PostService {
     return result[0].total;
   }
 
+  /**
+   * Get post edited history
+   * @param user UserDto
+   * @param postId number
+   * @param getPostEditedHistoryDto GetPostEditedHistoryDto
+   * @returns Promise resolve PageDto
+   */
   public async getPostEditedHistory(
     user: UserDto,
     postId: number,
     getPostEditedHistoryDto: GetPostEditedHistoryDto
-  ): Promise<PageDto<any>> {
-    const { size, endTime } = getPostEditedHistoryDto;
+  ): Promise<PageDto<PostEditedHistoryDto>> {
+    try {
+      const post = await this.findPost({ postId: postId });
+      this._authorityService.allowAccess(user, post);
 
-    const postEditedHistoryIndex = ElasticsearchHelper.INDEX.POST_EDITED_HISTORY;
+      if (post.isDraft === true && user.id !== post.createdBy) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
 
-    const body = {
-      query: {
-        bool: {
-          must: [],
-          filter: [],
-          should: [],
+      const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
+      const conditions = {};
+      conditions['postId'] = postId;
+      if (idGT) {
+        conditions['id'] = {
+          [Op.gt]: idGT,
+        };
+      }
+      if (idGTE) {
+        conditions['id'] = {
+          [Op.gte]: idGTE,
+          ...conditions['id'],
+        };
+      }
+      if (idLT) {
+        conditions['id'] = {
+          [Op.lt]: idLT,
+          ...conditions['id'],
+        };
+      }
+      if (idLTE) {
+        conditions['id'] = {
+          [Op.lte]: idLTE,
+          ...conditions,
+        };
+      }
+      if (endTime) {
+        conditions['editedAt'] = {
+          [Op.lt]: endTime,
+        };
+      }
+
+      const { rows, count } = await this._postEditedHistoryModel.findAndCountAll({
+        where: {
+          ...conditions,
         },
-      },
-    };
-
-    body.query.bool.must.push({
-      match: {
-        postId: postId,
-      },
-    });
-
-    if (endTime) {
-      body.query.bool.filter.push({
-        range: {
-          editedAt: {
-            lt: endTime,
+        include: [
+          {
+            model: MediaModel,
+            required: false,
           },
-        },
+        ],
+        order: [['id', order]],
+        offset: offset,
+        limit: limit,
       });
+
+      const result = rows.map((e) =>
+        plainToInstance(PostEditedHistoryDto, e.toJSON(), { excludeExtraneousValues: true })
+      );
+
+      return new PageDto(result, {
+        limit: limit,
+        total: count,
+      });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
+      throw e;
     }
-
-    const result = await this._searchService.search({
-      index: postEditedHistoryIndex,
-      size: size,
-      sort: 'editedAt:desc',
-      body: body,
-    });
-
-    const hits = result.body.hits.hits;
-    const posts = hits.map((item): PostEditedHistoryDto => {
-      const source = item._source;
-      return {
-        postId: source.postId,
-        content: source.content,
-        media: source.media,
-        editedAt: source.editedAt,
-      };
-    });
-
-    return new PageDto(posts, { limit: size });
   }
 }
