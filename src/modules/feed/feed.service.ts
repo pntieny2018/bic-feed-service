@@ -343,15 +343,10 @@ export class FeedService {
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
-    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
 
     const authUserId = authUser.id;
     if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.${userMarkReadPostTable} as u
-        WHERE u.user_id = 15 AND u.post_id = p.id
-      )`;
+      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
     } else {
       condition += `AND "p"."is_important" = false`;
     }
