@@ -67,7 +67,7 @@ export class FeedService {
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset + limit > totalImportantPosts) {
+      if (offset + limit >= totalImportantPosts) {
         normalPostsExc = this._getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
@@ -115,8 +115,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { offset, groupId } = getTimelineDto;
-    const limit = getTimelineDto.limit;
+    const { limit, offset, groupId } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -150,7 +149,7 @@ export class FeedService {
       });
     }
     let normalPostsExc = Promise.resolve([]);
-    if (offset + limit > totalImportantPosts) {
+    if (offset + limit >= totalImportantPosts) {
       normalPostsExc = this._getTimelineData({
         ...getTimelineDto,
         offset: Math.max(0, offset - totalImportantPosts),
