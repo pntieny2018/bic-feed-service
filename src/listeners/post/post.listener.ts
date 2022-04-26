@@ -26,24 +26,10 @@ export class PostListener {
     if (post.isDraft) return;
 
     const index = ElasticsearchHelper.INDEX.POST;
-    const postEditedHistoryIndex = ElasticsearchHelper.INDEX.POST_EDITED_HISTORY;
     try {
       this._elasticsearchService
         .delete({ index, id: `${post.id}` })
         .catch((e) => this._logger.debug(e));
-
-      this._elasticsearchService
-        .deleteByQuery({
-          index: postEditedHistoryIndex,
-          body: {
-            query: {
-              match: {
-                postId: post.id,
-              },
-            },
-          },
-        })
-        .catch((e) => this._logger.error(e, e?.stack));
 
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -93,19 +79,6 @@ export class PostListener {
       .index({ index, id: `${id}`, body: dataIndex })
       .catch((e) => this._logger.debug(e));
 
-    const postEditedHistoryIndex = ElasticsearchHelper.INDEX.POST_EDITED_HISTORY;
-    this._elasticsearchService
-      .index({
-        index: postEditedHistoryIndex,
-        body: {
-          postId: id,
-          content: content,
-          media: media,
-          editedAt: createdAt,
-        },
-      })
-      .catch((e) => this._logger.error(e, e?.stack));
-
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -151,17 +124,6 @@ export class PostListener {
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })
       .catch((e) => this._logger.debug(e));
-
-    const postEditedHistoryIndex = ElasticsearchHelper.INDEX.POST_EDITED_HISTORY;
-    this._elasticsearchService.index({
-      index: postEditedHistoryIndex,
-      body: {
-        postId: id,
-        content: content,
-        media: media,
-        editedAt: newPost.updatedAt,
-      },
-    });
 
     try {
       // Fanout to write post to all news feed of user follow group audience
