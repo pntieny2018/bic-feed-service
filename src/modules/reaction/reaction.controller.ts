@@ -41,14 +41,8 @@ export class ReactionController {
     type: ReactionResponseDto,
   })
   @Post('/')
-  public create(
-    @AuthUser() userDto: UserDto,
-    @Body() createReactionDto: CreateReactionDto
-  ): boolean {
-    this._createOrDeleteReactionService
-      .addToQueueReaction(userDto, createReactionDto)
-      .catch((ex) => this._logger.error(ex, ex.stack));
-    return true;
+  public create(@AuthUser() userDto: UserDto, @Body() createReactionDto: CreateReactionDto): any {
+    return this._createOrDeleteReactionService.addToQueueReaction(userDto, createReactionDto);
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
@@ -57,13 +51,7 @@ export class ReactionController {
     type: Boolean,
   })
   @Delete('/')
-  public delete(
-    @AuthUser() userDto: UserDto,
-    @Body() deleteReactionDto: DeleteReactionDto
-  ): boolean {
-    this._createOrDeleteReactionService
-      .addToQueueReaction(userDto, deleteReactionDto)
-      .catch((ex) => this._logger.error(ex, ex.stack));
-    return true;
+  public delete(@AuthUser() userDto: UserDto, @Body() deleteReactionDto: DeleteReactionDto): any {
+    return this._createOrDeleteReactionService.addToQueueReaction(userDto, deleteReactionDto);
   }
 }

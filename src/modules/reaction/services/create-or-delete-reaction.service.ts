@@ -12,6 +12,10 @@ import {
   JobReactionDataDto,
 } from '../dto/request';
 import { findOrRegisterQueue } from '../../../jobs';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber } from 'class-validator';
+import { Expose } from 'class-transformer';
+import { ReactionEnum } from '../reaction.enum';
 
 @Injectable()
 export class CreateOrDeleteReactionService {
@@ -26,7 +30,7 @@ export class CreateOrDeleteReactionService {
   public async addToQueueReaction(
     userDto: UserDto,
     payload: CreateReactionDto | DeleteReactionDto
-  ): Promise<void> {
+  ): Promise<any> {
     const queueName = `reaction:${payload.target.toString().toLowerCase()}:${payload.targetId}`;
     const redisConfig = this._configService.get<IRedisConfig>('redis');
 
@@ -67,5 +71,12 @@ export class CreateOrDeleteReactionService {
         }
       )
       .catch((ex) => this._logger.error(ex, ex.stack));
+
+    return {
+      action: action,
+      reactionName: payload.reactionName,
+      target: payload.target,
+      targetId: payload.targetId,
+    };
   }
 }
