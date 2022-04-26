@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, ValidateIf } from 'class-validator';
 import { ReactionEnum } from '../../reaction.enum';
 
 export class DeleteReactionDto {
@@ -15,9 +15,18 @@ export class DeleteReactionDto {
   @Expose()
   public targetId: number;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsNotEmpty()
   @Expose()
-  public reactionId: number;
+  @IsOptional()
+  @ValidateIf((object) => !object['reactionName'])
+  public reactionId?: number;
+
+  @ApiProperty({ required: false })
+  @IsNotEmpty()
+  @Expose()
+  @IsOptional()
+  @ValidateIf((object) => !object['reactionId'])
+  public reactionName?: string;
 }

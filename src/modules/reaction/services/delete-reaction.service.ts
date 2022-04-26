@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
@@ -53,27 +53,25 @@ export class DeleteReactionService {
   ): Promise<boolean> {
     this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
     const { id: userId } = userDto;
-    const { reactionId } = deleteReactionDto;
     try {
+      const condition = {};
+      if (deleteReactionDto.reactionId) {
+        condition['reactionId'] = deleteReactionDto.reactionId;
+      }
+      if (deleteReactionDto.reactionName) {
+        condition['reactionName'] = deleteReactionDto.reactionName;
+      }
       const existedReaction = await this._postReactionModel.findOne<PostReactionModel>({
         where: {
-          id: reactionId,
+          ...condition,
+          createdBy: userId,
         },
       });
 
-      if (!!existedReaction === false) {
-        throw new NotFoundException('Reaction id not found.');
+      if (!existedReaction) {
+        return false;
       }
-
-      if (existedReaction.createdBy !== userId) {
-        throw new ForbiddenException('Reaction is not created by user.');
-      }
-
-      await this._postReactionModel.destroy<PostReactionModel>({
-        where: {
-          id: reactionId,
-        },
-      });
+      await existedReaction.destroy();
 
       await this._commonReactionService.createDeleteReactionEvent(
         userDto,
@@ -111,27 +109,27 @@ export class DeleteReactionService {
     deleteReactionDto: DeleteReactionDto
   ): Promise<boolean> {
     const { id: userId } = userDto;
-    const { reactionId } = deleteReactionDto;
     try {
-      const existedReaction = await this._commentReactionModel.findOne<CommentReactionModel>({
+      const condition = {};
+      if (deleteReactionDto.reactionId) {
+        condition['reactionId'] = deleteReactionDto.reactionId;
+      }
+      if (deleteReactionDto.reactionName) {
+        condition['reactionName'] = deleteReactionDto.reactionName;
+      }
+
+      const existedReaction = await this._commentReactionModel.findOne({
         where: {
-          id: reactionId,
+          ...condition,
+          createdBy: userId,
         },
       });
 
-      if (!!existedReaction === false) {
-        throw new NotFoundException('Reaction id not found.');
+      if (!existedReaction) {
+        return false;
       }
 
-      if (existedReaction.createdBy !== userId) {
-        throw new ForbiddenException('Reaction is not created by user.');
-      }
-
-      await this._commentReactionModel.destroy<CommentReactionModel>({
-        where: {
-          id: reactionId,
-        },
-      });
+      await this._commentReactionModel.destroy();
 
       await this._commonReactionService.createDeleteReactionEvent(
         userDto,
