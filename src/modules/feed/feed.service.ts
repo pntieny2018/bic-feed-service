@@ -348,7 +348,7 @@ export class FeedService {
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
     } else {
-      condition += `AND "p"."is_important" = false`;
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
     }
     const query = `SELECT 
     "PostModel".*,
@@ -368,7 +368,7 @@ export class FeedService {
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount",
-      "p"."is_important" AS "isImportant", 
+      ${isImportant ? 'true' : 'false'} AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
@@ -446,7 +446,7 @@ export class FeedService {
         WHERE u.user_id = 15 AND u.post_id = p.id
       )`;
     } else {
-      condition += `AND "p"."is_important" = false`;
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
     }
     const query = `SELECT 
     "PostModel".*,
@@ -466,7 +466,7 @@ export class FeedService {
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount",
-      "p"."is_important" AS "isImportant", 
+      ${isImportant ? 'true' : 'false'} AS "isImportant",
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
