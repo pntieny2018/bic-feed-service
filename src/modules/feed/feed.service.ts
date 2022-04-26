@@ -368,7 +368,7 @@ export class FeedService {
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount",
-      "p"."is_important" AS "isImportant", 
+      ${isImportant ? 'true' : 'false'} AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
@@ -466,7 +466,7 @@ export class FeedService {
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount",
-      "p"."is_important" AS "isImportant", 
+      ${isImportant ? 'true' : 'false'} AS "isImportant",
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
