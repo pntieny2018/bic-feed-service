@@ -348,7 +348,7 @@ export class FeedService {
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
     } else {
-      condition += `AND "p"."is_important" = false`;
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
     }
     const query = `SELECT 
     "PostModel".*,
@@ -446,7 +446,7 @@ export class FeedService {
         WHERE u.user_id = 15 AND u.post_id = p.id
       )`;
     } else {
-      condition += `AND "p"."is_important" = false`;
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
     }
     const query = `SELECT 
     "PostModel".*,
