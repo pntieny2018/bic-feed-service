@@ -64,7 +64,7 @@ export class PostResponseDto {
         canReact: obj.canReact,
         canComment: obj.canComment,
         canShare: obj.canShare,
-        isImportant: obj.importantExpiredAt > new Date() ? true : false,
+        isImportant: obj.isImportant,
         importantExpiredAt: obj.importantExpiredAt,
       };
     }
