@@ -4,37 +4,44 @@ import { PostEditedHistoryDto } from '../../../dto/responses';
 export const mockGetPostEditedHistoryResult: PageDto<PostEditedHistoryDto> = {
   list: [
     {
-      postId: 110,
-      content: 'I love typescript...',
+      postId: 7,
+      content: 'have videos',
       media: {
-        videos: [],
-        images: [],
         files: [],
+        videos: [
+          {
+            id: 2,
+            name: 'a file',
+            url: 'http://google.com',
+            originName: null,
+          },
+        ],
+        images: [],
       },
-      editedAt: '2022-04-25T10:48:14.021Z',
+      editedAt: '2022-04-26T09:20:42.646Z',
     },
     {
-      postId: 110,
-      content: 'I love nodejs 2...',
+      postId: 7,
+      content: 'image...',
       media: {
-        videos: [],
-        images: [],
         files: [],
-      },
-      editedAt: '2022-04-25T09:47:38.634Z',
-    },
-    {
-      postId: 110,
-      content: 'I love nodejs...',
-      media: {
         videos: [],
-        images: [],
-        files: [],
+        images: [
+          {
+            id: 1,
+            name: 'an image',
+            url: 'http://google.com',
+            originName: null,
+            width: null,
+            height: null,
+          },
+        ],
       },
-      editedAt: '2022-04-25T09:44:11.512Z',
+      editedAt: '2022-04-26T09:20:23.252Z',
     },
   ],
   meta: {
-    limit: 10,
+    limit: 25,
+    total: 2,
   },
 };

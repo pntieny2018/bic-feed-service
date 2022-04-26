@@ -6,6 +6,9 @@ import { Sequelize } from 'sequelize-typescript';
 import { RedisModule } from '../../../../libs/redis/src';
 import { SentryService } from '../../../../libs/sentry/src';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
+import { PostEditedHistoryMediaModel } from '../../../database/models/post-edited-history-media.model';
+import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel } from '../../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
@@ -19,7 +22,11 @@ import { MentionService } from '../../mention';
 import { DeleteReactionService } from '../../reaction/services';
 import { PostPolicyService } from '../post-policy.service';
 import { PostService } from '../post.service';
-import { mockElasticsearchSearchPostEditedHistoryIndex, mockUserDto } from './mocks/input.mock';
+import {
+  mockPostEditedHistoryFindAndCountAll,
+  mockPostFindOne,
+  mockUserDto,
+} from './mocks/input.mock';
 import { mockGetPostEditedHistoryDto } from './mocks/request/get-post-edited-history.dto.mock';
 import { mockGetPostEditedHistoryResult } from './mocks/response/get-post-edited-history.response.mock';
 
@@ -40,6 +47,8 @@ describe('PostService', () => {
   let authorityService: AuthorityService;
   let transactionMock;
   let sequelize: Sequelize;
+  let postEditedHistoryModelMock: typeof PostEditedHistoryModel;
+  let postEditedHistoryMediaModelMock: typeof PostEditedHistoryMediaModel;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -166,12 +175,45 @@ describe('PostService', () => {
             findAndCountAll: jest.fn(),
           },
         },
+        {
+          provide: getModelToken(PostEditedHistoryModel),
+          useValue: {
+            create: jest.fn(),
+            update: jest.fn(),
+            findOne: jest.fn(),
+            findByPk: jest.fn(),
+            addMedia: jest.fn(),
+            destroy: jest.fn(),
+            findAll: jest.fn(),
+            findAndCountAll: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostEditedHistoryMediaModel),
+          useValue: {
+            create: jest.fn(),
+            update: jest.fn(),
+            findOne: jest.fn(),
+            findByPk: jest.fn(),
+            addMedia: jest.fn(),
+            destroy: jest.fn(),
+            findAll: jest.fn(),
+            findAndCountAll: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     postService = moduleRef.get<PostService>(PostService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
+    postEditedHistoryModelMock = moduleRef.get<typeof PostEditedHistoryModel>(
+      getModelToken(PostEditedHistoryModel)
+    );
+    postEditedHistoryMediaModelMock = moduleRef.get<typeof PostEditedHistoryMediaModel>(
+      getModelToken(PostEditedHistoryMediaModel)
+    );
+
     sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
@@ -182,7 +224,6 @@ describe('PostService', () => {
     deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
-
     sequelize = moduleRef.get<Sequelize>(Sequelize);
   });
 
@@ -196,12 +237,76 @@ describe('PostService', () => {
   });
 
   describe('getPostEditedHistory', () => {
-    it('Should successfully', async () => {
-      const postId = 110;
-      elasticSearchService.search = jest.fn().mockResolvedValue(mockElasticsearchSearchPostEditedHistoryIndex);
-      const ret = await postService.getPostEditedHistory(mockUserDto, postId, mockGetPostEditedHistoryDto);
-      expect(elasticSearchService.search).toBeCalledTimes(1);
-      expect(ret).toEqual(mockGetPostEditedHistoryResult);
+    describe('User not in post groups', () => {
+      it('Should failed', async () => {
+        postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
+        authorityService.allowAccess = jest
+          .fn()
+          .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
+        postEditedHistoryModelMock.findAndCountAll = jest
+          .fn()
+          .mockResolvedValue({ rows: [], count: 0 });
+        try {
+          await postService.getPostEditedHistory(
+            mockUserDto,
+            mockPostFindOne.id,
+            mockGetPostEditedHistoryDto
+          );
+        } catch (e) {
+          console.log(e);
+        }
+        expect(authorityService.allowAccess).toBeCalledTimes(1);
+        expect(authorityService.allowAccess).toBeCalledWith(mockUserDto, mockPostFindOne);
+        expect(postService.findPost).toBeCalledTimes(1);
+        expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
+      });
+    });
+
+    describe('Post is not published and user is not post owner', () => {
+      it('Should failed', async () => {
+        postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
+        authorityService.allowAccess = jest.fn().mockReturnValue('ok');
+        postEditedHistoryModelMock.findAndCountAll = jest
+          .fn()
+          .mockResolvedValue({ rows: [], count: 0 });
+        try {
+          await postService.getPostEditedHistory(
+            { id: mockUserDto.id + 100 },
+            mockPostFindOne.id,
+            mockGetPostEditedHistoryDto
+          );
+        } catch (e) {
+          console.log(e);
+        }
+        expect(authorityService.allowAccess).toBeCalledTimes(1);
+        expect(authorityService.allowAccess).toBeCalledWith(
+          { id: mockUserDto.id + 100 },
+          mockPostFindOne
+        );
+        expect(postService.findPost).toBeCalledTimes(1);
+        expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
+      });
+    });
+
+    describe('All conditions are valid', () => {
+      it('Should successfully', async () => {
+        postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
+        authorityService.allowAccess = jest.fn().mockReturnValue('ok');
+        postEditedHistoryModelMock.findAndCountAll = jest.fn().mockResolvedValue({
+          rows: mockPostEditedHistoryFindAndCountAll,
+          count: mockPostEditedHistoryFindAndCountAll.length,
+        });
+        const result = await postService.getPostEditedHistory(
+          mockUserDto,
+          mockPostFindOne.id,
+          mockGetPostEditedHistoryDto
+        );
+        expect(result).toEqual(mockGetPostEditedHistoryResult);
+        expect(authorityService.allowAccess).toBeCalledTimes(1);
+        expect(authorityService.allowAccess).toBeCalledWith(mockUserDto, mockPostFindOne);
+        expect(postService.findPost).toBeCalledTimes(1);
+        expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
+      });
     });
   });
 });

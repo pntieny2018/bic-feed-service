@@ -1026,7 +1026,7 @@ export class PostService {
   ): Promise<PageDto<PostEditedHistoryDto>> {
     try {
       const post = await this.findPost({ postId: postId });
-      this._authorityService.allowAccess(user, post);
+      await this._authorityService.allowAccess(user, post);
 
       if (post.isDraft === true && user.id !== post.createdBy) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
