@@ -17,6 +17,8 @@ import { mockedNewsFeed } from './mocks/data/newsfeed.data.mock';
 import { mockedNewsFeedResponse } from './mocks/response/newsfeed.response.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
 import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
+import { CommonReactionService } from '../../reaction/services';
+import { Sequelize } from 'sequelize-typescript';
 
 class EPostModel extends PostModel {
   public reactionsCount: string;
@@ -33,7 +35,8 @@ describe('FeedService', () => {
   let groupService: GroupService;
   let mentionService: MentionService;
   let postService: PostService;
-
+  let commonReactionService: CommonReactionService;
+  let sequelize: Sequelize;
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,8 +63,21 @@ describe('FeedService', () => {
           provide: PostService,
           useValue: {
             bindActorToPost: jest.fn(),
-            bindAudienceToPost: jest.fn()
+            bindAudienceToPost: jest.fn(),
+            getTotalImportantPostInGroups: jest.fn(),
           }
+        },
+        {
+          provide: CommonReactionService,
+          useValue: {
+            bindReactionToPosts: jest.fn()
+          }
+        },
+        {
+          provide: Sequelize,
+          useValue: {
+            transaction: jest.fn(),
+          },
         },
         {
           provide: getModelToken(UserNewsFeedModel),
@@ -89,6 +105,8 @@ describe('FeedService', () => {
     postService = module.get<PostService>(PostService);
     groupService = module.get<GroupService>(GroupService);
     mentionService = module.get<MentionService>(MentionService);
+    sequelize = module.get<Sequelize>(Sequelize);
+    commonReactionService = module.get<CommonReactionService>(CommonReactionService);
     postModelMock = module.get<typeof PostModel>(getModelToken(PostModel));
     feedModelMock = module.get<typeof UserNewsFeedModel>(getModelToken(UserNewsFeedModel));
   });
@@ -111,7 +129,7 @@ describe('FeedService', () => {
       const jsonPosts = mockFindAllData.map((r) => r.toJSON());
       const postModelFindAllSpy = postModelMock.findAll.mockResolvedValue(mockFindAllData);
       const postModelCountSpy = postModelMock.count.mockResolvedValue(mockedTimelineResponse.meta.total);
-      const result = await feedService.getTimeline(mockedUserAuth.id, mockedGetTimeLineDto);
+      const result = await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
       
       expect(postModelFindAllSpy).toBeCalledTimes(1);
       expect(postModelCountSpy).toBeCalledTimes(1);
@@ -125,7 +143,7 @@ describe('FeedService', () => {
       const input = createMock<PostModel[]>([] as PostModel[]);
       jest.spyOn(groupService, 'get').mockResolvedValue(null);
       try {
-      const result = await feedService.getTimeline(mockedUserAuth.id, mockedGetTimeLineDto);
+      const result = await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
       } catch (e) {
         expect(e).toBeInstanceOf(BadRequestException);
       }
@@ -141,7 +159,7 @@ describe('FeedService', () => {
       const jsonPosts = mockFindAllData.map((r) => r.toJSON());
       const postModelFindAllSpy = postModelMock.findAll.mockResolvedValue(mockFindAllData);
       const postModelCountSpy = postModelMock.count.mockResolvedValue(mockedNewsFeedResponse.meta.total);
-      const result = await feedService.getNewsFeed(mockedUserAuth.id, mockedGetNewsFeedDto);
+      const result = await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
       
       expect(postModelFindAllSpy).toBeCalledTimes(1);
       expect(postModelCountSpy).toBeCalledTimes(1);
@@ -159,7 +177,7 @@ describe('FeedService', () => {
 
       const postModelFindAllSpy = postModelMock.findAll.mockResolvedValue([]);
       const postModelCountSpy = postModelMock.count.mockResolvedValue(0);
-      const result = await feedService.getNewsFeed(mockedUserAuth.id, mockedGetNewsFeedDto);
+      const result = await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
       
       expect(postModelFindAllSpy).toBeCalledTimes(1);
       expect(postModelCountSpy).toBeCalledTimes(1);

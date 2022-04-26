@@ -20,8 +20,6 @@ import { SentryService } from '@app/sentry';
 import { RedisModule } from '@app/redis';
 import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
-``;
-import { Sequelize } from 'sequelize-typescript';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
 import { Transaction } from 'sequelize';
@@ -128,6 +126,7 @@ describe('PostService', () => {
           useValue: {
             checkValidMedia: jest.fn(),
             countMediaByPost: jest.fn(),
+            sync: jest.fn(),
           },
         },
         {
@@ -239,18 +238,16 @@ describe('PostService', () => {
       expect(mediaService.checkValidMedia).toBeCalledTimes(1)
 
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
-      expect(mockedDataCreatePost.addMedia).toHaveBeenCalledWith(mediaIds);
       expect(sequelize.transaction).toBeCalledTimes(1);
 
-      expect(mediaService.activeMedia).toBeCalledTimes(1)
-      expect(mediaService.activeMedia).toBeCalledWith(mediaIds, mockedUserAuth.id)
+      expect(mediaService.sync).toBeCalledTimes(1)
       expect(mentionService.create).toBeCalledWith(mockedCreatePostDto.mentions.map((i) => ({
         entityId: mockedDataCreatePost.id,
         userId: i,
         mentionableType: MentionableType.POST,
-      })))
+      })), {transactionMock})
       expect(postService.addPostGroup).toBeCalledTimes(1)
-      expect(postService.addPostGroup).toHaveBeenCalledWith(groupIds, mockedDataCreatePost.id)
+      expect(postService.addPostGroup).toHaveBeenCalledWith(groupIds, mockedDataCreatePost.id, transactionMock)
       expect(transactionMock.commit).toBeCalledTimes(1);
 
       const createPostQuery: any = postModelMock.create.mock.calls[0][0];
@@ -342,7 +339,7 @@ describe('PostService', () => {
       expect(mentionService.setMention).toBeCalledWith(mentionUserIds, MentionableType.POST, mockedDataUpdatePost.id, transactionMock)
 
       expect(postService.setGroupByPost).toBeCalledTimes(1)
-      expect(postService.setGroupByPost).toHaveBeenCalledWith(groupIds, mockedDataUpdatePost.id)
+      expect(postService.setGroupByPost).toHaveBeenCalledWith(groupIds, mockedDataUpdatePost.id, transactionMock)
       expect(transactionMock.commit).toBeCalledTimes(1);
 
       const updatePostQuery: any = postModelMock.update.mock.calls[0][0];
@@ -519,12 +516,12 @@ describe('PostService', () => {
 
   describe('addPostGroup', () => {
     it('Return if parameter is empty', async () => {
-      const result = await postService.addPostGroup([],1); 
+      const result = await postService.addPostGroup([],1, transactionMock); 
       expect(result).toBe(true);
     });
 
     it('Return if parameter is empty', async () => {
-      const result = await postService.addPostGroup([1,2],1); 
+      const result = await postService.addPostGroup([1,2],1, transactionMock); 
       expect(postGroupModelMock.bulkCreate).toBeCalledTimes(1);
       expect(result).toBe(true);
     });
@@ -547,7 +544,7 @@ describe('PostService', () => {
         postId: 1
       }
       postGroupModelMock.findAll.mockResolvedValueOnce(currentGroupPost);
-      const result = await postService.setGroupByPost(mockData.groupIds, mockData.postId); 
+      const result = await postService.setGroupByPost(mockData.groupIds, mockData.postId, transactionMock); 
       expect(result).toBe(true);
       expect(postGroupModelMock.destroy).toBeCalledTimes(1);
       expect(postGroupModelMock.bulkCreate).toBeCalledTimes(1);
@@ -668,21 +665,6 @@ describe('PostService', () => {
             }
           },
           sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
             { 'createdAt': 'desc' }
           ]
         },
@@ -721,21 +703,6 @@ describe('PostService', () => {
             }
           },
           sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
             { 'createdAt': 'desc' }
           ]
         },
@@ -779,21 +746,6 @@ describe('PostService', () => {
             }
           },
           sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
             { 'createdAt': 'desc' }
           ]
         },
@@ -875,21 +827,6 @@ describe('PostService', () => {
               }
           },
           sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
             {"_score": "desc" },
             { 'createdAt': 'desc' }
           ]
