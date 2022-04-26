@@ -48,10 +48,8 @@ export class FeedService {
    * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { offset, order, idGT, idGTE, idLT, idLTE } = getNewsFeedDto;
-    const limit = getNewsFeedDto.limit + 1;
+    const { limit, offset } = getNewsFeedDto;
     try {
-      const groupIds = authUser.profile.groups;
       const authUserId = authUser.id;
       const constraints = FeedService._getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
@@ -61,52 +59,41 @@ export class FeedService {
       let importantPostsExc = Promise.resolve([]);
       if (offset < totalImportantPosts) {
         importantPostsExc = this._getNewsFeedData({
-          offset,
-          limit,
-          order,
+          ...getNewsFeedDto,
+          limit: limit + 1,
           authUserId,
           isImportant: true,
-          idGT,
-          idGTE,
-          idLT,
-          idLTE,
         });
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset + limit - 1 > totalImportantPosts) {
+      if (offset + limit >= totalImportantPosts) {
         normalPostsExc = this._getNewsFeedData({
+          ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
-          limit: Math.min(limit, limit + offset - totalImportantPosts),
-          order,
+          limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
           authUserId,
           isImportant: false,
-          idGT,
-          idGTE,
-          idLT,
-          idLTE,
         });
       }
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
       const posts = this.groupPosts(rows);
 
-      const hasNextPage = posts.length === limit ? true : false;
-      const rowsRemovedLatestElm = hasNextPage
-        ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
-        : posts;
+      const hasNextPage = posts.length === limit + 1 ? true : false;
+      if (hasNextPage) posts.pop();
 
       await Promise.all([
-        this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
-        this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
-        this._postService.bindActorToPost(rowsRemovedLatestElm),
-        this._postService.bindAudienceToPost(rowsRemovedLatestElm),
+        this._commonReaction.bindReactionToPosts(posts),
+        this._mentionService.bindMentionsToPosts(posts),
+        this._postService.bindActorToPost(posts),
+        this._postService.bindAudienceToPost(posts),
       ]);
-      const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
+      const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
         excludeExtraneousValues: true,
       });
       return new PageDto<PostResponseDto>(result, {
-        limit: limit - 1,
+        limit,
         offset,
         hasNextPage,
       });
@@ -128,8 +115,7 @@ export class FeedService {
    * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { offset, order, groupId, idGT, idGTE, idLT, idLTE } = getTimelineDto;
-    const limit = getTimelineDto.limit + 1;
+    const { limit, offset, groupId } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -139,7 +125,7 @@ export class FeedService {
     );
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
-        limit: limit - 1,
+        limit,
         offset,
         hasNextPage: false,
       });
@@ -155,52 +141,41 @@ export class FeedService {
     let importantPostsExc = Promise.resolve([]);
     if (offset < totalImportantPosts) {
       importantPostsExc = this._getTimelineData({
-        offset,
-        limit,
-        order,
+        ...getTimelineDto,
+        limit: limit + 1,
         groupIds,
         authUser,
         isImportant: true,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
       });
     }
     let normalPostsExc = Promise.resolve([]);
-    if (offset + limit - 1 > totalImportantPosts) {
+    if (offset + limit >= totalImportantPosts) {
       normalPostsExc = this._getTimelineData({
+        ...getTimelineDto,
         offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.min(limit, limit + offset - totalImportantPosts),
-        order,
+        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
         groupIds,
         authUser,
         isImportant: false,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
       });
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
     const rows = importantPosts.concat(normalPosts);
     const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit ? true : false;
-    const rowsRemovedLatestElm = hasNextPage
-      ? posts.filter((p) => p.id !== posts[posts.length - 1].id)
-      : posts;
+    const hasNextPage = posts.length === limit + 1 ? true : false;
+    if (hasNextPage) posts.pop();
     await Promise.all([
-      this._commonReaction.bindReactionToPosts(rowsRemovedLatestElm),
-      this._mentionService.bindMentionsToPosts(rowsRemovedLatestElm),
-      this._postService.bindActorToPost(rowsRemovedLatestElm),
-      this._postService.bindAudienceToPost(rowsRemovedLatestElm),
+      this._commonReaction.bindReactionToPosts(posts),
+      this._mentionService.bindMentionsToPosts(posts),
+      this._postService.bindActorToPost(posts),
+      this._postService.bindAudienceToPost(posts),
     ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, rowsRemovedLatestElm, {
+    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
 
     return new PageDto<PostResponseDto>(result, {
-      limit: limit - 1,
+      limit,
       offset,
       hasNextPage,
     });
@@ -338,9 +313,6 @@ export class FeedService {
   }
 
   private async _getTimelineData({
-    offset,
-    limit,
-    order,
     authUser,
     groupIds,
     isImportant,
@@ -348,10 +320,10 @@ export class FeedService {
     idGTE,
     idLT,
     idLTE,
+    offset,
+    limit,
+    order,
   }: {
-    offset: number;
-    limit: number;
-    order: OrderEnum;
     authUser: UserDto;
     groupIds: number[];
     isImportant: boolean;
@@ -359,6 +331,9 @@ export class FeedService {
     idGTE?: any;
     idLT?: any;
     idLTE?: any;
+    offset?: number;
+    limit?: number;
+    order?: OrderEnum;
   }): Promise<any[]> {
     let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
@@ -439,25 +414,25 @@ export class FeedService {
   }
 
   private async _getNewsFeedData({
-    offset,
-    limit,
-    order,
     authUserId,
     isImportant,
     idGT,
     idGTE,
     idLT,
     idLTE,
+    offset,
+    limit,
+    order,
   }: {
-    offset: number;
-    limit: number;
-    order: OrderEnum;
     authUserId: number;
     isImportant: boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
     idLTE?: any;
+    offset?: number;
+    limit?: number;
+    order?: OrderEnum;
   }): Promise<any[]> {
     let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
