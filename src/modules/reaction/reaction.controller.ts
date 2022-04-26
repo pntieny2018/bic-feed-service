@@ -1,16 +1,12 @@
 import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
-import {
-  CommonReactionService,
-  CreateOrDeleteReactionService,
-  CreateReactionService,
-  DeleteReactionService,
-} from './services';
+import { CommonReactionService, CreateOrDeleteReactionService } from './services';
 import { CreateReactionDto, DeleteReactionDto } from './dto/request';
 import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
 import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { GetReactionDto } from './dto/request';
+import { GetReactionPipe } from './pipes';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -34,7 +30,7 @@ export class ReactionController {
   })
   public get(
     @AuthUser() userDto: UserDto,
-    @Query() getReactionDto: GetReactionDto
+    @Query(GetReactionPipe) getReactionDto: GetReactionDto
   ): Promise<ReactionsResponseDto> {
     return this._commonReactionService.getReactions(getReactionDto);
   }

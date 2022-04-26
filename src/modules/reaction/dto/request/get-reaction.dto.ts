@@ -18,13 +18,13 @@ export class GetReactionDto {
     required: false,
     default: 0,
   })
-  public latestId: number = 0;
+  public latestId: number;
 
   @ApiProperty({
     required: false,
     default: 25,
   })
-  public limit: number = 25;
+  public limit: number;
 
   @ApiProperty({
     required: false,
