@@ -1,11 +1,16 @@
-import { RecentSearchType, LIMIT_TOTAL_RECENT_SEARCH } from './recent-search-type.constants';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { plainToClass } from 'class-transformer';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchModel } from '../../database/models/recent-search.model';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { DEFAULT_RECENT_SEARCH_ITEMS_NUMBER } from '.';
+import { LIMIT_TOTAL_RECENT_SEARCH, RecentSearchType } from './recent-search-type.constants';
 
 @Injectable()
 export class RecentSearchService {
@@ -26,10 +31,11 @@ export class RecentSearchService {
    * @param getRecentSearchPostDto GetRecentSearchPostDto
    * @returns Promise resolve RecentSearchDto[] or []
    */
-  public async get(createdBy: number, getRecentSearchPostDto: GetRecentSearchPostDto): Promise<RecentSearchesDto>{
-    const limit = getRecentSearchPostDto.limit ?? DEFAULT_RECENT_SEARCH_ITEMS_NUMBER;
-    const target = getRecentSearchPostDto.target ?? RecentSearchType.ALL;
-    const sort = getRecentSearchPostDto.sort ?? 'desc';
+  public async get(
+    createdBy: number,
+    getRecentSearchPostDto: GetRecentSearchPostDto
+  ): Promise<RecentSearchesDto> {
+    const { limit, offset, target } = getRecentSearchPostDto;
     const filter = target === RecentSearchType.ALL ? {} : { target };
     try {
       const recentSearches = await this._recentSearchModel.findAll({
@@ -40,9 +46,9 @@ export class RecentSearchService {
           ...filter,
         },
         limit: limit,
-        order: [['updatedAt', sort]],
+        offset,
+        order: [['updatedAt', getRecentSearchPostDto.order]],
       });
-      //return recentSearches;
       return plainToClass(
         RecentSearchesDto,
         { target, recentSearches: recentSearches },
@@ -51,7 +57,7 @@ export class RecentSearchService {
     } catch (error) {
       this._logger.error(error, error.stack);
       //this._sentryService.captureException(error);
-      throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new InternalServerErrorException('Internal server error');
     }
   }
 
@@ -62,7 +68,10 @@ export class RecentSearchService {
    * @returns Promise resolve recentSearchPostDto
    * @throws HttpException
    */
-  public async create(createdBy: number, createRecentSearchDto: CreateRecentSearchDto): Promise<RecentSearchDto> {
+  public async create(
+    createdBy: number,
+    createRecentSearchDto: CreateRecentSearchDto
+  ): Promise<RecentSearchDto> {
     try {
       createRecentSearchDto.target = createRecentSearchDto.target?.toLowerCase();
       createRecentSearchDto.keyword = createRecentSearchDto.keyword.toLowerCase();
@@ -85,13 +94,11 @@ export class RecentSearchService {
         await recentSearch.save();
       }
       // Check and delete if need
-      this.needDeleteRecentSearchOverLimit(createdBy);
+      await this.needDeleteRecentSearchOverLimit(createdBy);
 
-      const result = plainToClass(RecentSearchDto, recentSearch, {
+      return plainToClass(RecentSearchDto, recentSearch, {
         excludeExtraneousValues: true,
       });
-
-      return result;
     } catch (error) {
       this._logger.error(error, error?.stack);
       //this._sentryService.captureException(error);

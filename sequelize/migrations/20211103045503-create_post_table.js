@@ -22,6 +22,11 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
+        comments_count: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          defaultValue: 0
+        },
         is_important: {
           type: Sequelize.BOOLEAN,
           allowNull: true,
@@ -67,6 +72,10 @@ module.exports = {
         schema: schemaName,
       }
     );
+
+    await queryInterface.addIndex(tableName, ['created_by']);
+    await queryInterface.addIndex(tableName, ['is_draft', 'is_important', 'created_at']);
+    await queryInterface.addIndex(tableName, ['important_expired_at']);
   },
 
   down: async (queryInterface) => {

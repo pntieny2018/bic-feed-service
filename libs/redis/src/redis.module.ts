@@ -8,7 +8,11 @@ import {
 import { RedisClusterStore } from './redis-cluster.store';
 import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
-import { REDIS_STORE_INSTANCE_TOKEN, REDIS_STORE_MODULE_ID, REDIS_STORE_MODULE_OPTIONS } from './redis-store.constants';
+import {
+  REDIS_STORE_INSTANCE_TOKEN,
+  REDIS_STORE_MODULE_ID,
+  REDIS_STORE_MODULE_OPTIONS,
+} from './redis-store.constants';
 
 @Global()
 @Module({})
@@ -112,7 +116,8 @@ export class RedisModule {
     }
     return {
       provide: REDIS_STORE_MODULE_OPTIONS,
-      useFactory: async (optionsFactory: IRedisStoreModuleOptionsFactory) => optionsFactory.createRedisStoreOptions(),
+      useFactory: async (optionsFactory: IRedisStoreModuleOptionsFactory) =>
+        optionsFactory.createRedisStoreOptions(),
       inject: [options.useExisting || options.useClass],
     };
   }

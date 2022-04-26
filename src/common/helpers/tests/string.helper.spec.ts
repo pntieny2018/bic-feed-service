@@ -8,6 +8,12 @@ describe('StringHelper', function () {
       const result = StringHelper.camelToSnakeCase(stringMock, []);
       expect(result).toEqual(expectString);
     });
+    it('should return old string when have white list', function () {
+      const stringMock = 'UIID';
+      const expectString = 'UIID';
+      const result = StringHelper.camelToSnakeCase(stringMock, ['UIID']);
+      expect(result).toEqual(expectString);
+    });
   });
   describe('snakeToCamelCase', function () {
     it('should return camel case string', function () {
@@ -20,17 +26,23 @@ describe('StringHelper', function () {
   });
   describe('parseCookieStr', function () {
     it('should return cookie object from cookie string', function () {
-      const cookieStringMock = 'auth_id=237e2b6ff5282f665f99cfc73a97e7b1; token=asdsad231232dasd';
+      const cookieStringMock = 'authId=237e2b6ff5282f665f99cfc73a97e7b1; token=asdsad231232dasd';
 
       const expectCookieObject = {
-        auth_id: '237e2b6ff5282f665f99cfc73a97e7b1',
+        authId: '237e2b6ff5282f665f99cfc73a97e7b1',
         token: 'asdsad231232dasd',
       };
 
       const result = StringHelper.parseCookieStr(cookieStringMock);
 
-      expect(result).toMatchObject(expectCookieObject);
       expect(result).toEqual(expectCookieObject);
+      expect(result).toEqual(expectCookieObject);
+    });
+
+    it('should return {} when parse error', function () {
+      const result = StringHelper.parseCookieStr(undefined);
+
+      expect(result).toEqual({});
     });
   });
   describe('isJson', function () {
@@ -38,13 +50,13 @@ describe('StringHelper', function () {
       const jsonMock = {
         name: 'rose',
       };
-      const result = StringHelper.isJson(JSON.stringify(jsonMock));
-      expect(result).toBe(true);
+      const isJson = StringHelper.isJson(JSON.stringify(jsonMock));
+      expect(isJson).toBe(true);
     });
 
     it('should return false if is not json', function () {
-      const result = StringHelper.isJson('asdsadawsd');
-      expect(result).toBe(false);
+      const isJson = StringHelper.isJson('asdsadawsd');
+      expect(isJson).toBe(false);
     });
   });
   describe('randomStr', function () {

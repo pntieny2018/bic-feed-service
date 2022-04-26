@@ -5,14 +5,17 @@ import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import { CleanRecentSearchesDto } from './dto/requests/clean-recent-searches.dto';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { Controller, Delete, Get, Post, Query, Body, Param, ParseIntPipe } from '@nestjs/common';
-import { AuthUser } from '../auth';
-import { UserDto } from '../auth/dto';
+import { AuthUser, UserDto } from '../auth';
+import { APP_VERSION } from '../../common/constants';
 
 @ApiSecurity('authorization')
 @ApiTags('Recent Searches')
-@Controller('recent-searches')
+@Controller({
+  path: 'recent-searches',
+  version: APP_VERSION,
+})
 export class RecentSearchController {
-  public constructor(private _recentSearchPostService: RecentSearchService) {}
+  public constructor(private _recentSearchService: RecentSearchService) {}
 
   @ApiOperation({ summary: 'Get recent search list' })
   @ApiOkResponse({
@@ -24,7 +27,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Query() getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
-    return this._recentSearchPostService.get(user.userId, getRecentSearchPostDto);
+    return this._recentSearchService.get(user.id, getRecentSearchPostDto);
   }
 
   @ApiOperation({ summary: 'Create recent search' })
@@ -37,7 +40,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Body() createRecentSearchPostDto: CreateRecentSearchDto
   ): Promise<RecentSearchDto> {
-    return this._recentSearchPostService.create(user.userId, createRecentSearchPostDto);
+    return this._recentSearchService.create(user.id, createRecentSearchPostDto);
   }
 
   @ApiOperation({ summary: 'Delete recent search' })
@@ -50,8 +53,11 @@ export class RecentSearchController {
     type: Boolean,
   })
   @Delete('/:id/delete')
-  public deleteRecentSearchForPost(@AuthUser() user: UserDto, @Param('id', ParseIntPipe) id: number): Promise<boolean> {
-    return this._recentSearchPostService.delete(user.userId, id);
+  public deleteRecentSearch(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseIntPipe) id: number
+  ): Promise<boolean> {
+    return this._recentSearchService.delete(user.id, id);
   }
 
   @ApiOperation({ summary: 'Clean recent search' })
@@ -60,10 +66,10 @@ export class RecentSearchController {
     type: Boolean,
   })
   @Delete('/:target/clean')
-  public cleanRecentSearchesForPost(
+  public cleanRecentSearches(
     @AuthUser() user: UserDto,
     @Param() cleanRecentSearchesDto: CleanRecentSearchesDto
   ): Promise<boolean> {
-    return this._recentSearchPostService.clean(user.userId, cleanRecentSearchesDto.target);
+    return this._recentSearchService.clean(user.id, cleanRecentSearchesDto.target);
   }
 }

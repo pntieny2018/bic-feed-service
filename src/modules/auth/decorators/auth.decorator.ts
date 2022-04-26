@@ -1,5 +1,7 @@
-import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
+import { HTTP_STATUS_ID } from '../../../common/constants';
+import { LogicException } from '../../../common/exceptions';
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 /**
  * AuthUser decorator resolve auth user info
@@ -7,7 +9,7 @@ import { Request } from 'express';
 export const AuthUser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   const request: Request = ctx.switchToHttp().getRequest();
   if (!request.user) {
-    throw new UnauthorizedException();
+    throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
   }
   return request.user;
 });

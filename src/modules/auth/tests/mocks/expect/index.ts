@@ -1,1 +1,1 @@
-export * from './user-info.expect';
+export * from './user-info.mock';

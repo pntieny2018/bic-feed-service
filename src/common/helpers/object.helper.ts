@@ -7,3 +7,7 @@ export class ObjectHelper {
     }, obj);
   }
 }
+
+export type ClassConstructor<T> = {
+  new (...args: any[]): T;
+};

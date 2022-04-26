@@ -1,7 +1,6 @@
-import * as winston from 'winston';
 import * as Sentry from '@sentry/node';
 import { Module } from '@nestjs/common';
-import { RedisModule } from '@app/redis';
+import { RedisModule } from '@app/redis/redis.module';
 import { HttpModule } from '@nestjs/axios';
 import { SentryModule } from '@app/sentry';
 import { IAxiosConfig } from '../config/axios';
@@ -10,6 +9,11 @@ import { ISentryConfig } from '../config/sentry';
 import { configs } from '../config/configuration';
 import { RewriteFrames } from '@sentry/integrations';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DatabaseModule } from '../database';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { IElasticsearchConfig } from '../config/elasticsearch';
+import { InternalEventEmitterModule } from './custom/event-emitter';
 
 @Module({
   imports: [
@@ -18,6 +22,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       cache: true,
       load: [configs],
     }),
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
+    ScheduleModule.forRoot(),
     HttpModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
@@ -82,7 +100,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           : {};
         return {
           redisOptions: {
-            db: redisConfig.db,
+            keyPrefix: redisConfig.prefix,
             host: redisConfig.host,
             port: redisConfig.port,
             password: redisConfig.password,
@@ -92,7 +110,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService],
     }),
+    ElasticsearchModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
+        return {
+          node: elasticsearchConfig.node,
+          auth: {
+            username: elasticsearchConfig.username,
+            password: elasticsearchConfig.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
+    DatabaseModule,
+    InternalEventEmitterModule,
   ],
-  exports: [HttpModule, RedisModule],
+  exports: [HttpModule, ElasticsearchModule],
 })
 export class LibModule {}

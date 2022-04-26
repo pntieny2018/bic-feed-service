@@ -8,7 +8,7 @@ export class AxiosHelper {
    */
   public static getDataResponse<T>(response: AxiosResponse): T {
     if (response) {
-      return response.data['data'] as T;
+      return response.data['data'] as unknown as T;
     }
 
     return null;

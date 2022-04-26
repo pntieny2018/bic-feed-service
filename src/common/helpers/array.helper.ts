@@ -44,6 +44,11 @@ export class ArrayHelper {
    * @returns bool  true if 2 arrays have the same elements
    */
   public static arraysEqual(a: unknown[], b: unknown[]): boolean {
-    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((val) => b.includes(val));
+    return (
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((val) => b.includes(val))
+    );
   }
 }

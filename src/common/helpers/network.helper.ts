@@ -13,7 +13,9 @@ export class NetworkHelper {
       })
       .filter((info) => {
         return (
-          info?.address.match(/(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2\d\.)|(^172\.3[0-1]\.)|(^192\.168\.)/) !== null
+          info?.address.match(
+            /(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2\d\.)|(^172\.3[0-1]\.)|(^192\.168\.)/
+          ) !== null
         );
       });
   };
@@ -38,7 +40,11 @@ export class NetworkHelper {
         return infos?.filter((i) => !i.internal && i.family === 'IPv4');
       })
       .filter((info) => {
-        return info?.address.match(/(^10\.)|(^172\.1[6-9]\.)|(^172\.2\d\.)|(^172\.3[0-1]\.)|(^192\.168\.)/) !== null;
+        return (
+          info?.address.match(
+            /(^10\.)|(^172\.1[6-9]\.)|(^172\.2\d\.)|(^172\.3[0-1]\.)|(^192\.168\.)/
+          ) !== null
+        );
       });
   };
 

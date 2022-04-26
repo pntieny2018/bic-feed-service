@@ -7,15 +7,23 @@ import { PostReactionModel } from './post-reaction.model';
 import { PostModel } from './post.model';
 import { RecentSearchModel } from './recent-search.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
+import { MentionModel } from './mention.model';
+import { PostGroupModel } from './post-group.model';
+import { FollowModel } from './follow.model';
+import { UserMarkReadPostModel } from './user-mark-read-post.model';
 
 export default [
   PostModel,
   PostReactionModel,
   PostMediaModel,
+  PostGroupModel,
   CommentModel,
   CommentMediaModel,
   CommentReactionModel,
   MediaModel,
   RecentSearchModel,
   UserNewsFeedModel,
+  MentionModel,
+  FollowModel,
+  UserMarkReadPostModel,
 ];

@@ -1,16 +1,22 @@
-export class UserProfile {
-  public fullname: string;
-  public avatar: string;
-  public createdAt?: string;
-  public updatedAt?: string;
-  public username?: string;
-}
+import { Expose } from 'class-transformer';
+import { UserSharedDto } from '../../../shared/user/dto';
+
 export class UserDto {
+  @Expose()
   public username?: string;
+
+  @Expose()
   public email?: string;
-  public userId: number;
+
+  @Expose()
+  public avatar?: string;
+
+  @Expose()
+  public id: number;
+
   public staffRole?: any;
-  public profile?: UserProfile;
+
+  public profile?: UserSharedDto;
 
   public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);

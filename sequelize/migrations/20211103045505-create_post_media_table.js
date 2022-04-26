@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 const schemaName = process.env.POSTGRES_SCHEMA;
-const tableName = 'post_media';
+const tableName = 'posts_media';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -26,6 +26,9 @@ module.exports = {
         schema: schemaName,
       }
     );
+    await queryInterface.addIndex(tableName, ['media_id', 'post_id'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

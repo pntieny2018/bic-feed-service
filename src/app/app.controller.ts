@@ -1,14 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { APP_VERSION } from '../common/constants';
+import { FeedPublisherService } from '../modules/feed-publisher';
 
 @Controller({
+  version: APP_VERSION,
   path: 'app',
-  version: '1',
 })
 export class AppController {
-  public constructor(private readonly _appService: AppService) {}
+  public constructor(private _publisher: FeedPublisherService) {}
+
   @Get()
-  public getHello(): string {
-    return this._appService.getHello();
+  public async test(): Promise<void> {
+    // if user in group not need attach or detach post
   }
 }

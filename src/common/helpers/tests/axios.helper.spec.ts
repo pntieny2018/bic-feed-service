@@ -3,7 +3,7 @@ import { AxiosHelper } from '../axios.helper';
 describe('AxiosHelper', function () {
   describe('getDataResponse', function () {
     it('should return data from axios response', function () {
-      type mockDataType = {
+      type MockDataType = {
         name: string;
         avatar: string;
       };
@@ -17,13 +17,13 @@ describe('AxiosHelper', function () {
         },
         status: 200,
       };
-      const result = AxiosHelper.getDataResponse<mockDataType>(axiosResponseMock as any);
+      const result = AxiosHelper.getDataResponse<MockDataType>(axiosResponseMock as any);
 
       expect(result).toMatchObject(expectData);
     });
 
     it('should return empty data from axios response', function () {
-      type mockDataType = {
+      type MockDataType = {
         name: string;
         avatar: string;
       };
@@ -34,9 +34,15 @@ describe('AxiosHelper', function () {
         },
         status: 200,
       };
-      const result = AxiosHelper.getDataResponse<mockDataType>(axiosResponseMock as any);
+      const result = AxiosHelper.getDataResponse<MockDataType>(axiosResponseMock as any);
 
       expect(result).toMatchObject(expectData);
+    });
+
+    it('should return null ', function () {
+      const result = AxiosHelper.getDataResponse(null);
+
+      expect(result).toBeNull();
     });
   });
   describe('injectParamsToStrUrl', function () {

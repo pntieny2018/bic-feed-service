@@ -19,7 +19,7 @@ describe('HandleResponseInterceptor', () => {
       const inputData = {
         dataKey: 'dataKey',
       };
-      const convertedDataExpect = { data_key: 'dataKey' };
+      const convertedDataExpect = { dataKey: 'dataKey' };
 
       const mockExecutionContext = createMock<ExecutionContext>();
 

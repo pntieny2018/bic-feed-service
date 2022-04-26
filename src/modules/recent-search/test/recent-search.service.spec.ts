@@ -2,21 +2,27 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RecentSearchService } from '../recent-search.service';
 import { RecentSearchModel } from '../../../database/models/recent-search.model';
 import { getModelToken } from '@nestjs/sequelize';
-import { DEFAULT_RECENT_SEARCH_ITEMS_NUMBER, LIMIT_TOTAL_RECENT_SEARCH, RecentSearchType } from '..';
+import {
+  DEFAULT_RECENT_SEARCH_ITEMS_NUMBER,
+  LIMIT_TOTAL_RECENT_SEARCH,
+  RecentSearchType,
+} from '..';
 import { plainToClass } from 'class-transformer';
 import { RecentSearchDto, RecentSearchesDto } from '../dto/responses';
-import { mockedRecentSearchList } from './mocks/recent-search-list';
+import { mockedRecentSearchList } from './mocks/recent-search-list.mock';
 import { HttpException } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
+import { SentryService } from '@app/sentry';
+import { OrderEnum } from '../../../common/dto';
 
 describe('RecentSearchService', () => {
   let recentSearchService: RecentSearchService;
   let recentSearchModelMock;
-  //let sentryService: SentryService;
+  let sentryService: SentryService;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
-        // RecentSearchService,
+        RecentSearchService,
         // {
         //   provide: SentryService,
         //   useValue: {
@@ -42,7 +48,9 @@ describe('RecentSearchService', () => {
     }).compile();
 
     recentSearchService = moduleRef.get<RecentSearchService>(RecentSearchService);
-    recentSearchModelMock = moduleRef.get<typeof RecentSearchModel>(getModelToken(RecentSearchModel));
+    recentSearchModelMock = moduleRef.get<typeof RecentSearchModel>(
+      getModelToken(RecentSearchModel)
+    );
     //sentryService = moduleRef.get<SentryService>(SentryService);
   });
 
@@ -102,11 +110,15 @@ describe('RecentSearchService', () => {
         keyword,
         target,
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(dataCreateMock.changed).toHaveBeenCalled();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(dataCreateMock.set).toBeCalledWith({
         totalSearched: totalSearched + 1,
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(dataCreateMock.save).toHaveBeenCalled();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.needDeleteRecentSearchOverLimit).toHaveBeenCalledTimes(1);
       expect(result).toStrictEqual(
         plainToClass(RecentSearchDto, dataCreateMock, {
@@ -149,6 +161,7 @@ describe('RecentSearchService', () => {
       recentSearchModelMock.count.mockResolvedValueOnce(LIMIT_TOTAL_RECENT_SEARCH);
 
       await recentSearchService.needDeleteRecentSearchOverLimit(createdBy);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.delete).not.toHaveBeenCalled();
     });
 
@@ -160,7 +173,9 @@ describe('RecentSearchService', () => {
       recentSearchModelMock.findOne.mockResolvedValueOnce(dataCreateMock);
 
       await recentSearchService.needDeleteRecentSearchOverLimit(createdBy);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.delete).toHaveBeenCalledTimes(1);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.delete).toHaveBeenLastCalledWith(createdBy, id);
     });
   });
@@ -222,40 +237,17 @@ describe('RecentSearchService', () => {
   describe('Get recent search', () => {
     const createdBy = 1;
     const defaultColumnSort = 'updatedAt';
-    const sort = 'desc';
-    it('Should return a list without any params', async () => {
-      const target = RecentSearchType.ALL;
-      const limit = DEFAULT_RECENT_SEARCH_ITEMS_NUMBER;
-
-      recentSearchModelMock.findAll.mockResolvedValueOnce(mockedRecentSearchList);
-
-      const result = await recentSearchService.get(createdBy, {});
-      expect(result).toStrictEqual(
-        plainToClass(RecentSearchesDto, {
-          target,
-          recentSearches: mockedRecentSearchList,
-        })
-      );
-
-      const queryArgFindUsers: any = recentSearchModelMock.findAll.mock.calls[0][0];
-      expect(queryArgFindUsers.limit).toBe(limit);
-      expect(queryArgFindUsers.where).toStrictEqual({
-        createdBy,
-      });
-      expect(queryArgFindUsers.order).toStrictEqual([[defaultColumnSort, sort]]);
-
-      recentSearchModelMock.findAll.mockClear();
-    });
-
+    const sort = OrderEnum.DESC;
     it('Should be return empty list', async () => {
       const target = 'post' as RecentSearchType;
+      const order = OrderEnum.DESC
       const limit = 2;
 
       recentSearchModelMock.findAll.mockResolvedValueOnce([]);
 
       const result = await recentSearchService.get(createdBy, {
         limit,
-        sort,
+        order,
         target,
       });
       expect(result).toStrictEqual(

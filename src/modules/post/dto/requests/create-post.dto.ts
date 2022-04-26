@@ -1,37 +1,116 @@
-import { Expose, Transform } from 'class-transformer';
+import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
+import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { PostContentDto } from '../post-content.dto';
-import { Audience } from '../audience.dto';
-import { SettingDto } from '../setting.dto';
+import {
+  isArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsObject,
+  ValidateIf,
+} from 'class-validator';
+import { PostSettingDto } from '../common/post-setting.dto';
+import { MediaDto } from '../../../media/dto';
+import { AudienceRequestDto } from './audience.request.dto';
+import { UserMentionDto } from '../../../mention/dto';
 
 export class CreatePostDto {
   @ApiProperty({
     description: 'Audience',
-    type: Audience,
+    type: AudienceRequestDto,
+    example: {
+      userIds: [],
+      groupIds: [1],
+    },
   })
-  public audience?: Audience;
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => AudienceRequestDto)
+  public audience: AudienceRequestDto;
+
+  @ApiProperty({
+    description: 'Content of post',
+    type: String,
+    example: 'Bla bla bla...',
+  })
+  @IsOptional()
+  @Type(() => String)
+  public content: string = null;
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
-    type: PostContentDto,
+    type: MediaDto,
+    required: false,
+    example: {
+      images: [
+        {
+          id: 1,
+          url: 'https://google.com',
+          name: 'FIle name 1',
+        },
+      ],
+      videos: [],
+      files: [],
+    },
   })
-  public data?: PostContentDto;
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => MediaDto)
+  public media: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
     description: 'Setting post',
-    type: SettingDto,
+    type: PostSettingDto,
+    required: false,
+    example: {
+      canShare: true,
+      canReact: true,
+      canComment: true,
+      isImportant: false,
+      importantExpiredAt: null,
+    },
   })
-  @IsNotEmpty()
-  public setting?: SettingDto;
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => PostSettingDto)
+  public setting?: PostSettingDto = {
+    canShare: true,
+    canReact: true,
+    canComment: true,
+    isImportant: false,
+    importantExpiredAt: null,
+  };
 
   @ApiProperty({
-    description: 'To know draft post or not',
-    name: 'is_draft',
-    type: Boolean,
-    default: true,
+    type: UserMentionDto,
+    example: {
+      dangdiep: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      tuine: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
+    },
   })
-  @IsBoolean()
   @IsOptional()
-  public isDraft?: boolean = false;
+  @Type(() => UserMentionDto)
+  @Transform(({ value }) => {
+    if (typeof value === 'object') {
+      const mentionUserIds = [];
+      for (const property in value) {
+        if (value[property]?.id) mentionUserIds.push(value[property].id);
+      }
+      return mentionUserIds;
+    }
+    return value;
+  })
+  public mentions?: number[] = [];
 }

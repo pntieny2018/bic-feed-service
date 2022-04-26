@@ -1,5 +1,5 @@
 import { UserDto } from './dto';
-import * as jwkToPem from 'jwk-to-pem';
+import jwkToPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
@@ -7,11 +7,21 @@ import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { UserService } from '../../shared/user';
+import { ClassTransformer } from 'class-transformer';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class AuthService {
   private _logger = new Logger(AuthService.name);
-  public constructor(private _httpService: HttpService, private _configService: ConfigService) {}
+  private _classTransformer = new ClassTransformer();
+
+  public constructor(
+    private _userService: UserService,
+    private _httpService: HttpService,
+    private _configService: ConfigService
+  ) {}
 
   public async login(token: string): Promise<UserDto> {
     const decodedJwt = jwt.decode(token, { complete: true });
@@ -22,7 +32,7 @@ export class AuthService {
     const cognitoConfig = this._configService.get<ICognitoConfig>('cognito');
     const tokenValidationUrl = `https://cognito-idp.${cognitoConfig.region}.amazonaws.com/${cognitoConfig.poolId}/.well-known/jwks.json`;
     const response = await lastValueFrom(this._httpService.get(tokenValidationUrl));
-    const keys = response['data']?.keys;
+    const keys = response['data']['keys'];
     const pems = keys
       .map((key) => {
         const keyId = key.kid;
@@ -36,26 +46,40 @@ export class AuthService {
       })
       .reduce((obj, item) => ({ ...obj, ...item }), {});
 
-    const kid = decodedJwt?.['header']?.kid;
+    const kid = decodedJwt['header']['kid'];
     const pem = pems[kid];
     if (!pem) {
-      throw new UnauthorizedException('Unauthorized');
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
-    try {
-      const payload = await jwt.verify(token, pem);
-      const isId = payload['token_use'] === 'id';
+    let payload;
 
-      return new UserDto({
-        email: payload['email'],
-        username: isId ? payload['custom:username'] : payload['username'],
-        userId: isId ? parseInt(payload['custom:bein_user_id']) : 0,
-        staffRole: isId ? payload['custom:bein_staff_role'] : null,
-        profile: null,
-      });
+    try {
+      payload = await jwt.verify(token, pem);
     } catch (e) {
-      this._logger.error(e, e?.stack);
-      const message = e instanceof TokenExpiredError ? 'Auth token expired' : 'Unauthorized';
-      throw new UnauthorizedException(message);
+      this._logger.error(e, e.stack);
+      if (e instanceof TokenExpiredError) {
+        throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
+      }
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
+
+    if (!payload) {
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    }
+
+    const user = this._classTransformer.plainToInstance(UserDto, {
+      email: payload['email'],
+      username: payload['custom:username'],
+      id: parseInt(payload['custom:bein_user_id']),
+      staffRole: payload['custom:bein_staff_role'],
+    });
+
+    user.profile = await this._userService.get(user.id);
+
+    if (!user.profile) {
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    }
+
+    return user;
   }
 }

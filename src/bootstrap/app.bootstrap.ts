@@ -1,9 +1,11 @@
 import { IAppConfig } from '../config/app';
 import { ConfigService } from '@nestjs/config';
-import { INestApplication, Logger, VersioningType } from '@nestjs/common';
 import { HttpExceptionFilter } from '../common/filters';
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { HandleResponseInterceptor } from '../common/interceptors';
+import { INestApplication, Logger, VersioningType } from '@nestjs/common';
+import {
+  HandleResponseInterceptor,
+  InjectMessageResponseInterceptor,
+} from '../common/interceptors';
 
 export class AppBootstrap {
   /**
@@ -14,6 +16,10 @@ export class AppBootstrap {
    */
   public static async init(app: INestApplication, configService: ConfigService): Promise<void> {
     const appConfig = configService.get<IAppConfig>('app');
+
+    app.enableCors({
+      origin: '*',
+    });
 
     app.enableVersioning({
       type: VersioningType.URI,

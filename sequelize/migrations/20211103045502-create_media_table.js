@@ -31,6 +31,26 @@ module.exports = {
           allowNull: true,
           defaultValue: true,
         },
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        origin_name: {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        width: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        height: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        extension: {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
         created_at: {
           type: Sequelize.DATE,
           allowNull: false,

@@ -20,8 +20,13 @@ module.exports = {
         },
         parent_id: {
           type: Sequelize.INTEGER,
+          allowNull: false,
+          defaultValue: 0,
+        },
+        total_reply: {
+          type: Sequelize.INTEGER,
           allowNull: true,
-          references: { model: tableName, key: 'id' },
+          defaultValue: 0,
         },
         created_by: {
           type: Sequelize.INTEGER,
@@ -29,7 +34,7 @@ module.exports = {
         },
         updated_by: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         content: {
           type: Sequelize.STRING(5000),
@@ -41,6 +46,10 @@ module.exports = {
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
         },
         updated_at: {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
+        deleted_at: {
           type: Sequelize.DATE,
           allowNull: true,
         },

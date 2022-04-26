@@ -1,29 +1,33 @@
-import { Module } from '@nestjs/common';
+import { MediaModule } from '../media';
+import { UserModule } from '../../shared/user';
+import { forwardRef, Module } from '@nestjs/common';
 import { DatabaseModule } from '../../database';
 import { PostService } from './post.service';
 import { PostController } from './post.controller';
-import { ElasticsearchModule } from '@nestjs/elasticsearch';
-import { ConfigService } from '@nestjs/config';
-import { IElasticsearchConfig } from 'src/config/elasticsearch';
+import { MentionModule } from '../mention';
+import { PostPolicyService } from './post-policy.service';
+import { GroupModule } from '../../shared/group';
+import { CommentModule } from '../comment';
+import { AuthorityModule } from '../authority';
+import { LibModule } from '../../app/lib.module';
+import { ReactionModule } from '../reaction';
+import { FeedModule } from '../feed';
 
 @Module({
   imports: [
     DatabaseModule,
-    ElasticsearchModule.registerAsync({
-      useFactory: async (configService: ConfigService) => {
-        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
-        return {
-          node: elasticsearchConfig.node,
-          auth: {
-            username: elasticsearchConfig.username,
-            password: elasticsearchConfig.password,
-          },
-        };
-      },
-      inject: [ConfigService],
-    }),
+    UserModule,
+    GroupModule,
+    MediaModule,
+    MentionModule,
+    ReactionModule,
+    AuthorityModule,
+    LibModule,
+    forwardRef(() => CommentModule),
+    forwardRef(() => FeedModule),
   ],
-  providers: [PostService],
   controllers: [PostController],
+  providers: [PostService, PostPolicyService],
+  exports: [PostService, PostPolicyService],
 })
 export class PostModule {}

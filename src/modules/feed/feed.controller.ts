@@ -1,38 +1,45 @@
-import {
-  ApiForbiddenResponse,
-  ApiInternalServerErrorResponse,
-  ApiSecurity,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
-import { Controller, Get, Logger } from '@nestjs/common';
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { PageDto } from '../../common/dto';
+import { AuthUser, UserDto } from '../auth';
+import { GetTimelineDto } from './dto/request';
+import { FeedService } from './feed.service';
+import { PostResponseDto } from '../post/dto/responses';
 import { APP_VERSION } from '../../common/constants';
-import { GenericApiOkResponse, ResponseMessages } from '../../common/decorators';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
-@ApiUnauthorizedResponse({
-  description: 'Unauthorized',
-})
-@ApiInternalServerErrorResponse({
-  description: 'Internal Server Error',
-})
-@ApiForbiddenResponse({
-  description: 'Forbidden',
-})
 @Controller({
-  path: 'feeds',
   version: APP_VERSION,
+  path: 'feeds',
 })
 export class FeedController {
-  protected logger = new Logger(FeedController.name);
+  public constructor(private readonly _feedService: FeedService) {}
 
-  @Get('/newsfeed')
-  @GenericApiOkResponse(String, 'Get newsfeed successfully')
-  @ResponseMessages({
-    success: 'Get newsfeed successfully',
+  @ApiOperation({ summary: 'Get timeline in a group.' })
+  @ApiOkResponse({
+    description: 'Get timeline in a group successfully.',
+    type: PageDto,
   })
-  public getNewsFeed(): string {
-    return '10';
+  @Get('/timeline')
+  public async getTimeline(
+    @AuthUser() authUser: UserDto,
+    @Query() getTimelineDto: GetTimelineDto
+  ): Promise<any> {
+    return this._feedService.getTimeline(authUser, getTimelineDto);
+  }
+
+  @ApiOperation({ summary: 'Get newsfeed of user' })
+  @ApiOkResponse({
+    description: 'Get timeline in a group successfully.',
+    type: PageDto,
+  })
+  @Get('/newsfeed')
+  public async getNewsFeed(
+    @AuthUser() authUser: UserDto,
+    @Query() getNewsFeedDto: GetNewsFeedDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._feedService.getNewsFeed(authUser, getNewsFeedDto);
   }
 }

@@ -1,25 +1,24 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { ResponseDto } from '../dto';
-import { StatusCode } from '../enum';
-import { ValidatorException } from '../exceptions';
+import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
+import { LogicException, ValidatorException } from '../exceptions';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
-  public catch(exception: Error, host: ArgumentsHost): void {
+  public catch(exception: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    if (response.req.originalUrl === '/') {
-      response.redirect(this._rootPath);
-    }
     if (exception instanceof ValidatorException) {
-      this.handleValidatorException(exception, response);
+      return this.handleValidatorException(exception, response);
+    } else if (exception instanceof LogicException) {
+      return this.handleLogicException(exception, response);
     } else if (exception instanceof HttpException) {
-      this.handleHttpException(exception, response);
+      return this.handleHttpException(exception, response);
     } else {
-      this.handleUnKnowException(exception, response);
+      return this.handleUnKnowException(exception, response);
     }
   }
 
@@ -28,11 +27,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleHttpException(exception: HttpException, response: Response): void {
+  protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
-    response.status(status).json(
+    let code = HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR;
+
+    if (status < HttpStatus.INTERNAL_SERVER_ERROR) {
+      code = HTTP_STATUS_ID.API_VALIDATION_ERROR;
+    }
+    return response.status(status).json(
       new ResponseDto({
-        code: status < HttpStatus.INTERNAL_SERVER_ERROR ? StatusCode.BAD_REQUEST : StatusCode.INTERNAL_SERVER_ERROR,
+        code: code,
         meta: {
           message: exception.message,
           stack: this._getStack(exception),
@@ -46,10 +50,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleUnKnowException(exception: Error, response: Response): void {
-    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
+  protected handleUnKnowException(exception: Error, response: Response): Response {
+    return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(
       new ResponseDto({
-        code: StatusCode.INTERNAL_SERVER_ERROR,
+        code: HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR,
         meta: {
           message: exception['message'],
           stack: this._getStack(exception),
@@ -63,13 +67,50 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @param exception
    * @param response
    */
-  protected handleValidatorException(exception: ValidatorException, response: Response): void {
-    response.status(HttpStatus.BAD_REQUEST).json(
+  protected handleValidatorException(exception: ValidatorException, response: Response): Response {
+    let message = 'Validate fails';
+
+    if (response.responseMessage && response.responseMessage.validator) {
+      message = response.responseMessage.validator.fails;
+    }
+    return response.status(HttpStatus.BAD_REQUEST).json(
       new ResponseDto({
-        code: StatusCode.BAD_REQUEST,
+        code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
         meta: {
-          message: response?.responseMessage?.validator?.fails || 'Validate fails',
+          message: message,
           errors: exception.getResponse(),
+          stack: this._getStack(exception),
+        },
+      })
+    );
+  }
+
+  /**
+   * Handle LogicException
+   * @param exception
+   * @param response
+   */
+  protected handleLogicException(exception: LogicException, response: Response): Response {
+    let status = HttpStatus.BAD_REQUEST;
+
+    switch (exception.id) {
+      case HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED:
+      case HTTP_STATUS_ID.API_UNAUTHORIZED:
+        status = HttpStatus.UNAUTHORIZED;
+        break;
+      case HTTP_STATUS_ID.API_FORBIDDEN:
+        status = HttpStatus.FORBIDDEN;
+        break;
+      case HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR:
+        status = HttpStatus.INTERNAL_SERVER_ERROR;
+        break;
+    }
+
+    return response.status(status).json(
+      new ResponseDto({
+        code: exception.id,
+        meta: {
+          message: HTTP_MESSAGES[exception.id],
           stack: this._getStack(exception),
         },
       })
@@ -83,6 +124,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   private _getStack(exception: HttpException | Error): string[] {
     const arrayStack = exception.stack.split('\n');
-    return this._appEnv === 'development' ? arrayStack : null;
+    if (this._appEnv === 'development') {
+      return arrayStack;
+    }
+    return null;
   }
 }

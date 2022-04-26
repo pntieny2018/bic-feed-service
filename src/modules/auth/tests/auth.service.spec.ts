@@ -8,6 +8,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import jwt from 'jsonwebtoken';
+import { UserService } from '../../../shared/user';
 
 const httpServiceMock = {
   get: (): Observable<any> => {
@@ -33,11 +34,18 @@ const configServiceMock = {
 
 describe('AuthService', () => {
   let authService: AuthService;
+  let userService;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
+        {
+          provide: UserService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
         {
           provide: HttpService,
           useValue: httpServiceMock,
@@ -50,6 +58,7 @@ describe('AuthService', () => {
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
+    userService = module.get<UserService>(UserService);
   });
 
   it('AuthService should be defined', () => {
@@ -64,11 +73,12 @@ describe('AuthService', () => {
             await authService.login(authInput.nullToken);
           } catch (e) {
             expect(e).toBeInstanceOf(UnauthorizedException);
+            expect((e as UnauthorizedException).message).toEqual('Unauthorized');
           }
         });
       });
 
-      describe('undefine token', () => {
+      describe('undefined token', () => {
         it('should throw an UnauthorizedException', async () => {
           try {
             await authService.login(undefined);
@@ -100,20 +110,32 @@ describe('AuthService', () => {
 
       describe('expired token', () => {
         it('should throw an UnauthorizedException', async () => {
+          jest.spyOn(jwt, 'verify').mockImplementation(() => {
+            throw new jwt.TokenExpiredError('Token Expired Error', new Date());
+          });
           try {
             await authService.login(authInput.expiredToken);
           } catch (e) {
             expect(e).toBeInstanceOf(UnauthorizedException);
+            expect((e as UnauthorizedException).message).toEqual('Auth token expired');
           }
         });
       });
     });
-
     describe('valid token', () => {
-      jest.spyOn(jwt, 'verify').mockImplementation(() => payLoad);
-
       it('should return the user data', async () => {
-        const user: UserDto = await authService.login(authInput.tokenValid);
+        jest.spyOn(jwt, 'verify').mockImplementation(() => payLoad);
+        userService.get.mockResolvedValue({
+          id: 4,
+          username: 'tronghm',
+          fullname: 'Hoàng Minh Trọng',
+          avatar:
+            'https://bein-development-storage.s3.ap-southeast-1.amazonaws.com/public/a/f9/af95058bbbc7ace1630495801f5b8694.JPG',
+          groups: [1, 2],
+        });
+
+        const user = await authService.login(authInput.tokenValid);
+        expect(user).toBeInstanceOf(UserDto);
         expect(user).toEqual(userInfoExpect);
       });
     });
