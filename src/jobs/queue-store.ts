@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
-import { Queue, Worker } from 'bullmq';
+import { Queue } from 'bullmq';
 import { IRedisConfig } from '../config/redis';
-import { REACTION_KIND_LIMIT } from '../modules/reaction/reaction.constant';
+import { NetworkHelper } from '../common/helpers';
 
 export function getDynamicQueues(): Map<string, Queue> {
   if (!global.DynamicQueues) {
@@ -10,16 +10,11 @@ export function getDynamicQueues(): Map<string, Queue> {
   return global.DynamicQueues;
 }
 
-export function findOrRegisterQueue(
-  queueName: string,
-  jobHandle: (...args: any[]) => any,
-  options?: IRedisConfig
-): Queue {
+export function findOrRegisterQueue(queueName: string, options?: IRedisConfig): Queue {
   const queues = getDynamicQueues();
   if (queues.has(queueName)) {
     return queues.get(queueName);
   }
-
   const sslConfig = options.ssl
     ? {
         tls: {
@@ -39,30 +34,15 @@ export function findOrRegisterQueue(
   });
 
   const queue = new Queue(queueName, {
-    // prefix: options.prefix,
     connection: redisConnection,
     sharedConnection: true,
   });
+
+  redisConnection
+    .duplicate()
+    .publish(`${NetworkHelper.getPrivateIPs()[0]}:new_reaction_queue`, queueName)
+    .catch((ex) => process.stdout.write('error when publish queue' + JSON.stringify(ex)));
 
   queues.set(queueName, queue);
-
-  const worker = new Worker(queueName, jobHandle, {
-    concurrency: REACTION_KIND_LIMIT,
-    connection: redisConnection,
-    sharedConnection: true,
-  });
-
-  worker.on('failed', (job, result) => {
-    process.stdout.write(
-      `[ReactionQueue] ${job.id} Job failed with result: ${JSON.stringify(result)} \n`
-    );
-  });
-
-  worker.on('completed', (job, result) => {
-    process.stdout.write(
-      `[ReactionQueue] ${job.id} Job completed with result: ${JSON.stringify(result)} \n`
-    );
-  });
-
   return queue;
 }

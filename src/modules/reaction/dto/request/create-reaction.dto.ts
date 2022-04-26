@@ -9,7 +9,7 @@ export class CreateReactionDto {
   @IsNotEmpty()
   @Expose()
   @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
-  reactionName: string;
+  public reactionName: string;
 
   @ApiProperty({ example: 'POST' })
   @IsNotEmpty()

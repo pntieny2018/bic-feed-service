@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ObjectHelper } from '../../common/helpers';
-import { ReactionResponseDto } from './dto/response';
-import { PostResponseDto } from '../post/dto/responses';
-import { CommentResponseDto } from '../comment/dto/response';
-import { TypeActivity, VerbActivity } from '../../notification';
-import {
-  ActivityObject,
-  NotificationActivity,
-} from '../../notification/dto/requests/notification-activity.dto';
+import { ReactionResponseDto } from '../../modules/reaction/dto/response';
+import { PostResponseDto } from '../../modules/post/dto/responses';
+import { CommentResponseDto } from '../../modules/comment/dto/response';
+import { TypeActivity, VerbActivity } from '../index';
+import { ActivityObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
 
 @Injectable()
-export class ReactionNotificationService {
+export class ReactionActivityService {
   protected createReactionPostPayload(
     post: PostResponseDto,
     reaction: ReactionResponseDto

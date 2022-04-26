@@ -1,7 +1,7 @@
 import { RedisService } from '@app/redis';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateReactionService, DeleteReactionService } from '../services';
+import { CreateReactionService, DeleteReactionService } from '../activities';
 import { mockCreateReactionDto, mockDeleteReactionDto, mockUserDto } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
@@ -14,7 +14,7 @@ import { GroupService } from '../../../shared/group';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CommonReactionService } from '../services';
+import { CommonReactionService } from '../activities';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 
 describe('ReactionController', () => {

@@ -7,7 +7,7 @@ import { ReactionController } from './reaction.controller';
 import { ReactionService } from './reaction.service';
 import { PostModule } from '../post';
 import { CommentModule } from '../comment';
-import { ReactionNotificationService } from './reaction-notification.service';
+import { ReactionActivityService } from '../../notification/activities/reaction-activity.service';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { ReactionNotificationService } from './reaction-notification.service';
     NotificationModule,
   ],
   controllers: [ReactionController],
-  providers: [ReactionService, ReactionNotificationService],
-  exports: [ReactionService, ReactionNotificationService],
+  providers: [ReactionService, ReactionActivityService],
+  exports: [ReactionService, ReactionActivityService],
 })
 export class ReactionModule {}

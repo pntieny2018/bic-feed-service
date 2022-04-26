@@ -20,7 +20,7 @@ import { FeedModule } from '../feed';
     GroupModule,
     MediaModule,
     MentionModule,
-    ReactionModule,
+    forwardRef(() => ReactionModule),
     AuthorityModule,
     LibModule,
     forwardRef(() => CommentModule),

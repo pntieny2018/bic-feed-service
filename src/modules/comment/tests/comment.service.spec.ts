@@ -28,7 +28,7 @@ import { CommentResponseDto } from '../dto/response/comment.response.dto';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
 import { getCommentMock, getCommentRawMock, getCommentsMock } from './mocks/get-comments.mock';
-import { DeleteReactionService } from '../../reaction/services';
+import { DeleteReactionService } from '../../reaction/activities';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -41,7 +41,7 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
-  let deleteReactionService
+  let deleteReactionService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -110,8 +110,8 @@ describe('CommentService', () => {
         {
           provide: DeleteReactionService,
           useValue: {
-            deleteReactionByCommentIds: jest.fn()
-          }
+            deleteReactionByCommentIds: jest.fn(),
+          },
         },
         {
           provide: Sequelize,

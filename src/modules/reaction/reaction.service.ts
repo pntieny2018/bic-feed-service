@@ -3,9 +3,7 @@ import {
   CreateReactionDto,
   DeleteReactionDto,
   GetReactionDto,
-  JobReactionDataDto,
 } from './dto/request';
-import { Job } from 'bullmq';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { CommentService } from '../comment';
@@ -33,7 +31,7 @@ import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
 import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { ReactionNotificationService } from './reaction-notification.service';
+import { ReactionActivityService } from '../../notification/activities/reaction-activity.service';
 import { TypeActivity } from '../../notification';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
@@ -56,7 +54,7 @@ export class ReactionService {
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _reactionNotificationService: ReactionNotificationService
+    private readonly _reactionNotificationService: ReactionActivityService
   ) {}
 
   public async getReactions(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
@@ -129,20 +127,10 @@ export class ReactionService {
     payload: CreateReactionDto | DeleteReactionDto
   ): Promise<void> {
     const queueName = `reaction:${payload.target.toString().toLowerCase()}:${payload.targetId}`;
+
     const redisConfig = this._configService.get<IRedisConfig>('redis');
 
-    const queue = findOrRegisterQueue(
-      queueName,
-      async (job: Job<JobReactionDataDto>) => {
-        if (job.data.action === ActionReaction.ADD) {
-          return await this._createReaction(job.data.userDto, job.data.payload as any);
-        } else if (job.data.action === ActionReaction.REMOVE) {
-          return await this.deleteReaction(job.data.userDto, job.data.payload as any);
-        }
-        return 'Action not found !';
-      },
-      redisConfig
-    );
+    const queue = findOrRegisterQueue(queueName, redisConfig);
 
     const action =
       payload instanceof CreateReactionDto ? ActionReaction.ADD : ActionReaction.REMOVE;
@@ -170,7 +158,7 @@ export class ReactionService {
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve boolean
    */
-  private _createReaction(
+  public createReaction(
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
@@ -334,7 +322,7 @@ export class ReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public deleteReaction(userDto: UserDto, deleteReactionDto: DeleteReactionDto): Promise<boolean> {
+  public deleteReaction(userDto: UserDto, deleteReactionDto: DeleteReactionDto): Promise<void> {
     switch (deleteReactionDto.target) {
       case ReactionEnum.POST:
         return this._deletePostReaction(userDto, deleteReactionDto);
@@ -355,32 +343,31 @@ export class ReactionService {
   private async _deletePostReaction(
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
-  ): Promise<boolean> {
+  ): Promise<void> {
     this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
 
-    const { id: userId } = userDto;
-    const { reactionId } = deleteReactionDto;
+    const conditions = {};
 
-    try {
-      const existedReaction = await this._postReactionModel.findOne({
-        where: {
-          id: reactionId,
-          createdBy: userId,
-        },
-      });
-
-      if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
-      }
-
-      await existedReaction.destroy();
-
-      return true;
-    } catch (e) {
-      this._logger.error(e, e?.stack);
-
-      throw e;
+    if (deleteReactionDto.reactionName) {
+      conditions['reactionName'] = deleteReactionDto.reactionName;
     }
+
+    if (deleteReactionDto.reactionId) {
+      conditions['id'] = deleteReactionDto.reactionId;
+    }
+
+    const existedReaction = await this._postReactionModel.findOne({
+      where: {
+        ...conditions,
+        createdBy: userDto.id,
+      },
+    });
+
+    if (!existedReaction) {
+      throw new LogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+    }
+
+    await existedReaction.destroy();
   }
 
   /**
@@ -393,28 +380,27 @@ export class ReactionService {
   private async _deleteCommentReaction(
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
-  ): Promise<boolean> {
+  ): Promise<void> {
     const { id: userId } = userDto;
     const { reactionId } = deleteReactionDto;
-    try {
-      const existedReaction = await this._commentReactionModel.findOne({
-        where: {
-          id: reactionId,
-          createdBy: userId,
-        },
-      });
 
-      if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
-      }
-
-      await existedReaction.destroy();
-
-      return true;
-    } catch (e) {
-      this._logger.error(e, e?.stack);
-      throw e;
+    const conditions = {};
+    if (deleteReactionDto.reactionName) {
+      conditions['reactionName'] = deleteReactionDto.reactionName;
     }
+    if (deleteReactionDto.reactionId) {
+      conditions['id'] = deleteReactionDto.reactionId;
+    }
+    const existedReaction = await this._commentReactionModel.findOne({
+      where: {
+        id: reactionId,
+        createdBy: userId,
+      },
+    });
+    if (!existedReaction) {
+      throw new LogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+    }
+    await existedReaction.destroy();
   }
 
   /**

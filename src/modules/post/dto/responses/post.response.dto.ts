@@ -157,6 +157,9 @@ export class PostResponseDto {
   @Expose()
   public createdAt: Date;
 
+  @Expose()
+  public updatedAt?: Date;
+
   @ApiProperty({
     type: Number,
   })
