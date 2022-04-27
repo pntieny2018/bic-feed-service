@@ -1,15 +1,6 @@
 import { DataTypes, Optional } from 'sequelize';
-import {
-  AllowNull,
-  AutoIncrement,
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
+import { AllowNull, AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostResponseDto } from '../../modules/post/dto/responses';
-import { PostModel } from './post.model';
 
 export interface IPostEditedHistory {
   id: number;
@@ -32,7 +23,6 @@ export class PostEditedHistoryModel
   @Column
   public id: number;
 
-  @ForeignKey(() => PostModel)
   @Column
   public postId: number;
 

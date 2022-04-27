@@ -105,10 +105,6 @@ export class PostController {
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
       const postResponseDto = await this._postService.getPost(created.id, user, new GetPostDto());
-      await this._postService.savePostEditedHistory(created.id, {
-        oldData: null,
-        newData: postResponseDto,
-      });
       return postResponseDto;
     }
   }
@@ -130,10 +126,6 @@ export class PostController {
     const isUpdated = await this._postService.updatePost(postId, user, createPostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
-      await this._postService.savePostEditedHistory(postId, {
-        oldData: postBefore,
-        newData: postUpdated,
-      });
       this._eventEmitter.emit(
         new PostHasBeenUpdatedEvent({
           oldPost: postBefore,
@@ -180,7 +172,6 @@ export class PostController {
   ): Promise<boolean> {
     const postDeleted = await this._postService.deletePost(postId, user.id);
     if (postDeleted) {
-      await this._postService.deletePostEditedHistory(postId);
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
           post: postDeleted,

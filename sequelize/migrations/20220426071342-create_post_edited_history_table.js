@@ -16,7 +16,6 @@ module.exports = {
         post_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
-          references: { model: 'posts', key: 'id' },
         },
         edited_at: {
           type: Sequelize.DATE,

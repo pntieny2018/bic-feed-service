@@ -530,18 +530,13 @@ export class PostService {
   public async savePostEditedHistory(
     postId: number,
     { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
-  ): Promise<void> {
-    try {
-      await this._postEditedHistoryModel.create({
-        postId: postId,
-        editedAt: newData.updatedAt ?? newData.createdAt,
-        oldData: oldData,
-        newData: newData,
-      });
-    } catch (e) {
-      this._logger.error(e, e?.stack);
-      throw e;
-    }
+  ): Promise<any> {
+    return this._postEditedHistoryModel.create({
+      postId: postId,
+      editedAt: newData.updatedAt ?? newData.createdAt,
+      oldData: oldData,
+      newData: newData,
+    });
   }
 
   /**
@@ -715,17 +710,12 @@ export class PostService {
    * Delete post edited history
    * @param postId number
    */
-  public async deletePostEditedHistory(postId: number): Promise<void> {
-    try {
-      await this._postEditedHistoryModel.destroy({
-        where: {
-          postId: postId,
-        },
-      });
-    } catch (e) {
-      this._logger.error(e, e?.stack);
-      throw e;
-    }
+  public async deletePostEditedHistory(postId: number): Promise<any> {
+    return this._postEditedHistoryModel.destroy({
+      where: {
+        postId: postId,
+      },
+    });
   }
 
   /**
