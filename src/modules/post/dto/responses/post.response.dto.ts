@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { PageDto } from '../../../../common/dto';
 import { UserSharedDto } from '../../../../shared/user/dto';
-import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
+import { CommentResponseDto } from '../../../comment/dto/response';
 import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { PostSettingDto } from '../common/post-setting.dto';

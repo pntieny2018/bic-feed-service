@@ -1,19 +1,19 @@
-import { CommentService } from '../../modules/comment';
+import { On } from '../../common/decorators';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
-import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
-import { NotificationService } from '../../notification';
-import { ElasticsearchHelper } from '../../common/helpers';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import {
-  CreatedCommentPayloadDto,
   DeletedCommentPayloadDto,
   UpdatedCommentPayloadDto,
 } from '../../notification/dto/requests/comment';
+import { Injectable, Logger } from '@nestjs/common';
+import { NotificationService } from '../../notification';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { CommentActivityService } from '../../notification/activities';
+import { CommentDissociationService } from '../../notification/services';
+import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
 
 @Injectable()
 export class CommentListener {
@@ -21,50 +21,54 @@ export class CommentListener {
   public constructor(
     private _notificationService: NotificationService,
     private _elasticsearchService: ElasticsearchService,
-    private _commentService: CommentService
+    private _commentActivityService: CommentActivityService,
+    private _commentDissociationService: CommentDissociationService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
   public async onCommentHasBeenCreated(event: CommentHasBeenCreatedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
 
-    const { post, isReply, commentResponse } = event.payload;
+    const { postResponse, isReply, commentResponse } = event.payload;
 
-    let relatedParties;
-    const mentions = Object.values(commentResponse.mentions).map((u) => u.id);
-    if (!isReply) {
-      if (!post.mentions) {
-        post.mentions = [];
-      }
+    let commentActivity;
 
-      relatedParties = await this._commentService.getRecipientWhenCreatedCommentForPost(
-        commentResponse.actor.id,
-        0,
-        mentions,
-        post
+    const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
+
+    if (isReply) {
+      commentActivity = this._commentActivityService.createReplyCommentPayload(
+        postResponse,
+        commentResponse
       );
     } else {
-      const groupIds = post.groups.map((g) => g.groupId);
-
-      relatedParties = await this._commentService.getRecipientWhenRepliedComment(
-        commentResponse.actor.id,
-        groupIds,
-        commentResponse.parentId,
-        mentions
+      commentActivity = this._commentActivityService.createCommentPayload(
+        postResponse,
+        commentResponse
       );
     }
-    this._notificationService.publishCommentNotification<CreatedCommentPayloadDto>({
-      key: `${post.id}`,
+    const recipient = await this._commentDissociationService.dissociateComment(
+      commentResponse.actor.id,
+      commentResponse.id,
+      groupAudienceIds
+    );
+    const recipientObj = {
+      commentRecipient: null,
+      replyCommentRecipient: null,
+    };
+    if (isReply) {
+      recipientObj.replyCommentRecipient = recipient;
+    } else {
+      recipientObj.commentRecipient = recipient;
+    }
+
+    this._notificationService.publishCommentNotification<NotificationActivity>({
+      key: `${postResponse.id}`,
       value: {
         actor: commentResponse.actor,
         event: event.getEventName(),
-        data: {
-          isReply: isReply,
-          post: post,
-          comment: commentResponse,
-          relatedParties: relatedParties,
-        },
-      },
+        data: commentActivity,
+        ...recipientObj,
+      } as any,
     });
   }
 
@@ -72,11 +76,6 @@ export class CommentListener {
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenUpdatedEvent]: ${JSON.stringify(event)}`);
     const { post, newComment, oldComment, commentResponse } = event.payload;
-
-    const relatedParties = await this._commentService.getRecipientWhenUpdatedComment(
-      oldComment.mentions.map((m) => m.userId),
-      newComment.mentions.map((m) => m.userId)
-    );
 
     this._notificationService.publishCommentNotification<UpdatedCommentPayloadDto>({
       key: `${post.id}`,
@@ -86,7 +85,7 @@ export class CommentListener {
         data: {
           post: post,
           comment: commentResponse,
-          relatedParties: relatedParties,
+          relatedParties: null,
         },
       },
     });

@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IKafkaConfig } from '../config/kafka';
+import { CommentActivityService, PostActivityService, ReactionActivityService } from './activities';
 import { ClientsModule } from '@nestjs/microservices';
+import { CommentDissociationService } from './services';
 import { NotificationService } from './notification.service';
 import { Transport } from '@nestjs/microservices/enums/transport.enum';
 import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER } from './producer.constants';
@@ -36,6 +38,12 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
       },
     ]),
   ],
-  exports: [NotificationService],
+  exports: [
+    NotificationService,
+    PostActivityService,
+    ReactionActivityService,
+    CommentActivityService,
+    CommentDissociationService,
+  ],
 })
 export class NotificationModule {}

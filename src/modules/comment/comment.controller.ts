@@ -20,6 +20,10 @@ import { CreateCommentDto, CreateReplyCommentDto, GetCommentDto } from './dto/re
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
+import { CommentHasBeenCreatedEvent, CommentHasBeenUpdatedEvent } from '../../events/comment';
+import { PostService } from '../post/post.service';
+import { mockedPostResponse } from '../post/test/mocks/response/post.response.mock';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -30,7 +34,11 @@ import { ResponseMessages } from '../../common/decorators';
 export class CommentController {
   private _logger = new Logger(CommentController.name);
 
-  public constructor(private _commentService: CommentService) {}
+  public constructor(
+    private _postService: PostService,
+    private _commentService: CommentService,
+    private _eventEmitter: InternalEventEmitterService
+  ) {}
 
   @ApiOperation({ summary: 'Get comment list' })
   @ResponseMessages({
@@ -54,14 +62,28 @@ export class CommentController {
     success: 'Create comment successfully',
   })
   @Post('/')
-  public create(
+  public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug(
       `create comment by ${user.id} with body: ${JSON.stringify(createCommentDto)}`
     );
-    return this._commentService.create(user, createCommentDto);
+    const comment = await this._commentService.create(user, createCommentDto);
+
+    const commentResponse = await this._commentService.getComment(user, comment.id);
+
+    this._postService.getPost(comment.postId, user).then((postResponse) => {
+      this._eventEmitter.emit(
+        new CommentHasBeenCreatedEvent({
+          isReply: false,
+          postResponse: postResponse,
+          commentResponse: commentResponse,
+        })
+      );
+    });
+
+    return commentResponse;
   }
 
   @ApiOperation({ summary: 'Reply comment' })
@@ -73,13 +95,13 @@ export class CommentController {
     success: 'Create reply comment successfully',
   })
   @Post('/:commentId/reply')
-  public reply(
+  public async reply(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
     @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
-  ): Promise<any> {
+  ): Promise<CommentResponseDto> {
     this._logger.debug('reply comment');
-    return this._commentService.create(
+    const comment = await this._commentService.create(
       user,
       {
         ...createReplyCommentDto,
@@ -87,6 +109,20 @@ export class CommentController {
       },
       commentId
     );
+
+    const commentResponse = await this._commentService.getComment(user, comment.id);
+
+    this._postService.getPost(comment.postId, user).then((postResponse) => {
+      this._eventEmitter.emit(
+        new CommentHasBeenCreatedEvent({
+          isReply: false,
+          postResponse: postResponse,
+          commentResponse: commentResponse,
+        })
+      );
+    });
+
+    return commentResponse;
   }
 
   @ApiOperation({ summary: 'Get comment' })
@@ -115,13 +151,28 @@ export class CommentController {
     success: 'Update comment successfully',
   })
   @Put('/:commentId')
-  public update(
+  public async update(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('update comment');
-    return this._commentService.update(user, commentId, updateCommentDto);
+    const response = await this._commentService.update(user, commentId, updateCommentDto);
+
+    const commentResponse = await this._commentService.getComment(user, response.comment.id);
+
+    this._postService.getPost(response.comment.postId, user).then((postResponse) => {
+      this._eventEmitter.emit(
+        new CommentHasBeenUpdatedEvent({
+          newComment: response.comment,
+          oldComment: response.oldComment,
+          postResponse: postResponse,
+          commentResponse: commentResponse,
+        })
+      );
+    });
+
+    return commentResponse;
   }
 
   @ApiOperation({ summary: 'Delete comment' })

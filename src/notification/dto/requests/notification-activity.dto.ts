@@ -56,6 +56,7 @@ export class CommentObject {
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reaction?: ReactionObject;
+  public reactionsCount?: ReactionsCountObject;
   public child?: CommentObject;
   public createdAt: Date;
   public updatedAt: Date;

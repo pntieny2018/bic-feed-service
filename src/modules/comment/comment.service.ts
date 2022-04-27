@@ -71,7 +71,7 @@ export class CommentService {
     user: UserDto,
     createCommentDto: CreateCommentDto,
     replyId = 0
-  ): Promise<CommentResponseDto> {
+  ): Promise<IComment> {
     this._logger.debug(
       `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
         createCommentDto
@@ -79,9 +79,8 @@ export class CommentService {
     );
 
     let post;
-    let isReply = false;
+
     if (replyId > 0) {
-      isReply = true;
       const parentComment = await this._commentModel.findOne({
         include: [
           {
@@ -170,17 +169,7 @@ export class CommentService {
 
       await transaction.commit();
 
-      const commentResponse = await this.getComment(user, comment.id);
-
-      this._eventEmitter.emit(
-        new CommentHasBeenCreatedEvent({
-          isReply: isReply,
-          post: post,
-          commentResponse: commentResponse,
-        })
-      );
-
-      return commentResponse;
+      return comment;
     } catch (ex) {
       await transaction.rollback();
 
@@ -199,7 +188,10 @@ export class CommentService {
     user: UserDto,
     commentId: number,
     updateCommentDto: UpdateCommentDto
-  ): Promise<CommentResponseDto> {
+  ): Promise<{
+    comment: IComment;
+    oldComment: IComment;
+  }> {
     this._logger.debug(
       `[update] user: ${JSON.stringify(user)}, updateCommentDto: ${JSON.stringify(
         updateCommentDto
@@ -268,18 +260,10 @@ export class CommentService {
 
       await transaction.commit();
 
-      const commentResponse = await this.getComment(user, commentId);
-
-      this._eventEmitter.emit(
-        new CommentHasBeenUpdatedEvent({
-          newComment: comment.toJSON(),
-          oldComment: oldComment,
-          post: post,
-          commentResponse: commentResponse,
-        })
-      );
-
-      return commentResponse;
+      return {
+        comment: comment,
+        oldComment: oldComment,
+      };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       await transaction.rollback();
