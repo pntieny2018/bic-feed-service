@@ -303,6 +303,7 @@ export class FeedService {
           id: post.mediaId,
           url: post.url,
           name: post.name,
+          type: post.type,
           width: post.width,
           height: post.height,
           extension: post.extension,
