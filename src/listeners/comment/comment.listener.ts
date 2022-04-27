@@ -31,7 +31,7 @@ export class CommentListener {
     const { post, isReply, commentResponse } = event.payload;
 
     let relatedParties;
-    const mentions = Object.values(commentResponse.mentions).map((u) => u.id);
+    const mentions = Object.values(commentResponse.mentions ?? []).map((u) => u.id);
     if (!isReply) {
       if (!post.mentions) {
         post.mentions = [];
@@ -74,8 +74,8 @@ export class CommentListener {
     const { post, newComment, oldComment, commentResponse } = event.payload;
 
     const relatedParties = await this._commentService.getRecipientWhenUpdatedComment(
-      oldComment.mentions.map((m) => m.userId),
-      newComment.mentions.map((m) => m.userId)
+      (oldComment.mentions ?? []).map((m) => m.userId),
+      (newComment.mentions ?? []).map((m) => m.userId)
     );
 
     this._notificationService.publishCommentNotification<UpdatedCommentPayloadDto>({
