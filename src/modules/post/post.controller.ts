@@ -104,8 +104,7 @@ export class PostController {
   ): Promise<PostResponseDto> {
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
-      const postResponseDto = await this._postService.getPost(created.id, user, new GetPostDto());
-      return postResponseDto;
+      return await this._postService.getPost(created.id, user, new GetPostDto());
     }
   }
 
@@ -133,6 +132,7 @@ export class PostController {
           actor: user.profile,
         })
       );
+
       return postUpdated;
     }
   }
