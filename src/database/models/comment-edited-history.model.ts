@@ -1,24 +1,13 @@
-import { Optional } from 'sequelize';
-import {
-  AllowNull,
-  AutoIncrement,
-  BelongsToMany,
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
-import { CommentEditedHistoryMediaModel } from './comment-edited-history-media.model';
-import { CommentModel } from './comment.model';
-import { IMedia, MediaModel } from './media.model';
+import { DataTypes, Optional } from 'sequelize';
+import { AllowNull, AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { CommentResponseDto } from '../../modules/comment/dto/response';
 
 export interface ICommentEditedHistory {
   id: number;
   commentId: number;
-  content: string;
   editedAt: Date;
-  media?: IMedia[];
+  oldData: CommentResponseDto;
+  newData: CommentResponseDto;
 }
 
 @Table({
@@ -34,18 +23,22 @@ export class CommentEditedHistoryModel
   @Column
   public id: number;
 
-  @ForeignKey(() => CommentModel)
   @Column
   public commentId: number;
-
-  @AllowNull(true)
-  @Column
-  public content: string;
 
   @AllowNull(false)
   @Column
   public editedAt: Date;
 
-  @BelongsToMany(() => MediaModel, () => CommentEditedHistoryMediaModel)
-  public media?: MediaModel[];
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public oldData: any;
+
+  @AllowNull(false)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public newData: any;
 }
