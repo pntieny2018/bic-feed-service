@@ -15,13 +15,13 @@ import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { CommentResponseDto } from './dto/response';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { EntityType } from '../media/media.constants';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
-import { CreateCommentDto, GetCommentDto } from './dto/requests';
+import { CreateCommentDto, GetCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
@@ -37,6 +37,7 @@ import { FollowModel } from '../../database/models/follow.model';
 import { FollowService } from '../follow';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
 
 @Injectable()
 export class CommentService {
@@ -56,7 +57,9 @@ export class CommentService {
     private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
-    private _followService: FollowService
+    private _followService: FollowService,
+    @InjectModel(CommentEditedHistoryModel)
+    private readonly _commentEditedHistoryModel: typeof CommentEditedHistoryModel
   ) {}
 
   /**
@@ -217,6 +220,8 @@ export class CommentService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
+    const oldCommentResponse = await this.getComment(user, commentId);
+
     const post = await this._postService.findPost({
       postId: comment.postId,
     });
@@ -276,6 +281,7 @@ export class CommentService {
           oldComment: oldComment,
           post: post,
           commentResponse: commentResponse,
+          oldCommentResponse: oldCommentResponse,
         })
       );
 
@@ -904,5 +910,138 @@ export class CommentService {
         currentMentionedUserIds: [],
       };
     }
+  }
+
+  /**
+   * Save comment edited history
+   * @param commentId number
+   * @param Object { oldData: CommentResponseDto; newData: CommentResponseDto }
+   * @returns Promise resolve any
+   */
+  public async saveCommentEditedHistory(
+    commentId: number,
+    { oldData, newData }: { oldData: CommentResponseDto; newData: CommentResponseDto }
+  ): Promise<any> {
+    return this._commentEditedHistoryModel.create({
+      commentId: commentId,
+      oldData: oldData,
+      newData: newData,
+      editedAt: newData.updatedAt ?? newData.createdAt,
+    });
+  }
+
+  /**
+   * Delete comment edited history
+   * @param commentId number
+   * @returns Promise resolve any
+   */
+  public async deleteCommentEditedHistory(commentId: number): Promise<any> {
+    return this._commentEditedHistoryModel.destroy({
+      where: {
+        commentId: commentId,
+      },
+    });
+  }
+
+  /**
+   * Get comment edited history
+   * @param user UserDto
+   * @param commentId number
+   * @param getCommentEditedHistoryDto GetCommentEditedHistoryDto
+   * @returns Promise resolve PageDto
+   */
+  public async getCommentEditedHistory(
+    user: UserDto,
+    commentId: number,
+    getCommentEditedHistoryDto: GetCommentEditedHistoryDto
+  ): Promise<PageDto<CommentEditedHistoryDto>> {
+    try {
+      const postId = await this.getPostIdOfComment(commentId);
+      const post = await this._postService.findPost({ postId: postId });
+      await this._authorityService.allowAccess(user, post);
+
+      const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } =
+        getCommentEditedHistoryDto;
+      const conditions = {};
+      conditions['commentId'] = commentId;
+      if (idGT) {
+        conditions['id'] = {
+          [Op.gt]: idGT,
+        };
+      }
+      if (idGTE) {
+        conditions['id'] = {
+          [Op.gte]: idGTE,
+          ...conditions['id'],
+        };
+      }
+      if (idLT) {
+        conditions['id'] = {
+          [Op.lt]: idLT,
+          ...conditions['id'],
+        };
+      }
+      if (idLTE) {
+        conditions['id'] = {
+          [Op.lte]: idLTE,
+          ...conditions,
+        };
+      }
+      if (endTime) {
+        conditions['editedAt'] = {
+          [Op.lt]: endTime,
+        };
+      }
+
+      const { rows, count } = await this._commentEditedHistoryModel.findAndCountAll({
+        where: {
+          ...conditions,
+        },
+        order: [['id', order]],
+        offset: offset,
+        limit: limit,
+      });
+
+      const result = rows.map((e) => {
+        const newData: CommentResponseDto = e.toJSON().newData;
+        return plainToInstance(
+          CommentEditedHistoryDto,
+          {
+            ...newData,
+            commentId: newData.id,
+            editedAt: newData.updatedAt ?? newData.createdAt,
+          },
+          { excludeExtraneousValues: true }
+        );
+      });
+
+      return new PageDto(result, {
+        limit: limit,
+        total: count,
+      });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
+      throw e;
+    }
+  }
+
+  /**
+   * Get post ID of a comment
+   * @param commentId number
+   * @returns Promise resolve number
+   * @throws Logical exception
+   */
+  public async getPostIdOfComment(commentId: number): Promise<number> {
+    const comment = await this._commentModel.findOne({
+      where: {
+        id: commentId,
+      },
+    });
+
+    if (!comment) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+    }
+
+    return comment.postId;
   }
 }

@@ -1,14 +1,13 @@
-import { CommentService } from '../../modules/comment';
+import { Injectable, Logger } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { On } from '../../common/decorators';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
-import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
+import { CommentService } from '../../modules/comment';
 import { NotificationService } from '../../notification';
-import { ElasticsearchHelper } from '../../common/helpers';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import {
   CreatedCommentPayloadDto,
   DeletedCommentPayloadDto,
@@ -29,6 +28,13 @@ export class CommentListener {
     this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
 
     const { post, isReply, commentResponse } = event.payload;
+
+    this._commentService
+      .saveCommentEditedHistory(commentResponse.id, {
+        oldData: null,
+        newData: commentResponse,
+      })
+      .catch((e) => this._logger.error(e, e?.stack));
 
     let relatedParties;
     const mentions = Object.values(commentResponse.mentions ?? []).map((u) => u.id);
@@ -71,7 +77,14 @@ export class CommentListener {
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenUpdatedEvent]: ${JSON.stringify(event)}`);
-    const { post, newComment, oldComment, commentResponse } = event.payload;
+    const { post, newComment, oldComment, commentResponse, oldCommentResponse } = event.payload;
+
+    this._commentService
+      .saveCommentEditedHistory(commentResponse.id, {
+        oldData: oldCommentResponse,
+        newData: commentResponse,
+      })
+      .catch((e) => this._logger.error(e, e?.stack));
 
     const relatedParties = await this._commentService.getRecipientWhenUpdatedComment(
       (oldComment.mentions ?? []).map((m) => m.userId),
@@ -96,6 +109,10 @@ export class CommentListener {
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenDeletedEvent]: ${JSON.stringify(event)}`);
     const { post, comment } = event.payload;
+
+    this._commentService
+      .deleteCommentEditedHistory(comment.id)
+      .catch((e) => this._logger.error(e, e?.stack));
 
     this._notificationService.publishCommentNotification<DeletedCommentPayloadDto>({
       key: `${post.id}`,
