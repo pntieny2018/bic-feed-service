@@ -1,24 +1,13 @@
-import { Optional } from 'sequelize';
-import {
-  AllowNull,
-  AutoIncrement,
-  BelongsToMany,
-  Column,
-  ForeignKey,
-  Model,
-  PrimaryKey,
-  Table,
-} from 'sequelize-typescript';
-import { IMedia, MediaModel } from './media.model';
-import { PostEditedHistoryMediaModel } from './post-edited-history-media.model';
-import { PostModel } from './post.model';
+import { DataTypes, Optional } from 'sequelize';
+import { AllowNull, AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { PostResponseDto } from '../../modules/post/dto/responses';
 
 export interface IPostEditedHistory {
   id: number;
   postId: number;
-  content: string;
   editedAt: Date;
-  media?: IMedia[];
+  oldData: PostResponseDto;
+  newData: PostResponseDto;
 }
 
 @Table({
@@ -34,18 +23,22 @@ export class PostEditedHistoryModel
   @Column
   public id: number;
 
-  @ForeignKey(() => PostModel)
   @Column
   public postId: number;
-
-  @AllowNull(true)
-  @Column
-  public content: string;
 
   @AllowNull(false)
   @Column
   public editedAt: Date;
 
-  @BelongsToMany(() => MediaModel, () => PostEditedHistoryMediaModel)
-  public media?: MediaModel[];
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public oldData: any;
+
+  @AllowNull(false)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public newData: any;
 }
