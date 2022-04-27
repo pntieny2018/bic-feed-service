@@ -1,5 +1,3 @@
-import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
 import {
   Body,
   Controller,
@@ -12,7 +10,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { PostService } from './post.service';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { APP_VERSION } from '../../common/constants';
+import { PageDto } from '../../common/dto';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
+import { AuthUser, UserDto } from '../auth';
 import {
   CreatePostDto,
   GetPostDto,
@@ -20,15 +26,9 @@ import {
   SearchPostsDto,
   UpdatePostDto,
 } from './dto/requests';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { APP_VERSION } from '../../common/constants';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { PostService } from './post.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
