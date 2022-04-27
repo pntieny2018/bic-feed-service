@@ -9,6 +9,7 @@ import {
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class PostListener {
@@ -16,7 +17,8 @@ export class PostListener {
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _postService: PostService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -24,6 +26,10 @@ export class PostListener {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
+
+    this._postService
+      .deletePostEditedHistory(post.id)
+      .catch((e) => this._logger.error(e, e?.stack));
 
     const index = ElasticsearchHelper.INDEX.POST;
     try {
@@ -54,6 +60,11 @@ export class PostListener {
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       post;
     if (isDraft) return;
+
+    this._postService
+      .savePostEditedHistory(post.id, { oldData: null, newData: post })
+      .catch((e) => this._logger.error(e, e?.stack));
+
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
@@ -99,6 +110,11 @@ export class PostListener {
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       newPost;
     if (isDraft) return;
+
+    this._postService
+      .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
+      .catch((e) => this._logger.error(e, e?.stack));
+
     this._notificationService.publishPostNotification({
       key: `${id}`,
       value: {
