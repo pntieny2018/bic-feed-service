@@ -1,5 +1,3 @@
-import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
 import {
   Body,
   Controller,
@@ -12,7 +10,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { PostService } from './post.service';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { APP_VERSION } from '../../common/constants';
+import { PageDto } from '../../common/dto';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
+import { AuthUser, UserDto } from '../auth';
 import {
   CreatePostDto,
   GetPostDto,
@@ -20,15 +26,9 @@ import {
   SearchPostsDto,
   UpdatePostDto,
 } from './dto/requests';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { APP_VERSION } from '../../common/constants';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { PostService } from './post.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -104,7 +104,12 @@ export class PostController {
   ): Promise<PostResponseDto> {
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
-      return await this._postService.getPost(created.id, user, new GetPostDto());
+      const postResponseDto = await this._postService.getPost(created.id, user, new GetPostDto());
+      await this._postService.savePostEditedHistory(created.id, {
+        oldData: null,
+        newData: postResponseDto,
+      });
+      return postResponseDto;
     }
   }
 
@@ -125,6 +130,10 @@ export class PostController {
     const isUpdated = await this._postService.updatePost(postId, user, createPostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
+      await this._postService.savePostEditedHistory(postId, {
+        oldData: postBefore,
+        newData: postUpdated,
+      });
       this._eventEmitter.emit(
         new PostHasBeenUpdatedEvent({
           oldPost: postBefore,
@@ -132,7 +141,6 @@ export class PostController {
           actor: user.profile,
         })
       );
-
       return postUpdated;
     }
   }
@@ -172,6 +180,7 @@ export class PostController {
   ): Promise<boolean> {
     const postDeleted = await this._postService.deletePost(postId, user.id);
     if (postDeleted) {
+      await this._postService.deletePostEditedHistory(postId);
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
           post: postDeleted,
