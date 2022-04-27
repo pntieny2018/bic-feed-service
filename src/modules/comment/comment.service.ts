@@ -15,13 +15,13 @@ import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { CommentResponseDto } from './dto/response';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { EntityType } from '../media/media.constants';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
-import { CreateCommentDto, GetCommentDto } from './dto/requests';
+import { CreateCommentDto, GetCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
@@ -904,5 +904,37 @@ export class CommentService {
         currentMentionedUserIds: [],
       };
     }
+  }
+
+  public async getCommentEditedHistory(
+    user: UserDto,
+    commentId: number,
+    getCommentEditedHistoryDto: GetCommentEditedHistoryDto
+  ): Promise<PageDto<CommentEditedHistoryDto>> {
+    const postId = await this.getPostIdOfComment(commentId);
+    const post = await this._postService.findPost({ postId: postId });
+    await this._authorityService.allowAccess(user, post);
+
+    return null;
+  }
+
+  /**
+   * Get post ID of a comment
+   * @param commentId number
+   * @returns Promise resolve number
+   * @throws Logical exception
+   */
+  public async getPostIdOfComment(commentId: number): Promise<number> {
+    const comment = await this._commentModel.findOne({
+      where: {
+        id: commentId,
+      },
+    });
+
+    if (!comment) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+    }
+
+    return comment.postId;
   }
 }

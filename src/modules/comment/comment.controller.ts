@@ -13,10 +13,10 @@ import {
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { CommentService } from './comment.service';
-import { CommentResponseDto } from './dto/response';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { APP_VERSION } from '../../common/constants';
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
-import { CreateCommentDto, GetCommentDto } from './dto/requests';
+import { CreateCommentDto, GetCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
@@ -97,6 +97,23 @@ export class CommentController {
   ): Promise<any> {
     this._logger.debug('get comment');
     return this._commentService.getComment(user, commentId);
+  }
+
+  @ApiOperation({ summary: 'Get comment edited history' })
+  @ApiOkResponse({
+    type: CommentEditedHistoryDto,
+  })
+  @Get('/:commentId/edited-history')
+  public getCommentEditedHistory(
+    @AuthUser() user: UserDto,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() getCommentEditedHistoryDto: GetCommentEditedHistoryDto
+  ): Promise<PageDto<CommentEditedHistoryDto>> {
+    return this._commentService.getCommentEditedHistory(
+      user,
+      commentId,
+      getCommentEditedHistoryDto
+    );
   }
 
   @ApiOperation({ summary: 'Update comment' })
