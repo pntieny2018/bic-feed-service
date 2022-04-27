@@ -5,5 +5,5 @@ export enum RecentSearchType {
   ALL = 'all',
 }
 
-export const LIMIT_TOTAL_RECENT_SEARCH = 4;
+export const LIMIT_TOTAL_RECENT_SEARCH = 10;
 export const DEFAULT_RECENT_SEARCH_ITEMS_NUMBER = 10;
