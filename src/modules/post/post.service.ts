@@ -605,6 +605,7 @@ export class PostService {
       await this._postModel.update(
         {
           isDraft: false,
+          createdAt: new Date(),
         },
         {
           where: {
