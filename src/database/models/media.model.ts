@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Optional } from 'sequelize';
 import {
   AllowNull,
@@ -11,11 +12,10 @@ import {
   PrimaryKey,
   Table,
 } from 'sequelize-typescript';
+import { CommentMediaModel } from './comment-media.model';
 import { CommentModel } from './comment.model';
 import { PostMediaModel } from './post-media.model';
 import { PostModel } from './post.model';
-import { CommentMediaModel } from './comment-media.model';
-import { ApiProperty } from '@nestjs/swagger';
 
 export enum MediaType {
   VIDEO = 'video',
