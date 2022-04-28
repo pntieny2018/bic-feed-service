@@ -117,12 +117,12 @@ export class PostController {
   public async updatePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
-    @Body() createPostDto: UpdatePostDto
+    @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
     await this._postService.checkPostExistAndOwner(postBefore, user.id);
-
-    const isUpdated = await this._postService.updatePost(postId, user, createPostDto);
+    updatePostDto.isDraft = postBefore.isDraft;
+    const isUpdated = await this._postService.updatePost(postId, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
