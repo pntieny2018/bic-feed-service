@@ -28,7 +28,7 @@ import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { DeleteReactionService } from '../reaction/services';
-import { PageDto } from './../../common/dto/pagination/page.dto';
+import { PageDto } from '../../common/dto';
 import {
   CreatePostDto,
   GetPostDto,
@@ -722,6 +722,7 @@ export class PostService {
    * Add group to post
    * @param groupIds Array of Group ID
    * @param postId PostID
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
