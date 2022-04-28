@@ -533,7 +533,7 @@ export class PostService {
 
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { content, media, setting, mentions, audience } = updatePostDto;
+      const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
 
       const { groupIds } = audience;
       const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
@@ -550,24 +550,23 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
-      await this._postModel.update(
-        {
-          content,
-          updatedBy: authUserId,
-          isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canShare: setting.canShare,
-          canComment: setting.canComment,
-          canReact: setting.canReact,
+      const dataUpdate = {
+        content,
+        updatedBy: authUserId,
+        isImportant: setting.isImportant,
+        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+        canShare: setting.canShare,
+        canComment: setting.canComment,
+        canReact: setting.canReact,
+      };
+      if (isDraft) dataUpdate['createdAt'] = new Date();
+      await this._postModel.update(dataUpdate, {
+        where: {
+          id: postId,
+          createdBy: authUserId,
         },
-        {
-          where: {
-            id: postId,
-            createdBy: authUserId,
-          },
-          transaction,
-        }
-      );
+        transaction,
+      });
       await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
       await this._mentionService.setMention(
         mentionUserIds,
