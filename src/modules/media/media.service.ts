@@ -300,7 +300,7 @@ export class MediaService {
           ));
     }
 
-    await this.updateMediaDraft([...changes.detached, ...changes.detached], transaction);
+    await this.updateMediaDraft([...changes.attached, ...changes.detached], transaction);
   }
 
   public destroyCommentMedia(user: UserDto, commentId: number): Promise<void> {
