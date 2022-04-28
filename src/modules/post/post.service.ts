@@ -357,7 +357,8 @@ export class PostService {
       {
         postId,
         childLimit: getPostDto.childCommentLimit,
-        order: OrderEnum.DESC,
+        order: getPostDto.commentOrder,
+        childOrder: getPostDto.childCommentOrder,
         limit: getPostDto.commentLimit,
       },
       false

@@ -29,6 +29,7 @@ import {
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { PostService } from './post.service';
+import { GetPostPipe } from './pipes';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -87,7 +88,7 @@ export class PostController {
   public getPost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
-    @Query() getPostDto: GetPostDto
+    @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     return this._postService.getPost(postId, user, getPostDto);
   }
