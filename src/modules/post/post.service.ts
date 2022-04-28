@@ -105,7 +105,7 @@ export class PostService {
     });
 
     await Promise.all([
-      //this.bindActorToPost(posts),
+      this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
       this.bindCommentsCount(posts),
     ]);
@@ -421,11 +421,20 @@ export class PostService {
   public async bindActorToPost(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
-      userIds.push(post.createdBy);
+      if (post?.actor.id) {
+        userIds.push(post.actor.id);
+      } else {
+        userIds.push(post.createdBy);
+      }
     }
+
     const users = await this._userService.getMany(userIds);
     for (const post of posts) {
-      post.actor = users.find((i) => i.id === post.createdBy);
+      if (post?.actor.id) {
+        post.actor = users.find((i) => i.id === post.actor.id);
+      } else {
+        post.actor = users.find((i) => i.id === post.createdBy);
+      }
     }
   }
   /**
