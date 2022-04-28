@@ -118,4 +118,6 @@ export class UpdatePostDto {
     return value;
   })
   public mentions?: number[] = [];
+
+  public isDraft?: boolean;
 }
