@@ -1,1 +1,1 @@
-export * from './comment-dissociation.service';
+export * from './comment-notification.service';

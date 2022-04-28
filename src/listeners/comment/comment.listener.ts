@@ -4,107 +4,54 @@ import {
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
-import {
-  DeletedCommentPayloadDto,
-  UpdatedCommentPayloadDto,
-} from '../../notification/dto/requests/comment';
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationService } from '../../notification';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { CommentActivityService } from '../../notification/activities';
-import { CommentDissociationService } from '../../notification/services';
-import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
+import { CommentNotificationService } from '../../notification/services';
+import { CommentService } from '../../modules/comment';
 
 @Injectable()
 export class CommentListener {
   private _logger = new Logger(CommentListener.name);
   public constructor(
-    private _notificationService: NotificationService,
-    private _elasticsearchService: ElasticsearchService,
-    private _commentActivityService: CommentActivityService,
-    private _commentDissociationService: CommentDissociationService
+    private _commentService: CommentService,
+    private _commentNotificationService: CommentNotificationService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
   public async onCommentHasBeenCreated(event: CommentHasBeenCreatedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
 
-    const { postResponse, isReply, commentResponse } = event.payload;
+    const { commentResponse, actor } = event.payload;
 
-    let commentActivity;
-
-    const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
-
-    if (isReply) {
-      commentActivity = this._commentActivityService.createReplyCommentPayload(
-        postResponse,
-        commentResponse
-      );
-    } else {
-      commentActivity = this._commentActivityService.createCommentPayload(
-        postResponse,
-        commentResponse
+    if (commentResponse.parentId) {
+      commentResponse.parent = await this._commentService.getComment(
+        actor,
+        commentResponse.parentId,
+        0
       );
     }
-    const recipient = await this._commentDissociationService.dissociateComment(
-      commentResponse.actor.id,
-      commentResponse.id,
-      groupAudienceIds
-    );
-    const recipientObj = {
-      commentRecipient: null,
-      replyCommentRecipient: null,
-    };
-    if (isReply) {
-      recipientObj.replyCommentRecipient = recipient;
-    } else {
-      recipientObj.commentRecipient = recipient;
-    }
-
-    this._notificationService.publishCommentNotification<NotificationActivity>({
-      key: `${postResponse.id}`,
-      value: {
-        actor: commentResponse.actor,
-        event: event.getEventName(),
-        data: commentActivity,
-        ...recipientObj,
-      } as any,
-    });
+    this._commentNotificationService
+      .create(event.getEventName(), actor, commentResponse)
+      .catch((ex) => this._logger.error(ex, ex.stack));
   }
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenUpdatedEvent]: ${JSON.stringify(event)}`);
-    const { post, newComment, oldComment, commentResponse } = event.payload;
 
-    this._notificationService.publishCommentNotification<UpdatedCommentPayloadDto>({
-      key: `${post.id}`,
-      value: {
-        actor: commentResponse.actor,
-        event: event.getEventName(),
-        data: {
-          post: post,
-          comment: commentResponse,
-          relatedParties: null,
-        },
-      },
-    });
+    const { oldComment, commentResponse, actor } = event.payload;
+
+    this._commentNotificationService
+      .update(event.getEventName(), actor, oldComment, commentResponse)
+      .catch((ex) => this._logger.error(ex, ex.stack));
   }
 
   @On(CommentHasBeenDeletedEvent)
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
     this._logger.debug(`[CommentHasBeenDeletedEvent]: ${JSON.stringify(event)}`);
-    const { post, comment } = event.payload;
+    const { comment, actor } = event.payload;
 
-    this._notificationService.publishCommentNotification<DeletedCommentPayloadDto>({
-      key: `${post.id}`,
-      value: {
-        actor: null,
-        event: event.getEventName(),
-        data: {
-          commentId: comment.id,
-        },
-      },
-    });
+    this._commentNotificationService
+      .destroy(event.getEventName(), comment)
+      .catch((ex) => this._logger.error(ex, ex.stack));
   }
 }

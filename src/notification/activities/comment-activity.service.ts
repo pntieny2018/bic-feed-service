@@ -29,7 +29,7 @@ export class CommentActivityService {
 
     return new NotificationActivity(
       activityObject,
-      VerbActivity.REACT,
+      VerbActivity.COMMENT,
       TypeActivity.COMMENT,
       comment.createdAt,
       comment.updatedAt
@@ -68,7 +68,7 @@ export class CommentActivityService {
 
     return new NotificationActivity(
       activityObject,
-      VerbActivity.REACT,
+      VerbActivity.COMMENT,
       TypeActivity.CHILD_COMMENT,
       comment.createdAt,
       comment.createdAt

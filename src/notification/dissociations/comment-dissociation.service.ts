@@ -66,12 +66,12 @@ export class CommentDissociationService {
       /**
        * users who mentioned in post
        */
-      const mentionedUsersInPost = comment.post.mentions.map((mention) => mention.userId);
+      const mentionedUsersInPost = (comment.post.mentions ?? []).map((mention) => mention.userId);
 
       /**
        * users who mentioned in created comment
        */
-      const mentionedUsersInComment = comment.mentions.map((m) => m.userId);
+      const mentionedUsersInComment = (comment.mentions ?? []).map((m) => m.userId);
 
       let prevComments = await this._commentModel.findAll({
         where: {
@@ -108,7 +108,9 @@ export class CommentDissociationService {
        * users who was checked if users followed group audience
        */
       const validUserIds = await this.getValidUserIds(
-        [postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments],
+        [...new Set([postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments])].filter(
+          (id) => id
+        ),
         groupAudienceIds
       );
 
@@ -190,7 +192,7 @@ export class CommentDissociationService {
       });
 
       if (!parentComment) {
-        throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
       }
 
       const parentCommentCreatorId =
@@ -213,12 +215,14 @@ export class CommentDissociationService {
 
       const validUserIds = await this.getValidUserIds(
         [
-          parentCommentCreatorId,
-          ...mentionedUserIdsInComment,
-          ...mentionedUserIdsInParentComment,
-          ...prevChildCommentCreatorIds,
-          ...mentionedUserIdsInPrevChildComment,
-        ],
+          ...new Set([
+            parentCommentCreatorId,
+            ...mentionedUserIdsInComment,
+            ...mentionedUserIdsInParentComment,
+            ...prevChildCommentCreatorIds,
+            ...mentionedUserIdsInPrevChildComment,
+          ]),
+        ].filter((id) => id),
         groupAudienceIds
       );
 

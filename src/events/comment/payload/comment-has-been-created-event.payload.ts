@@ -1,8 +1,7 @@
-import { PostResponseDto } from '../../../modules/post/dto/responses';
+import { UserDto } from '../../../modules/auth';
 import { CommentResponseDto } from '../../../modules/comment/dto/response';
 
 export class CommentHasBeenCreatedEventPayload {
-  public isReply: boolean;
-  public postResponse: PostResponseDto;
+  public actor: UserDto;
   public commentResponse: CommentResponseDto;
 }

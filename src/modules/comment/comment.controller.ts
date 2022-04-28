@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  forwardRef,
   Get,
+  Inject,
   Logger,
   Param,
   ParseIntPipe,
@@ -20,9 +22,12 @@ import { CreateCommentDto, CreateReplyCommentDto, GetCommentDto } from './dto/re
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
-import { CommentHasBeenCreatedEvent, CommentHasBeenUpdatedEvent } from '../../events/comment';
+import {
+  CommentHasBeenCreatedEvent,
+  CommentHasBeenDeletedEvent,
+  CommentHasBeenUpdatedEvent,
+} from '../../events/comment';
 import { PostService } from '../post/post.service';
-import { mockedPostResponse } from '../post/test/mocks/response/post.response.mock';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 
 @ApiTags('Comment')
@@ -35,7 +40,6 @@ export class CommentController {
   private _logger = new Logger(CommentController.name);
 
   public constructor(
-    private _postService: PostService,
     private _commentService: CommentService,
     private _eventEmitter: InternalEventEmitterService
   ) {}
@@ -73,15 +77,12 @@ export class CommentController {
 
     const commentResponse = await this._commentService.getComment(user, comment.id);
 
-    this._postService.getPost(comment.postId, user).then((postResponse) => {
-      this._eventEmitter.emit(
-        new CommentHasBeenCreatedEvent({
-          isReply: false,
-          postResponse: postResponse,
-          commentResponse: commentResponse,
-        })
-      );
-    });
+    this._eventEmitter.emit(
+      new CommentHasBeenCreatedEvent({
+        actor: user,
+        commentResponse: commentResponse,
+      })
+    );
 
     return commentResponse;
   }
@@ -112,15 +113,12 @@ export class CommentController {
 
     const commentResponse = await this._commentService.getComment(user, comment.id);
 
-    this._postService.getPost(comment.postId, user).then((postResponse) => {
-      this._eventEmitter.emit(
-        new CommentHasBeenCreatedEvent({
-          isReply: false,
-          postResponse: postResponse,
-          commentResponse: commentResponse,
-        })
-      );
-    });
+    this._eventEmitter.emit(
+      new CommentHasBeenCreatedEvent({
+        actor: user,
+        commentResponse: commentResponse,
+      })
+    );
 
     return commentResponse;
   }
@@ -161,17 +159,13 @@ export class CommentController {
 
     const commentResponse = await this._commentService.getComment(user, response.comment.id);
 
-    this._postService.getPost(response.comment.postId, user).then((postResponse) => {
-      this._eventEmitter.emit(
-        new CommentHasBeenUpdatedEvent({
-          newComment: response.comment,
-          oldComment: response.oldComment,
-          postResponse: postResponse,
-          commentResponse: commentResponse,
-        })
-      );
-    });
-
+    this._eventEmitter.emit(
+      new CommentHasBeenUpdatedEvent({
+        actor: user,
+        oldComment: response.oldComment,
+        commentResponse: commentResponse,
+      })
+    );
     return commentResponse;
   }
 
@@ -184,11 +178,19 @@ export class CommentController {
     success: 'Delete comment successfully',
   })
   @Delete('/:commentId')
-  public destroy(
+  public async destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number
   ): Promise<boolean> {
     this._logger.debug('delete comment');
-    return this._commentService.destroy(user, commentId);
+    const comment = await this._commentService.destroy(user, commentId);
+
+    this._eventEmitter.emit(
+      new CommentHasBeenDeletedEvent({
+        actor: user,
+        comment: comment,
+      })
+    );
+    return true;
   }
 }

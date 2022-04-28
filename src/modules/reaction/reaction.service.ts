@@ -6,21 +6,24 @@ import {
 } from './dto/request';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
+
 import { CommentService } from '../comment';
 import { ReactionEnum } from './reaction.enum';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../shared/user';
 import { findOrRegisterQueue } from '../../jobs';
+import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { IRedisConfig } from '../../config/redis';
-import { Sequelize } from 'sequelize-typescript';
+import { TypeActivity } from '../../notification';
 import { plainToInstance } from 'class-transformer';
 import { PostService } from '../post/post.service';
-import { Op, QueryTypes, Transaction } from 'sequelize';
+
 import {
   CommentReactionModel,
   ICommentReaction,
 } from '../../database/models/comment-reaction.model';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { LogicException } from '../../common/exceptions';
 import { REACTION_KIND_LIMIT } from './reaction.constant';
@@ -28,11 +31,10 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
+import { ReactionActivityService } from '../../notification/activities';
 import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { ReactionActivityService } from '../../notification/activities/reaction-activity.service';
-import { TypeActivity } from '../../notification';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 
