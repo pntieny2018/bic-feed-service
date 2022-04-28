@@ -421,16 +421,15 @@ export class PostService {
   public async bindActorToPost(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
-      if (post?.actor.id) {
+      if (post.actor?.id) {
         userIds.push(post.actor.id);
       } else {
         userIds.push(post.createdBy);
       }
     }
-
     const users = await this._userService.getMany(userIds);
     for (const post of posts) {
-      if (post?.actor.id) {
+      if (post.actor?.id) {
         post.actor = users.find((i) => i.id === post.actor.id);
       } else {
         post.actor = users.find((i) => i.id === post.createdBy);
