@@ -76,7 +76,9 @@ export class FeedService {
           isImportant: false,
         });
       }
+
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
+      console.log('normalPostsExc=', normalPostsExc);
       const rows = importantPosts.concat(normalPosts);
       const posts = this.groupPosts(rows);
 

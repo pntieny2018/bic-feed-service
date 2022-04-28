@@ -439,7 +439,7 @@ export class CommentService {
         ...conditions,
       },
       attributes: {
-        include: [CommentModel.loadReactionsCount()],
+        include: [],
       },
       include: [
         {
@@ -458,7 +458,7 @@ export class CommentService {
           limit: getCommentDto.childLimit,
           required: false,
           attributes: {
-            include: [CommentModel.loadReactionsCount()],
+            include: [],
           },
           include: [
             {
@@ -498,6 +498,7 @@ export class CommentService {
       order: [['createdAt', getCommentDto.order]],
     });
     const response = rows.map((r) => r.toJSON());
+    console.log('rows=', JSON.stringify(response, null, 4));
     await this._mentionService.bindMentionsToComment(response);
 
     await this.bindUserToComment(response);
