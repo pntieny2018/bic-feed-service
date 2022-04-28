@@ -103,6 +103,7 @@ export class CommentService {
         ],
         where: {
           id: replyId,
+          parentId: 0,
         },
       });
       if (!parentComment) {
