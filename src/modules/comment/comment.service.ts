@@ -8,7 +8,7 @@ import { Op, Transaction } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { MediaService } from '../media';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
@@ -418,7 +418,7 @@ export class CommentService {
     }
     if (getCommentDto.idLT) {
       conditions['id'] = {
-        [Op.lt]: getCommentDto.idLT,
+        [Op.lt]: parseInt(`${getCommentDto.idLT}`),
         ...conditions['id'],
       };
     }
@@ -477,7 +477,7 @@ export class CommentService {
               },
             },
           ],
-          order: [['createdAt', getCommentDto.order]],
+          order: [['createdAt', OrderEnum.DESC]],
         },
         {
           model: CommentReactionModel,
