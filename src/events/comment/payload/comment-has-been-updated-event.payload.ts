@@ -7,4 +7,5 @@ export class CommentHasBeenUpdatedEventPayload {
   public newComment: IComment;
   public oldComment: IComment;
   public commentResponse: CommentResponseDto;
+  public oldCommentResponse: CommentResponseDto;
 }

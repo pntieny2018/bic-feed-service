@@ -1,22 +1,22 @@
 import { DataTypes, Optional } from 'sequelize';
 import { AllowNull, AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { PostResponseDto } from '../../modules/post/dto/responses';
+import { CommentResponseDto } from '../../modules/comment/dto/response';
 
-export interface IPostEditedHistory {
+export interface ICommentEditedHistory {
   id: number;
-  postId: number;
+  commentId: number;
   editedAt: Date;
-  oldData: PostResponseDto;
-  newData: PostResponseDto;
+  oldData: CommentResponseDto;
+  newData: CommentResponseDto;
 }
 
 @Table({
-  tableName: 'post_edited_history',
+  tableName: 'comment_edited_history',
   timestamps: false,
 })
-export class PostEditedHistoryModel
-  extends Model<IPostEditedHistory, Optional<IPostEditedHistory, 'id'>>
-  implements IPostEditedHistory
+export class CommentEditedHistoryModel
+  extends Model<ICommentEditedHistory, Optional<ICommentEditedHistory, 'id'>>
+  implements ICommentEditedHistory
 {
   @PrimaryKey
   @AutoIncrement
@@ -24,7 +24,7 @@ export class PostEditedHistoryModel
   public id: number;
 
   @Column
-  public postId: number;
+  public commentId: number;
 
   @AllowNull(false)
   @Column

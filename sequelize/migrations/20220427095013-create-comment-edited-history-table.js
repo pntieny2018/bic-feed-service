@@ -1,7 +1,7 @@
 'use strict';
 
 const schemaName = process.env.POSTGRES_SCHEMA;
-const tableName = 'post_edited_history';
+const tableName = 'comment_edited_history';
 
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -13,7 +13,7 @@ module.exports = {
           autoIncrement: true,
           type: Sequelize.INTEGER,
         },
-        post_id: {
+        comment_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
@@ -36,7 +36,7 @@ module.exports = {
       }
     )
 
-    await queryInterface.addIndex(tableName, ['post_id']);
+    await queryInterface.addIndex(tableName, ['comment_id']);
   },
 
   async down(queryInterface, Sequelize) {

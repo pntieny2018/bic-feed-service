@@ -13,7 +13,6 @@ import { CommentReactionModel } from '../../database/models/comment-reaction.mod
 import { CommentModel } from '../../database/models/comment.model';
 import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
-import { PostEditedHistoryMediaModel } from '../../database/models/post-edited-history-media.model';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -70,9 +69,7 @@ export class PostService {
     @Inject(forwardRef(() => FeedService))
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
-    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
-    @InjectModel(PostEditedHistoryMediaModel)
-    private readonly _postEditedHistoryMediaModel: typeof PostEditedHistoryMediaModel
+    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel
   ) {}
 
   /**
@@ -516,10 +513,6 @@ export class PostService {
 
       await transaction.commit();
 
-      this._savePostEditedHistory(post.id, uniqueMediaIds).catch((e) =>
-        this._logger.error(e, e?.stack)
-      );
-
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -531,41 +524,19 @@ export class PostService {
   /**
    * Save post edited history
    * @param postId number
-   * @param uniqueMediaIds number[]
+   * @param Object { oldData: PostResponseDto; newData: PostResponseDto }
+   * @returns Promise resolve void
    */
-  private async _savePostEditedHistory(postId: number, uniqueMediaIds: number[]): Promise<void> {
-    const post = await this._postModel.findOne({
-      where: {
-        id: postId,
-      },
+  public async savePostEditedHistory(
+    postId: number,
+    { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
+  ): Promise<any> {
+    return this._postEditedHistoryModel.create({
+      postId: postId,
+      editedAt: newData.updatedAt ?? newData.createdAt,
+      oldData: oldData,
+      newData: newData,
     });
-
-    const transaction = await this._sequelizeConnection.transaction();
-
-    try {
-      const postEditedHistory = await this._postEditedHistoryModel.create(
-        {
-          postId: postId,
-          content: post.content,
-          editedAt: post.updatedAt ?? post.createdAt,
-        },
-        { transaction: transaction }
-      );
-
-      const rawPostEditedHistoryMedia = uniqueMediaIds.map((e: number) => ({
-        postEditedHistoryId: postEditedHistory.id,
-        mediaId: e,
-      }));
-
-      await this._postEditedHistoryMediaModel.bulkCreate(rawPostEditedHistoryMedia, {
-        transaction: transaction,
-      });
-
-      await transaction.commit();
-    } catch (e) {
-      await transaction.rollback();
-      throw e;
-    }
   }
 
   /**
@@ -589,7 +560,7 @@ export class PostService {
 
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { content, media, setting, mentions, audience } = updatePostDto;
+      const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
 
       const { groupIds } = audience;
       const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
@@ -606,24 +577,23 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
-      await this._postModel.update(
-        {
-          content,
-          updatedBy: authUserId,
-          isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canShare: setting.canShare,
-          canComment: setting.canComment,
-          canReact: setting.canReact,
+      const dataUpdate = {
+        content,
+        updatedBy: authUserId,
+        isImportant: setting.isImportant,
+        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+        canShare: setting.canShare,
+        canComment: setting.canComment,
+        canReact: setting.canReact,
+      };
+      if (isDraft) dataUpdate['createdAt'] = new Date();
+      await this._postModel.update(dataUpdate, {
+        where: {
+          id: postId,
+          createdBy: authUserId,
         },
-        {
-          where: {
-            id: postId,
-            createdBy: authUserId,
-          },
-          transaction,
-        }
-      );
+        transaction,
+      });
       await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
       await this._mentionService.setMention(
         mentionUserIds,
@@ -633,10 +603,6 @@ export class PostService {
       );
       await this.setGroupByPost(groupIds, postId, transaction);
       await transaction.commit();
-
-      this._savePostEditedHistory(postId, uniqueMediaIds).catch((e) =>
-        this._logger.error(e, e?.stack)
-      );
 
       return true;
     } catch (error) {
@@ -666,6 +632,7 @@ export class PostService {
       await this._postModel.update(
         {
           isDraft: false,
+          createdAt: new Date(),
         },
         {
           where: {
@@ -721,7 +688,6 @@ export class PostService {
         this._commentService.deleteCommentsByPost(postId, transaction),
         this._feedService.deleteNewsFeedByPost(postId, transaction),
         this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
-        this._deletePostEditedHistory(postId),
       ]);
       await this._postModel.destroy({
         where: {
@@ -744,24 +710,8 @@ export class PostService {
    * Delete post edited history
    * @param postId number
    */
-  private async _deletePostEditedHistory(postId: number): Promise<void> {
-    const postEditedHistoryRows = await this._postEditedHistoryModel.findAll({
-      where: {
-        postId: postId,
-      },
-    });
-
-    const postEditedHistoryIds = postEditedHistoryRows.map((e): number => e.id);
-
-    await this._postEditedHistoryMediaModel.destroy({
-      where: {
-        postEditedHistoryId: {
-          [Op.in]: postEditedHistoryIds,
-        },
-      },
-    });
-
-    await this._postEditedHistoryModel.destroy({
+  public async deletePostEditedHistory(postId: number): Promise<any> {
+    return this._postEditedHistoryModel.destroy({
       where: {
         postId: postId,
       },
@@ -1068,20 +1018,23 @@ export class PostService {
         where: {
           ...conditions,
         },
-        include: [
-          {
-            model: MediaModel,
-            required: false,
-          },
-        ],
         order: [['id', order]],
         offset: offset,
         limit: limit,
       });
 
-      const result = rows.map((e) =>
-        plainToInstance(PostEditedHistoryDto, e.toJSON(), { excludeExtraneousValues: true })
-      );
+      const result = rows.map((e) => {
+        const newData: PostResponseDto = e.toJSON().newData;
+        return plainToInstance(
+          PostEditedHistoryDto,
+          {
+            ...newData,
+            postId: newData.id,
+            editedAt: newData.updatedAt ?? newData.createdAt,
+          },
+          { excludeExtraneousValues: true }
+        );
+      });
 
       return new PageDto(result, {
         limit: limit,

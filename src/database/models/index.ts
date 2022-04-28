@@ -12,7 +12,7 @@ import { PostGroupModel } from './post-group.model';
 import { FollowModel } from './follow.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { PostEditedHistoryModel } from './post-edited-history.model';
-import { PostEditedHistoryMediaModel } from './post-edited-history-media.model';
+import { CommentEditedHistoryModel } from './comment-edited-history.model';
 
 export default [
   PostModel,
@@ -29,5 +29,5 @@ export default [
   FollowModel,
   UserMarkReadPostModel,
   PostEditedHistoryModel,
-  PostEditedHistoryMediaModel,
+  CommentEditedHistoryModel,
 ];
