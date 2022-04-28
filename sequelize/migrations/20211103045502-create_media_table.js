@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.POSTGRES_SCHEMA;
+const schemaName = process.env.DB_SCHEMA;
 const tableName = 'media';
 
 module.exports = {

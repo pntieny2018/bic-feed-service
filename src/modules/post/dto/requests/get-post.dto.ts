@@ -8,6 +8,11 @@ export class GetPostDto {
   @IsOptional()
   public commentOrder?: OrderEnum = OrderEnum.DESC;
 
+  @ApiProperty({ enum: OrderEnum, default: OrderEnum.ASC, required: false })
+  @IsEnum(OrderEnum)
+  @IsOptional()
+  public childCommentOrder?: OrderEnum = OrderEnum.DESC;
+
   @ApiProperty({
     required: false,
     type: Number,
