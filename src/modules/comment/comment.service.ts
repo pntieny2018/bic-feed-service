@@ -478,7 +478,7 @@ export class CommentService {
               },
             },
           ],
-          order: [['createdAt', OrderEnum.DESC]],
+          order: [['createdAt', getCommentDto.childOrder]],
         },
         {
           model: CommentReactionModel,

@@ -1,6 +1,6 @@
 'use strict';
 
-const schemaName = process.env.POSTGRES_SCHEMA;
+const schemaName = process.env.DB_SCHEMA;
 const tableName = 'comment_edited_history';
 
 module.exports = {
@@ -24,22 +24,22 @@ module.exports = {
         },
         old_data: {
           type: Sequelize.JSONB,
-          allowNull: true
+          allowNull: true,
         },
         new_data: {
           type: Sequelize.JSONB,
-          allowNull: false
-        }
+          allowNull: false,
+        },
       },
       {
         schema: schemaName,
       }
-    )
+    );
 
     await queryInterface.addIndex(tableName, ['comment_id']);
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable(tableName);
-  }
+  },
 };
