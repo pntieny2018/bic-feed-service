@@ -125,22 +125,17 @@ export class CommentService {
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
 
+    //HOTFIX: hot fix create comment with image
+    const comment = await this._commentModel.create({
+      createdBy: user.id,
+      updatedBy: user.id,
+      parentId: replyId,
+      content: createCommentDto.content,
+      postId: post.id,
+    });
+
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const comment = await this._commentModel.create(
-        {
-          createdBy: user.id,
-          updatedBy: user.id,
-          parentId: replyId,
-          content: createCommentDto.content,
-          postId: post.id,
-        },
-        {
-          returning: true,
-          transaction: transaction,
-        }
-      );
-
       const userMentionIds = createCommentDto.mentions;
 
       if (userMentionIds.length) {
@@ -186,7 +181,7 @@ export class CommentService {
       return commentResponse;
     } catch (ex) {
       await transaction.rollback();
-
+      await comment.destroy();
       throw ex;
     }
   }
