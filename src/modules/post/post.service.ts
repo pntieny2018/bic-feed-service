@@ -28,7 +28,7 @@ import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { CommonReactionService, DeleteReactionService } from '../reaction/services';
-import { PageDto } from './../../common/dto/pagination/page.dto';
+import { PageDto } from '../../common/dto';
 import {
   CreatePostDto,
   GetPostDto,
@@ -106,7 +106,7 @@ export class PostService {
     });
 
     await Promise.all([
-      //this.bindActorToPost(posts),
+      this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
       this.bindCommentsCount(posts),
     ]);
@@ -314,6 +314,7 @@ export class PostService {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
+        include: [PostModel.loadReactionsCount(), PostModel.loadMarkReadPost(user.id)],
       },
       where: { id: postId },
       include: [
@@ -356,7 +357,8 @@ export class PostService {
       {
         postId,
         childLimit: getPostDto.childCommentLimit,
-        order: OrderEnum.DESC,
+        order: getPostDto.commentOrder,
+        childOrder: getPostDto.childCommentOrder,
         limit: getPostDto.commentLimit,
       },
       false
@@ -421,11 +423,19 @@ export class PostService {
   public async bindActorToPost(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
-      userIds.push(post.createdBy);
+      if (post.actor?.id) {
+        userIds.push(post.actor.id);
+      } else {
+        userIds.push(post.createdBy);
+      }
     }
     const users = await this._userService.getMany(userIds);
     for (const post of posts) {
-      post.actor = users.find((i) => i.id === post.createdBy);
+      if (post.actor?.id) {
+        post.actor = users.find((i) => i.id === post.actor.id);
+      } else {
+        post.actor = users.find((i) => i.id === post.createdBy);
+      }
     }
   }
   /**
@@ -722,6 +732,7 @@ export class PostService {
    * Add group to post
    * @param groupIds Array of Group ID
    * @param postId PostID
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */

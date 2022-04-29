@@ -1,4 +1,7 @@
 'use strict';
+
+const { max } = require("class-validator");
+
 module.exports = {
   async up(queryInterface, sequelize) {
     let count = 1;
@@ -6,7 +9,8 @@ module.exports = {
     const users = [10,11,12,13,14,15,16,17,18,19,20,21,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,64,65,66,67,69,70,71,72,76,77,78,79,80,81,82,83,84,85,86,87,88,89];
     const mediaIds = [1,2,3,4,5,6,7];
     const reactionNames = ['hihi', 'haha', 'huhu', 'xd', 'kk', 'xcd', 'oo', 'qq', 'gg', 'mm', 'pp'];
-    for (let i = 1; i <= 5000; i++) {
+    const totalPost = Math.max(1000, 5000);
+    for (let i = 1; i <= totalPost/1000; i++) {
       let data = [];
       for (let k = 1; k <= 1000; k++) {
         const uid = users[Math.floor(Math.random()*users.length)];
@@ -25,23 +29,21 @@ module.exports = {
       await queryInterface.bulkInsert('posts', data);
     }
 
-    for (let i = 1; i <= 1000; i++) {
-      let data = [];
-      for (let k = 1; k <= 1000; k++) {
-        data.push({
-          'url': `http://google.com/....`,
-          'type': 'image',
-          'is_draft': false,
-          'name': 'Filename.jpg',
-          'origin_name': 'Filename.jpg',
-          'created_by': users[Math.floor(Math.random()*users.length)],
-        })
-      }
-      await queryInterface.bulkInsert('media', data);
+    let data = [];
+    for (let k = 1; k <= 1000; k++) {
+      data.push({
+        'url': `http://google.com/....`,
+        'type': 'image',
+        'is_draft': false,
+        'name': 'Filename.jpg',
+        'origin_name': 'Filename.jpg',
+        'created_by': users[Math.floor(Math.random()*users.length)],
+      })
     }
+    await queryInterface.bulkInsert('media', data);
 
     let postId = 1;
-    for (let i = 1; i <= 50000; i++) {
+    for (let i = 1; i <= totalPost/1000; i++) {
       let postGroup = [];
       let mentions = [];
       let media = [];
@@ -106,7 +108,7 @@ module.exports = {
     }
     await queryInterface.bulkInsert('comments', comments);
 
-    for( let i = 437; i<= 100000; i++) {
+    for( let i = 1; i<= totalPost/1000; i++) {
       let postId = 1;
       for (let k = 1; k<= 5; k++) {
         let newfeed = [];

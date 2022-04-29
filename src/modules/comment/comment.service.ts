@@ -8,7 +8,7 @@ import { Op, Transaction } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { MediaService } from '../media';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
@@ -103,6 +103,7 @@ export class CommentService {
         ],
         where: {
           id: replyId,
+          parentId: 0,
         },
       });
       if (!parentComment) {
@@ -125,22 +126,17 @@ export class CommentService {
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
 
+    //HOTFIX: hot fix create comment with image
+    const comment = await this._commentModel.create({
+      createdBy: user.id,
+      updatedBy: user.id,
+      parentId: replyId,
+      content: createCommentDto.content,
+      postId: post.id,
+    });
+
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const comment = await this._commentModel.create(
-        {
-          createdBy: user.id,
-          updatedBy: user.id,
-          parentId: replyId,
-          content: createCommentDto.content,
-          postId: post.id,
-        },
-        {
-          returning: true,
-          transaction: transaction,
-        }
-      );
-
       const userMentionIds = createCommentDto.mentions;
 
       if (userMentionIds.length) {
@@ -186,7 +182,7 @@ export class CommentService {
       return commentResponse;
     } catch (ex) {
       await transaction.rollback();
-
+      await comment.destroy();
       throw ex;
     }
   }
@@ -423,7 +419,7 @@ export class CommentService {
     }
     if (getCommentDto.idLT) {
       conditions['id'] = {
-        [Op.lt]: getCommentDto.idLT,
+        [Op.lt]: parseInt(`${getCommentDto.idLT}`),
         ...conditions['id'],
       };
     }
@@ -482,7 +478,7 @@ export class CommentService {
               },
             },
           ],
-          order: [['createdAt', getCommentDto.order]],
+          order: [['createdAt', getCommentDto.childOrder]],
         },
         {
           model: CommentReactionModel,
