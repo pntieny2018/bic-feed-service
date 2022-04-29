@@ -152,6 +152,12 @@ export class PostResponseDto {
   public reactionsCount?: Record<string, Record<string, number>>;
 
   @ApiProperty({
+    type: Boolean,
+  })
+  @Expose()
+  public markedReadPost?: boolean;
+
+  @ApiProperty({
     type: Date,
   })
   @Expose()
