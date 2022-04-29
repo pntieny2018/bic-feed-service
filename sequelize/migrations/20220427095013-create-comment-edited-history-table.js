@@ -36,7 +36,9 @@ module.exports = {
       }
     );
 
-    await queryInterface.addIndex(tableName, ['comment_id']);
+    await queryInterface.addIndex(tableName, ['comment_id'], {
+      as: `idx_${tableName}_comment_id`
+    });
   },
 
   async down(queryInterface, Sequelize) {
