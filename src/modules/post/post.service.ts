@@ -27,7 +27,7 @@ import { FeedService } from '../feed/feed.service';
 import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
-import { DeleteReactionService } from '../reaction/services';
+import { CommonReactionService, DeleteReactionService } from '../reaction/services';
 import { PageDto } from '../../common/dto';
 import {
   CreatePostDto,
@@ -65,6 +65,7 @@ export class PostService {
     private _authorityService: AuthorityService,
     private _searchService: ElasticsearchService,
     private _deleteReactionService: DeleteReactionService,
+    private _commonReactionService: CommonReactionService,
     @Inject(forwardRef(() => FeedService))
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
@@ -313,7 +314,7 @@ export class PostService {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [PostModel.loadReactionsCount(), PostModel.loadMarkReadPost(user.id)],
+        include: [PostModel.loadMarkReadPost(user.id)],
       },
       where: { id: postId },
       include: [
@@ -351,7 +352,6 @@ export class PostService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     await this._authorityService.allowAccess(user, post);
-
     const comments = await this._commentService.getComments(
       user,
       {
@@ -365,6 +365,7 @@ export class PostService {
     );
     const jsonPost = post.toJSON();
     await Promise.all([
+      this._commonReactionService.bindReactionToPosts([jsonPost]),
       this._mentionService.bindMentionsToPosts([jsonPost]),
       this.bindActorToPost([jsonPost]),
       this.bindAudienceToPost([jsonPost]),

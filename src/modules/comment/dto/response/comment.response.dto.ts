@@ -46,7 +46,12 @@ export class CommentResponseDto {
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }
-    if (typeof value === 'object') {
+    if (
+      typeof value === 'object' &&
+      value.hasOwnProperty('files') &&
+      value.hasOwnProperty('images') &&
+      value.hasOwnProperty('videos')
+    ) {
       return value;
     }
     return new MediaFilterResponseDto([], [], []);
@@ -78,6 +83,11 @@ export class CommentResponseDto {
     }
     if (value === '1=') {
       return null;
+    }
+    if (Array.isArray(value)) {
+      const reactionsCount = {};
+      value.forEach((v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) }));
+      return reactionsCount;
     }
     return value;
   })
