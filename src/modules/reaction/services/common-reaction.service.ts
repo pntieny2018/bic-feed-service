@@ -275,7 +275,7 @@ export class CommonReactionService {
   }
 
   /**
-   * Bind commentsCount info to post
+   * Bind reaction to post
    * @param posts Array of post
    * @returns Promise resolve void
    * @throws HttpException
@@ -308,6 +308,58 @@ export class CommonReactionService {
       post.reactionsCount = reactions.filter((i) => {
         return i.postId === post.id;
       });
+    }
+  }
+
+  /**
+   * Bind reaction to comments
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindReactionToComments(comments: any[]): Promise<void> {
+    const { schema } = getDatabaseConfig();
+    const commentIds = [];
+    for (const comment of comments) {
+      commentIds.push(comment.id);
+      //push child commentID
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
+          commentIds.push(cm.id);
+        }
+      }
+    }
+
+    if (commentIds.length === 0) return;
+    const commentReactionTable = CommentReactionModel.tableName;
+    const query = `SELECT 
+        ${schema}.${commentReactionTable}.comment_id as "commentId",
+         COUNT(${schema}.${commentReactionTable}.id ) as total,
+         ${schema}.${commentReactionTable}.reaction_name as "reactionName",
+         MIN(${schema}.${commentReactionTable}.created_at) as "date"
+      FROM   ${schema}.${commentReactionTable}
+      WHERE  ${schema}.${commentReactionTable}.comment_id IN(:commentIds)
+      GROUP BY ${schema}.${commentReactionTable}.comment_id, ${schema}.${commentReactionTable}.reaction_name
+      ORDER BY date ASC`;
+    const reactions: any[] = await this._sequelizeConnection.query(query, {
+      replacements: {
+        commentIds,
+      },
+      type: QueryTypes.SELECT,
+      raw: true,
+    });
+    for (const comment of comments) {
+      comment.reactionsCount = reactions.filter((i) => {
+        return i.commentId === comment.id;
+      });
+      //Map reaction to child comment
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
+          cm.reactionsCount = reactions.filter((r) => {
+            return r.commentId === cm.id;
+          });
+        }
+      }
     }
   }
 }

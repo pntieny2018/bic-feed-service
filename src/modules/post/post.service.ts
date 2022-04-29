@@ -314,7 +314,7 @@ export class PostService {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [PostModel.loadReactionsCount(), PostModel.loadMarkReadPost(user.id)],
+        include: [PostModel.loadMarkReadPost(user.id)],
       },
       where: { id: postId },
       include: [
