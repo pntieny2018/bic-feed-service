@@ -1,11 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-require('dotenv').config();
+'use strict';
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'follows';
+const tableName = 'comment_edited_history';
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
       tableName,
       {
@@ -14,27 +13,35 @@ module.exports = {
           autoIncrement: true,
           type: Sequelize.INTEGER,
         },
-        user_id: {
+        comment_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
-        group_id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-        },
-        created_at: {
+        edited_at: {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        },
+        old_data: {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        },
+        new_data: {
+          type: Sequelize.JSONB,
+          allowNull: false,
         },
       },
       {
         schema: schemaName,
       }
     );
+
+    await queryInterface.addIndex(tableName, ['comment_id'], {
+      as: `idx_${tableName}_comment_id`
+    });
   },
 
-  down: async (queryInterface) => {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable(tableName);
   },
 };
