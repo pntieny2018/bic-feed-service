@@ -81,11 +81,12 @@ export class FeedService {
       const rows = importantPosts.concat(normalPosts);
 
       let normalSeenPost = [];
-      if (offset + limit >= rows.length) {
+      if (limit >= rows.length) {
+        const unSeenCount = await this._newsFeedModel.count({where: {isSeenPost: false , userId: authUserId}})
         normalSeenPost = await this._getNewsFeedData({
           ...getNewsFeedDto,
-          offset: Math.max(0, offset - rows.length),
-          limit: Math.min(limit + 1, limit + offset - rows.length + 1),
+          offset: Math.max(0, offset - unSeenCount),
+          limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
           authUserId,
           isImportant: false,
           isSeen: true,
@@ -518,7 +519,7 @@ export class FeedService {
       WHERE "p"."is_draft" = false ${condition}
       AND is_seen_post = ${isSeen ? true: false}
       ORDER BY "p"."created_at" ${order}
-      ${isSeen ? "" : "OFFSET :offset LIMIT :limit"}
+      OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
       LEFT OUTER JOIN ( 
