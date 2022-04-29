@@ -1,4 +1,4 @@
-import sequelize from 'sequelize';
+import sequelize, { Op } from 'sequelize';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { GetTimelineDto } from './dto/request';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
@@ -76,9 +76,24 @@ export class FeedService {
           isImportant: false,
         });
       }
+
+
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
-      const posts = this.groupPosts(rows);
+
+      let normalSeenPost = [];
+      if (offset + limit >= rows.length) {
+        normalSeenPost = await this._getNewsFeedData({
+          ...getNewsFeedDto,
+          offset: Math.max(0, offset - rows.length),
+          limit: Math.min(limit + 1, limit + offset - rows.length + 1),
+          authUserId,
+          isImportant: false,
+          isSeen: true,
+        });
+      }
+
+      const posts = this.groupPosts(rows.concat(normalSeenPost));
 
       const hasNextPage = posts.length === limit + 1 ? true : false;
       if (hasNextPage) posts.pop();
@@ -106,6 +121,21 @@ export class FeedService {
       });
     }
   }
+
+
+  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+    try {
+      await this._newsFeedModel.update(
+        {isSeenPost: true},
+        {
+          where: {userId, postId: {[Op.in]: postIds}}
+        }
+      )
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+    }
+  }
+
 
   /**
    * Get Timeline
@@ -412,6 +442,7 @@ export class FeedService {
   private async _getNewsFeedData({
     authUserId,
     isImportant,
+    isSeen,
     idGT,
     idGTE,
     idLT,
@@ -422,6 +453,7 @@ export class FeedService {
   }: {
     authUserId: number;
     isImportant: boolean;
+    isSeen? : boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
@@ -478,9 +510,10 @@ export class FeedService {
         from ${schema}.${userNewsFeedModel} AS u
         WHERE u.post_id = p.id
         AND u.user_id  = :authUserId
+        AND u.is_seen_post = ${isSeen ? true : false}
       ) ${condition}
       ORDER BY "p"."created_at" ${order}
-      OFFSET :offset LIMIT :limit
+      ${isSeen ? "" : "OFFSET :offset LIMIT :limit"}
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
       LEFT OUTER JOIN ( 

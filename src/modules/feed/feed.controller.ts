@@ -1,5 +1,5 @@
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseArrayPipe, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
@@ -41,5 +41,19 @@ export class FeedController {
     @Query() getNewsFeedDto: GetNewsFeedDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._feedService.getNewsFeed(authUser, getNewsFeedDto);
+  }
+
+
+  @ApiOperation({ summary: 'Mark seen post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Put('/seen/:ids')
+  public async markSeenPost(
+    @AuthUser() user: UserDto,
+    @Param('ids', ParseArrayPipe) postId: number[]
+  ): Promise<boolean> {
+    await this._feedService.markSeenPosts(postId, user.id);
+    return true;
   }
 }
