@@ -223,6 +223,7 @@ export class FeedService {
         importantExpiredAt,
         isDraft,
         content,
+        markedReadPost,
         canComment,
         canReact,
         canShare,
@@ -268,6 +269,7 @@ export class FeedService {
           isDraft,
           content,
           canComment,
+          markedReadPost,
           canReact,
           canShare,
           createdBy,
@@ -433,21 +435,36 @@ export class FeedService {
     let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
-    const userNewsFeedModel = UserNewsFeedModel.tableName;
+    const userNewsFeedTable = UserNewsFeedModel.tableName;
     const mentionTable = MentionModel.tableName;
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
+    let subSelect = `SELECT "p"."id", 
+    "p"."comments_count" AS "commentsCount",
+    "p"."is_important" AS "isImportant", 
+    "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
+    "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
+    "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+    "createdAt", "p"."updated_at" AS "updatedAt"`;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
         SELECT 1
         FROM ${schema}.${userMarkReadPostTable} as u
-        WHERE u.user_id = 15 AND u.post_id = p.id
+        WHERE u.user_id = :authUserId AND u.post_id = p.id
       )`;
+      subSelect += `, false AS "markedReadPost"`;
     } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW() OR EXISTS(
+				SELECT 1
+				FROM ${schema}.${userMarkReadPostTable} as u
+				WHERE u.user_id = :authUserId AND u.post_id = p.id
+		  ))`;
+      subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+                                  WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+                      ) AS "markedReadPost"`;
     }
     const query = `SELECT 
     "PostModel".*,
@@ -464,21 +481,10 @@ export class FeedService {
     "media"."height",
     "media"."extension"
     FROM (
-      SELECT 
-      "p"."id", 
-      "p"."comments_count" AS "commentsCount",
-      "p"."is_important" AS "isImportant", 
-      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt"
+      ${subSelect}
       FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false AND EXISTS(
-        SELECT 1
-        from ${schema}.${userNewsFeedModel} AS u
-        WHERE u.post_id = p.id
-        AND u.user_id  = :authUserId
-      ) ${condition}
+      INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
+      WHERE "p"."is_draft" = false ${condition}
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
