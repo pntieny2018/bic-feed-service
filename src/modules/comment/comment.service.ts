@@ -31,7 +31,7 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { ExceptionHelper } from '../../common/helpers';
-import { DeleteReactionService } from '../reaction/services';
+import { CommonReactionService, DeleteReactionService } from '../reaction/services';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel } from '../../database/models/follow.model';
 import { FollowService } from '../follow';
@@ -53,6 +53,7 @@ export class CommentService {
     private _mentionService: MentionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
+    private _commonReactionService: CommonReactionService,
     private _deleteReactionService: DeleteReactionService,
     private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
@@ -435,7 +436,7 @@ export class CommentService {
         ...conditions,
       },
       attributes: {
-        include: [CommentModel.loadReactionsCount()],
+        include: [],
       },
       include: [
         {
@@ -454,7 +455,7 @@ export class CommentService {
           limit: getCommentDto.childLimit,
           required: false,
           attributes: {
-            include: [CommentModel.loadReactionsCount()],
+            include: [],
           },
           include: [
             {
@@ -494,9 +495,11 @@ export class CommentService {
       order: [['createdAt', getCommentDto.order]],
     });
     const response = rows.map((r) => r.toJSON());
-    await this._mentionService.bindMentionsToComment(response);
-
-    await this.bindUserToComment(response);
+    await Promise.all([
+      this._mentionService.bindMentionsToComment(response),
+      this._commonReactionService.bindReactionToComments(response),
+      this.bindUserToComment(response),
+    ]);
 
     const comments = this._classTransformer.plainToInstance(CommentResponseDto, response, {
       excludeExtraneousValues: true,
