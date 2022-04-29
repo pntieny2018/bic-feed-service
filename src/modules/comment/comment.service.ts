@@ -495,9 +495,11 @@ export class CommentService {
       order: [['createdAt', getCommentDto.order]],
     });
     const response = rows.map((r) => r.toJSON());
-    await this._mentionService.bindMentionsToComment(response);
-    await this._commonReactionService.bindReactionToComments(response);
-    await this.bindUserToComment(response);
+    await Promise.all([
+      this._mentionService.bindMentionsToComment(response),
+      this._commonReactionService.bindReactionToComments(response),
+      this.bindUserToComment(response),
+    ]);
 
     const comments = this._classTransformer.plainToInstance(CommentResponseDto, response, {
       excludeExtraneousValues: true,
