@@ -516,6 +516,7 @@ export class FeedService {
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
+      AND is_seen_post = ${isSeen ? true: false}
       ORDER BY "p"."created_at" ${order}
       ${isSeen ? "" : "OFFSET :offset LIMIT :limit"}
     ) AS "PostModel"
