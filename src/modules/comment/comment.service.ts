@@ -21,7 +21,7 @@ import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
-import { CreateCommentDto, GetCommentsDto, GetCommentEditedHistoryDto } from './dto/requests';
+import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
@@ -41,6 +41,7 @@ import { CommentEditedHistoryModel } from '../../database/models/comment-edited-
 import { GetCommentDto } from './dto/requests/get-comment.dto';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 import sequelize from 'sequelize';
+import { GetCommentsDto } from './dto/requests/get-comments.dto';
 
 @Injectable()
 export class CommentService {
