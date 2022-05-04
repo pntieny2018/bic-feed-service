@@ -82,7 +82,9 @@ export class FeedService {
 
       let normalSeenPost = [];
       if (limit >= rows.length) {
-        const unSeenCount = await this._newsFeedModel.count({where: {isSeenPost: false , userId: authUserId}})
+        const unSeenCount = await this._newsFeedModel.count({
+          where: { isSeenPost: false, userId: authUserId },
+        });
         normalSeenPost = await this._getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - unSeenCount),
@@ -122,20 +124,18 @@ export class FeedService {
     }
   }
 
-
   public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
     try {
       await this._newsFeedModel.update(
-        {isSeenPost: true},
+        { isSeenPost: true },
         {
-          where: {userId, postId: {[Op.in]: postIds}}
+          where: { userId, postId: { [Op.in]: postIds } },
         }
-      )
+      );
     } catch (ex) {
       this._logger.error(ex, ex.stack);
     }
   }
-
 
   /**
    * Get Timeline
@@ -376,7 +376,7 @@ export class FeedService {
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
-
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const authUserId = authUser.id;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
@@ -405,7 +405,10 @@ export class FeedService {
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt"
+      "createdAt", "p"."updated_at" AS "updatedAt",
+      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+      ) AS "markedReadPost"
       FROM ${schema}.${postTable} AS "p"
       WHERE "p"."is_draft" = false AND EXISTS(
         SELECT 1
@@ -455,7 +458,7 @@ export class FeedService {
   }: {
     authUserId: number;
     isImportant: boolean;
-    isSeen? : boolean;
+    isSeen?: boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
@@ -517,7 +520,7 @@ export class FeedService {
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
-      AND is_seen_post = ${isSeen ? true: false}
+      AND is_seen_post = ${isSeen ? true : false}
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
