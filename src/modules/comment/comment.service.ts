@@ -430,7 +430,6 @@ export class CommentService {
     const actor = await this._userService.get(post.createdBy);
     const childs = await this._getChildComments(parent.id, user.id, getCommentDto, loadAroundId);
     const parentJson = parent.toJSON();
-    console.log('parent=', parentJson);
     await Promise.all([
       this._commonReactionService.bindReactionToComments([parentJson]),
       this._mentionService.bindMentionsToComment([parentJson]),
