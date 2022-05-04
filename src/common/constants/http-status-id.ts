@@ -47,7 +47,6 @@ export const HTTP_STATUS_ID = {
 
   // INSIDE
   APP_POST_PUBLISH_CONTENT_EMPTY: 'app.post.publish.content_empty.app_error',
-  APP_USER_EXISTING: 'app.user.existing.app_error',
   APP_COMMENT_EXISTING: 'app.comment.existing.app_error',
   APP_COMMENT_NOT_FOUND: 'app.comment.not_found.app_error',
   APP_COMMENT_REPLY_EXISTING: 'app.comment.reply.existing.app_error',
@@ -56,4 +55,6 @@ export const HTTP_STATUS_ID = {
   APP_AUTH_TOKEN_EXPIRED: 'app.auth_token.expired',
   APP_POST_AS_READ_INVALID_PARAMETER: 'app.post.invalid_parameter',
   APP_POST_NOT_FOUND: 'app.post.not_found',
+
+  APP_USER_NOT_FOUND: 'app.user.not_found',
 };
