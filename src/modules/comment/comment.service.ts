@@ -430,7 +430,7 @@ export class CommentService {
     const actor = await this._userService.get(post.createdBy);
     const childs = await this._getComments(
       user.id,
-      { ...getCommentDto, postId: post.id },
+      { ...getCommentDto, parentId: parent.id, postId: post.id },
       loadAroundId
     );
     const parentJson = parent.toJSON();
@@ -563,6 +563,45 @@ export class CommentService {
     });
   }
 
+  /**
+   * Get comment list
+   * @param user UserDto
+   * @param getCommentsDto GetCommentsDto
+   * @param checkAccess Boolean
+   * @returns Promise resolve PageDto<CommentResponseDto>
+   */
+  public async getCommentsForCopyLink(
+    user: UserDto,
+    getCommentsDto: GetCommentsDto,
+    checkAccess = true
+  ): Promise<any> {
+    this._logger.debug(
+      `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
+        getCommentsDto
+      )}`
+    );
+    const { limit, offset, childLimit, postId, childOrder, order } = getCommentsDto;
+
+    if (checkAccess) {
+      const post = await this._postService.findPost({
+        postId,
+      });
+
+      await this._authorityService.allowAccess(user, post);
+    }
+
+    const comments = await this._getComments(user.id, {
+      limit,
+      offset,
+      order,
+      postId,
+    });
+    if (comments.list.length) {
+      await this.bindChildsToComment(comments.list, user.id, childOrder, 1);
+    }
+    return comments;
+  }
+
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
     const conditions = {};
@@ -624,10 +663,10 @@ export class CommentService {
 
   private async _getComments(
     authUserId: number,
-    getChildCommentsDto: GetCommentDto,
+    getCommentDto: GetCommentDto,
     arroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
-    const { offset, limit, order, parentId, postId } = getChildCommentsDto;
+    const { offset, limit, order, parentId, postId } = getCommentDto;
     const { schema } = getDatabaseConfig();
     let query: string;
     let condition = ' 1 = 1';
@@ -757,9 +796,11 @@ export class CommentService {
       hasNextPage = childsGrouped[n] ? true : false;
     } else {
       hasPreviousPage = childsGrouped.length === limit + 1 ? true : false;
-      if (hasPreviousPage) childsFiltered = childsGrouped.pop();
+      if (hasPreviousPage) {
+        childsGrouped.pop();
+        childsFiltered = childsGrouped;
+      }
     }
-
     await Promise.all([
       this._commonReactionService.bindReactionToComments(childsFiltered),
       this._mentionService.bindMentionsToComment(childsFiltered),
@@ -872,6 +913,88 @@ export class CommentService {
           cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
         }
       }
+    }
+  }
+
+  /**
+   * Bind user info to comment list
+   * @param commentsResponse  Array<IComment>
+   * @returns Promise resolve void
+   */
+  public async bindChildsToComment(
+    comments: any[],
+    authUserId: number,
+    order?: OrderEnum,
+    limit = 10
+  ): Promise<void> {
+    const subQuery = [];
+    for (const comment of comments) {
+      subQuery.push(`SELECT * 
+      FROM (
+        SELECT 
+              "id", 
+              "parent_id" AS "parentId", 
+              "post_id" AS "postId", 
+              "content", 
+              "total_reply" AS "totalReply", 
+              "created_by" AS "createdBy", 
+              "updated_by" AS "updatedBy", 
+              "created_at" AS "createdAt", 
+              "updated_at" AS "updatedAt" 
+        FROM "feed_abcd"."comments" AS "CommentModel" 
+        WHERE "CommentModel"."parent_id" = ${comment.id} 
+        ORDER BY "CommentModel"."created_at" ${order} LIMIT :limit
+      ) AS sub`);
+    }
+
+    const query = `SELECT 
+      "CommentModel".*,
+      "media"."id" AS "mediaId",
+      "media"."url" AS "mediaUrl", 
+      "media"."type" AS "mediaType",
+      "media"."name" AS "mediaName",
+      "media"."width" AS "mediaWidth", 
+      "media"."height" AS "mediaHeight", 
+      "media"."extension" AS "mediaExtension",
+      "mentions"."user_id" AS "mentionUserId", 
+      "ownerReactions"."id" AS "commentReactionId", 
+      "ownerReactions"."reaction_name" AS "reactionName",
+      "ownerReactions"."created_at" AS "reactCreatedAt"
+    FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel" 
+    LEFT OUTER JOIN ( 
+      "feed_abcd"."comments_media" AS "media->CommentMediaModel" 
+      INNER JOIN "feed_abcd"."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+    ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+    LEFT OUTER JOIN "feed_abcd"."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" 
+        AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment') 
+    LEFT OUTER JOIN "feed_abcd"."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
+    AND "ownerReactions"."created_by" = :authUserId;`;
+
+    const rows: any[] = await this._sequelizeConnection.query(query, {
+      replacements: {
+        authUserId,
+        limit,
+      },
+      type: QueryTypes.SELECT,
+    });
+
+    const childsGrouped = this._groupComments(rows);
+    await Promise.all([
+      this._commonReactionService.bindReactionToComments(childsGrouped),
+      this._mentionService.bindMentionsToComment(childsGrouped),
+      this.bindUserToComment(childsGrouped),
+    ]);
+
+    const childsFormatted = this._classTransformer.plainToInstance(
+      CommentResponseDto,
+      childsGrouped,
+      {
+        excludeExtraneousValues: true,
+      }
+    );
+
+    for (const comment of comments) {
+      comment.child = childsFormatted.filter((i) => i.parentId === comment.id);
     }
   }
 
