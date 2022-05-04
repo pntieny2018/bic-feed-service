@@ -529,7 +529,7 @@ export class CommentService {
               },
             },
           ],
-          order: [['createdAt', childOrder]],
+          order: [['createdAt', 'DESC']],
         },
         {
           model: CommentReactionModel,
@@ -542,7 +542,7 @@ export class CommentService {
       ],
       offset: 0,
       limit: limit + 1,
-      order: [['createdAt', order]],
+      order: [['createdAt', 'DESC']],
     });
     const response = rows.map((r) => r.toJSON());
 
@@ -916,8 +916,8 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.childs && comment.childs.length) {
+        for (const cm of comment.childs) {
           actorIds.push(cm.createdBy);
         }
       }
@@ -930,8 +930,8 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.childs && comment.childs.length) {
+        for (const cm of comment.childs) {
           cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
         }
       }
