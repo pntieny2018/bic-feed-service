@@ -348,7 +348,6 @@ export class PostService {
     });
 
     if (!post) {
-      //throw new NotFoundException('Post not found');
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     await this._authorityService.allowAccess(user, post);
