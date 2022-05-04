@@ -375,13 +375,13 @@ export class CommentService {
   }
 
   /**
-   * Used for copy link comment
+   * Used for copy link comment on Mobile
    * @param user UserDto
    * @param commentId Number
    * @param getCommentDto: GetCommentDto
    * @returns Promise resolve CommentResponseDto
    */
-  public async getCommentAndChilds(
+  public async getCommentLinkForMobile(
     commentId: number,
     user: UserDto,
     getCommentsDto: GetCommentsDto
@@ -573,7 +573,7 @@ export class CommentService {
    * @param checkAccess Boolean
    * @returns Promise resolve PageDto<CommentResponseDto>
    */
-  public async getCommentsForCopyLink(
+  public async getCommentLinkForWeb(
     commentId: number,
     user: UserDto,
     getCommentsDto: GetCommentsDto,
@@ -584,7 +584,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { limit, offset, postId, targetChildLimit, childLimit, parentId } = getCommentsDto;
+    const { limit, postId, targetChildLimit, childLimit, parentId } = getCommentsDto;
 
     const checkComment = await this._commentModel.findByPk(commentId);
     if (!checkComment) {
@@ -596,14 +596,14 @@ export class CommentService {
       });
       await this._authorityService.allowAccess(user, post);
     }
-    const arroundId = parentId > 0 ? parentId : commentId;
+    const aroundId = parentId > 0 ? parentId : commentId;
     const comments = await this._getComments(
       user.id,
       {
         limit,
         postId,
       },
-      arroundId
+      aroundId
     );
     if (comments.list.length) {
       await this.bindChildsToComment(comments.list, user.id, childLimit);
@@ -690,7 +690,7 @@ export class CommentService {
   private async _getComments(
     authUserId: number,
     getCommentsDto: GetCommentsDto,
-    arroundId = 0
+    aroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
     const { limit, parentId, postId } = getCommentsDto;
     const order = 'DESC';
@@ -700,7 +700,7 @@ export class CommentService {
     if (postId) {
       condition += ` AND "c".post_id = :postId`;
     }
-    if (arroundId === 0) {
+    if (aroundId === 0) {
       query = ` SELECT "CommentModel".*,
       "media"."id" AS "mediaId",
       "media"."url" AS "mediaUrl", 
@@ -763,7 +763,7 @@ export class CommentService {
                 "c"."created_at" AS "createdAt", 
                 "c"."updated_at" AS "updatedAt"
         FROM ${schema}."comments" AS "c"
-        WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
+        WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
         ORDER BY "c"."created_at" DESC
         OFFSET 0 LIMIT :limitTop
         )
@@ -779,7 +779,7 @@ export class CommentService {
                   "c"."created_at" AS "createdAt", 
                   "c"."updated_at" AS "updatedAt"
           FROM ${schema}."comments" AS "c"
-          WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
+          WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
           ORDER BY "c"."created_at" ASC
           OFFSET 0 LIMIT :limitBottom
         )
@@ -798,7 +798,7 @@ export class CommentService {
       replacements: {
         parentId: parentId ?? 0,
         postId,
-        arroundId,
+        aroundId,
         authUserId,
         limitTop: limit + 1,
         limitBottom: limit,
@@ -809,8 +809,8 @@ export class CommentService {
     let hasNextPage = false;
     let hasPreviousPage = false;
     let commentsFiltered = [];
-    if (arroundId > 0) {
-      const index = childsGrouped.findIndex((i) => i.id === arroundId);
+    if (aroundId > 0) {
+      const index = childsGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childsGrouped.length);
       const start = Math.max(0, index + 1 - Math.round(n / 2));
       commentsFiltered = childsGrouped.slice(start, start + n);

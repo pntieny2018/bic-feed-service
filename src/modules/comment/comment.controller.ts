@@ -98,7 +98,7 @@ export class CommentController {
     @Query() getCommentsDto: GetCommentsDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentAndChilds(commentId, user, getCommentsDto);
+    return this._commentService.getCommentLinkForMobile(commentId, user, getCommentsDto);
   }
 
   @ApiOperation({ summary: 'Get comment detail' })
@@ -109,14 +109,14 @@ export class CommentController {
   @ResponseMessages({
     success: 'Get comment successfully',
   })
-  @Get('/copy/:commentId')
+  @Get('/web/:commentId')
   public getCommentCopy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
     @Query() getCommentsDto: GetCommentsDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentsForCopyLink(commentId, user, getCommentsDto);
+    return this._commentService.getCommentLinkForWeb(commentId, user, getCommentsDto);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })
