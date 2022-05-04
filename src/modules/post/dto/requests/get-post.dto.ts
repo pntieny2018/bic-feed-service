@@ -1,6 +1,7 @@
 import { IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderEnum } from '../../../../common/dto';
+import { Type } from 'class-transformer';
 
 export class GetPostDto {
   @ApiProperty({ enum: OrderEnum, default: OrderEnum.ASC, required: false })
@@ -19,6 +20,7 @@ export class GetPostDto {
     default: 10,
   })
   @IsOptional()
+  @Type(() => Number)
   public commentLimit?: number = 10;
 
   @ApiProperty({
@@ -27,6 +29,7 @@ export class GetPostDto {
     default: 10,
   })
   @IsOptional()
+  @Type(() => Number)
   public childCommentLimit?: number = 10;
 
   public constructor(data: Partial<GetPostDto> = {}) {
