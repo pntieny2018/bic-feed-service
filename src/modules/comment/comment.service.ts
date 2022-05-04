@@ -4,7 +4,7 @@ import {
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
 
-import { Op, Transaction } from 'sequelize';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { MediaService } from '../media';
@@ -21,7 +21,7 @@ import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
-import { CreateCommentDto, GetCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
+import { CreateCommentDto, GetCommentsDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
@@ -38,6 +38,9 @@ import { FollowService } from '../follow';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
+import { GetCommentDto } from './dto/requests/get-comment.dto';
+import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
+import sequelize from 'sequelize';
 
 @Injectable()
 export class CommentService {
@@ -373,65 +376,105 @@ export class CommentService {
   }
 
   /**
+   * Used for copy link comment
+   * @param user UserDto
+   * @param commentId Number
+   * @param getCommentDto: GetCommentDto
+   * @returns Promise resolve CommentResponseDto
+   */
+  public async getCommentAndChilds(
+    commentId: number,
+    user: UserDto,
+    getCommentDto: GetCommentDto
+  ): Promise<CommentDetailResponseDto> {
+    const { parentId } = getCommentDto;
+    const loadAroundId = parentId > 0 ? commentId : 0;
+    this._logger.debug(`[getComment] commentId: ${commentId} `);
+    const parent = await this._commentModel.findOne({
+      where: {
+        id: parentId > 0 ? parentId : commentId,
+      },
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+        },
+        {
+          model: CommentReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: user.id,
+          },
+        },
+      ],
+    });
+
+    if (!parent) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
+    }
+
+    const post = await this._postService.findPost({ postId: parent.postId });
+    if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+
+    await this._authorityService.allowAccess(user, post);
+    const actor = await this._userService.get(post.createdBy);
+    const childs = await this._getChildComments(parent.id, user.id, getCommentDto, loadAroundId);
+    const parentJson = parent.toJSON();
+    console.log('parent=', parentJson);
+    await Promise.all([
+      this._commonReactionService.bindReactionToComments([parentJson]),
+      this._mentionService.bindMentionsToComment([parentJson]),
+      this.bindUserToComment([parentJson]),
+    ]);
+    const result = {
+      actor,
+      comment: this._classTransformer.plainToInstance(CommentResponseDto, parentJson, {
+        excludeExtraneousValues: true,
+      }),
+      childs,
+    };
+
+    return result;
+  }
+
+  /**
    * Get comment list
    * @param user UserDto
-   * @param getCommentDto GetCommentDto
+   * @param getCommentsDto GetCommentsDto
    * @param checkAccess Boolean
    * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getComments(
     user: UserDto,
-    getCommentDto: GetCommentDto,
+    getCommentsDto: GetCommentsDto,
     checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug(
-      `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(getCommentDto)}`
+      `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
+        getCommentsDto
+      )}`
     );
-
-    const conditions = {};
-    const offset = {};
+    const { limit, offset, childLimit, postId, childOrder, order } = getCommentsDto;
 
     if (checkAccess) {
       const post = await this._postService.findPost({
-        postId: getCommentDto.postId,
+        postId,
       });
 
       await this._authorityService.allowAccess(user, post);
     }
 
-    conditions['postId'] = getCommentDto.postId;
-
-    conditions['parentId'] = getCommentDto.parentId ?? 0;
-
-    if (getCommentDto.offset || getCommentDto.offset === 0) {
-      offset['offset'] = getCommentDto.offset;
-    }
-    if (getCommentDto.idGT) {
-      conditions['id'] = {
-        [Op.gt]: getCommentDto.idGT,
-        ...conditions['id'],
-      };
-    }
-    if (getCommentDto.idGTE) {
-      conditions['id'] = {
-        [Op.gte]: getCommentDto.idGTE,
-        ...conditions['id'],
-      };
-    }
-    if (getCommentDto.idLT) {
-      conditions['id'] = {
-        [Op.lt]: parseInt(`${getCommentDto.idLT}`),
-        ...conditions['id'],
-      };
-    }
-    if (getCommentDto.idLTE) {
-      conditions['id'] = {
-        [Op.lte]: getCommentDto.idLTE,
-        ...conditions['id'],
-      };
-    }
-
-    const { rows, count } = await this._commentModel.findAndCountAll({
+    const conditions = await this._getCondition(getCommentsDto);
+    const rows = await this._commentModel.findAll({
       where: {
         ...conditions,
       },
@@ -452,7 +495,7 @@ export class CommentService {
         },
         {
           model: CommentModel,
-          limit: getCommentDto.childLimit,
+          limit: childLimit,
           required: false,
           attributes: {
             include: [],
@@ -479,7 +522,7 @@ export class CommentService {
               },
             },
           ],
-          order: [['createdAt', getCommentDto.childOrder]],
+          order: [['createdAt', childOrder]],
         },
         {
           model: CommentReactionModel,
@@ -490,11 +533,15 @@ export class CommentService {
           },
         },
       ],
-      ...offset,
-      limit: getCommentDto.limit,
-      order: [['createdAt', getCommentDto.order]],
+      offset,
+      limit: limit + 1,
+      order: [['createdAt', order]],
     });
     const response = rows.map((r) => r.toJSON());
+
+    const hasNextPage = response.length === limit + 1 ? true : false;
+    if (hasNextPage) response.pop();
+
     await Promise.all([
       this._mentionService.bindMentionsToComment(response),
       this._commonReactionService.bindReactionToComments(response),
@@ -506,9 +553,223 @@ export class CommentService {
     });
 
     return new PageDto<CommentResponseDto>(comments, {
-      total: count,
-      limit: getCommentDto.limit,
-      ...offset,
+      limit,
+      offset,
+      hasNextPage,
+    });
+  }
+
+  private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
+    const { schema } = getDatabaseConfig();
+    const conditions = {};
+    const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
+
+    conditions['postId'] = postId;
+
+    conditions['parentId'] = parentId ?? 0;
+    if (idGT) {
+      conditions['id'] = {
+        [Op.not]: idGT,
+        ...conditions['id'],
+      };
+      conditions['createdAt'] = {
+        [Op.gte]: sequelize.literal(
+          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
+            idGT
+          )})`
+        ),
+        ...conditions['createdAt'],
+      };
+    }
+    if (idGTE) {
+      conditions['createdAt'] = {
+        [Op.gte]: sequelize.literal(
+          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
+            idGTE
+          )})`
+        ),
+        ...conditions['createdAt'],
+      };
+    }
+    if (idLT) {
+      conditions['id'] = {
+        [Op.not]: idLT,
+        ...conditions['id'],
+      };
+      conditions['createdAt'] = {
+        [Op.lte]: sequelize.literal(
+          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
+            idLT
+          )})`
+        ),
+        ...conditions['createdAt'],
+      };
+    }
+    if (idLTE) {
+      conditions['createdAt'] = {
+        [Op.lte]: sequelize.literal(
+          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
+            idLTE
+          )})`
+        ),
+        ...conditions['createdAt'],
+      };
+    }
+    return conditions;
+  }
+  private async _getChildComments(
+    parentId: number,
+    authUserId: number,
+    getChildCommentsDto: GetCommentDto,
+    arroundId = 0
+  ): Promise<PageDto<CommentResponseDto>> {
+    const { offset, limit, order } = getChildCommentsDto;
+    const { schema } = getDatabaseConfig();
+    let query: string;
+    if (arroundId === 0) {
+      query = ` SELECT "CommentModel".*,
+      "media"."id" AS "mediaId",
+      "media"."url" AS "mediaUrl", 
+      "media"."type" AS "mediaType",
+      "media"."name" AS "mediaName",
+      "media"."width" AS "mediaWidth", 
+      "media"."height" AS "mediaHeight", 
+      "media"."extension" AS "mediaExtension",
+      "mentions"."user_id" AS "mentionUserId", 
+      "ownerReactions"."id" AS "commentReactionId", 
+      "ownerReactions"."reaction_name" AS "reactionName",
+      "ownerReactions"."created_at" AS "reactCreatedAt"
+      FROM (
+        SELECT 
+        "c"."id",
+        "c"."parent_id" AS "parentId", 
+        "c"."post_id" AS "postId",
+        "c"."content", 
+        "c"."total_reply" AS "totalReply", 
+        "c"."created_by" AS "createdBy", 
+        "c"."updated_by" AS "updatedBy", 
+        "c"."created_at" AS "createdAt", 
+        "c"."updated_at" AS "updatedAt"
+        FROM ${schema}."comments" AS "c"
+        WHERE "c"."parent_id" = :parentId 
+        ORDER BY "c"."created_at" ${order}
+        OFFSET :offset LIMIT :limitTop
+      ) AS "CommentModel" 
+      LEFT OUTER JOIN ( 
+        ${schema}."comments_media" AS "media->CommentMediaModel" 
+       INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+      ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+      LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
+        "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
+      ) 
+      LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId 
+      ORDER BY "CommentModel"."createdAt" ${order}`;
+    } else {
+      query = ` SELECT "CommentModel".*,
+      "media"."id" AS "mediaId",
+      "media"."url" AS "mediaUrl", 
+      "media"."type" AS "mediaType",
+      "media"."name" AS "mediaName",
+      "media"."width" AS "mediaWidth", 
+      "media"."height" AS "mediaHeight", 
+      "media"."extension" AS "mediaExtension",
+      "mentions"."user_id" AS "mentionUserId", 
+      "ownerReactions"."id" AS "commentReactionId", 
+      "ownerReactions"."reaction_name" AS "reactionName",
+      "ownerReactions"."created_at" AS "reactCreatedAt"
+      FROM (
+        (
+          SELECT "c"."id", 
+                "c"."parent_id" AS "parentId", 
+                "c"."post_id" AS "postId",
+                "c"."content", 
+                "c"."total_reply" AS "totalReply", 
+                "c"."created_by" AS "createdBy", 
+                "c"."updated_by" AS "updatedBy", 
+                "c"."created_at" AS "createdAt", 
+                "c"."updated_at" AS "updatedAt"
+        FROM ${schema}."comments" AS "c"
+        WHERE "c"."parent_id" = :parentId AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
+        ORDER BY "c"."created_at" ${order}
+        OFFSET :offset LIMIT :limitTop
+        )
+        UNION ALL 
+        (
+          SELECT "c"."id", 
+                  "c"."parent_id" AS "parentId", 
+                  "c"."post_id" AS "postId",
+                  "c"."content", 
+                  "c"."total_reply" AS "totalReply", 
+                  "c"."created_by" AS "createdBy", 
+                  "c"."updated_by" AS "updatedBy", 
+                  "c"."created_at" AS "createdAt", 
+                  "c"."updated_at" AS "updatedAt"
+          FROM ${schema}."comments" AS "c"
+          WHERE "c"."parent_id" = :parentId AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
+          ORDER BY "c"."created_at" ${order}
+          OFFSET :offset LIMIT :limitBottom
+        )
+      ) AS "CommentModel" 
+      LEFT OUTER JOIN ( 
+        ${schema}."comments_media" AS "media->CommentMediaModel" 
+       INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+      ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+      LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
+        "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
+      )
+      LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId 
+      ORDER BY "CommentModel"."createdAt" ${order}`;
+    }
+    const rows: any[] = await this._sequelizeConnection.query(query, {
+      replacements: {
+        parentId,
+        arroundId,
+        authUserId,
+        offset,
+        limitTop: limit + 1,
+        limitBottom: limit,
+      },
+      type: QueryTypes.SELECT,
+    });
+    //[0,1,2,3,4,5,[6],7,8,9,10,11]
+
+    //N = Math.min(5, Array.length)
+    //[0,1,2,[3]]
+    //start = Math.max(0, (index - (N / 2) + 1) = 0
+    //array.slice(start,N)
+    //hasPrev = start >= 1 ? true: false
+    //hasNext = array[N] ? true: false
+
+    const childsGrouped = this._groupComments(rows);
+    let hasNextPage = false;
+    let hasPreviousPage = false;
+    let childsFiltered = [];
+    if (parentId > 0) {
+      const index = childsGrouped.findIndex((i) => i.id === arroundId);
+      const n = Math.min(limit, childsGrouped.length);
+      const start = Math.max(0, index + 1 - Math.round(n / 2));
+      childsFiltered = childsGrouped.slice(start, start + n);
+      hasPreviousPage = start >= 1 ? true : false;
+      hasNextPage = childsGrouped[n] ? true : false;
+    } else {
+      hasPreviousPage = childsGrouped.length === limit + 1 ? true : false;
+      if (hasPreviousPage) childsFiltered = childsGrouped.pop();
+    }
+
+    await Promise.all([
+      this._commonReactionService.bindReactionToComments(childsFiltered),
+      this._mentionService.bindMentionsToComment(childsFiltered),
+      this.bindUserToComment(childsFiltered),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(CommentResponseDto, childsFiltered, {
+      excludeExtraneousValues: true,
+    });
+    return new PageDto<CommentResponseDto>(result, {
+      limit,
+      offset,
+      hasNextPage,
+      hasPreviousPage,
     });
   }
 
@@ -596,7 +857,6 @@ export class CommentService {
     }
 
     const usersInfo = await this._userService.getMany(actorIds);
-
     const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
       excludeExtraneousValues: true,
     });
@@ -1042,5 +1302,93 @@ export class CommentService {
     }
 
     return comment.postId;
+  }
+
+  private _groupComments(comments: any[]): any[] {
+    const result = [];
+    comments.forEach((comment) => {
+      const {
+        id,
+        parentId,
+        postId,
+        content,
+        totalReply,
+        createdBy,
+        updatedBy,
+        createdAt,
+        updatedAt,
+      } = comment;
+      const commentAdded = result.find((i) => i.id === comment.id);
+      if (!commentAdded) {
+        const mentions = comment.mentionUserId === null ? [] : [{ userId: comment.mentionUserId }];
+        const ownerReactions =
+          comment.commentReactionId === null
+            ? []
+            : [
+                {
+                  id: comment.commentReactionId,
+                  reactionName: comment.reactionName,
+                  createdAt: comment.reactCreatedAt,
+                },
+              ];
+        const media =
+          comment.mediaId === null
+            ? []
+            : [
+                {
+                  id: comment.mediaId,
+                  url: comment.mediaUrl,
+                  name: comment.mediaName,
+                  type: comment.mediaType,
+                  width: comment.mediaWidth,
+                  height: comment.mediaHeight,
+                  extension: comment.mediaExtension,
+                },
+              ];
+        result.push({
+          id,
+          parentId,
+          postId,
+          content,
+          totalReply,
+          createdBy,
+          updatedBy,
+          createdAt,
+          updatedAt,
+          mentions,
+          media,
+          ownerReactions,
+        });
+        return;
+      }
+      if (
+        comment.mentionUserId !== null &&
+        !commentAdded.mentions.find((m) => m.userId === comment.mentionUserId)
+      ) {
+        commentAdded.mentions.push({ userId: comment.mentionUserId });
+      }
+      if (
+        comment.commentReactionId !== null &&
+        !commentAdded.ownerReactions.find((m) => m.id === comment.commentReactionId)
+      ) {
+        commentAdded.ownerReactions.push({
+          id: comment.commentReactionId,
+          reactionName: comment.reactionName,
+          createdAt: comment.reactCreatedAt,
+        });
+      }
+      if (comment.mediaId !== null && !commentAdded.media.find((m) => m.id === comment.mediaId)) {
+        commentAdded.media.push({
+          id: comment.mediaId,
+          url: comment.mediaUrl,
+          name: comment.mediaName,
+          type: comment.mediaType,
+          width: comment.mediaWidth,
+          height: comment.mediaHeight,
+          extension: comment.mediaExtension,
+        });
+      }
+    });
+    return result;
   }
 }

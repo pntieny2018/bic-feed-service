@@ -474,7 +474,7 @@ export class PostService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
       const { groupIds } = audience;
       const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
@@ -565,7 +565,7 @@ export class PostService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
     const transaction = await this._sequelizeConnection.transaction();
@@ -669,7 +669,7 @@ export class PostService {
     authUserId: number
   ): Promise<boolean> {
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
 
     if (post.createdBy !== authUserId) {
@@ -871,7 +871,7 @@ export class PostService {
     const post = await this._postModel.findOne(conditions);
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     return post.toJSON();
   }
