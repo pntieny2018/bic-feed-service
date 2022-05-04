@@ -1,4 +1,4 @@
-import sequelize from 'sequelize';
+import sequelize, { Op } from 'sequelize';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { GetTimelineDto } from './dto/request';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
@@ -79,7 +79,21 @@ export class FeedService {
 
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
-      const posts = this.groupPosts(rows);
+
+      let normalSeenPost = [];
+      if (limit >= rows.length) {
+        const unSeenCount = await this._newsFeedModel.count({where: {isSeenPost: false , userId: authUserId}})
+        normalSeenPost = await this._getNewsFeedData({
+          ...getNewsFeedDto,
+          offset: Math.max(0, offset - unSeenCount),
+          limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
+          authUserId,
+          isImportant: false,
+          isSeen: true,
+        });
+      }
+
+      const posts = this.groupPosts(rows.concat(normalSeenPost));
 
       const hasNextPage = posts.length === limit + 1 ? true : false;
       if (hasNextPage) posts.pop();
@@ -107,6 +121,21 @@ export class FeedService {
       });
     }
   }
+
+
+  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+    try {
+      await this._newsFeedModel.update(
+        {isSeenPost: true},
+        {
+          where: {userId, postId: {[Op.in]: postIds}}
+        }
+      )
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+    }
+  }
+
 
   /**
    * Get Timeline
@@ -415,6 +444,7 @@ export class FeedService {
   private async _getNewsFeedData({
     authUserId,
     isImportant,
+    isSeen,
     idGT,
     idGTE,
     idLT,
@@ -425,6 +455,7 @@ export class FeedService {
   }: {
     authUserId: number;
     isImportant: boolean;
+    isSeen? : boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
@@ -486,6 +517,7 @@ export class FeedService {
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
+      AND is_seen_post = ${isSeen ? true: false}
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
