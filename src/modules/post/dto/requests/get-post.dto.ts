@@ -32,6 +32,14 @@ export class GetPostDto {
   @Type(() => Number)
   public childCommentLimit?: number = 10;
 
+  @ApiProperty({
+    required: false,
+    type: Number,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  public offset?: number = 0;
+
   public constructor(data: Partial<GetPostDto> = {}) {
     Object.assign(this, data);
   }

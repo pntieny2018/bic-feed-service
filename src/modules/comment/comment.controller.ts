@@ -20,7 +20,6 @@ import { CreateCommentDto, GetCommentsDto, GetCommentEditedHistoryDto } from './
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
-import { GetCommentDto } from './dto/requests/get-comment.dto';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 
 @ApiTags('Comment')
@@ -96,10 +95,28 @@ export class CommentController {
   public get(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
-    @Query() getCommentDto: GetCommentDto
+    @Query() getCommentsDto: GetCommentsDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentAndChilds(commentId, user, getCommentDto);
+    return this._commentService.getCommentAndChilds(commentId, user, getCommentsDto);
+  }
+
+  @ApiOperation({ summary: 'Get comment detail' })
+  @ApiOkResponse({
+    type: CommentDetailResponseDto,
+    description: 'Get comment successfully',
+  })
+  @ResponseMessages({
+    success: 'Get comment successfully',
+  })
+  @Get('/copy/:commentId')
+  public getCommentCopy(
+    @AuthUser() user: UserDto,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() getCommentsDto: GetCommentsDto
+  ): Promise<any> {
+    this._logger.debug('get comment');
+    return this._commentService.getCommentsForCopyLink(commentId, user, getCommentsDto);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })

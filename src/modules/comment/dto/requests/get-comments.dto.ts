@@ -18,9 +18,11 @@ export class GetCommentsDto extends PageOptionsDto {
 
   @ApiProperty({
     required: false,
+    default: 10,
   })
   @IsOptional()
-  public commentId?: number = undefined;
+  @Type(() => Number)
+  public childLimit?: number = 10;
 
   @ApiProperty({
     required: false,
@@ -28,7 +30,7 @@ export class GetCommentsDto extends PageOptionsDto {
   })
   @IsOptional()
   @Type(() => Number)
-  public childLimit?: number = 10;
+  public targetChildLimit?: number = 10;
 
   @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
   @IsEnum(OrderEnum)
