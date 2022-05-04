@@ -4,7 +4,7 @@ import { OrderEnum, PageOptionsDto } from '../../../../common/dto';
 
 export class GetCommentDto extends PageOptionsDto {
   @ApiProperty({
-    required: true,
+    required: false,
     type: Number,
   })
   @IsOptional()
