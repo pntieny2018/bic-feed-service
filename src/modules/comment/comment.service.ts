@@ -428,9 +428,12 @@ export class CommentService {
 
     await this._authorityService.allowAccess(user, post);
     const actor = await this._userService.get(post.createdBy);
-    const childs = await this._getChildComments(parent.id, user.id, getCommentDto, loadAroundId);
+    const childs = await this._getComments(
+      user.id,
+      { ...getCommentDto, postId: post.id },
+      loadAroundId
+    );
     const parentJson = parent.toJSON();
-    console.log('parent=', parentJson);
     await Promise.all([
       this._commonReactionService.bindReactionToComments([parentJson]),
       this._mentionService.bindMentionsToComment([parentJson]),
@@ -618,15 +621,22 @@ export class CommentService {
     }
     return conditions;
   }
-  private async _getChildComments(
-    parentId: number,
+
+  private async _getComments(
     authUserId: number,
     getChildCommentsDto: GetCommentDto,
     arroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
-    const { offset, limit, order } = getChildCommentsDto;
+    const { offset, limit, order, parentId, postId } = getChildCommentsDto;
     const { schema } = getDatabaseConfig();
     let query: string;
+    let condition = ' 1 = 1';
+    if (postId) {
+      condition += ` AND "c".post_id = :postId`;
+    }
+    if (parentId) {
+      condition += ` AND "c".parent_id = :parentId`;
+    }
     if (arroundId === 0) {
       query = ` SELECT "CommentModel".*,
       "media"."id" AS "mediaId",
@@ -652,7 +662,7 @@ export class CommentService {
         "c"."created_at" AS "createdAt", 
         "c"."updated_at" AS "updatedAt"
         FROM ${schema}."comments" AS "c"
-        WHERE "c"."parent_id" = :parentId 
+        WHERE ${condition} 
         ORDER BY "c"."created_at" ${order}
         OFFSET :offset LIMIT :limitTop
       ) AS "CommentModel" 
@@ -690,7 +700,7 @@ export class CommentService {
                 "c"."created_at" AS "createdAt", 
                 "c"."updated_at" AS "updatedAt"
         FROM ${schema}."comments" AS "c"
-        WHERE "c"."parent_id" = :parentId AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
+        WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
         ORDER BY "c"."created_at" ${order}
         OFFSET :offset LIMIT :limitTop
         )
@@ -706,7 +716,7 @@ export class CommentService {
                   "c"."created_at" AS "createdAt", 
                   "c"."updated_at" AS "updatedAt"
           FROM ${schema}."comments" AS "c"
-          WHERE "c"."parent_id" = :parentId AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
+          WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :arroundId)
           ORDER BY "c"."created_at" ${order}
           OFFSET :offset LIMIT :limitBottom
         )
@@ -724,6 +734,7 @@ export class CommentService {
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         parentId,
+        postId,
         arroundId,
         authUserId,
         offset,
@@ -732,14 +743,6 @@ export class CommentService {
       },
       type: QueryTypes.SELECT,
     });
-    //[0,1,2,3,4,5,[6],7,8,9,10,11]
-
-    //N = Math.min(5, Array.length)
-    //[0,1,2,[3]]
-    //start = Math.max(0, (index - (N / 2) + 1) = 0
-    //array.slice(start,N)
-    //hasPrev = start >= 1 ? true: false
-    //hasNext = array[N] ? true: false
 
     const childsGrouped = this._groupComments(rows);
     let hasNextPage = false;
