@@ -1,10 +1,10 @@
-import { GetCommentDto } from '../dto/requests';
+import { GetCommentsDto } from '../dto/requests';
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { OrderEnum } from '../../../common/dto';
 
 @Injectable()
 export class GetCommentsPipe implements PipeTransform {
-  public transform(getCommentDto: GetCommentDto): GetCommentDto {
+  public transform(getCommentDto: GetCommentsDto): GetCommentsDto {
     if (!getCommentDto.limit) {
       getCommentDto.limit = 25;
     }

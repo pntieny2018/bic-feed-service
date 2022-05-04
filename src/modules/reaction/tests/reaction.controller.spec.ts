@@ -1,7 +1,11 @@
 import { RedisService } from '@app/redis';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateReactionService, DeleteReactionService } from '../services';
+import {
+  CreateOrDeleteReactionService,
+  CreateReactionService,
+  DeleteReactionService,
+} from '../services';
 import { mockCreateReactionDto, mockDeleteReactionDto, mockUserDto } from './mocks/input.mock';
 import { ReactionController } from '../reaction.controller';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
@@ -16,21 +20,33 @@ import { createMock } from '@golevelup/ts-jest';
 import { ReactionDto } from '../dto/reaction.dto';
 import { CommonReactionService } from '../services';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { ReactionResponseDto } from '../dto/response';
+import { ActionReaction } from '../dto/request';
+import { Sequelize } from 'sequelize-typescript';
+import { NotificationService } from '../../../notification';
+import { ConfigModule } from '@nestjs/config';
 
 describe('ReactionController', () => {
   let createReactionService: CreateReactionService;
   let deleteReactionService: DeleteReactionService;
   let reactionController: ReactionController;
+  let createOrDeleteReactionService: CreateOrDeleteReactionService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [ConfigModule],
       controllers: [ReactionController],
       providers: [
         UserService,
         GroupService,
         CommonReactionService,
+        CreateOrDeleteReactionService,
         CreateReactionService,
         DeleteReactionService,
+        {
+          provide: NotificationService,
+          useClass: jest.fn(),
+        },
         {
           provide: RedisService,
           useClass: jest.fn(),
@@ -91,12 +107,25 @@ describe('ReactionController', () => {
             destroy: jest.fn(),
           },
         },
+        {
+          provide: Sequelize,
+          useValue: {
+            query: jest.fn(),
+            transaction: jest.fn(async () => ({
+              commit: jest.fn(),
+              rollback: jest.fn(),
+            })),
+          },
+        },
       ],
     }).compile();
 
     createReactionService = module.get<CreateReactionService>(CreateReactionService);
     deleteReactionService = module.get<DeleteReactionService>(DeleteReactionService);
     reactionController = module.get<ReactionController>(ReactionController);
+    createOrDeleteReactionService = module.get<CreateOrDeleteReactionService>(
+      CreateOrDeleteReactionService
+    );
   });
 
   afterEach(() => {
@@ -107,87 +136,59 @@ describe('ReactionController', () => {
     describe('Create post reaction', () => {
       it('Create post reaction successfully', async () => {
         const input = mockCreateReactionDto[0];
-        const response = createMock<ReactionDto>({
-          ...input,
-          userId: mockUserDto.id,
-        });
-        const createReactionServiceCreateReactionSpy = jest
-          .spyOn(createReactionService, 'createReaction')
-          .mockResolvedValue(response);
-        expect(await reactionController.create(mockUserDto, input)).toEqual(true);
-        expect(createReactionServiceCreateReactionSpy).toBeCalledTimes(1);
-      });
-
-      it('Create post reaction failed', async () => {
-        const input = mockCreateReactionDto[0];
-        const createReactionServiceCreateReactionSpy = jest
-          .spyOn(createReactionService, 'createReaction')
-          .mockRejectedValue(
-            new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR)
-          );
-        try {
-          await reactionController.create(mockUserDto, input);
-        } catch (e) {
-          expect(e.message).toEqual('Can not create reaction.');
-        }
-        expect(createReactionServiceCreateReactionSpy).toBeCalledTimes(1);
+        const response = {
+          action: ActionReaction.ADD,
+          reactionName: input.reactionName,
+          target: input.target,
+          targetId: input.targetId,
+        };
+        createOrDeleteReactionService.addToQueueReaction = jest.fn().mockResolvedValue(response);
+        expect(await reactionController.create(mockUserDto, input)).toEqual(response);
+        expect(createOrDeleteReactionService.addToQueueReaction).toBeCalledTimes(1);
       });
     });
+  });
 
-    describe('Create comment reaction', () => {
-      it('Create comment reaction successfully', async () => {
-        const input = mockCreateReactionDto[1];
-        const response = createMock<ReactionDto>({
-          ...input,
-          userId: mockUserDto.id,
-        });
-        const createReactionServiceCreateCommentSpy = jest
-          .spyOn(createReactionService, 'createReaction')
-          .mockResolvedValue(response);
-        expect(await reactionController.create(mockUserDto, input)).toEqual(true);
-        expect(createReactionServiceCreateCommentSpy).toBeCalledTimes(1);
-      });
-
-      it('Create comment reaction failed', async () => {
-        const input = mockCreateReactionDto[1];
-        const createReactionServiceCreateCommentSpy = jest
-          .spyOn(createReactionService, 'createReaction')
-          .mockRejectedValue(
-            new HttpException('Can not create reaction.', HttpStatus.INTERNAL_SERVER_ERROR)
-          );
-        try {
-          await reactionController.create(mockUserDto, input);
-        } catch (e) {
-          expect(e.message).toEqual('Can not create reaction.');
-        }
-        expect(createReactionServiceCreateCommentSpy).toBeCalledTimes(1);
-      });
+  describe('Create comment reaction', () => {
+    it('Create comment reaction successfully', async () => {
+      const input = mockCreateReactionDto[1];
+      const response = {
+        action: ActionReaction.ADD,
+        reactionName: input.reactionName,
+        target: input.target,
+        targetId: input.targetId,
+      };
+      createOrDeleteReactionService.addToQueueReaction = jest.fn().mockResolvedValue(response);
+      expect(await reactionController.create(mockUserDto, input)).toEqual(response);
+      expect(createOrDeleteReactionService.addToQueueReaction).toBeCalledTimes(1);
     });
   });
 
   describe('Delete reaction', () => {
     it('Delete post reaction successfully', async () => {
-      const input = mockDeleteReactionDto[0];
-      const deleteReactionServiceDeleteReactionSpy = jest
-        .spyOn(deleteReactionService, 'deleteReaction')
-        .mockResolvedValue(true);
-      expect(await reactionController.delete(mockUserDto, input)).toEqual(true);
-      expect(deleteReactionServiceDeleteReactionSpy).toBeCalledTimes(1);
+      const input = mockCreateReactionDto[0];
+      const response = {
+        action: ActionReaction.REMOVE,
+        reactionName: input.reactionName,
+        target: input.target,
+        targetId: input.targetId,
+      };
+      createOrDeleteReactionService.addToQueueReaction = jest.fn().mockResolvedValue(response);
+      expect(await reactionController.delete(mockUserDto, input)).toEqual(response);
+      expect(createOrDeleteReactionService.addToQueueReaction).toBeCalledTimes(1);
     });
 
     it('Delete post reaction failed because of non-existed reaction', async () => {
-      const input = mockDeleteReactionDto[0];
-      const deleteReactionServiceDeleteReactionSpy = jest
-        .spyOn(deleteReactionService, 'deleteReaction')
-        .mockRejectedValue(
-          new HttpException('Can not delete reaction.', HttpStatus.INTERNAL_SERVER_ERROR)
-        );
-      try {
-        await reactionController.delete(mockUserDto, input);
-      } catch (e) {
-        expect(e.message).toEqual('Can not delete reaction.');
-      }
-      expect(deleteReactionServiceDeleteReactionSpy).toBeCalledTimes(1);
+      const input = mockCreateReactionDto[1];
+      const response = {
+        action: ActionReaction.REMOVE,
+        reactionName: input.reactionName,
+        target: input.target,
+        targetId: input.targetId,
+      };
+      createOrDeleteReactionService.addToQueueReaction = jest.fn().mockResolvedValue(response);
+      expect(await reactionController.delete(mockUserDto, input)).toEqual(response);
+      expect(createOrDeleteReactionService.addToQueueReaction).toBeCalledTimes(1);
     });
   });
 });

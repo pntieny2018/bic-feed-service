@@ -16,10 +16,12 @@ import { CommentService } from './comment.service';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { APP_VERSION } from '../../common/constants';
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
-import { CreateCommentDto, GetCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
+import { CreateCommentDto, GetCommentsDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
+import { GetCommentDto } from './dto/requests/get-comment.dto';
+import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -39,10 +41,10 @@ export class CommentController {
   @Get('/')
   public getList(
     @AuthUser() user: UserDto,
-    @Query(GetCommentsPipe) getCommentDto: GetCommentDto
+    @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comments');
-    return this._commentService.getComments(user, getCommentDto);
+    return this._commentService.getComments(user, getCommentsDto);
   }
 
   @ApiOperation({ summary: 'Create new comment' })
@@ -82,9 +84,9 @@ export class CommentController {
     return this._commentService.create(user, createCommentDto, commentId);
   }
 
-  @ApiOperation({ summary: 'Get comment' })
+  @ApiOperation({ summary: 'Get comment detail' })
   @ApiOkResponse({
-    type: CommentResponseDto,
+    type: CommentDetailResponseDto,
     description: 'Get comment successfully',
   })
   @ResponseMessages({
@@ -93,10 +95,11 @@ export class CommentController {
   @Get('/:commentId')
   public get(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() getCommentDto: GetCommentDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getComment(user, commentId);
+    return this._commentService.getCommentAndChilds(commentId, user, getCommentDto);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })
