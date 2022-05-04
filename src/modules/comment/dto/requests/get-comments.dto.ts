@@ -18,6 +18,12 @@ export class GetCommentsDto extends PageOptionsDto {
 
   @ApiProperty({
     required: false,
+  })
+  @IsOptional()
+  public commentId?: number = undefined;
+
+  @ApiProperty({
+    required: false,
     default: 10,
   })
   @IsOptional()
