@@ -21,6 +21,7 @@ import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
 import { GetCommentDto } from './dto/requests/get-comment.dto';
+import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -83,9 +84,9 @@ export class CommentController {
     return this._commentService.create(user, createCommentDto, commentId);
   }
 
-  @ApiOperation({ summary: 'Get comment' })
+  @ApiOperation({ summary: 'Get comment detail' })
   @ApiOkResponse({
-    type: CommentResponseDto,
+    type: CommentDetailResponseDto,
     description: 'Get comment successfully',
   })
   @ResponseMessages({
