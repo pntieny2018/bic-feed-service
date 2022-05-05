@@ -352,7 +352,6 @@ export class PostService {
     }
     await this._authorityService.allowAccess(user, post);
     let comments = null;
-    console.log('getPostDto=', getPostDto);
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments(
         user,
