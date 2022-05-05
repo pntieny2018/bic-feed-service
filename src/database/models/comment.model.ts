@@ -47,7 +47,7 @@ export interface IComment {
   post: IPost;
   media?: IMedia[];
   mentions?: IMention[];
-  childs?: IComment[];
+  child?: IComment[];
   totalReply?: number;
   reactionsCount?: string;
 }
@@ -117,7 +117,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       allowNull: true,
     },
   })
-  public childs?: CommentModel[];
+  public child?: CommentModel[];
 
   @HasMany(() => CommentReactionModel)
   public ownerReactions: CommentReactionModel[];

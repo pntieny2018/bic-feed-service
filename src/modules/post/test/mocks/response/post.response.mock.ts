@@ -23,7 +23,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
         files: [],
       },
       reactionsCount: null,
-      childs: [
+      child: [
         {
           id: 3,
           actor: {
