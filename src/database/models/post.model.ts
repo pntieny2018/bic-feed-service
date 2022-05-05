@@ -27,6 +27,7 @@ import sequelize from 'sequelize';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { MentionableType } from '../../common/constants';
+import { UserMarkReadPostModel } from './user-mark-read-post.model';
 
 export interface IPost {
   id: number;
@@ -135,6 +136,18 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public postReactions: PostReactionModel[];
 
   public reactionsCount: string;
+
+  public static loadMarkReadPost(authUserId: number, alias?: string): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    return [
+      Sequelize.literal(`(
+        COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+          WHERE r.post_id = "PostModel".id AND r.user_id = ${authUserId}), false)
+               )`),
+      alias ? alias : 'markedReadPost',
+    ];
+  }
 
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
