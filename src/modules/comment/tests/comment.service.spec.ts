@@ -149,6 +149,7 @@ describe('CommentService', () => {
             update: jest.fn(),
             create: jest.fn(),
             destroy: jest.fn(),
+            findByPk: jest.fn(),
           },
         },
         {
@@ -964,13 +965,22 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.getCommentAndChilds', () => {
-    it('Should get successfully', async () => {
-      commentModel.findOne.mockResolvedValue({
-        ...getCommentRawMock,
-        toJSON: () => getCommentRawMock,
+  describe('CommentService._getComments', () => {
+    it('Should be successfully', async () => {
+      const spySequelizeConnectionQuery = jest
+        .spyOn(sequelizeConnection, 'query')
+        .mockResolvedValue([]);
+      await commentService['_getComments'](authUserMock.id, {
+        postId: 57,
+        idGT: 1,
       });
+      expect(spySequelizeConnectionQuery).toBeCalled();
+    });
+  });
 
+  describe('CommentService.getCommentLinkForWeb', () => {
+    it('Should be successfully', async () => {
+      commentModel.findByPk.mockResolvedValue(getCommentMock);
       postService.findPost.mockResolvedValue({
         id: 1,
         groups: [
@@ -980,31 +990,11 @@ describe('CommentService', () => {
           },
         ],
       });
-
-      const bindUserToCommentSpy = jest
-        .spyOn(commentService, 'bindUserToComment')
-        .mockResolvedValue(Promise.resolve());
-
-      jest.spyOn(commentService as any, '_getChildComments').mockResolvedValue([]);
-
-      const commentId = 57;
-      await commentService.getCommentAndChilds(commentId, authUserMock, {
-        idGT: 1,
-      });
-      expect(commentModel.findOne).toBeCalled();
+      commentService.bindChildsToComment = jest.fn();
+      jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
+      await commentService.getCommentLinkForWeb(57, authUserMock, {});
+      expect(commentModel.findByPk).toBeCalled();
       expect(postService.findPost).toBeCalled();
-    });
-  });
-
-  describe('CommentService._getChildComments', () => {
-    it('Should be successfully', async () => {
-      const spySequelizeConnectionQuery = jest
-        .spyOn(sequelizeConnection, 'query')
-        .mockResolvedValue([]);
-      await commentService['_getChildComments'](57, authUserMock.id, {
-        idGT: 1,
-      });
-      expect(spySequelizeConnectionQuery).toBeCalled();
     });
   });
 
