@@ -921,11 +921,6 @@ export class PostService {
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
     WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.users_mark_read_posts as u
-        WHERE u.user_id = :userId AND u.post_id = p.id
-      )
     AND EXISTS(
         SELECT 1
         from ${schema}.posts_groups AS g

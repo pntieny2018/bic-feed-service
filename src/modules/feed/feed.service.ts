@@ -1,4 +1,4 @@
-import sequelize from 'sequelize';
+import sequelize, { Op } from 'sequelize';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { GetTimelineDto } from './dto/request';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
@@ -346,7 +346,7 @@ export class FeedService {
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
-
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const authUserId = authUser.id;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
@@ -375,7 +375,10 @@ export class FeedService {
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt"
+      "createdAt", "p"."updated_at" AS "updatedAt",
+      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+      ) AS "markedReadPost"
       FROM ${schema}.${postTable} AS "p"
       WHERE "p"."is_draft" = false AND EXISTS(
         SELECT 1
