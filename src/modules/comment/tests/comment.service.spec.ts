@@ -992,7 +992,7 @@ describe('CommentService', () => {
       });
       commentService.bindChildsToComment = jest.fn();
       jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
-      await commentService.getCommentLinkForWeb(57, authUserMock, {});
+      await commentService.getCommentLink(57, authUserMock, {});
       expect(commentModel.findByPk).toBeCalled();
       expect(postService.findPost).toBeCalled();
     });
