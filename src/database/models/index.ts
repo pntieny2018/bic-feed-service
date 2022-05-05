@@ -13,6 +13,7 @@ import { FollowModel } from './follow.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { PostEditedHistoryModel } from './post-edited-history.model';
 import { CommentEditedHistoryModel } from './comment-edited-history.model';
+import { UserSeenPostModel } from './user-seen-post.model';
 
 export default [
   PostModel,
@@ -30,4 +31,5 @@ export default [
   UserMarkReadPostModel,
   PostEditedHistoryModel,
   CommentEditedHistoryModel,
+  UserSeenPostModel,
 ];

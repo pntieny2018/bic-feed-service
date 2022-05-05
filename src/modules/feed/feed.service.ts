@@ -21,6 +21,7 @@ import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommonReactionService } from '../reaction/services';
 import { UserDto } from '../auth';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class FeedService {
@@ -35,6 +36,8 @@ export class FeedService {
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
     private _newsFeedModel: typeof UserNewsFeedModel,
+    @InjectModel(UserSeenPostModel)
+    private _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
     private _sequelizeConnection: Sequelize
@@ -126,6 +129,11 @@ export class FeedService {
 
   public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
     try {
+      await this._userSeenPostModel.bulkCreate(
+        postIds.map(postId => ({postId, userId})),
+        { ignoreDuplicates: true }
+      );
+
       await this._newsFeedModel.update(
         { isSeenPost: true },
         {
