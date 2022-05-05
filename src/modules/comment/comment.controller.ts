@@ -21,6 +21,7 @@ import { UpdateCommentDto } from './dto/requests/update-comment.dto';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../common/decorators';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
+import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -95,10 +96,10 @@ export class CommentController {
   public get(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
-    @Query() getCommentsDto: GetCommentsDto
+    @Query() getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentLinkForMobile(commentId, user, getCommentsDto);
+    return this._commentService.getCommentLinkForWeb(commentId, user, getCommentLinkDto);
   }
 
   @ApiOperation({ summary: 'Get comment detail' })
@@ -113,10 +114,10 @@ export class CommentController {
   public getCommentCopy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
-    @Query() getCommentsDto: GetCommentsDto
+    @Query() getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentLinkForWeb(commentId, user, getCommentsDto);
+    return this._commentService.getCommentLinkForWeb(commentId, user, getCommentLinkDto);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })
