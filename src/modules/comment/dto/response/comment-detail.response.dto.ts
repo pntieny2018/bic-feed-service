@@ -64,7 +64,7 @@ export class CommentDetailResponseDto {
     },
   })
   @Expose()
-  public childs: PageDto<CommentResponseDto>;
+  public child: PageDto<CommentResponseDto>;
 
   public constructor(data: Partial<CommentResponseDto>) {
     Object.assign(this, data);

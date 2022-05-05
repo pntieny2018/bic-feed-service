@@ -130,7 +130,7 @@ export const createdComment: CommentResponseDto = {
       avatar: 'https://bein.group/back.png',
     },
   },
-  childs: [],
+  child: [],
 };
 
 export {

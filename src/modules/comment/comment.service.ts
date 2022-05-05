@@ -532,7 +532,7 @@ export class CommentService {
       await this.bindChildsToComment(comments.list, user.id, childLimit);
     }
     const aroundChildId = checkComment.parentId > 0 ? commentId : 0;
-    const childs = await this._getComments(
+    const child = await this._getComments(
       user.id,
       {
         limit: targetChildLimit,
@@ -543,7 +543,7 @@ export class CommentService {
     );
     comments.list.map((cm) => {
       if (cm.id == parentId) {
-        cm.childs = childs;
+        cm.child = child;
       }
       return cm;
     });
@@ -727,21 +727,21 @@ export class CommentService {
       },
       type: QueryTypes.SELECT,
     });
-    const childsGrouped = this._groupComments(rows);
+    const childGrouped = this._groupComments(rows);
     let hasNextPage = false;
     let hasPreviousPage = false;
     let commentsFiltered = [];
     if (aroundId > 0) {
-      const index = childsGrouped.findIndex((i) => i.id === aroundId);
-      const n = Math.min(limit, childsGrouped.length);
+      const index = childGrouped.findIndex((i) => i.id === aroundId);
+      const n = Math.min(limit, childGrouped.length);
       const start = Math.max(0, index + 1 - Math.round(n / 2));
-      commentsFiltered = childsGrouped.slice(start, start + n);
+      commentsFiltered = childGrouped.slice(start, start + n);
       hasPreviousPage = start >= 1 ? true : false;
-      hasNextPage = childsGrouped[start + n] ? true : false;
+      hasNextPage = childGrouped[start + n] ? true : false;
     } else {
-      hasNextPage = childsGrouped.length === limit + 1 ? true : false;
-      if (hasNextPage) childsGrouped.pop();
-      commentsFiltered = childsGrouped;
+      hasNextPage = childGrouped.length === limit + 1 ? true : false;
+      if (hasNextPage) childGrouped.pop();
+      commentsFiltered = childGrouped;
     }
     await Promise.all([
       this._commonReactionService.bindReactionToComments(commentsFiltered),
@@ -836,8 +836,8 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
-      if (comment.childs && comment.childs.length) {
-        for (const cm of comment.childs) {
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
           actorIds.push(cm.createdBy);
         }
       }
@@ -850,8 +850,8 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
-      if (comment.childs && comment.childs.length) {
-        for (const cm of comment.childs) {
+      if (comment.child && comment.child.length) {
+        for (const cm of comment.child) {
           cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
         }
       }
@@ -915,23 +915,23 @@ export class CommentService {
       type: QueryTypes.SELECT,
     });
 
-    const childsGrouped = this._groupComments(rows);
+    const childGrouped = this._groupComments(rows);
     await Promise.all([
-      this._commonReactionService.bindReactionToComments(childsGrouped),
-      this._mentionService.bindMentionsToComment(childsGrouped),
-      this.bindUserToComment(childsGrouped),
+      this._commonReactionService.bindReactionToComments(childGrouped),
+      this._mentionService.bindMentionsToComment(childGrouped),
+      this.bindUserToComment(childGrouped),
     ]);
 
-    const childsFormatted = this._classTransformer.plainToInstance(
+    const childFormatted = this._classTransformer.plainToInstance(
       CommentResponseDto,
-      childsGrouped,
+      childGrouped,
       {
         excludeExtraneousValues: true,
       }
     );
 
     for (const comment of comments) {
-      comment.childs = childsFormatted.filter((i) => i.parentId === comment.id);
+      comment.child = childFormatted.filter((i) => i.parentId === comment.id);
     }
   }
 
