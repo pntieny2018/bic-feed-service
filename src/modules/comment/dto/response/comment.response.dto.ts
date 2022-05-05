@@ -110,7 +110,7 @@ export class CommentResponseDto {
   @Type(() => CommentResponseDto)
   @Transform(({ value }) => plainToInstance(CommentResponseDto, value))
   @Expose()
-  public childs?: CommentResponseDto[] | PageDto<CommentResponseDto>;
+  public child?: CommentResponseDto[] | PageDto<CommentResponseDto>;
 
   public constructor(data: Partial<CommentResponseDto>) {
     Object.assign(this, data);
