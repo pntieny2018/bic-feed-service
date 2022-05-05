@@ -865,6 +865,7 @@ export class CommentService {
    */
   public async bindChildsToComment(comments: any[], authUserId: number, limit = 10): Promise<void> {
     const subQuery = [];
+    const { schema } = getDatabaseConfig();
     for (const comment of comments) {
       subQuery.push(`SELECT * 
       FROM (
@@ -878,7 +879,7 @@ export class CommentService {
               "updated_by" AS "updatedBy", 
               "created_at" AS "createdAt", 
               "updated_at" AS "updatedAt" 
-        FROM "feed_abcd"."comments" AS "CommentModel" 
+        FROM ${schema}."comments" AS "CommentModel" 
         WHERE "CommentModel"."parent_id" = ${comment.id} 
         ORDER BY "CommentModel"."created_at" DESC LIMIT :limit
       ) AS sub`);
@@ -899,12 +900,12 @@ export class CommentService {
       "ownerReactions"."created_at" AS "reactCreatedAt"
     FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel" 
     LEFT OUTER JOIN ( 
-      "feed_abcd"."comments_media" AS "media->CommentMediaModel" 
-      INNER JOIN "feed_abcd"."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+      ${schema}."comments_media" AS "media->CommentMediaModel" 
+      INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
     ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
-    LEFT OUTER JOIN "feed_abcd"."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" 
+    LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" 
         AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment') 
-    LEFT OUTER JOIN "feed_abcd"."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
+    LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
     AND "ownerReactions"."created_by" = :authUserId;`;
 
     const rows: any[] = await this._sequelizeConnection.query(query, {
