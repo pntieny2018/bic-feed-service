@@ -102,24 +102,6 @@ export class CommentController {
     return this._commentService.getCommentLinkForWeb(commentId, user, getCommentLinkDto);
   }
 
-  @ApiOperation({ summary: 'Get comment detail' })
-  @ApiOkResponse({
-    type: CommentDetailResponseDto,
-    description: 'Get comment successfully',
-  })
-  @ResponseMessages({
-    success: 'Get comment successfully',
-  })
-  @Get('/web/:commentId')
-  public getCommentCopy(
-    @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
-    @Query() getCommentLinkDto: GetCommentLinkDto
-  ): Promise<any> {
-    this._logger.debug('get comment');
-    return this._commentService.getCommentLinkForWeb(commentId, user, getCommentLinkDto);
-  }
-
   @ApiOperation({ summary: 'Get comment edited history' })
   @ApiOkResponse({
     type: CommentEditedHistoryDto,

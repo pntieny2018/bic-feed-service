@@ -22,7 +22,7 @@ import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
-import { Sequelize, Transaction } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { EntityIdDto } from '../../../common/dto';
 import { CommentModule, CommentService } from '../../comment';
@@ -35,16 +35,19 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
-import { DeleteReactionService } from '../../reaction/services';
+import { CommonReactionService, DeleteReactionService } from '../../reaction/services';
 import { FeedService } from '../../feed/feed.service';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { LogicException } from '../../../common/exceptions';
+import { Sequelize } from 'sequelize-typescript';
+import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
   let postGroupModelMock;
   let userMarkedImportantPostModelMock;
+  let postEditedHistoryModelMock;
   let sentryService: SentryService;
   let userService: UserService;
   let groupService: GroupService;
@@ -55,6 +58,7 @@ describe('PostService', () => {
   let deleteReactionService: DeleteReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
+  let commonReactionService: CommonReactionService
   let transactionMock;
   let sequelize: Sequelize;
   beforeEach(async () => {
@@ -86,6 +90,12 @@ describe('PostService', () => {
           provide: FeedService,
           useValue: {
             deleteNewsFeedByPost: jest.fn()
+          },
+        },
+        {
+          provide: CommonReactionService,
+          useValue: {
+            bindReactionToPosts: jest.fn()
           },
         },
         {
@@ -141,6 +151,7 @@ describe('PostService', () => {
           provide: Sequelize,
           useValue: {
             transaction: jest.fn(),
+            query: jest.fn(),
           },
         },
         {
@@ -177,6 +188,14 @@ describe('PostService', () => {
             create: jest.fn(),
             destroy: jest.fn(),
           }
+        },
+        {
+          provide: getModelToken(PostEditedHistoryModel),
+          useValue: {
+            findAndCountAll: jest.fn(),
+            create: jest.fn(),
+            destroy: jest.fn(),
+          }
         }
       ],
     }).compile();
@@ -185,6 +204,8 @@ describe('PostService', () => {
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(getModelToken(UserMarkReadPostModel));
+    postEditedHistoryModelMock = moduleRef.get<typeof PostEditedHistoryModel>(getModelToken(PostEditedHistoryModel));
+    
     sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
@@ -195,7 +216,7 @@ describe('PostService', () => {
     deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
-    
+    commonReactionService = moduleRef.get<CommonReactionService>(CommonReactionService);
     sequelize = moduleRef.get<Sequelize>(Sequelize); 
 
     transactionMock = createMock<Transaction>({
