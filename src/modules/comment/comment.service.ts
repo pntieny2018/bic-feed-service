@@ -41,6 +41,7 @@ import { CommentEditedHistoryModel } from '../../database/models/comment-edited-
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 import sequelize from 'sequelize';
 import { GetCommentsDto } from './dto/requests/get-comments.dto';
+import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 
 @Injectable()
 export class CommentService {
@@ -375,85 +376,6 @@ export class CommentService {
   }
 
   /**
-   * Used for copy link comment on Mobile
-   * @param user UserDto
-   * @param commentId Number
-   * @param getCommentDto: GetCommentDto
-   * @returns Promise resolve CommentResponseDto
-   */
-  public async getCommentLinkForMobile(
-    commentId: number,
-    user: UserDto,
-    getCommentsDto: GetCommentsDto
-  ): Promise<CommentDetailResponseDto> {
-    const { parentId } = getCommentsDto;
-    const loadAroundId = parentId > 0 ? commentId : 0;
-    this._logger.debug(`[getComment] commentId: ${commentId} `);
-    const checkComment = await this._commentModel.findByPk(commentId);
-    if (!checkComment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
-    }
-
-    const parent = await this._commentModel.findOne({
-      where: {
-        id: parentId > 0 ? parentId : commentId,
-      },
-      include: [
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          required: false,
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-        },
-        {
-          model: CommentReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: user.id,
-          },
-        },
-      ],
-    });
-
-    if (!parent) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
-    }
-
-    const post = await this._postService.findPost({ postId: parent.postId });
-    if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
-
-    await this._authorityService.allowAccess(user, post);
-    const actor = await this._userService.get(post.createdBy);
-    const childs = await this._getComments(
-      user.id,
-      { ...getCommentsDto, parentId: parent.id, postId: post.id },
-      loadAroundId
-    );
-    const parentJson = parent.toJSON();
-    await Promise.all([
-      this._commonReactionService.bindReactionToComments([parentJson]),
-      this._mentionService.bindMentionsToComment([parentJson]),
-      this.bindUserToComment([parentJson]),
-    ]);
-    const result = {
-      actor,
-      comment: this._classTransformer.plainToInstance(CommentResponseDto, parentJson, {
-        excludeExtraneousValues: true,
-      }),
-      childs,
-    };
-
-    return result;
-  }
-
-  /**
    * Get comment list
    * @param user UserDto
    * @param getCommentsDto GetCommentsDto
@@ -576,55 +498,55 @@ export class CommentService {
   public async getCommentLinkForWeb(
     commentId: number,
     user: UserDto,
-    getCommentsDto: GetCommentsDto,
+    getCommentLinkDto: GetCommentLinkDto,
     checkAccess = true
   ): Promise<any> {
     this._logger.debug(
       `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
-        getCommentsDto
+        getCommentLinkDto
       )}`
     );
-    const { limit, postId, targetChildLimit, childLimit, parentId } = getCommentsDto;
+    const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
 
     const checkComment = await this._commentModel.findByPk(commentId);
     if (!checkComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
     }
+    const { postId } = checkComment;
     if (checkAccess) {
       const post = await this._postService.findPost({
         postId,
       });
       await this._authorityService.allowAccess(user, post);
     }
-    const aroundId = parentId > 0 ? parentId : commentId;
+    const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;
     const comments = await this._getComments(
       user.id,
       {
         limit,
         postId,
       },
-      aroundId
+      parentId
     );
-    if (comments.list.length) {
+    if (comments.list.length && limit > 1) {
       await this.bindChildsToComment(comments.list, user.id, childLimit);
     }
-    if (parentId > 0) {
-      const childs = await this._getComments(
-        user.id,
-        {
-          limit: targetChildLimit,
-          parentId,
-          postId: checkComment.postId,
-        },
-        commentId
-      );
-      comments.list.map((cm) => {
-        if (cm.id == parentId) {
-          cm.childs = childs;
-        }
-        return cm;
-      });
-    }
+    const aroundChildId = checkComment.parentId > 0 ? commentId : 0;
+    const childs = await this._getComments(
+      user.id,
+      {
+        limit: targetChildLimit,
+        parentId,
+        postId,
+      },
+      aroundChildId
+    );
+    comments.list.map((cm) => {
+      if (cm.id == parentId) {
+        cm.childs = childs;
+      }
+      return cm;
+    });
     return comments;
   }
 
@@ -817,11 +739,9 @@ export class CommentService {
       hasPreviousPage = start >= 1 ? true : false;
       hasNextPage = childsGrouped[start + n] ? true : false;
     } else {
-      hasPreviousPage = childsGrouped.length === limit + 1 ? true : false;
-      if (hasPreviousPage) {
-        childsGrouped.pop();
-        commentsFiltered = childsGrouped;
-      }
+      hasNextPage = childsGrouped.length === limit + 1 ? true : false;
+      if (hasNextPage) childsGrouped.pop();
+      commentsFiltered = childsGrouped;
     }
     await Promise.all([
       this._commonReactionService.bindReactionToComments(commentsFiltered),
