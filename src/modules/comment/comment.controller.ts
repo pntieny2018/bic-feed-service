@@ -99,7 +99,7 @@ export class CommentController {
     @Query() getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentLinkForWeb(commentId, user, getCommentLinkDto);
+    return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })

@@ -495,11 +495,10 @@ export class CommentService {
    * @param checkAccess Boolean
    * @returns Promise resolve PageDto<CommentResponseDto>
    */
-  public async getCommentLinkForWeb(
+  public async getCommentLink(
     commentId: number,
     user: UserDto,
-    getCommentLinkDto: GetCommentLinkDto,
-    checkAccess = true
+    getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug(
       `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
@@ -513,12 +512,11 @@ export class CommentService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
     }
     const { postId } = checkComment;
-    if (checkAccess) {
-      const post = await this._postService.findPost({
-        postId,
-      });
-      await this._authorityService.allowAccess(user, post);
-    }
+    const post = await this._postService.findPost({
+      postId,
+    });
+    await this._authorityService.allowAccess(user, post);
+    const actor = await this._userService.get(post.createdBy);
     const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;
     const comments = await this._getComments(
       user.id,
@@ -547,6 +545,7 @@ export class CommentService {
       }
       return cm;
     });
+    comments['actor'] = actor;
     return comments;
   }
 
