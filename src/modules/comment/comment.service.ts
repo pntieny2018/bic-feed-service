@@ -541,7 +541,6 @@ export class CommentService {
       },
       aroundChildId
     );
-    console.log('childs=', childs);
     comments.list.map((cm) => {
       if (cm.id == parentId) {
         cm.childs = childs;
@@ -740,8 +739,8 @@ export class CommentService {
       hasPreviousPage = start >= 1 ? true : false;
       hasNextPage = childsGrouped[start + n] ? true : false;
     } else {
-      hasPreviousPage = childsGrouped.length === limit + 1 ? true : false;
-      if (hasPreviousPage) childsGrouped.pop();
+      hasNextPage = childsGrouped.length === limit + 1 ? true : false;
+      if (hasNextPage) childsGrouped.pop();
       commentsFiltered = childsGrouped;
     }
     await Promise.all([
