@@ -5,6 +5,7 @@ import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { MediaService } from '../../../media';
+import { PageDto } from '../../../../common/dto';
 
 export class CommentResponseDto {
   @ApiProperty()
@@ -109,7 +110,7 @@ export class CommentResponseDto {
   @Type(() => CommentResponseDto)
   @Transform(({ value }) => plainToInstance(CommentResponseDto, value))
   @Expose()
-  public child?: CommentResponseDto[];
+  public child?: CommentResponseDto[] | PageDto<CommentResponseDto>;
 
   public constructor(data: Partial<CommentResponseDto>) {
     Object.assign(this, data);

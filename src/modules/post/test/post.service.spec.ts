@@ -22,7 +22,7 @@ import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
-import { Transaction } from 'sequelize';
+import { Sequelize, Transaction } from 'sequelize';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { EntityIdDto } from '../../../common/dto';
 import { CommentModule, CommentService } from '../../comment';

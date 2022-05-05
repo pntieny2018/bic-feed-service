@@ -24,6 +24,14 @@ export class GetCommentsDto extends PageOptionsDto {
   @Type(() => Number)
   public childLimit?: number = 10;
 
+  @ApiProperty({
+    required: false,
+    default: 10,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  public targetChildLimit?: number = 10;
+
   @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
   @IsEnum(OrderEnum)
   @IsOptional()

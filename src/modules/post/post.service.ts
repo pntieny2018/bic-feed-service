@@ -348,21 +348,24 @@ export class PostService {
     });
 
     if (!post) {
-      //throw new NotFoundException('Post not found');
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     await this._authorityService.allowAccess(user, post);
-    const comments = await this._commentService.getComments(
-      user,
-      {
-        postId,
-        childLimit: getPostDto.childCommentLimit,
-        order: getPostDto.commentOrder,
-        childOrder: getPostDto.childCommentOrder,
-        limit: getPostDto.commentLimit,
-      },
-      false
-    );
+    let comments = null;
+    console.log('getPostDto=', getPostDto);
+    if (getPostDto.withComment) {
+      comments = await this._commentService.getComments(
+        user,
+        {
+          postId,
+          childLimit: getPostDto.childCommentLimit,
+          order: getPostDto.commentOrder,
+          childOrder: getPostDto.childCommentOrder,
+          limit: getPostDto.commentLimit,
+        },
+        false
+      );
+    }
     const jsonPost = post.toJSON();
     await Promise.all([
       this._commonReactionService.bindReactionToPosts([jsonPost]),
@@ -922,11 +925,6 @@ export class PostService {
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
     WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.users_mark_read_posts as u
-        WHERE u.user_id = :userId AND u.post_id = p.id
-      )
     AND EXISTS(
         SELECT 1
         from ${schema}.posts_groups AS g
