@@ -38,8 +38,6 @@ import { FollowService } from '../follow';
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
-import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
-import sequelize from 'sequelize';
 import { GetCommentsDto } from './dto/requests/get-comments.dto';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 
@@ -294,7 +292,7 @@ export class CommentService {
   }
 
   /**
-   * Get single comment
+   * Get single comment 
    * @param user UserDto
    * @param commentId Number
    * @param childLimit Number
@@ -311,9 +309,6 @@ export class CommentService {
       where: {
         id: commentId,
       },
-      attributes: {
-        include: [CommentModel.loadReactionsCount()],
-      },
       include: [
         {
           model: MediaModel,
@@ -326,28 +321,6 @@ export class CommentService {
           model: MentionModel,
           as: 'mentions',
           required: false,
-        },
-        {
-          model: CommentModel,
-          limit: childLimit,
-          required: false,
-          attributes: {
-            include: [CommentModel.loadReactionsCount()],
-          },
-          include: [
-            {
-              model: MediaModel,
-              through: {
-                attributes: [],
-              },
-              required: false,
-            },
-            {
-              model: MentionModel,
-              as: 'mentions',
-              required: false,
-            },
-          ],
         },
         {
           model: CommentReactionModel,
@@ -366,13 +339,17 @@ export class CommentService {
 
     const rawComment = response.toJSON();
 
-    await this._mentionService.bindMentionsToComment([rawComment]);
+    await Promise.all([
+      this._commonReactionService.bindReactionToComments([rawComment]),
+      this._mentionService.bindMentionsToComment([rawComment]),
+      this.bindUserToComment([rawComment]),
+    ]);
 
-    await this.bindUserToComment([rawComment]);
-
-    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
+    const result = this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
+    await this.bindChildsToComment([result], user.id, childLimit);
+    return result;
   }
 
   /**
@@ -409,6 +386,12 @@ export class CommentService {
     if (comments.list.length) {
       await this.bindChildsToComment(comments.list, user.id, childLimit);
     }
+
+    await Promise.all([
+      this._commonReactionService.bindReactionToComments(comments.list),
+      this._mentionService.bindMentionsToComment(comments.list),
+      this.bindUserToComment(comments.list),
+    ]);
 
     return comments;
   }
@@ -470,6 +453,11 @@ export class CommentService {
       }
       return cm;
     });
+    await Promise.all([
+      this._commonReactionService.bindReactionToComments(comments.list),
+      this._mentionService.bindMentionsToComment(comments.list),
+      this.bindUserToComment(comments.list),
+    ]);
     comments['actor'] = actor;
     return comments;
   }
@@ -632,11 +620,6 @@ export class CommentService {
       if (hasNextPage) childGrouped.pop();
       commentsFiltered = childGrouped;
     }
-    await Promise.all([
-      this._commonReactionService.bindReactionToComments(commentsFiltered),
-      this._mentionService.bindMentionsToComment(commentsFiltered),
-      this.bindUserToComment(commentsFiltered),
-    ]);
 
     const result = this._classTransformer.plainToInstance(CommentResponseDto, commentsFiltered, {
       excludeExtraneousValues: true,
@@ -720,13 +703,13 @@ export class CommentService {
    * @param commentsResponse  Array<IComment>
    * @returns Promise resolve void
    */
-  public async bindUserToComment(commentsResponse: IComment[]): Promise<void> {
+  public async bindUserToComment(commentsResponse: any[]): Promise<void> {
     const actorIds: number[] = [];
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
           actorIds.push(cm.createdBy);
         }
       }
@@ -739,8 +722,8 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
           cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
         }
       }
@@ -806,12 +789,6 @@ export class CommentService {
     });
 
     const childGrouped = this._groupComments(rows);
-    await Promise.all([
-      this._commonReactionService.bindReactionToComments(childGrouped),
-      this._mentionService.bindMentionsToComment(childGrouped),
-      this.bindUserToComment(childGrouped),
-    ]);
-
     const childFormatted = this._classTransformer.plainToInstance(
       CommentResponseDto,
       childGrouped,

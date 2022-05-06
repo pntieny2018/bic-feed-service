@@ -323,8 +323,8 @@ export class CommonReactionService {
     for (const comment of comments) {
       commentIds.push(comment.id);
       //push child commentID
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
           commentIds.push(cm.id);
         }
       }
@@ -353,8 +353,8 @@ export class CommonReactionService {
         return i.commentId === comment.id;
       });
       //Map reaction to child comment
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
           cm.reactionsCount = reactions.filter((r) => {
             return r.commentId === cm.id;
           });
