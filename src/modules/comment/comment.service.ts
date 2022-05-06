@@ -453,6 +453,7 @@ export class CommentService {
       }
       return cm;
     });
+    console.log('comments.list=', comments.list);
     await Promise.all([
       this._commonReactionService.bindReactionToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
@@ -719,7 +720,6 @@ export class CommentService {
     const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
       excludeExtraneousValues: true,
     });
-
     for (const comment of commentsResponse) {
       comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
       if (comment.child?.list && comment.child?.list.length) {
@@ -885,7 +885,7 @@ export class CommentService {
     repliedUserIds: number[];
     mentionedInRepliedCommentUserIds: number[];
   }> {
-    const { schema } = getDatabaseConfig();
+    const { schema } = getDatabaseConfig(); 
 
     const parentComment = await this._commentModel.findOne({
       include: [
