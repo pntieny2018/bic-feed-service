@@ -360,11 +360,7 @@ export class CommentService {
       await this._authorityService.allowAccess(user, post);
     }
 
-    const comments = await this._getComments(user.id, {
-      limit,
-      postId,
-      parentId,
-    });
+    const comments = await this._getComments(user.id, getCommentsDto);
     if (comments.list.length) {
       await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
@@ -447,7 +443,6 @@ export class CommentService {
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
     const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
-
     let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId ?? 0)}`;
     if (postId) {
       condition += ` AND "c".post_id = ${this._sequelizeConnection.escape(postId)}`;
@@ -458,15 +453,15 @@ export class CommentService {
       condition += ` AND ( "c".id != ${id} AND "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idGTE) {
-      const id = this._sequelizeConnection.escape(idGT);
+      const id = this._sequelizeConnection.escape(idGTE);
       condition += ` AND ( "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idLT) {
-      const id = this._sequelizeConnection.escape(idGT);
+      const id = this._sequelizeConnection.escape(idLT);
       condition += ` AND ( "c".id != ${id} AND "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idLTE) {
-      const id = this._sequelizeConnection.escape(idGT);
+      const id = this._sequelizeConnection.escape(idLTE);
       condition += ` AND ( "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     return condition;
