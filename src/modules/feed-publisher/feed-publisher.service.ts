@@ -6,6 +6,7 @@ import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class FeedPublisherService {
@@ -14,7 +15,8 @@ export class FeedPublisherService {
   private _logger = new Logger(FeedPublisherService.name);
   public constructor(
     private _followService: FollowService,
-    @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel
+    @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
+    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel
   ) {}
 
   public async attachPostsForUserNewsFeed(userId: number, postIds: number[]): Promise<void> {
@@ -41,14 +43,22 @@ export class FeedPublisherService {
     this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
     const schema = this._databaseConfig.schema;
     try {
+      const seenPostData = await this._userSeenPostModel.findAll(
+        {
+          where: { postId, userId: { [Op.in]: userIds} }
+        }
+      );
+      const seenPostDataMap = seenPostData.reduce(
+        (dataMap, seenPostRecord) => ({userId: true}),
+        {})
       const data = userIds
         .map((userId) => {
-          return `(${userId},${postId})`;
+          return `(${userId},${postId}, ${!!seenPostDataMap[userId]})`;
         })
         .join(',');
 
       await this._userNewsFeedModel.sequelize.query(
-        `INSERT INTO ${schema}.${this._userNewsFeedModel.tableName} (user_id,post_id) 
+        `INSERT INTO ${schema}.${this._userNewsFeedModel.tableName} (user_id,post_id, is_seen_post) 
              VALUES ${data} ON CONFLICT  (user_id,post_id) DO NOTHING;`
       );
     } catch (ex) {

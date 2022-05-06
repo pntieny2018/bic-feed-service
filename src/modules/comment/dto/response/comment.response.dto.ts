@@ -49,6 +49,10 @@ export class CommentResponseDto {
   @Expose()
   public updatedAt?: Date;
 
+  @ApiProperty()
+  @Expose()
+  public createdBy?: number;
+
   @ApiProperty({
     type: MediaFilterResponseDto,
   })

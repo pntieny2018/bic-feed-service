@@ -5,7 +5,6 @@ import { PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
 import { FollowService } from '../follow';
 import { ReactionService } from '../reaction';
-import { GetCommentsDto } from './dto/requests';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
@@ -22,7 +21,7 @@ import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
-import { UpdateCommentDto } from './dto/requests/update-comment.dto';
+import { GetCommentsDto, UpdateCommentDto } from './dto/requests';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -211,8 +210,6 @@ export class CommentService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
-    const oldCommentResponse = await this.getComment(user, commentId);
-
     const post = await this._postService.findPost({
       postId: comment.postId,
     });
@@ -332,7 +329,7 @@ export class CommentService {
     const result = this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
-    await this.bindChildentToComment([result], user.id, childLimit);
+    await this.bindChildrenToComment([result], user.id, childLimit);
     return result;
   }
 
@@ -368,7 +365,7 @@ export class CommentService {
       postId,
     });
     if (comments.list.length) {
-      await this.bindChildentToComment(comments.list, user.id, childLimit);
+      await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
 
     await Promise.all([
@@ -419,7 +416,7 @@ export class CommentService {
       parentId
     );
     if (comments.list.length && limit > 1) {
-      await this.bindChildentToComment(comments.list, user.id, childLimit);
+      await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
     const aroundChildId = checkComment.parentId > 0 ? commentId : 0;
     const child = await this._getComments(
@@ -589,18 +586,18 @@ export class CommentService {
       type: QueryTypes.SELECT,
     });
     const childGrouped = this._groupComments(rows);
-    let hasNextPage = false;
+    let hasNextPage: boolean;
     let hasPreviousPage = false;
-    let commentsFiltered = [];
+    let commentsFiltered: any[];
     if (aroundId > 0) {
       const index = childGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childGrouped.length);
       const start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
       commentsFiltered = childGrouped.slice(start, start + n);
-      hasPreviousPage = start >= 1 ? true : false;
-      hasNextPage = childGrouped[start + n] ? true : false;
+      hasPreviousPage = start >= 1;
+      hasNextPage = !!childGrouped[start + n];
     } else {
-      hasNextPage = childGrouped.length === limit + 1 ? true : false;
+      hasNextPage = childGrouped.length === limit + 1;
       if (hasNextPage) childGrouped.pop();
       commentsFiltered = childGrouped;
     }
@@ -690,38 +687,31 @@ export class CommentService {
       if (comment.parent) {
         actorIds.push(comment.parent.createdBy);
       }
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
-          if (comment.child?.list && comment.child?.list.length) {
-            for (const cm of comment.child.list) {
-              actorIds.push(cm.createdBy);
-            }
-          }
+
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
+          actorIds.push(cm.createdBy);
         }
       }
-      const usersInfo = await this._userService.getMany(actorIds);
-      const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
-        excludeExtraneousValues: true,
-      });
+    }
 
-      for (const comment of commentsResponse) {
-        comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
-
-        if (comment.parent) {
-          comment.parent.actor = actorsInfo.find((u) => u.id === comment.parent.createdBy);
-        }
-        if (comment.child && comment.child.length) {
-          for (const cm of comment.child) {
-            if (comment.child?.list && comment.child?.list.length) {
-              for (const cm of comment.child.list) {
-                cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
-              }
-            }
-          }
+    const usersInfo = await this._userService.getMany(actorIds);
+    const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
+      excludeExtraneousValues: true,
+    });
+    for (const comment of commentsResponse) {
+      if (comment.parent) {
+        comment.parent.actor = actorsInfo.find((u) => u.id === comment.parent.createdBy);
+      }
+      comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
+          cm.actor = actorsInfo.find((u) => u.id === cm.createdBy);
         }
       }
     }
   }
+
   /**
    * Bind user info to comment list
    * @returns Promise resolve void
@@ -729,7 +719,7 @@ export class CommentService {
    * @param authUserId
    * @param limit
    */
-  public async bindChildentToComment(
+  public async bindChildrenToComment(
     comments: any[],
     authUserId: number,
     limit = 10
@@ -797,7 +787,7 @@ export class CommentService {
 
     for (const comment of comments) {
       const childList = childFormatted.filter((i) => i.parentId === comment.id);
-      const hasNextPage = childList.length > limit ? true : false;
+      const hasNextPage = childList.length > limit;
       if (hasNextPage) childList.pop();
       comment.child = new PageDto<CommentResponseDto>(childList, {
         limit,

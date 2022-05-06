@@ -21,6 +21,7 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class FeedService {
@@ -35,6 +36,8 @@ export class FeedService {
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
     private _newsFeedModel: typeof UserNewsFeedModel,
+    @InjectModel(UserSeenPostModel)
+    private _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
     private _sequelizeConnection: Sequelize
@@ -126,6 +129,11 @@ export class FeedService {
 
   public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
     try {
+      await this._userSeenPostModel.bulkCreate(
+        postIds.map((postId) => ({ postId, userId })),
+        { ignoreDuplicates: true }
+      );
+
       await this._newsFeedModel.update(
         { isSeenPost: true },
         {
