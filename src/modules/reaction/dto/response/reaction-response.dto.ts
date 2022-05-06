@@ -19,4 +19,11 @@ export class ReactionResponseDto {
   @ApiProperty()
   @Expose()
   public createdAt: Date;
+
+  public constructor(id: number, reactionName: string, actor: UserDataShareDto, createdAt: Date) {
+    this.id = id;
+    this.reactionName = reactionName;
+    this.actor = actor;
+    this.createdAt = createdAt;
+  }
 }

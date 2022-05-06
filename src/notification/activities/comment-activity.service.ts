@@ -30,7 +30,7 @@ export class CommentActivityService {
     return new NotificationActivity(
       activityObject,
       VerbActivity.COMMENT,
-      TypeActivity.COMMENT,
+      TypeActivity.POST,
       comment.createdAt,
       comment.updatedAt
     );
@@ -69,7 +69,7 @@ export class CommentActivityService {
     return new NotificationActivity(
       activityObject,
       VerbActivity.COMMENT,
-      TypeActivity.CHILD_COMMENT,
+      TypeActivity.COMMENT,
       comment.createdAt,
       comment.createdAt
     );

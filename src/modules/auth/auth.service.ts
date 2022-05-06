@@ -53,31 +53,25 @@ export class AuthService {
     }
     let payload;
 
-    // try {
-    //   payload = await jwt.verify(token, pem);
-    // } catch (e) {
-    //   this._logger.error(e, e.stack);
-    //   if (e instanceof TokenExpiredError) {
-    //     throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
-    //   }
-    //   throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
-    // }
-    //
-    // if (!payload) {
-    //   throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
-    // }
+    try {
+      payload = await jwt.verify(token, pem);
+    } catch (e) {
+      this._logger.error(e, e.stack);
+      if (e instanceof TokenExpiredError) {
+        throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
+      }
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    }
+
+    if (!payload) {
+      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    }
 
     const user = this._classTransformer.plainToInstance(UserDto, {
-      email: 'ngoclinh@tgm.vn',
-      id: 33,
-      profile: {
-        username: 'ngoclinh',
-        avatar:
-          'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/user/avatar/images/original/a0f2b4bb-abf7-423d-9fed-0b706751b323.jpg',
-        fullname: 'Nguyễn Thị Ngọc Linh',
-        id: 33,
-        groups: [1, 10, 17, 25, 143, 151, 153, 154, 155, 156],
-      },
+      email: payload['email'],
+      username: payload['custom:username'],
+      id: parseInt(payload['custom:bein_user_id']),
+      staffRole: payload['custom:bein_staff_role'],
     });
 
     user.profile = await this._userService.get(user.id);

@@ -10,7 +10,6 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentModel } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
-import { LogicException } from '../../common/exceptions';
 
 @Injectable()
 export class CommentDissociationService {
@@ -235,32 +234,34 @@ export class CommentDissociationService {
        *        5. replied on a comment you are mentioned. (mentioned user in parent comment)
        */
 
-      validUserIds.forEach((validUserId) => {
-        if (!handledUserIds.includes(validUserId)) {
-          if (mentionedUserIdsInComment.includes(validUserId)) {
-            recipient.mentionedUserIdsInComment.push(validUserId);
-            handledUserIds.push(validUserId);
-          }
+      validUserIds
+        .filter((id) => id !== actorId)
+        .forEach((validUserId) => {
+          if (!handledUserIds.includes(validUserId)) {
+            if (mentionedUserIdsInComment.includes(validUserId)) {
+              recipient.mentionedUserIdsInComment.push(validUserId);
+              handledUserIds.push(validUserId);
+            }
 
-          if (parentCommentCreatorId === validUserId && parentCommentCreatorId !== null) {
-            recipient.parentCommentCreatorId = validUserId;
-            handledUserIds.push(validUserId);
-          }
+            if (parentCommentCreatorId === validUserId && parentCommentCreatorId !== null) {
+              recipient.parentCommentCreatorId = validUserId;
+              handledUserIds.push(validUserId);
+            }
 
-          if (mentionedUserIdsInPrevChildComment.includes(validUserId)) {
-            recipient.mentionedUserIdsInPrevChildComment.push(validUserId);
-            handledUserIds.push(validUserId);
+            if (mentionedUserIdsInPrevChildComment.includes(validUserId)) {
+              recipient.mentionedUserIdsInPrevChildComment.push(validUserId);
+              handledUserIds.push(validUserId);
+            }
+            if (mentionedUserIdsInParentComment.includes(validUserId)) {
+              recipient.mentionedUserIdsInParentComment.push(validUserId);
+              handledUserIds.push(validUserId);
+            }
+            if (prevChildCommentCreatorIds.includes(validUserId)) {
+              recipient.prevChildCommentCreatorIds.push(validUserId);
+              handledUserIds.push(validUserId);
+            }
           }
-          if (mentionedUserIdsInParentComment.includes(validUserId)) {
-            recipient.mentionedUserIdsInParentComment.push(validUserId);
-            handledUserIds.push(validUserId);
-          }
-          if (prevChildCommentCreatorIds.includes(validUserId)) {
-            recipient.prevChildCommentCreatorIds.push(validUserId);
-            handledUserIds.push(validUserId);
-          }
-        }
-      });
+        });
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);

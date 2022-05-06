@@ -1,11 +1,11 @@
 export enum TypeActivity {
-  POST = 'post',
-  COMMENT = 'comment',
-  CHILD_COMMENT = 'child_comment',
+  POST = 'POST',
+  COMMENT = 'COMMENT',
+  CHILD_COMMENT = 'CHILD_COMMENT',
 }
 
 export enum VerbActivity {
-  POST = 'post',
-  COMMENT = 'comment',
-  REACT = 'react',
+  POST = 'POST',
+  COMMENT = 'COMMENT',
+  REACT = 'REACT',
 }

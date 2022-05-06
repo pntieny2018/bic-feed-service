@@ -1,23 +1,28 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database';
-import { NotificationModule } from '../../notification';
-import { GroupModule } from '../../shared/group';
-import { UserModule } from '../../shared/user';
-import { ReactionController } from './reaction.controller';
-import { ReactionService } from './reaction.service';
 import { PostModule } from '../post';
+import { FollowModule } from '../follow';
 import { CommentModule } from '../comment';
-import { ReactionActivityService } from '../../notification/activities/reaction-activity.service';
+import { UserModule } from '../../shared/user';
+import { DatabaseModule } from '../../database';
+import { GroupModule } from '../../shared/group';
+import { forwardRef, Module } from '@nestjs/common';
+import { ReactionService } from './reaction.service';
+import { NotificationModule } from '../../notification';
+import { ReactionController } from './reaction.controller';
+import { ReactionCountModule } from '../../shared/reaction-count';
+import { ReactionActivityService } from '../../notification/activities';
 
 @Module({
   imports: [
+    FollowModule,
     DatabaseModule,
     UserModule,
     GroupModule,
+    NotificationModule,
+    ReactionCountModule,
     forwardRef(() => PostModule),
     forwardRef(() => CommentModule),
-    NotificationModule,
   ],
+
   controllers: [ReactionController],
   providers: [ReactionService, ReactionActivityService],
   exports: [ReactionService, ReactionActivityService],

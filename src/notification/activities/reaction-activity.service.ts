@@ -10,8 +10,32 @@ import { ActivityObject, NotificationActivity } from '../dto/requests/notificati
 export class ReactionActivityService {
   protected createReactionPostPayload(
     post: PostResponseDto,
-    reaction: ReactionResponseDto
+    reaction: ReactionResponseDto,
+    action: string
   ): NotificationActivity {
+    post.reactionsCount = post.reactionsCount ?? {};
+    const reactionsMap = new Map<string, number>();
+    const reactionsName = [];
+    Object.values(post.reactionsCount ?? {}).forEach((r, index) => {
+      const rn = Object.keys(r)[0];
+      reactionsName.push(rn);
+      reactionsMap.set(rn, index);
+    });
+
+    if (reactionsName.includes(reaction.reactionName)) {
+      post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
+        action === 'create'
+          ? post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] + 1
+          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+              1 <
+            0
+          ? 0
+          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] + 1;
+    } else {
+      post.reactionsCount[reactionsMap.size] = {
+        [reaction.reactionName]: 1,
+      };
+    }
     const activityObject: ActivityObject = {
       id: post.id,
       actor: ObjectHelper.omit(['groups', 'email'], post.actor) as any,
@@ -39,8 +63,34 @@ export class ReactionActivityService {
   protected createReactionCommentPayload(
     post: PostResponseDto,
     comment: CommentResponseDto,
-    reaction: ReactionResponseDto
+    reaction: ReactionResponseDto,
+    action: string
   ): NotificationActivity {
+    comment.reactionsCount = comment.reactionsCount ?? {};
+    const reactionsMap = new Map<string, number>();
+    const reactionsName = [];
+    Object.values(comment.reactionsCount ?? {}).forEach((r, index) => {
+      const rn = Object.keys(r)[0];
+      reactionsName.push(rn);
+      reactionsMap.set(rn, index);
+    });
+
+    if (reactionsName.includes(reaction.reactionName)) {
+      post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
+        action === 'create'
+          ? comment.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] +
+            1
+          : comment.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+              1 <
+            0
+          ? 0
+          : comment.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+            1;
+    } else {
+      comment.reactionsCount[reactionsMap.size] = {
+        [reaction.reactionName]: 1,
+      };
+    }
     const activityObject: ActivityObject = {
       id: post.id,
       actor: ObjectHelper.omit(['groups'], post.actor) as any,
@@ -75,8 +125,34 @@ export class ReactionActivityService {
   protected createReactionChildCommentPayload(
     post: PostResponseDto,
     comment: CommentResponseDto,
-    reaction: ReactionResponseDto
+    reaction: ReactionResponseDto,
+    action = 'create'
   ): NotificationActivity {
+    comment.reactionsCount = comment.reactionsCount ?? {};
+    const reactionsMap = new Map<string, number>();
+    const reactionsName = [];
+    Object.values(comment.reactionsCount ?? {}).forEach((r, index) => {
+      const rn = Object.keys(r)[0];
+      reactionsName.push(rn);
+      reactionsMap.set(rn, index);
+    });
+
+    if (reactionsName.includes(reaction.reactionName)) {
+      post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
+        action === 'create'
+          ? comment.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] +
+            1
+          : comment.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+              1 <
+            0
+          ? 0
+          : comment.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+            1;
+    } else {
+      comment.reactionsCount[reactionsMap.size] = {
+        [reaction.reactionName]: 1,
+      };
+    }
     const parentComment = comment.parent;
     const activityObject: ActivityObject = {
       id: post.id,
@@ -98,6 +174,7 @@ export class ReactionActivityService {
             actor: ObjectHelper.omit(['groups'], reaction.actor) as any,
             createdAt: reaction.createdAt,
           },
+          reactionsCount: comment.reactionsCount,
           content: comment.content,
           media: comment.media,
           createdAt: comment.createdAt,
@@ -123,21 +200,22 @@ export class ReactionActivityService {
       reaction: ReactionResponseDto;
       post?: PostResponseDto;
       comment?: CommentResponseDto;
-    }
+    },
+    action: 'create' | 'remove'
   ): NotificationActivity {
     if (type === TypeActivity.POST) {
       const { post, reaction } = data;
-      return this.createReactionPostPayload(post, reaction);
+      return this.createReactionPostPayload(post, reaction, action);
     }
 
     if (type === TypeActivity.COMMENT) {
       const { post, comment, reaction } = data;
-      return this.createReactionCommentPayload(post, comment, reaction);
+      return this.createReactionCommentPayload(post, comment, reaction, action);
     }
 
     if (type === TypeActivity.CHILD_COMMENT) {
       const { post, comment, reaction } = data;
-      return this.createReactionChildCommentPayload(post, comment, reaction);
+      return this.createReactionChildCommentPayload(post, comment, reaction, action);
     }
     return null;
   }

@@ -51,13 +51,13 @@ export class CommentNotificationService {
       groupAudienceIds
     );
     const recipientObj = {
-      commentRecipient: null,
-      replyCommentRecipient: null,
+      commentRecipient: CommentRecipientDto.init(),
+      replyCommentRecipient: ReplyCommentRecipientDto.init(),
     };
     if (commentResponse.parentId) {
-      recipientObj.replyCommentRecipient = recipient;
+      recipientObj.replyCommentRecipient = recipient as any;
     } else {
-      recipientObj.commentRecipient = recipient;
+      recipientObj.commentRecipient = recipient as any;
     }
 
     this._notificationService.publishCommentNotification<NotificationActivity>({

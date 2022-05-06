@@ -1,14 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { ElasticsearchHelper } from '../../common/helpers';
-import { On } from '../../common/decorators';
-import { FeedPublisherService } from '../../modules/feed-publisher';
-import { NotificationService } from '../../notification';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
+import { On } from '../../common/decorators';
+import { Injectable, Logger } from '@nestjs/common';
+import { NotificationService } from '../../notification';
+import { ElasticsearchHelper } from '../../common/helpers';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+import { PostActivityService } from '../../notification/activities';
 
 @Injectable()
 export class PostListener {
@@ -16,6 +17,7 @@ export class PostListener {
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
+    private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService
   ) {}
 
@@ -36,7 +38,7 @@ export class PostListener {
         value: {
           actor,
           event: event.getEventName(),
-          data: { post },
+          data: post,
         },
       });
 
@@ -54,14 +56,20 @@ export class PostListener {
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       post;
     if (isDraft) return;
+
+    const activity = this._postActivityService.createPayload(post);
+    if (((activity.object.mentions as any) ?? [])?.length === 0) {
+      activity.object.mentions = {};
+    }
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
         actor,
         event: event.getEventName(),
-        data: { post },
+        data: activity,
       },
     });
+
     const dataIndex = {
       id,
       commentsCount,
@@ -99,15 +107,16 @@ export class PostListener {
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       newPost;
     if (isDraft) return;
+
+    const updatedActivity = this._postActivityService.createPayload(newPost);
+    const oldActivity = this._postActivityService.createPayload(oldPost);
     this._notificationService.publishPostNotification({
       key: `${id}`,
       value: {
         actor,
         event: event.getEventName(),
-        data: {
-          oldPost,
-          newPost,
-        },
+        data: updatedActivity,
+        oldData: oldActivity,
       },
     });
 
