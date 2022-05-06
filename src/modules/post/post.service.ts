@@ -373,13 +373,11 @@ export class PostService {
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    return this._classTransformer.plainToInstance(
-      PostResponseDto,
-      { ...jsonPost, comments },
-      {
-        excludeExtraneousValues: true,
-      }
-    );
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+      excludeExtraneousValues: true,
+    });
+    result['comments'] = comments;
+    return result;
   }
 
   /**
