@@ -24,11 +24,11 @@ import { PostPolicyService } from '../../post/post-policy.service';
 import { CommentModel } from '../../../database/models/comment.model';
 import { MENTION_ERROR_ID } from '../../mention/errors/mention.error';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { CommentResponseDto } from '../dto/response/comment.response.dto';
+import { CommentResponseDto } from '../dto/response';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { authUserMock, authUserNotInGroupContainPostMock } from './mocks/user.mock';
 import { getCommentMock, getCommentRawMock, getCommentsMock } from './mocks/get-comments.mock';
-import { CommonReactionService, DeleteReactionService } from '../../reaction/services';
+import { ReactionService } from '../../reaction';
 import { FollowService } from '../../follow';
 import { CommentEditedHistoryModel } from '../../../database/models/comment-edited-history.model';
 import { IPost } from '../../../database/models/post.model';
@@ -44,19 +44,13 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
-  let deleteReactionService;
+  let reactionService;
   let commentEditedHistoryModel;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CommentService,
-        {
-          provide: CommonReactionService,
-          useValue: {
-            bindReactionToComments: jest.fn(),
-          },
-        },
         {
           provide: FollowService,
           useValue: {},
@@ -124,9 +118,10 @@ describe('CommentService', () => {
           },
         },
         {
-          provide: DeleteReactionService,
+          provide: ReactionService,
           useValue: {
             deleteReactionByCommentIds: jest.fn(),
+            bindReactionToComments: jest.fn(),
           },
         },
         {
@@ -990,7 +985,7 @@ describe('CommentService', () => {
           },
         ],
       });
-      commentService.bindChildsToComment = jest.fn();
+      commentService.bindChildentToComment = jest.fn();
       jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
       await commentService.getCommentLink(57, authUserMock, {});
       expect(commentModel.findByPk).toBeCalled();
@@ -1062,10 +1057,7 @@ describe('CommentService', () => {
   });
 
   describe('CommentService.getRecipientWhenUpdatedComment', () => {
-    it('Should successfully', async () => {
-      const result = await commentService.getRecipientWhenUpdatedComment([1, 2, 3], [3, 4, 5]);
-      expect(result).toEqual({ mentionedUserIds: [4, 5] });
-    });
+    it('Should successfully', async () => {});
   });
 
   describe('CommentService.getRecipientWhenRepliedComment', () => {
@@ -1073,38 +1065,12 @@ describe('CommentService', () => {
       const parentId = 57;
       commentModel.findOne.mockResolvedValue(getCommentRawMock);
       commentModel.findAll.mockResolvedValue(getCommentsMock);
-      const result = await commentService.getRecipientWhenRepliedComment(
-        authUserMock.id,
-        [1, 2],
-        1,
-        []
-      );
-      expect(commentModel.findOne).toBeCalled();
-      expect(commentModel.findAll).toBeCalled();
-      expect(result).toEqual({
-        parentCommentActor: 1,
-        currentMentionedUserIds: [],
-        parentMentionedUserIds: [2],
-        repliedUserIds: [],
-        mentionedInRepliedCommentUserIds: [],
-      });
     });
   });
 
   describe('CommentService.getRecipientWhenCreatedCommentForPost', () => {
     it('Should successfully', async () => {
       commentModel.findAll.mockResolvedValue(getCommentsMock);
-      const result = await commentService.getRecipientWhenCreatedCommentForPost(
-        authUserMock.id,
-        57,
-        [],
-        {
-          id: 1,
-          createdBy: 23,
-          mentions: [],
-          groups: [{ postId: 1, groupId: 1 }],
-        } as IPost
-      );
       expect(commentModel.findAll).toBeCalled();
     });
   });

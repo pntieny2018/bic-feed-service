@@ -5,6 +5,7 @@ import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { MediaService } from '../../../media';
+import { IPost } from '../../../../database/models/post.model';
 import { PageDto } from '../../../../common/dto';
 
 export class CommentResponseDto {
@@ -18,11 +19,19 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public parentId?: number;
+  public parentId: number;
+
+  @ApiProperty()
+  @Expose()
+  public parent?: CommentResponseDto;
 
   @ApiProperty()
   @Expose()
   public postId: number;
+
+  @ApiProperty()
+  @Expose()
+  public post?: IPost;
 
   @ApiProperty()
   @Expose()
@@ -39,6 +48,10 @@ export class CommentResponseDto {
   @ApiProperty()
   @Expose()
   public updatedAt?: Date;
+
+  @ApiProperty()
+  @Expose()
+  public createdBy?: number;
 
   @ApiProperty({
     type: MediaFilterResponseDto,

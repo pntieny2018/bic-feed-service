@@ -74,11 +74,14 @@ export class MentionService {
     const userIds: number[] = [];
 
     for (const comment of commentsResponse) {
+      if (comment?.parent?.mentions.length) {
+        userIds.push(...comment.parent.mentions.map((m) => m.userId));
+      }
       if (comment.mentions && comment.mentions.length) {
         userIds.push(...comment.mentions.map((m) => m.userId));
       }
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
           userIds.push(...cm.mentions.map((m) => m.userId));
         }
       }
@@ -96,13 +99,18 @@ export class MentionService {
     };
 
     for (const comment of commentsResponse) {
+      if (comment?.parent?.mentions.length) {
+        comment.parent.mentions = convert(
+          comment.parent.mentions.map((v) => usersInfo.find((u) => u.id === v.userId))
+        );
+      }
       if (comment.mentions && comment.mentions.length) {
         comment.mentions = convert(
           comment.mentions.map((v) => usersInfo.find((u) => u.id === v.userId))
         );
       }
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child?.list) {
           cm.mentions = convert(cm.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
         }
       }

@@ -6,5 +6,6 @@ export class NotificationPayloadDto<T> {
     actor: UserSharedDto;
     event: string;
     data: T;
+    oldData?: any;
   };
 }

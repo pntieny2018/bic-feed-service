@@ -3,7 +3,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from '../../../shared/user';
-import { CreateReactionService } from '../services';
+import { CreateReactionService } from '../activities';
 import {
   mock15ReactionOnAComment,
   mock15ReactionOnAPost,
@@ -25,7 +25,7 @@ import {
   mockUserSharedDto,
   mockUserSharedDtoNotInTheGroup,
 } from './mocks/input.mock';
-import { DeleteReactionService } from '../services';
+import { DeleteReactionService } from '../activities';
 import { PostModel } from '../../../database/models/post.model';
 import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
 import { CommentModel } from '../../../database/models/comment.model';
@@ -34,7 +34,7 @@ import { GroupService } from '../../../shared/group';
 import { PostReactionModel } from '../../../database/models/post-reaction.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { ReactionDto } from '../dto/reaction.dto';
-import { CommonReactionService } from '../services';
+import { CommonReactionService } from '../activities';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { NotificationModule, NotificationService } from '../../../notification';
 import { ReactionEnum } from '../reaction.enum';
