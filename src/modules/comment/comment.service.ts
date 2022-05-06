@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { MediaService } from '../media';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
 import { FollowService } from '../follow';
 import { ReactionService } from '../reaction';
@@ -472,7 +472,8 @@ export class CommentService {
     getCommentsDto: GetCommentsDto,
     aroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
-    const { limit, order } = getCommentsDto;
+    const { limit } = getCommentsDto;
+    const order = getCommentsDto.order ?? OrderEnum.DESC;
     const { schema } = getDatabaseConfig();
     let query: string;
     const condition = await this._getCondition(getCommentsDto);
