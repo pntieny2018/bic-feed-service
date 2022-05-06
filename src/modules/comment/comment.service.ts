@@ -350,7 +350,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { limit, childLimit, postId } = getCommentsDto;
+    const { limit, childLimit, postId, parentId } = getCommentsDto;
 
     if (checkAccess) {
       const post = await this._postService.findPost({
@@ -363,6 +363,7 @@ export class CommentService {
     const comments = await this._getComments(user.id, {
       limit,
       postId,
+      parentId,
     });
     if (comments.list.length) {
       await this.bindChildrenToComment(comments.list, user.id, childLimit);
