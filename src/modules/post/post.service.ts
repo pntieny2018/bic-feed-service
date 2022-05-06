@@ -352,7 +352,6 @@ export class PostService {
     }
     await this._authorityService.allowAccess(user, post);
     let comments = null;
-    console.log('getPostDto=', getPostDto);
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments(
         user,
@@ -896,24 +895,26 @@ export class PostService {
   }
 
   public async markReadPost(postId: number, userId: number): Promise<void> {
-    try {
-      const readPost = await this._userMarkReadPostModel.findOne({
-        where: {
-          postId,
-          userId,
-        },
-      });
-      if (!readPost) {
-        await this._userMarkReadPostModel.create({
-          postId,
-          userId,
-        });
-      }
-      return;
-    } catch (ex) {
-      this._logger.error(ex, ex.stack);
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER);
+    const post = await this._postModel.findByPk(postId);
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
+    if (post && post.createdBy === userId) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_NOT_ALLOW);
+    }
+    const readPost = await this._userMarkReadPostModel.findOne({
+      where: {
+        postId,
+        userId,
+      },
+    });
+    if (!readPost) {
+      await this._userMarkReadPostModel.create({
+        postId,
+        userId,
+      });
+    }
+    return;
   }
 
   public async getTotalImportantPostInGroups(
