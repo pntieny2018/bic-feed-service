@@ -43,7 +43,6 @@ export class FeedController {
     return this._feedService.getNewsFeed(authUser, getNewsFeedDto);
   }
 
-
   @ApiOperation({ summary: 'Mark seen post' })
   @ApiOkResponse({
     type: Boolean,

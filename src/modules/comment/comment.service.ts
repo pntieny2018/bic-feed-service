@@ -350,7 +350,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { limit, childLimit, postId, parentId } = getCommentsDto;
+    const { childLimit, postId, parentId } = getCommentsDto;
 
     if (checkAccess) {
       const post = await this._postService.findPost({
@@ -361,7 +361,7 @@ export class CommentService {
     }
 
     const comments = await this._getComments(user.id, getCommentsDto);
-    if (comments.list.length) {
+    if (comments.list.length && !parentId) {
       await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
 
@@ -472,8 +472,7 @@ export class CommentService {
     getCommentsDto: GetCommentsDto,
     aroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
-    const { limit } = getCommentsDto;
-    const order = 'DESC';
+    const { limit, order } = getCommentsDto;
     const { schema } = getDatabaseConfig();
     let query: string;
     const condition = await this._getCondition(getCommentsDto);
