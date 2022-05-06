@@ -1,30 +1,30 @@
-import { Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database';
-import { NotificationModule } from '../../notification';
-import { GroupModule } from '../../shared/group';
+import { PostModule } from '../post';
+import { FollowModule } from '../follow';
+import { CommentModule } from '../comment';
 import { UserModule } from '../../shared/user';
+import { DatabaseModule } from '../../database';
+import { GroupModule } from '../../shared/group';
+import { forwardRef, Module } from '@nestjs/common';
+import { ReactionService } from './reaction.service';
+import { NotificationModule } from '../../notification';
 import { ReactionController } from './reaction.controller';
-import {
-  CommonReactionService,
-  CreateOrDeleteReactionService,
-  CreateReactionService,
-  DeleteReactionService,
-} from './services';
+import { ReactionCountModule } from '../../shared/reaction-count';
+import { ReactionActivityService } from '../../notification/activities';
 
 @Module({
-  imports: [DatabaseModule, UserModule, GroupModule, NotificationModule],
+  imports: [
+    FollowModule,
+    DatabaseModule,
+    UserModule,
+    GroupModule,
+    NotificationModule,
+    ReactionCountModule,
+    forwardRef(() => PostModule),
+    forwardRef(() => CommentModule),
+  ],
+
   controllers: [ReactionController],
-  providers: [
-    CreateReactionService,
-    DeleteReactionService,
-    CommonReactionService,
-    CreateOrDeleteReactionService,
-  ],
-  exports: [
-    CommonReactionService,
-    CreateReactionService,
-    DeleteReactionService,
-    CreateOrDeleteReactionService,
-  ],
+  providers: [ReactionService, ReactionActivityService],
+  exports: [ReactionService, ReactionActivityService],
 })
 export class ReactionModule {}

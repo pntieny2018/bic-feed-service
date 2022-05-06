@@ -12,4 +12,9 @@ export class ReactionsResponseDto {
     type: Number,
   })
   public limit: number;
+
+  @ApiProperty({
+    type: String,
+  })
+  public order?: string;
 }
