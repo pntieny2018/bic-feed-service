@@ -1,45 +1,38 @@
-import {
-  CommentHasBeenCreatedEvent,
-  CommentHasBeenDeletedEvent,
-  CommentHasBeenUpdatedEvent,
-} from '../../events/comment';
-
-import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { MediaService } from '../media';
-import { OrderEnum, PageDto } from '../../common/dto';
+import { PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
+import { FollowService } from '../follow';
+import { ReactionService } from '../reaction';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { EntityType } from '../media/media.constants';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { ExceptionHelper } from '../../common/helpers';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UserDataShareDto } from '../../shared/user/dto';
+import { LogicException } from '../../common/exceptions';
+import { getDatabaseConfig } from '../../config/database';
+import { PostModel } from '../../database/models/post.model';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
-import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
-import { UpdateCommentDto } from './dto/requests/update-comment.dto';
+import { GetCommentsDto, UpdateCommentDto } from './dto/requests';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
-import { CommentModel, IComment } from '../../database/models/comment.model';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { IPost, PostModel } from '../../database/models/post.model';
-import { ExceptionHelper } from '../../common/helpers';
-import { CommonReactionService, DeleteReactionService } from '../reaction/services';
-import { getDatabaseConfig } from '../../config/database';
-import { FollowModel } from '../../database/models/follow.model';
-import { FollowService } from '../follow';
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
-import { GetCommentsDto } from './dto/requests/get-comments.dto';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { CommentModel, IComment } from '../../database/models/comment.model';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
+import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
 
 @Injectable()
 export class CommentService {
@@ -51,11 +44,11 @@ export class CommentService {
     private _postService: PostService,
     private _userService: UserService,
     private _mediaService: MediaService,
+    private _groupService: GroupService,
     private _mentionService: MentionService,
+    private _reactionService: ReactionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
-    private _commonReactionService: CommonReactionService,
-    private _deleteReactionService: DeleteReactionService,
     private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
@@ -75,7 +68,7 @@ export class CommentService {
     user: UserDto,
     createCommentDto: CreateCommentDto,
     replyId = 0
-  ): Promise<CommentResponseDto> {
+  ): Promise<IComment> {
     this._logger.debug(
       `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
         createCommentDto
@@ -83,9 +76,8 @@ export class CommentService {
     );
 
     let post;
-    let isReply = false;
+
     if (replyId > 0) {
-      isReply = true;
       const parentComment = await this._commentModel.findOne({
         include: [
           {
@@ -108,9 +100,11 @@ export class CommentService {
           parentId: 0,
         },
       });
+
       if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
       }
+
       if (!parentComment.post) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
       }
@@ -165,23 +159,12 @@ export class CommentService {
         const mediaIds = media.map((m) => m.id);
 
         await this._mediaService.checkValidMedia(mediaIds, user.id);
-
         await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
       }
 
       await transaction.commit();
 
-      const commentResponse = await this.getComment(user, comment.id);
-
-      this._eventEmitter.emit(
-        new CommentHasBeenCreatedEvent({
-          isReply: isReply,
-          post: post,
-          commentResponse: commentResponse,
-        })
-      );
-
-      return commentResponse;
+      return comment;
     } catch (ex) {
       await transaction.rollback();
       await comment.destroy();
@@ -200,7 +183,10 @@ export class CommentService {
     user: UserDto,
     commentId: number,
     updateCommentDto: UpdateCommentDto
-  ): Promise<CommentResponseDto> {
+  ): Promise<{
+    comment: IComment;
+    oldComment: IComment;
+  }> {
     this._logger.debug(
       `[update] user: ${JSON.stringify(user)}, updateCommentDto: ${JSON.stringify(
         updateCommentDto
@@ -208,6 +194,12 @@ export class CommentService {
     );
 
     const comment = await this._commentModel.findOne({
+      include: [
+        {
+          model: MentionModel,
+          as: 'mentions',
+        },
+      ],
       where: {
         id: commentId,
         createdBy: user.id,
@@ -217,8 +209,6 @@ export class CommentService {
     if (!comment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
-
-    const oldCommentResponse = await this.getComment(user, commentId);
 
     const post = await this._postService.findPost({
       postId: comment.postId,
@@ -271,19 +261,10 @@ export class CommentService {
 
       await transaction.commit();
 
-      const commentResponse = await this.getComment(user, commentId);
-
-      this._eventEmitter.emit(
-        new CommentHasBeenUpdatedEvent({
-          newComment: comment.toJSON(),
-          oldComment: oldComment,
-          post: post,
-          commentResponse: commentResponse,
-          oldCommentResponse: oldCommentResponse,
-        })
-      );
-
-      return commentResponse;
+      return {
+        comment: comment,
+        oldComment: oldComment,
+      };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       await transaction.rollback();
@@ -292,7 +273,7 @@ export class CommentService {
   }
 
   /**
-   * Get single comment 
+   * Get single comment
    * @param user UserDto
    * @param commentId Number
    * @param childLimit Number
@@ -334,13 +315,13 @@ export class CommentService {
     });
 
     if (!response) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
 
     const rawComment = response.toJSON();
 
     await Promise.all([
-      this._commonReactionService.bindReactionToComments([rawComment]),
+      this._reactionService.bindReactionToComments([rawComment]),
       this._mentionService.bindMentionsToComment([rawComment]),
       this.bindUserToComment([rawComment]),
     ]);
@@ -348,7 +329,7 @@ export class CommentService {
     const result = this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
-    await this.bindChildsToComment([result], user.id, childLimit);
+    await this.bindChildrenToComment([result], user.id, childLimit);
     return result;
   }
 
@@ -385,11 +366,11 @@ export class CommentService {
       parentId,
     });
     if (comments.list.length) {
-      await this.bindChildsToComment(comments.list, user.id, childLimit);
+      await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
 
     await Promise.all([
-      this._commonReactionService.bindReactionToComments(comments.list),
+      this._reactionService.bindReactionToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
       this.bindUserToComment(comments.list),
     ]);
@@ -399,9 +380,9 @@ export class CommentService {
 
   /**
    * Get comment list
+   * @param commentId Number
    * @param user UserDto
-   * @param getCommentsDto GetCommentsDto
-   * @param checkAccess Boolean
+   * @param getCommentLinkDto GetCommentLinkDto
    * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getCommentLink(
@@ -436,7 +417,7 @@ export class CommentService {
       parentId
     );
     if (comments.list.length && limit > 1) {
-      await this.bindChildsToComment(comments.list, user.id, childLimit);
+      await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
     const aroundChildId = checkComment.parentId > 0 ? commentId : 0;
     const child = await this._getComments(
@@ -454,9 +435,8 @@ export class CommentService {
       }
       return cm;
     });
-    console.log('comments.list=', comments.list);
     await Promise.all([
-      this._commonReactionService.bindReactionToComments(comments.list),
+      this._reactionService.bindReactionToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
       this.bindUserToComment(comments.list),
     ]);
@@ -607,18 +587,18 @@ export class CommentService {
       type: QueryTypes.SELECT,
     });
     const childGrouped = this._groupComments(rows);
-    let hasNextPage = false;
+    let hasNextPage: boolean;
     let hasPreviousPage = false;
-    let commentsFiltered = [];
+    let commentsFiltered: any[];
     if (aroundId > 0) {
       const index = childGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childGrouped.length);
       const start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
       commentsFiltered = childGrouped.slice(start, start + n);
-      hasPreviousPage = start >= 1 ? true : false;
-      hasNextPage = childGrouped[start + n] ? true : false;
+      hasPreviousPage = start >= 1;
+      hasNextPage = !!childGrouped[start + n];
     } else {
-      hasNextPage = childGrouped.length === limit + 1 ? true : false;
+      hasNextPage = childGrouped.length === limit + 1;
       if (hasNextPage) childGrouped.pop();
       commentsFiltered = childGrouped;
     }
@@ -640,7 +620,7 @@ export class CommentService {
    * @param commentId Number
    * @returns Promise resolve boolean
    */
-  public async destroy(user: UserDto, commentId: number): Promise<boolean> {
+  public async destroy(user: UserDto, commentId: number): Promise<IComment> {
     this._logger.debug(`[destroy] user: ${JSON.stringify(user)}, commentID: ${commentId}`);
 
     const comment = await this._commentModel.findOne({
@@ -656,6 +636,7 @@ export class CommentService {
     const post = await this._postService.findPost({
       commentId: commentId,
     });
+
     await this._authorityService.allowAccess(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
@@ -671,7 +652,7 @@ export class CommentService {
           transaction
         ),
 
-        this._deleteReactionService.deleteReactionByCommentIds([commentId], transaction),
+        this._reactionService.deleteReactionByCommentIds([commentId], transaction),
       ]);
 
       await this._commentModel.destroy({
@@ -686,14 +667,7 @@ export class CommentService {
 
       await transaction.commit();
 
-      this._eventEmitter.emit(
-        new CommentHasBeenDeletedEvent({
-          comment: comment.toJSON(),
-          post: post,
-        })
-      );
-
-      return true;
+      return comment;
     } catch (e) {
       this._logger.error(e, e.stack);
       await transaction.rollback();
@@ -710,6 +684,11 @@ export class CommentService {
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
+
+      if (comment.parent) {
+        actorIds.push(comment.parent.createdBy);
+      }
+
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
           actorIds.push(cm.createdBy);
@@ -722,6 +701,9 @@ export class CommentService {
       excludeExtraneousValues: true,
     });
     for (const comment of commentsResponse) {
+      if (comment.parent) {
+        comment.parent.actor = actorsInfo.find((u) => u.id === comment.parent.createdBy);
+      }
       comment.actor = actorsInfo.find((u) => u.id === comment.createdBy);
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
@@ -733,10 +715,16 @@ export class CommentService {
 
   /**
    * Bind user info to comment list
-   * @param commentsResponse  Array<IComment>
    * @returns Promise resolve void
+   * @param comments
+   * @param authUserId
+   * @param limit
    */
-  public async bindChildsToComment(comments: any[], authUserId: number, limit = 10): Promise<void> {
+  public async bindChildrenToComment(
+    comments: any[],
+    authUserId: number,
+    limit = 10
+  ): Promise<void> {
     const subQuery = [];
     const { schema } = getDatabaseConfig();
     for (const comment of comments) {
@@ -800,7 +788,7 @@ export class CommentService {
 
     for (const comment of comments) {
       const childList = childFormatted.filter((i) => i.parentId === comment.id);
-      const hasNextPage = childList.length > limit ? true : false;
+      const hasNextPage = childList.length > limit;
       if (hasNextPage) childList.pop();
       comment.child = new PageDto<CommentResponseDto>(childList, {
         limit,
@@ -830,7 +818,7 @@ export class CommentService {
         MentionableType.COMMENT,
         transaction
       ),
-      this._deleteReactionService.deleteReactionByCommentIds(commentIds, transaction),
+      this._reactionService.deleteReactionByCommentIds(commentIds, transaction),
     ]).catch((ex) => this._logger.error(ex, ex.stack));
 
     await this._commentModel.destroy({
@@ -843,272 +831,48 @@ export class CommentService {
     });
   }
 
-  /**
-   * Get recipient when updated comment
-   * @param oldMentions Array<Number>
-   * @param newMentions Array<Number>
-   * @protected
-   */
-  public async getRecipientWhenUpdatedComment(
-    oldMentions: number[] = [],
-    newMentions: number[] = []
-  ): Promise<{
-    mentionedUserIds: number[];
-  }> {
-    const validMentionUserIds = newMentions.filter((userId) => !oldMentions.includes(userId));
-
-    return {
-      mentionedUserIds: validMentionUserIds,
-    };
-  }
-
-  /**
-   * Get recipient when reply to comment.
-   *** I'll be executed when the listeners handle comment created post.
-   * @param userId Number
-   * @param groupIds Array<Number>
-   * @param parentId Number
-   * @param currentMentionedUserIds Array<Number>
-   * @param limit Number
-   * @protected
-   * @returns Promise {commentedUserIds: number[];mentionedUserIds: number[]; }
-   */
-  public async getRecipientWhenRepliedComment(
-    userId: number,
-    groupIds: number[],
-    parentId: number,
-    currentMentionedUserIds: number[],
-    limit = 50
-  ): Promise<{
-    parentCommentActor: number;
-    currentMentionedUserIds: number[];
-    parentMentionedUserIds: number[];
-    repliedUserIds: number[];
-    mentionedInRepliedCommentUserIds: number[];
-  }> {
-    const { schema } = getDatabaseConfig(); 
-
-    const parentComment = await this._commentModel.findOne({
-      include: [
-        {
-          model: MentionModel,
-          required: false,
+  public async findComment(commentId: number): Promise<CommentResponseDto> {
+    const get = async (cid: number): Promise<CommentModel> => {
+      return await this._commentModel.findOne({
+        where: {
+          id: cid,
         },
-      ],
-      where: {
-        id: parentId,
-        createdBy: {
-          [Op.in]: Sequelize.literal(
-            `( select user_id from ${schema}.${
-              FollowModel.tableName
-            } where group_id in (${groupIds.join(',')}) )`
-          ),
-        },
-      },
-    });
-
-    if (!parentComment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
-    }
-
-    const recentComments = await this._commentModel.findAll({
-      include: [
-        {
-          model: MentionModel,
-          required: false,
-        },
-      ],
-      where: {
-        parentId: parentId,
-        createdBy: {
-          [Op.in]: Sequelize.literal(
-            `( select user_id from ${schema}.${
-              FollowModel.tableName
-            } where group_id in (${groupIds.join(',')}) )`
-          ),
-        },
-      },
-      order: [['createdAt', 'DESC']],
-      limit,
-    });
-
-    const parentMentionedUserIds = parentComment.mentions.map((m) => m.userId);
-
-    const mentionedInRepliedCommentUserIds: number[] = [];
-
-    const repliedUserIds = recentComments.map((c) => {
-      mentionedInRepliedCommentUserIds.push(...c.mentions.map((m) => m.userId));
-      return c.createdBy;
-    });
-
-    // priority
-    //  1. mentioned you in a comment.
-    //  2. replied to a comment you're mentioned.
-    //  3. also replied to a comment you replied.
-    //  4. replied to a comment you're mentioned.
-
-    const ignoreUserId: number[] = [userId, parentComment.createdBy, ...currentMentionedUserIds];
-
-    const filterParentMentionedUserIds = parentMentionedUserIds.filter((userId) => {
-      return !ignoreUserId.includes(userId);
-    });
-    ignoreUserId.push(...filterParentMentionedUserIds);
-
-    const filterRepliedUserIds = repliedUserIds.filter((userId) => {
-      return !ignoreUserId.includes(userId);
-    });
-
-    ignoreUserId.push(...filterRepliedUserIds);
-
-    const filterMentionedInRepliedCommentUserIds = mentionedInRepliedCommentUserIds.filter(
-      (userId) => {
-        return !ignoreUserId.includes(userId);
-      }
-    );
-
-    return {
-      parentCommentActor: parentComment.createdBy,
-      currentMentionedUserIds: currentMentionedUserIds,
-      parentMentionedUserIds: [...new Set(filterParentMentionedUserIds)],
-      repliedUserIds: [...new Set(filterRepliedUserIds)],
-      mentionedInRepliedCommentUserIds: [...new Set(filterMentionedInRepliedCommentUserIds)],
-    };
-  }
-
-  /**
-   * Get recipient when reply to comment.
-   *** I'll be executed when the listeners handle comment created post.
-   * @param userId Number
-   * @param parentId Number
-   * @param currentMentionedUserIds Array<Number>
-   * @param post PostResponseDto
-   * @param limit Number
-   * @protected
-   * @returns Promise {postOwnerId: number;mentionedPostUserId: number[]; rootCommentedUserIds: number[];rootMentionedUserIds: number[];}
-   */
-  public async getRecipientWhenCreatedCommentForPost(
-    userId: number,
-    parentId: number,
-    currentMentionedUserIds: number[],
-    post: IPost,
-    limit = 50
-  ): Promise<{
-    postOwnerId: number;
-    mentionedPostUserId: number[];
-    rootCommentedUserIds: number[];
-    rootMentionedUserIds: number[];
-    currentMentionedUserIds: number[];
-  }> {
-    this._logger.debug(`[getRecipientWhenCreatedCommentForPost] ${JSON.stringify(post)}`);
-    try {
-      const { schema } = getDatabaseConfig();
-
-      const groupIds = post.groups.map((g) => g.groupId);
-
-      // get app comments. Ignore user request
-      const rootComments = await this._commentModel.findAll({
         include: [
           {
+            model: MediaModel,
+            through: {
+              attributes: [],
+            },
+            required: false,
+          },
+          {
             model: MentionModel,
+            as: 'mentions',
             required: false,
           },
         ],
-        where: {
-          parentId: 0,
-          postId: post.id,
-          createdBy: {
-            [Op.in]: Sequelize.literal(
-              `( select user_id from ${schema}.${
-                FollowModel.tableName
-              } where group_id in (${groupIds.join(',')}) )`
-            ),
-          },
-        },
-        order: [['createdAt', 'DESC']],
-        limit,
       });
+    };
+    const response = await get(commentId);
 
-      let rootMentionedUserIds: number[] = [];
-
-      const rootCommentedUserIds: number[] = [];
-
-      rootComments.forEach((comment) => {
-        comment = comment.toJSON();
-        if (!comment.mentions) {
-          comment.mentions = [];
-        }
-        const mentionedUserInComment = comment.mentions
-          .map((m) => m.userId)
-          .filter((id) => id != userId && id != post.createdBy);
-
-        rootMentionedUserIds.push(...mentionedUserInComment);
-        if (comment.createdBy != userId && comment.createdBy != post.createdBy) {
-          rootCommentedUserIds.push(comment.createdBy);
-        }
-      });
-
-      rootMentionedUserIds = rootMentionedUserIds.filter(
-        (id) => !currentMentionedUserIds.includes(id)
-      );
-
-      const mentionedUserIdsPost = post.mentions.map((m) => m.userId);
-
-      const ignoreUserId = await this._followService.getUsersNotInGroups(
-        [post.createdBy, ...mentionedUserIdsPost],
-        groupIds
-      );
-      ignoreUserId.push(userId);
-
-      let postOwner = post.createdBy;
-
-      if (ignoreUserId.includes(post.createdBy)) {
-        postOwner = null;
-      }
-      // priority
-      //  1. mentioned you in a comment.
-      //  2. commented to a post you're mentioned.
-      //  3. also commented on a post.
-      //  4. commented to a post you're mentioned.
-
-      const filterCurrentMentionedUserIds = currentMentionedUserIds.filter(
-        (userId) => !ignoreUserId.includes(userId)
-      );
-
-      ignoreUserId.push(...filterCurrentMentionedUserIds);
-
-      const filterMentionedPostUserId = mentionedUserIdsPost.filter((userId) => {
-        return !ignoreUserId.includes(userId);
-      });
-
-      ignoreUserId.push(...filterMentionedPostUserId);
-
-      const filterRootMentionedUserIds = rootMentionedUserIds.filter((userId) => {
-        return !ignoreUserId.includes(userId);
-      });
-
-      ignoreUserId.push(...filterRootMentionedUserIds);
-
-      const filterRootCommentedUserIds = rootCommentedUserIds.filter((userId) => {
-        return !ignoreUserId.includes(userId);
-      });
-
-      return {
-        postOwnerId: postOwner,
-        mentionedPostUserId: [...new Set(filterMentionedPostUserId)],
-        rootCommentedUserIds: [...new Set(filterRootCommentedUserIds)],
-        rootMentionedUserIds: [...new Set(filterRootMentionedUserIds)],
-        currentMentionedUserIds: [...new Set(filterCurrentMentionedUserIds)],
-      };
-    } catch (e) {
-      this._logger.error(e, e.stack);
-      return {
-        postOwnerId: null,
-        mentionedPostUserId: [],
-        rootCommentedUserIds: [],
-        rootMentionedUserIds: [],
-        currentMentionedUserIds: [],
-      };
+    if (!response) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
+    const rawComment = response.toJSON();
+
+    if (rawComment.parentId) {
+      const parentComment = await get(rawComment.parentId);
+      if (parentComment) {
+        rawComment.parent = parentComment.toJSON();
+      }
+    }
+    await this._mentionService.bindMentionsToComment([rawComment]);
+
+    await this.bindUserToComment([rawComment]);
+
+    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
