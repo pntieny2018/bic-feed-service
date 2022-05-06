@@ -1,12 +1,12 @@
-import { On } from '../../common/decorators';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
+import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
-import { CommentNotificationService } from '../../notification/services';
 import { CommentService } from '../../modules/comment';
+import { CommentNotificationService } from '../../notification/services';
 
 @Injectable()
 export class CommentListener {

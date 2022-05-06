@@ -6,6 +6,7 @@ import { PostAllow } from '..';
 import { BadRequestException } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { getModelToken } from '@nestjs/sequelize';
+import { LogicException } from '../../../common/exceptions';
 
 describe('PostPolicyService', () => {
   let postService: PostPolicyService;
@@ -52,7 +53,7 @@ describe('PostPolicyService', () => {
         await postService.allow(post, PostAllow.REACT);
       }
       catch(e) {
-        expect(e).toBeInstanceOf(BadRequestException)
+        expect(e).toBeInstanceOf(LogicException)
       }
       
     });

@@ -6,7 +6,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { GetTimelineDto } from '../dto/request';
 import { mockedUserAuth } from './mocks/data/user-auth.data.mock';
 import { GetNewsFeedDto } from '../dto/request/get-newsfeed.dto';
-
+jest.mock('../feed.service');
 describe('FeedController', () => {
   let feedController: FeedController;
   let feedService: FeedService;

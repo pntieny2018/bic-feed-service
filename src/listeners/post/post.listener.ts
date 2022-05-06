@@ -10,6 +10,7 @@ import { ElasticsearchHelper } from '../../common/helpers';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class PostListener {
@@ -18,7 +19,8 @@ export class PostListener {
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _postService: PostService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -26,6 +28,10 @@ export class PostListener {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
+
+    this._postService
+      .deletePostEditedHistory(post.id)
+      .catch((e) => this._logger.error(e, e?.stack));
 
     const index = ElasticsearchHelper.INDEX.POST;
     try {
@@ -61,6 +67,10 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
+    this._postService
+      .savePostEditedHistory(post.id, { oldData: null, newData: post })
+      .catch((e) => this._logger.error(e, e?.stack));
+
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
@@ -104,12 +114,17 @@ export class PostListener {
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
-      newPost;
+    const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
+
     if (isDraft) return;
+
+    this._postService
+      .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
+      .catch((e) => this._logger.error(e, e?.stack));
 
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);
+
     this._notificationService.publishPostNotification({
       key: `${id}`,
       value: {

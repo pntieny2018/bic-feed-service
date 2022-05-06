@@ -2,9 +2,7 @@ import {
   Body,
   Controller,
   Delete,
-  forwardRef,
   Get,
-  Inject,
   Logger,
   Param,
   ParseIntPipe,
@@ -12,23 +10,29 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
-import { CommentService } from './comment.service';
-import { CommentResponseDto } from './dto/response';
-import { APP_VERSION } from '../../common/constants';
-import { CreateCommentPipe, GetCommentsPipe } from './pipes';
-import { CreateCommentDto, CreateReplyCommentDto, GetCommentDto } from './dto/requests';
-import { UpdateCommentDto } from './dto/requests/update-comment.dto';
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ResponseMessages } from '../../common/decorators';
+import {
+  CreateCommentDto,
+  UpdateCommentDto,
+  CreateReplyCommentDto,
+  GetCommentsDto,
+  GetCommentEditedHistoryDto,
+} from './dto/requests';
 import {
   CommentHasBeenCreatedEvent,
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
-import { PostService } from '../post/post.service';
+import { PageDto } from '../../common/dto';
+import { AuthUser, UserDto } from '../auth';
+import { CommentService } from './comment.service';
+import { APP_VERSION } from '../../common/constants';
+import { ResponseMessages } from '../../common/decorators';
+import { CreateCommentPipe, GetCommentsPipe } from './pipes';
+import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -51,10 +55,10 @@ export class CommentController {
   @Get('/')
   public getList(
     @AuthUser() user: UserDto,
-    @Query(GetCommentsPipe) getCommentDto: GetCommentDto
+    @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comments');
-    return this._commentService.getComments(user, getCommentDto);
+    return this._commentService.getComments(user, getCommentsDto);
   }
 
   @ApiOperation({ summary: 'Create new comment' })
@@ -123,9 +127,9 @@ export class CommentController {
     return commentResponse;
   }
 
-  @ApiOperation({ summary: 'Get comment' })
+  @ApiOperation({ summary: 'Get comment detail' })
   @ApiOkResponse({
-    type: CommentResponseDto,
+    type: CommentDetailResponseDto,
     description: 'Get comment successfully',
   })
   @ResponseMessages({
@@ -134,10 +138,28 @@ export class CommentController {
   @Get('/:commentId')
   public get(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getComment(user, commentId);
+    return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
+  }
+
+  @ApiOperation({ summary: 'Get comment edited history' })
+  @ApiOkResponse({
+    type: CommentEditedHistoryDto,
+  })
+  @Get('/:commentId/edited-history')
+  public getCommentEditedHistory(
+    @AuthUser() user: UserDto,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() getCommentEditedHistoryDto: GetCommentEditedHistoryDto
+  ): Promise<PageDto<CommentEditedHistoryDto>> {
+    return this._commentService.getCommentEditedHistory(
+      user,
+      commentId,
+      getCommentEditedHistoryDto
+    );
   }
 
   @ApiOperation({ summary: 'Update comment' })

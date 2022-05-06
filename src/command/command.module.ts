@@ -14,6 +14,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { InternalEventEmitterModule } from '../app/custom/event-emitter';
 import { FeedPublisherModule } from '../modules/feed-publisher';
+import { FixCommentCountCommand } from './fix-comment-count.command';
+import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
 
 @Module({
   imports: [
@@ -56,6 +58,6 @@ import { FeedPublisherModule } from '../modules/feed-publisher';
     // GroupModule,
     // MentionModule,
   ],
-  providers: [SequelizeTinkerCommand],
+  providers: [SequelizeTinkerCommand, FixCommentCountCommand, FixPostCommentCountCommand],
 })
 export class CommandModule {}

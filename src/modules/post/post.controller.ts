@@ -1,5 +1,3 @@
-import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
 import {
   Body,
   Controller,
@@ -12,17 +10,26 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { PostService } from './post.service';
-import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { PostResponseDto } from './dto/responses';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { APP_VERSION } from '../../common/constants';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { APP_VERSION } from '../../common/constants';
+import { PageDto } from '../../common/dto';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
+import { AuthUser, UserDto } from '../auth';
+import {
+  CreatePostDto,
+  GetPostDto,
+  GetPostEditedHistoryDto,
+  SearchPostsDto,
+  UpdatePostDto,
+} from './dto/requests';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { PostService } from './post.service';
+import { GetPostPipe } from './pipes';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -48,6 +55,19 @@ export class PostController {
     return this._postService.searchPosts(user, searchPostsDto);
   }
 
+  @ApiOperation({ summary: 'Get post edited history' })
+  @ApiOkResponse({
+    type: PostEditedHistoryDto,
+  })
+  @Get('/:postId/edited-history')
+  public getPostEditedHistory(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseIntPipe) postId: number,
+    @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
+  ): Promise<PageDto<PostEditedHistoryDto>> {
+    return this._postService.getPostEditedHistory(user, postId, getPostEditedHistoryDto);
+  }
+
   @ApiOperation({ summary: 'Get draft posts' })
   @ApiOkResponse({
     type: PostResponseDto,
@@ -68,7 +88,7 @@ export class PostController {
   public getPost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
-    @Query() getPostDto: GetPostDto
+    @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     return this._postService.getPost(postId, user, getPostDto);
   }
@@ -98,12 +118,12 @@ export class PostController {
   public async updatePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
-    @Body() createPostDto: UpdatePostDto
+    @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
     await this._postService.checkPostExistAndOwner(postBefore, user.id);
-
-    const isUpdated = await this._postService.updatePost(postId, user, createPostDto);
+    updatePostDto.isDraft = postBefore.isDraft;
+    const isUpdated = await this._postService.updatePost(postId, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(

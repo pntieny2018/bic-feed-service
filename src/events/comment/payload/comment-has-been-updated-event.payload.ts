@@ -6,4 +6,5 @@ export class CommentHasBeenUpdatedEventPayload {
   public actor: UserDto;
   public oldComment: IComment;
   public commentResponse: CommentResponseDto;
+  public oldCommentResponse?: CommentResponseDto;
 }

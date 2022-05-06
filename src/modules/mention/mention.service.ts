@@ -80,8 +80,8 @@ export class MentionService {
       if (comment.mentions && comment.mentions.length) {
         userIds.push(...comment.mentions.map((m) => m.userId));
       }
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
           userIds.push(...cm.mentions.map((m) => m.userId));
         }
       }
@@ -109,8 +109,8 @@ export class MentionService {
           comment.mentions.map((v) => usersInfo.find((u) => u.id === v.userId))
         );
       }
-      if (comment.child && comment.child.length) {
-        for (const cm of comment.child) {
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child?.list) {
           cm.mentions = convert(cm.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
         }
       }

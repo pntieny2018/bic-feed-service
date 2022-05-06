@@ -30,8 +30,6 @@ import { SentryService } from '@app/sentry';
 import { RedisModule } from '@app/redis';
 import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
-``;
-import { Sequelize } from 'sequelize-typescript';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
 import { Transaction } from 'sequelize';
@@ -47,15 +45,19 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
-import { DeleteReactionService } from '../../reaction/activities';
+import { CommonReactionService, DeleteReactionService } from '../../reaction/services';
 import { FeedService } from '../../feed/feed.service';
-import { UserMarkedImportantPostModel } from '../../../database/models/user-mark-read-post.model';
+import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
+import { LogicException } from '../../../common/exceptions';
+import { Sequelize } from 'sequelize-typescript';
+import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
   let postGroupModelMock;
   let userMarkedImportantPostModelMock;
+  let postEditedHistoryModelMock;
   let sentryService: SentryService;
   let userService: UserService;
   let groupService: GroupService;
@@ -66,6 +68,7 @@ describe('PostService', () => {
   let deleteReactionService: DeleteReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
+  let commonReactionService: CommonReactionService;
   let transactionMock;
   let sequelize: Sequelize;
   beforeEach(async () => {
@@ -97,6 +100,12 @@ describe('PostService', () => {
           provide: FeedService,
           useValue: {
             deleteNewsFeedByPost: jest.fn(),
+          },
+        },
+        {
+          provide: CommonReactionService,
+          useValue: {
+            bindReactionToPosts: jest.fn(),
           },
         },
         {
@@ -137,6 +146,7 @@ describe('PostService', () => {
           useValue: {
             checkValidMedia: jest.fn(),
             countMediaByPost: jest.fn(),
+            sync: jest.fn(),
           },
         },
         {
@@ -151,6 +161,7 @@ describe('PostService', () => {
           provide: Sequelize,
           useValue: {
             transaction: jest.fn(),
+            query: jest.fn(),
           },
         },
         {
@@ -181,10 +192,19 @@ describe('PostService', () => {
           },
         },
         {
-          provide: getModelToken(UserMarkedImportantPostModel),
+          provide: getModelToken(UserMarkReadPostModel),
           useValue: {
             findOne: jest.fn(),
             create: jest.fn(),
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostEditedHistoryModel),
+          useValue: {
+            findAndCountAll: jest.fn(),
+            create: jest.fn(),
+            destroy: jest.fn(),
           },
         },
       ],
@@ -193,8 +213,11 @@ describe('PostService', () => {
     postService = moduleRef.get<PostService>(PostService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
-    userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkedImportantPostModel>(
-      getModelToken(UserMarkedImportantPostModel)
+    userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(
+      getModelToken(UserMarkReadPostModel)
+    );
+    postEditedHistoryModelMock = moduleRef.get<typeof PostEditedHistoryModel>(
+      getModelToken(PostEditedHistoryModel)
     );
     sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
@@ -206,7 +229,7 @@ describe('PostService', () => {
     deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
-
+    commonReactionService = moduleRef.get<CommonReactionService>(CommonReactionService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
 
     transactionMock = createMock<Transaction>({
@@ -249,20 +272,23 @@ describe('PostService', () => {
       expect(mediaService.checkValidMedia).toBeCalledTimes(1);
 
       expect(postModelMock.create).toHaveBeenCalledTimes(1);
-      expect(mockedDataCreatePost.addMedia).toHaveBeenCalledWith(mediaIds);
       expect(sequelize.transaction).toBeCalledTimes(1);
 
-      expect(mediaService.activeMedia).toBeCalledTimes(1);
-      expect(mediaService.activeMedia).toBeCalledWith(mediaIds, mockedUserAuth.id);
+      expect(mediaService.sync).toBeCalledTimes(1);
       expect(mentionService.create).toBeCalledWith(
         mockedCreatePostDto.mentions.map((i) => ({
           entityId: mockedDataCreatePost.id,
           userId: i,
           mentionableType: MentionableType.POST,
-        }))
+        })),
+        { transactionMock }
       );
       expect(postService.addPostGroup).toBeCalledTimes(1);
-      expect(postService.addPostGroup).toHaveBeenCalledWith(groupIds, mockedDataCreatePost.id);
+      expect(postService.addPostGroup).toHaveBeenCalledWith(
+        groupIds,
+        mockedDataCreatePost.id,
+        transactionMock
+      );
       expect(transactionMock.commit).toBeCalledTimes(1);
 
       const createPostQuery: any = postModelMock.create.mock.calls[0][0];
@@ -290,7 +316,7 @@ describe('PostService', () => {
       try {
         const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -300,7 +326,7 @@ describe('PostService', () => {
       try {
         const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -357,16 +383,22 @@ describe('PostService', () => {
       expect(mediaService.sync).toHaveBeenCalledWith(
         mockedDataUpdatePost.id,
         EntityType.POST,
-        mediaIds
+        mediaIds,
+        transactionMock
       );
       expect(mentionService.setMention).toBeCalledWith(
         mentionUserIds,
         MentionableType.POST,
-        mockedDataUpdatePost.id
+        mockedDataUpdatePost.id,
+        transactionMock
       );
 
       expect(postService.setGroupByPost).toBeCalledTimes(1);
-      expect(postService.setGroupByPost).toHaveBeenCalledWith(groupIds, mockedDataUpdatePost.id);
+      expect(postService.setGroupByPost).toHaveBeenCalledWith(
+        groupIds,
+        mockedDataUpdatePost.id,
+        transactionMock
+      );
       expect(transactionMock.commit).toBeCalledTimes(1);
 
       const updatePostQuery: any = postModelMock.update.mock.calls[0][0];
@@ -394,7 +426,7 @@ describe('PostService', () => {
           mockedUpdatePostDto
         );
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -403,7 +435,7 @@ describe('PostService', () => {
       try {
         await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedUpdatePostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -456,7 +488,7 @@ describe('PostService', () => {
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
+        expect(error).toBeInstanceOf(LogicException);
       }
     });
 
@@ -465,7 +497,7 @@ describe('PostService', () => {
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
-        expect(error).toBeInstanceOf(NotFoundException);
+        expect(error).toBeInstanceOf(LogicException);
       }
     });
 
@@ -475,7 +507,7 @@ describe('PostService', () => {
       try {
         await postService.publishPost(mockedDataUpdatePost.id, authUserId);
       } catch (error) {
-        expect(error).toBeInstanceOf(ForbiddenException);
+        expect(error).toBeInstanceOf(LogicException);
       }
     });
   });
@@ -504,9 +536,8 @@ describe('PostService', () => {
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
       expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
-
+      expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
-      expect(commentService.deleteCommentsByPost).toHaveBeenCalledWith(mockedDataDeletePost.id);
       expect(transactionMock.commit).toBeCalledTimes(1);
       const [condition] = postModelMock.destroy.mock.calls[0];
       expect(condition.where).toStrictEqual({
@@ -531,7 +562,7 @@ describe('PostService', () => {
       try {
         await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth.id + 1);
       } catch (e) {
-        expect(e).toBeInstanceOf(ForbiddenException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -540,19 +571,19 @@ describe('PostService', () => {
       try {
         await postService.deletePost(1, 1);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
   });
 
   describe('addPostGroup', () => {
     it('Return if parameter is empty', async () => {
-      const result = await postService.addPostGroup([], 1);
+      const result = await postService.addPostGroup([], 1, transactionMock);
       expect(result).toBe(true);
     });
 
     it('Return if parameter is empty', async () => {
-      const result = await postService.addPostGroup([1, 2], 1);
+      const result = await postService.addPostGroup([1, 2], 1, transactionMock);
       expect(postGroupModelMock.bulkCreate).toBeCalledTimes(1);
       expect(result).toBe(true);
     });
@@ -575,7 +606,11 @@ describe('PostService', () => {
         postId: 1,
       };
       postGroupModelMock.findAll.mockResolvedValueOnce(currentGroupPost);
-      const result = await postService.setGroupByPost(mockData.groupIds, mockData.postId);
+      const result = await postService.setGroupByPost(
+        mockData.groupIds,
+        mockData.postId,
+        transactionMock
+      );
       expect(result).toBe(true);
       expect(postGroupModelMock.destroy).toBeCalledTimes(1);
       expect(postGroupModelMock.bulkCreate).toBeCalledTimes(1);
@@ -616,7 +651,7 @@ describe('PostService', () => {
       try {
         const result = await postService.findPost(entity);
       } catch (e) {
-        expect(e).toBeInstanceOf(BadRequestException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
   });
@@ -691,24 +726,7 @@ describe('PostService', () => {
               should: [],
             },
           },
-          sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
-            { createdAt: 'desc' },
-          ],
+          sort: [{ createdAt: 'desc' }],
         },
         from: 0,
         size: 1,
@@ -744,24 +762,7 @@ describe('PostService', () => {
               should: [],
             },
           },
-          sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
-            { createdAt: 'desc' },
-          ],
+          sort: [{ createdAt: 'desc' }],
         },
         from: 0,
         size: 1,
@@ -802,24 +803,7 @@ describe('PostService', () => {
               should: [],
             },
           },
-          sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
-            { createdAt: 'desc' },
-          ],
+          sort: [{ createdAt: 'desc' }],
         },
         from: 0,
         size: 1,
@@ -890,25 +874,7 @@ describe('PostService', () => {
               },
             },
           },
-          sort: [
-            {
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              _script: {
-                type: 'number',
-                script: {
-                  lang: 'painless',
-                  source:
-                    "if (doc['setting.importantExpiredAt'].size() != 0 && doc['setting.importantExpiredAt'].value.millis > params['time']) return 1; else return 0",
-                  params: {
-                    time: Date.now(),
-                  },
-                },
-                order: 'desc',
-              },
-            },
-            { _score: 'desc' },
-            { createdAt: 'desc' },
-          ],
+          sort: [{ _score: 'desc' }, { createdAt: 'desc' }],
         },
         from: 0,
         size: 1,
@@ -977,7 +943,7 @@ describe('PostService', () => {
       try {
         await postService.getPost(postData.id, mockedUserAuth, getPostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(NotFoundException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
 
@@ -989,12 +955,12 @@ describe('PostService', () => {
       authorityService.allowAccess = jest
         .fn()
         .mockRejectedValueOnce(
-          new ForbiddenException('You do not have permission to perform this action !')
+          new LogicException('You do not have permission to perform this action !')
         );
       try {
         await postService.getPost(postData.id, mockedUserAuth, getPostDto);
       } catch (e) {
-        expect(e).toBeInstanceOf(ForbiddenException);
+        expect(e).toBeInstanceOf(LogicException);
       }
     });
   });

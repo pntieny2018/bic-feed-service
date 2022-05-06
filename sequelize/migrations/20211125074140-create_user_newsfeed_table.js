@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.POSTGRES_SCHEMA;
+const schemaName = process.env.DB_SCHEMA;
 const tableName = 'user_newsfeed';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -20,6 +20,11 @@ module.exports = {
         post_id: {
           type: Sequelize.INTEGER,
           allowNull: false,
+        },
+        is_seen_post: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
         },
         created_at: {
           type: Sequelize.DATE,
