@@ -392,7 +392,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { limit, childLimit, postId, childOrder, order } = getCommentsDto;
+    const { limit, childLimit, postId } = getCommentsDto;
 
     if (checkAccess) {
       const post = await this._postService.findPost({
@@ -402,90 +402,15 @@ export class CommentService {
       await this._authorityService.allowAccess(user, post);
     }
 
-    const conditions = await this._getCondition(getCommentsDto);
-    const rows = await this._commentModel.findAll({
-      where: {
-        ...conditions,
-      },
-      attributes: {
-        include: [],
-      },
-      include: [
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          required: false,
-        },
-        {
-          model: MentionModel,
-          required: false,
-        },
-        {
-          model: CommentModel,
-          limit: childLimit,
-          required: false,
-          attributes: {
-            include: [],
-          },
-          include: [
-            {
-              model: MediaModel,
-              through: {
-                attributes: [],
-              },
-              required: false,
-            },
-            {
-              model: MentionModel,
-              as: 'mentions',
-              required: false,
-            },
-            {
-              model: CommentReactionModel,
-              as: 'ownerReactions',
-              required: false,
-              where: {
-                createdBy: user.id,
-              },
-            },
-          ],
-          order: [['createdAt', 'DESC']],
-        },
-        {
-          model: CommentReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: user.id,
-          },
-        },
-      ],
-      offset: 0,
-      limit: limit + 1,
-      order: [['createdAt', 'DESC']],
-    });
-    const response = rows.map((r) => r.toJSON());
-
-    const hasNextPage = response.length === limit + 1 ? true : false;
-    if (hasNextPage) response.pop();
-
-    await Promise.all([
-      this._mentionService.bindMentionsToComment(response),
-      this._commonReactionService.bindReactionToComments(response),
-      this.bindUserToComment(response),
-    ]);
-
-    const comments = this._classTransformer.plainToInstance(CommentResponseDto, response, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<CommentResponseDto>(comments, {
+    const comments = await this._getComments(user.id, {
       limit,
-      offset: 0,
-      hasNextPage,
+      postId,
     });
+    if (comments.list.length) {
+      await this.bindChildsToComment(comments.list, user.id, childLimit);
+    }
+
+    return comments;
   }
 
   /**
@@ -551,61 +476,30 @@ export class CommentService {
 
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
-    const conditions = {};
     const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
 
-    conditions['postId'] = postId;
+    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId ?? 0)}`;
+    if (postId) {
+      condition += ` AND "c".post_id = ${this._sequelizeConnection.escape(postId)}`;
+    }
 
-    conditions['parentId'] = parentId ?? 0;
     if (idGT) {
-      conditions['id'] = {
-        [Op.not]: idGT,
-        ...conditions['id'],
-      };
-      conditions['createdAt'] = {
-        [Op.gte]: sequelize.literal(
-          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
-            idGT
-          )})`
-        ),
-        ...conditions['createdAt'],
-      };
+      const id = this._sequelizeConnection.escape(idGT);
+      condition += ` AND ( "c".id != ${id} AND "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idGTE) {
-      conditions['createdAt'] = {
-        [Op.gte]: sequelize.literal(
-          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
-            idGTE
-          )})`
-        ),
-        ...conditions['createdAt'],
-      };
+      const id = this._sequelizeConnection.escape(idGT);
+      condition += ` AND ( "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idLT) {
-      conditions['id'] = {
-        [Op.not]: idLT,
-        ...conditions['id'],
-      };
-      conditions['createdAt'] = {
-        [Op.lte]: sequelize.literal(
-          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
-            idLT
-          )})`
-        ),
-        ...conditions['createdAt'],
-      };
+      const id = this._sequelizeConnection.escape(idGT);
+      condition += ` AND ( "c".id != ${id} AND "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idLTE) {
-      conditions['createdAt'] = {
-        [Op.lte]: sequelize.literal(
-          `(SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${this._sequelizeConnection.escape(
-            idLTE
-          )})`
-        ),
-        ...conditions['createdAt'],
-      };
+      const id = this._sequelizeConnection.escape(idGT);
+      condition += ` AND ( "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
-    return conditions;
+    return condition;
   }
 
   private async _getComments(
@@ -613,14 +507,12 @@ export class CommentService {
     getCommentsDto: GetCommentsDto,
     aroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
-    const { limit, parentId, postId } = getCommentsDto;
+    const { limit } = getCommentsDto;
     const order = 'DESC';
     const { schema } = getDatabaseConfig();
     let query: string;
-    let condition = ' "c".parent_id = :parentId';
-    if (postId) {
-      condition += ` AND "c".post_id = :postId`;
-    }
+    const condition = await this._getCondition(getCommentsDto);
+
     if (aroundId === 0) {
       query = ` SELECT "CommentModel".*,
       "media"."id" AS "mediaId",
@@ -717,8 +609,6 @@ export class CommentService {
     }
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
-        parentId: parentId ?? 0,
-        postId,
         aroundId,
         authUserId,
         limitTop: limit + 1,
@@ -910,7 +800,7 @@ export class CommentService {
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
         authUserId,
-        limit,
+        limit: limit + 1,
       },
       type: QueryTypes.SELECT,
     });
@@ -931,7 +821,15 @@ export class CommentService {
     );
 
     for (const comment of comments) {
-      comment.child = childFormatted.filter((i) => i.parentId === comment.id);
+      const childList = childFormatted.filter((i) => i.parentId === comment.id);
+      const hasNextPage = childList.length > limit ? true : false;
+      if (hasNextPage) childList.pop();
+      comment.child = new PageDto<CommentResponseDto>(childList, {
+        limit,
+        offset: 0,
+        hasNextPage,
+        hasPreviousPage: false,
+      });
     }
   }
 
