@@ -1,14 +1,14 @@
-import { UserMentionDto } from '../../../mention/dto/user-mention.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
-import { PageDto } from '../../../../common/dto';
-import { UserSharedDto } from '../../../../shared/user/dto';
-import { CommentResponseDto } from '../../../comment/dto/response/comment.response.dto';
 import { MediaService } from '../../../media';
-import { MediaFilterResponseDto } from '../../../media/dto/response';
+import { PageDto } from '../../../../common/dto';
+import { UserMentionDto } from '../../../mention/dto';
 import { PostSettingDto } from '../common/post-setting.dto';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { Expose, Transform, Type } from 'class-transformer';
+import { UserSharedDto } from '../../../../shared/user/dto';
 import { AudienceResponseDto } from './audience.response.dto';
+import { CommentResponseDto } from '../../../comment/dto/response';
+import { MediaFilterResponseDto } from '../../../media/dto/response';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -117,13 +117,13 @@ export class PostResponseDto {
   @ApiProperty({
     type: 'object',
     example: {
-      0: {
+      [0]: {
         id: 1,
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
-      1: {
+      [1]: {
         id: 2,
         username: 'tuine',
         avatar: 'https://google.com',
@@ -167,7 +167,7 @@ export class PostResponseDto {
     type: Date,
   })
   @Expose()
-  public updatedAt: Date;
+  public updatedAt?: Date;
 
   @ApiProperty({
     type: Number,

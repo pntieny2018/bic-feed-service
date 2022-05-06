@@ -1,12 +1,14 @@
+import { GetReactionPipe } from './pipes';
+import { AuthUser, UserDto } from '../auth';
+import { GetReactionDto } from './dto/request';
+import { ReactionService } from './reaction.service';
+import { APP_VERSION } from '../../common/constants';
+import { CreateReactionDto, DeleteReactionDto } from './dto/request';
+import { IPostReaction } from '../../database/models/post-reaction.model';
+import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
+import { ICommentReaction } from '../../database/models/comment-reaction.model';
 import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiOkResponse, ApiSecurity } from '@nestjs/swagger';
-import { CommonReactionService, CreateOrDeleteReactionService } from './services';
-import { CreateReactionDto, DeleteReactionDto } from './dto/request';
-import { AuthUser, UserDto } from '../auth';
-import { APP_VERSION } from '../../common/constants';
-import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
-import { GetReactionDto } from './dto/request';
-import { GetReactionPipe } from './pipes';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -17,10 +19,7 @@ import { GetReactionPipe } from './pipes';
 export class ReactionController {
   private _logger = new Logger(ReactionController.name);
 
-  public constructor(
-    private readonly _commonReactionService: CommonReactionService,
-    private readonly _createOrDeleteReactionService: CreateOrDeleteReactionService
-  ) {}
+  public constructor(private readonly _reactionService: ReactionService) {}
 
   @Get('/')
   @ApiOperation({ summary: 'Get reaction.' })
@@ -32,7 +31,8 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionDto
   ): Promise<ReactionsResponseDto> {
-    return this._commonReactionService.getReactions(getReactionDto);
+    this._logger.debug(`[Get reaction]`);
+    return this._reactionService.getReactions(getReactionDto);
   }
 
   @ApiOperation({ summary: 'Create reaction.' })
@@ -41,8 +41,11 @@ export class ReactionController {
     type: ReactionResponseDto,
   })
   @Post('/')
-  public create(@AuthUser() userDto: UserDto, @Body() createReactionDto: CreateReactionDto): any {
-    return this._createOrDeleteReactionService.addToQueueReaction(userDto, createReactionDto);
+  public create(
+    @AuthUser() userDto: UserDto,
+    @Body() createReactionDto: CreateReactionDto
+  ): Promise<ReactionResponseDto> {
+    return this._reactionService.createReaction(userDto, createReactionDto);
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
@@ -51,7 +54,10 @@ export class ReactionController {
     type: Boolean,
   })
   @Delete('/')
-  public delete(@AuthUser() userDto: UserDto, @Body() deleteReactionDto: DeleteReactionDto): any {
-    return this._createOrDeleteReactionService.addToQueueReaction(userDto, deleteReactionDto);
+  public delete(
+    @AuthUser() userDto: UserDto,
+    @Body() deleteReactionDto: DeleteReactionDto
+  ): Promise<IPostReaction | ICommentReaction> {
+    return this._reactionService.deleteReaction(userDto, deleteReactionDto);
   }
 }

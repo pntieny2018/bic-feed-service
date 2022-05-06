@@ -1,4 +1,3 @@
-import { PageDto } from '../../../../common/dto';
 import { IPost } from '../../../../database/models/post.model';
 import { UserDto } from '../../../auth';
 

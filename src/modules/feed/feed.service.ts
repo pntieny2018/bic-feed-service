@@ -1,26 +1,26 @@
-import sequelize, { Op } from 'sequelize';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { GetTimelineDto } from './dto/request';
-import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { Op } from 'sequelize';
+import { UserDto } from '../auth';
 import { MentionService } from '../mention';
+import { ReactionService } from '../reaction';
+import { GetTimelineDto } from './dto/request';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { ClassTransformer } from 'class-transformer';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
+import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { MediaModel } from '../../database/models/media.model';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostMediaModel } from '../../database/models/post-media.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
-import { CommonReactionService } from '../reaction/services';
-import { UserDto } from '../auth';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class FeedService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    private readonly _commonReaction: CommonReactionService,
+    private readonly _reactionService: ReactionService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
@@ -104,7 +104,7 @@ export class FeedService {
       if (hasNextPage) posts.pop();
 
       await Promise.all([
-        this._commonReaction.bindReactionToPosts(posts),
+        this._reactionService.bindReactionToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
         this._postService.bindActorToPost(posts),
         this._postService.bindAudienceToPost(posts),
@@ -130,7 +130,7 @@ export class FeedService {
   public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
     try {
       await this._userSeenPostModel.bulkCreate(
-        postIds.map(postId => ({postId, userId})),
+        postIds.map((postId) => ({ postId, userId })),
         { ignoreDuplicates: true }
       );
 
@@ -203,7 +203,7 @@ export class FeedService {
     const hasNextPage = posts.length === limit + 1 ? true : false;
     if (hasNextPage) posts.pop();
     await Promise.all([
-      this._commonReaction.bindReactionToPosts(posts),
+      this._reactionService.bindReactionToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
       this._postService.bindActorToPost(posts),
       this._postService.bindAudienceToPost(posts),

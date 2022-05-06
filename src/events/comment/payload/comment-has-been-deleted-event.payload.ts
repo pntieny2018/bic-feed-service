@@ -1,7 +1,7 @@
-import { IPost } from '../../../database/models/post.model';
 import { IComment } from '../../../database/models/comment.model';
+import { UserDto } from '../../../modules/auth';
 
 export class CommentHasBeenDeletedEventPayload {
-  public post: IPost;
+  public actor: UserDto;
   public comment: IComment;
 }

@@ -13,6 +13,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
         fullname: 'aaaaa',
       },
       parentId: 0,
+      parent: null,
       postId: 1,
       content: 'aaaa',
       createdAt: new Date(),
