@@ -15,6 +15,9 @@ export class CommentActivityService {
       id: post.id,
       actor: ObjectHelper.omit(['groups'], post.actor) as any,
       audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
+      content: post.content,
+      media: post.media,
+      setting: post.setting as any,
       comment: {
         id: comment.id,
         actor: ObjectHelper.omit(['groups'], comment.actor) as any,
@@ -46,6 +49,9 @@ export class CommentActivityService {
       id: post.id,
       actor: ObjectHelper.omit(['groups'], post.actor) as any,
       audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
+      content: post.content,
+      media: post.media,
+      setting: post.setting as any,
       comment: {
         id: parent.id,
         actor: ObjectHelper.omit(['groups'], parent.actor) as any,
