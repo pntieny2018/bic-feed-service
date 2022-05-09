@@ -19,7 +19,7 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public edited: boolean;
+  public edited?: boolean;
 
   @ApiProperty()
   @Expose()

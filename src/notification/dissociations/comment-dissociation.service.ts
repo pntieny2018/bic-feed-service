@@ -36,6 +36,7 @@ export class CommentDissociationService {
           },
           {
             association: 'mentions',
+            required: false,
             where: {
               mentionableType: MentionableType.COMMENT,
             },
@@ -45,7 +46,6 @@ export class CommentDissociationService {
           id: commentId,
         },
       });
-
       if (!comment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
       }
@@ -154,7 +154,7 @@ export class CommentDissociationService {
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-      return null;
+      return recipient;
     }
   }
 
