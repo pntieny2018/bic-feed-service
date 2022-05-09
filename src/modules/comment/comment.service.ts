@@ -229,6 +229,7 @@ export class CommentService {
         {
           updatedBy: user.id,
           content: updateCommentDto.content,
+          edited: true,
         },
         {
           transaction: transaction,

@@ -10,7 +10,6 @@ import {
   Default,
   ForeignKey,
   HasMany,
-  HasOne,
   Length,
   Model,
   PrimaryKey,
@@ -40,6 +39,7 @@ export interface IComment {
   actor: UserDataShareDto;
   postId: number;
   parentId?: number;
+  edited?: boolean;
   parent?: IComment;
   content?: string;
   createdBy: number;
@@ -85,6 +85,9 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @Column
   public createdBy: number;
+
+  @Column
+  public edited?: boolean;
 
   @Column
   public updatedBy: number;
