@@ -19,6 +19,10 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
+  public edited: boolean;
+
+  @ApiProperty()
+  @Expose()
   public parentId: number;
 
   @ApiProperty()
