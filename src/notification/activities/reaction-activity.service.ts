@@ -42,6 +42,7 @@ export class ReactionActivityService {
       audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       content: post.content,
       media: post.media,
+      mentions: post.mentions as any,
       setting: post.setting as any,
       reaction: {
         id: reaction.id,
@@ -100,6 +101,7 @@ export class ReactionActivityService {
       audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       content: post.content,
       media: post.media,
+      mentions: post.mentions as any,
       setting: post.setting as any,
       comment: {
         id: comment.id,
@@ -112,6 +114,7 @@ export class ReactionActivityService {
         },
         content: comment.content,
         media: comment.media,
+        mentions: comment.mentions as any,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
       },
@@ -167,11 +170,13 @@ export class ReactionActivityService {
       content: post.content,
       media: post.media,
       setting: post.setting as any,
+      mentions: post.mentions as any,
       comment: {
         id: parentComment.id,
         actor: ObjectHelper.omit(['groups'], parentComment.actor) as any,
         content: parentComment.content,
         media: parentComment.media,
+        mentions: parentComment.mentions as any,
         createdAt: parentComment.createdAt,
         updatedAt: parentComment.updatedAt,
         child: {
@@ -186,6 +191,7 @@ export class ReactionActivityService {
           reactionsCount: comment.reactionsCount,
           content: comment.content,
           media: comment.media,
+          mentions: comment.mentions as any,
           createdAt: comment.createdAt,
           updatedAt: comment.updatedAt,
         },

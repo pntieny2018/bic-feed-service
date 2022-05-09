@@ -18,11 +18,13 @@ export class CommentActivityService {
       content: post.content,
       media: post.media,
       setting: post.setting as any,
+      mentions: post.mentions as any,
       comment: {
         id: comment.id,
         actor: ObjectHelper.omit(['groups'], comment.actor) as any,
         content: comment.content,
         media: comment.media,
+        mentions: comment.mentions as any,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
       },
@@ -57,6 +59,7 @@ export class CommentActivityService {
         actor: ObjectHelper.omit(['groups'], parent.actor) as any,
         content: parent.content,
         media: parent.media,
+        mentions: parent.mentions as any,
         createdAt: parent.createdAt,
         updatedAt: parent.updatedAt,
         child: {
