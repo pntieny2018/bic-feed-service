@@ -2,13 +2,13 @@ import { Op } from 'sequelize';
 import { Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ExceptionHelper } from '../../common/helpers';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
 import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentModel } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class CommentDissociationService {
     const recipient = CommentRecipientDto.init();
 
     try {
-      const comment = await this._commentModel.findOne({
+      let comment = await this._commentModel.findOne({
         include: [
           {
             model: PostModel,
@@ -35,8 +35,10 @@ export class CommentDissociationService {
             attributes: ['createdBy'],
           },
           {
-            model: MentionModel,
-            as: 'mentions',
+            association: 'mentions',
+            where: {
+              mentionableType: MentionableType.COMMENT,
+            },
           },
         ],
         where: {
@@ -47,6 +49,8 @@ export class CommentDissociationService {
       if (!comment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
       }
+
+      comment = comment.toJSON();
 
       if (!comment.post) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
@@ -122,30 +126,31 @@ export class CommentDissociationService {
        */
 
       const handledUserIds = [];
-
-      validUserIds.forEach((validUserId) => {
+      for (const validUserId of validUserIds) {
         if (!handledUserIds.includes(validUserId)) {
           if (mentionedUsersInComment.includes(validUserId)) {
             recipient.mentionedUsersInComment.push(validUserId);
             handledUserIds.push(validUserId);
+            continue;
           }
 
           if (validUserId === postOwnerId && postOwnerId !== null) {
             recipient.postOwnerId = validUserId;
             handledUserIds.push(validUserId);
+            continue;
           }
 
           if (mentionedUsersInPost.includes(validUserId)) {
             recipient.mentionedUsersInPost.push(validUserId);
             handledUserIds.push(validUserId);
+            continue;
           }
           if (actorIdsOfPrevComments.includes(validUserId)) {
             actorIdsOfPrevComments.push(validUserId);
             handledUserIds.push(validUserId);
           }
         }
-      });
-
+      }
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
@@ -234,34 +239,36 @@ export class CommentDissociationService {
        *        5. replied on a comment you are mentioned. (mentioned user in parent comment)
        */
 
-      validUserIds
-        .filter((id) => id !== actorId)
-        .forEach((validUserId) => {
-          if (!handledUserIds.includes(validUserId)) {
-            if (mentionedUserIdsInComment.includes(validUserId)) {
-              recipient.mentionedUserIdsInComment.push(validUserId);
-              handledUserIds.push(validUserId);
-            }
-
-            if (parentCommentCreatorId === validUserId && parentCommentCreatorId !== null) {
-              recipient.parentCommentCreatorId = validUserId;
-              handledUserIds.push(validUserId);
-            }
-
-            if (mentionedUserIdsInPrevChildComment.includes(validUserId)) {
-              recipient.mentionedUserIdsInPrevChildComment.push(validUserId);
-              handledUserIds.push(validUserId);
-            }
-            if (mentionedUserIdsInParentComment.includes(validUserId)) {
-              recipient.mentionedUserIdsInParentComment.push(validUserId);
-              handledUserIds.push(validUserId);
-            }
-            if (prevChildCommentCreatorIds.includes(validUserId)) {
-              recipient.prevChildCommentCreatorIds.push(validUserId);
-              handledUserIds.push(validUserId);
-            }
+      for (const validUserId of validUserIds.filter((id) => id !== actorId)) {
+        if (!handledUserIds.includes(validUserId)) {
+          if (mentionedUserIdsInComment.includes(validUserId)) {
+            recipient.mentionedUserIdsInComment.push(validUserId);
+            handledUserIds.push(validUserId);
+            continue;
           }
-        });
+
+          if (parentCommentCreatorId === validUserId && parentCommentCreatorId !== null) {
+            recipient.parentCommentCreatorId = validUserId;
+            handledUserIds.push(validUserId);
+            continue;
+          }
+
+          if (mentionedUserIdsInPrevChildComment.includes(validUserId)) {
+            recipient.mentionedUserIdsInPrevChildComment.push(validUserId);
+            handledUserIds.push(validUserId);
+            continue;
+          }
+          if (mentionedUserIdsInParentComment.includes(validUserId)) {
+            recipient.mentionedUserIdsInParentComment.push(validUserId);
+            handledUserIds.push(validUserId);
+            continue;
+          }
+          if (prevChildCommentCreatorIds.includes(validUserId)) {
+            recipient.prevChildCommentCreatorIds.push(validUserId);
+            handledUserIds.push(validUserId);
+          }
+        }
+      }
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
