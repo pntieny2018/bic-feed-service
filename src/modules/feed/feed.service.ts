@@ -1,26 +1,27 @@
-import sequelize, { Op } from 'sequelize';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { GetTimelineDto } from './dto/request';
-import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { Op } from 'sequelize';
+import { UserDto } from '../auth';
 import { MentionService } from '../mention';
+import { ReactionService } from '../reaction';
+import { GetTimelineDto } from './dto/request';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { ClassTransformer } from 'class-transformer';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
+import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { MediaModel } from '../../database/models/media.model';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostMediaModel } from '../../database/models/post-media.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
-import { CommonReactionService } from '../reaction/services';
-import { UserDto } from '../auth';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class FeedService {
@@ -28,13 +29,15 @@ export class FeedService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    private readonly _commonReaction: CommonReactionService,
+    private readonly _reactionService: ReactionService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
     private _newsFeedModel: typeof UserNewsFeedModel,
+    @InjectModel(UserSeenPostModel)
+    private _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
     private _sequelizeConnection: Sequelize
@@ -76,15 +79,32 @@ export class FeedService {
           isImportant: false,
         });
       }
+
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
-      const posts = this.groupPosts(rows);
+
+      let normalSeenPost = [];
+      if (limit >= rows.length) {
+        const unSeenCount = await this._newsFeedModel.count({
+          where: { isSeenPost: false, userId: authUserId },
+        });
+        normalSeenPost = await this._getNewsFeedData({
+          ...getNewsFeedDto,
+          offset: Math.max(0, offset - unSeenCount),
+          limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
+          authUserId,
+          isImportant: false,
+          isSeen: true,
+        });
+      }
+
+      const posts = this.groupPosts(rows.concat(normalSeenPost));
 
       const hasNextPage = posts.length === limit + 1 ? true : false;
       if (hasNextPage) posts.pop();
 
       await Promise.all([
-        this._commonReaction.bindReactionToPosts(posts),
+        this._reactionService.bindReactionToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
         this._postService.bindActorToPost(posts),
         this._postService.bindAudienceToPost(posts),
@@ -104,6 +124,24 @@ export class FeedService {
         offset,
         hasNextPage: false,
       });
+    }
+  }
+
+  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+    try {
+      await this._userSeenPostModel.bulkCreate(
+        postIds.map((postId) => ({ postId, userId })),
+        { ignoreDuplicates: true }
+      );
+
+      await this._newsFeedModel.update(
+        { isSeenPost: true },
+        {
+          where: { userId, postId: { [Op.in]: postIds } },
+        }
+      );
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
     }
   }
 
@@ -165,7 +203,7 @@ export class FeedService {
     const hasNextPage = posts.length === limit + 1 ? true : false;
     if (hasNextPage) posts.pop();
     await Promise.all([
-      this._commonReaction.bindReactionToPosts(posts),
+      this._reactionService.bindReactionToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
       this._postService.bindActorToPost(posts),
       this._postService.bindAudienceToPost(posts),
@@ -417,6 +455,7 @@ export class FeedService {
   private async _getNewsFeedData({
     authUserId,
     isImportant,
+    isSeen,
     idGT,
     idGTE,
     idLT,
@@ -427,6 +466,7 @@ export class FeedService {
   }: {
     authUserId: number;
     isImportant: boolean;
+    isSeen?: boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
@@ -488,6 +528,7 @@ export class FeedService {
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
+      AND is_seen_post = ${isSeen ? true : false}
       ORDER BY "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"

@@ -39,6 +39,8 @@ export interface IComment {
   actor: UserDataShareDto;
   postId: number;
   parentId?: number;
+  edited?: boolean;
+  parent?: IComment;
   content?: string;
   createdBy: number;
   updatedBy: number;
@@ -85,6 +87,9 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   public createdBy: number;
 
   @Column
+  public edited?: boolean;
+
+  @Column
   public updatedBy: number;
 
   @CreatedAt
@@ -111,6 +116,8 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     },
   })
   public mentions: MentionModel[] = [];
+
+  public parent?: CommentModel;
 
   @HasMany(() => CommentModel, {
     foreignKey: {

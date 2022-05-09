@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { ReactionEnum } from '../../reaction.enum';
 import { OrderEnum } from '../../../../common/dto';
 
@@ -18,13 +18,13 @@ export class GetReactionDto {
     required: false,
     default: 0,
   })
-  public latestId: number;
+  public latestId = 0;
 
   @ApiProperty({
     required: false,
     default: 25,
   })
-  public limit: number;
+  public limit = 25;
 
   @ApiProperty({
     required: false,
@@ -32,5 +32,6 @@ export class GetReactionDto {
     enum: OrderEnum,
     description: 'Order by Created At',
   })
+  @ApiHideProperty()
   public order: OrderEnum;
 }

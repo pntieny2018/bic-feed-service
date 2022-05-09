@@ -1,5 +1,7 @@
+import { OrderEnum } from '../../../../common/dto';
 import { UserDto } from '../../../auth';
-import { CreateReactionDto, DeleteReactionDto } from '../../dto/request';
+import { ReactionDto } from '../../dto/reaction.dto';
+import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from '../../dto/request';
 import { ReactionEnum } from '../../reaction.enum';
 
 export const mockCreateReactionDto: CreateReactionDto[] = [
@@ -14,6 +16,14 @@ export const mockCreateReactionDto: CreateReactionDto[] = [
     targetId: 89,
   },
 ];
+
+export const mockReactionDto: ReactionDto = {
+  userId: 33,
+  reactionId: 1,
+  target: ReactionEnum.POST,
+  targetId: 9,
+  reactionName: 'smile',
+};
 
 export const mockDeleteReactionDto: DeleteReactionDto[] = [
   {
@@ -30,6 +40,15 @@ export const mockDeleteReactionDto: DeleteReactionDto[] = [
 
 export const mockUserDto: UserDto = {
   id: 33,
+};
+
+export const mockGetReactionDto: GetReactionDto = {
+  reactionName: 'smile',
+  targetId: 9,
+  target: ReactionEnum.POST,
+  latestId: 1,
+  limit: 25,
+  order: OrderEnum.ASC,
 };
 
 export const mockPostReactionModelFindOne = {
@@ -90,6 +109,14 @@ export const mockPostCannotReact = {
   comments: [],
   media: [],
 };
+
+export const mockPostSmileReaction = [
+  { toJSON: () => ({ id: 1, postId: 9, reactionName: 'smile', createdBy: 33 }) },
+];
+
+export const mockCommentSmileReaction = [
+  { toJSON: () => ({ id: 1, postId: 9, reactionName: 'smile', createdBy: 33 }) },
+];
 
 export const mock15ReactionOnAPost = [
   { id: 1, postId: 9, reactionName: 'reactionName1', createdBy: 3 },

@@ -1,43 +1,40 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
-import { Op, QueryTypes, Transaction } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
+import { PageDto } from '../../common/dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { EntityIdDto, OrderEnum } from '../../common/dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { IPost, PostModel } from '../../database/models/post.model';
+import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { UserDto } from '../auth';
+import { MediaService } from '../media';
+import { MentionService } from '../mention';
+import { CommentService } from '../comment';
+import { AuthorityService } from '../authority';
+import { UserService } from '../../shared/user';
+import { Sequelize } from 'sequelize-typescript';
+import { PostResponseDto } from './dto/responses';
+import { GroupService } from '../../shared/group';
+import { ClassTransformer } from 'class-transformer';
+import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { CommentModel } from '../../database/models/comment.model';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { FeedService } from '../feed/feed.service';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
-import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { IPost, PostModel } from '../../database/models/post.model';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { GroupService } from '../../shared/group';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
-import { AuthorityService } from '../authority';
-import { CommentService } from '../comment';
-import { FeedService } from '../feed/feed.service';
-import { MediaService } from '../media';
-import { EntityType } from '../media/media.constants';
-import { MentionService } from '../mention';
-import { DeleteReactionService } from '../reaction/services';
-import { PageDto } from '../../common/dto';
-import {
-  CreatePostDto,
-  GetPostDto,
-  GetPostEditedHistoryDto,
-  SearchPostsDto,
-  UpdatePostDto,
-} from './dto/requests';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { EntityIdDto } from '../../common/dto';
+import { CommentModel } from '../../database/models/comment.model';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import { ReactionService } from '../reaction';
+import { plainToInstance } from 'class-transformer';
+import { Op, QueryTypes, Transaction } from 'sequelize';
+import { getDatabaseConfig } from '../../config/database';
+import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
+import { GetPostEditedHistoryDto } from './dto/requests';
+import { PostEditedHistoryDto } from './dto/responses';
 
 @Injectable()
 export class PostService {
@@ -46,7 +43,13 @@ export class PostService {
    * @private
    */
   private _logger = new Logger(PostService.name);
+
+  /**
+   *  ClassTransformer
+   * @private
+   */
   private _classTransformer = new ClassTransformer();
+
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
@@ -64,7 +67,7 @@ export class PostService {
     private _commentService: CommentService,
     private _authorityService: AuthorityService,
     private _searchService: ElasticsearchService,
-    private _deleteReactionService: DeleteReactionService,
+    private _reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
@@ -313,7 +316,7 @@ export class PostService {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [PostModel.loadReactionsCount(), PostModel.loadMarkReadPost(user.id)],
+        include: [PostModel.loadMarkReadPost(user.id)],
       },
       where: { id: postId },
       include: [
@@ -347,36 +350,37 @@ export class PostService {
     });
 
     if (!post) {
-      //throw new NotFoundException('Post not found');
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this._authorityService.allowAccess(user, post);
 
-    const comments = await this._commentService.getComments(
-      user,
-      {
-        postId,
-        childLimit: getPostDto.childCommentLimit,
-        order: getPostDto.commentOrder,
-        childOrder: getPostDto.childCommentOrder,
-        limit: getPostDto.commentLimit,
-      },
-      false
-    );
+    await this._authorityService.allowAccess(user, post);
+    let comments = null;
+    if (getPostDto.withComment) {
+      comments = await this._commentService.getComments(
+        user,
+        {
+          postId,
+          childLimit: getPostDto.childCommentLimit,
+          order: getPostDto.commentOrder,
+          childOrder: getPostDto.childCommentOrder,
+          limit: getPostDto.commentLimit,
+        },
+        false
+      );
+    }
     const jsonPost = post.toJSON();
     await Promise.all([
+      this._reactionService.bindReactionToPosts([jsonPost]),
       this._mentionService.bindMentionsToPosts([jsonPost]),
       this.bindActorToPost([jsonPost]),
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    return this._classTransformer.plainToInstance(
-      PostResponseDto,
-      { ...jsonPost, comments },
-      {
-        excludeExtraneousValues: true,
-      }
-    );
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+      excludeExtraneousValues: true,
+    });
+    result['comments'] = comments;
+    return result;
   }
 
   /**
@@ -473,7 +477,7 @@ export class PostService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
       const { groupIds } = audience;
       const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
@@ -564,7 +568,7 @@ export class PostService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
     const transaction = await this._sequelizeConnection.transaction();
@@ -668,7 +672,7 @@ export class PostService {
     authUserId: number
   ): Promise<boolean> {
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
 
     if (post.createdBy !== authUserId) {
@@ -693,7 +697,7 @@ export class PostService {
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
         this.setGroupByPost([], postId, transaction),
-        this._deleteReactionService.deleteReactionByPostIds([postId], transaction),
+        this._reactionService.deleteReactionByPostIds([postId]),
         this._commentService.deleteCommentsByPost(postId, transaction),
         this._feedService.deleteNewsFeedByPost(postId, transaction),
         this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
@@ -753,6 +757,7 @@ export class PostService {
    * Delete/Insert group by post
    * @param groupIds Array of Group ID
    * @param postId PostID
+   * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
@@ -870,7 +875,7 @@ export class PostService {
     const post = await this._postModel.findOne(conditions);
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     return post.toJSON();
   }
@@ -892,24 +897,26 @@ export class PostService {
   }
 
   public async markReadPost(postId: number, userId: number): Promise<void> {
-    try {
-      const readPost = await this._userMarkReadPostModel.findOne({
-        where: {
-          postId,
-          userId,
-        },
-      });
-      if (!readPost) {
-        await this._userMarkReadPostModel.create({
-          postId,
-          userId,
-        });
-      }
-      return;
-    } catch (ex) {
-      this._logger.error(ex, ex.stack);
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER);
+    const post = await this._postModel.findByPk(postId);
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
+    if (post && post.createdBy === userId) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_NOT_ALLOW);
+    }
+    const readPost = await this._userMarkReadPostModel.findOne({
+      where: {
+        postId,
+        userId,
+      },
+    });
+    if (!readPost) {
+      await this._userMarkReadPostModel.create({
+        postId,
+        userId,
+      });
+    }
+    return;
   }
 
   public async getTotalImportantPostInGroups(

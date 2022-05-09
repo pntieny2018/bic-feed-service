@@ -81,7 +81,6 @@ export class FollowService {
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
-    console.log(targetIds);
     return ArrayHelper.differenceArrNumber(userIds, targetIds);
   }
 
@@ -166,6 +165,9 @@ export class FollowService {
     userIds: number[];
     latestFollowId: number;
   }> {
+    this._logger.debug(
+      `[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}. groupIds: ${groupIds}`
+    );
     try {
       const schema = this._databaseConfig.schema;
 
@@ -175,6 +177,7 @@ export class FollowService {
                    AS duplicate_count
                    FROM ${schema}.${this._followModel.tableName} 
                    WHERE group_id IN  (${groupIds.join(',')})  
+                   AND user_id NOT IN (${ignoreUserIds.join(',')})
               ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1 
                 WHERE duplicate_count = 1 
                 AND id > $followId  limit $limit ;
@@ -206,5 +209,26 @@ export class FollowService {
         latestFollowId: 0,
       };
     }
+  }
+
+  public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
+    const { schema } = getDatabaseConfig();
+
+    const rows = await this._sequelize.query(
+      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
+                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
+                   AS duplicate_count
+                   FROM ${schema}.${FollowModel.tableName} 
+                   WHERE group_id IN  (${groupIds.join(',')})  
+              ) SELECT user_id FROM REMOVE_DUPLICATE tb1 
+                WHERE duplicate_count = 1 
+                AND user_id IN  (${userIds.join(',')})  
+             `
+    );
+    if (!rows) {
+      return [];
+    }
+
+    return rows[0].map((r) => r['user_id']);
   }
 }

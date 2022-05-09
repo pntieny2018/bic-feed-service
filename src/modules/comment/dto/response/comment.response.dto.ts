@@ -5,6 +5,8 @@ import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { MediaService } from '../../../media';
+import { IPost } from '../../../../database/models/post.model';
+import { PageDto } from '../../../../common/dto';
 
 export class CommentResponseDto {
   @ApiProperty()
@@ -17,11 +19,23 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public parentId?: number;
+  public edited: boolean;
+
+  @ApiProperty()
+  @Expose()
+  public parentId: number;
+
+  @ApiProperty()
+  @Expose()
+  public parent?: CommentResponseDto;
 
   @ApiProperty()
   @Expose()
   public postId: number;
+
+  @ApiProperty()
+  @Expose()
+  public post?: IPost;
 
   @ApiProperty()
   @Expose()
@@ -39,6 +53,10 @@ export class CommentResponseDto {
   @Expose()
   public updatedAt?: Date;
 
+  @ApiProperty()
+  @Expose()
+  public createdBy?: number;
+
   @ApiProperty({
     type: MediaFilterResponseDto,
   })
@@ -46,7 +64,12 @@ export class CommentResponseDto {
     if (value && value.length) {
       return MediaService.filterMediaType(value);
     }
-    if (typeof value === 'object') {
+    if (
+      typeof value === 'object' &&
+      value.hasOwnProperty('files') &&
+      value.hasOwnProperty('images') &&
+      value.hasOwnProperty('videos')
+    ) {
       return value;
     }
     return new MediaFilterResponseDto([], [], []);
@@ -79,6 +102,11 @@ export class CommentResponseDto {
     if (value === '1=') {
       return null;
     }
+    if (Array.isArray(value)) {
+      const reactionsCount = {};
+      value.forEach((v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) }));
+      return reactionsCount;
+    }
     return value;
   })
   @Expose()
@@ -99,7 +127,7 @@ export class CommentResponseDto {
   @Type(() => CommentResponseDto)
   @Transform(({ value }) => plainToInstance(CommentResponseDto, value))
   @Expose()
-  public child?: CommentResponseDto[];
+  public child?: CommentResponseDto[] | PageDto<CommentResponseDto>;
 
   public constructor(data: Partial<CommentResponseDto>) {
     Object.assign(this, data);
