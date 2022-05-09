@@ -10,7 +10,7 @@ module.exports = {
     await queryInterface.sequelize.query(`
           SET SEARCH_PATH = ${schemaName};
           CREATE OR REPLACE PROCEDURE ${procedureName}(
-              ccr_post_id  IN INTEGER,
+              ccr_comment_id  IN INTEGER,
               ccr_created_by IN INTEGER,
               ccr_reaction_name IN VARCHAR(100),
               ccr_id INOUT INTEGER
