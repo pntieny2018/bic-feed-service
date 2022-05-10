@@ -78,6 +78,7 @@ export class CommentDissociationService {
 
       let prevComments = await this._commentModel.findAll({
         where: {
+          postId: comment.postId,
           id: {
             [Op.lt]: commentId,
           },
@@ -97,7 +98,6 @@ export class CommentDissociationService {
         order: [['createdAt', 'DESC']],
         limit: 50,
       });
-
       if (!prevComments) {
         prevComments = [];
       }
@@ -116,7 +116,7 @@ export class CommentDissociationService {
         ),
         groupAudienceIds
       );
-
+      console.log(validUserIds);
       /**
        * priority:
        *        1. mentioned you in a comment.
@@ -146,7 +146,7 @@ export class CommentDissociationService {
             continue;
           }
           if (actorIdsOfPrevComments.includes(validUserId)) {
-            actorIdsOfPrevComments.push(validUserId);
+            recipient.actorIdsOfPrevComments.push(validUserId);
             handledUserIds.push(validUserId);
           }
         }
