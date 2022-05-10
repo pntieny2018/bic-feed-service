@@ -14,7 +14,7 @@ import {
 } from '../../database/models/comment-reaction.model';
 import { LogicException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
-import { LOCK, Op, QueryTypes, Transaction } from 'sequelize';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ReactionCountService } from '../../shared/reaction-count';
@@ -503,7 +503,7 @@ export class ReactionService {
           ),
           post: post,
         },
-        'create'
+        'remove'
       );
 
       this._notificationService.publishReactionNotification({
