@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@app/redis';
-import { GroupSharedDto } from './dto';
+import { ChildGroup, GroupPrivacy, GroupSharedDto } from './dto';
+import { UserDto } from '../../modules/auth';
 
 @Injectable()
 export class GroupService {
@@ -8,7 +9,14 @@ export class GroupService {
 
   public async get(groupId: number): Promise<GroupSharedDto> {
     const group = await this._store.get<GroupSharedDto>(`SG:${groupId}`);
-    if (group !== null && !group?.child) group.child = [];
+    if (group !== null && !group?.child) {
+      group.child = {
+        open: [],
+        public: [],
+        private: [],
+        secret: [],
+      };
+    }
     return group;
   }
 
@@ -37,5 +45,24 @@ export class GroupService {
    */
   public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
     return groupIds.every((groupId) => myGroupIds.includes(groupId));
+  }
+
+  public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): number[] {
+    let groupIds = [];
+    if (group.privacy === GroupPrivacy.OPEN || group.privacy === GroupPrivacy.PUBLIC) {
+      groupIds = [...group.child.public, ...group.child.open];
+
+      const privateGroupIds = [...group.child.private, ...group.child.secret].filter((groupId) =>
+        authUser.profile.groups.includes(groupId)
+      );
+      groupIds.push(...privateGroupIds, group.id);
+    } else {
+      groupIds = [group.id, ...group.child.private, ...group.child.secret].filter((groupId) =>
+        authUser.profile.groups.includes(groupId)
+      );
+      groupIds.push(...group.child.open);
+      groupIds.push(...group.child.public);
+    }
+    return groupIds;
   }
 }

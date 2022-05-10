@@ -158,9 +158,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = [groupId, ...group.child].filter((groupId) =>
-      authUser.profile.groups.includes(groupId)
-    );
+    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,
