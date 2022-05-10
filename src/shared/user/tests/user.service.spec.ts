@@ -74,7 +74,7 @@ describe('UserService', () => {
       expect(redisService.mget).toBeCalled();
       const keys = redisService.mget.mock.calls[0][0];
       expect(keys.length).toBe(userIds.length);
-      expect(keys.every((k) => k.indexOf('US:') > -1)).toBe(true);
+      expect(keys.every((k) => k.indexOf('SU:') > -1)).toBe(true);
       expect(data).toEqual(sharedUsersMock);
     });
 
@@ -85,7 +85,7 @@ describe('UserService', () => {
       expect(redisService.mget).toBeCalled();
       const keys = redisService.mget.mock.calls[0][0];
       expect(keys.length).toBeLessThan(userIds.length);
-      expect(keys.every((k) => k.indexOf('US:') > -1)).toBe(true);
+      expect(keys.every((k) => k.indexOf('SU:') > -1)).toBe(true);
       expect(data).toEqual(sharedUsersMock);
     });
   });

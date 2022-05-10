@@ -5,6 +5,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
     {
       ownerReactions: [],
       id: 1,
+      edited: false,
       totalReply: 0,
       actor: {
         id: 59,
@@ -27,6 +28,7 @@ export const mockedComments: PageDto<CommentResponseDto> = {
       child: [
         {
           id: 3,
+          edited: false,
           actor: {
             id: 1,
             username: 'aaa',

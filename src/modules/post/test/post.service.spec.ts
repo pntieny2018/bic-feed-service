@@ -45,30 +45,27 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
-import { CommonReactionService, DeleteReactionService } from '../../reaction/services';
 import { FeedService } from '../../feed/feed.service';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { LogicException } from '../../../common/exceptions';
 import { Sequelize } from 'sequelize-typescript';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
+import { ReactionService } from '../../reaction';
 
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
   let postGroupModelMock;
   let userMarkedImportantPostModelMock;
-  let postEditedHistoryModelMock;
-  let sentryService: SentryService;
   let userService: UserService;
   let groupService: GroupService;
   let mediaService: MediaService;
   let mentionService: MentionService;
   let commentService: CommentService;
   let feedService: FeedService;
-  let deleteReactionService: DeleteReactionService;
+  let reactionService: ReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
-  let commonReactionService: CommonReactionService;
   let transactionMock;
   let sequelize: Sequelize;
   beforeEach(async () => {
@@ -103,9 +100,10 @@ describe('PostService', () => {
           },
         },
         {
-          provide: CommonReactionService,
+          provide: ReactionService,
           useValue: {
             bindReactionToPosts: jest.fn(),
+            deleteReactionByPostIds: jest.fn()
           },
         },
         {
@@ -133,12 +131,7 @@ describe('PostService', () => {
             get: jest.fn(),
             getMany: jest.fn(),
             isMemberOfGroups: jest.fn(),
-          },
-        },
-        {
-          provide: DeleteReactionService,
-          useValue: {
-            deleteReactionByPostIds: jest.fn(),
+            getGroupIdsCanAccess: jest.fn(),
           },
         },
         {
@@ -216,20 +209,15 @@ describe('PostService', () => {
     userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(
       getModelToken(UserMarkReadPostModel)
     );
-    postEditedHistoryModelMock = moduleRef.get<typeof PostEditedHistoryModel>(
-      getModelToken(PostEditedHistoryModel)
-    );
-    sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
     commentService = moduleRef.get<CommentService>(CommentService);
     feedService = moduleRef.get<FeedService>(FeedService);
-    deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
+    reactionService = moduleRef.get<ReactionService>(ReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
-    commonReactionService = moduleRef.get<CommonReactionService>(CommonReactionService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
 
     transactionMock = createMock<Transaction>({
@@ -535,7 +523,7 @@ describe('PostService', () => {
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
-      expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      expect(reactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
       expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);

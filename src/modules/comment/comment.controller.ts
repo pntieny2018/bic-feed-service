@@ -180,7 +180,6 @@ export class CommentController {
     const response = await this._commentService.update(user, commentId, updateCommentDto);
 
     const commentResponse = await this._commentService.getComment(user, response.comment.id);
-
     this._eventEmitter.emit(
       new CommentHasBeenUpdatedEvent({
         actor: user,
