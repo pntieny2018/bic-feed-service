@@ -27,7 +27,7 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
-import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
+import { CommentEditedHistoryDto, CommentResponseDto, CommentsResponseDto } from './dto/response';
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
@@ -366,7 +366,6 @@ export class CommentService {
       this._mentionService.bindMentionsToComment(comments.list),
       this.bindUserToComment(comments.list),
     ]);
-
     return comments;
   }
 
@@ -780,7 +779,6 @@ export class CommentService {
         excludeExtraneousValues: true,
       }
     );
-
     for (const comment of comments) {
       const childList = childFormatted.filter((i) => i.parentId === comment.id);
       const hasNextPage = childList.length > limit;
