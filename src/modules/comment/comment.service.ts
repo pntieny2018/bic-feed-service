@@ -31,6 +31,7 @@ import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
+import sequelize from 'sequelize';
 
 @Injectable()
 export class CommentService {
@@ -913,6 +914,8 @@ export class CommentService {
     commentId: number,
     getCommentEditedHistoryDto: GetCommentEditedHistoryDto
   ): Promise<PageDto<CommentEditedHistoryDto>> {
+    const { schema } = getDatabaseConfig();
+
     try {
       const postId = await this.getPostIdOfComment(commentId);
       const post = await this._postService.findPost({ postId: postId });
@@ -922,27 +925,56 @@ export class CommentService {
         getCommentEditedHistoryDto;
       const conditions = {};
       conditions['commentId'] = commentId;
+
       if (idGT) {
         conditions['id'] = {
-          [Op.gt]: idGT,
-        };
-      }
-      if (idGTE) {
-        conditions['id'] = {
-          [Op.gte]: idGTE,
+          [Op.not]: idGT,
           ...conditions['id'],
         };
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(
+            `(SELECT "ceh".edited_at FROM ${schema}.comment_edited_history AS "ceh" WHERE "ceh".id = ${this._sequelizeConnection.escape(
+              idGT
+            )})`
+          ),
+          ...conditions['editedAt'],
+        };
       }
+
+      if (idGTE) {
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(
+            `SELECT "ceh".edited_at FROM ${schema}.comment_edited_history AS "ceh" WHERE "ceh".id = ${this._sequelizeConnection.escape(
+              idGTE
+            )}`
+          ),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (idLT) {
         conditions['id'] = {
-          [Op.lt]: idLT,
+          [Op.not]: idLT,
           ...conditions['id'],
         };
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(
+            `SELECT "ceh".edited_at FROM ${schema}.comment_edited_history as "ceh" WHERE "ceh".id = ${this._sequelizeConnection.escape(
+              idLT
+            )}`
+          ),
+          ...conditions['editedAt'],
+        };
       }
+
       if (idLTE) {
-        conditions['id'] = {
-          [Op.lte]: idLTE,
-          ...conditions,
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(
+            `SELECT "ceh".edited_at FROM ${schema}.comment_edited_history as "ceh" WHERE "ceh".id = ${this._sequelizeConnection.escape(
+              idLTE
+            )}`
+          ),
+          ...conditions['editedAt'],
         };
       }
       if (endTime) {

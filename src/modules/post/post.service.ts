@@ -35,6 +35,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
+import sequelize from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -922,7 +923,7 @@ export class PostService {
   public async getTotalImportantPostInGroups(
     userId: number,
     groupIds: number[],
-    constraints: string
+    constraints?: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
@@ -934,7 +935,7 @@ export class PostService {
         WHERE g.post_id = p.id
         AND g.group_id IN(:groupIds)
       )
-    ${constraints}`;
+    ${constraints ?? ''}`;
     const result: any = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -986,6 +987,7 @@ export class PostService {
     postId: number,
     getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
+    const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
       await this._authorityService.allowAccess(user, post);
@@ -997,29 +999,59 @@ export class PostService {
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
       const conditions = {};
       conditions['postId'] = postId;
+
       if (idGT) {
         conditions['id'] = {
-          [Op.gt]: idGT,
-        };
-      }
-      if (idGTE) {
-        conditions['id'] = {
-          [Op.gte]: idGTE,
+          [Op.not]: idGT,
           ...conditions['id'],
         };
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idGT
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
       }
+
+      if (idGTE) {
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idGTE
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (idLT) {
         conditions['id'] = {
-          [Op.lt]: idLT,
+          [Op.not]: idLT,
           ...conditions['id'],
         };
-      }
-      if (idLTE) {
-        conditions['id'] = {
-          [Op.lte]: idLTE,
-          ...conditions,
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idLT
+          )}
+          `),
+          ...conditions['editedAt'],
         };
       }
+
+      if (idLTE) {
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idLT
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (endTime) {
         conditions['editedAt'] = {
           [Op.lt]: endTime,
