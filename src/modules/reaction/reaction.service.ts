@@ -751,15 +751,23 @@ export class ReactionService {
       raw: true,
     });
     for (const comment of comments) {
-      comment.reactionsCount = reactions.filter((i) => {
-        return i.commentId === comment.id;
-      });
+      const reactionsCount = {};
+      reactions
+        .filter((i) => {
+          return i.commentId === comment.id;
+        })
+        .forEach((v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) }));
+      comment.reactionsCount = reactionsCount;
       //Map reaction to child comment
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
-          cm.reactionsCount = reactions.filter((r) => {
-            return r.commentId === cm.id;
-          });
+          const childRC = {};
+          reactions
+            .filter((r) => {
+              return r.commentId === cm.id;
+            })
+            .forEach((v, i) => (childRC[i] = { [v.reactionName]: parseInt(v.total) }));
+          cm.reactionsCount = childRC;
         }
       }
     }
