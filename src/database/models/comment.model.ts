@@ -67,7 +67,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @AllowNull(true)
   @ForeignKey(() => CommentModel)
-  @Default(0)
   @Column
   public parentId: number;
 
