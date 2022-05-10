@@ -38,7 +38,18 @@ export class FollowService {
           }))
         )
         .flat();
-      await this._followModel.bulkCreate(bulkCreateData);
+
+      const insertData = bulkCreateData
+        .map((record) => {
+          return `(${record.userId},${record.groupId})`;
+        })
+        .join(',');
+
+      await this._followModel.sequelize.query(
+        `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id) 
+             VALUES ${insertData} ON CONFLICT (user_id,post_id) DO NOTHING;`
+      );
+
       this._eventEmitter.emit(new UsersHasBeenFollowedEvent(createFollowDto));
     } catch (ex) {
       throw new RpcException("Can't follow");
