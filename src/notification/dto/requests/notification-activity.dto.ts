@@ -8,6 +8,7 @@ export class ActivityObject {
   public content?: string;
   public media?: MediaObject;
   public mentions?: MentionObject;
+  public ownerReactions?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
   public audience: AudienceObject[];
   public comment?: CommentObject;
@@ -52,7 +53,7 @@ export class AudienceObject {
 
 export class ReactionObject {
   public id: number;
-  public actor: ActorObject;
+  public actor?: ActorObject;
   public reactionName: string;
   public createdAt: Date;
 }
@@ -64,6 +65,7 @@ export class CommentObject {
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reaction?: ReactionObject;
+  public ownerReactions?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
   public child?: CommentObject;
   public createdAt: Date;

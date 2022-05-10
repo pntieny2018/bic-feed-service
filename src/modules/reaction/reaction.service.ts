@@ -431,14 +431,20 @@ export class ReactionService {
    * Delete post reaction
    * @param userDto UserDto
    * @param deleteReactionDto DeleteReactionDto
+   * @param attempt
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deletePostReaction(
     userDto: UserDto,
-    deleteReactionDto: DeleteReactionDto
+    deleteReactionDto: DeleteReactionDto,
+    attempt = 0
   ): Promise<IPostReaction> {
     this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
+
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
 
     const post = await this._postService.getPost(deleteReactionDto.targetId, userDto, {
       commentLimit: 0,
@@ -514,6 +520,9 @@ export class ReactionService {
       await trx.rollback();
       this._logger.error(ex, ex.message, ex.stack);
 
+      if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        return this._deletePostReaction(userDto, deleteReactionDto, attempt + 1);
+      }
       throw ex;
     }
   }
@@ -522,13 +531,19 @@ export class ReactionService {
    * Delete comment reaction
    * @param userDto UserDto
    * @param deleteReactionDto DeleteReactionDto
+   * @param attempt
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deleteCommentReaction(
     userDto: UserDto,
-    deleteReactionDto: DeleteReactionDto
+    deleteReactionDto: DeleteReactionDto,
+    attempt = 0
   ): Promise<ICommentReaction> {
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
+
     const { id: userId } = userDto;
     const { reactionId, targetId } = deleteReactionDto;
 
@@ -566,7 +581,6 @@ export class ReactionService {
           createdBy: userId,
         },
         transaction: trx,
-        lock: LOCK.SHARE,
       });
 
       if (!existedReaction) {
@@ -617,6 +631,10 @@ export class ReactionService {
     } catch (ex) {
       await trx.rollback();
       this._logger.error(ex, ex.stack);
+
+      if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        return this._deleteCommentReaction(userDto, deleteReactionDto, attempt + 1);
+      }
 
       throw ex;
     }

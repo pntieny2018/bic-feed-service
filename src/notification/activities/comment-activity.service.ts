@@ -21,7 +21,7 @@ export class CommentActivityService {
       mentions: post.mentions as any,
       comment: {
         id: comment.id,
-        actor: ObjectHelper.omit(['groups'], comment.actor) as any,
+        actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
         content: comment.content,
         media: comment.media,
         mentions: comment.mentions as any,
@@ -49,14 +49,14 @@ export class CommentActivityService {
 
     const activityObject: ActivityObject = {
       id: post.id,
-      actor: ObjectHelper.omit(['groups'], post.actor) as any,
+      actor: ObjectHelper.omit(['groups', 'email'], post.actor) as any,
       audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       content: post.content,
       media: post.media,
       setting: post.setting as any,
       comment: {
         id: parent.id,
-        actor: ObjectHelper.omit(['groups'], parent.actor) as any,
+        actor: ObjectHelper.omit(['groups', 'email'], parent.actor) as any,
         content: parent.content,
         media: parent.media,
         mentions: parent.mentions as any,
@@ -64,7 +64,7 @@ export class CommentActivityService {
         updatedAt: parent.updatedAt,
         child: {
           id: comment.id,
-          actor: ObjectHelper.omit(['groups'], comment.actor) as any,
+          actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
           content: comment.content,
           media: comment.media,
           createdAt: comment.createdAt,
