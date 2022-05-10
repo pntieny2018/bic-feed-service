@@ -409,6 +409,7 @@ export class PostService {
         const mappedGroups = [];
         postGroups.forEach((group) => {
           const dataGroup = dataGroups.find((i) => i.id === group.id || i.id === group.groupId);
+          delete dataGroup.child;
           if (dataGroup) mappedGroups.push(dataGroup);
         });
         groups = mappedGroups;
