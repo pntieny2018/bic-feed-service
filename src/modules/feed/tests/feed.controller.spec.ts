@@ -45,7 +45,7 @@ describe('FeedController', () => {
       }
       const result = await feedController.getTimeline(mockedUserAuth, getTimelineDto);      
       expect(feedService.getTimeline).toBeCalledTimes(1);
-      expect(feedService.getTimeline).toBeCalledWith(mockedUserAuth.id, getTimelineDto);
+      expect(feedService.getTimeline).toBeCalledWith(mockedUserAuth, getTimelineDto);
     });
   });
 
@@ -54,7 +54,7 @@ describe('FeedController', () => {
       const getNewsFeedDto: GetNewsFeedDto = {}
       const result = await feedController.getNewsFeed(mockedUserAuth, getNewsFeedDto);      
       expect(feedService.getNewsFeed).toBeCalledTimes(1);
-      expect(feedService.getNewsFeed).toBeCalledWith(mockedUserAuth.id, getNewsFeedDto);
+      expect(feedService.getNewsFeed).toBeCalledWith(mockedUserAuth, getNewsFeedDto);
     });
   });
 });

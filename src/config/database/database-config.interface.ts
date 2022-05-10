@@ -10,7 +10,7 @@ export interface IDatabaseConfig {
   password?: string;
   schema?: string;
   uri?: string;
-  isDebug?: string;
+  isDebug?: boolean;
   ssl: boolean;
   pool?: PoolOptions;
 }

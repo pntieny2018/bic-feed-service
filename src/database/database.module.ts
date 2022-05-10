@@ -23,7 +23,7 @@ import { IDatabaseConfig } from '../config/database';
             timestamps: true,
             schema: databaseConfig.schema,
           },
-          logging: true,
+          logging: databaseConfig.isDebug,
           benchmark: true,
           logQueryParameters: true,
           native: databaseConfig.ssl,

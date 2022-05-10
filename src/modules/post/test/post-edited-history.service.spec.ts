@@ -3,11 +3,10 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
-import { RedisModule } from '../../../../libs/redis/src';
-import { SentryService } from '../../../../libs/sentry/src';
+import { RedisModule } from '@app/redis';
+import { SentryService } from '@app/sentry';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
-import { PostEditedHistoryMediaModel } from '../../../database/models/post-edited-history-media.model';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel } from '../../../database/models/post.model';
@@ -19,7 +18,6 @@ import { CommentService } from '../../comment';
 import { FeedService } from '../../feed/feed.service';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
-import { DeleteReactionService } from '../../reaction/services';
 import { PostPolicyService } from '../post-policy.service';
 import { PostService } from '../post.service';
 import {
@@ -42,13 +40,11 @@ describe('PostService', () => {
   let mentionService: MentionService;
   let commentService: CommentService;
   let feedService: FeedService;
-  let deleteReactionService: DeleteReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
   let transactionMock;
   let sequelize: Sequelize;
   let postEditedHistoryModelMock: typeof PostEditedHistoryModel;
-  let postEditedHistoryMediaModelMock: typeof PostEditedHistoryMediaModel;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({

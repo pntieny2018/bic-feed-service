@@ -7,5 +7,6 @@ export class NotificationPayloadDto<T> {
     event: string;
     data: T;
     oldData?: any;
+    meta?: Record<string, any>;
   };
 }
