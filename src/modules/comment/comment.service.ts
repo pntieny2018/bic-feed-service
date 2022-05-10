@@ -845,6 +845,11 @@ export class CommentService {
             as: 'mentions',
             required: false,
           },
+          {
+            model: CommentReactionModel,
+            as: 'ownerReactions',
+            required: false,
+          },
         ],
       });
     };
@@ -864,6 +869,8 @@ export class CommentService {
     await this._mentionService.bindMentionsToComment([rawComment]);
 
     await this.bindUserToComment([rawComment]);
+
+    await this._reactionService.bindReactionToComments([rawComment]);
 
     return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
