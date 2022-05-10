@@ -8,7 +8,6 @@ import { ReactionService } from '../reaction';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
-import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
 import { EntityType } from '../media/media.constants';
 import { ExceptionHelper } from '../../common/helpers';
@@ -27,7 +26,6 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
@@ -44,12 +42,10 @@ export class CommentService {
     private _postService: PostService,
     private _userService: UserService,
     private _mediaService: MediaService,
-    private _groupService: GroupService,
     private _mentionService: MentionService,
     private _reactionService: ReactionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
-    private _eventEmitter: InternalEventEmitterService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
     private _followService: FollowService,

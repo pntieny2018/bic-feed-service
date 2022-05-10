@@ -3,11 +3,12 @@ import { CommentController } from '../comment.controller';
 import { CommentService } from '../comment.service';
 import { authUserMock } from './mocks/user.mock';
 import { createTextCommentDto } from './mocks/create-comment-dto.mock';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 
 describe('CommentController', () => {
   let controller: CommentController;
   let commentService;
-
+  let internalEventEmitterService: InternalEventEmitterService
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
@@ -23,11 +24,19 @@ describe('CommentController', () => {
             getCommentLink: jest.fn(),
           },
         },
+        {
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<CommentController>(CommentController);
     commentService = module.get<CommentService>(CommentService);
+    internalEventEmitterService = module.get<InternalEventEmitterService>(InternalEventEmitterService);
+    
   });
 
   it('should be defined', () => {

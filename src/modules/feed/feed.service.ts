@@ -22,6 +22,7 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { GroupPrivacy } from '../../shared/group/dto';
 
 @Injectable()
 export class FeedService {
@@ -158,9 +159,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = [groupId, ...group.child].filter((groupId) =>
-      authUser.profile.groups.includes(groupId)
-    );
+    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,
