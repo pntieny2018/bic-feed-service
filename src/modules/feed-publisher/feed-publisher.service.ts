@@ -43,14 +43,13 @@ export class FeedPublisherService {
     this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
     const schema = this._databaseConfig.schema;
     try {
-      const seenPostData = await this._userSeenPostModel.findAll(
-        {
-          where: { postId, userId: { [Op.in]: userIds} }
-        }
-      );
+      const seenPostData = await this._userSeenPostModel.findAll({
+        where: { postId, userId: { [Op.in]: userIds } },
+      });
       const seenPostDataMap = seenPostData.reduce(
-        (dataMap, seenPostRecord) => ({userId: true}),
-        {})
+        (dataMap, seenPostRecord) => ({ userId: true }),
+        {}
+      );
       const data = userIds
         .map((userId) => {
           return `(${userId},${postId}, ${!!seenPostDataMap[userId]})`;

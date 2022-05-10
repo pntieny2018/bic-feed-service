@@ -22,7 +22,6 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { GroupPrivacy } from '../../shared/group/dto';
 
 @Injectable()
 export class FeedService {

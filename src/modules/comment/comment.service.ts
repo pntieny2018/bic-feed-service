@@ -314,9 +314,7 @@ export class CommentService {
     if (!response) {
       throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
     }
-
     const rawComment = response.toJSON();
-
     await Promise.all([
       this._reactionService.bindReactionToComments([rawComment]),
       this._mentionService.bindMentionsToComment([rawComment]),
@@ -358,6 +356,7 @@ export class CommentService {
     }
 
     const comments = await this._getComments(user.id, getCommentsDto);
+
     if (comments.list.length && !parentId) {
       await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
@@ -494,6 +493,7 @@ export class CommentService {
         "c"."parent_id" AS "parentId", 
         "c"."post_id" AS "postId",
         "c"."content", 
+        "c"."edited", 
         "c"."total_reply" AS "totalReply", 
         "c"."created_by" AS "createdBy", 
         "c"."updated_by" AS "updatedBy", 
@@ -532,6 +532,7 @@ export class CommentService {
                 "c"."parent_id" AS "parentId", 
                 "c"."post_id" AS "postId",
                 "c"."content", 
+                "c"."edited",
                 "c"."total_reply" AS "totalReply", 
                 "c"."created_by" AS "createdBy", 
                 "c"."updated_by" AS "updatedBy", 
@@ -548,6 +549,7 @@ export class CommentService {
                   "c"."parent_id" AS "parentId", 
                   "c"."post_id" AS "postId",
                   "c"."content", 
+                  "c"."edited",
                   "c"."total_reply" AS "totalReply", 
                   "c"."created_by" AS "createdBy", 
                   "c"."updated_by" AS "updatedBy", 
@@ -727,6 +729,7 @@ export class CommentService {
               "parent_id" AS "parentId", 
               "post_id" AS "postId", 
               "content", 
+              "edited",
               "total_reply" AS "totalReply", 
               "created_by" AS "createdBy", 
               "updated_by" AS "updatedBy", 
@@ -1006,6 +1009,7 @@ export class CommentService {
       const {
         id,
         parentId,
+        edited,
         postId,
         content,
         totalReply,
@@ -1045,6 +1049,7 @@ export class CommentService {
           id,
           parentId,
           postId,
+          edited,
           content,
           totalReply,
           createdBy,

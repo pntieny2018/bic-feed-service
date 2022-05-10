@@ -33,6 +33,9 @@ import { IPostReaction, PostReactionModel } from '../../database/models/post-rea
 import { FollowService } from '../follow';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
+const SERIALIZE_TRANSACTION_ERROR =
+  'could not serialize access due to read/write dependencies among transactions';
+const SERIALIZE_TRANSACTION_MAX_ATTEMPT = 3;
 
 @Injectable()
 export class ReactionService {
@@ -161,13 +164,19 @@ export class ReactionService {
    * Create post reaction
    * @param userDto UserDto
    * @param createReactionDto CreateReactionDto
+   * @param attempt Number
    * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createPostReaction(
     userDto: UserDto,
-    createReactionDto: CreateReactionDto
+    createReactionDto: CreateReactionDto,
+    attempt = 0
   ): Promise<ReactionResponseDto> {
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
+
     this._logger.debug(`[_createPostReaction]: ${JSON.stringify(createReactionDto)}`);
 
     const { id: userId } = userDto;
@@ -258,6 +267,9 @@ export class ReactionService {
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
         throw new LogicException(e.message);
       }
+      if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        return this._createPostReaction(userDto, createReactionDto, attempt + 1);
+      }
 
       throw e;
     }
@@ -267,13 +279,19 @@ export class ReactionService {
    * Create comment reaction
    * @param userDto UserDto
    * @param createReactionDto CreateReactionDto
+   * @param attempt
    * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createCommentReaction(
     userDto: UserDto,
-    createReactionDto: CreateReactionDto
+    createReactionDto: CreateReactionDto,
+    attempt = 0
   ): Promise<ReactionResponseDto> {
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
+
     const { id: userId } = userDto;
 
     const { reactionName, targetId: commentId } = createReactionDto;
@@ -379,6 +397,11 @@ export class ReactionService {
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
         throw new LogicException(e.message);
       }
+
+      if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        return this._createCommentReaction(userDto, createReactionDto, attempt + 1);
+      }
+
       throw e;
     }
   }
