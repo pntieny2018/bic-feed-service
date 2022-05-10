@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { MediaService } from '../media';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { MentionService } from '../mention';
 import { FollowService } from '../follow';
 import { ReactionService } from '../reaction';
@@ -229,6 +229,7 @@ export class CommentService {
         {
           updatedBy: user.id,
           content: updateCommentDto.content,
+          edited: true,
         },
         {
           transaction: transaction,
@@ -350,7 +351,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { limit, childLimit, postId } = getCommentsDto;
+    const { childLimit, postId, parentId } = getCommentsDto;
 
     if (checkAccess) {
       const post = await this._postService.findPost({
@@ -360,11 +361,8 @@ export class CommentService {
       await this._authorityService.allowAccess(user, post);
     }
 
-    const comments = await this._getComments(user.id, {
-      limit,
-      postId,
-    });
-    if (comments.list.length) {
+    const comments = await this._getComments(user.id, getCommentsDto);
+    if (comments.list.length && !parentId) {
       await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
 
@@ -446,7 +444,6 @@ export class CommentService {
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
     const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
-
     let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId ?? 0)}`;
     if (postId) {
       condition += ` AND "c".post_id = ${this._sequelizeConnection.escape(postId)}`;
@@ -457,15 +454,15 @@ export class CommentService {
       condition += ` AND ( "c".id != ${id} AND "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idGTE) {
-      const id = this._sequelizeConnection.escape(idGT);
+      const id = this._sequelizeConnection.escape(idGTE);
       condition += ` AND ( "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idLT) {
-      const id = this._sequelizeConnection.escape(idGT);
+      const id = this._sequelizeConnection.escape(idLT);
       condition += ` AND ( "c".id != ${id} AND "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     if (idLTE) {
-      const id = this._sequelizeConnection.escape(idGT);
+      const id = this._sequelizeConnection.escape(idLTE);
       condition += ` AND ( "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
     }
     return condition;
@@ -477,7 +474,7 @@ export class CommentService {
     aroundId = 0
   ): Promise<PageDto<CommentResponseDto>> {
     const { limit } = getCommentsDto;
-    const order = 'DESC';
+    const order = getCommentsDto.order ?? OrderEnum.DESC;
     const { schema } = getDatabaseConfig();
     let query: string;
     const condition = await this._getCondition(getCommentsDto);

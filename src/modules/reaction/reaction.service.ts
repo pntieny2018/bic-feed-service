@@ -22,7 +22,11 @@ import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
 import { NotificationService, TypeActivity } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
 import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
-import { HTTP_STATUS_ID, ReactionHasBeenCreated } from '../../common/constants';
+import {
+  HTTP_STATUS_ID,
+  ReactionHasBeenCreated,
+  ReactionHasBeenRemoved,
+} from '../../common/constants';
 import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/request';
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
@@ -209,10 +213,6 @@ export class ReactionService {
           },
         });
 
-        if (post.actor.id === userId) {
-          return reaction;
-        }
-
         this._followService
           .getValidUserIds(
             [post.actor.id],
@@ -234,7 +234,12 @@ export class ReactionService {
             this._notificationService.publishReactionNotification({
               key: `${post.id}`,
               value: {
-                actor: null,
+                actor: {
+                  id: userDto.profile.id,
+                  fullname: userDto.profile.fullname,
+                  username: userDto.profile.username,
+                  avatar: userDto.profile.avatar,
+                },
                 event: ReactionHasBeenCreated,
                 data: activity,
               },
@@ -328,10 +333,6 @@ export class ReactionService {
 
         const ownerId = comment.parentId ? comment.parent.actor.id : comment.actor.id;
 
-        if (ownerId === userId) {
-          return reaction;
-        }
-
         this._followService
           .getValidUserIds(
             [ownerId],
@@ -354,7 +355,12 @@ export class ReactionService {
             this._notificationService.publishReactionNotification({
               key: `${post.id}`,
               value: {
-                actor: null,
+                actor: {
+                  id: userDto.profile.id,
+                  fullname: userDto.profile.fullname,
+                  username: userDto.profile.username,
+                  avatar: userDto.profile.avatar,
+                },
                 event: ReactionHasBeenCreated,
                 data: activity,
               },
@@ -475,7 +481,7 @@ export class ReactionService {
         key: `${post.id}`,
         value: {
           actor: actor,
-          event: ReactionHasBeenCreated,
+          event: ReactionHasBeenRemoved,
           data: activity,
         },
       });
@@ -579,7 +585,7 @@ export class ReactionService {
         key: `${post.id}`,
         value: {
           actor: actor,
-          event: ReactionHasBeenCreated,
+          event: ReactionHasBeenRemoved,
           data: activity,
         },
       });

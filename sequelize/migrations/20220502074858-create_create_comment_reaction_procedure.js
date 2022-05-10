@@ -7,10 +7,10 @@ const procedureName = 'create_comment_reaction';
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.sequence.query(`
+    await queryInterface.sequelize.query(`
           SET SEARCH_PATH = ${schemaName};
           CREATE OR REPLACE PROCEDURE ${procedureName}(
-              ccr_post_id  IN INTEGER,
+              ccr_comment_id  IN INTEGER,
               ccr_created_by IN INTEGER,
               ccr_reaction_name IN VARCHAR(100),
               ccr_id INOUT INTEGER
@@ -45,7 +45,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.sequence.query(`
+    await queryInterface.sequelize.query(`
         SET SEARCH_PATH = ${schemaName};
         DROP PROCEDURE IF EXISTS ${procedureName};
     `);
