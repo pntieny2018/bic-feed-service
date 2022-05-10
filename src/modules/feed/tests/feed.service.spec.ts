@@ -51,7 +51,8 @@ describe('FeedService', () => {
         {
           provide: GroupService,
           useValue: {
-            get: jest.fn()
+            get: jest.fn(),
+            getGroupIdsCanAccess: jest.fn()
           }
         },
         {
@@ -139,7 +140,7 @@ describe('FeedService', () => {
       jest.spyOn(groupService, 'get').mockResolvedValue(mockedGroups[0]);
       const jsonPosts = mockFindAllData.map((r) => r.toJSON());
       jest.spyOn(postService, 'getTotalImportantPostInGroups').mockResolvedValue(1);
-      jest.spyOn(feedService, '_getTimelineData').mockResolvedValue([]);
+      //jest.spyOn(feedService, '_getTimelineData').mockResolvedValue([]);
       
       const result = await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
       

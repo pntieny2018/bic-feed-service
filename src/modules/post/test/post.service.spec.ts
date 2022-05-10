@@ -131,6 +131,7 @@ describe('PostService', () => {
             get: jest.fn(),
             getMany: jest.fn(),
             isMemberOfGroups: jest.fn(),
+            getGroupIdsCanAccess: jest.fn(),
           },
         },
         {
