@@ -43,17 +43,17 @@ export class ReactionActivityService {
       actor: reaction.actor as any,
     };
 
-    const ownerReactions = [
-      ...post.ownerReactions.map((or) => ({
-        id: or.id,
-        reactionName: or.reactionName,
-        createdAt: or.createdAt,
-        actor: reactionObject.actor,
-      })),
-    ];
+    let ownerReactions = post.ownerReactions.map((or) => ({
+      id: or.id,
+      reactionName: or.reactionName,
+      createdAt: or.createdAt,
+      actor: reactionObject.actor,
+    }));
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+    } else {
+      ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
 
     const activityObject: ActivityObject = {
@@ -119,17 +119,17 @@ export class ReactionActivityService {
       createdAt: reaction.createdAt,
     };
 
-    const ownerReactions = [
-      ...comment.ownerReactions.map((or) => ({
-        id: or.id,
-        reactionName: or.reactionName,
-        createdAt: or.createdAt,
-        actor: reactionObject.actor,
-      })),
-    ];
+    let ownerReactions = comment.ownerReactions.map((or) => ({
+      id: or.id,
+      reactionName: or.reactionName,
+      createdAt: or.createdAt,
+      actor: reactionObject.actor,
+    }));
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+    } else {
+      ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
 
     const activityObject: ActivityObject = {
@@ -205,10 +205,17 @@ export class ReactionActivityService {
       createdAt: reaction.createdAt,
     };
 
-    const ownerReactions = [];
+    let ownerReactions = comment.ownerReactions.map((or) => ({
+      id: or.id,
+      reactionName: or.reactionName,
+      createdAt: or.createdAt,
+      actor: reactionObject.actor,
+    }));
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+    } else {
+      ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
 
     const activityObject: ActivityObject = {
