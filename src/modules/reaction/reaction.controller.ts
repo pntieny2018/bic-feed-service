@@ -58,7 +58,6 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
   ): Promise<IPostReaction | ICommentReaction> {
-    deleteReactionDto.target = ReactionEnum.COMMENT;
     return this._reactionService.deleteReaction(userDto, deleteReactionDto);
   }
 }
