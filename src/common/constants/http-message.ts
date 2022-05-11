@@ -15,4 +15,5 @@ export const HTTP_MESSAGES = {
   [HTTP_STATUS_ID.APP_REACTION_TARGET_EXISTING]: 'Unable to find the reaction target',
   [HTTP_STATUS_ID.APP_POST_NOT_FOUND]: 'Unable to find the post',
   [HTTP_STATUS_ID.APP_USER_NOT_FOUND]: 'Unable to find the user',
+  [HTTP_STATUS_ID.APP_REACTION_UNIQUE]: 'Duplicate reaction kind',
 };
