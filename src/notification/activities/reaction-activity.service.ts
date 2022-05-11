@@ -30,10 +30,10 @@ export class ReactionActivityService {
               1 <
             0
           ? 0
-          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] + 1;
+          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] - 1;
     } else {
       post.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: 1,
+        [reaction.reactionName]: action === 'create' ? 1 : 0,
       };
     }
     const reactionObject = {
@@ -103,7 +103,7 @@ export class ReactionActivityService {
             1;
     } else {
       comment.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: 1,
+        [reaction.reactionName]: action === 'create' ? 1 : 0,
       };
     }
 
@@ -183,7 +183,7 @@ export class ReactionActivityService {
             1;
     } else {
       comment.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: 1,
+        [reaction.reactionName]: action === 'create' ? 1 : 0,
       };
     }
     const parentComment = comment.parent;
