@@ -457,9 +457,7 @@ export class ReactionService {
 
     if (deleteReactionDto.reactionName) {
       conditions['reactionName'] = deleteReactionDto.reactionName;
-    }
-
-    if (deleteReactionDto.reactionId) {
+    } else if (deleteReactionDto.reactionId) {
       conditions['id'] = deleteReactionDto.reactionId;
     }
 
@@ -545,7 +543,7 @@ export class ReactionService {
     }
 
     const { id: userId } = userDto;
-    const { reactionId, targetId } = deleteReactionDto;
+    const { targetId } = deleteReactionDto;
 
     const comment = await this._commentService.findComment(targetId);
 
@@ -567,8 +565,7 @@ export class ReactionService {
     const conditions = {};
     if (deleteReactionDto.reactionName) {
       conditions['reactionName'] = deleteReactionDto.reactionName;
-    }
-    if (deleteReactionDto.reactionId) {
+    } else if (deleteReactionDto.reactionId) {
       conditions['id'] = deleteReactionDto.reactionId;
     }
     const trx = await this._sequelize.transaction({
@@ -577,7 +574,7 @@ export class ReactionService {
     try {
       const existedReaction = await this._commentReactionModel.findOne({
         where: {
-          id: reactionId,
+          ...conditions,
           createdBy: userId,
         },
         transaction: trx,
