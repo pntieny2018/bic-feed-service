@@ -12,6 +12,11 @@ export class VideoMetadataDto implements IDocumentMetadata {
   @Expose()
   public id: number;
 
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public uploadId?: string;
+
   @ApiProperty({
     required: true,
     description: 'Video name',

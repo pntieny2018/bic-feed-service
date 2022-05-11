@@ -35,6 +35,8 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
+import { MediaDto } from '../media/dto';
+import { CreateVideoPostService } from './video';
 
 @Injectable()
 export class PostService {
@@ -71,7 +73,8 @@ export class PostService {
     @Inject(forwardRef(() => FeedService))
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
-    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel
+    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
+    private readonly _createVideoPostService: CreateVideoPostService
   ) {}
 
   /**
@@ -240,6 +243,7 @@ export class PostService {
       size: limit,
     };
   }
+
   /**
    * Get Draft Posts
    * @param authUserId auth user ID
@@ -256,6 +260,7 @@ export class PostService {
       where: {
         createdBy: authUserId,
         isDraft: true,
+        isPostVideo: false,
       },
       attributes: {
         exclude: ['commentsCount'],
@@ -488,9 +493,13 @@ export class PostService {
       if (mentions.length) {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
+      // Make video post
+      if (PostService._isVideoPost(media)) {
+        return this._createVideoPostService.createVideoPost(authUser, createPostDto);
+      }
 
-      const { files, videos, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      const { files, images } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const post = await this._postModel.create(
@@ -587,8 +596,13 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, videos, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      // Make video post
+      if (PostService._isVideoPost(media)) {
+        return this._createVideoPostService.updateVideoPost(postId, authUser, updatePostDto);
+      }
+
+      const { files, images } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const dataUpdate = {
@@ -636,7 +650,13 @@ export class PostService {
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
       const post = await this._postModel.findByPk(postId);
+
       await this.checkPostExistAndOwner(post, authUserId);
+
+      if (post.isPostVideo) {
+        return this._createVideoPostService.requestToPublishVideoPost(post.toJSON());
+      }
+
       const countMedia = await this._mediaService.countMediaByPost(postId);
 
       if (post.content === null && countMedia === 0) {
@@ -1057,5 +1077,9 @@ export class PostService {
       this._logger.error(e, e?.stack);
       throw e;
     }
+  }
+
+  private static _isVideoPost(media: MediaDto): boolean {
+    return media ? media.videos.some((v) => v.uploadId) : false;
   }
 }

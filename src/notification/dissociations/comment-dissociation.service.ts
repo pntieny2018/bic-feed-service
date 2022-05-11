@@ -116,7 +116,6 @@ export class CommentDissociationService {
         ),
         groupAudienceIds
       );
-      console.log(validUserIds);
       /**
        * priority:
        *        1. mentioned you in a comment.

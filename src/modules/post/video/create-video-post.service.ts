@@ -1,0 +1,50 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ProcessVideoResponseDto } from './dto';
+import { ProcessStatus } from './process-status.enum';
+import { UserDto } from '../../auth';
+import { CreatePostDto, UpdatePostDto } from '../dto/requests';
+import { InjectModel } from '@nestjs/sequelize';
+import { IPost, PostModel } from '../../../database/models/post.model';
+
+@Injectable()
+export class CreateVideoPostService {
+  private readonly _logger = new Logger(CreateVideoPostService.name);
+
+  public constructor(@InjectModel(PostModel) private readonly _postModel: typeof PostModel) {}
+
+  public async requestToPublishVideoPost(post: IPost): Promise<boolean> {
+    return true;
+  }
+
+  public async publishOrRejectVideoPost(
+    processVideoResponseDto: ProcessVideoResponseDto
+  ): Promise<void> {
+    switch (processVideoResponseDto.status) {
+      case ProcessStatus.DONE:
+        return this.publishVideoPost(processVideoResponseDto);
+      case ProcessStatus.ERROR:
+        return this.rejectVideoPost(processVideoResponseDto);
+    }
+  }
+
+  public async publishVideoPost(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {}
+
+  public async rejectVideoPost(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {}
+
+  public async createVideoPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
+    try {
+      return await this._postModel.create({});
+    } catch (ex) {}
+  }
+
+  public async updateVideoPost(
+    postId: number,
+    authUser: UserDto,
+    updatePostDto: UpdatePostDto
+  ): Promise<boolean> {
+    try {
+      await this._postModel.create({});
+      return false;
+    } catch (ex) {}
+  }
+}

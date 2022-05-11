@@ -1,6 +1,6 @@
 import { MentionModel, IMention } from './mention.model';
-import { MediaType, IMedia } from './media.model';
-import { DataTypes, Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
+import { IMedia } from './media.model';
+import { Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -9,7 +9,6 @@ import {
   CreatedAt,
   Default,
   HasMany,
-  Length,
   Model,
   PrimaryKey,
   Table,
@@ -31,6 +30,7 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 
 export interface IPost {
   id: number;
+  isPostVideo: boolean;
   createdBy: number;
   updatedBy: number;
   content: string;
@@ -58,6 +58,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AutoIncrement
   @Column
   public id: number;
+
+  @Column
+  @Default(false)
+  public isPostVideo: boolean;
 
   @Column
   public commentsCount: number;

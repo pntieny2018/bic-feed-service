@@ -12,6 +12,7 @@ import { AuthorityModule } from '../authority';
 import { LibModule } from '../../app/lib.module';
 import { ReactionModule } from '../reaction';
 import { FeedModule } from '../feed';
+import { CreateVideoPostController, CreateVideoPostService } from './video';
 
 @Module({
   imports: [
@@ -25,9 +26,10 @@ import { FeedModule } from '../feed';
     LibModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
+    Cli,
   ],
-  controllers: [PostController],
-  providers: [PostService, PostPolicyService],
-  exports: [PostService, PostPolicyService],
+  controllers: [PostController, CreateVideoPostController],
+  providers: [PostService, PostPolicyService, CreateVideoPostService],
+  exports: [PostService, PostPolicyService, CreateVideoPostService],
 })
 export class PostModule {}
