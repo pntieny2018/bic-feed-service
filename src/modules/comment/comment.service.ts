@@ -586,10 +586,15 @@ export class CommentService {
     if (aroundId > 0) {
       const index = childGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childGrouped.length);
-      const start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
-      commentsFiltered = childGrouped.slice(start, start + n);
+      let start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
+      let end = start + n;
+      if (end >= childGrouped.length) {
+        end = childGrouped.length;
+        start = end - n;
+      }
+      commentsFiltered = childGrouped.slice(start, end);
       hasPreviousPage = start >= 1;
-      hasNextPage = !!childGrouped[start + n];
+      hasNextPage = !!childGrouped[end];
     } else {
       hasNextPage = childGrouped.length === limit + 1;
       if (hasNextPage) childGrouped.pop();
