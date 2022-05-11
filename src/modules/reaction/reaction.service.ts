@@ -469,16 +469,20 @@ export class ReactionService {
         where: {
           ...conditions,
           createdBy: userDto.id,
+          postId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
-
       if (!existedReaction) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
       }
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._postReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          postId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
       await trx.commit();
@@ -577,6 +581,7 @@ export class ReactionService {
         where: {
           ...conditions,
           createdBy: userId,
+          commentId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
@@ -587,7 +592,11 @@ export class ReactionService {
 
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._commentReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          commentId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
 
