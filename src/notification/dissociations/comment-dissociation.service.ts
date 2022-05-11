@@ -110,13 +110,16 @@ export class CommentDissociationService {
       /**
        * users who was checked if users followed group audience
        */
+      const checkUserIds = [postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments];
+
+      if (!checkUserIds.length) {
+        return recipient;
+      }
+
       const validUserIds = await this.getValidUserIds(
-        [...new Set([postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments])].filter(
-          (id) => id
-        ),
+        [...new Set(checkUserIds)].filter((id) => id),
         groupAudienceIds
       );
-      console.log(validUserIds);
       /**
        * priority:
        *        1. mentioned you in a comment.
