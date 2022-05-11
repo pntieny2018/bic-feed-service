@@ -538,10 +538,11 @@ export class ReactionService {
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<ICommentReaction> {
+    this._logger.debug(`[_deleteCommentReaction]: ${JSON.stringify(deleteReactionDto)},${attempt}`);
+
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
-
     const { id: userId } = userDto;
     const { targetId } = deleteReactionDto;
 
