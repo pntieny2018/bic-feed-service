@@ -8,6 +8,7 @@ import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { ICommentReaction } from '../../database/models/comment-reaction.model';
 import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ReactionEnum } from './reaction.enum';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -57,6 +58,7 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
   ): Promise<IPostReaction | ICommentReaction> {
+    deleteReactionDto.target = ReactionEnum.COMMENT;
     return this._reactionService.deleteReaction(userDto, deleteReactionDto);
   }
 }
