@@ -353,7 +353,7 @@ export class PostService {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
 
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments(
@@ -481,10 +481,8 @@ export class PostService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
       const { groupIds } = audience;
-      const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
-      if (!isMember) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      await this._authorityService.canCreatePost(authUser, groupIds);
+
       if (mentions.length) {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
@@ -577,10 +575,9 @@ export class PostService {
       const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
 
       const { groupIds } = audience;
-      const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
-      if (!isMember) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      const post = await this._postModel.findByPk(postId);
+      if (!post) throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      await this._authorityService.canUpdatePost(authUser, post);
 
       const mentionUserIds = mentions;
       if (mentionUserIds.length) {
@@ -689,11 +686,11 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: number, authUserId: number): Promise<IPost> {
+  public async deletePost(postId: number, authUser: UserDto): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const post = await this._postModel.findOne({ where: { id: postId } });
-      await this.checkPostExistAndOwner(post, authUserId);
+      const post = await this._postModel.findByPk(postId);
+      await this._authorityService.canDeletePost(authUser, post);
       await Promise.all([
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
@@ -706,7 +703,7 @@ export class PostService {
       await this._postModel.destroy({
         where: {
           id: postId,
-          createdBy: authUserId,
+          createdBy: authUser.id,
         },
         transaction: transaction,
       });
@@ -989,7 +986,7 @@ export class PostService {
   ): Promise<PageDto<PostEditedHistoryDto>> {
     try {
       const post = await this.findPost({ postId: postId });
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canUpdatePost(user, post);
 
       if (post.isDraft === true && user.id !== post.createdBy) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);

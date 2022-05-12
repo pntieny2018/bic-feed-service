@@ -940,7 +940,7 @@ describe('PostService', () => {
         ...postData,
         toJSON: () => postData,
       });
-      authorityService.allowAccess = jest
+      authorityService.canReadPost = jest
         .fn()
         .mockRejectedValueOnce(
           new LogicException('You do not have permission to perform this action !')

@@ -236,7 +236,7 @@ describe('PostService', () => {
     describe('User not in post groups', () => {
       it('Should failed', async () => {
         postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
-        authorityService.allowAccess = jest
+        authorityService.canUpdatePost = jest
           .fn()
           .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
         postEditedHistoryModelMock.findAndCountAll = jest
@@ -251,8 +251,8 @@ describe('PostService', () => {
         } catch (e) {
           console.log(e);
         }
-        expect(authorityService.allowAccess).toBeCalledTimes(1);
-        expect(authorityService.allowAccess).toBeCalledWith(mockUserDto, mockPostFindOne);
+        expect(authorityService.canUpdatePost).toBeCalledTimes(1);
+        expect(authorityService.canUpdatePost).toBeCalledWith(mockUserDto, mockPostFindOne);
         expect(postService.findPost).toBeCalledTimes(1);
         expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
       });
@@ -261,7 +261,7 @@ describe('PostService', () => {
     describe('Post is not published and user is not post owner', () => {
       it('Should failed', async () => {
         postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
-        authorityService.allowAccess = jest.fn().mockReturnValue('ok');
+        authorityService.canUpdatePost = jest.fn().mockReturnValue('ok');
         postEditedHistoryModelMock.findAndCountAll = jest
           .fn()
           .mockResolvedValue({ rows: [], count: 0 });
@@ -274,8 +274,8 @@ describe('PostService', () => {
         } catch (e) {
           console.log(e);
         }
-        expect(authorityService.allowAccess).toBeCalledTimes(1);
-        expect(authorityService.allowAccess).toBeCalledWith(
+        expect(authorityService.canUpdatePost).toBeCalledTimes(1);
+        expect(authorityService.canUpdatePost).toBeCalledWith(
           { id: mockUserDto.id + 100 },
           mockPostFindOne
         );
@@ -287,7 +287,7 @@ describe('PostService', () => {
     describe('All conditions are valid', () => {
       it('Should successfully', async () => {
         postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
-        authorityService.allowAccess = jest.fn().mockReturnValue('ok');
+        authorityService.canUpdatePost = jest.fn().mockReturnValue('ok');
         postEditedHistoryModelMock.findAndCountAll = jest.fn().mockResolvedValue({
           rows: mockPostEditedHistoryFindAndCountAll,
           count: mockPostEditedHistoryFindAndCountAll.length,
@@ -298,8 +298,8 @@ describe('PostService', () => {
           mockGetPostEditedHistoryDto
         );
         expect(result).toEqual(mockGetPostEditedHistoryResult);
-        expect(authorityService.allowAccess).toBeCalledTimes(1);
-        expect(authorityService.allowAccess).toBeCalledWith(mockUserDto, mockPostFindOne);
+        expect(authorityService.canUpdatePost).toBeCalledTimes(1);
+        expect(authorityService.canUpdatePost).toBeCalledWith(mockUserDto, mockPostFindOne);
         expect(postService.findPost).toBeCalledTimes(1);
         expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
       });
