@@ -77,6 +77,7 @@ export class NotificationActivity {
   public object: ActivityObject;
   public verb: VerbActivity | string;
   public target: TypeActivity;
+  public ignore?: number[];
   public createdAt: Date;
   public updatedAt: Date;
 

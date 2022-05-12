@@ -87,7 +87,7 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
         const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
         return {
@@ -104,12 +104,12 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
 
         const reactionsComment = (rsc ?? []).map((r) => r.toJSON());
+
         return {
-          order: order,
           list: await this._bindActorToReaction(reactionsComment),
           limit: limit,
           latestId:
@@ -464,6 +464,7 @@ export class ReactionService {
     const trx = await this._sequelize.transaction({
       isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
     });
+
     try {
       const existedReaction = await this._postReactionModel.findOne({
         where: {
@@ -473,9 +474,11 @@ export class ReactionService {
         },
         transaction: trx,
       });
+
       if (!existedReaction) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
       }
+
       const response = existedReaction.toJSON();
 
       await this._postReactionModel.destroy({
