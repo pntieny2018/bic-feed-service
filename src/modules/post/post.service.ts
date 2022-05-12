@@ -303,14 +303,14 @@ export class PostService {
 
   /**
    * Get Post
-   * @param postId number
+   * @param postId string
    * @param user UserDto
    * @param getPostDto GetPostDto
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
   public async getPost(
-    postId: number,
+    postId: string,
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
@@ -537,12 +537,12 @@ export class PostService {
 
   /**
    * Save post edited history
-   * @param postId number
+   * @param postId string
    * @param Object { oldData: PostResponseDto; newData: PostResponseDto }
    * @returns Promise resolve void
    */
   public async savePostEditedHistory(
-    postId: number,
+    postId: string,
     { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
   ): Promise<any> {
     return this._postEditedHistoryModel.create({
@@ -555,14 +555,14 @@ export class PostService {
 
   /**
    * Update Post except isDraft
-   * @param postId postID
+   * @param postId string
    * @param authUser UserDto
    * @param updatePostDto UpdatePostDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async updatePost(
-    postId: number,
+    postId: string,
     authUser: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
@@ -633,7 +633,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishPost(postId: number, authUserId: number): Promise<boolean> {
+  public async publishPost(postId: string, authUserId: number): Promise<boolean> {
     try {
       const post = await this._postModel.findByPk(postId);
       await this.checkPostExistAndOwner(post, authUserId);
@@ -684,12 +684,12 @@ export class PostService {
 
   /**
    * Delete post by id
-   * @param postId postID
+   * @param postId string
    * @param authUserId auth user ID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: number, authUserId: number): Promise<IPost> {
+  public async deletePost(postId: string, authUserId: number): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const post = await this._postModel.findOne({ where: { id: postId } });
@@ -722,9 +722,9 @@ export class PostService {
 
   /**
    * Delete post edited history
-   * @param postId number
+   * @param postId string
    */
-  public async deletePostEditedHistory(postId: number): Promise<any> {
+  public async deletePostEditedHistory(postId: string): Promise<any> {
     return this._postEditedHistoryModel.destroy({
       where: {
         postId: postId,
@@ -735,14 +735,14 @@ export class PostService {
   /**
    * Add group to post
    * @param groupIds Array of Group ID
-   * @param postId PostID
+   * @param postId string
    * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async addPostGroup(
     groupIds: number[],
-    postId: number,
+    postId: string,
     transaction: Transaction
   ): Promise<boolean> {
     if (groupIds.length === 0) return true;
@@ -764,7 +764,7 @@ export class PostService {
    */
   public async setGroupByPost(
     groupIds: number[],
-    postId: number,
+    postId: string,
     transaction: Transaction
   ): Promise<boolean> {
     const currentGroups = await this._postGroupModel.findAll({
@@ -881,7 +881,7 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<number[]> {
+  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<string[]> {
     try {
       const posts = await this._postGroupModel.findAll({
         where: {
@@ -978,13 +978,13 @@ export class PostService {
   /**
    * Get post edited history
    * @param user UserDto
-   * @param postId number
+   * @param postId string
    * @param getPostEditedHistoryDto GetPostEditedHistoryDto
    * @returns Promise resolve PageDto
    */
   public async getPostEditedHistory(
     user: UserDto,
-    postId: number,
+    postId: string,
     getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
     const { schema } = getDatabaseConfig();

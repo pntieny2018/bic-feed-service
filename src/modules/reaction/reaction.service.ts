@@ -31,6 +31,7 @@ import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/requ
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { FollowService } from '../follow';
+import sequelize from 'sequelize';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -67,19 +68,28 @@ export class ReactionService {
    * @returns Promise resolve ReactionsResponseDto
    */
   public async getReactions(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
+    const { schema } = getDatabaseConfig();
     const response = new ReactionsResponseDto();
     const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
-    const conditions =
-      latestId === 0
-        ? {}
-        : {
-            id: {
-              [Op.lt]: latestId,
-            },
-          };
+
+    const conditions = {};
+    if (!!latestId) {
+      conditions['id'] = {
+        [Op.not]: latestId,
+      };
+    }
 
     switch (target) {
       case ReactionEnum.POST:
+        if (!!latestId) {
+          conditions['createdAt'] = {
+            [Op.gte]: sequelize.literal(
+              `(SELECT pr.created_at FROM ${schema}.posts_reactions AS pr WHERE id=${this._sequelize.escape(
+                latestId
+              )})`
+            ),
+          };
+        }
         const rsp = await this._postReactionModel.findAll({
           where: {
             reactionName: reactionName,
@@ -94,9 +104,18 @@ export class ReactionService {
           order: order,
           list: await this._bindActorToReaction(reactionsPost),
           limit: limit,
-          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : 0,
+          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : null,
         };
       case ReactionEnum.COMMENT:
+        if (!!latestId) {
+          conditions['createdAt'] = {
+            [Op.gte]: sequelize.literal(
+              `(SELECT cr.created_at FROM ${schema}.comments_reactions AS cr WHERE id=${this._sequelize.escape(
+                latestId
+              )})`
+            ),
+          };
+        }
         const rsc = await this._commentReactionModel.findAll({
           where: {
             reactionName: reactionName,
@@ -113,7 +132,7 @@ export class ReactionService {
           list: await this._bindActorToReaction(reactionsComment),
           limit: limit,
           latestId:
-            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : 0,
+            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : null,
         };
     }
 
@@ -624,14 +643,14 @@ export class ReactionService {
 
   /**
    * Delete reaction by commentIds
-   * @param commentIds number[]
+   * @param commentIds string[]
    * @returns Promise resolve boolean
    * @throws HttpException
    * @param commentIds
    * @param transaction Transaction
    */
   public async deleteReactionByCommentIds(
-    commentIds: number[],
+    commentIds: string[],
     transaction: Transaction
   ): Promise<number> {
     return this._commentReactionModel.destroy({
@@ -644,11 +663,11 @@ export class ReactionService {
 
   /**
    * Delete reaction by postIds
-   * @param postIds number[]
+   * @param postIds string[]
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteReactionByPostIds(postIds: number[]): Promise<number> {
+  public async deleteReactionByPostIds(postIds: string[]): Promise<number> {
     return this._postReactionModel.destroy({
       where: {
         postId: postIds,

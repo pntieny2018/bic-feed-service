@@ -155,7 +155,7 @@ export class MentionService {
   public async setMention(
     userIds: number[],
     mentionableType: MentionableType,
-    entityId: number,
+    entityId: string,
     transaction: Transaction
   ): Promise<boolean> {
     const currentMentions = await this._mentionModel.findAll({
@@ -229,7 +229,7 @@ export class MentionService {
   }
 
   public async deleteMentionByEntityIds(
-    entityIds: number[],
+    entityIds: string[],
     mentionableType: MentionableType,
     transaction: Transaction
   ): Promise<number> {

@@ -253,11 +253,11 @@ export class FeedService {
 
   /**
    * Delete newsfeed by post
-   * @param postId number
+   * @param postId string
    * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: number, transaction: Transaction): Promise<number> {
+  public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 

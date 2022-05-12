@@ -21,7 +21,7 @@ export class CommentDissociationService {
 
   public async dissociateComment(
     actorId: number,
-    commentId: number,
+    commentId: string,
     groupAudienceIds: number[]
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const recipient = CommentRecipientDto.init();

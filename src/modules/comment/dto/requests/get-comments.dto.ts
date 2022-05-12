@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderEnum, PageOptionsDto } from '../../../../common/dto';
 import { Type } from 'class-transformer';
@@ -7,14 +7,16 @@ export class GetCommentsDto extends PageOptionsDto {
   @ApiProperty({
     required: true,
   })
+  @IsUUID()
   @IsNotEmpty()
-  public postId: number;
+  public postId: string;
 
   @ApiProperty({
     required: false,
   })
+  @IsUUID()
   @IsOptional()
-  public parentId?: number = undefined;
+  public parentId?: string = null;
 
   @ApiProperty({
     required: false,

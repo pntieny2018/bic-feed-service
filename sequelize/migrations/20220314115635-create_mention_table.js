@@ -20,7 +20,7 @@ module.exports = {
           allowNull: false,
         },
         entity_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
         },
         user_id: {

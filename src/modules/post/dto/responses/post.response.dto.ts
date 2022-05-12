@@ -9,14 +9,16 @@ import { AudienceResponseDto } from './audience.response.dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { IsUUID } from 'class-validator';
 
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
-    type: Number,
+    type: String,
   })
+  @IsUUID()
   @Expose()
-  public id: number;
+  public id: string;
 
   @ApiProperty({
     description: 'Content',

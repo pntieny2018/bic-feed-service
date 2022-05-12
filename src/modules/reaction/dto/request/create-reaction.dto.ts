@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
 import { ReactionEnum } from '../../reaction.enum';
 import { emoji } from 'node-emoji';
 
@@ -17,10 +17,10 @@ export class CreateReactionDto {
   public target: ReactionEnum;
 
   @ApiProperty({ example: 1 })
-  @IsNumber()
+  @IsUUID()
   @IsNotEmpty()
   @Expose()
-  public targetId: number;
+  public targetId: string;
 
   public constructor(createReactionDto: CreateReactionDto) {
     Object.assign(this, createReactionDto);

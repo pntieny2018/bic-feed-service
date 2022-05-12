@@ -2,11 +2,12 @@ import { PostModel } from './post.model';
 import { CommentModel } from './comment.model';
 import { MentionableType } from '../../common/constants';
 import { AutoIncrement, BelongsTo, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { IsUUID } from 'class-validator';
 
 export interface IMention {
   id?: number;
   mentionableType: MentionableType;
-  entityId: number;
+  entityId: string;
   userId: number;
   post?: PostModel;
   comment?: CommentModel;
@@ -24,8 +25,9 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   @Column
   public mentionableType: MentionableType;
 
+  @IsUUID()
   @Column
-  public entityId: number;
+  public entityId: string;
 
   @Column
   public userId: number;

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
 import { Optional } from 'sequelize';
 import {
   AllowNull,
@@ -24,7 +25,7 @@ export enum MediaType {
 }
 
 export interface IMedia {
-  id: number;
+  id: string;
   createdBy: number;
   url: string;
   type: MediaType;
@@ -45,9 +46,9 @@ export interface IMedia {
 })
 export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements IMedia {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
   @Column
-  public id: number;
+  public id: string;
 
   @Column
   public url: string;

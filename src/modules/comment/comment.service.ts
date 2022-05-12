@@ -58,13 +58,13 @@ export class CommentService {
    * Create new comment
    * @param user UserDto
    * @param createCommentDto CreateCommentDto
-   * @param replyId Number
+   * @param replyId String
    * @return Promise resolve CommentResponseDto
    */
   public async create(
     user: UserDto,
     createCommentDto: CreateCommentDto,
-    replyId = 0
+    replyId = null
   ): Promise<IComment> {
     this._logger.debug(
       `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
@@ -74,7 +74,7 @@ export class CommentService {
 
     let post;
 
-    if (replyId > 0) {
+    if (!!replyId) {
       const parentComment = await this._commentModel.findOne({
         include: [
           {
@@ -273,13 +273,13 @@ export class CommentService {
   /**
    * Get single comment
    * @param user UserDto
-   * @param commentId Number
+   * @param commentId String
    * @param childLimit Number
    * @returns Promise resolve CommentResponseDto
    */
   public async getComment(
     user: UserDto,
-    commentId: number,
+    commentId: string,
     childLimit = 25
   ): Promise<CommentResponseDto> {
     this._logger.debug(`[getComment] commentId: ${commentId} `);
@@ -373,13 +373,13 @@ export class CommentService {
 
   /**
    * Get comment list
-   * @param commentId Number
+   * @param commentId String
    * @param user UserDto
    * @param getCommentLinkDto GetCommentLinkDto
    * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getCommentLink(
-    commentId: number,
+    commentId: string,
     user: UserDto,
     getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
@@ -400,7 +400,7 @@ export class CommentService {
     });
     await this._authorityService.allowAccess(user, post);
     const actor = await this._userService.get(post.createdBy);
-    const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;
+    const parentId = !!checkComment.parentId ? checkComment.parentId : commentId;
     const comments = await this._getComments(
       user.id,
       {
@@ -412,7 +412,7 @@ export class CommentService {
     if (comments.list.length && limit > 1) {
       await this.bindChildrenToComment(comments.list, user.id, childLimit);
     }
-    const aroundChildId = checkComment.parentId > 0 ? commentId : 0;
+    const aroundChildId = !!checkComment.parentId ? commentId : 0;
     const child = await this._getComments(
       user.id,
       {
@@ -467,7 +467,7 @@ export class CommentService {
   private async _getComments(
     authUserId: number,
     getCommentsDto: GetCommentsDto,
-    aroundId = 0
+    aroundId = null
   ): Promise<PageDto<CommentResponseDto>> {
     const { limit } = getCommentsDto;
     const order = getCommentsDto.order ?? OrderEnum.DESC;
@@ -612,10 +612,10 @@ export class CommentService {
   /**
    * Delete single comment
    * @param user UserDto
-   * @param commentId Number
+   * @param commentId string
    * @returns Promise resolve boolean
    */
-  public async destroy(user: UserDto, commentId: number): Promise<IComment> {
+  public async destroy(user: UserDto, commentId: string): Promise<IComment> {
     this._logger.debug(`[destroy] user: ${JSON.stringify(user)}, commentID: ${commentId}`);
 
     const comment = await this._commentModel.findOne({
@@ -797,11 +797,11 @@ export class CommentService {
 
   /**
    * Delete all comments by postID
-   * @param postId number
+   * @param postId string
    * @param transaction Transaction
    * @returns Promise resolve boolean
    */
-  public async deleteCommentsByPost(postId: number, transaction: Transaction): Promise<void> {
+  public async deleteCommentsByPost(postId: string, transaction: Transaction): Promise<void> {
     const comments = await this._commentModel.findAll({
       where: { postId },
     });
@@ -827,8 +827,8 @@ export class CommentService {
     });
   }
 
-  public async findComment(commentId: number): Promise<CommentResponseDto> {
-    const get = async (cid: number): Promise<CommentModel> => {
+  public async findComment(commentId: string): Promise<CommentResponseDto> {
+    const get = async (cid: string): Promise<CommentModel> => {
       return await this._commentModel.findOne({
         where: {
           id: cid,
@@ -873,12 +873,12 @@ export class CommentService {
 
   /**
    * Save comment edited history
-   * @param commentId number
+   * @param commentId string
    * @param Object { oldData: CommentResponseDto; newData: CommentResponseDto }
    * @returns Promise resolve any
    */
   public async saveCommentEditedHistory(
-    commentId: number,
+    commentId: string,
     { oldData, newData }: { oldData: CommentResponseDto; newData: CommentResponseDto }
   ): Promise<any> {
     return this._commentEditedHistoryModel.create({
@@ -905,13 +905,13 @@ export class CommentService {
   /**
    * Get comment edited history
    * @param user UserDto
-   * @param commentId number
+   * @param commentId string
    * @param getCommentEditedHistoryDto GetCommentEditedHistoryDto
    * @returns Promise resolve PageDto
    */
   public async getCommentEditedHistory(
     user: UserDto,
-    commentId: number,
+    commentId: string,
     getCommentEditedHistoryDto: GetCommentEditedHistoryDto
   ): Promise<PageDto<CommentEditedHistoryDto>> {
     const { schema } = getDatabaseConfig();
@@ -1017,11 +1017,11 @@ export class CommentService {
 
   /**
    * Get post ID of a comment
-   * @param commentId number
-   * @returns Promise resolve number
+   * @param commentId string
+   * @returns Promise resolve string
    * @throws Logical exception
    */
-  public async getPostIdOfComment(commentId: number): Promise<number> {
+  public async getPostIdOfComment(commentId: string): Promise<string> {
     const comment = await this._commentModel.findOne({
       where: {
         id: commentId,

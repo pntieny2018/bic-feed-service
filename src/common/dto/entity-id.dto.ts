@@ -1,6 +1,6 @@
 export class EntityIdDto {
-  public postId?: number;
-  public commentId?: number;
-  public reactionCommentId?: number;
-  public reactionPostId?: number;
+  public postId?: string;
+  public commentId?: string;
+  public reactionCommentId?: string;
+  public reactionPostId?: string;
 }

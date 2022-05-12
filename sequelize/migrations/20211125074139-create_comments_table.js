@@ -10,16 +10,16 @@ module.exports = {
       {
         id: {
           primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.literal("gen_random_uuid()")
         },
         post_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: { model: 'posts', key: 'id' },
         },
         parent_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           defaultValue: 0,
         },

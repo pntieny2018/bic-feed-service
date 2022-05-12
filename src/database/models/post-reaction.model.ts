@@ -1,3 +1,4 @@
+import { IsUUID } from 'class-validator';
 import {
   AutoIncrement,
   Column,
@@ -12,8 +13,8 @@ import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
 
 export interface IPostReaction {
-  id: number;
-  postId?: number;
+  id: string;
+  postId?: string;
   reactionName: string;
   createdBy?: number;
   createdAt?: Date;
@@ -28,12 +29,14 @@ export class PostReactionModel
 {
   @PrimaryKey
   @AutoIncrement
+  @IsUUID()
   @Column
-  public id: number;
+  public id: string;
 
   @ForeignKey(() => PostModel)
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @ForeignKey(() => MediaModel)
   @Column

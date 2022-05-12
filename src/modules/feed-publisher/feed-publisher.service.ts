@@ -19,7 +19,7 @@ export class FeedPublisherService {
     @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel
   ) {}
 
-  public async attachPostsForUserNewsFeed(userId: number, postIds: number[]): Promise<void> {
+  public async attachPostsForUserNewsFeed(userId: number, postIds: string[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userId, postIds })}`);
 
     try {
@@ -37,9 +37,9 @@ export class FeedPublisherService {
   /**
    * Attach post for any NewsFeed
    * @param userIds Array<Number>
-   * @param postId Array<Number>
+   * @param postId String
    */
-  public async attachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
+  public async attachPostForAnyNewsFeed(userIds: number[], postId: string): Promise<void> {
     this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
     const schema = this._databaseConfig.schema;
     try {
@@ -68,9 +68,9 @@ export class FeedPublisherService {
   /**
    * Detach post for any NewsFeed
    * @param userIds Array<Number>
-   * @param postId Array<Number>
+   * @param postId String
    */
-  public async detachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
+  public async detachPostForAnyNewsFeed(userIds: number[], postId: string): Promise<void> {
     this._logger.debug(`[detachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
 
     try {
@@ -89,7 +89,7 @@ export class FeedPublisherService {
 
   protected async processFanout(
     userId: number,
-    postId: number,
+    postId: string,
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
     this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
@@ -146,7 +146,7 @@ export class FeedPublisherService {
 
   public fanoutOnWrite(
     createdBy: number,
-    postId: number,
+    postId: string,
     currentGroupIds: number[],
     oldGroupIds: number[]
   ): void {

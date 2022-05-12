@@ -62,7 +62,7 @@ export class PostController {
   @Get('/:postId/edited-history')
   public getPostEditedHistory(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseIntPipe) postId: number,
+    @Param('postId') postId: string,
     @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
     return this._postService.getPostEditedHistory(user, postId, getPostEditedHistoryDto);
@@ -87,7 +87,7 @@ export class PostController {
   @Get('/:postId')
   public getPost(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseIntPipe) postId: number,
+    @Param('postId') postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     return this._postService.getPost(postId, user, getPostDto);
@@ -117,7 +117,7 @@ export class PostController {
   @Put('/:postId')
   public async updatePost(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseIntPipe) postId: number,
+    @Param('postId') postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
@@ -146,7 +146,7 @@ export class PostController {
   @Put('/:postId/publish')
   public async publishPost(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseIntPipe) postId: number
+    @Param('postId') postId: string
   ): Promise<PostResponseDto> {
     const isPublished = await this._postService.publishPost(postId, user.id);
     if (isPublished) {
@@ -169,7 +169,7 @@ export class PostController {
   @Delete('/:id')
   public async deletePost(
     @AuthUser() user: UserDto,
-    @Param('id', ParseIntPipe) postId: number
+    @Param('id') postId: string
   ): Promise<boolean> {
     const postDeleted = await this._postService.deletePost(postId, user.id);
     if (postDeleted) {

@@ -4,7 +4,7 @@ import { ReactionDto } from '../../dto/reaction.dto';
 import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from '../../dto/request';
 import { ReactionEnum } from '../../reaction.enum';
 
-export const mockCreateReactionDto: CreateReactionDto[] = [
+export const mockCreateReactionDto = [
   {
     reactionName: 'smile',
     target: ReactionEnum.POST,
@@ -17,7 +17,7 @@ export const mockCreateReactionDto: CreateReactionDto[] = [
   },
 ];
 
-export const mockReactionDto: ReactionDto = {
+export const mockReactionDto = {
   userId: 33,
   reactionId: 1,
   target: ReactionEnum.POST,
@@ -25,7 +25,7 @@ export const mockReactionDto: ReactionDto = {
   reactionName: 'smile',
 };
 
-export const mockDeleteReactionDto: DeleteReactionDto[] = [
+export const mockDeleteReactionDto = [
   {
     target: ReactionEnum.POST,
     reactionId: 1,

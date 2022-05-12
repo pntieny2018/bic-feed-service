@@ -101,6 +101,9 @@ module.exports = {
           }, { transaction: t }),
           queryInterface.addColumn({ tableName: `users_mark_read_posts`, schema: schemaName }, 'post_uuid', {
             type: Sequelize.UUID,
+          }, { transaction: t }),
+          queryInterface.addColumn({ tableName: `users_seen_posts`, schema: schemaName }, 'post_uuid', {
+            type: Sequelize.UUID,
           }, { transaction: t })
         ])
       })
@@ -218,6 +221,13 @@ module.exports = {
               SET post_uuid=(SELECT uuid FROM ${schemaName}.posts p WHERE p.id=umrp.post_id)
               `,
             { transaction: t }
+          ),
+          queryInterface.sequelize.query(
+            `
+              UPDATE ${schemaName}.users_seen_posts usp
+              SET post_uuid=(SELECT uuid FROM ${schemaName}.posts p WHERE p.id=usp.post_id)
+              `,
+            { transaction: t }
           )
         ])
       })
@@ -236,7 +246,8 @@ module.exports = {
           queryInterface.removeColumn({ tableName: `posts_media`, schema: schemaName }, 'media_id', { transaction: t }),
           queryInterface.removeColumn({ tableName: `posts_reactions`, schema: schemaName }, 'post_id', { transaction: t }),
           queryInterface.removeColumn({ tableName: `user_newsfeed`, schema: schemaName }, 'post_id', { transaction: t }),
-          queryInterface.removeColumn({ tableName: `users_mark_read_posts`, schema: schemaName }, 'post_id', { transaction: t })
+          queryInterface.removeColumn({ tableName: `users_mark_read_posts`, schema: schemaName }, 'post_id', { transaction: t }),
+          queryInterface.removeColumn({ tableName: `users_seen_posts`, schema: schemaName }, 'post_id', { transaction: t })
         ]);
       })
       .then(() => { // drop old primary key
@@ -308,7 +319,8 @@ module.exports = {
           queryInterface.renameColumn({ tableName: `posts_media`, schema: schemaName }, 'media_uuid', 'media_id', { transaction: t }),
           queryInterface.renameColumn({ tableName: `posts_reactions`, schema: schemaName }, 'post_uuid', 'post_id', { transaction: t }),
           queryInterface.renameColumn({ tableName: `user_newsfeed`, schema: schemaName }, 'post_uuid', 'post_id', { transaction: t }),
-          queryInterface.renameColumn({ tableName: `users_mark_read_posts`, schema: schemaName }, 'post_uuid', 'post_id', { transaction: t })
+          queryInterface.renameColumn({ tableName: `users_mark_read_posts`, schema: schemaName }, 'post_uuid', 'post_id', { transaction: t }),
+          queryInterface.renameColumn({ tableName: `users_seen_posts`, schema: schemaName }, 'post_uuid', 'post_id', { transaction: t })
         ]);
       })
       .then(() => { // add fk constraints
@@ -449,6 +461,20 @@ module.exports = {
             transaction: t
           }),
           queryInterface.changeColumn({ tableName: `users_mark_read_posts`, schema: schemaName }, `post_id`, {
+            type: Sequelize.UUID,
+            allowNull: false
+          }, { transaction: t }),
+
+          queryInterface.addConstraint({ tableName: `users_seen_posts`, schema: schemaName }, {
+            fields: ['post_id'],
+            type: 'foreign key',
+            references: {
+              table: `posts`,
+              field: 'id'
+            },
+            transaction: t
+          }),
+          queryInterface.changeColumn({ tableName: `users_seen_posts`, schema: schemaName }, `post_id`, {
             type: Sequelize.UUID,
             allowNull: false
           }, { transaction: t })

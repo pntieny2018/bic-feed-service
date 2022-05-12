@@ -1,6 +1,6 @@
 import { CommentResponseDto } from '../../../../comment/dto/response/comment.response.dto';
 import { PageDto } from '../../../../../common/dto/pagination/page.dto';
-export const mockedComments: PageDto<CommentResponseDto> = {
+export const mockedComments = {
   list: [
     {
       ownerReactions: [],
