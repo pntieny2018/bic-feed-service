@@ -8,8 +8,8 @@ export class ProcessVideoMetadataResponseDto {
   public extension?: string;
 }
 export class ProcessVideoResponseDto {
-  public postId: number;
-  public uploadIds: string;
+  //public postId: number;
+  public uploadId: string;
   public status: ProcessStatus;
   public hlsUrl: string;
   public meta?: ProcessVideoMetadataResponseDto;

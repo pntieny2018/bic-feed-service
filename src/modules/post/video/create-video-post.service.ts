@@ -27,9 +27,22 @@ export class CreateVideoPostService {
     }
   }
 
-  public async publishVideoPost(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {}
+  public async publishVideoPost(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
+    //set hidden = false
+  }
 
-  public async rejectVideoPost(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {}
+  public async rejectVideoPost(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
+    //sent to noti 
+    // check post is publish
+    // this._notificationService.publishPostNotification({
+    //   key: `${post.id}`,
+    //   value: {
+    //     actor,
+    //     event: event.getEventName(), PostVideoHasBeenPublished
+    //     data: activity,
+    //   },
+    // });
+  }
 
   public async createVideoPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     try {
