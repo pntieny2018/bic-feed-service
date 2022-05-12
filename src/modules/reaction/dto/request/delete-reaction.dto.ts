@@ -10,7 +10,7 @@ export class DeleteReactionDto {
   @Expose()
   public target: ReactionEnum;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 'dd41bad0-9699-493a-b8cd-c0cea072f373' })
   @IsUUID()
   @IsNotEmpty()
   @Expose()

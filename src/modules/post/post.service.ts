@@ -897,7 +897,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: number, userId: number): Promise<void> {
+  public async markReadPost(postId: string, userId: number): Promise<void> {
     const post = await this._postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);

@@ -3,6 +3,9 @@ require('dotenv').config();
 
 const schemaName = process.env.DB_SCHEMA;
 const tableName = 'comments';
+
+const  { NIL: NIL_UUID } = require('uuid');
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
@@ -21,7 +24,7 @@ module.exports = {
         parent_id: {
           type: Sequelize.UUID,
           allowNull: false,
-          defaultValue: 0,
+          defaultValue: NIL_UUID,
         },
         total_reply: {
           type: Sequelize.INTEGER,

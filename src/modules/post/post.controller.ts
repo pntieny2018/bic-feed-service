@@ -183,14 +183,14 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Mark important post' })
+  @ApiOperation({ summary: 'Mark as read' })
   @ApiOkResponse({
     type: Boolean,
   })
   @Put('/:id/mark-as-read')
   public async markReadPost(
     @AuthUser() user: UserDto,
-    @Param('id', ParseIntPipe) postId: number
+    @Param('id') postId: string
   ): Promise<boolean> {
     await this._postService.markReadPost(postId, user.id);
     return true;

@@ -32,6 +32,7 @@ import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nest
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { FollowService } from '../follow';
 import sequelize from 'sequelize';
+import { NIL as NIL_UUID } from 'uuid';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -73,7 +74,7 @@ export class ReactionService {
     const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
 
     const conditions = {};
-    if (!!latestId) {
+    if (latestId !== NIL_UUID) {
       conditions['id'] = {
         [Op.not]: latestId,
       };
@@ -81,7 +82,7 @@ export class ReactionService {
 
     switch (target) {
       case ReactionEnum.POST:
-        if (!!latestId) {
+        if (latestId !== NIL_UUID) {
           conditions['createdAt'] = {
             [Op.gte]: sequelize.literal(
               `(SELECT pr.created_at FROM ${schema}.posts_reactions AS pr WHERE id=${this._sequelize.escape(
@@ -107,7 +108,7 @@ export class ReactionService {
           latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : null,
         };
       case ReactionEnum.COMMENT:
-        if (!!latestId) {
+        if (latestId !== NIL_UUID) {
           conditions['createdAt'] = {
             [Op.gte]: sequelize.literal(
               `(SELECT cr.created_at FROM ${schema}.comments_reactions AS cr WHERE id=${this._sequelize.escape(
@@ -366,9 +367,10 @@ export class ReactionService {
           },
         });
 
-        const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+        const type =
+          comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
-        const ownerId = comment.parentId ? comment.parent.actor.id : comment.actor.id;
+        const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
 
         this._followService
           .getValidUserIds(
@@ -600,7 +602,8 @@ export class ReactionService {
 
       await trx.commit();
 
-      const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+      const type =
+        comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
       const actor = {
         id: userId,

@@ -2,6 +2,7 @@ import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderEnum, PageOptionsDto } from '../../../../common/dto';
 import { Type } from 'class-transformer';
+import uuid from 'uuid';
 
 export class GetCommentsDto extends PageOptionsDto {
   @ApiProperty({

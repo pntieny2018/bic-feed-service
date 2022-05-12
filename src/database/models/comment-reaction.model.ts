@@ -1,8 +1,8 @@
 import { IsUUID } from 'class-validator';
 import {
-  AutoIncrement,
   Column,
   CreatedAt,
+  Default,
   ForeignKey,
   Model,
   PrimaryKey,
@@ -10,6 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize/types';
 import { CommentModel } from './comment.model';
+import { v4 as uuid_v4 } from 'uuid';
 
 export interface ICommentReaction {
   id: string;
@@ -29,6 +30,7 @@ export class CommentReactionModel
 {
   @PrimaryKey
   @IsUUID()
+  @Default(() => uuid_v4())
   @Column
   public id: string;
 

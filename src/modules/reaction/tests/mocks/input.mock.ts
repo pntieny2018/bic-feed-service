@@ -42,7 +42,7 @@ export const mockUserDto: UserDto = {
   id: 33,
 };
 
-export const mockGetReactionDto: GetReactionDto = {
+export const mockGetReactionDto = {
   reactionName: 'smile',
   targetId: 9,
   target: ReactionEnum.POST,

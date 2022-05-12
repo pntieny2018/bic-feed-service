@@ -29,6 +29,7 @@ import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
 import { BelongsToManyAddAssociationsMixin, Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
+import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -61,12 +62,13 @@ export interface IComment {
 export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> implements IComment {
   @PrimaryKey
   @IsUUID()
+  @Default(() => uuid_v4())
   @Column
   public id: string;
 
   public actor: UserDataShareDto;
 
-  @AllowNull(true)
+  @AllowNull(false)
   @ForeignKey(() => CommentModel)
   @IsUUID()
   @Column
@@ -193,7 +195,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     comment: CommentModel,
     action: ActionEnum
   ): Promise<void> {
-    if (!!comment.parentId) {
+    if (comment.parentId !== NIL_UUID) {
       const parentComment = await comment.sequelize
         .model(CommentModel.name)
         .findByPk(comment.parentId);

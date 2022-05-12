@@ -1,13 +1,19 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { ReactionEnum } from '../../reaction.enum';
 import { OrderEnum } from '../../../../common/dto';
+import { IsUUID } from 'class-validator';
+import { NIL as NIL_UUID } from 'uuid';
 
 export class GetReactionDto {
   @ApiProperty()
   public reactionName: string;
 
-  @ApiProperty()
-  public targetId: number;
+  @ApiProperty({
+    type: String,
+    example: '494d8a84-fbc3-4a8f-a8a9-530a26b2007f',
+  })
+  @IsUUID()
+  public targetId: string;
 
   @ApiProperty({
     enum: ReactionEnum,
@@ -16,9 +22,10 @@ export class GetReactionDto {
 
   @ApiProperty({
     required: false,
-    default: 0,
+    default: NIL_UUID,
   })
-  public latestId = 0;
+  @IsUUID()
+  public latestId = NIL_UUID;
 
   @ApiProperty({
     required: false,

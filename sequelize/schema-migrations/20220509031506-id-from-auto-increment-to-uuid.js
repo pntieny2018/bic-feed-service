@@ -67,7 +67,8 @@ module.exports = {
           }, { transaction: t }),
           queryInterface.addColumn({ tableName: `comments`, schema: schemaName }, 'parent_uuid', {
             type: Sequelize.UUID,
-            allowNull: true
+            allowNull: false,
+            defaultValue: '00000000-0000-0000-0000-000000000000'
           }, { transaction: t }),
           queryInterface.addColumn({ tableName: `comments_media`, schema: schemaName }, 'comment_uuid', {
             type: Sequelize.UUID,
@@ -90,7 +91,7 @@ module.exports = {
           queryInterface.addColumn({ tableName: `posts_media`, schema: schemaName }, 'post_uuid', {
             type: Sequelize.UUID,
           }, { transaction: t }),
-          queryInterface.addColumn({ tableName: `posts_media`, schema: schemaName }, 'media_uuid', { 
+          queryInterface.addColumn({ tableName: `posts_media`, schema: schemaName }, 'media_uuid', {
             type: Sequelize.UUID,
           }, { transaction: t }),
           queryInterface.addColumn({ tableName: `posts_reactions`, schema: schemaName }, 'post_uuid', {
@@ -127,6 +128,7 @@ module.exports = {
             `
               UPDATE ${schemaName}.comments c1
               SET parent_uuid=(SELECT uuid FROM ${schemaName}.comments c2 WHERE c2.id=c1.parent_id)
+              WHERE parent_id != 0
               `,
             { transaction: t }
           ),
@@ -394,7 +396,7 @@ module.exports = {
             type: Sequelize.UUID,
             allowNull: false
           }, { transaction: t }),
-          
+
           queryInterface.addConstraint({ tableName: `posts_media`, schema: schemaName }, {
             fields: ['post_id'],
             type: 'foreign key',

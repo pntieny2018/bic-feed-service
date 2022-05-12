@@ -102,7 +102,7 @@ export class CommentController {
   @Post('/:commentId/reply')
   public async reply(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
+    @Param('commentId') commentId: string,
     @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('reply comment');
@@ -173,7 +173,7 @@ export class CommentController {
   @Put('/:commentId')
   public async update(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
+    @Param('commentId') commentId: string,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('update comment');
