@@ -34,8 +34,7 @@ export class AuthorityService {
       .map((g) => g.id);
     const userJoinedGroupIds = user.profile?.groups ?? [];
     if (privateGroupIds.length == 0) return;
-
-    const canAccess = this._groupService.isMemberOfSomeGroups([1], userJoinedGroupIds);
+    const canAccess = this._groupService.isMemberOfSomeGroups(privateGroupIds, userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
@@ -44,7 +43,6 @@ export class AuthorityService {
   public checkCanCreatePost(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
-
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
