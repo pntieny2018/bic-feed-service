@@ -27,7 +27,7 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
-import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
+import { CommentEditedHistoryDto, CommentResponseDto, CommentsResponseDto } from './dto/response';
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
@@ -114,7 +114,7 @@ export class CommentService {
     }
 
     // check user can access
-    this._authorityService.allowAccess(user, post);
+    this._authorityService.canReadPost(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
@@ -212,7 +212,7 @@ export class CommentService {
     });
 
     // check user can access
-    this._authorityService.allowAccess(user, post);
+    this._authorityService.canReadPost(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
@@ -352,7 +352,7 @@ export class CommentService {
         postId,
       });
 
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canReadPost(user, post);
     }
     const comments = await this._getComments(user.id, getCommentsDto);
     if (comments.list.length && parentId === NIL_UUID) {
@@ -363,7 +363,6 @@ export class CommentService {
       this._mentionService.bindMentionsToComment(comments.list),
       this.bindUserToComment(comments.list),
     ]);
-
     return comments;
   }
 
@@ -394,7 +393,7 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId,
     });
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
     const actor = await this._userService.get(user.id);
     const parentId = checkComment.parentId !== NIL_UUID ? checkComment.parentId : commentId;
     const comments = await this._getComments(
@@ -584,10 +583,15 @@ export class CommentService {
     if (!!aroundId) {
       const index = childGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childGrouped.length);
-      const start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
-      commentsFiltered = childGrouped.slice(start, start + n);
+      let start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
+      let end = start + n;
+      if (end >= childGrouped.length) {
+        end = childGrouped.length;
+        start = end - n;
+      }
+      commentsFiltered = childGrouped.slice(start, end);
       hasPreviousPage = start >= 1;
-      hasNextPage = !!childGrouped[start + n];
+      hasNextPage = !!childGrouped[end];
     } else {
       hasNextPage = childGrouped.length === limit + 1;
       if (hasNextPage) childGrouped.pop();
@@ -628,7 +632,7 @@ export class CommentService {
       commentId: commentId,
     });
 
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
 
@@ -777,7 +781,6 @@ export class CommentService {
         excludeExtraneousValues: true,
       }
     );
-
     for (const comment of comments) {
       const childList = childFormatted.filter((i) => i.parentId === comment.id);
       const hasNextPage = childList.length > limit;
@@ -842,6 +845,11 @@ export class CommentService {
             as: 'mentions',
             required: false,
           },
+          {
+            model: CommentReactionModel,
+            as: 'ownerReactions',
+            required: false,
+          },
         ],
       });
     };
@@ -861,6 +869,8 @@ export class CommentService {
     await this._mentionService.bindMentionsToComment([rawComment]);
 
     await this.bindUserToComment([rawComment]);
+
+    await this._reactionService.bindReactionToComments([rawComment]);
 
     return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
@@ -915,7 +925,7 @@ export class CommentService {
     try {
       const postId = await this.getPostIdOfComment(commentId);
       const post = await this._postService.findPost({ postId: postId });
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canReadPost(user, post);
 
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } =
         getCommentEditedHistoryDto;

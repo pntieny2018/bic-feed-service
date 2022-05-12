@@ -20,7 +20,6 @@ export class DeleteReactionDto {
   @IsUUID()
   @IsNotEmpty()
   @Expose()
-  @IsOptional()
   @ValidateIf((object) => !object['reactionName'])
   public reactionId?: string;
 
@@ -28,7 +27,6 @@ export class DeleteReactionDto {
   @IsNotEmpty()
   @Expose()
   @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
-  @IsOptional()
   @ValidateIf((object) => !object['reactionId'])
   public reactionName?: string;
 }

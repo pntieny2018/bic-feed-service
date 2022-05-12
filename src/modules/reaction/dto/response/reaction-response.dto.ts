@@ -16,7 +16,7 @@ export class ReactionResponseDto {
 
   @ApiProperty()
   @Expose()
-  public actor: UserDataShareDto = null;
+  public actor?: UserDataShareDto = null;
 
   @ApiProperty()
   @Expose()
