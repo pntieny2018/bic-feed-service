@@ -576,8 +576,8 @@ export class PostService {
 
       const { groupIds } = audience;
       const post = await this._postModel.findByPk(postId);
-      if (!post) throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
-      await this._authorityService.checkCanUpdatePost(authUser, post);
+      await this.checkPostOwner(post, authUser.id);
+      await this._authorityService.checkCanUpdatePost(authUser, groupIds);
 
       const mentionUserIds = mentions;
       if (mentionUserIds.length) {
@@ -633,7 +633,7 @@ export class PostService {
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
       const post = await this._postModel.findByPk(postId);
-      await this.checkPostExistAndOwner(post, authUserId);
+      await this.checkPostOwner(post, authUserId);
       const countMedia = await this._mediaService.countMediaByPost(postId);
 
       if (post.content === null && countMedia === 0) {
@@ -665,7 +665,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkPostExistAndOwner(
+  public async checkPostOwner(
     post: PostResponseDto | PostModel | IPost,
     authUserId: number
   ): Promise<boolean> {
@@ -690,7 +690,7 @@ export class PostService {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const post = await this._postModel.findByPk(postId);
-      await this._authorityService.checkCanDeletePost(authUser, post);
+      await this.checkPostOwner(post, authUser.id);
       await Promise.all([
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
@@ -986,13 +986,17 @@ export class PostService {
   ): Promise<PageDto<PostEditedHistoryDto>> {
     try {
       const post = await this.findPost({ postId: postId });
-      await this._authorityService.checkCanUpdatePost(user, post);
-
-      if (post.isDraft === true && user.id !== post.createdBy) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      await this.checkPostOwner(post, user.id);
 
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
+
+      if (post.isDraft === true) {
+        return new PageDto([], {
+          limit: limit,
+          total: 0,
+        });
+      }
+
       const conditions = {};
       conditions['postId'] = postId;
       if (idGT) {

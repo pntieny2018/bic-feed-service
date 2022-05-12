@@ -83,7 +83,7 @@ describe('PostService', () => {
         {
           provide: AuthorityService,
           useValue: {
-            allowAccess: jest.fn(),
+            canReadPost: jest.fn(),
           },
         },
         {

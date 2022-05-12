@@ -85,7 +85,7 @@ describe('CommentService', () => {
         {
           provide: AuthorityService,
           useValue: {
-            allowAccess: jest.fn(),
+            canReadPost: jest.fn(),
           },
         },
         {
