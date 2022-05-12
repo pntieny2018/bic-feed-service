@@ -89,6 +89,10 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @Column
   public edited?: boolean;
 
+  @AllowNull(true)
+  @Column
+  public giphyId: string;
+
   @Column
   public updatedBy: number;
 
