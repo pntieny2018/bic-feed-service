@@ -28,14 +28,15 @@ export class AuthorityService {
       .filter((g) => g.privacy === GroupPrivacy.PRIVATE || g.privacy === GroupPrivacy.SECRET)
       .map((g) => g.id);
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(privateGroupIds, userJoinedGroupIds);
+    if (privateGroupIds.length == 0) return;
 
+    const canAccess = this._groupService.isMemberOfSomeGroups([1], userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
   }
 
-  public async canCreatePost(user: UserDto, groupAudienceIds: number[]): Promise<void> {
+  public checkCanCreatePost(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
 
@@ -44,14 +45,16 @@ export class AuthorityService {
     }
   }
 
-  public async canUpdatePost(user: UserDto, post: IPost): Promise<void> {
+  public checkCanUpdatePost(user: UserDto, post: IPost): void {
     if (post.createdBy !== user.id) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
 
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
-
+    console.log('groupAudienceIds=', groupAudienceIds);
+    
     const userJoinedGroupIds = user.profile?.groups ?? [];
+    console.log('userJoinedGroupIds=', userJoinedGroupIds);
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
@@ -59,7 +62,7 @@ export class AuthorityService {
     }
   }
 
-  public async canDeletePost(user: UserDto, post: IPost): Promise<void> {
+  public checkCanDeletePost(user: UserDto, post: IPost): void {
     if (post.createdBy !== user.id) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
