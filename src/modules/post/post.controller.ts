@@ -121,7 +121,6 @@ export class PostController {
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
-    await this._postService.checkPostExistAndOwner(postBefore, user.id);
     updatePostDto.isDraft = postBefore.isDraft;
     const isUpdated = await this._postService.updatePost(postId, user, updatePostDto);
     if (isUpdated) {
@@ -171,7 +170,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) postId: number
   ): Promise<boolean> {
-    const postDeleted = await this._postService.deletePost(postId, user.id);
+    const postDeleted = await this._postService.deletePost(postId, user);
     if (postDeleted) {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({

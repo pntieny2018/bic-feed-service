@@ -113,7 +113,7 @@ export class CommentService {
     }
 
     // check user can access
-    this._authorityService.allowAccess(user, post);
+    this._authorityService.canReadPost(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
@@ -211,7 +211,7 @@ export class CommentService {
     });
 
     // check user can access
-    this._authorityService.allowAccess(user, post);
+    this._authorityService.canReadPost(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
@@ -352,7 +352,7 @@ export class CommentService {
         postId,
       });
 
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canReadPost(user, post);
     }
 
     const comments = await this._getComments(user.id, getCommentsDto);
@@ -396,7 +396,7 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId,
     });
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
     const actor = await this._userService.get(post.createdBy);
     const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;
     const comments = await this._getComments(
@@ -635,7 +635,7 @@ export class CommentService {
       commentId: commentId,
     });
 
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
 
@@ -926,7 +926,7 @@ export class CommentService {
     try {
       const postId = await this.getPostIdOfComment(commentId);
       const post = await this._postService.findPost({ postId: postId });
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canReadPost(user, post);
 
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } =
         getCommentEditedHistoryDto;
