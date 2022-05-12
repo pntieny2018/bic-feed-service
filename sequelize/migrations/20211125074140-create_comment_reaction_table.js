@@ -10,15 +10,15 @@ module.exports = {
       {
         id: {
           primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.literal("gen_random_uuid()")
         },
         created_by: {
           type: Sequelize.INTEGER,
           allowNull: false,
         },
         comment_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: { model: 'comments', key: 'id' },
         },

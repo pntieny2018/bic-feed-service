@@ -12,10 +12,6 @@ export class GetReactionPipe implements PipeTransform {
       getReactionDto.order = OrderEnum.DESC;
     }
 
-    if (!getReactionDto.latestId) {
-      getReactionDto.latestId = 0;
-    }
-
     return getReactionDto;
   }
 }

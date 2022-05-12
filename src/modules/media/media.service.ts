@@ -218,7 +218,7 @@ export class MediaService {
   }
 
   public async sync(
-    entityId: number,
+    entityId: string,
     entityType: EntityType,
     mediaIds: number[],
     transaction: Transaction
@@ -256,7 +256,7 @@ export class MediaService {
     const getAttachedData = (
       data: number[],
       entityKey: string,
-      entityId: number,
+      entityId: string,
       mediaKey: string
     ): any[] =>
       data.map((id) => ({
@@ -267,7 +267,7 @@ export class MediaService {
     const getDetachedData = (
       data: number[],
       entityKey: string,
-      entityId: number,
+      entityId: string,
       mediaKey: string
     ): object => ({
       where: {
@@ -343,7 +343,7 @@ export class MediaService {
   }
 
   public async deleteMediaByEntityIds(
-    entityIds: number[],
+    entityIds: string[],
     entityType: EntityType,
     transaction: Transaction
   ): Promise<void> {
@@ -378,7 +378,7 @@ export class MediaService {
     await this.updateMediaDraft(mediaIds, transaction);
   }
 
-  public async countMediaByPost(postId: number): Promise<number> {
+  public async countMediaByPost(postId: string): Promise<number> {
     return await this._postMediaModel.count({
       where: { postId },
     });

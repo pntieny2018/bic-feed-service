@@ -10,6 +10,7 @@ import { CommentModel } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class CommentDissociationService {
@@ -21,7 +22,7 @@ export class CommentDissociationService {
 
   public async dissociateComment(
     actorId: number,
-    commentId: number,
+    commentId: string,
     groupAudienceIds: number[]
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const recipient = CommentRecipientDto.init();
@@ -56,7 +57,7 @@ export class CommentDissociationService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
       }
 
-      if (comment.parentId) {
+      if (comment.parentId !== NIL_UUID) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
 

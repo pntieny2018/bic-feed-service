@@ -10,10 +10,10 @@ module.exports = {
     await queryInterface.sequelize.query(`
           SET SEARCH_PATH = ${schemaName};
           CREATE OR REPLACE PROCEDURE ${procedureName}(
-              cpr_post_id  IN INTEGER,
+              cpr_post_id  IN UUID,
               cpr_created_by IN INTEGER,
               cpr_reaction_name IN VARCHAR(100),
-              cpr_id INOUT INTEGER
+              cpr_id INOUT UUID
           )
           LANGUAGE plpgsql    
           AS $$
@@ -38,7 +38,7 @@ module.exports = {
               END IF;
               
               INSERT INTO ${schemaName}.${tableName}(id,created_by,post_id,reaction_name,created_at)
-              VALUES (nextval('${schemaName}.${tableName}_id_seq'::regclass),cpr_created_by,cpr_post_id,cpr_reaction_name,CURRENT_TIMESTAMP)
+              VALUES (gen_random_uuid(),cpr_created_by,cpr_post_id,cpr_reaction_name,CURRENT_TIMESTAMP)
               RETURNING id into cpr_id;
           END;$$
     `);

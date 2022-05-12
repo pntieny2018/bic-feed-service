@@ -1,10 +1,11 @@
+import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import { AllowNull, AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
 
 export interface ICommentEditedHistory {
   id: number;
-  commentId: number;
+  commentId: string;
   editedAt: Date;
   oldData: CommentResponseDto;
   newData: CommentResponseDto;
@@ -23,8 +24,9 @@ export class CommentEditedHistoryModel
   @Column
   public id: number;
 
+  @IsUUID()
   @Column
-  public commentId: number;
+  public commentId: string;
 
   @AllowNull(false)
   @Column

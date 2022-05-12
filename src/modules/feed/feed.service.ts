@@ -54,7 +54,7 @@ export class FeedService {
     const { limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
-      const constraints = FeedService._getIdConstrains(getNewsFeedDto);
+      const constraints = this._getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
@@ -167,7 +167,7 @@ export class FeedService {
       });
     }
     const authUserId = authUser.id;
-    const constraints = FeedService._getIdConstrains(getTimelineDto);
+    const constraints = this._getIdConstrains(getTimelineDto);
 
     const totalImportantPosts = await this._postService.getTotalImportantPostInGroups(
       authUserId,
@@ -222,30 +222,42 @@ export class FeedService {
    * @param getTimelineDto GetTimelineDto
    * @returns object
    */
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+  private _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+    const { schema } = getDatabaseConfig();
+    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
     let constraints = '';
-    if (getTimelineDto.idGT) {
-      constraints += 'AND p.id > :idGT';
+    if (idGT) {
+      constraints += `AND p.id != ${this._sequelizeConnection.escape(idGT)}`;
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idGTE) {
-      constraints += 'AND p.id >= :idGTE';
+    if (idGTE) {
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idLT) {
-      constraints += 'AND p.id < :idLT';
+    if (idLT) {
+      constraints += `AND p.id != ${this._sequelizeConnection.escape(idLT)}`;
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idLT
+      )})`;
     }
-    if (getTimelineDto.idLTE) {
-      constraints += 'AND p.id <= :idLTE';
+    if (idLTE) {
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idLT
+      )})`;
     }
     return constraints;
   }
 
   /**
    * Delete newsfeed by post
-   * @param postId number
+   * @param postId string
    * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: number, transaction: Transaction): Promise<number> {
+  public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 
@@ -374,7 +386,7 @@ export class FeedService {
     limit?: number;
     order?: OrderEnum;
   }): Promise<any[]> {
-    let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
+    let condition = this._getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -473,7 +485,7 @@ export class FeedService {
     limit?: number;
     order?: OrderEnum;
   }): Promise<any[]> {
-    let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
+    let condition = this._getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const userNewsFeedTable = UserNewsFeedModel.tableName;

@@ -7,11 +7,13 @@ import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { MediaService } from '../../../media';
 import { IPost } from '../../../../database/models/post.model';
 import { PageDto } from '../../../../common/dto';
+import { IsUUID } from 'class-validator';
 
 export class CommentResponseDto {
   @ApiProperty()
+  @IsUUID()
   @Expose()
-  public id: number;
+  public id: string;
 
   @ApiProperty()
   @Expose()
@@ -22,16 +24,18 @@ export class CommentResponseDto {
   public edited = false;
 
   @ApiProperty()
+  @IsUUID()
   @Expose()
-  public parentId: number;
+  public parentId: string;
 
   @ApiProperty()
   @Expose()
   public parent?: CommentResponseDto;
 
   @ApiProperty()
+  @IsUUID()
   @Expose()
-  public postId: number;
+  public postId: string;
 
   @ApiProperty()
   @Expose()

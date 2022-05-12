@@ -1,8 +1,9 @@
+import { IsUUID } from 'class-validator';
 import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
 export interface IPostGroup {
-  postId: number;
+  postId: string;
   groupId: number;
 }
 @Table({
@@ -12,8 +13,9 @@ export interface IPostGroup {
 export class PostGroupModel extends Model implements IPostGroup {
   @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @PrimaryKey
   @Column

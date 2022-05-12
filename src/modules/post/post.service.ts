@@ -35,6 +35,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
+import sequelize from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -302,14 +303,14 @@ export class PostService {
 
   /**
    * Get Post
-   * @param postId number
+   * @param postId string
    * @param user UserDto
    * @param getPostDto GetPostDto
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
   public async getPost(
-    postId: number,
+    postId: string,
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
@@ -535,12 +536,12 @@ export class PostService {
 
   /**
    * Save post edited history
-   * @param postId number
+   * @param postId string
    * @param Object { oldData: PostResponseDto; newData: PostResponseDto }
    * @returns Promise resolve void
    */
   public async savePostEditedHistory(
-    postId: number,
+    postId: string,
     { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
   ): Promise<any> {
     return this._postEditedHistoryModel.create({
@@ -553,14 +554,14 @@ export class PostService {
 
   /**
    * Update Post except isDraft
-   * @param postId postID
+   * @param postId string
    * @param authUser UserDto
    * @param updatePostDto UpdatePostDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async updatePost(
-    postId: number,
+    postId: string,
     authUser: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
@@ -630,7 +631,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishPost(postId: number, authUserId: number): Promise<boolean> {
+  public async publishPost(postId: string, authUserId: number): Promise<boolean> {
     try {
       const post = await this._postModel.findByPk(postId);
       await this.checkPostOwner(post, authUserId);
@@ -681,12 +682,12 @@ export class PostService {
 
   /**
    * Delete post by id
-   * @param postId postID
+   * @param postId string
    * @param authUserId auth user ID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: number, authUser: UserDto): Promise<IPost> {
+  public async deletePost(postId: string, authUser: UserDto): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const post = await this._postModel.findByPk(postId);
@@ -719,9 +720,9 @@ export class PostService {
 
   /**
    * Delete post edited history
-   * @param postId number
+   * @param postId string
    */
-  public async deletePostEditedHistory(postId: number): Promise<any> {
+  public async deletePostEditedHistory(postId: string): Promise<any> {
     return this._postEditedHistoryModel.destroy({
       where: {
         postId: postId,
@@ -732,14 +733,14 @@ export class PostService {
   /**
    * Add group to post
    * @param groupIds Array of Group ID
-   * @param postId PostID
+   * @param postId string
    * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async addPostGroup(
     groupIds: number[],
-    postId: number,
+    postId: string,
     transaction: Transaction
   ): Promise<boolean> {
     if (groupIds.length === 0) return true;
@@ -761,7 +762,7 @@ export class PostService {
    */
   public async setGroupByPost(
     groupIds: number[],
-    postId: number,
+    postId: string,
     transaction: Transaction
   ): Promise<boolean> {
     const currentGroups = await this._postGroupModel.findAll({
@@ -878,7 +879,7 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<number[]> {
+  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<string[]> {
     try {
       const posts = await this._postGroupModel.findAll({
         where: {
@@ -894,7 +895,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: number, userId: number): Promise<void> {
+  public async markReadPost(postId: string, userId: number): Promise<void> {
     const post = await this._postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
@@ -920,7 +921,7 @@ export class PostService {
   public async getTotalImportantPostInGroups(
     userId: number,
     groupIds: number[],
-    constraints: string
+    constraints?: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
@@ -932,7 +933,7 @@ export class PostService {
         WHERE g.post_id = p.id
         AND g.group_id IN(:groupIds)
       )
-    ${constraints}`;
+    ${constraints ?? ''}`;
     const result: any = await this._sequelizeConnection.query(query, {
       replacements: {
         groupIds,
@@ -975,15 +976,16 @@ export class PostService {
   /**
    * Get post edited history
    * @param user UserDto
-   * @param postId number
+   * @param postId string
    * @param getPostEditedHistoryDto GetPostEditedHistoryDto
    * @returns Promise resolve PageDto
    */
   public async getPostEditedHistory(
     user: UserDto,
-    postId: number,
+    postId: string,
     getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
+    const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
       await this.checkPostOwner(post, user.id);
@@ -999,29 +1001,59 @@ export class PostService {
 
       const conditions = {};
       conditions['postId'] = postId;
+
       if (idGT) {
         conditions['id'] = {
-          [Op.gt]: idGT,
-        };
-      }
-      if (idGTE) {
-        conditions['id'] = {
-          [Op.gte]: idGTE,
+          [Op.not]: idGT,
           ...conditions['id'],
         };
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idGT
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
       }
+
+      if (idGTE) {
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idGTE
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (idLT) {
         conditions['id'] = {
-          [Op.lt]: idLT,
+          [Op.not]: idLT,
           ...conditions['id'],
         };
-      }
-      if (idLTE) {
-        conditions['id'] = {
-          [Op.lte]: idLTE,
-          ...conditions,
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idLT
+          )}
+          `),
+          ...conditions['editedAt'],
         };
       }
+
+      if (idLTE) {
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            idLT
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (endTime) {
         conditions['editedAt'] = {
           [Op.lt]: endTime,

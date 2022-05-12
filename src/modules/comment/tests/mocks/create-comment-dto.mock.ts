@@ -2,7 +2,7 @@ import { CreateCommentDto } from '../../dto/requests';
 import { actorComment, userMentionInGroupMock, userMentionNotInGroupMock } from './user.mock';
 import { CommentResponseDto } from '../../dto/response/comment.response.dto';
 
-const createTextCommentDto: CreateCommentDto = {
+const createTextCommentDto = {
   postId: 1,
   content: 'create text comment',
   media: {
@@ -12,7 +12,7 @@ const createTextCommentDto: CreateCommentDto = {
   },
 };
 
-const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
+const createTextCommentWithMentionInGroupDto = {
   postId: 1,
   content: 'create text mention comment @bret.josh',
   media: {
@@ -23,7 +23,7 @@ const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
   mentions: [userMentionInGroupMock.id],
 };
 
-const createCommentWithPostNotFoundDto: CreateCommentDto = {
+const createCommentWithPostNotFoundDto = {
   postId: 2,
   content: 'create text comment',
   media: {
@@ -33,7 +33,7 @@ const createCommentWithPostNotFoundDto: CreateCommentDto = {
   },
 };
 
-const createMediaNotFoundCommentDto: CreateCommentDto = {
+const createMediaNotFoundCommentDto = {
   postId: 1,
   content: 'hello @caitlyn.back',
   media: {
@@ -63,7 +63,7 @@ const createMediaNotFoundCommentDto: CreateCommentDto = {
   },
 };
 
-const createCommentDto: CreateCommentDto = {
+const createCommentDto = {
   postId: 1,
   content: 'hello @caitlyn.back',
   media: {
@@ -82,7 +82,7 @@ const createCommentDto: CreateCommentDto = {
   mentions: [3],
 };
 
-const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
+const createTextCommentWithMentionNotInGroupDto = {
   postId: 1,
   content: 'create text mention comment @caitlyn.back',
   media: {
@@ -93,7 +93,7 @@ const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
   mentions: [userMentionNotInGroupMock.id],
 };
 
-export const createdComment: CommentResponseDto = {
+export const createdComment = {
   id: 1,
   totalReply: 0,
   edited: false,

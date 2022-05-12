@@ -7,6 +7,7 @@ import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
 import { CommentService } from '../../modules/comment';
 import { CommentNotificationService } from '../../notification/services';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class CommentListener {
@@ -22,7 +23,7 @@ export class CommentListener {
 
     const { commentResponse, actor } = event.payload;
 
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       commentResponse.parent = await this._commentService.getComment(
         actor,
         commentResponse.parentId,

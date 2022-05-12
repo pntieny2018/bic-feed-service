@@ -28,9 +28,11 @@ import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { MentionableType } from '../../common/constants';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
+import { IsUUID } from 'class-validator';
+import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
 export interface IPost {
-  id: number;
+  id: string;
   createdBy: number;
   updatedBy: number;
   content: string;
@@ -55,9 +57,10 @@ export interface IPost {
 })
 export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IPost {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
-  public id: number;
+  public id: string;
 
   @Column
   public commentsCount: number;
