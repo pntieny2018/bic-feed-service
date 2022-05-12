@@ -2,7 +2,7 @@ import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderEnum, PageOptionsDto } from '../../../../common/dto';
 import { Type } from 'class-transformer';
-import uuid from 'uuid';
+import { NIL as NIL_UUID } from 'uuid';
 
 export class GetCommentsDto extends PageOptionsDto {
   @ApiProperty({
@@ -17,7 +17,7 @@ export class GetCommentsDto extends PageOptionsDto {
   })
   @IsUUID()
   @IsOptional()
-  public parentId?: string = null;
+  public parentId?: string = NIL_UUID;
 
   @ApiProperty({
     required: false,

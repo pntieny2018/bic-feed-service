@@ -95,6 +95,7 @@ export class CommentService {
         ],
         where: {
           id: replyId,
+          parentId: NIL_UUID,
         },
       });
 
@@ -580,7 +581,7 @@ export class CommentService {
     let hasNextPage: boolean;
     let hasPreviousPage = false;
     let commentsFiltered: any[];
-    if (!!aroundId) {
+    if (aroundId !== NIL_UUID) {
       const index = childGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childGrouped.length);
       let start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));

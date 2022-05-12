@@ -33,6 +33,7 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
+import { NIL as NIL_UUID } from 'uuid';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -110,7 +111,7 @@ export class CommentController {
       user,
       {
         ...createReplyCommentDto,
-        postId: null,
+        postId: NIL_UUID,
       },
       commentId
     );
