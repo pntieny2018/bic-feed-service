@@ -18,6 +18,7 @@ import { RecentSearchModule } from '../modules/recent-search';
 import { ReactionCountModule } from '../shared/reaction-count';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
+import { GiphyModule } from '../modules/giphy/giphy.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FeedGeneratorModule } from '../modules/feed-generator';
     ReactionCountModule,
     FeedGeneratorModule,
     FeedPublisherModule,
+    GiphyModule,
   ],
   controllers: [AppController],
   providers: [],
