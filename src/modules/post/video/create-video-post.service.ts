@@ -1,9 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ProcessVideoResponseDto } from './dto';
-import { ProcessStatus } from './process-status.enum';
 import { UserDto } from '../../auth';
-import { CreatePostDto, UpdatePostDto } from '../dto/requests';
 import { InjectModel } from '@nestjs/sequelize';
+import { ProcessVideoResponseDto } from './dto';
+import { Injectable, Logger } from '@nestjs/common';
+import { ProcessStatus } from './process-status.enum';
+import { CreatePostDto, UpdatePostDto } from '../dto/requests';
 import { IPost, PostModel } from '../../../database/models/post.model';
 
 @Injectable()

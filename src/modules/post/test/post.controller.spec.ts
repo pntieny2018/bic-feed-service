@@ -30,7 +30,7 @@ describe('PostController', () => {
             getPost: jest.fn(),
             getDraftPosts: jest.fn(),
             searchPosts: jest.fn(),
-            checkPostExistAndOwner: jest.fn(),
+            checkPostOwner: jest.fn(),
           },
         },
         {
@@ -113,7 +113,7 @@ describe('PostController', () => {
       const mockedDataUpdatePost = mockedPostList[0];
       const result = await postController.updatePost(userDto, mockedDataUpdatePost.id, mockedUpdatePostDto);
       expect(postService.updatePost).toBeCalledTimes(1);
-      expect(postService.checkPostExistAndOwner).toBeCalledTimes(1);
+      expect(postService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledWith(mockedDataUpdatePost.id, userDto, mockedUpdatePostDto);
       expect(postService.getPost).toBeCalledTimes(2);
       expect(postService.getPost).toBeCalledWith(1, userDto, new GetPostDto());

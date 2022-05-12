@@ -358,7 +358,7 @@ export class PostService {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
 
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments(
@@ -486,10 +486,8 @@ export class PostService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
       const { groupIds } = audience;
-      const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
-      if (!isMember) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      await this._authorityService.checkCanCreatePost(authUser, groupIds);
+
       if (mentions.length) {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
@@ -586,10 +584,9 @@ export class PostService {
       const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
 
       const { groupIds } = audience;
-      const isMember = this._groupService.isMemberOfGroups(groupIds, creator.groups);
-      if (!isMember) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      const post = await this._postModel.findByPk(postId);
+      await this.checkPostOwner(post, authUser.id);
+      await this._authorityService.checkCanUpdatePost(authUser, groupIds);
 
       const mentionUserIds = mentions;
       if (mentionUserIds.length) {
@@ -651,7 +648,7 @@ export class PostService {
     try {
       const post = await this._postModel.findByPk(postId);
 
-      await this.checkPostExistAndOwner(post, authUserId);
+      await this.checkPostOwner(post, authUserId);
 
       if (post.isPostVideo) {
         return this._createVideoPostService.requestToPublishVideoPost(post.toJSON());
@@ -688,7 +685,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkPostExistAndOwner(
+  public async checkPostOwner(
     post: PostResponseDto | PostModel | IPost,
     authUserId: number
   ): Promise<boolean> {
@@ -709,11 +706,11 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: number, authUserId: number): Promise<IPost> {
+  public async deletePost(postId: number, authUser: UserDto): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const post = await this._postModel.findOne({ where: { id: postId } });
-      await this.checkPostExistAndOwner(post, authUserId);
+      const post = await this._postModel.findByPk(postId);
+      await this.checkPostOwner(post, authUser.id);
       await Promise.all([
         this._mentionService.setMention([], MentionableType.POST, postId, transaction),
         this._mediaService.sync(postId, EntityType.POST, [], transaction),
@@ -726,7 +723,7 @@ export class PostService {
       await this._postModel.destroy({
         where: {
           id: postId,
-          createdBy: authUserId,
+          createdBy: authUser.id,
         },
         transaction: transaction,
       });
@@ -1009,13 +1006,17 @@ export class PostService {
   ): Promise<PageDto<PostEditedHistoryDto>> {
     try {
       const post = await this.findPost({ postId: postId });
-      await this._authorityService.allowAccess(user, post);
-
-      if (post.isDraft === true && user.id !== post.createdBy) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      await this.checkPostOwner(post, user.id);
 
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
+
+      if (post.isDraft === true) {
+        return new PageDto([], {
+          limit: limit,
+          total: 0,
+        });
+      }
+
       const conditions = {};
       conditions['postId'] = postId;
       if (idGT) {

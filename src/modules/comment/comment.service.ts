@@ -113,7 +113,7 @@ export class CommentService {
     }
 
     // check user can access
-    this._authorityService.allowAccess(user, post);
+    this._authorityService.canReadPost(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
@@ -211,7 +211,7 @@ export class CommentService {
     });
 
     // check user can access
-    this._authorityService.allowAccess(user, post);
+    this._authorityService.canReadPost(user, post);
 
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
@@ -352,7 +352,7 @@ export class CommentService {
         postId,
       });
 
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canReadPost(user, post);
     }
 
     const comments = await this._getComments(user.id, getCommentsDto);
@@ -396,7 +396,7 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId,
     });
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
     const actor = await this._userService.get(post.createdBy);
     const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;
     const comments = await this._getComments(
@@ -586,10 +586,15 @@ export class CommentService {
     if (aroundId > 0) {
       const index = childGrouped.findIndex((i) => i.id === aroundId);
       const n = Math.min(limit, childGrouped.length);
-      const start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
-      commentsFiltered = childGrouped.slice(start, start + n);
+      let start = limit >= childGrouped.length ? 0 : Math.max(0, index + 1 - Math.round(n / 2));
+      let end = start + n;
+      if (end >= childGrouped.length) {
+        end = childGrouped.length;
+        start = end - n;
+      }
+      commentsFiltered = childGrouped.slice(start, end);
       hasPreviousPage = start >= 1;
-      hasNextPage = !!childGrouped[start + n];
+      hasNextPage = !!childGrouped[end];
     } else {
       hasNextPage = childGrouped.length === limit + 1;
       if (hasNextPage) childGrouped.pop();
@@ -630,7 +635,7 @@ export class CommentService {
       commentId: commentId,
     });
 
-    await this._authorityService.allowAccess(user, post);
+    await this._authorityService.canReadPost(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
 
@@ -921,7 +926,7 @@ export class CommentService {
     try {
       const postId = await this.getPostIdOfComment(commentId);
       const post = await this._postService.findPost({ postId: postId });
-      await this._authorityService.allowAccess(user, post);
+      await this._authorityService.canReadPost(user, post);
 
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } =
         getCommentEditedHistoryDto;

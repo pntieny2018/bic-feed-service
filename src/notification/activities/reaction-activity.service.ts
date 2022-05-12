@@ -30,10 +30,10 @@ export class ReactionActivityService {
               1 <
             0
           ? 0
-          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] + 1;
+          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] - 1;
     } else {
       post.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: 1,
+        [reaction.reactionName]: action === 'create' ? 1 : 0,
       };
     }
     const reactionObject = {
@@ -42,6 +42,19 @@ export class ReactionActivityService {
       reactionName: reaction.reactionName,
       actor: reaction.actor as any,
     };
+
+    let ownerReactions = post.ownerReactions.map((or) => ({
+      id: or.id,
+      reactionName: or.reactionName,
+      createdAt: or.createdAt,
+      actor: reactionObject.actor,
+    }));
+
+    if (action === 'create') {
+      ownerReactions.push(reactionObject);
+    } else {
+      ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
+    }
 
     const activityObject: ActivityObject = {
       id: post.id,
@@ -52,15 +65,7 @@ export class ReactionActivityService {
       mentions: post.mentions as any,
       setting: post.setting as any,
       reaction: reactionObject,
-      ownerReactions: [
-        ...post.ownerReactions.map((or) => ({
-          id: or.id,
-          reactionName: or.reactionName,
-          createdAt: or.createdAt,
-          actor: reactionObject.actor,
-        })),
-        reactionObject,
-      ],
+      reactionsOfActor: ownerReactions,
       reactionsCount: post.reactionsCount,
       createdAt: post.createdAt,
       updatedAt: post.createdAt,
@@ -103,7 +108,7 @@ export class ReactionActivityService {
             1;
     } else {
       comment.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: 1,
+        [reaction.reactionName]: action === 'create' ? 1 : 0,
       };
     }
 
@@ -113,6 +118,19 @@ export class ReactionActivityService {
       actor: ObjectHelper.omit(['groups', 'email'], reaction.actor) as any,
       createdAt: reaction.createdAt,
     };
+
+    let ownerReactions = comment.ownerReactions.map((or) => ({
+      id: or.id,
+      reactionName: or.reactionName,
+      createdAt: or.createdAt,
+      actor: reactionObject.actor,
+    }));
+
+    if (action === 'create') {
+      ownerReactions.push(reactionObject);
+    } else {
+      ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
+    }
 
     const activityObject: ActivityObject = {
       id: post.id,
@@ -130,15 +148,7 @@ export class ReactionActivityService {
         media: comment.media,
         mentions: comment.mentions as any,
         reactionsCount: comment.reactionsCount,
-        ownerReactions: [
-          ...comment.ownerReactions.map((or) => ({
-            id: or.id,
-            reactionName: or.reactionName,
-            createdAt: or.createdAt,
-            actor: reactionObject.actor,
-          })),
-          reactionObject,
-        ],
+        reactionsOfActor: ownerReactions,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
       },
@@ -183,7 +193,7 @@ export class ReactionActivityService {
             1;
     } else {
       comment.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: 1,
+        [reaction.reactionName]: action === 'create' ? 1 : 0,
       };
     }
     const parentComment = comment.parent;
@@ -194,6 +204,19 @@ export class ReactionActivityService {
       actor: ObjectHelper.omit(['groups', 'email'], reaction.actor) as any,
       createdAt: reaction.createdAt,
     };
+
+    let ownerReactions = comment.ownerReactions.map((or) => ({
+      id: or.id,
+      reactionName: or.reactionName,
+      createdAt: or.createdAt,
+      actor: reactionObject.actor,
+    }));
+
+    if (action === 'create') {
+      ownerReactions.push(reactionObject);
+    } else {
+      ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
+    }
 
     const activityObject: ActivityObject = {
       id: post.id,
@@ -216,15 +239,7 @@ export class ReactionActivityService {
           actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
           reaction: reactionObject,
           reactionsCount: comment.reactionsCount,
-          ownerReactions: [
-            ...comment.ownerReactions.map((or) => ({
-              id: or.id,
-              reactionName: or.reactionName,
-              createdAt: or.createdAt,
-              actor: reactionObject.actor,
-            })),
-            reactionObject,
-          ],
+          reactionsOfActor: ownerReactions,
           content: comment.content,
           media: comment.media,
           mentions: comment.mentions as any,

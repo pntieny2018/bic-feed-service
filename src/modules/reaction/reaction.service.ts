@@ -87,7 +87,7 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
         const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
         return {
@@ -104,12 +104,12 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
 
         const reactionsComment = (rsc ?? []).map((r) => r.toJSON());
+
         return {
-          order: order,
           list: await this._bindActorToReaction(reactionsComment),
           limit: limit,
           latestId:
@@ -457,20 +457,20 @@ export class ReactionService {
 
     if (deleteReactionDto.reactionName) {
       conditions['reactionName'] = deleteReactionDto.reactionName;
-    }
-
-    if (deleteReactionDto.reactionId) {
+    } else if (deleteReactionDto.reactionId) {
       conditions['id'] = deleteReactionDto.reactionId;
     }
 
     const trx = await this._sequelize.transaction({
       isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
     });
+
     try {
       const existedReaction = await this._postReactionModel.findOne({
         where: {
           ...conditions,
           createdBy: userDto.id,
+          postId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
@@ -478,9 +478,14 @@ export class ReactionService {
       if (!existedReaction) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
       }
+
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._postReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          postId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
       await trx.commit();
@@ -540,12 +545,13 @@ export class ReactionService {
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<ICommentReaction> {
+    this._logger.debug(`[_deleteCommentReaction]: ${JSON.stringify(deleteReactionDto)},${attempt}`);
+
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
-
     const { id: userId } = userDto;
-    const { reactionId, targetId } = deleteReactionDto;
+    const { targetId } = deleteReactionDto;
 
     const comment = await this._commentService.findComment(targetId);
 
@@ -567,8 +573,7 @@ export class ReactionService {
     const conditions = {};
     if (deleteReactionDto.reactionName) {
       conditions['reactionName'] = deleteReactionDto.reactionName;
-    }
-    if (deleteReactionDto.reactionId) {
+    } else if (deleteReactionDto.reactionId) {
       conditions['id'] = deleteReactionDto.reactionId;
     }
     const trx = await this._sequelize.transaction({
@@ -577,8 +582,9 @@ export class ReactionService {
     try {
       const existedReaction = await this._commentReactionModel.findOne({
         where: {
-          id: reactionId,
+          ...conditions,
           createdBy: userId,
+          commentId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
@@ -589,7 +595,11 @@ export class ReactionService {
 
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._commentReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          commentId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
 
