@@ -42,6 +42,7 @@ export interface IComment {
   edited?: boolean;
   parent?: IComment;
   content?: string;
+  giphyId?: string;
   createdBy: number;
   updatedBy: number;
   createdAt?: Date;
