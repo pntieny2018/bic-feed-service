@@ -28,13 +28,8 @@ export class AuthorityService {
    */
   public async canReadPost(user: UserDto, post: IPost): Promise<void> {
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
-    const groups = await this._groupService.getMany(groupAudienceIds);
-    const privateGroupIds = groups
-      .filter((g) => g.privacy === GroupPrivacy.PRIVATE || g.privacy === GroupPrivacy.SECRET)
-      .map((g) => g.id);
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    if (privateGroupIds.length == 0) return;
-    const canAccess = this._groupService.isMemberOfSomeGroups(privateGroupIds, userJoinedGroupIds);
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
