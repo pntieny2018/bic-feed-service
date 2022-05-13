@@ -30,7 +30,6 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 
 export interface IPost {
   id: number;
-  isPostVideo: boolean;
   createdBy: number;
   updatedBy: number;
   content: string;
@@ -58,10 +57,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AutoIncrement
   @Column
   public id: number;
-
-  @Column
-  @Default(false)
-  public isPostVideo: boolean;
 
   @Column
   public commentsCount: number;

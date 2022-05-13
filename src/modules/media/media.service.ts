@@ -48,6 +48,7 @@ export class MediaService {
       extension,
       width,
       height,
+      uploadId,
     }: {
       url: string;
       uploadType: UploadType;
@@ -56,6 +57,7 @@ export class MediaService {
       extension: string;
       width: number;
       height: number;
+      uploadId?: string;
     }
   ): Promise<any> {
     this._logger.debug(
@@ -67,6 +69,7 @@ export class MediaService {
         extension,
         width,
         height,
+        uploadId,
       })}`
     );
     try {
@@ -80,6 +83,7 @@ export class MediaService {
         type: typeArr[1] as MediaType,
         width: width,
         height: height,
+        uploadId,
       });
     } catch (ex) {
       throw new InternalServerErrorException("Can't create media");

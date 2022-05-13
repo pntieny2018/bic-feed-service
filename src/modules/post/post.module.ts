@@ -26,7 +26,6 @@ import { CreateVideoPostController, CreateVideoPostService } from './video';
     LibModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
-    Cli,
   ],
   controllers: [PostController, CreateVideoPostController],
   providers: [PostService, PostPolicyService, CreateVideoPostService],

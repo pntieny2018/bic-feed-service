@@ -12,10 +12,6 @@ export class CreateVideoPostService {
 
   public constructor(@InjectModel(PostModel) private readonly _postModel: typeof PostModel) {}
 
-  public async requestToPublishVideoPost(post: IPost): Promise<boolean> {
-    return true;
-  }
-
   public async publishOrRejectVideoPost(
     processVideoResponseDto: ProcessVideoResponseDto
   ): Promise<void> {
@@ -42,22 +38,5 @@ export class CreateVideoPostService {
     //     data: activity,
     //   },
     // });
-  }
-
-  public async createVideoPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
-    try {
-      return await this._postModel.create({});
-    } catch (ex) {}
-  }
-
-  public async updateVideoPost(
-    postId: number,
-    authUser: UserDto,
-    updatePostDto: UpdatePostDto
-  ): Promise<boolean> {
-    try {
-      await this._postModel.create({});
-      return false;
-    } catch (ex) {}
   }
 }

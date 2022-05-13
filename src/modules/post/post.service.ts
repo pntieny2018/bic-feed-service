@@ -260,7 +260,6 @@ export class PostService {
       where: {
         createdBy: authUserId,
         isDraft: true,
-        isPostVideo: false,
       },
       attributes: {
         exclude: ['commentsCount'],
@@ -491,10 +490,6 @@ export class PostService {
       if (mentions.length) {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
-      // Make video post
-      if (PostService._isVideoPost(media)) {
-        return this._createVideoPostService.createVideoPost(authUser, createPostDto);
-      }
 
       const { files, images } = media;
       const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
@@ -593,11 +588,6 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      // Make video post
-      if (PostService._isVideoPost(media)) {
-        return this._createVideoPostService.updateVideoPost(postId, authUser, updatePostDto);
-      }
-
       const { files, images } = media;
       const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
@@ -649,10 +639,6 @@ export class PostService {
       const post = await this._postModel.findByPk(postId);
 
       await this.checkPostOwner(post, authUserId);
-
-      if (post.isPostVideo) {
-        return this._createVideoPostService.requestToPublishVideoPost(post.toJSON());
-      }
 
       const countMedia = await this._mediaService.countMediaByPost(postId);
 
@@ -1078,9 +1064,5 @@ export class PostService {
       this._logger.error(e, e?.stack);
       throw e;
     }
-  }
-
-  private static _isVideoPost(media: MediaDto): boolean {
-    return media ? media.videos.some((v) => v.uploadId) : false;
   }
 }

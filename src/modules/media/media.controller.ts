@@ -24,6 +24,7 @@ import { MediaService } from './media.service';
 import { AuthUser, UserDto } from '../auth';
 import { ResponseMessages } from '../../common/decorators';
 import { MediaHelper } from './media.helper';
+import { CreateMediaDto } from './dto/request/create-media.dto';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -88,6 +89,37 @@ export class MediaController {
   public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: number): Promise<any> {
     return this._mediaService.destroy(user, {
       mediaIds: [mediaId],
+    });
+  }
+
+  @ApiOperation({ summary: 'Delete Media' })
+  @ApiBadRequestResponse({
+    description: 'Delete media fails',
+  })
+  @ApiOkResponse({
+    description: 'Delete media successfully',
+  })
+  @Delete('/:mediaId')
+  @ResponseMessages({
+    success: 'Delete media successfully',
+    validator: {
+      fails: 'Delete media fails',
+    },
+  })
+  public async createMedia(
+    @AuthUser() user: UserDto,
+    @Body() createMediaDto: CreateMediaDto
+  ): Promise<any> {
+    const { url, extension, uploadId, uploadType, name } = createMediaDto;
+    return this._mediaService.create(user, {
+      url: url ?? null,
+      name,
+      uploadType,
+      originName: name,
+      extension: extension ?? null,
+      uploadId,
+      width: null,
+      height: null,
     });
   }
 }
