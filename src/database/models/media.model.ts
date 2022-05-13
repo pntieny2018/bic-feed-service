@@ -38,6 +38,7 @@ export interface IMedia {
   height?: number;
   extension?: string;
   uploadId?: string;
+  isProcessing?: boolean;
 }
 @Table({
   tableName: 'media',
@@ -94,5 +95,12 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   public extension?: string;
 
   @Column
-  public isProccessing?: boolean;
+  public isProcessing?: boolean;
+
+  @Default(0)
+  @Column
+  public size?: number;
+
+  @Column
+  public mimeType?: number;
 }

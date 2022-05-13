@@ -636,15 +636,28 @@ export class PostService {
    */
   public async publishPost(postId: number, authUserId: number): Promise<boolean> {
     try {
-      const post = await this._postModel.findByPk(postId);
-
+      const post = await this._postModel.findOne({
+        where: {
+          id: postId,
+        },
+        include: [
+          {
+            model: MediaModel,
+            through: {
+              attributes: [],
+            },
+            attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+            required: false,
+          },
+        ],
+      });
+      console.log('post=', post);
       await this.checkPostOwner(post, authUserId);
 
-      const countMedia = await this._mediaService.countMediaByPost(postId);
-
-      if (post.content === null && countMedia === 0) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
-      }
+      
+      // if (post.content === null && countMedia === 0) {
+      //   ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
+      // }
 
       await this._postModel.update(
         {

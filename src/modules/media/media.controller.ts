@@ -69,6 +69,7 @@ export class MediaController {
       extension: file.mimetype.split('/').pop(),
       width,
       height,
+      isProcessing: false,
     });
   }
 
@@ -120,6 +121,7 @@ export class MediaController {
       uploadId,
       width: null,
       height: null,
+      isProcessing: true,
     });
   }
 }

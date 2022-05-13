@@ -49,6 +49,7 @@ export class MediaService {
       width,
       height,
       uploadId,
+      isProcessing = false,
     }: {
       url: string;
       uploadType: UploadType;
@@ -58,6 +59,7 @@ export class MediaService {
       width: number;
       height: number;
       uploadId?: string;
+      isProcessing: boolean;
     }
   ): Promise<any> {
     this._logger.debug(
@@ -70,6 +72,7 @@ export class MediaService {
         width,
         height,
         uploadId,
+        isProcessing,
       })}`
     );
     try {
@@ -84,6 +87,7 @@ export class MediaService {
         width: width,
         height: height,
         uploadId,
+        isProcessing,
       });
     } catch (ex) {
       throw new InternalServerErrorException("Can't create media");
@@ -159,28 +163,6 @@ export class MediaService {
     if (getMediaList.length < mediaIds.length) {
       throw new HttpException('Media ID is invalid', HttpStatus.BAD_REQUEST);
     }
-
-    return true;
-  }
-
-  /**
-   * Validate Mention
-   * @param mediaIds Array of Media ID
-   * @param createdBy created_by of post
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async activeMedia(mediaIds: number[], createdBy: number): Promise<boolean> {
-    if (mediaIds.length === 0) return true;
-
-    await this._mediaModel.update(
-      {
-        isDraft: false,
-      },
-      {
-        where: { id: mediaIds, createdBy },
-      }
-    );
 
     return true;
   }
@@ -387,4 +369,5 @@ export class MediaService {
       where: { postId },
     });
   }
+  
 }
