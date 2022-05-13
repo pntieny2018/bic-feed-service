@@ -51,10 +51,6 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public giphyInfo?: any;
-
-  @ApiProperty()
-  @Expose()
   public createdAt?: Date;
 
   @ApiProperty()

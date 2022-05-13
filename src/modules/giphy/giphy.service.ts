@@ -19,18 +19,4 @@ export class GiphyService {
       }
     }
   }
-
-  public async bindGiphyToComment(commentsResponse: any[]): Promise<void> {
-    for (const comment of commentsResponse) {
-      if(comment.giphyId) {
-        const giphyType = await this._giphyModel.findByPk(comment.giphyId)
-        comment.giphyInfo = {
-          id: comment.giphyId,
-          url: `https://media4.giphy.com/media/${comment.giphyId}/giphy.gif`,
-          type: giphyType.type
-        }
-      }
-    }
-
-  }
 }
