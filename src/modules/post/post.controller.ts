@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION } from '../../common/constants';
+import { APP_VERSION, KAFKA_TOPIC } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import {
   PostHasBeenDeletedEvent,
@@ -30,6 +30,9 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { PostService } from './post.service';
 import { GetPostPipe } from './pipes';
+import { EventPattern, Payload } from '@nestjs/microservices';
+import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
+import { VideoProcessStatus } from '.';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -193,5 +196,20 @@ export class PostController {
   ): Promise<boolean> {
     await this._postService.markReadPost(postId, user.id);
     return true;
+  }
+
+  @EventPattern(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC)
+  public async createVideoPostDone(
+    @Payload('value') processVideoResponseDto: ProcessVideoResponseDto
+  ): Promise<void> {
+    console.log('msgggg=', processVideoResponseDto);
+    switch (processVideoResponseDto.status) {
+      case VideoProcessStatus.DONE:
+        return this._postService.videoPostSuccess(processVideoResponseDto);
+      case VideoProcessStatus.ERROR:
+        return this._postService.videoPostFail(processVideoResponseDto);
+    }
+
+    //return this._postService.publishOrRejectVideoPost(processVideoResponseDto);
   }
 }

@@ -1,6 +1,6 @@
 import { MentionModel, IMention } from './mention.model';
-import { MediaType, IMedia } from './media.model';
-import { DataTypes, Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
+import { IMedia } from './media.model';
+import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -9,7 +9,6 @@ import {
   CreatedAt,
   Default,
   HasMany,
-  Length,
   Model,
   PrimaryKey,
   Table,
@@ -45,6 +44,7 @@ export interface IPost {
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
+  isProcessing: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   comments?: IComment[];
@@ -81,6 +81,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @Column
   public canReact: boolean;
+
+  @Column
+  public isProcessing: boolean;
 
   @Column
   public canShare: boolean;

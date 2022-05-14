@@ -80,6 +80,13 @@ export class PostResponseDto {
   public isDraft: boolean;
 
   @ApiProperty({
+    description: 'To know post is processing',
+    type: Boolean,
+  })
+  @Expose()
+  public isProcessing: boolean;
+
+  @ApiProperty({
     description: 'Post creator information',
     type: UserSharedDto,
   })
