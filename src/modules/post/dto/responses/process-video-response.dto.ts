@@ -1,4 +1,4 @@
-import { ProcessStatus } from '../process-status.enum';
+import { VideoProcessStatus } from '../..';
 
 export class ProcessVideoMetadataResponseDto {
   public name: string;
@@ -6,11 +6,11 @@ export class ProcessVideoMetadataResponseDto {
   public height?: number;
   public mimeType?: string;
   public extension?: string;
+  public size: number;
 }
 export class ProcessVideoResponseDto {
-  //public postId: number;
-  public uploadId: string;
-  public status: ProcessStatus;
+  public videoId: string;
+  public status: VideoProcessStatus;
   public hlsUrl: string;
   public meta?: ProcessVideoMetadataResponseDto;
 }

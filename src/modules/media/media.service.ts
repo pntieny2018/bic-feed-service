@@ -8,17 +8,17 @@ import {
 import { UserDto } from '../auth';
 import { FileMetadataDto, ImageMetadataDto, RemoveMediaDto, VideoMetadataDto } from './dto';
 import { EntityType } from './media.constants';
-import { Sequelize } from 'sequelize-typescript';
+import { ModelStatic, Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
+import { Attributes, FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommentMediaModel } from '../../database/models/comment-media.model';
-import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
+import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 
@@ -49,7 +49,9 @@ export class MediaService {
       width,
       height,
       uploadId,
-      isProcessing = false,
+      status,
+      size,
+      mimeType,
     }: {
       url: string;
       uploadType: UploadType;
@@ -59,7 +61,9 @@ export class MediaService {
       width: number;
       height: number;
       uploadId?: string;
-      isProcessing: boolean;
+      status: MediaStatus;
+      size?: number;
+      mimeType?: string;
     }
   ): Promise<any> {
     this._logger.debug(
@@ -72,7 +76,7 @@ export class MediaService {
         width,
         height,
         uploadId,
-        isProcessing,
+        status,
       })}`
     );
     try {
@@ -87,7 +91,9 @@ export class MediaService {
         width: width,
         height: height,
         uploadId,
-        isProcessing,
+        status,
+        size: size ?? null,
+        mimeType: mimeType ?? null,
       });
     } catch (ex) {
       throw new InternalServerErrorException("Can't create media");
@@ -369,5 +375,19 @@ export class MediaService {
       where: { postId },
     });
   }
-  
+
+  public async updateData(
+    uploadIds: string[],
+    dataUpdate: {
+      url?: string;
+      status: MediaStatus;
+      mimeType?: string;
+    }
+  ): Promise<void> {
+    await this._mediaModel.update(dataUpdate, {
+      where: {
+        uploadId: uploadIds,
+      },
+    });
+  }
 }

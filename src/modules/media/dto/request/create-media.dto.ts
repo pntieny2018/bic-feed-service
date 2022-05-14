@@ -41,5 +41,20 @@ export class CreateMediaDto {
     example: 'jpg | png | mp4 | avi',
   })
   @IsOptional()
-  public extension: string;
+  public extension?: string;
+
+  @ApiProperty({
+    description: 'mimeType',
+    type: String,
+  })
+  @IsOptional()
+  public mimeType?: string;
+
+  @ApiProperty({
+    description: 'Size of file in kb',
+    type: Number,
+    example: '10000',
+  })
+  @IsOptional()
+  public size?: number;
 }

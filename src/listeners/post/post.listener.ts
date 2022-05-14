@@ -11,6 +11,7 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
+import { MediaStatus } from '../../database/models/media.model';
 
 @Injectable()
 export class PostListener {
@@ -61,6 +62,12 @@ export class PostListener {
     const { post, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       post;
+
+    const uploadIds = media.videos
+      .filter((m) => m.status === MediaStatus.READY_PROCESS)
+      .map((i) => i.uploadId);
+    this._postService.processVideo(uploadIds);
+
     if (isDraft) return;
 
     const activity = this._postActivityService.createPayload(post);

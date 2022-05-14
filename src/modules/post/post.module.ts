@@ -12,8 +12,16 @@ import { AuthorityModule } from '../authority';
 import { LibModule } from '../../app/lib.module';
 import { ReactionModule } from '../reaction';
 import { FeedModule } from '../feed';
-import { CreateVideoPostController, CreateVideoPostService } from './video';
-
+import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+import { IKafkaConfig } from '../../config/kafka';
+export const register = async (config: ConfigService): Promise<KafkaOptions> => {
+  const kafkaConfig = config.get<IKafkaConfig>('kafka');
+  return {
+    transport: Transport.KAFKA,
+    options: kafkaConfig,
+  };
+};
 @Module({
   imports: [
     DatabaseModule,
@@ -26,9 +34,16 @@ import { CreateVideoPostController, CreateVideoPostService } from './video';
     LibModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
+    ClientsModule.registerAsync([
+      {
+        name: 'post_xxx',
+        useFactory: register,
+        inject: [ConfigService],
+      },
+    ]),
   ],
-  controllers: [PostController, CreateVideoPostController],
-  providers: [PostService, PostPolicyService, CreateVideoPostService],
-  exports: [PostService, PostPolicyService, CreateVideoPostService],
+  controllers: [PostController],
+  providers: [PostService, PostPolicyService],
+  exports: [PostService, PostPolicyService],
 })
 export class PostModule {}

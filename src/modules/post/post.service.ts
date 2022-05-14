@@ -1,5 +1,5 @@
 import { PageDto } from '../../common/dto';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID, KAFKA_TOPIC, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
@@ -19,7 +19,7 @@ import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { MediaModel } from '../../database/models/media.model';
+import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -35,8 +35,10 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
-import { MediaDto } from '../media/dto';
-import { CreateVideoPostService } from './video';
+import { VideoProcessStatus } from '.';
+import { ClientKafka } from '@nestjs/microservices';
+import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
+import { PostMediaModel } from '../../database/models/post-media.model';
 
 @Injectable()
 export class PostService {
@@ -74,7 +76,8 @@ export class PostService {
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
     private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
-    private readonly _createVideoPostService: CreateVideoPostService
+    @Inject('post_xxx')
+    private readonly _client: ClientKafka
   ) {}
 
   /**
@@ -340,7 +343,7 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'isProcessing', 'uploadId'],
         },
         {
           model: PostReactionModel,
@@ -574,6 +577,8 @@ export class PostService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
+    //Todo:: get mediaId, check status, neu co chua completed het => post.isProcessing = true; is_draft = true;
+    //event update post listener giong publish
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
@@ -646,22 +651,38 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+            attributes: [
+              'id',
+              'url',
+              'type',
+              'name',
+              'width',
+              'height',
+              'uploadId',
+              'isProcessing',
+            ],
             required: false,
           },
         ],
       });
-      console.log('post=', post);
       await this.checkPostOwner(post, authUserId);
 
-      
-      // if (post.content === null && countMedia === 0) {
-      //   ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
-      // }
+      if (post.content === null && post.media.length === 0) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
+      }
 
+      if (post.isDraft === false) return true;
+
+      let isDraft = false;
+      let isProcessing = false;
+      if (post.media.filter((m) => m.status === MediaStatus.READY_PROCESS).length > 0) {
+        isDraft = true;
+        isProcessing = true;
+      }
       await this._postModel.update(
         {
-          isDraft: false,
+          isDraft,
+          isProcessing,
           createdAt: new Date(),
         },
         {
@@ -1076,6 +1097,101 @@ export class PostService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw e;
+    }
+  }
+
+  public async publishOrRejectVideoPost(
+    processVideoResponseDto: ProcessVideoResponseDto
+  ): Promise<void> {
+    switch (processVideoResponseDto.status) {
+      case VideoProcessStatus.DONE:
+        return this.videoPostSuccess(processVideoResponseDto);
+      case VideoProcessStatus.ERROR:
+        return this.videoPostFail(processVideoResponseDto);
+    }
+  }
+
+  public async getPostsByMedia(uploadId: string) {
+    const posts = await this._postModel.findAll({
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: [],
+          required: true,
+          where: {
+            uploadId,
+          },
+        },
+      ],
+    });
+    console.log('posts=', posts);
+    return posts;
+  }
+
+  public async updatePostStatus(postId: number): Promise<void> {
+    const { schema } = getDatabaseConfig();
+    const postMedia = PostMediaModel.tableName;
+    const post = PostModel.tableName;
+    const media = MediaModel.tableName;
+    const query = ` UPDATE ${schema}.${post}
+                SET is_processing = tmp.is_processing
+                FROM (
+                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = 'completed' THEN 1 ELSE 0 END 
+		                ) < COUNT(m.id) THEN true ELSE false END as is_processing
+                  FROM ${schema}.${media} as m
+                  JOIN ${schema}.${postMedia} ON ${postMedia}.media_id = m.id
+                  WHERE ${postMedia}.post_id = :postId
+                  GROUP BY pm.post_id
+                ) as tmp 
+                WHERE tmp.post_id = ${schema}.${media}.id`;
+    await this._sequelizeConnection.query(query, {
+      replacements: {
+        postId,
+      },
+      type: QueryTypes.UPDATE,
+      raw: true,
+    });
+  }
+
+  public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
+    const { videoId, hlsUrl, meta } = processVideoResponseDto;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    const posts = await this.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this.updatePostStatus(post.id);
+    });
+    //send noti
+  }
+
+  public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
+    const { videoId, hlsUrl, meta } = processVideoResponseDto;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    const posts = await this.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this.updatePostStatus(post.id);
+    });
+    //send noti
+  }
+
+  public async processVideo(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    try {
+      this._client['post_xxx'].send({
+        topic: KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC,
+        messages: [
+          {
+            key: null,
+            value: JSON.stringify({ videoIds: ids }),
+          },
+        ],
+        acks: 1,
+      });
+      this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
     }
   }
 }

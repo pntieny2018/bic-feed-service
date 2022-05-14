@@ -23,6 +23,13 @@ export enum MediaType {
   FILE = 'file',
 }
 
+export enum MediaStatus {
+  READY_PROCESS = 'ready_process',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
 export interface IMedia {
   id: number;
   createdBy: number;
@@ -38,7 +45,9 @@ export interface IMedia {
   height?: number;
   extension?: string;
   uploadId?: string;
-  isProcessing?: boolean;
+  status: MediaStatus;
+  size?: number;
+  mimeType?: string;
 }
 @Table({
   tableName: 'media',
@@ -95,12 +104,12 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   public extension?: string;
 
   @Column
-  public isProcessing?: boolean;
+  public status: MediaStatus;
 
   @Default(0)
   @Column
   public size?: number;
 
   @Column
-  public mimeType?: number;
+  public mimeType?: string;
 }

@@ -1,7 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { FollowService } from './follow.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { EVENTS } from '../../common/constants';
+import { KAFKA_TOPIC } from '../../common/constants';
 import { CreateFollowDto, UnfollowDto } from './dto/requests';
 
 @Controller()

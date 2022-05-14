@@ -40,6 +40,7 @@ export interface IPost {
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
+  isProcessing: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   comments?: IComment[];
@@ -76,6 +77,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @Column
   public canReact: boolean;
+
+  @Column
+  public isProcessing: boolean;
 
   @Column
   public canShare: boolean;

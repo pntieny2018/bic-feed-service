@@ -109,19 +109,6 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
       },
       inject: [ConfigService],
     }),
-    ElasticsearchModule.registerAsync({
-      useFactory: async (configService: ConfigService) => {
-        const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
-        return {
-          node: elasticsearchConfig.node,
-          auth: {
-            username: elasticsearchConfig.username,
-            password: elasticsearchConfig.password,
-          },
-        };
-      },
-      inject: [ConfigService],
-    }),
     DatabaseModule,
     InternalEventEmitterModule,
   ],

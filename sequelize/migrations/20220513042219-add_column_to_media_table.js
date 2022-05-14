@@ -1,9 +1,22 @@
+const { MediaStatus } = require('../../src/database/models/media.model');
+
 require('dotenv').config();
 
 const schemaName = process.env.DB_SCHEMA;
 const tableName = 'media';
 module.exports = {
   async up(queryInterface, Sequelize) {
+    await queryInterface.changeColumn(
+      {
+        tableName: tableName,
+        schema: schemaName,
+      },
+      'url',
+      {
+        type: Sequelize.STRING,
+        allowNull: true,
+      }
+    );
     await queryInterface.addColumn(
       {
         tableName: tableName,
@@ -43,15 +56,27 @@ module.exports = {
         tableName: tableName,
         schema: schemaName,
       },
-      'is_processing',
+      'status',
       {
-        type: Sequelize.BOOLEAN,
+        type: Sequelize.ENUM(MediaStatus.READY_PROCESS, MediaStatus.PROCESSING, MediaStatus.COMPLETED, MediaStatus.FAILED),
         allowNull: false,
+        default: MediaStatus.COMPLETED
       }
     );
   },
 
   async down(queryInterface, Sequelize) {
+    await queryInterface.changeColumn(
+      {
+        tableName: tableName,
+        schema: schemaName,
+      },
+      'url',
+      {
+        type: Sequelize.STRING,
+        allowNull: false,
+      }
+    );
     await queryInterface.removeColumn(
       {
         tableName: tableName,
@@ -79,7 +104,7 @@ module.exports = {
         tableName: tableName,
         schema: schemaName,
       },
-      'is_processing'
+      'status'
     );
     
   },
