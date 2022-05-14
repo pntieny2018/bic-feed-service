@@ -1,5 +1,3 @@
-const { MediaStatus } = require('../../src/database/models/media.model');
-
 require('dotenv').config();
 
 const schemaName = process.env.DB_SCHEMA;
@@ -58,9 +56,9 @@ module.exports = {
       },
       'status',
       {
-        type: Sequelize.ENUM(MediaStatus.READY_PROCESS, MediaStatus.PROCESSING, MediaStatus.COMPLETED, MediaStatus.FAILED),
+        type: Sequelize.ENUM('waiting_process', 'processing', 'completed', 'failed'),
         allowNull: false,
-        default: MediaStatus.COMPLETED
+        default: 'completed'
       }
     );
   },

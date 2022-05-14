@@ -24,7 +24,7 @@ export enum MediaType {
 }
 
 export enum MediaStatus {
-  READY_PROCESS = 'ready_process',
+  WAITING_PROCESS = 'waiting_process',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   FAILED = 'failed',

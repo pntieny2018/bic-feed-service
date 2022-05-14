@@ -64,7 +64,7 @@ export class PostListener {
       post;
 
     const uploadIds = media.videos
-      .filter((m) => m.status === MediaStatus.READY_PROCESS)
+      .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
       .map((i) => i.uploadId);
     this._postService.processVideo(uploadIds);
 
@@ -123,6 +123,10 @@ export class PostListener {
     const { oldPost, newPost, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
 
+    const uploadIds = media.videos
+      .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+      .map((i) => i.uploadId);
+    this._postService.processVideo(uploadIds);
     if (isDraft) return;
 
     this._postService

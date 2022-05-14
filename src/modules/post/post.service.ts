@@ -1,5 +1,10 @@
 import { PageDto } from '../../common/dto';
-import { HTTP_STATUS_ID, KAFKA_PRODUCER, KAFKA_TOPIC, MentionableType } from '../../common/constants';
+import {
+  HTTP_STATUS_ID,
+  KAFKA_PRODUCER,
+  KAFKA_TOPIC,
+  MentionableType,
+} from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
@@ -343,7 +348,7 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'isProcessing', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
         },
         {
           model: PostReactionModel,
@@ -509,6 +514,7 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
+          isProcessing: false,
         },
         { transaction }
       );
@@ -577,11 +583,9 @@ export class PostService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
-    //Todo:: get mediaId, check status, neu co chua completed het => post.isProcessing = true; is_draft = true;
-    //event update post listener giong publish
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
+      const { content, media, setting, mentions, audience } = updatePostDto;
 
       const { groupIds } = audience;
       const post = await this._postModel.findByPk(postId);
@@ -597,6 +601,17 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
+      let isDraft = false;
+      let isProcessing = false;
+      if (
+        post.media.filter(
+          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+        ).length > 0
+      ) {
+        isDraft = true;
+        isProcessing = true;
+      }
+
       const dataUpdate = {
         content,
         updatedBy: authUserId,
@@ -605,6 +620,8 @@ export class PostService {
         canShare: setting.canShare,
         canComment: setting.canComment,
         canReact: setting.canReact,
+        isDraft,
+        isProcessing,
       };
       if (isDraft) dataUpdate['createdAt'] = new Date();
       await this._postModel.update(dataUpdate, {
@@ -651,16 +668,7 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: [
-              'id',
-              'url',
-              'type',
-              'name',
-              'width',
-              'height',
-              'uploadId',
-              'isProcessing',
-            ],
+            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'uploadId', 'status'],
             required: false,
           },
         ],
@@ -671,11 +679,15 @@ export class PostService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
       }
 
-      if (post.isDraft === false) return true;
+      if (post.isDraft === false) return false;
 
       let isDraft = false;
       let isProcessing = false;
-      if (post.media.filter((m) => m.status === MediaStatus.READY_PROCESS).length > 0) {
+      if (
+        post.media.filter(
+          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+        ).length > 0
+      ) {
         isDraft = true;
         isProcessing = true;
       }
@@ -1045,17 +1057,6 @@ export class PostService {
     }
   }
 
-  public async publishOrRejectVideoPost(
-    processVideoResponseDto: ProcessVideoResponseDto
-  ): Promise<void> {
-    switch (processVideoResponseDto.status) {
-      case VideoProcessStatus.DONE:
-        return this.videoPostSuccess(processVideoResponseDto);
-      case VideoProcessStatus.ERROR:
-        return this.videoPostFail(processVideoResponseDto);
-    }
-  }
-
   public async getPostsByMedia(uploadId: string) {
     const posts = await this._postModel.findAll({
       include: [
@@ -1072,7 +1073,6 @@ export class PostService {
         },
       ],
     });
-    console.log('posts=', posts);
     return posts;
   }
 
@@ -1082,16 +1082,16 @@ export class PostService {
     const post = PostModel.tableName;
     const media = MediaModel.tableName;
     const query = ` UPDATE ${schema}.${post}
-                SET is_processing = tmp.is_processing
+                SET is_processing = tmp.is_processing, is_draft = tmp.is_processing
                 FROM (
                   SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = 'completed' THEN 1 ELSE 0 END 
 		                ) < COUNT(m.id) THEN true ELSE false END as is_processing
                   FROM ${schema}.${media} as m
-                  JOIN ${schema}.${postMedia} ON ${postMedia}.media_id = m.id
-                  WHERE ${postMedia}.post_id = :postId
+                  JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
+                  WHERE pm.post_id = :postId
                   GROUP BY pm.post_id
                 ) as tmp 
-                WHERE tmp.post_id = ${schema}.${media}.id`;
+                WHERE tmp.post_id = ${schema}.${post}.id`;
     await this._sequelizeConnection.query(query, {
       replacements: {
         postId,
@@ -1119,20 +1119,15 @@ export class PostService {
       this.updatePostStatus(post.id);
     });
     //send noti
+    
   }
 
   public async processVideo(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     try {
-      this._client[KAFKA_PRODUCER].send({
-        topic: KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC,
-        messages: [
-          {
-            key: null,
-            value: JSON.stringify({ videoIds: ids }),
-          },
-        ],
-        acks: 1,
+      this._client.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+        key: null,
+        value: JSON.stringify({ videoIds: ids }),
       });
       this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {

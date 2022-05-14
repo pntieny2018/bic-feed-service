@@ -11,16 +11,9 @@ export class NotificationService {
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._kafkaProducer[KAFKA_PRODUCER].send({
-      topic: KAFKA_TOPIC.STREAM.POST,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
+      key: payload.key,
+      value: JSON.stringify(payload.value),
     });
     // return lastValueFrom(
     //   this._postProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.POST}`, payload)
@@ -28,16 +21,9 @@ export class NotificationService {
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._kafkaProducer[KAFKA_PRODUCER].send({
-      topic: KAFKA_TOPIC.STREAM.COMMENT,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.COMMENT, {
+      key: payload.key,
+      value: JSON.stringify(payload.value),
     });
     // return lastValueFrom(
     //   this._commentProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`, payload)
@@ -45,17 +31,9 @@ export class NotificationService {
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    console.log(JSON.stringify(payload.value.event));
-    return this._kafkaProducer[KAFKA_PRODUCER].send({
-      topic: KAFKA_TOPIC.STREAM.REACTION,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REACTION, {
+      key: payload.key,
+      value: JSON.stringify(payload.value),
     });
     // return lastValueFrom(
     //   this._reactionProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.REACTION}`, payload)

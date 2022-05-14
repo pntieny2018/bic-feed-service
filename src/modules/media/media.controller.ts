@@ -119,7 +119,7 @@ export class MediaController {
       uploadId,
       width: null,
       height: null,
-      status: MediaStatus.READY_PROCESS,
+      status: MediaStatus.WAITING_PROCESS,
       size,
       mimeType,
     });
