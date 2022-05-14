@@ -1,6 +1,6 @@
 import { MentionModel, IMention } from './mention.model';
 import { IMedia } from './media.model';
-import { Optional, BelongsToManyAddAssociationsMixin } from 'sequelize';
+import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
