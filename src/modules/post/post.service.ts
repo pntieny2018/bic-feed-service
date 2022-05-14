@@ -957,61 +957,6 @@ export class PostService {
     return;
   }
 
-  public async getTotalImportantPostInGroups(
-    userId: number,
-    groupIds: number[],
-    constraints: string
-  ): Promise<number> {
-    const { schema } = getDatabaseConfig();
-    const query = `SELECT COUNT(*) as total
-    FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND EXISTS(
-        SELECT 1
-        from ${schema}.posts_groups AS g
-        WHERE g.post_id = p.id
-        AND g.group_id IN(:groupIds)
-      )
-    ${constraints}`;
-    const result: any = await this._sequelizeConnection.query(query, {
-      replacements: {
-        groupIds,
-        userId,
-      },
-      type: QueryTypes.SELECT,
-    });
-    return result[0].total;
-  }
-
-  public async getTotalImportantPostInNewsFeed(
-    userId: number,
-    constraints: string
-  ): Promise<number> {
-    const { schema } = getDatabaseConfig();
-    const query = `SELECT COUNT(*) as total
-    FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.users_mark_read_posts as u
-        WHERE u.user_id = :userId AND u.post_id = p.id
-      )
-    AND EXISTS(
-        SELECT 1
-        from ${schema}.user_newsfeed AS u
-        WHERE u.post_id = p.id
-        AND u.user_id = :userId
-      )
-    ${constraints}`;
-    const result: any = await this._sequelizeConnection.query(query, {
-      replacements: {
-        userId,
-      },
-      type: QueryTypes.SELECT,
-    });
-    return result[0].total;
-  }
-
   /**
    * Get post edited history
    * @param user UserDto
