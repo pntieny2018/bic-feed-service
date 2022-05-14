@@ -87,7 +87,7 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
         const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
         return {
@@ -104,12 +104,12 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
 
         const reactionsComment = (rsc ?? []).map((r) => r.toJSON());
+
         return {
-          order: order,
           list: await this._bindActorToReaction(reactionsComment),
           limit: limit,
           latestId:
@@ -464,11 +464,13 @@ export class ReactionService {
     const trx = await this._sequelize.transaction({
       isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
     });
+
     try {
       const existedReaction = await this._postReactionModel.findOne({
         where: {
           ...conditions,
           createdBy: userDto.id,
+          postId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
@@ -476,9 +478,14 @@ export class ReactionService {
       if (!existedReaction) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
       }
+
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._postReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          postId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
       await trx.commit();
@@ -577,6 +584,7 @@ export class ReactionService {
         where: {
           ...conditions,
           createdBy: userId,
+          commentId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
@@ -587,7 +595,11 @@ export class ReactionService {
 
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._commentReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          commentId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
 
