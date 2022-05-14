@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { RedisModule } from '@app/redis/redis.module';
 import { HttpModule } from '@nestjs/axios';
 import { SentryModule } from '@app/sentry';
@@ -9,11 +9,21 @@ import { ISentryConfig } from '../config/sentry';
 import { configs } from '../config/configuration';
 import { RewriteFrames } from '@sentry/integrations';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DatabaseModule } from '../database';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { IElasticsearchConfig } from '../config/elasticsearch';
 import { InternalEventEmitterModule } from './custom/event-emitter';
+import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
+import { IKafkaConfig } from '../config/kafka';
+import { KAFKA_PRODUCER } from '../common/constants';
 
+export const register = async (config: ConfigService): Promise<KafkaOptions> => {
+  const kafkaConfig = config.get<IKafkaConfig>('kafka');
+  return {
+    transport: Transport.KAFKA,
+    options: kafkaConfig,
+  };
+};
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,6 +31,13 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
       cache: true,
       load: [configs],
     }),
+    ClientsModule.registerAsync([
+      {
+        name: KAFKA_PRODUCER,
+        useFactory: register,
+        inject: [ConfigService],
+      },
+    ]),
     ElasticsearchModule.registerAsync({
       useFactory: async (configService: ConfigService) => {
         const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
@@ -109,9 +126,8 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
       },
       inject: [ConfigService],
     }),
-    DatabaseModule,
     InternalEventEmitterModule,
   ],
-  exports: [HttpModule, ElasticsearchModule],
+  exports: [HttpModule, ElasticsearchModule, ClientsModule],
 })
 export class LibModule {}

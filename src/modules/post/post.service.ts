@@ -1,5 +1,5 @@
 import { PageDto } from '../../common/dto';
-import { HTTP_STATUS_ID, KAFKA_TOPIC, MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID, KAFKA_PRODUCER, KAFKA_TOPIC, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
@@ -76,7 +76,7 @@ export class PostService {
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
     private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
-    @Inject('post_xxx')
+    @Inject(KAFKA_PRODUCER)
     private readonly _client: ClientKafka
   ) {}
 
@@ -1179,7 +1179,7 @@ export class PostService {
   public async processVideo(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     try {
-      this._client['post_xxx'].send({
+      this._client[KAFKA_PRODUCER].send({
         topic: KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC,
         messages: [
           {

@@ -2,7 +2,6 @@ import { PostModule } from '../post';
 import { FollowModule } from '../follow';
 import { CommentModule } from '../comment';
 import { UserModule } from '../../shared/user';
-import { DatabaseModule } from '../../database';
 import { GroupModule } from '../../shared/group';
 import { forwardRef, Module } from '@nestjs/common';
 import { ReactionService } from './reaction.service';
@@ -14,7 +13,6 @@ import { ReactionActivityService } from '../../notification/activities';
 @Module({
   imports: [
     FollowModule,
-    DatabaseModule,
     UserModule,
     GroupModule,
     NotificationModule,
