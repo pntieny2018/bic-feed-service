@@ -6,7 +6,7 @@ export class CreateMediaDto {
   @ApiProperty({
     description: 'uploadId get from upload service',
     type: String,
-    example: 'http://google.com...',
+    example: '7663faa6-d008-404f-8e43-ce888b2b9aa8',
   })
   @IsNotEmpty()
   public uploadId: string;
@@ -39,6 +39,7 @@ export class CreateMediaDto {
     description: 'extension',
     type: String,
     example: 'jpg | png | mp4 | avi',
+    required: false,
   })
   @IsOptional()
   public extension?: string;
@@ -46,6 +47,7 @@ export class CreateMediaDto {
   @ApiProperty({
     description: 'mimeType',
     type: String,
+    required: false,
   })
   @IsOptional()
   public mimeType?: string;
@@ -54,6 +56,7 @@ export class CreateMediaDto {
     description: 'Size of file in kb',
     type: Number,
     example: '10000',
+    required: false,
   })
   @IsOptional()
   public size?: number;

@@ -498,8 +498,8 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
 
-      const { files, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const post = await this._postModel.create(
@@ -519,6 +519,7 @@ export class PostService {
       );
 
       if (uniqueMediaIds.length) {
+        console.log('uniqueMediaIds=', uniqueMediaIds);
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
@@ -596,8 +597,8 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const mediaList = await this._mediaService.getMediaList({ where: { id: uniqueMediaIds } });
@@ -1082,13 +1083,14 @@ export class PostService {
         },
       ],
     });
-    await Promise.all([
-      this.bindAudienceToPost(posts),
-      this._mentionService.bindMentionsToPosts(posts),
-      this.bindActorToPost(posts),
-    ]);
 
-    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
+    const jsonPosts = posts.map((p) => p.toJSON());
+    await Promise.all([
+      this.bindAudienceToPost(jsonPosts),
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+    ]);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
     return result;
