@@ -328,7 +328,7 @@ describe('CommentService', () => {
           JSON.stringify([1, 'comment', [1], sequelizeConnection.transaction()])
         );
 
-        // expect(getCommentSpy).toBeCalled();
+        expect(getCommentSpy).toBeCalled();
       });
     });
 
@@ -413,7 +413,7 @@ describe('CommentService', () => {
           JSON.stringify([1, 'comment', [1], sequelizeConnection.transaction()])
         );
 
-        // expect(getCommentSpy).toBeCalled();
+        expect(getCommentSpy).toBeCalled();
       });
     });
   });
