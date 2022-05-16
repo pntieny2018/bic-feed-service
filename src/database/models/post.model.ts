@@ -92,6 +92,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public content: string;
 
+  @AllowNull(true)
+  @Column
+  public giphyId: string;
+
   @AllowNull(false)
   @Column
   public createdBy: number;

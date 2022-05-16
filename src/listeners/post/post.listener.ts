@@ -13,6 +13,9 @@ import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
 import { MediaStatus } from '../../database/models/media.model';
 import { SentryService } from '../../../libs/sentry/src';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { MediaService } from '../../modules/media';
+import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 
 @Injectable()
 export class PostListener {
@@ -23,7 +26,8 @@ export class PostListener {
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _postService: PostService,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    private readonly _mediaService: MediaService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -106,7 +110,6 @@ export class PostListener {
       createdAt,
       actor,
     };
-
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
       this._logger.debug(e);
@@ -188,5 +191,76 @@ export class PostListener {
       this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
     }
+  }
+
+  @On(PostVideoSuccessEvent)
+  public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
+    const { videoId, hlsUrl, meta } = event.payload;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    const posts = await this._postService.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this._postService.updatePostStatus(post.id);
+      const postActivity = this._postActivityService.createPayload(post);
+      this._notificationService.publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor: post.actor,
+          event: event.getEventName(),
+          data: postActivity,
+        },
+      });
+
+      const { actor, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
+        post;
+
+      const dataIndex = {
+        id,
+        commentsCount,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+      };
+      const index = ElasticsearchHelper.INDEX.POST;
+      this._elasticsearchService
+        .index({ index, id: `${id}`, body: dataIndex })
+        .catch((e) => this._logger.debug(e));
+
+      try {
+        this._feedPublisherService.fanoutOnWrite(
+          actor.id,
+          id,
+          audience.groups.map((g) => g.id),
+          [0]
+        );
+      } catch (error) {
+        this._logger.error(error, error?.stack);
+      }
+    });
+  }
+
+  @On(PostVideoFailedEvent)
+  public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
+
+    const { videoId, hlsUrl, meta } = event.payload;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    const posts = await this._postService.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this._postService.updatePostStatus(post.id);
+      const postActivity = this._postActivityService.createPayload(post);
+      this._notificationService.publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor: post.actor,
+          event: event.getEventName(),
+          data: postActivity,
+        },
+      });
+    });
   }
 }

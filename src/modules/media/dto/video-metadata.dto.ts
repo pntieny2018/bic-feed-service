@@ -29,7 +29,7 @@ export class VideoMetadataDto implements IDocumentMetadata {
     example: 'ba7339bc-5204-4009-9d43-89b6d2787747.mp4',
   })
   @IsString()
-  @Transform((params) => basename(params.value))
+  //@Transform((params) => basename(params.value) ?? params.value)
   @IsOptional()
   @Expose()
   public name?: string;

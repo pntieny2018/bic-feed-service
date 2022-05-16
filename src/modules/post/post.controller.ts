@@ -33,6 +33,8 @@ import { GetPostPipe } from './pipes';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { VideoProcessStatus } from '.';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -198,18 +200,17 @@ export class PostController {
     return true;
   }
 
-  @EventPattern(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC)
+  @EventPattern(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED)
   public async createVideoPostDone(
     @Payload('value') processVideoResponseDto: ProcessVideoResponseDto
   ): Promise<void> {
-    console.log('msgggg=', processVideoResponseDto);
     switch (processVideoResponseDto.status) {
       case VideoProcessStatus.DONE:
-        return this._postService.videoPostSuccess(processVideoResponseDto);
+        this._eventEmitter.emit(new PostVideoSuccessEvent(processVideoResponseDto));
+        break;
       case VideoProcessStatus.ERROR:
-        return this._postService.videoPostFail(processVideoResponseDto);
+        this._eventEmitter.emit(new PostVideoFailedEvent(processVideoResponseDto));
+        break;
     }
-
-    //return this._postService.publishOrRejectVideoPost(processVideoResponseDto);
   }
 }

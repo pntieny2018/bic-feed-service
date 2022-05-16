@@ -32,6 +32,7 @@ import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
 import { SentryService } from '../../../libs/sentry/src';
+import { GiphyService } from '../giphy';
 
 @Injectable()
 export class CommentService {
@@ -47,6 +48,7 @@ export class CommentService {
     private _reactionService: ReactionService,
     private _authorityService: AuthorityService,
     private _postPolicyService: PostPolicyService,
+    private _giphyService: GiphyService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
     private _followService: FollowService,
@@ -120,6 +122,8 @@ export class CommentService {
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
 
+    await this._giphyService.saveGiphyData(createCommentDto.giphy);
+
     //HOTFIX: hot fix create comment with image
     const comment = await this._commentModel.create({
       createdBy: user.id,
@@ -127,6 +131,7 @@ export class CommentService {
       parentId: replyId,
       content: createCommentDto.content,
       postId: post.id,
+      giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
     });
 
     const transaction = await this._sequelizeConnection.transaction();
@@ -211,6 +216,8 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId: comment.postId,
     });
+
+    await this._giphyService.saveGiphyData(updateCommentDto.giphy);
 
     // check user can access
     this._authorityService.canReadPost(user, post);
@@ -495,6 +502,7 @@ export class CommentService {
         "c"."post_id" AS "postId",
         "c"."content", 
         "c"."edited", 
+        "c"."giphy_id" as "giphyId",
         "c"."total_reply" AS "totalReply", 
         "c"."created_by" AS "createdBy", 
         "c"."updated_by" AS "updatedBy", 
@@ -534,6 +542,7 @@ export class CommentService {
                 "c"."post_id" AS "postId",
                 "c"."content", 
                 "c"."edited",
+                "c"."giphy_id" as "giphyId",
                 "c"."total_reply" AS "totalReply", 
                 "c"."created_by" AS "createdBy", 
                 "c"."updated_by" AS "updatedBy", 
@@ -551,6 +560,7 @@ export class CommentService {
                   "c"."post_id" AS "postId",
                   "c"."content", 
                   "c"."edited",
+                  "c"."giphy_id" as "giphyId",
                   "c"."total_reply" AS "totalReply", 
                   "c"."created_by" AS "createdBy", 
                   "c"."updated_by" AS "updatedBy", 
@@ -1027,6 +1037,7 @@ export class CommentService {
         parentId,
         edited,
         postId,
+        giphyId,
         content,
         totalReply,
         createdBy,
@@ -1065,6 +1076,7 @@ export class CommentService {
           id,
           parentId,
           postId,
+          giphyId,
           edited,
           content,
           totalReply,

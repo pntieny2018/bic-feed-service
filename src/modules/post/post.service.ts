@@ -40,7 +40,6 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
-import { VideoProcessStatus } from '.';
 import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
@@ -501,8 +500,8 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
 
-      const { files, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const post = await this._postModel.create(
@@ -599,20 +598,11 @@ export class PostService {
         await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
       }
 
-      const { files, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
-      let isDraft = false;
-      let isProcessing = false;
-      if (
-        post.media.filter(
-          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
-        ).length > 0
-      ) {
-        isDraft = true;
-        isProcessing = true;
-      }
+      const mediaList = await this._mediaService.getMediaList({ where: { id: uniqueMediaIds } });
 
       const dataUpdate = {
         content,
@@ -622,10 +612,20 @@ export class PostService {
         canShare: setting.canShare,
         canComment: setting.canComment,
         canReact: setting.canReact,
-        isDraft,
-        isProcessing,
       };
-      if (isDraft) dataUpdate['createdAt'] = new Date();
+
+      if (
+        mediaList.filter(
+          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+        ).length > 0
+      ) {
+        dataUpdate['isDraft'] = true;
+        dataUpdate['isProcessing'] = true;
+        if (post.isDraft === false)
+          await this._feedService.deleteNewsFeedByPost(postId, transaction);
+      }
+
+      if (post.isDraft) dataUpdate['createdAt'] = new Date();
       await this._postModel.update(dataUpdate, {
         where: {
           id: postId,
@@ -1060,7 +1060,7 @@ export class PostService {
     }
   }
 
-  public async getPostsByMedia(uploadId: string) {
+  public async getPostsByMedia(uploadId: string): Promise<PostResponseDto[]> {
     const posts = await this._postModel.findAll({
       include: [
         {
@@ -1068,15 +1068,34 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: [],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
           required: true,
           where: {
             uploadId,
           },
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+        },
       ],
     });
-    return posts;
+
+    const jsonPosts = posts.map((p) => p.toJSON());
+    await Promise.all([
+      this.bindAudienceToPost(jsonPosts),
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+    ]);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
   }
 
   public async updatePostStatus(postId: number): Promise<void> {
@@ -1111,7 +1130,6 @@ export class PostService {
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
     });
-    //send noti
   }
 
   public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
@@ -1121,7 +1139,6 @@ export class PostService {
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
     });
-    //send noti
   }
 
   public async processVideo(ids: string[]): Promise<void> {

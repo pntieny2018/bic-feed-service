@@ -4,6 +4,7 @@ import { Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 import { UserMentionDto } from '../../../mention/dto';
+import { GiphyDto } from '../../../giphy/dto/requests';
 
 export class CreateCommentDto {
   @ApiProperty({
@@ -74,4 +75,15 @@ export class CreateCommentDto {
     return value;
   })
   public mentions?: number[] = [];
+
+  @ApiProperty({
+    type: GiphyDto,
+    example: {
+      id: '3pZipqyo1sqHDfJGtz',
+      type: 'gif',
+    }
+  })
+  @IsOptional()
+  @Type(() => GiphyDto)
+  public giphy?: GiphyDto = null;
 }

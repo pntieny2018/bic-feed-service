@@ -32,6 +32,7 @@ import { ReactionService } from '../../reaction';
 import { FollowService } from '../../follow';
 import { CommentEditedHistoryModel } from '../../../database/models/comment-edited-history.model';
 import { IPost } from '../../../database/models/post.model';
+import { GiphyService } from '../../giphy';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -44,6 +45,7 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
+  let giphyService;
   let reactionService;
   let commentEditedHistoryModel;
 
@@ -110,6 +112,12 @@ describe('CommentService', () => {
           },
         },
         {
+          provide: GiphyService,
+          useValue: {
+            saveGiphyData: jest.fn(),
+          },
+        },
+        {
           provide: UserService,
           useValue: {
             get: jest.fn(),
@@ -171,6 +179,7 @@ describe('CommentService', () => {
     commentModel = module.get<typeof CommentModel>(getModelToken(CommentModel));
     postService = module.get<PostService>(PostService);
     mediaService = module.get<MediaService>(MediaService);
+    giphyService = module.get<GiphyService>(GiphyService);
     commentEditedHistoryModel = module.get<typeof CommentEditedHistoryModel>(
       getModelToken(CommentEditedHistoryModel)
     );
@@ -311,6 +320,8 @@ describe('CommentService', () => {
 
         expect(mediaService.sync).toBeCalled();
 
+        expect(giphyService.saveGiphyData).toBeCalled();
+
         const syncParams = mediaService.sync.mock.calls[0];
 
         expect(JSON.stringify(syncParams)).toEqual(
@@ -390,7 +401,11 @@ describe('CommentService', () => {
 
         expect(mentionService.create).toBeCalled();
 
+        expect(mentionService.create).toBeCalled();
+
         expect(mediaService.sync).toBeCalled();
+
+        expect(giphyService.saveGiphyData).toBeCalled();
 
         const syncParams = mediaService.sync.mock.calls[0];
 
@@ -594,13 +609,15 @@ describe('CommentService', () => {
 
         expect(mediaService.sync).toBeCalled();
 
+        expect(giphyService.saveGiphyData).toBeCalled();
+
         const syncParams = mediaService.sync.mock.calls[0];
 
         expect(JSON.stringify(syncParams)).toEqual(
           JSON.stringify([1, 'comment', [1], sequelizeConnection.transaction()])
         );
 
-        expect(getCommentSpy).toBeCalled();
+        // expect(getCommentSpy).toBeCalled();
       });
     });
   });
@@ -783,6 +800,7 @@ describe('CommentService', () => {
               content: 'hello',
               createdBy: 1,
               updatedBy: 1,
+              giphyId: null,
               createdAt: '2022-03-11T08:39:58.832Z',
               updatedAt: '2022-03-11T08:39:58.832Z',
               reactionsCount: '1=',
@@ -804,6 +822,7 @@ describe('CommentService', () => {
               content: 'hello',
               createdBy: 2,
               updatedBy: 2,
+              giphyId: null,
               createdAt: '2022-03-11T08:41:35.047Z',
               updatedAt: '2022-03-11T08:41:35.047Z',
               reactionsCount: '1=',
@@ -985,7 +1004,7 @@ describe('CommentService', () => {
           },
         ],
       });
-      commentService.bindChildentToComment = jest.fn();
+      commentService.bindChildrenToComment = jest.fn();
       jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
       await commentService.getCommentLink(57, authUserMock, {});
       expect(commentModel.findByPk).toBeCalled();
