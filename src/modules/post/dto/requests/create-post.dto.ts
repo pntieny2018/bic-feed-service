@@ -1,20 +1,10 @@
-import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
-import { Expose, Transform, Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
-import {
-  isArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsArray,
-  ValidateNested,
-  IsObject,
-  ValidateIf,
-} from 'class-validator';
-import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
-import { AudienceRequestDto } from './audience.request.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
 import { UserMentionDto } from '../../../mention/dto';
+import { PostSettingDto } from '../common/post-setting.dto';
+import { AudienceRequestDto } from './audience.request.dto';
+import { IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 
 export class CreatePostDto {
   @ApiProperty({

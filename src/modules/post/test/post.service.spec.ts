@@ -246,7 +246,6 @@ describe('PostService', () => {
       mentionService.checkValidMentions = jest.fn().mockResolvedValue(true);
       mentionService.create = jest.fn();
       postService.addPostGroup = jest.fn().mockResolvedValue(true);
-      mediaService.activeMedia = jest.fn();
 
       postModelMock.create.mockResolvedValueOnce(mockedDataCreatePost);
       postGroupModelMock.bulkCreate.mockResolvedValueOnce(true);
@@ -322,7 +321,6 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(true);
       groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
-      mediaService.activeMedia = jest.fn().mockResolvedValue(true);
 
       postModelMock.create.mockRejectedValue(new Error('Any error when insert data to DB'));
 

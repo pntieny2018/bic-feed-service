@@ -5,13 +5,11 @@ import { forwardRef, Module } from '@nestjs/common';
 import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
 import { CanReadTimelineConstraint } from './validations/decorators';
-import { DatabaseModule } from '../../database';
 import { UserModule } from '../../shared/user';
 import { ReactionModule } from '../reaction';
 
 @Module({
   imports: [
-    DatabaseModule,
     UserModule,
     forwardRef(() => PostModule),
     GroupModule,

@@ -11,6 +11,10 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
+import { MediaStatus } from '../../database/models/media.model';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { MediaService } from '../../modules/media';
+import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 
 @Injectable()
 export class PostListener {
@@ -20,7 +24,8 @@ export class PostListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
-    private readonly _postService: PostService
+    private readonly _postService: PostService,
+    private readonly _mediaService: MediaService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -61,6 +66,12 @@ export class PostListener {
     const { post, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       post;
+
+    const uploadIds = media.videos
+      .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+      .map((i) => i.uploadId);
+    this._postService.processVideo(uploadIds);
+
     if (isDraft) return;
 
     const activity = this._postActivityService.createPayload(post);
@@ -116,6 +127,10 @@ export class PostListener {
     const { oldPost, newPost, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
 
+    const uploadIds = media.videos
+      .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+      .map((i) => i.uploadId);
+    this._postService.processVideo(uploadIds);
     if (isDraft) return;
 
     this._postService
@@ -160,5 +175,73 @@ export class PostListener {
     } catch (error) {
       this._logger.error(error, error?.stack);
     }
+  }
+
+  @On(PostVideoSuccessEvent)
+  public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
+    console.log('success=============');
+    const { videoId, hlsUrl, meta } = event.payload;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    const posts = await this._postService.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this._postService.updatePostStatus(post.id);
+
+      const postActivity = this._postActivityService.createPayload(post);
+      console.log(
+        'payload=',
+        JSON.stringify(
+          {
+            actor: post.actor,
+            event: event.getEventName(),
+            data: postActivity,
+          },
+          null,
+          4
+        )
+      );
+      this._notificationService.publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor: post.actor,
+          event: event.getEventName(),
+          data: postActivity,
+        },
+      });
+    });
+  }
+
+  @On(PostVideoFailedEvent)
+  public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
+    this._logger.debug(`Event: ${JSON.stringify(event)}`);
+
+    const { videoId, hlsUrl, meta } = event.payload;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    const posts = await this._postService.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this._postService.updatePostStatus(post.id);
+      const postActivity = this._postActivityService.createPayload(post);
+      console.log(
+        'payload=',
+        JSON.stringify(
+          {
+            actor: post.actor,
+            event: event.getEventName(),
+            data: postActivity,
+          },
+          null,
+          4
+        )
+      );
+      this._notificationService.publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor: post.actor,
+          event: event.getEventName(),
+          data: postActivity,
+        },
+      });
+    });
+    //send noti
   }
 }
