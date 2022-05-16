@@ -101,7 +101,6 @@ export class PostListener {
       createdAt,
       actor,
     };
-console.log('dataIndex=', JSON.stringify(dataIndex, null, 4));
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService
       .index({ index, id: `${id}`, body: dataIndex })
@@ -109,7 +108,6 @@ console.log('dataIndex=', JSON.stringify(dataIndex, null, 4));
 
     try {
       // Fanout to write post to all news feed of user follow group audience
-      console.log('fanout================');
       this._feedPublisherService.fanoutOnWrite(
         actor.id,
         id,

@@ -519,7 +519,6 @@ export class PostService {
       );
 
       if (uniqueMediaIds.length) {
-        console.log('uniqueMediaIds=', uniqueMediaIds);
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
@@ -602,16 +601,6 @@ export class PostService {
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
       const mediaList = await this._mediaService.getMediaList({ where: { id: uniqueMediaIds } });
-      let isDraft = false;
-      let isProcessing = false;
-      if (
-        mediaList.filter(
-          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
-        ).length > 0
-      ) {
-        isDraft = true;
-        isProcessing = true;
-      }
 
       const dataUpdate = {
         content,
@@ -621,10 +610,18 @@ export class PostService {
         canShare: setting.canShare,
         canComment: setting.canComment,
         canReact: setting.canReact,
-        isDraft,
-        isProcessing,
       };
-      if (isDraft) dataUpdate['createdAt'] = new Date();
+
+      if (
+        mediaList.filter(
+          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+        ).length > 0
+      ) {
+        dataUpdate['isDraft'] = true;
+        dataUpdate['isProcessing'] = true;
+      }
+
+      if (post.isDraft) dataUpdate['createdAt'] = new Date();
       await this._postModel.update(dataUpdate, {
         where: {
           id: postId,
