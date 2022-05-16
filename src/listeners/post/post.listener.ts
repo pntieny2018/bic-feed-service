@@ -192,6 +192,36 @@ export class PostListener {
           data: postActivity,
         },
       });
+
+      const { actor, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
+        post;
+
+      const dataIndex = {
+        id,
+        commentsCount,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+      };
+      const index = ElasticsearchHelper.INDEX.POST;
+      this._elasticsearchService
+        .index({ index, id: `${id}`, body: dataIndex })
+        .catch((e) => this._logger.debug(e));
+
+      try {
+        this._feedPublisherService.fanoutOnWrite(
+          actor.id,
+          id,
+          audience.groups.map((g) => g.id),
+          [0]
+        );
+      } catch (error) {
+        this._logger.error(error, error?.stack);
+      }
     });
   }
 
