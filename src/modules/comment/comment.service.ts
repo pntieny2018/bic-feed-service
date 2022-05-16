@@ -215,6 +215,8 @@ export class CommentService {
       postId: comment.postId,
     });
 
+    await this._giphyService.saveGiphyData(updateCommentDto.giphy)
+
     // check user can access
     this._authorityService.canReadPost(user, post);
 

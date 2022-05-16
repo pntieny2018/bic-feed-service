@@ -12,7 +12,7 @@ export class GiphyService {
   ) {}
 
   public async saveGiphyData(giphyDto: GiphyDto) {
-    if(giphyDto.id) {
+    if(giphyDto && giphyDto.id) {
       const giphyData = await this._giphyModel.findOne({where: {id: giphyDto.id}});
       if(!giphyData) {
         await this._giphyModel.create({id: giphyDto.id, type: giphyDto.type});
