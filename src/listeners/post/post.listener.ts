@@ -101,7 +101,6 @@ export class PostListener {
       createdAt,
       actor,
     };
-console.log('dataIndex=', JSON.stringify(dataIndex, null, 4));
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService
       .index({ index, id: `${id}`, body: dataIndex })
@@ -109,7 +108,6 @@ console.log('dataIndex=', JSON.stringify(dataIndex, null, 4));
 
     try {
       // Fanout to write post to all news feed of user follow group audience
-      console.log('fanout================');
       this._feedPublisherService.fanoutOnWrite(
         actor.id,
         id,
@@ -194,6 +192,36 @@ console.log('dataIndex=', JSON.stringify(dataIndex, null, 4));
           data: postActivity,
         },
       });
+
+      const { actor, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
+        post;
+
+      const dataIndex = {
+        id,
+        commentsCount,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+      };
+      const index = ElasticsearchHelper.INDEX.POST;
+      this._elasticsearchService
+        .index({ index, id: `${id}`, body: dataIndex })
+        .catch((e) => this._logger.debug(e));
+
+      try {
+        this._feedPublisherService.fanoutOnWrite(
+          actor.id,
+          id,
+          audience.groups.map((g) => g.id),
+          [0]
+        );
+      } catch (error) {
+        this._logger.error(error, error?.stack);
+      }
     });
   }
 
