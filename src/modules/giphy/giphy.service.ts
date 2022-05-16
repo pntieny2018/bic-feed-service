@@ -11,7 +11,7 @@ export class GiphyService {
     private readonly _giphyModel: typeof GiphyModel
   ) {}
 
-  public async saveGiphyData(giphyDto: GiphyDto) {
+  public async saveGiphyData(giphyDto: GiphyDto): Promise<void> {
     if(giphyDto && giphyDto.id) {
       const giphyData = await this._giphyModel.findOne({where: {id: giphyDto.id}});
       if(!giphyData) {
