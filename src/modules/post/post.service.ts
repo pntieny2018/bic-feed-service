@@ -40,7 +40,6 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
-import { VideoProcessStatus } from '.';
 import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
@@ -601,10 +600,11 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...images].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
 
+      const mediaList = await this._mediaService.getMediaList({ where: { id: uniqueMediaIds } });
       let isDraft = false;
       let isProcessing = false;
       if (
-        post.media.filter(
+        mediaList.filter(
           (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
         ).length > 0
       ) {
@@ -1057,7 +1057,7 @@ export class PostService {
     }
   }
 
-  public async getPostsByMedia(uploadId: string) {
+  public async getPostsByMedia(uploadId: string): Promise<PostResponseDto[]> {
     const posts = await this._postModel.findAll({
       include: [
         {
@@ -1065,15 +1065,33 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: [],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
           required: true,
           where: {
             uploadId,
           },
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+        },
       ],
     });
-    return posts;
+    await Promise.all([
+      this.bindAudienceToPost(posts),
+      this._mentionService.bindMentionsToPosts(posts),
+      this.bindActorToPost(posts),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
   }
 
   public async updatePostStatus(postId: number): Promise<void> {
@@ -1108,7 +1126,6 @@ export class PostService {
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
     });
-    //send noti
   }
 
   public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
@@ -1118,8 +1135,6 @@ export class PostService {
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
     });
-    //send noti
-    
   }
 
   public async processVideo(ids: string[]): Promise<void> {
