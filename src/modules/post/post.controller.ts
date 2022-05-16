@@ -152,14 +152,6 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number
   ): Promise<PostResponseDto> {
-    // this._eventEmitter.emit(
-    //   new PostVideoSuccessEvent({
-    //     videoId: '5568ad1d-cb34-4ac0-afbf-034acd33ac40',
-    //     hlsUrl: 'aa',
-    //     status: VideoProcessStatus.DONE,
-    //   })
-    // );
-   // return;
     const isPublished = await this._postService.publishPost(postId, user.id);
     if (isPublished) {
       const post = await this._postService.getPost(postId, user, new GetPostDto());
@@ -212,12 +204,13 @@ export class PostController {
   public async createVideoPostDone(
     @Payload('value') processVideoResponseDto: ProcessVideoResponseDto
   ): Promise<void> {
-    console.log('msgggg=', processVideoResponseDto);
     switch (processVideoResponseDto.status) {
       case VideoProcessStatus.DONE:
         this._eventEmitter.emit(new PostVideoSuccessEvent(processVideoResponseDto));
+        break;
       case VideoProcessStatus.ERROR:
         this._eventEmitter.emit(new PostVideoFailedEvent(processVideoResponseDto));
+        break;
     }
   }
 }
