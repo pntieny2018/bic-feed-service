@@ -81,7 +81,6 @@ export class PostListener {
     this._postService
       .savePostEditedHistory(post.id, { oldData: null, newData: post })
       .catch((e) => this._logger.error(e, e?.stack));
-
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
@@ -102,7 +101,7 @@ export class PostListener {
       createdAt,
       actor,
     };
-
+console.log('dataIndex=', JSON.stringify(dataIndex, null, 4));
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService
       .index({ index, id: `${id}`, body: dataIndex })
@@ -110,6 +109,7 @@ export class PostListener {
 
     try {
       // Fanout to write post to all news feed of user follow group audience
+      console.log('fanout================');
       this._feedPublisherService.fanoutOnWrite(
         actor.id,
         id,
@@ -180,26 +180,12 @@ export class PostListener {
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    console.log('success=============');
     const { videoId, hlsUrl, meta } = event.payload;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this._postService.updatePostStatus(post.id);
-
       const postActivity = this._postActivityService.createPayload(post);
-      console.log(
-        'payload=',
-        JSON.stringify(
-          {
-            actor: post.actor,
-            event: event.getEventName(),
-            data: postActivity,
-          },
-          null,
-          4
-        )
-      );
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
@@ -221,18 +207,6 @@ export class PostListener {
     posts.forEach((post) => {
       this._postService.updatePostStatus(post.id);
       const postActivity = this._postActivityService.createPayload(post);
-      console.log(
-        'payload=',
-        JSON.stringify(
-          {
-            actor: post.actor,
-            event: event.getEventName(),
-            data: postActivity,
-          },
-          null,
-          4
-        )
-      );
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
@@ -242,6 +216,5 @@ export class PostListener {
         },
       });
     });
-    //send noti
   }
 }
