@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { UserMentionDto } from '../../../mention/dto';
+import { GiphyDto } from '../../../giphy/dto/requests';
 
 export class UpdateCommentDto {
   @ApiProperty({ type: String })
@@ -66,4 +67,15 @@ export class UpdateCommentDto {
     return value;
   })
   public mentions?: number[] = [];
+
+  @ApiProperty({
+    type: GiphyDto,
+    example: {
+      id: '3pZipqyo1sqHDfJGtz',
+      type: 'gif',
+    }
+  })
+  @IsOptional()
+  @Type(() => GiphyDto)
+  public giphy?: GiphyDto = null;
 }
