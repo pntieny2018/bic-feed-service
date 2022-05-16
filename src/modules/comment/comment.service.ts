@@ -31,6 +31,7 @@ import { CommentEditedHistoryDto, CommentResponseDto, CommentsResponseDto } from
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class CommentService {
@@ -50,7 +51,8 @@ export class CommentService {
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
     private _followService: FollowService,
     @InjectModel(CommentEditedHistoryModel)
-    private readonly _commentEditedHistoryModel: typeof CommentEditedHistoryModel
+    private readonly _commentEditedHistoryModel: typeof CommentEditedHistoryModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -669,6 +671,7 @@ export class CommentService {
     } catch (e) {
       this._logger.error(e, e.stack);
       await transaction.rollback();
+      throw e;
     }
   }
 
@@ -817,7 +820,10 @@ export class CommentService {
         transaction
       ),
       this._reactionService.deleteReactionByCommentIds(commentIds, transaction),
-    ]).catch((ex) => this._logger.error(ex, ex.stack));
+    ]).catch((ex) => {
+      this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
+    });
 
     await this._commentModel.destroy({
       where: {

@@ -12,6 +12,7 @@ import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
 import { MediaStatus } from '../../database/models/media.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class PostListener {
@@ -21,7 +22,8 @@ export class PostListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
-    private readonly _postService: PostService
+    private readonly _postService: PostService,
+    private readonly _sentryService: SentryService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -30,15 +32,17 @@ export class PostListener {
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
-    this._postService
-      .deletePostEditedHistory(post.id)
-      .catch((e) => this._logger.error(e, e?.stack));
+    this._postService.deletePostEditedHistory(post.id).catch((e) => {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
+    });
 
     const index = ElasticsearchHelper.INDEX.POST;
     try {
-      this._elasticsearchService
-        .delete({ index, id: `${post.id}` })
-        .catch((e) => this._logger.debug(e));
+      this._elasticsearchService.delete({ index, id: `${post.id}` }).catch((e) => {
+        this._logger.debug(e);
+        this._sentryService.captureException(e);
+      });
 
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -52,6 +56,7 @@ export class PostListener {
       return;
     } catch (error) {
       this._logger.error(error, error?.stack);
+      this._sentryService.captureException(error);
       return;
     }
   }
@@ -76,7 +81,10 @@ export class PostListener {
     }
     this._postService
       .savePostEditedHistory(post.id, { oldData: null, newData: post })
-      .catch((e) => this._logger.error(e, e?.stack));
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
 
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -100,9 +108,10 @@ export class PostListener {
     };
 
     const index = ElasticsearchHelper.INDEX.POST;
-    this._elasticsearchService
-      .index({ index, id: `${id}`, body: dataIndex })
-      .catch((e) => this._logger.debug(e));
+    this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
+      this._logger.debug(e);
+      this._sentryService.captureException(e);
+    });
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -114,6 +123,7 @@ export class PostListener {
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
+      this._sentryService.captureException(error);
     }
   }
 
@@ -131,7 +141,10 @@ export class PostListener {
 
     this._postService
       .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
-      .catch((e) => this._logger.error(e, e?.stack));
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
 
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);
@@ -158,7 +171,10 @@ export class PostListener {
     };
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })
-      .catch((e) => this._logger.debug(e));
+      .catch((e) => {
+        this._logger.debug(e);
+        this._sentryService.captureException(e);
+      });
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -170,6 +186,7 @@ export class PostListener {
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
+      this._sentryService.captureException(error);
     }
   }
 }

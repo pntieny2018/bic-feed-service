@@ -31,6 +31,7 @@ import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/requ
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { FollowService } from '../follow';
+import { SentryService } from '../../../libs/sentry/src';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -58,7 +59,8 @@ export class ReactionService {
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _reactionNotificationService: ReactionActivityService
+    private readonly _reactionNotificationService: ReactionActivityService,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -254,7 +256,10 @@ export class ReactionService {
               },
             });
           })
-          .catch((ex) => this._logger.error(ex, ex.stack));
+          .catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
 
         return reaction;
       }
@@ -262,12 +267,15 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
+        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
+        this._sentryService.captureException(e);
         throw new LogicException(e.message);
       }
       if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(e);
         return this._createPostReaction(userDto, createReactionDto, attempt + 1);
       }
 
@@ -384,7 +392,10 @@ export class ReactionService {
               },
             });
           })
-          .catch((ex) => this._logger.error(ex, ex.stack));
+          .catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
 
         return reaction;
       }
@@ -392,13 +403,16 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
+        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
+        this._sentryService.captureException(e);
         throw new LogicException(e.message);
       }
 
       if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(e);
         return this._createCommentReaction(userDto, createReactionDto, attempt + 1);
       }
 
@@ -526,6 +540,7 @@ export class ReactionService {
       this._logger.error(ex, ex.message, ex.stack);
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(ex);
         return this._deletePostReaction(userDto, deleteReactionDto, attempt + 1);
       }
       throw ex;
@@ -643,6 +658,7 @@ export class ReactionService {
       this._logger.error(ex, ex.stack);
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(ex);
         return this._deleteCommentReaction(userDto, deleteReactionDto, attempt + 1);
       }
 

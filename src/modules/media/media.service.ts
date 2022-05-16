@@ -21,6 +21,7 @@ import { CommentMediaModel } from '../../database/models/comment-media.model';
 import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class MediaService {
@@ -29,7 +30,8 @@ export class MediaService {
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
-    @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel
+    @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -96,6 +98,7 @@ export class MediaService {
         mimeType: mimeType ?? null,
       });
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new InternalServerErrorException("Can't create media");
     }
   }
@@ -136,6 +139,7 @@ export class MediaService {
       return true;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       await trx.rollback();
       throw new LogicException(HTTP_STATUS_ID.API_MEDIA_DELETE_ERROR);
     }

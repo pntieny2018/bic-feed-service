@@ -9,6 +9,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
 import { ArrayHelper } from '../../common/helpers';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FollowService {
@@ -19,7 +20,8 @@ export class FollowService {
   public constructor(
     @InjectConnection() private _sequelize: Sequelize,
     private _eventEmitter: InternalEventEmitterService,
-    @InjectModel(FollowModel) private _followModel: typeof FollowModel
+    @InjectModel(FollowModel) private _followModel: typeof FollowModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -52,6 +54,7 @@ export class FollowService {
 
       this._eventEmitter.emit(new UsersHasBeenFollowedEvent(createFollowDto));
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
     }
   }
@@ -74,6 +77,7 @@ export class FollowService {
       });
       this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
     }
   }
@@ -152,7 +156,7 @@ export class FollowService {
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-
+      this._sentryService.captureException(ex);
       return {
         userIds: [],
         latestFollowId: 0,
@@ -214,7 +218,7 @@ export class FollowService {
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-
+      this._sentryService.captureException(ex);
       return {
         userIds: [],
         latestFollowId: 0,

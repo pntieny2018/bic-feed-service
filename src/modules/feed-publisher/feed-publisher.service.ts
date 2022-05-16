@@ -7,6 +7,7 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FeedPublisherService {
@@ -16,7 +17,8 @@ export class FeedPublisherService {
   public constructor(
     private _followService: FollowService,
     @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
-    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel
+    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   public async attachPostsForUserNewsFeed(userId: number, postIds: number[]): Promise<void> {
@@ -31,6 +33,7 @@ export class FeedPublisherService {
       );
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
@@ -62,6 +65,7 @@ export class FeedPublisherService {
       );
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
@@ -84,6 +88,7 @@ export class FeedPublisherService {
       });
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
@@ -139,6 +144,7 @@ export class FeedPublisherService {
         }
       } catch (ex) {
         this._logger.error(ex, ex.stack);
+        this._sentryService.captureException(ex);
         break;
       }
     }
@@ -174,7 +180,10 @@ export class FeedPublisherService {
           attached: attachedGroupIds,
           old: oldGroupIds,
           detached: [],
-        }).catch((ex) => this._logger.error(ex, ex.stack));
+        }).catch((ex) => {
+          this._logger.error(ex, ex.stack);
+          this._sentryService.captureException(ex);
+        });
       } else if (detachedGroupIds.length > 0) {
         if (attachedGroupIds.length > 0) {
           this.processFanout(createdBy, postId, {
@@ -184,14 +193,20 @@ export class FeedPublisherService {
               ...detachedGroupIds,
             ],
             detached: [],
-          }).catch((ex) => this._logger.error(ex, ex.stack));
+          }).catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
         }
         if (detachedGroupIds[0] != 0)
           this.processFanout(createdBy, postId, {
             attached: [],
             detached: detachedGroupIds,
             current: currentGroupIds,
-          }).catch((ex) => this._logger.error(ex, ex.stack));
+          }).catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
       }
     }
   }
