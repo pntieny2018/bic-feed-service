@@ -196,8 +196,6 @@ export class FeedService {
       });
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    console.log('importantPosts=', importantPosts);
-    console.log('normalPosts=', normalPosts);
     const rows = importantPosts.concat(normalPosts);
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;

@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
-import { CompressionTypes } from '@nestjs/microservices/external/kafka.interface';
 import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../common/constants';
 
 @Injectable()

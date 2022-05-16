@@ -6,9 +6,10 @@ import { ReactionListener } from './reaction';
 import { NotificationModule } from '../notification';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { CommentModule } from '../modules/comment';
+import { MediaModule } from '../modules/media';
 
 @Module({
-  imports: [PostModule, CommentModule, NotificationModule, FeedPublisherModule],
+  imports: [PostModule, CommentModule, NotificationModule, FeedPublisherModule, MediaModule],
   providers: [PostListener, CommentListener, ReactionListener],
 })
 export class ListenerModule {}
