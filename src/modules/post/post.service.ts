@@ -619,6 +619,8 @@ export class PostService {
       ) {
         dataUpdate['isDraft'] = true;
         dataUpdate['isProcessing'] = true;
+        if (post.isDraft === false)
+          await this._feedService.deleteNewsFeedByPost(postId, transaction);
       }
 
       if (post.isDraft) dataUpdate['createdAt'] = new Date();
