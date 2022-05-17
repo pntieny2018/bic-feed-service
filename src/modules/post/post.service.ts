@@ -43,6 +43,7 @@ import { PostEditedHistoryDto } from './dto/responses';
 import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class PostService {
@@ -81,7 +82,8 @@ export class PostService {
     @InjectModel(PostEditedHistoryModel)
     private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
     @Inject(KAFKA_PRODUCER)
-    private readonly _client: ClientKafka
+    private readonly _client: ClientKafka,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -942,6 +944,7 @@ export class PostService {
       return posts.map((p) => p.postId);
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return [];
     }
   }
@@ -1148,6 +1151,7 @@ export class PostService {
       this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
     }
   }
 }

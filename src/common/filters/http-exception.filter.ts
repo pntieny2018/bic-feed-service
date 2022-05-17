@@ -3,6 +3,7 @@ import { ResponseDto } from '../dto';
 import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
 import { LogicException, ValidatorException } from '../exceptions';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -11,6 +12,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public catch(exception: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    Sentry.captureException(exception);
     if (exception instanceof ValidatorException) {
       return this.handleValidatorException(exception, response);
     } else if (exception instanceof LogicException) {

@@ -11,6 +11,7 @@ import { UserService } from '../../shared/user';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,8 @@ export class AuthService {
   public constructor(
     private _userService: UserService,
     private _httpService: HttpService,
-    private _configService: ConfigService
+    private _configService: ConfigService,
+    private _sentryService: SentryService
   ) {}
 
   public async login(token: string): Promise<UserDto> {
@@ -57,6 +59,7 @@ export class AuthService {
       payload = await jwt.verify(token, pem);
     } catch (e) {
       this._logger.error(e, e.stack);
+      this._sentryService.captureException(e);
       if (e instanceof TokenExpiredError) {
         throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
       }

@@ -31,6 +31,7 @@ import { CommentEditedHistoryDto, CommentResponseDto, CommentsResponseDto } from
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
+import { SentryService } from '../../../libs/sentry/src';
 import { GiphyService } from '../giphy';
 
 @Injectable()
@@ -52,7 +53,8 @@ export class CommentService {
     @InjectModel(CommentModel) private _commentModel: typeof CommentModel,
     private _followService: FollowService,
     @InjectModel(CommentEditedHistoryModel)
-    private readonly _commentEditedHistoryModel: typeof CommentEditedHistoryModel
+    private readonly _commentEditedHistoryModel: typeof CommentEditedHistoryModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -120,7 +122,7 @@ export class CommentService {
     // check post policy
     this._postPolicyService.allow(post, PostAllow.COMMENT);
 
-    await this._giphyService.saveGiphyData(createCommentDto.giphy)
+    await this._giphyService.saveGiphyData(createCommentDto.giphy);
 
     //HOTFIX: hot fix create comment with image
     const comment = await this._commentModel.create({
@@ -129,7 +131,7 @@ export class CommentService {
       parentId: replyId,
       content: createCommentDto.content,
       postId: post.id,
-      giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null
+      giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
     });
 
     const transaction = await this._sequelizeConnection.transaction();
@@ -215,7 +217,7 @@ export class CommentService {
       postId: comment.postId,
     });
 
-    await this._giphyService.saveGiphyData(updateCommentDto.giphy)
+    await this._giphyService.saveGiphyData(updateCommentDto.giphy);
 
     // check user can access
     this._authorityService.canReadPost(user, post);
@@ -679,6 +681,7 @@ export class CommentService {
     } catch (e) {
       this._logger.error(e, e.stack);
       await transaction.rollback();
+      throw e;
     }
   }
 
@@ -827,7 +830,10 @@ export class CommentService {
         transaction
       ),
       this._reactionService.deleteReactionByCommentIds(commentIds, transaction),
-    ]).catch((ex) => this._logger.error(ex, ex.stack));
+    ]).catch((ex) => {
+      this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
+    });
 
     await this._commentModel.destroy({
       where: {
