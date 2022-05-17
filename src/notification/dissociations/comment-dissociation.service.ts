@@ -50,10 +50,6 @@ export class CommentDissociationService {
 
       comment = comment.toJSON();
 
-      if (!comment.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
-      }
-
       if (comment.parentId) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
@@ -62,7 +58,7 @@ export class CommentDissociationService {
        * User who created post
        * Will equal null if post creator comment to self's post
        */
-      const postOwnerId = comment.post.createdBy === actorId ? null : comment.post.createdBy;
+      const postOwnerId = postResponse.actor.id === actorId ? null : postResponse.actor.id;
 
       /**
        * users who mentioned in post
