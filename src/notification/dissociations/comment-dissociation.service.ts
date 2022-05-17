@@ -104,7 +104,12 @@ export class CommentDissociationService {
       /**
        * users who was checked if users followed group audience
        */
-      const checkUserIds = [postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments];
+      const checkUserIds = [
+        postOwnerId,
+        ...mentionedUsersInComment,
+        ...actorIdsOfPrevComments,
+        ...mentionedUsersInPost,
+      ];
 
       if (!checkUserIds.length) {
         return recipient;
