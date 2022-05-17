@@ -7,9 +7,18 @@ import { NotificationModule } from '../notification';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { CommentModule } from '../modules/comment';
 import { MediaModule } from '../modules/media';
+import { FollowListener } from './follow/follow.listener';
+import { UserModule } from '../shared/user';
 
 @Module({
-  imports: [PostModule, CommentModule, NotificationModule, FeedPublisherModule, MediaModule],
-  providers: [PostListener, CommentListener, ReactionListener],
+  imports: [
+    PostModule,
+    CommentModule,
+    NotificationModule,
+    FeedPublisherModule,
+    MediaModule,
+    UserModule,
+  ],
+  providers: [PostListener, CommentListener, ReactionListener, FollowListener],
 })
 export class ListenerModule {}
