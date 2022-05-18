@@ -645,7 +645,7 @@ export class PostService {
       await this._postModel.update(dataUpdate, {
         where: {
           id: post.id,
-          createdBy: authUserId,
+          createdBy: 12313123,
         },
         transaction,
       });
@@ -655,7 +655,6 @@ export class PostService {
       }
 
       if (mentions) {
-        console.log('setMention======');
         await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
       if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
