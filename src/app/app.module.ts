@@ -52,13 +52,7 @@ export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(AuthMiddleware)
-      .exclude(
-        '/api/health-check',
-        'api/v1/follows',
-        'api/v1/app',
-        'api/v1/posts/(.*)',
-        'api/v1/comments/(.*)'
-      )
+      .exclude('/api/health-check', 'api/v1/follows', 'api/v1/app')
       .forRoutes('*');
   }
 }
