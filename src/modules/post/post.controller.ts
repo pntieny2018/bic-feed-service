@@ -91,23 +91,12 @@ export class PostController {
   })
   @Get('/:postId')
   public getPost(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
-    return this._postService.getPost(postId, user, getPostDto);
-  }
-
-  @ApiOperation({ summary: 'Get post detail' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-  })
-  @Get('/public/:postId')
-  public getPublisPost(
-    @Param('postId', ParseIntPipe) postId: number,
-    @Query(GetPostPipe) getPostDto: GetPostDto
-  ): any {
-    return this._postService.getPublicPost(postId, getPostDto);
+    if (user === null) return this._postService.getPublicPost(postId, getPostDto);
+    else return this._postService.getPost(postId, user, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })

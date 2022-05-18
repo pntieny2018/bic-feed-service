@@ -386,8 +386,8 @@ export class CommentService {
    */
   public async getCommentLink(
     commentId: number,
-    user: UserDto,
-    getCommentLinkDto: GetCommentLinkDto
+    getCommentLinkDto: GetCommentLinkDto,
+    user?: UserDto
   ): Promise<any> {
     this._logger.debug(
       `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
@@ -404,7 +404,8 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId,
     });
-    await this._authorityService.checkCanReadPost(user, post);
+    if (user) await this._authorityService.checkCanReadPost(user, post);
+    const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
     const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;
     const comments = await this._getComments(
@@ -412,11 +413,11 @@ export class CommentService {
         limit,
         postId,
       },
-      user.id,
+      userId,
       parentId
     );
     if (comments.list.length && limit > 1) {
-      await this.bindChildrenToComment(comments.list, user.id, childLimit);
+      await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
     const aroundChildId = checkComment.parentId > 0 ? commentId : 0;
     const child = await this._getComments(
@@ -425,7 +426,7 @@ export class CommentService {
         parentId,
         postId,
       },
-      user.id,
+      userId,
       aroundChildId
     );
     comments.list.map((cm) => {
