@@ -28,7 +28,7 @@ export class GiphyController {
     );
   };
 
-  @ApiOperation({ summary: 'Get trending Gif.' })
+  @ApiOperation({ summary: 'Search Gif.' })
   @Get('/search')
   public async search(
     @Query() searchDto: SearchDto
