@@ -58,7 +58,7 @@ export class CommentController {
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comments');
-    return this._commentService.getComments(user, getCommentsDto);
+    return this._commentService.getComments(getCommentsDto, user);
   }
 
   @ApiOperation({ summary: 'Create new comment' })

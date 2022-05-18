@@ -207,7 +207,7 @@ describe('CommentService', () => {
     describe('Create comment when user out group', () => {
       it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
         try {
-          authorityService.canReadPost.mockImplementation(() => {
+          authorityService.checkCanReadPost.mockImplementation(() => {
             throw new ForbiddenException('You do not have permission to perform this action !');
           });
           await commentService.create(authUserNotInGroupContainPostMock, createTextCommentDto);
@@ -234,7 +234,7 @@ describe('CommentService', () => {
               ],
             });
 
-            authorityService.canReadPost.mockReturnThis();
+            authorityService.checkCanReadPost.mockReturnThis();
 
             postPolicyService.allow.mockReturnThis();
 
@@ -276,7 +276,7 @@ describe('CommentService', () => {
           ],
         });
 
-        authorityService.canReadPost.mockReturnThis();
+        authorityService.checkCanReadPost.mockReturnThis();
 
         postPolicyService.allow.mockReturnThis();
 
@@ -306,7 +306,7 @@ describe('CommentService', () => {
 
         expect(postService.findPost).toBeCalled();
 
-        expect(authorityService.canReadPost).toBeCalled();
+        expect(authorityService.checkCanReadPost).toBeCalled();
 
         expect(postPolicyService.allow).toBeCalled();
 
@@ -359,7 +359,7 @@ describe('CommentService', () => {
           }),
         });
 
-        authorityService.canReadPost.mockReturnThis();
+        authorityService.checkCanReadPost.mockReturnThis();
 
         postPolicyService.allow.mockReturnThis();
 
@@ -387,7 +387,7 @@ describe('CommentService', () => {
 
         await commentService.create(authUserMock, createCommentDto, 1);
 
-        expect(authorityService.canReadPost).toBeCalled();
+        expect(authorityService.checkCanReadPost).toBeCalled();
 
         expect(commentModel.findOne).toBeCalled();
 
@@ -471,7 +471,7 @@ describe('CommentService', () => {
               },
             ],
           });
-          authorityService.canReadPost.mockImplementation(() => {
+          authorityService.checkCanReadPost.mockImplementation(() => {
             throw new ForbiddenException('You do not have permission to perform this action !');
           });
           userService.getMany.mockResolvedValue([]);
@@ -521,7 +521,7 @@ describe('CommentService', () => {
 
             userService.getMany.mockResolvedValue([]);
 
-            authorityService.canReadPost.mockReturnThis();
+            authorityService.checkCanReadPost.mockReturnThis();
 
             postPolicyService.allow.mockReturnThis();
 
@@ -572,7 +572,7 @@ describe('CommentService', () => {
           ],
         });
 
-        authorityService.canReadPost.mockReturnThis();
+        authorityService.checkCanReadPost.mockReturnThis();
 
         postPolicyService.allow.mockReturnThis();
 
@@ -597,7 +597,7 @@ describe('CommentService', () => {
 
         expect(postService.findPost).toBeCalled();
 
-        expect(authorityService.canReadPost).toBeCalled();
+        expect(authorityService.checkCanReadPost).toBeCalled();
 
         expect(postPolicyService.allow).toBeCalled();
 
@@ -670,7 +670,7 @@ describe('CommentService', () => {
           ],
         });
 
-        authorityService.canReadPost.mockImplementation(() => {
+        authorityService.checkCanReadPost.mockImplementation(() => {
           throw new ForbiddenException('You do not have permission to perform this action !');
         });
 
@@ -707,7 +707,7 @@ describe('CommentService', () => {
         ],
       });
 
-      authorityService.canReadPost.mockReturnThis();
+      authorityService.checkCanReadPost.mockReturnThis();
 
       mediaService.sync.mockResolvedValue({});
 
@@ -721,7 +721,7 @@ describe('CommentService', () => {
 
       expect(commentModel.findOne).toBeCalled();
       expect(postService.findPost).toBeCalled();
-      expect(authorityService.canReadPost).toBeCalled();
+      expect(authorityService.checkCanReadPost).toBeCalled();
       expect(mediaService.sync).toBeCalled();
       expect(mentionService.destroy).toBeCalled();
       // expect(trxCommit).toBeCalled();
@@ -749,7 +749,7 @@ describe('CommentService', () => {
         ],
       });
 
-      authorityService.canReadPost.mockReturnValue({});
+      authorityService.checkCanReadPost.mockReturnValue({});
 
       mediaService.sync.mockReturnValue(Promise.resolve());
 
@@ -763,7 +763,7 @@ describe('CommentService', () => {
 
       expect(commentModel.findOne).toBeCalled();
       expect(postService.findPost).toBeCalled();
-      expect(authorityService.canReadPost).toBeCalled();
+      expect(authorityService.checkCanReadPost).toBeCalled();
       expect(mediaService.sync).toBeCalled();
       expect(mentionService.destroy).toBeCalled();
       expect(loggerSpy).toBeCalled();

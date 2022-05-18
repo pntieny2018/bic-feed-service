@@ -102,14 +102,12 @@ export class PostController {
   @ApiOkResponse({
     type: PostResponseDto,
   })
-  @Get('/public-post/:postId')
+  @Get('/public/:postId')
   public getPublisPost(
-    @AuthUser() user: UserDto,
     @Param('postId', ParseIntPipe) postId: number,
     @Query(GetPostPipe) getPostDto: GetPostDto
-  ): Promise<PostResponseDto> {
-    console.log('xxxxxxxxxxxxx');
-    return this._postService.getPost(postId, user, getPostDto);
+  ): any {
+    return this._postService.getPublicPost(postId, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })
