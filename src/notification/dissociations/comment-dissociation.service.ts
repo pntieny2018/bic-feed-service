@@ -3,11 +3,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { PostModel } from '../../database/models/post.model';
 import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentModel } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
+import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { SentryService } from '../../../libs/sentry/src';
@@ -24,18 +24,16 @@ export class CommentDissociationService {
   public async dissociateComment(
     actorId: number,
     commentId: number,
-    groupAudienceIds: number[]
+    postResponse: PostResponseDto
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const recipient = CommentRecipientDto.init();
-
+    const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
+    const postMentions = Array.isArray(postResponse.mentions)
+      ? []
+      : Object.values(postResponse.mentions);
     try {
       let comment = await this._commentModel.findOne({
         include: [
-          {
-            model: PostModel,
-            as: 'post',
-            attributes: ['createdBy'],
-          },
           {
             association: 'mentions',
             required: false,
@@ -54,10 +52,6 @@ export class CommentDissociationService {
 
       comment = comment.toJSON();
 
-      if (!comment.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
-      }
-
       if (comment.parentId) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
@@ -66,12 +60,12 @@ export class CommentDissociationService {
        * User who created post
        * Will equal null if post creator comment to self's post
        */
-      const postOwnerId = comment.post.createdBy === actorId ? null : comment.post.createdBy;
+      const postOwnerId = postResponse.actor.id === actorId ? null : postResponse.actor.id;
 
       /**
        * users who mentioned in post
        */
-      const mentionedUsersInPost = (comment.post.mentions ?? []).map((mention) => mention.userId);
+      const mentionedUsersInPost = postMentions.map((mention) => mention.id);
 
       /**
        * users who mentioned in created comment
@@ -112,7 +106,12 @@ export class CommentDissociationService {
       /**
        * users who was checked if users followed group audience
        */
-      const checkUserIds = [postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments];
+      const checkUserIds = [
+        postOwnerId,
+        ...mentionedUsersInComment,
+        ...actorIdsOfPrevComments,
+        ...mentionedUsersInPost,
+      ];
 
       if (!checkUserIds.length) {
         return recipient;
