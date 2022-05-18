@@ -226,9 +226,10 @@ export class PostListener {
         actor,
       };
       const index = ElasticsearchHelper.INDEX.POST;
-      this._elasticsearchService
-        .index({ index, id: `${id}`, body: dataIndex })
-        .catch((e) => this._logger.debug(e));
+      this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
+        this._logger.debug(e);
+        this._sentryService.captureException(e);
+      });
 
       try {
         this._feedPublisherService.fanoutOnWrite(
@@ -239,6 +240,7 @@ export class PostListener {
         );
       } catch (error) {
         this._logger.error(error, error?.stack);
+        this._sentryService.captureException(error);
       }
     });
   }

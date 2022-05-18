@@ -15,7 +15,6 @@ export interface IGiphy {
   tableName: 'giphy',
   timestamps: false,
 })
-
 export class GiphyModel extends Model implements IGiphy {
   @PrimaryKey
   @Column

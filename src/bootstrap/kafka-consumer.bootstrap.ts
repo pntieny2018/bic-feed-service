@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { IKafkaConfig } from '../config/kafka';
@@ -18,6 +18,6 @@ export class KafkaConsumerBootstrap {
       transport: Transport.KAFKA,
       options: defaultConfig,
     });
-    app.startAllMicroservices();
+    app.startAllMicroservices().catch((ex) => Logger.error(ex));
   }
 }
