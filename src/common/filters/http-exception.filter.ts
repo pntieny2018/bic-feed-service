@@ -12,7 +12,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public catch(exception: Error, host: ArgumentsHost): Response {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    Sentry.captureException(exception);
     if (exception instanceof ValidatorException) {
       return this.handleValidatorException(exception, response);
     } else if (exception instanceof LogicException) {
@@ -20,6 +19,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (exception instanceof HttpException) {
       return this.handleHttpException(exception, response);
     } else {
+      Sentry.captureException(exception);
       return this.handleUnKnowException(exception, response);
     }
   }
