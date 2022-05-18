@@ -168,11 +168,14 @@ export class CommentDissociationService {
     try {
       const recipient = ReplyCommentRecipientDto.init();
 
-      const parentComment = await this._commentModel.findOne({
+      let parentComment = await this._commentModel.findOne({
         include: [
           {
             model: MentionModel,
             as: 'mentions',
+            where: {
+              mentionableType: MentionableType.COMMENT,
+            },
           },
           {
             model: CommentModel,
@@ -200,6 +203,7 @@ export class CommentDissociationService {
       if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
       }
+      parentComment = parentComment.toJSON();
 
       const parentCommentCreatorId =
         parentComment.createdBy === actorId ? null : parentComment.createdBy;
@@ -240,7 +244,6 @@ export class CommentDissociationService {
        *        4. also replied on a comment you are replied.
        *        5. replied on a comment you are mentioned. (mentioned user in parent comment)
        */
-
       for (const validUserId of validUserIds.filter((id) => id !== actorId)) {
         if (!handledUserIds.includes(validUserId)) {
           if (mentionedUserIdsInComment.includes(validUserId)) {
