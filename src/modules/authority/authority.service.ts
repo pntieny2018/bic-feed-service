@@ -20,13 +20,16 @@ export class AuthorityService {
     }
   }
 
-  /**
-   * Need get groups of post
-   * @param user UserDto
-   * @param post IPost
-   * @returns Promise<void>
-   */
   public async canReadPost(user: UserDto, post: IPost): Promise<void> {
+    const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
+  }
+
+  public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
