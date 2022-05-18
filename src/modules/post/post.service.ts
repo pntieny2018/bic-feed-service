@@ -434,7 +434,7 @@ export class PostService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-
+    await this._authorityService.checkPublicPost(post);
     let comments = null;
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments({
@@ -456,6 +456,7 @@ export class PostService {
     const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
+
     result['comments'] = comments;
     return result;
   }
