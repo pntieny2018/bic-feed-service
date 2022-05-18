@@ -1,4 +1,4 @@
-import { Body, Controller, Logger } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { FollowService } from './follow.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { KAFKA_TOPIC } from '../../common/constants';
@@ -16,7 +16,7 @@ export class InternalFollowController {
   }
 
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_UNFOLLOW_GROUP)
-  public async unfollow(@Body() unfollowDto: UnfollowDto): Promise<void> {
+  public async unfollow(@Payload('value') unfollowDto: UnfollowDto): Promise<void> {
     this._logger.debug(`[unfollow]: ${JSON.stringify(unfollowDto)}`);
     await this._followService.unfollow(unfollowDto);
   }
