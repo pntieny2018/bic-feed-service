@@ -1037,16 +1037,15 @@ export class CommentService {
       const commentAdded = result.find((i) => i.id === comment.id);
       if (!commentAdded) {
         const mentions = comment.mentionUserId === null ? [] : [{ userId: comment.mentionUserId }];
-        const ownerReactions =
-          comment.commentReactionId === null
-            ? []
-            : [
-                {
-                  id: comment.commentReactionId,
-                  reactionName: comment.reactionName,
-                  createdAt: comment.reactCreatedAt,
-                },
-              ];
+        const ownerReactions = !comment.commentReactionId
+          ? []
+          : [
+              {
+                id: comment.commentReactionId,
+                reactionName: comment.reactionName,
+                createdAt: comment.reactCreatedAt,
+              },
+            ];
         const media =
           comment.mediaId === null
             ? []
