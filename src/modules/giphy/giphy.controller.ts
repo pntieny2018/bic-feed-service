@@ -4,6 +4,7 @@ import { APP_VERSION } from '../../common/constants';
 import { HttpService } from '@nestjs/axios';
 import { TrendingDto } from './dto/requests/trending.dto';
 import { map } from 'rxjs';
+import { SearchDto } from './dto/requests/search.dto';
 
 
 @ApiTags('Giphy')
@@ -23,6 +24,17 @@ export class GiphyController {
   ): Promise<any> {
     const trendingGiphyUrl = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=${trendingDto.limit}&rating=${trendingDto.rating}`;
     return this._httpService.get(trendingGiphyUrl).pipe(
+      map(response => response.data.data)
+    );
+  };
+
+  @ApiOperation({ summary: 'Get trending Gif.' })
+  @Get('/search')
+  public async search(
+    @Query() searchDto: SearchDto
+  ): Promise<any> {
+    const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchDto.q}&limit=${searchDto.limit}&offset=${searchDto.offset}&rating=${searchDto.rating}&lang=${searchDto.lang}`;
+    return this._httpService.get(giphyUrl).pipe(
       map(response => response.data.data)
     );
   };
