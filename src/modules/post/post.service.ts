@@ -365,7 +365,6 @@ export class PostService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-
     await this._authorityService.canReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
@@ -574,7 +573,7 @@ export class PostService {
    * @throws HttpException
    */
   public async updatePost(
-    postId: number,
+    post: PostResponseDto,
     authUser: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
@@ -587,60 +586,81 @@ export class PostService {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
-
-      const { groupIds } = audience;
-      const post = await this._postModel.findByPk(postId);
+      await this.checkContent(updatePostDto);
       await this.checkPostOwner(post, authUser.id);
-      await this._authorityService.checkCanUpdatePost(authUser, groupIds);
-
-      const mentionUserIds = mentions;
-      if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
+      const oldGroupIds = post.audience.groups.map((group) => group.id);
+      if (audience) {
+        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
       }
 
-      const { files, images, videos } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-
-      const mediaList = await this._mediaService.getMediaList({ where: { id: uniqueMediaIds } });
+      if (mentions && mentions.length) {
+        await this._mentionService.checkValidMentions(
+          audience ? audience.groupIds : oldGroupIds,
+          mentions
+        );
+      }
 
       const dataUpdate = {
-        content,
         updatedBy: authUserId,
-        isImportant: setting.isImportant,
-        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-        canShare: setting.canShare,
-        canComment: setting.canComment,
-        canReact: setting.canReact,
       };
 
-      if (
-        mediaList.filter(
-          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
-        ).length > 0
-      ) {
-        dataUpdate['isDraft'] = true;
-        dataUpdate['isProcessing'] = true;
-        if (post.isDraft === false)
-          await this._feedService.deleteNewsFeedByPost(postId, transaction);
+      if (content !== null) {
+        dataUpdate['content'] = content;
+      }
+      if (setting.hasOwnProperty('canShare')) {
+        dataUpdate['canShare'] = setting.canShare;
+      }
+      if (setting.hasOwnProperty('canComment')) {
+        dataUpdate['canComment'] = setting.canComment;
+      }
+      if (setting.hasOwnProperty('canReact')) {
+        dataUpdate['canReact'] = setting.canReact;
+      }
+      if (setting.hasOwnProperty('isImportant')) {
+        dataUpdate['isImportant'] = setting.isImportant;
+      }
+      if (setting.hasOwnProperty('importantExpiredAt')) {
+        dataUpdate['importantExpiredAt'] =
+          setting.isImportant === false ? null : setting.importantExpiredAt;
       }
 
-      if (post.isDraft) dataUpdate['createdAt'] = new Date();
+      let newMediaids = [];
+      if (media) {
+        const { files, images, videos } = media;
+        newMediaids = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+        await this._mediaService.checkValidMedia(newMediaids, authUserId);
+        const mediaList = await this._mediaService.getMediaList({ where: { id: newMediaids } });
+        if (
+          mediaList.filter(
+            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+          ).length > 0
+        ) {
+          dataUpdate['isDraft'] = true;
+          dataUpdate['isProcessing'] = true;
+          if (post.isDraft === false)
+            await this._feedService.deleteNewsFeedByPost(post.id, transaction);
+        }
+      }
+
       await this._postModel.update(dataUpdate, {
         where: {
-          id: postId,
+          id: post.id,
           createdBy: authUserId,
         },
         transaction,
       });
-      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
-      await this._mentionService.setMention(
-        mentionUserIds,
-        MentionableType.POST,
-        postId,
-        transaction
-      );
-      await this.setGroupByPost(groupIds, postId, transaction);
+
+      if (media) {
+        await this._mediaService.sync(post.id, EntityType.POST, newMediaids, transaction);
+      }
+
+      if (mentions) {
+        console.log('setMention======');
+        await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
+      }
+      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+        await this.setGroupByPost(audience.groupIds, post.id, transaction);
+      }
       await transaction.commit();
 
       return true;
@@ -1152,6 +1172,18 @@ export class PostService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
+    }
+  }
+
+  public checkContent(updatePostDto: UpdatePostDto): void {
+    const { content, media } = updatePostDto;
+    if (
+      content === '' &&
+      media?.files.length === 0 &&
+      media?.videos.length === 0 &&
+      media?.images.length === 0
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
     }
   }
 }

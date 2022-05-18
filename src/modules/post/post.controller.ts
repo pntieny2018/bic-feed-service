@@ -126,8 +126,7 @@ export class PostController {
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
-    updatePostDto.isDraft = postBefore.isDraft;
-    const isUpdated = await this._postService.updatePost(postId, user, updatePostDto);
+    const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
