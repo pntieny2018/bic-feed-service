@@ -1,46 +1,49 @@
 import { RedisService } from '@app/redis';
-import { createMock } from '@golevelup/ts-jest';
+import { ConfigModule } from '@nestjs/config';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Sequelize } from 'sequelize-typescript';
+import { ReactionService } from '..';
+import { SentryService } from '../../../../libs/sentry/src';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
+import { LogicException } from '../../../common/exceptions';
+import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
+import { CommentModel } from '../../../database/models/comment.model';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { PostReactionModel } from '../../../database/models/post-reaction.model';
+import { PostModel } from '../../../database/models/post.model';
+import { NotificationService } from '../../../notification';
+import { ReactionActivityService } from '../../../notification/activities';
+import { GroupService } from '../../../shared/group';
+import { ReactionCountService } from '../../../shared/reaction-count';
 import { UserService } from '../../../shared/user';
+import { CommentService } from '../../comment';
+import { FollowService } from '../../follow';
+import { PostPolicyService } from '../../post/post-policy.service';
+import { PostService } from '../../post/post.service';
+import { ReactionEnum } from '../reaction.enum';
 import {
-  mock15ReactionOnAComment,
-  mock15ReactionOnAPost,
-  mock21ReactionOnAComment,
-  mock21ReactionOnAPost,
-  mockComment,
-  mockCommentReactionModelFindOne,
-  mockCommentSmileReaction,
+  mockCommentReactionModel,
+  mockCommentReactionModels,
+  mockCommentResponseDto,
+  mockCreateCommentReactionProcedureReturn,
+  mockCreatePostReactionProcedureReturn,
   mockCreateReactionDto,
   mockDeleteReactionDto,
   mockGetReactionDto,
-  mockPostCannotReact,
-  mockPostCanReact,
-  mockPostGroup,
-  mockPostReactionModelFindOne,
-  mockPostSmileReaction,
-  mockReactionDto,
+  mockICommentReaction,
+  mockIPostReaction,
+  mockPostReactionModel,
+  mockPostReactionModels,
+  mockPostResponseDto,
+  mockReactionResponseDto,
+  mockReactionResponseDtos,
+  mockReactionsResponseDto,
   mockUserDto,
-  mockUserSharedDto,
-  mockUserSharedDtoNotInTheGroup,
 } from './mocks/input.mock';
-import { PostModel } from '../../../database/models/post.model';
-import { CommentReactionModel } from '../../../database/models/comment-reaction.model';
-import { CommentModel } from '../../../database/models/comment.model';
-import { UserSharedDto } from '../../../shared/user/dto';
-import { GroupService } from '../../../shared/group';
-import { PostReactionModel } from '../../../database/models/post-reaction.model';
-import { PostGroupModel } from '../../../database/models/post-group.model';
-import { ReactionDto } from '../dto/reaction.dto';
-import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { NotificationModule, NotificationService } from '../../../notification';
-import { ReactionEnum } from '../reaction.enum';
-import { Sequelize } from 'sequelize-typescript';
-import { ConfigModule } from '@nestjs/config';
-import { ReactionResponseDto } from '../dto/response';
-import { LogicException } from '../../../common/exceptions';
-import { ForbiddenException, InternalServerErrorException } from '@nestjs/common';
-import { ReactionService } from '..';
+
+const SERIALIZE_TRANSACTION_MAX_ATTEMPT = 3;
 
 describe('ReactionService', () => {
   let reactionService: ReactionService;
@@ -52,6 +55,13 @@ describe('ReactionService', () => {
   let userService: UserService;
   let groupService: GroupService;
   let notificationService: NotificationService;
+  let postService: PostService;
+  let sequelizeConnection: Sequelize;
+  let followService: FollowService;
+  let reactionNotificationService: ReactionActivityService;
+  let sentryService: SentryService;
+  let commentService: CommentService;
+  let postPolicyService: PostPolicyService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -60,6 +70,31 @@ describe('ReactionService', () => {
         UserService,
         GroupService,
         ReactionService,
+        {
+          provide: FollowService,
+          useClass: jest.fn(),
+        },
+        ReactionActivityService,
+        {
+          provide: SentryService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: PostService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: CommentService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: PostPolicyService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: ReactionCountService,
+          useClass: jest.fn(),
+        },
         {
           provide: RedisService,
           useClass: jest.fn(),
@@ -153,11 +188,512 @@ describe('ReactionService', () => {
     commentModel = module.get<typeof CommentModel>(getModelToken(CommentModel));
     postGroupModel = module.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     notificationService = module.get<NotificationService>(NotificationService);
+    postService = module.get<PostService>(PostService);
+    sequelizeConnection = module.get<Sequelize>(Sequelize);
+    followService = module.get<FollowService>(FollowService);
+    reactionNotificationService = module.get<ReactionActivityService>(ReactionActivityService);
+    sentryService = module.get<SentryService>(SentryService);
+    commentService = module.get<CommentService>(CommentService);
+    postPolicyService = module.get<PostPolicyService>(PostPolicyService);
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   describe('Create post reaction', () => {
-    it('Create post reaction successfully', async () => {
-      
-    })
-  })
+    describe('Happy case', () => {
+      it('Should successfully', async () => {
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        sequelizeConnection.transaction = jest
+          .fn()
+          .mockResolvedValue(mockCreatePostReactionProcedureReturn);
+
+        postReactionModel.findByPk = jest.fn().mockResolvedValue(mockPostReactionModel);
+
+        followService.getValidUserIds = jest.fn().mockResolvedValue([1, 2, 3, 4, 5]);
+
+        reactionNotificationService.createPayload = jest.fn();
+
+        notificationService.publishReactionNotification = jest.fn();
+
+        sentryService.captureException = jest.fn();
+
+        const response = await reactionService.createReaction(
+          mockUserDto,
+          mockCreateReactionDto.post
+        );
+
+        expect(JSON.stringify(response)).toEqual(JSON.stringify(mockReactionResponseDto.post));
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(sequelizeConnection.transaction).toBeCalledTimes(1);
+        expect(postReactionModel.findByPk).toBeCalledTimes(1);
+        expect(followService.getValidUserIds).toBeCalledTimes(1);
+        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+        expect(sentryService.captureException).toBeCalledTimes(0);
+      });
+    });
+
+    describe("Reaction is existed | Post isn't allow to react | Post is draft", () => {
+      it('Should failed', async () => {
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        sequelizeConnection.transaction = jest
+          .fn()
+          .mockRejectedValue(new Error('Error in database layer'));
+
+        sentryService.captureException = jest.fn();
+
+        try {
+          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.post);
+        } catch (e) {
+          expect(e.message).toEqual('Error in database layer');
+        }
+
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postPolicyService.allow).toBeCalledTimes(1);
+        expect(sequelizeConnection.transaction).toBeCalledTimes(1);
+      });
+    });
+
+    describe('User is not in the any groups of post', () => {
+      it('Should failed', async () => {
+        postService.getPost = jest
+          .fn()
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND));
+
+        try {
+          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.post);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+        }
+
+        expect(postService.getPost).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Exceed max attempt to create reaction', () => {
+      it('Should failed', async () => {
+        try {
+          await reactionService['_createPostReaction'](
+            mockUserDto,
+            mockCreateReactionDto.post,
+            SERIALIZE_TRANSACTION_MAX_ATTEMPT
+          );
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+        }
+      });
+    });
+
+    describe('Reaction type is not match', () => {
+      it('Should failed', async () => {
+        try {
+          await reactionService.createReaction(mockUserDto, {
+            ...mockCreateReactionDto.post,
+            target: 'POSTT' as ReactionEnum,
+          });
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_TARGET_EXISTING);
+        }
+      });
+    });
+  });
+
+  describe('Create comment reaction', () => {
+    describe('Happy case', () => {
+      it('Should successfully', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
+
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        sequelizeConnection.transaction = jest
+          .fn()
+          .mockResolvedValue(mockCreateCommentReactionProcedureReturn);
+
+        commentReactionModel.findByPk = jest.fn().mockResolvedValue(mockCommentReactionModel);
+
+        followService.getValidUserIds = jest.fn().mockResolvedValue([1, 2, 3, 4, 5]);
+
+        reactionNotificationService.createPayload = jest.fn();
+
+        notificationService.publishReactionNotification = jest.fn();
+
+        sentryService.captureException = jest.fn();
+
+        const response = await reactionService.createReaction(
+          mockUserDto,
+          mockCreateReactionDto.comment
+        );
+
+        expect(JSON.stringify(response)).toEqual(JSON.stringify(mockReactionResponseDto.comment));
+        expect(commentService.findComment).toBeCalledTimes(1);
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(sequelizeConnection.transaction).toBeCalledTimes(1);
+        expect(commentReactionModel.findByPk).toBeCalledTimes(1);
+        expect(followService.getValidUserIds).toBeCalledTimes(1);
+        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+        expect(sentryService.captureException).toBeCalledTimes(0);
+      });
+    });
+
+    describe('Reaction is existed', () => {
+      it('Should failed', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
+
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        sequelizeConnection.transaction = jest
+          .fn()
+          .mockRejectedValue(new Error('Error in database layer'));
+
+        try {
+          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
+        } catch (e) {
+          expect(e.message).toEqual('Error in database layer');
+        }
+
+        expect(commentService.findComment).toBeCalledTimes(1);
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postPolicyService.allow).toBeCalledTimes(1);
+        expect(sequelizeConnection.transaction).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Comment is not existed', () => {
+      it('Should failed', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(null);
+
+        try {
+          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        }
+
+        expect(commentService.findComment).toBeCalledTimes(1);
+      });
+    });
+
+    describe("User is not in the any groups of comment's post", () => {
+      it('Should failed', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
+
+        postService.getPost = jest.fn().mockResolvedValue(null);
+
+        try {
+          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_EXISTING);
+        }
+
+        expect(commentService.findComment).toBeCalledTimes(1);
+        expect(postService.getPost).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Exceed max attempt to create reaction', () => {
+      it('Should failed', async () => {
+        try {
+          await reactionService['_createCommentReaction'](
+            mockUserDto,
+            mockCreateReactionDto.comment,
+            SERIALIZE_TRANSACTION_MAX_ATTEMPT
+          );
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+        }
+      });
+    });
+  });
+
+  describe('Delete post reaction', () => {
+    describe('Happy case', () => {
+      it('Should successfully', async () => {
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        postReactionModel.findOne = jest.fn().mockResolvedValue(mockPostReactionModel);
+
+        reactionNotificationService.createPayload = jest.fn();
+
+        notificationService.publishReactionNotification = jest.fn();
+
+        const response = await reactionService.deleteReaction(
+          mockUserDto,
+          mockDeleteReactionDto.post
+        );
+
+        expect(response).toEqual(mockIPostReaction);
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postPolicyService.allow).toBeCalledTimes(1);
+        expect(postReactionModel.findOne).toBeCalledTimes(1);
+        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+      });
+    });
+
+    describe("User isn't in the any groups of post", () => {
+      it('Should failed', async () => {
+        postService.getPost = jest
+          .fn()
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND));
+
+        try {
+          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+        }
+
+        expect(postService.getPost).toBeCalledTimes(1);
+      });
+    });
+
+    describe("Post isn't not allow to react", () => {
+      it('Should failed', async () => {
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest
+          .fn()
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE));
+
+        try {
+          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
+        }
+
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postPolicyService.allow).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Reaction is not existed', () => {
+      it('Should failed', async () => {
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        postReactionModel.findOne = jest.fn().mockResolvedValue(null);
+
+        try {
+          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        }
+
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postPolicyService.allow).toBeCalledTimes(1);
+        expect(postReactionModel.findOne).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Reaction type is not match', () => {
+      it('Should failed', async () => {
+        try {
+          await reactionService.deleteReaction(mockUserDto, {
+            ...mockCreateReactionDto.post,
+            target: 'POSTT' as ReactionEnum,
+          });
+        } catch (e) {
+          expect(e.message).toEqual('Reaction type not match.');
+        }
+      });
+    });
+
+    describe('Exceed max attempt to delete reaction', () => {
+      it('Should failed', async () => {
+        try {
+          await reactionService['_deletePostReaction'](
+            mockUserDto,
+            mockDeleteReactionDto.post,
+            SERIALIZE_TRANSACTION_MAX_ATTEMPT
+          );
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+        }
+      });
+    });
+  });
+
+  describe('Delete comment reaction', () => {
+    describe('Happy case', () => {
+      it('Should successfully', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
+
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        commentReactionModel.findOne = jest.fn().mockResolvedValue(mockCommentReactionModel);
+
+        reactionNotificationService.createPayload = jest.fn();
+
+        notificationService.publishReactionNotification = jest.fn();
+
+        const response = await reactionService.deleteReaction(
+          mockUserDto,
+          mockDeleteReactionDto.comment
+        );
+
+        expect(response).toEqual(mockICommentReaction);
+        expect(commentService.findComment).toBeCalledTimes(1);
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(commentReactionModel.findOne).toBeCalledTimes(1);
+        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+      });
+    });
+
+    describe("User isn't in the any groups of comment's post", () => {
+      it('Should failed', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
+
+        postService.getPost = jest.fn().mockResolvedValue(null);
+
+        try {
+          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_EXISTING);
+        }
+
+        expect(commentService.findComment).toBeCalledTimes(1);
+        expect(postService.getPost).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Comment is not existed', () => {
+      it('Should failed', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(null);
+
+        try {
+          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        }
+
+        expect(commentService.findComment).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Reaction is not existed', () => {
+      it('Should failed', async () => {
+        commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
+
+        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+
+        postPolicyService.allow = jest.fn();
+
+        commentReactionModel.findOne = jest.fn().mockResolvedValue(null);
+
+        try {
+          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        }
+
+        expect(commentService.findComment).toBeCalledTimes(1);
+        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postPolicyService.allow).toBeCalledTimes(1);
+        expect(commentReactionModel.findOne).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Exceed max attempt to delete reaction', () => {
+      it('Should failed', async () => {
+        try {
+          await reactionService['_deleteCommentReaction'](
+            mockUserDto,
+            mockDeleteReactionDto.comment,
+            SERIALIZE_TRANSACTION_MAX_ATTEMPT
+          );
+        } catch (e) {
+          expect(e.message).toEqual(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+        }
+      });
+    });
+  });
+
+  describe('Get reaction', () => {
+    describe('Get post reaction', () => {
+      it('Should successfully', async () => {
+        postReactionModel.findAll = jest.fn().mockResolvedValue(mockPostReactionModels);
+
+        reactionService['_bindActorToReaction'] = jest
+          .fn()
+          .mockResolvedValue(mockReactionResponseDtos.post);
+
+        const rsp = await reactionService.getReactions(mockGetReactionDto.post);
+
+        expect(rsp).toEqual(mockReactionsResponseDto.post);
+        expect(postReactionModel.findAll).toBeCalledTimes(1);
+        expect(reactionService['_bindActorToReaction']).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Get comment reaction', () => {
+      it('Should successfully', async () => {
+        commentReactionModel.findAll = jest.fn().mockResolvedValue(mockCommentReactionModels);
+
+        reactionService['_bindActorToReaction'] = jest
+          .fn()
+          .mockResolvedValue(mockReactionResponseDtos.comment);
+
+        const rsp = await reactionService.getReactions(mockGetReactionDto.comment);
+
+        expect(rsp).toEqual(mockReactionsResponseDto.comment);
+        expect(commentReactionModel.findAll).toBeCalledTimes(1);
+        expect(reactionService['_bindActorToReaction']).toBeCalledTimes(1);
+      });
+    });
+  });
+
+  describe('Utility function', () => {
+    describe('Function: deleteReactionByPostIds', () => {
+      it('Should successfully', async () => {
+        postReactionModel.destroy = jest.fn().mockResolvedValue(3);
+        const result = await reactionService.deleteReactionByPostIds([10, 11, 12]);
+        expect(result).toEqual(3);
+      });
+    });
+
+    describe('Function: deleteReactionByCommentIds', () => {
+      it('Should successfully', async () => {
+        commentReactionModel.destroy = jest.fn().mockResolvedValue(3);
+        const result = await reactionService.deleteReactionByCommentIds([10, 11, 12], null);
+        expect(result).toEqual(3);
+      });
+    });
+
+    describe('Function: bindReactionToPosts', () => {
+      it('Should successfully', async () => {
+        sequelizeConnection.query = jest.fn().mockResolvedValue([]);
+
+        await reactionService.bindReactionToPosts([mockPostResponseDto]);
+
+        expect(sequelizeConnection.query).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Function: bindReactionToComments', () => {
+      it('Should successfully', async () => {
+        sequelizeConnection.query = jest.fn().mockResolvedValue([]);
+
+        await reactionService.bindReactionToComments([mockCommentResponseDto]);
+
+        expect(sequelizeConnection.query).toBeCalledTimes(1);
+      });
+    });
+  });
 });
