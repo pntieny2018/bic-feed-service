@@ -58,6 +58,8 @@ export class FollowListener {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
+    const groupIds = (userSharedDto.groups ?? []).filter((gId) => gId !== groupId);
+
     const { schema } = getDatabaseConfig();
 
     const query = `
@@ -72,12 +74,17 @@ export class FollowListener {
 		        WHERE "pg".post_id = "un_sq".post_id
           ) AS groups_of_post
           FROM ${schema}.user_newsfeed AS "un_sq"
-          WHERE "un_sq".user_id=${this._sequelizeConnection.escape(userId)}
+          WHERE "un_sq".user_id = :userId
         ) AS "un_need_to_delete"
-        WHERE "un_need_to_delete".groups_of_post && ARRAY[${userSharedDto.groups ?? []}] = false
+        WHERE "un_need_to_delete".groups_of_post && ARRAY[${groupIds}] = false
       )
     `;
 
-    await this._sequelizeConnection.query(query, { type: QueryTypes.DELETE });
+    await this._sequelizeConnection.query(query, {
+      replacements: {
+        userId: userId,
+      },
+      type: QueryTypes.DELETE,
+    });
   }
 }
