@@ -234,6 +234,7 @@ export class CommentService {
         {
           updatedBy: user.id,
           content: updateCommentDto.content,
+          giphyId: updateCommentDto.giphy ? updateCommentDto.giphy.id : null,
           edited: true,
         },
         {
