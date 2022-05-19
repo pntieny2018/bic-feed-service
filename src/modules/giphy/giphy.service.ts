@@ -19,4 +19,13 @@ export class GiphyService {
       }
     }
   }
+
+  public async bindUrlToComment(comments: any[]): Promise<void> {
+    // Currently giphy only have gif type so just add link to it
+    return comments.forEach(e => {
+      if(e.giphyId) {
+        e.giphyUrl = `https://i.giphy.com/${e.giphyId}.gif`
+      }
+    })
+  }
 }
