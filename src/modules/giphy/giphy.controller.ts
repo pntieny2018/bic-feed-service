@@ -3,8 +3,10 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../common/constants';
 import { HttpService } from '@nestjs/axios';
 import { TrendingDto } from './dto/requests/trending.dto';
-import { map } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { SearchDto } from './dto/requests/search.dto';
+import { GiphyResponseDto } from './dto/responses/giphy-response.dto';
+import { createUrlFromId } from './giphy.util';
 
 
 @ApiTags('Giphy')
@@ -17,14 +19,18 @@ import { SearchDto } from './dto/requests/search.dto';
 export class GiphyController {
   public constructor(private readonly _httpService: HttpService) {}
 
+  transferGiphyResponseApi(response) : GiphyResponseDto[] {
+    return response.data.data.map(e => new GiphyResponseDto(e.id, e.type, createUrlFromId(e.id)))
+  }
+
   @ApiOperation({ summary: 'Get trending Gif.' })
   @Get('/trending')
   public async getTrending(
     @Query() trendingDto: TrendingDto
-  ): Promise<any> {
+  ): Promise<Observable<GiphyResponseDto[]>> {
     const trendingGiphyUrl = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=${trendingDto.limit}&rating=${trendingDto.rating}`;
     return this._httpService.get(trendingGiphyUrl).pipe(
-      map(response => response.data.data)
+      map(response => this.transferGiphyResponseApi(response))
     );
   };
 
@@ -32,10 +38,10 @@ export class GiphyController {
   @Get('/search')
   public async search(
     @Query() searchDto: SearchDto
-  ): Promise<any> {
+  ): Promise<Observable<GiphyResponseDto[]>> {
     const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchDto.q}&limit=${searchDto.limit}&offset=${searchDto.offset}&rating=${searchDto.rating}&lang=${searchDto.lang}`;
     return this._httpService.get(giphyUrl).pipe(
-      map(response => response.data.data)
+      map(response => this.transferGiphyResponseApi(response))
     );
   };
 }

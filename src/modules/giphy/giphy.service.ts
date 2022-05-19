@@ -2,7 +2,7 @@ import { GiphyModel } from '../../database/models/giphy.model';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { GiphyDto } from './dto/requests';
-import { UserMentionDto } from '../mention/dto';
+import { createUrlFromId } from './giphy.util';
 
 @Injectable()
 export class GiphyService {
@@ -24,7 +24,7 @@ export class GiphyService {
     // Currently giphy only have gif type so just add link to it
     return comments.forEach(e => {
       if(e.giphyId) {
-        e.giphyUrl = `https://i.giphy.com/${e.giphyId}.gif`
+        e.giphyUrl = createUrlFromId(e.giphyId)
       }
     })
   }
