@@ -484,7 +484,7 @@ export class PostService {
    * @throws HttpException
    */
   public async createPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
-    const transaction = await this._sequelizeConnection.transaction();
+    let transaction;
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
       const authUserId = authUser.id;
@@ -495,14 +495,14 @@ export class PostService {
       const { groupIds } = audience;
       await this._authorityService.checkCanCreatePost(authUser, groupIds);
 
-      if (mentions.length) {
+      if (mentions && mentions.length) {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-
+      transaction = await this._sequelizeConnection.transaction();
       const post = await this._postModel.create(
         {
           isDraft: true,
@@ -518,7 +518,6 @@ export class PostService {
         },
         { transaction }
       );
-
       if (uniqueMediaIds.length) {
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
@@ -542,6 +541,7 @@ export class PostService {
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
+      this._sentryService.captureException(error);
       throw error;
     }
   }
@@ -583,7 +583,7 @@ export class PostService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
-    const transaction = await this._sequelizeConnection.transaction();
+    let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
       await this.checkContent(updatePostDto);
@@ -625,6 +625,7 @@ export class PostService {
       }
 
       let newMediaids = [];
+      transaction = await this._sequelizeConnection.transaction();
       if (media) {
         const { files, images, videos } = media;
         newMediaids = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
@@ -645,7 +646,7 @@ export class PostService {
       await this._postModel.update(dataUpdate, {
         where: {
           id: post.id,
-          createdBy: 12313123,
+          createdBy: authUser.id,
         },
         transaction,
       });

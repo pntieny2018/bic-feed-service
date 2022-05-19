@@ -41,6 +41,7 @@ import { ReactionResponseDto } from '../dto/response';
 import { LogicException } from '../../../common/exceptions';
 import { ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { ReactionService } from '..';
+import { SentryService } from '../../../../libs/sentry/src';
 
 describe('ReactionService', () => {
   let reactionService: ReactionService;
@@ -60,6 +61,12 @@ describe('ReactionService', () => {
         UserService,
         GroupService,
         ReactionService,
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
+          },
+        },
         {
           provide: RedisService,
           useClass: jest.fn(),

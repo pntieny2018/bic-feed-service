@@ -5,6 +5,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { MediaModel } from '../../../database/models/media.model';
 import { PostMediaModel } from '../../../database/models/post-media.model';
 import { CommentMediaModel } from '../../../database/models/comment-media.model';
+import { SentryService } from '../../../../libs/sentry/src';
 
 describe('MediaService', () => {
   let service: MediaService;
@@ -13,6 +14,12 @@ describe('MediaService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MediaService,
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
+          },
+        },
         { provide: Sequelize, useValue: { query: jest.fn(), transaction: jest.fn() } },
         {
           provide: getModelToken(MediaModel),
