@@ -36,11 +36,13 @@ spec:
 
           # Use all environment variables defined in the pro-stream-configmap and pro-stream-secret 
           envFrom:
-            - configMapRef:
-                name: pro-stream-configmap
+            # - configMapRef:
+            #     name: pro-stream-configmap
+            # - secretRef:
+            #     name: pro-stream-secret
             - secretRef:
-                name: pro-stream-secret
-
+                name: bic-stream-pro-managed-secret
+                
       # Docker credentials to access theBein private registry
       imagePullSecrets:
         - name: dockerhubregistrykey
