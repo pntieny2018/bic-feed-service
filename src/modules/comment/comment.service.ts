@@ -328,6 +328,7 @@ export class CommentService {
     await Promise.all([
       this._reactionService.bindReactionToComments([rawComment]),
       this._mentionService.bindMentionsToComment([rawComment]),
+      this._giphyService.bindUrlToComment([rawComment]),
       this.bindUserToComment([rawComment]),
     ]);
 
@@ -375,6 +376,7 @@ export class CommentService {
     await Promise.all([
       this._reactionService.bindReactionToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
+      this._giphyService.bindUrlToComment(comments.list),
       this.bindUserToComment(comments.list),
     ]);
     return comments;
@@ -445,6 +447,7 @@ export class CommentService {
     await Promise.all([
       this._reactionService.bindReactionToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
+      this._giphyService.bindUrlToComment(comments.list),
       this.bindUserToComment(comments.list),
     ]);
     comments['actor'] = actor;
@@ -882,6 +885,8 @@ export class CommentService {
       }
     }
     await this._mentionService.bindMentionsToComment([rawComment]);
+
+    await this._giphyService.bindUrlToComment([rawComment]);
 
     await this.bindUserToComment([rawComment]);
 
