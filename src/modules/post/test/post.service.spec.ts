@@ -45,7 +45,8 @@ import { ReactionService } from '../../reaction';
 import { ClientKafka, ClientsModule } from '@nestjs/microservices';
 import { authUserMock } from '../../comment/tests/mocks/user.mock';
 import { mockedPostCreated } from './mocks/response/create-post.response.mock';
-import { mockedAuthUser } from './mocks/data/user-auth.mock';
+import { mockedUserAuth } from './mocks/data/user-auth.mock';
+import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -230,7 +231,7 @@ describe('PostService', () => {
       jest.spyOn(postService, 'addPostGroup').mockReturnThis();
       postModelMock.create.mockResolvedValueOnce(mockedPostCreated)
 
-      await postService.createPost(mockedAuthUser, mockedCreatePostDto);
+      await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
@@ -239,8 +240,8 @@ describe('PostService', () => {
       expect(postService.addPostGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({ isDraft: true,
         content: mockedCreatePostDto.content,
-        createdBy: mockedAuthUser.id,
-        updatedBy: mockedAuthUser.id,
+        createdBy: mockedUserAuth.id,
+        updatedBy: mockedUserAuth.id,
         isImportant: mockedCreatePostDto.setting.isImportant,
         importantExpiredAt: mockedCreatePostDto.setting.importantExpiredAt,
         canShare: mockedCreatePostDto.setting.canShare,
@@ -267,7 +268,7 @@ describe('PostService', () => {
       postModelMock.create.mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        await postService.createPost(mockedAuthUser, mockedCreatePostDto);
+        await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (error) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
@@ -507,28 +508,28 @@ describe('PostService', () => {
     // });
   });
 
-  describe('findPost', () => {
-    // const entity: EntityIdDto = {
-    //   postId: 1,
-    //   commentId: 1,
-    //   reactionCommentId: 1,
-    //   reactionPostId: 1,
-    // };
-    // it('Should get post successfully', async () => {
-    //   const mockedPost = createMock<PostModel>(mockedPostList[0]);
-    //   postModelMock.findOne.mockResolvedValueOnce(mockedPost);
-    //   const result = await postService.findPost(entity);
-    //   expect(postModelMock.findOne).toBeCalledTimes(1);
-    // });
+  describe.only('findPost', () => {
+    const entity: EntityIdDto = {
+      postId: 1,
+      commentId: 1,
+      reactionCommentId: 1,
+      reactionPostId: 1,
+    };
+    it('Should get post successfully', async () => {
+      const mockedPost = createMock<PostModel>(mockedPostCreated);
+      postModelMock.findOne.mockResolvedValueOnce(mockedPost);
+      const result = await postService.findPost(entity);
+      expect(postModelMock.findOne).toBeCalledTimes(1);
+    });
 
-    // it('Catch exception', async () => {
-    //   postModelMock.findOne.mockResolvedValueOnce(null);
-    //   try {
-    //     const result = await postService.findPost(entity);
-    //   } catch (e) {
-    //     expect(e).toBeInstanceOf(LogicException);
-    //   }
-    // });
+    it('Catch exception', async () => {
+      postModelMock.findOne.mockResolvedValueOnce(null);
+      try {
+        const result = await postService.findPost(entity);
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
   });
 
   describe('searchPosts', () => {
@@ -793,52 +794,58 @@ describe('PostService', () => {
   //   });
   // });
 
-  // describe('getPost', () => {
-  //   const postData = mockedPostList[0];
-  //   const getPostDto: GetPostDto = {
-  //     commentLimit: 1,
-  //     childCommentLimit: 1,
-  //   };
+  describe('getPost', () => {
+    const getPostDto: GetPostDto = {
+      commentLimit: 1,
+      childCommentLimit: 1,
+      withComment: true
+    };
+    
+    it('Should get post successfully', async () => {
+      postModelMock.findOne.mockResolvedValueOnce({
+        ...mockedPostResponse,
+        toJSON: () => mockedPostResponse,
+      });
+      jest.spyOn(authorityService, 'canReadPost').mockReturnThis()
+      jest.spyOn(commentService, 'getComments').mockResolvedValueOnce(mockedPostResponse.comments);
+      jest.spyOn(postService, 'bindActorToPost').mockReturnThis;
+      jest.spyOn(postService, 'bindAudienceToPost').mockReturnThis();
+      jest.spyOn(reactionService, 'bindReactionToPosts').mockReturnThis();
+      jest.spyOn(mentionService, 'bindMentionsToPosts').mockReturnThis();
+      postService.bindActorToPost = jest.fn();
+      postService.bindAudienceToPost = jest.fn();
+      const result = await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
+      expect(result.comments).toStrictEqual(mockedPostResponse.comments);
+      expect(postService.bindActorToPost).toBeCalledTimes(1);
+      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
+      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
+    });
+    it('Post not found', async () => {
+      postModelMock.findOne.mockResolvedValueOnce(null);
+      try {
+        await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
 
-  //   it('Should get post successfully', async () => {
-  //     postModelMock.findOne.mockResolvedValueOnce({
-  //       ...postData,
-  //       toJSON: () => postData,
-  //     });
-  //     commentService.getComments = jest.fn().mockResolvedValueOnce(mockedComments);
-  //     postService.bindActorToPost = jest.fn();
-  //     postService.bindAudienceToPost = jest.fn();
-  //     const result = await postService.getPost(postData.id, mockedUserAuth, getPostDto);
-  //     expect(result.comments).toStrictEqual(mockedComments);
-  //     expect(postService.bindActorToPost).toBeCalledWith([postData]);
-  //     expect(postService.bindAudienceToPost).toBeCalledWith([postData]);
-  //   });
-  //   it('Post not found', async () => {
-  //     postModelMock.findOne.mockResolvedValueOnce(null);
-  //     try {
-  //       await postService.getPost(postData.id, mockedUserAuth, getPostDto);
-  //     } catch (e) {
-  //       expect(e).toBeInstanceOf(LogicException);
-  //     }
-  //   });
-
-  //   it('Catch ForbiddenException when access a post in invalid group', async () => {
-  //     postModelMock.findOne.mockResolvedValueOnce({
-  //       ...postData,
-  //       toJSON: () => postData,
-  //     });
-  //     authorityService.canReadPost = jest
-  //       .fn()
-  //       .mockRejectedValueOnce(
-  //         new LogicException('You do not have permission to perform this action !')
-  //       );
-  //     try {
-  //       await postService.getPost(postData.id, mockedUserAuth, getPostDto);
-  //     } catch (e) {
-  //       expect(e).toBeInstanceOf(LogicException);
-  //     }
-  //   });
-  // });
+    it('Catch ForbiddenException when access a post in invalid group', async () => {
+      postModelMock.findOne.mockResolvedValueOnce({
+        ...mockedPostResponse,
+      });
+      authorityService.canReadPost = jest
+        .fn()
+        .mockRejectedValueOnce(
+          new LogicException('You do not have permission to perform this action !')
+        );
+      try {
+        await postService.getPost(mockedPostResponse.id, mockedUserAuth, getPostDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
+  });
 
   describe('bindActorToPost', () => {
     const posts = [{ createdBy: 1, actor: null }];

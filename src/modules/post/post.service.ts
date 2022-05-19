@@ -361,7 +361,6 @@ export class PostService {
         },
       ],
     });
-
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
@@ -646,7 +645,7 @@ export class PostService {
       await this._postModel.update(dataUpdate, {
         where: {
           id: post.id,
-          createdBy: authUser.id,
+          createdBy: authUserId,
         },
         transaction,
       });
