@@ -184,6 +184,7 @@ export class PostController {
       );
       return true;
     }
+    return false;
   }
 
   @ApiOperation({ summary: 'Mark important post' })

@@ -75,6 +75,7 @@ export const mockedPostData = {
   content: 'bbbbbb',
   giphyId: null,
   createdBy: 15,
+  updatedBy: 15,
   createdAt: '2022-05-18T11:05:11.998Z',
   updatedAt: '2022-05-19T07:19:14.130Z',
   markedReadPost: false,
