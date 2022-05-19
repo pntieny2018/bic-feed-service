@@ -839,7 +839,7 @@ describe('PostService', () => {
       postModelMock.findOne.mockResolvedValueOnce({
         ...mockedPostResponse,
       });
-      authorityService.canReadPost = jest
+      authorityService.checkCanReadPost = jest
         .fn()
         .mockRejectedValueOnce(
           new LogicException('You do not have permission to perform this action !')

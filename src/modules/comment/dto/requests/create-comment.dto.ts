@@ -19,7 +19,7 @@ export class CreateCommentDto {
   @IsNotEmpty()
   @ValidateIf(
     (o) =>
-      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0 || o.giphy?.id)
   )
   public content: string;
 
@@ -83,7 +83,10 @@ export class CreateCommentDto {
       type: 'gif',
     }
   })
-  @IsOptional()
+  @IsNotEmpty()
+  @ValidateIf(
+    (o) => !(o.content || o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+  )
   @Type(() => GiphyDto)
   public giphy?: GiphyDto = null;
 }

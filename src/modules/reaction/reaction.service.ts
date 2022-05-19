@@ -189,7 +189,7 @@ export class ReactionService {
         childCommentLimit: 0,
       });
 
-      this._postPolicyService.allow(post, PostAllow.REACT);
+      await this._postPolicyService.allow(post, PostAllow.REACT);
 
       const { schema } = getDatabaseConfig();
       const rc = await this._sequelize.transaction(
@@ -319,7 +319,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const { schema } = getDatabaseConfig();
     try {
@@ -465,7 +465,7 @@ export class ReactionService {
       childCommentLimit: 0,
     });
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const conditions = {};
 
@@ -583,7 +583,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const conditions = {};
     if (deleteReactionDto.reactionName) {

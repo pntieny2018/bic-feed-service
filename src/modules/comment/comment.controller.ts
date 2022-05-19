@@ -54,11 +54,11 @@ export class CommentController {
   })
   @Get('/')
   public getList(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comments');
-    return this._commentService.getComments(user, getCommentsDto);
+    return this._commentService.getComments(getCommentsDto, user);
   }
 
   @ApiOperation({ summary: 'Create new comment' })
@@ -137,12 +137,12 @@ export class CommentController {
   })
   @Get('/:commentId')
   public get(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Param('commentId', ParseIntPipe) commentId: number,
     @Query() getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
-    return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
+    return this._commentService.getCommentLink(commentId, getCommentLinkDto, user);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })

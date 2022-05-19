@@ -1,21 +1,26 @@
 import { OrderEnum } from '../../../../common/dto';
+import { ObjectHelper } from '../../../../common/helpers';
+import { GroupPrivacy } from '../../../../shared/group/dto';
 import { UserDto } from '../../../auth';
+import { CommentResponseDto } from '../../../comment/dto/response';
+import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionDto } from '../../dto/reaction.dto';
-import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from '../../dto/request';
+import { DeleteReactionDto, GetReactionDto } from '../../dto/request';
+import { ReactionsResponseDto } from '../../dto/response';
 import { ReactionEnum } from '../../reaction.enum';
 
-export const mockCreateReactionDto: CreateReactionDto[] = [
-  {
+export const mockCreateReactionDto = {
+  post: {
     reactionName: 'smile',
     target: ReactionEnum.POST,
     targetId: 9,
   },
-  {
+  comment: {
     reactionName: 'sad',
     target: ReactionEnum.COMMENT,
     targetId: 89,
   },
-];
+};
 
 export const mockReactionDto: ReactionDto = {
   userId: 33,
@@ -25,206 +30,234 @@ export const mockReactionDto: ReactionDto = {
   reactionName: 'smile',
 };
 
-export const mockDeleteReactionDto: DeleteReactionDto[] = [
-  {
-    target: ReactionEnum.POST,
-    reactionId: 1,
-    targetId: 0,
-  },
-  {
-    target: ReactionEnum.COMMENT,
-    reactionId: 2,
-    targetId: 0,
-  },
-];
-
 export const mockUserDto: UserDto = {
+  username: 'vuquang23',
+  email: 'vuquang@tgm.vn',
+  avatar: 'https://google.com/vuquang.png',
   id: 33,
-};
-
-export const mockGetReactionDto: GetReactionDto = {
-  reactionName: 'smile',
-  targetId: 9,
-  target: ReactionEnum.POST,
-  latestId: 1,
-  limit: 25,
-  order: OrderEnum.ASC,
-};
-
-export const mockPostReactionModelFindOne = {
-  id: 1,
-  postId: 5,
-  reactionName: 'smile',
-  createdBy: mockUserDto.id,
-};
-
-export const mockCommentReactionModelFindOne = {
-  id: 2,
-  commentId: 5,
-  reactionName: 'smile',
-  createdBy: mockUserDto.id,
-};
-
-export const mockComment = {
-  id: 89,
-  postId: 9,
-  parentId: 1,
-  content: 'huhu viet test nhieu qua :(',
-  createdBy: 33,
-  updatedBy: 33,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-export const mockPostCanReact = {
-  id: 9,
-  createdBy: 33,
-  updatedBy: 33,
-  content: 'haha',
-  isImportant: true,
-  importantExpiredAt: new Date(),
-  isDraft: false,
-  canReact: true,
-  canShare: true,
-  canComment: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  comments: [],
-  media: [],
-};
-
-export const mockPostCannotReact = {
-  id: 9,
-  createdBy: 33,
-  updatedBy: 33,
-  content: 'haha',
-  isImportant: true,
-  importantExpiredAt: new Date(),
-  isDraft: false,
-  canReact: false,
-  canShare: true,
-  canComment: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  comments: [],
-  media: [],
-};
-
-export const mockPostSmileReaction = [
-  { toJSON: () => ({ id: 1, postId: 9, reactionName: 'smile', createdBy: 33 }) },
-];
-
-export const mockCommentSmileReaction = [
-  { toJSON: () => ({ id: 1, postId: 9, reactionName: 'smile', createdBy: 33 }) },
-];
-
-export const mock15ReactionOnAPost = [
-  { id: 1, postId: 9, reactionName: 'reactionName1', createdBy: 3 },
-  { id: 2, postId: 9, reactionName: 'reactionName2', createdBy: 31 },
-  { id: 3, postId: 9, reactionName: 'reactionName3', createdBy: 79 },
-  { id: 4, postId: 9, reactionName: 'reactionName4', createdBy: 57 },
-  { id: 5, postId: 9, reactionName: 'reactionName5', createdBy: 98 },
-  { id: 6, postId: 9, reactionName: 'reactionName6', createdBy: 9 },
-  { id: 7, postId: 9, reactionName: 'reactionName7', createdBy: 28 },
-  { id: 8, postId: 9, reactionName: 'reactionName8', createdBy: 11 },
-  { id: 9, postId: 9, reactionName: 'reactionName9', createdBy: 67 },
-  { id: 10, postId: 9, reactionName: 'reactionName10', createdBy: 70 },
-  { id: 11, postId: 9, reactionName: 'reactionName11', createdBy: 50 },
-  { id: 12, postId: 9, reactionName: 'reactionName12', createdBy: 62 },
-  { id: 13, postId: 9, reactionName: 'reactionName13', createdBy: 42 },
-  { id: 14, postId: 9, reactionName: 'reactionName14', createdBy: 111 },
-  { id: 15, postId: 9, reactionName: 'reactionName15', createdBy: 18 },
-];
-
-export const mock21ReactionOnAPost = [
-  { id: 1, postId: 9, reactionName: 'reactionName1', createdBy: 97 },
-  { id: 2, postId: 9, reactionName: 'reactionName2', createdBy: 50 },
-  { id: 3, postId: 9, reactionName: 'reactionName3', createdBy: 39 },
-  { id: 4, postId: 9, reactionName: 'reactionName4', createdBy: 55 },
-  { id: 5, postId: 9, reactionName: 'reactionName5', createdBy: 77 },
-  { id: 6, postId: 9, reactionName: 'reactionName6', createdBy: 9 },
-  { id: 7, postId: 9, reactionName: 'reactionName7', createdBy: 54 },
-  { id: 8, postId: 9, reactionName: 'reactionName8', createdBy: 18 },
-  { id: 9, postId: 9, reactionName: 'reactionName9', createdBy: 83 },
-  { id: 10, postId: 9, reactionName: 'reactionName10', createdBy: 50 },
-  { id: 11, postId: 9, reactionName: 'reactionName11', createdBy: 88 },
-  { id: 12, postId: 9, reactionName: 'reactionName12', createdBy: 63 },
-  { id: 13, postId: 9, reactionName: 'reactionName13', createdBy: 103 },
-  { id: 14, postId: 9, reactionName: 'reactionName14', createdBy: 108 },
-  { id: 15, postId: 9, reactionName: 'reactionName15', createdBy: 109 },
-  { id: 16, postId: 9, reactionName: 'reactionName16', createdBy: 59 },
-  { id: 17, postId: 9, reactionName: 'reactionName17', createdBy: 105 },
-  { id: 18, postId: 9, reactionName: 'reactionName18', createdBy: 60 },
-  { id: 19, postId: 9, reactionName: 'reactionName19', createdBy: 72 },
-  { id: 20, postId: 9, reactionName: 'reactionName20', createdBy: 52 },
-  { id: 21, postId: 9, reactionName: 'reactionName21', createdBy: 104 },
-];
-
-export const mock21ReactionOnAComment = [
-  { id: 1, commentId: 89, reactionName: 'reactionName1', createdBy: 6 },
-  { id: 2, commentId: 89, reactionName: 'reactionName2', createdBy: 95 },
-  { id: 3, commentId: 89, reactionName: 'reactionName3', createdBy: 73 },
-  { id: 4, commentId: 89, reactionName: 'reactionName4', createdBy: 62 },
-  { id: 5, commentId: 89, reactionName: 'reactionName5', createdBy: 103 },
-  { id: 6, commentId: 89, reactionName: 'reactionName6', createdBy: 12 },
-  { id: 7, commentId: 89, reactionName: 'reactionName7', createdBy: 63 },
-  { id: 8, commentId: 89, reactionName: 'reactionName8', createdBy: 91 },
-  { id: 9, commentId: 89, reactionName: 'reactionName9', createdBy: 39 },
-  { id: 10, commentId: 89, reactionName: 'reactionName10', createdBy: 48 },
-  { id: 11, commentId: 89, reactionName: 'reactionName11', createdBy: 43 },
-  { id: 12, commentId: 89, reactionName: 'reactionName12', createdBy: 36 },
-  { id: 13, commentId: 89, reactionName: 'reactionName13', createdBy: 91 },
-  { id: 14, commentId: 89, reactionName: 'reactionName14', createdBy: 51 },
-  { id: 15, commentId: 89, reactionName: 'reactionName15', createdBy: 92 },
-  { id: 16, commentId: 89, reactionName: 'reactionName16', createdBy: 26 },
-  { id: 17, commentId: 89, reactionName: 'reactionName17', createdBy: 26 },
-  { id: 18, commentId: 89, reactionName: 'reactionName18', createdBy: 104 },
-  { id: 19, commentId: 89, reactionName: 'reactionName19', createdBy: 93 },
-  { id: 20, commentId: 89, reactionName: 'reactionName20', createdBy: 25 },
-  { id: 21, commentId: 89, reactionName: 'reactionName21', createdBy: 27 },
-];
-
-export const mock15ReactionOnAComment = [
-  { id: 1, commentId: 89, reactionName: 'reactionName1', createdBy: 37 },
-  { id: 2, commentId: 89, reactionName: 'reactionName2', createdBy: 19 },
-  { id: 3, commentId: 89, reactionName: 'reactionName3', createdBy: 78 },
-  { id: 4, commentId: 89, reactionName: 'reactionName4', createdBy: 61 },
-  { id: 5, commentId: 89, reactionName: 'reactionName5', createdBy: 62 },
-  { id: 6, commentId: 89, reactionName: 'reactionName6', createdBy: 14 },
-  { id: 7, commentId: 89, reactionName: 'reactionName7', createdBy: 63 },
-  { id: 8, commentId: 89, reactionName: 'reactionName8', createdBy: 104 },
-  { id: 9, commentId: 89, reactionName: 'reactionName9', createdBy: 70 },
-  { id: 10, commentId: 89, reactionName: 'reactionName10', createdBy: 78 },
-  { id: 11, commentId: 89, reactionName: 'reactionName11', createdBy: 40 },
-  { id: 12, commentId: 89, reactionName: 'reactionName12', createdBy: 35 },
-  { id: 13, commentId: 89, reactionName: 'reactionName13', createdBy: 69 },
-  { id: 14, commentId: 89, reactionName: 'reactionName14', createdBy: 66 },
-  { id: 15, commentId: 89, reactionName: 'reactionName15', createdBy: 97 },
-];
-
-export const mockPostGroup = [
-  {
-    postId: 9,
-    groupId: 2,
+  profile: {
+    id: 33,
+    username: 'vuquang23',
+    fullname: 'Vu Quang Le',
+    avatar: 'https://google.com/vuquang.png',
+    email: 'vuquang@tgm.vn',
+    groups: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   },
-  {
-    postId: 9,
-    groupId: 10,
-  },
-];
+};
 
 export const mockUserSharedDto = {
-  id: 33,
-  username: 'username33',
-  fullname: 'fullname33',
-  avatar: 'http://abc.com',
-  groups: [1, 2],
+  id: 20,
+  username: 'vantt',
+  fullname: 'Than The Van',
+  avatar: 'http://google.com/vantt.png',
+  groups: [1, 2, 3],
 };
 
-export const mockUserSharedDtoNotInTheGroup = {
-  id: 33,
-  username: 'username33',
-  fullname: 'fullname33',
-  avatar: 'http://abc.com',
-  groups: [],
+export const mockPostResponseDto: PostResponseDto = {
+  id: mockCreateReactionDto.post.targetId,
+  content: 'hello world',
+  highlight: 'nothing',
+  media: {
+    files: [],
+    videos: [],
+    images: [],
+  },
+  setting: {
+    canReact: true,
+    canComment: true,
+    isImportant: false,
+    importantExpiredAt: null,
+  },
+  isDraft: false,
+  isProcessing: false,
+  actor: mockUserSharedDto,
+  mentions: {},
+  commentsCount: 0,
+  reactionsCount: {},
+  markedReadPost: false,
+  createdAt: new Date('2022-05-19T02:53:48.135Z'),
+  updatedAt: null,
+  createdBy: mockUserSharedDto.id,
+  audience: {
+    groups: [
+      {
+        id: 1,
+        name: 'Bein Community',
+        icon: 'http://bein.com/bein.png',
+        privacy: GroupPrivacy.OPEN,
+      },
+    ],
+  },
+  ownerReactions: [],
+  comments: null,
+};
+
+export const mockCreatePostReactionProcedureReturn = [
+  {
+    ['cpr_id']: 99,
+  },
+];
+
+export const mockCreateCommentReactionProcedureReturn = [
+  {
+    ['ccr_id']: 100,
+  },
+];
+
+export const mockPostReactionModel = {
+  id: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
+  postId: mockCreateReactionDto.post.targetId,
+  reactionName: mockCreateReactionDto.post.reactionName,
+  createdBy: mockUserDto.id,
+  createdAt: new Date('2022-05-19T02:53:48.135Z'),
+  toJSON: () => {
+    return {
+      id: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
+      postId: mockCreateReactionDto.post.targetId,
+      reactionName: mockCreateReactionDto.post.reactionName,
+      createdBy: mockUserDto.id,
+      createdAt: new Date('2022-05-19T02:53:48.135Z'),
+    };
+  },
+};
+
+export const mockCommentReactionModel = {
+  id: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
+  commentId: mockCreateReactionDto.comment.targetId,
+  reactionName: mockCreateReactionDto.comment.reactionName,
+  createdBy: mockUserDto.id,
+  createdAt: new Date('2022-05-19T02:53:48.135Z'),
+  toJSON: () => {
+    return {
+      id: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
+      commentId: mockCreateReactionDto.comment.targetId,
+      reactionName: mockCreateReactionDto.comment.reactionName,
+      createdBy: mockUserDto.id,
+      createdAt: new Date('2022-05-19T02:53:48.135Z'),
+    };
+  },
+};
+
+export const mockReactionResponseDto = {
+  post: {
+    actor: {
+      ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+      email: mockUserDto.email,
+    },
+    id: mockPostReactionModel.id,
+    reactionName: mockPostReactionModel.reactionName,
+    createdAt: mockPostReactionModel.createdAt,
+  },
+  comment: {
+    actor: {
+      ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+      email: mockUserDto.email,
+    },
+    id: mockCommentReactionModel.id,
+    reactionName: mockCommentReactionModel.reactionName,
+    createdAt: mockCommentReactionModel.createdAt,
+  },
+};
+
+export const mockCommentResponseDto: CommentResponseDto = {
+  id: mockCreateReactionDto.comment.targetId,
+  actor: mockUserSharedDto,
+  edited: false,
+  parentId: null,
+  postId: mockPostResponseDto.id,
+  totalReply: 0,
+  ownerReactions: [],
+};
+
+export const mockDeleteReactionDto = {
+  post: {
+    target: ReactionEnum.POST,
+    targetId: mockCreateReactionDto.post.targetId,
+    reactionName: mockCreateReactionDto.post.reactionName,
+    reactionId: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
+  },
+  comment: {
+    target: ReactionEnum.COMMENT,
+    targetId: mockCreateReactionDto.comment.targetId,
+    reactionName: mockCreateReactionDto.comment.reactionName,
+    reactionId: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
+  },
+};
+
+export const mockIPostReaction = {
+  id: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
+  postId: mockCreateReactionDto.post.targetId,
+  reactionName: mockCreateReactionDto.post.reactionName,
+  createdBy: mockUserDto.id,
+  createdAt: new Date('2022-05-19T02:53:48.135Z'),
+};
+
+export const mockICommentReaction = {
+  id: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
+  commentId: mockCreateReactionDto.comment.targetId,
+  reactionName: mockCreateReactionDto.comment.reactionName,
+  createdBy: mockUserDto.id,
+  createdAt: new Date('2022-05-19T02:53:48.135Z'),
+};
+
+export const mockGetReactionDto = {
+  post: {
+    reactionName: mockCreateReactionDto.post.reactionName,
+    targetId: mockPostResponseDto.id,
+    target: ReactionEnum.POST,
+    latestId: 0,
+    limit: 1,
+    order: OrderEnum.ASC,
+  },
+  comment: {
+    reactionName: mockCreateReactionDto.comment.reactionName,
+    targetId: mockCommentResponseDto.id,
+    target: ReactionEnum.COMMENT,
+    latestId: 0,
+    limit: 1,
+    order: OrderEnum.ASC,
+  },
+};
+
+export const mockPostReactionModels = [mockPostReactionModel];
+
+export const mockCommentReactionModels = [mockCommentReactionModel];
+
+export const mockReactionResponseDtos = {
+  post: [
+    {
+      id: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
+      actor: {
+        ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+        email: mockUserDto.email,
+      },
+      reactionName: mockCreateReactionDto.post.reactionName,
+      createdAt: new Date('2022-05-19T02:53:48.135Z'),
+    },
+  ],
+  comment: [
+    {
+      id: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
+      actor: {
+        ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+        email: mockUserDto.email,
+      },
+      reactionName: mockCreateReactionDto.comment.reactionName,
+      createdAt: new Date('2022-05-19T02:53:48.135Z'),
+    },
+  ],
+};
+
+export const mockReactionsResponseDto = {
+  post: {
+    order: mockGetReactionDto.post.order,
+    list: [mockReactionResponseDto.post],
+    limit: mockGetReactionDto.post.limit,
+    latestId: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
+  },
+  comment: {
+    list: [mockReactionResponseDto.comment],
+    limit: 1,
+    latestId: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
+  },
 };

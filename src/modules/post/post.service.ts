@@ -364,11 +364,10 @@ export class PostService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this._authorityService.canReadPost(user, post);
+    await this._authorityService.checkCanReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments(
-        user,
         {
           postId,
           childLimit: getPostDto.childCommentLimit,
@@ -376,6 +375,7 @@ export class PostService {
           childOrder: getPostDto.childCommentOrder,
           limit: getPostDto.commentLimit,
         },
+        user,
         false
       );
     }
@@ -390,6 +390,72 @@ export class PostService {
     const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
+    result['comments'] = comments;
+    return result;
+  }
+
+  /**
+   * Get Public Post
+   * @param postId number
+   * @param user UserDto
+   * @param getPostDto GetPostDto
+   * @returns Promise resolve PostResponseDto
+   * @throws HttpException
+   */
+  public async getPublicPost(postId: number, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+    const post = await this._postModel.findOne({
+      attributes: {
+        exclude: ['updatedBy'],
+      },
+      where: { id: postId },
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+          attributes: ['userId'],
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+        },
+      ],
+    });
+
+    if (!post) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+    }
+    await this._authorityService.checkPublicPost(post);
+    let comments = null;
+    if (getPostDto.withComment) {
+      comments = await this._commentService.getComments({
+        postId,
+        childLimit: getPostDto.childCommentLimit,
+        order: getPostDto.commentOrder,
+        childOrder: getPostDto.childCommentOrder,
+        limit: getPostDto.commentLimit,
+      });
+    }
+    const jsonPost = post.toJSON();
+    await Promise.all([
+      this._reactionService.bindReactionToPosts([jsonPost]),
+      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.bindActorToPost([jsonPost]),
+      this.bindAudienceToPost([jsonPost]),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+      excludeExtraneousValues: true,
+    });
+
     result['comments'] = comments;
     return result;
   }
