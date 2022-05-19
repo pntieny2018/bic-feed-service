@@ -36,10 +36,12 @@ spec:
 
           # Use all environment variables defined in the sbx-stream-configmap and sbx-stream-secret 
           envFrom:
-            - configMapRef:
-                name: sbx-stream-configmap
+            # - configMapRef:
+            #     name: sbx-stream-configmap
+            # - secretRef:
+            #     name: sbx-stream-secret
             - secretRef:
-                name: sbx-stream-secret
+                name: bic-stream-sbx-managed-secret
 
       # Docker credentials to access theBein private registry
       imagePullSecrets:

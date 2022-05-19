@@ -36,10 +36,12 @@ spec:
 
           # Use all environment variables defined in the stg-stream-configmap and stg-stream-secret 
           envFrom:
-            - configMapRef:
-                name: stg-stream-configmap
+            # - configMapRef:
+            #     name: stg-stream-configmap
+            # - secretRef:
+            #     name: stg-stream-secret
             - secretRef:
-                name: stg-stream-secret
+                name: bic-stream-stg-managed-secret
 
       # Docker credentials to access theBein private registry
       imagePullSecrets:
