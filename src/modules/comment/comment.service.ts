@@ -355,12 +355,14 @@ export class CommentService {
       )}`
     );
     const { childLimit, postId, parentId } = getCommentsDto;
-    if (checkAccess && user) {
-      const post = await this._postService.findPost({
-        postId,
-      });
+    const post = await this._postService.findPost({
+      postId,
+    });
 
+    if (checkAccess && user) {
       await this._authorityService.checkCanReadPost(user, post);
+    } else {
+      await this._authorityService.checkPublicPost(post);
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
@@ -404,7 +406,11 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId,
     });
-    if (user) await this._authorityService.checkCanReadPost(user, post);
+    if (user) {
+      await this._authorityService.checkCanReadPost(user, post);
+    } else {
+      await this._authorityService.checkPublicPost(post);
+    }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
     const parentId = checkComment.parentId > 0 ? checkComment.parentId : commentId;

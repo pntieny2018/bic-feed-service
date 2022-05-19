@@ -9,22 +9,18 @@ import { GroupPrivacy } from '../../shared/group/dto';
 export class AuthorityService {
   public constructor(private _groupService: GroupService) {}
 
-  public allowAccess(user: UserDto, post: IPost): void {
-    const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
+  public async checkPublicPost(post: IPost): Promise<void> {
+    const groupIds = (post.groups ?? []).map((g) => g.groupId);
+    const groups = await this._groupService.getMany(groupIds);
+    let isPublic = false;
+    groups.forEach((g) => {
+      if (g.privacy === GroupPrivacy.PUBLIC) {
+        isPublic = true;
+        return;
+      }
+    });
 
-    const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
-
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-  }
-
-  public async canReadPost(user: UserDto, post: IPost): Promise<void> {
-    const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
-    const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
-    if (!canAccess) {
+    if (!isPublic) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
   }
