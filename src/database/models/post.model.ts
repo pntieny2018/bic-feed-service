@@ -44,7 +44,7 @@ export interface IPost {
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
-  isProcessing: boolean;
+  isProcessing?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   comments?: IComment[];

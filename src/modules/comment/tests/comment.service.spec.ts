@@ -33,6 +33,7 @@ import { FollowService } from '../../follow';
 import { CommentEditedHistoryModel } from '../../../database/models/comment-edited-history.model';
 import { IPost } from '../../../database/models/post.model';
 import { GiphyService } from '../../giphy';
+import { SentryService } from '../../../../libs/sentry/src';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -164,6 +165,12 @@ describe('CommentService', () => {
             update: jest.fn(),
             create: jest.fn(),
             destroy: jest.fn(),
+          },
+        },
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
           },
         },
       ],

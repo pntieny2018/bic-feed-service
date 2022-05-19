@@ -23,12 +23,12 @@ describe('RecentSearchService', () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
         RecentSearchService,
-        // {
-        //   provide: SentryService,
-        //   useValue: {
-        //     captureException: jest.fn(),
-        //   },
-        // },
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
+          },
+        },
         {
           provide: getModelToken(RecentSearchModel),
           useValue: {

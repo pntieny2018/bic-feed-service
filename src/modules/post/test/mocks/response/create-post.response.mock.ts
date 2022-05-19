@@ -1,4 +1,4 @@
-export const mockedPostResponse = {
+export const mockedCreatePostResponse = {
   ownerReactions: [],
   id: 1,
   content: 'bbbbbb',
@@ -62,37 +62,20 @@ export const mockedPostResponse = {
   },
 };
 
-export const mockedPostData = {
-  id: 3,
-  commentsCount: 3,
+export const mockedPostCreated = {
+  id: 5,
+  isDraft: true,
+  content: 'bbbbbb',
+  createdBy: 15,
+  updatedBy: 15,
   isImportant: false,
   importantExpiredAt: null,
-  isDraft: true,
+  canShare: true,
   canComment: true,
   canReact: true,
   isProcessing: false,
-  canShare: true,
-  content: 'bbbbbb',
+  updatedAt: '2022-05-19T07:31:55.504Z',
+  createdAt: '2022-05-19T07:31:55.504Z',
+  commentsCount: 0,
   giphyId: null,
-  createdBy: 15,
-  updatedBy: 15,
-  createdAt: '2022-05-18T11:05:11.998Z',
-  updatedAt: '2022-05-19T07:19:14.130Z',
-  markedReadPost: false,
-  groups: [
-    {
-      groupId: 1,
-    },
-  ],
-  mentions: [],
-  media: [],
-  ownerReactions: [
-    {
-      id: 2,
-      postId: 3,
-      reactionName: 'bb',
-      createdBy: 15,
-      createdAt: '2022-05-18T11:05:31.990Z',
-    },
-  ],
 };
