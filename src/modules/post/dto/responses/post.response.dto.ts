@@ -77,6 +77,7 @@ export class PostResponseDto {
   @ApiProperty({
     description: 'To know draft post or not',
     type: Boolean,
+    name: 'is_draft'
   })
   @Expose()
   public isDraft: boolean;
@@ -112,6 +113,7 @@ export class PostResponseDto {
   @ApiProperty({
     description: 'Total number of comments',
     type: Number,
+    name: 'comments_count'
   })
   @Expose()
   public commentsCount: number;
@@ -132,6 +134,7 @@ export class PostResponseDto {
         fullname: 'Tui Day Ne',
       },
     },
+    name: 'reactions_count'
   })
   @Transform(({ value }) => {
     if (value && value !== '1=' && typeof value === 'string') {
@@ -156,23 +159,28 @@ export class PostResponseDto {
   @ApiProperty({
     type: Boolean,
   })
-  @Expose()
+  @Expose({
+    name: 'marked_read_post'
+  })
   public markedReadPost?: boolean;
 
   @ApiProperty({
     type: Date,
+    name: 'created_at'
   })
   @Expose()
   public createdAt: Date;
 
   @ApiProperty({
     type: Date,
+    name: 'updated_at'
   })
   @Expose()
   public updatedAt?: Date;
 
   @ApiProperty({
     type: Number,
+    name: 'created_by'
   })
   @Expose()
   public createdBy: number;
@@ -185,6 +193,7 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: [ReactionResponseDto],
+    name: 'owner_reactions'
   })
   @Expose()
   public ownerReactions?: ReactionResponseDto[] = [];
