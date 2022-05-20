@@ -11,7 +11,7 @@ export class AuthMiddleware implements NestMiddleware {
   public async use(req: Request, res: Response, next: () => void): Promise<void> {
     const token = req.headers.authorization;
 
-    if (!token && req.baseUrl.indexOf('comments/') === -1 && req.baseUrl.indexOf('posts/') === -1) {
+    if (!token && req.baseUrl.indexOf('comments/') !== -1 && req.baseUrl.indexOf('posts/') !== -1) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
     req.user = token ? await this._authService.login(token) : null;
