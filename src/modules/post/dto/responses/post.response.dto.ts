@@ -10,6 +10,7 @@ import { CommentResponseDto } from '../../../comment/dto/response';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
+import { PostSettingResponseDto } from './post-setting-response.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -57,7 +58,7 @@ export class PostResponseDto {
 
   @ApiProperty({
     description: 'Setting post',
-    type: PostSettingDto,
+    type: PostSettingResponseDto,
   })
   @Expose()
   @Transform(({ obj, value }) => {
@@ -158,10 +159,9 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: Boolean,
-  })
-  @Expose({
     name: 'marked_read_post'
-  })
+})
+  @Expose()
   public markedReadPost?: boolean;
 
   @ApiProperty({
