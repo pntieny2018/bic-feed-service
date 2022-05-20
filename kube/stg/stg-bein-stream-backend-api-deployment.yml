@@ -12,6 +12,8 @@ spec:
       app: bein-stream-backend-api
   template:
     metadata:
+      annotations:
+        secrets.doppler.com/reload: 'true'
       labels:
         app: bein-stream-backend-api
     spec:
@@ -34,12 +36,10 @@ spec:
               memory: 256Mi
               cpu: '0.2'
 
-          # Use all environment variables defined in the stg-stream-configmap and stg-stream-secret 
+          # Use all environment variables defined in Doppler 
           envFrom:
-            - configMapRef:
-                name: stg-stream-configmap
             - secretRef:
-                name: stg-stream-secret
+                name: bic-stream-stg-managed-secret
 
       # Docker credentials to access theBein private registry
       imagePullSecrets:
