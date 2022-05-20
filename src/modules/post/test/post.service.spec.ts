@@ -7,7 +7,7 @@ import { PostService } from '../post.service';
 import { IPost, PostModel } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
-import { mockedUpdatePostDto } from './mocks/request/update-post.mock';
+import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedSearchResponse } from './mocks/response/search.response.mock';
 
 import {
@@ -48,6 +48,7 @@ import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedUserAuth } from './mocks/data/user-auth.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { PostResponseDto } from '../dto/responses';
+import { IMedia, MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -128,6 +129,7 @@ describe('PostService', () => {
             checkValidMedia: jest.fn(),
             countMediaByPost: jest.fn(),
             sync: jest.fn(),
+            getMediaList: jest.fn(),
           },
         },
         {
@@ -278,34 +280,43 @@ describe('PostService', () => {
     });
   });
 
-  describe('updatePost', () => {
-    //const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
+  describe.only('updatePost', () => {
+    const mockedDataUpdatePost = createMock<PostModel>(mockedPostData);
+    const mockedMedia= createMock<MediaModel[]>([
+      {
+        id: 1,
+        url: "aaaa",
+        name: "aaa",
+        isDraft: false,
+        type: MediaType.IMAGE,
+        status: MediaStatus.COMPLETED,
+        createdBy: mockedUserAuth.id,
+      }
+    ])
     it('Update post successfully', async () => {
-      // jest.spyOn(authorityService, 'checkCanCreatePost').mockReturnThis();
-      // jest.spyOn(mediaService, 'checkValidMedia').mockReturnThis();
-      // jest.spyOn(mediaService, 'sync').mockReturnThis();
-      // jest.spyOn(mentionService, 'create').mockReturnThis();
-      // jest.spyOn(postService, 'addPostGroup').mockReturnThis();
-      // postModelMock.create.mockResolvedValueOnce(mockedPostCreated)
-
-      // await postService.createPost(mockedAuthUser, mockedCreatePostDto);
-      // expect(sequelize.transaction).toBeCalledTimes(1);
-      // expect(transactionMock.commit).toBeCalledTimes(1);
-      // expect(transactionMock.rollback).not.toBeCalled();
-      // expect(mediaService.sync).toBeCalledTimes(1);
-      // expect(mentionService.create).not.toBeCalled();
-      // expect(postService.addPostGroup).toBeCalledTimes(1);
-      // expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({ isDraft: true,
-      //   content: mockedCreatePostDto.content,
-      //   createdBy: mockedAuthUser.id,
-      //   updatedBy: mockedAuthUser.id,
-      //   isImportant: mockedCreatePostDto.setting.isImportant,
-      //   importantExpiredAt: mockedCreatePostDto.setting.importantExpiredAt,
-      //   canShare: mockedCreatePostDto.setting.canShare,
-      //   canComment: mockedCreatePostDto.setting.canComment,
-      //   canReact: mockedCreatePostDto.setting.canReact,
-      //   isProcessing: false 
-      // })
+      jest.spyOn(authorityService, 'checkCanUpdatePost').mockReturnThis();
+      jest.spyOn(mediaService, 'checkValidMedia').mockReturnThis();
+      jest.spyOn(mediaService, 'sync').mockReturnThis();
+      jest.spyOn(mentionService, 'create').mockReturnThis();
+      jest.spyOn(postService, 'setGroupByPost').mockReturnThis();
+      jest.spyOn(mediaService, 'getMediaList').mockResolvedValueOnce(mockedMedia);
+      postModelMock.update.mockResolvedValueOnce(mockedPostCreated)
+      await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
+      expect(sequelize.transaction).toBeCalledTimes(1);
+      expect(transactionMock.commit).toBeCalledTimes(1);
+      expect(transactionMock.rollback).not.toBeCalled();
+      expect(mediaService.sync).toBeCalledTimes(1);
+      expect(mentionService.create).not.toBeCalled();
+      expect(postService.setGroupByPost).toBeCalledTimes(1);
+      expect(postModelMock.update.mock.calls[0][0]).toStrictEqual({
+        content: mockedUpdatePostDto.content,
+        updatedBy: mockedUserAuth.id,
+        isImportant: mockedCreatePostDto.setting.isImportant,
+        importantExpiredAt: mockedCreatePostDto.setting.importantExpiredAt,
+        canShare: mockedCreatePostDto.setting.canShare,
+        canComment: mockedCreatePostDto.setting.canComment,
+        canReact: mockedCreatePostDto.setting.canReact
+      })
     });
 
     it('Should catch exception if creator not found in cache', async () => {
@@ -586,218 +597,218 @@ describe('PostService', () => {
     });
   });
   describe('getPayloadSearch', () => {
-    // it('Should return payload correctly with no content, actor, time', async () => {
-    //   const searchDto: SearchPostsDto = {
-    //     offset: 0,
-    //     limit: 1,
-    //   };
-    //   const expectedResult = {
-    //     index: ElasticsearchHelper.INDEX.POST,
-    //     body: {
-    //       query: {
-    //         bool: {
-    //           filter: [
-    //             {
-    //               terms: {
-    //                 'audience.groups.id': [1],
-    //               },
-    //             },
-    //           ],
-    //           must: [],
-    //           should: [],
-    //         },
-    //       },
-    //       sort: [{ createdAt: 'desc' }],
-    //     },
-    //     from: 0,
-    //     size: 1,
-    //   };
-    //   const result = await postService.getPayloadSearch(searchDto, [1]);
-    //   expect(result).toStrictEqual(expectedResult);
-    // });
+    it('Should return payload correctly with no content, actor, time', async () => {
+      const searchDto: SearchPostsDto = {
+        offset: 0,
+        limit: 1,
+      };
+      const expectedResult = {
+        index: ElasticsearchHelper.INDEX.POST,
+        body: {
+          query: {
+            bool: {
+              filter: [
+                {
+                  terms: {
+                    'audience.groups.id': [1],
+                  },
+                },
+              ],
+              must: [],
+              should: [],
+            },
+          },
+          sort: [{ createdAt: 'desc' }],
+        },
+        from: 0,
+        size: 1,
+      };
+      const result = await postService.getPayloadSearch(searchDto, [1]);
+      expect(result).toStrictEqual(expectedResult);
+    });
 
-    // it('Should return payload correctly with actor', async () => {
-    //   const searchDto: SearchPostsDto = {
-    //     offset: 0,
-    //     limit: 1,
-    //     actors: [1],
-    //   };
-    //   const expectedResult = {
-    //     index: ElasticsearchHelper.INDEX.POST,
-    //     body: {
-    //       query: {
-    //         bool: {
-    //           filter: [
-    //             {
-    //               terms: {
-    //                 'actor.id': [1],
-    //               },
-    //             },
-    //             {
-    //               terms: {
-    //                 'audience.groups.id': [1],
-    //               },
-    //             },
-    //           ],
-    //           must: [],
-    //           should: [],
-    //         },
-    //       },
-    //       sort: [{ createdAt: 'desc' }],
-    //     },
-    //     from: 0,
-    //     size: 1,
-    //   };
-    //   const result = await postService.getPayloadSearch(searchDto, [1]);
-    //   expect(result).toStrictEqual(expectedResult);
-    // });
+    it('Should return payload correctly with actor', async () => {
+      const searchDto: SearchPostsDto = {
+        offset: 0,
+        limit: 1,
+        actors: [1],
+      };
+      const expectedResult = {
+        index: ElasticsearchHelper.INDEX.POST,
+        body: {
+          query: {
+            bool: {
+              filter: [
+                {
+                  terms: {
+                    'actor.id': [1],
+                  },
+                },
+                {
+                  terms: {
+                    'audience.groups.id': [1],
+                  },
+                },
+              ],
+              must: [],
+              should: [],
+            },
+          },
+          sort: [{ createdAt: 'desc' }],
+        },
+        from: 0,
+        size: 1,
+      };
+      const result = await postService.getPayloadSearch(searchDto, [1]);
+      expect(result).toStrictEqual(expectedResult);
+    });
 
-    // it('Should return payload correctly with time', async () => {
-    //   const searchDto: SearchPostsDto = {
-    //     offset: 0,
-    //     limit: 1,
-    //     startTime: '2022-03-23T17:00:00.000Z',
-    //     endTime: '2022-03-25T17:00:00.000Z',
-    //   };
-    //   const expectedResult = {
-    //     index: ElasticsearchHelper.INDEX.POST,
-    //     body: {
-    //       query: {
-    //         bool: {
-    //           must: [
-    //             {
-    //               range: {
-    //                 createdAt: {
-    //                   gte: '2022-03-23T17:00:00.000Z',
-    //                   lte: '2022-03-25T17:00:00.000Z',
-    //                 },
-    //               },
-    //             },
-    //           ],
-    //           filter: [
-    //             {
-    //               terms: {
-    //                 'audience.groups.id': [1],
-    //               },
-    //             },
-    //           ],
-    //           should: [],
-    //         },
-    //       },
-    //       sort: [{ createdAt: 'desc' }],
-    //     },
-    //     from: 0,
-    //     size: 1,
-    //   };
-    //   const result = await postService.getPayloadSearch(searchDto, [1]);
-    //   expect(result).toStrictEqual(expectedResult);
-    // });
+    it('Should return payload correctly with time', async () => {
+      const searchDto: SearchPostsDto = {
+        offset: 0,
+        limit: 1,
+        startTime: '2022-03-23T17:00:00.000Z',
+        endTime: '2022-03-25T17:00:00.000Z',
+      };
+      const expectedResult = {
+        index: ElasticsearchHelper.INDEX.POST,
+        body: {
+          query: {
+            bool: {
+              must: [
+                {
+                  range: {
+                    createdAt: {
+                      gte: '2022-03-23T17:00:00.000Z',
+                      lte: '2022-03-25T17:00:00.000Z',
+                    },
+                  },
+                },
+              ],
+              filter: [
+                {
+                  terms: {
+                    'audience.groups.id': [1],
+                  },
+                },
+              ],
+              should: [],
+            },
+          },
+          sort: [{ createdAt: 'desc' }],
+        },
+        from: 0,
+        size: 1,
+      };
+      const result = await postService.getPayloadSearch(searchDto, [1]);
+      expect(result).toStrictEqual(expectedResult);
+    });
 
-    // it('Should return payload correctly with content', async () => {
-    //   const searchDto: SearchPostsDto = {
-    //     offset: 0,
-    //     limit: 1,
-    //     content: 'aaaa',
-    //   };
-    //   const expectedResult = {
-    //     index: ElasticsearchHelper.INDEX.POST,
-    //     body: {
-    //       query: {
-    //         bool: {
-    //           must: [],
-    //           filter: [
-    //             {
-    //               terms: {
-    //                 'audience.groups.id': [1],
-    //               },
-    //             },
-    //           ],
-    //           should: [
-    //             {
-    //               dis_max: {
-    //                 queries: [
-    //                   {
-    //                     match: {
-    //                       content: 'aaaa',
-    //                     },
-    //                   },
-    //                   {
-    //                     match: {
-    //                       'content.ascii': {
-    //                         query: 'aaaa',
-    //                         boost: 0.6,
-    //                       },
-    //                     },
-    //                   },
-    //                   {
-    //                     match: {
-    //                       'content.ngram': {
-    //                         query: 'aaaa',
-    //                         boost: 0.3,
-    //                       },
-    //                     },
-    //                   },
-    //                 ],
-    //               },
-    //             },
-    //           ],
-    //           minimum_should_match: 1,
-    //         },
-    //       },
-    //       highlight: {
-    //         pre_tags: ['=='],
-    //         post_tags: ['=='],
-    //         fields: {
-    //           content: {
-    //             matched_fields: ['content', 'content.ascii', 'content.ngram'],
-    //             type: 'fvh',
-    //             number_of_fragments: 0,
-    //           },
-    //         },
-    //       },
-    //       sort: [{ _score: 'desc' }, { createdAt: 'desc' }],
-    //     },
-    //     from: 0,
-    //     size: 1,
-    //   };
-    //   const result = await postService.getPayloadSearch(searchDto, [1]);
-    //   expect(result).toStrictEqual(expectedResult);
-    // });
+    it('Should return payload correctly with content', async () => {
+      const searchDto: SearchPostsDto = {
+        offset: 0,
+        limit: 1,
+        content: 'aaaa',
+      };
+      const expectedResult = {
+        index: ElasticsearchHelper.INDEX.POST,
+        body: {
+          query: {
+            bool: {
+              must: [],
+              filter: [
+                {
+                  terms: {
+                    'audience.groups.id': [1],
+                  },
+                },
+              ],
+              should: [
+                {
+                  dis_max: {
+                    queries: [
+                      {
+                        match: {
+                          content: 'aaaa',
+                        },
+                      },
+                      {
+                        match: {
+                          'content.ascii': {
+                            query: 'aaaa',
+                            boost: 0.6,
+                          },
+                        },
+                      },
+                      {
+                        match: {
+                          'content.ngram': {
+                            query: 'aaaa',
+                            boost: 0.3,
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+              minimum_should_match: 1,
+            },
+          },
+          highlight: {
+            pre_tags: ['=='],
+            post_tags: ['=='],
+            fields: {
+              content: {
+                matched_fields: ['content', 'content.ascii', 'content.ngram'],
+                type: 'fvh',
+                number_of_fragments: 0,
+              },
+            },
+          },
+          sort: [{ _score: 'desc' }, { createdAt: 'desc' }],
+        },
+        from: 0,
+        size: 1,
+      };
+      const result = await postService.getPayloadSearch(searchDto, [1]);
+      expect(result).toStrictEqual(expectedResult);
+    });
   });
 
-  // describe('getDraftPost', () => {
-  //   const postData = mockedPostList[0];
-  //   const getDraftPostsDto: GetDraftPostDto = {
-  //     limit: 1,
-  //   };
+  describe('getDraftPost', () => {
+    const postData = mockedPostData;
+    const getDraftPostsDto: GetDraftPostDto = {
+      limit: 1,
+    };
 
-  //   it('Should get post successfully', async () => {
-  //     const mockPosts = [
-  //       {
-  //         ...postData,
-  //         toJSON: () => postData,
-  //       },
-  //     ];
+    it('Should get post successfully', async () => {
+      const mockPosts = [
+        {
+          ...postData,
+          toJSON: () => postData,
+        },
+      ];
 
-  //     postModelMock.findAndCountAll.mockResolvedValue({
-  //       rows: mockPosts,
-  //       count: 1,
-  //     });
+      postModelMock.findAndCountAll.mockResolvedValue({
+        rows: mockPosts,
+        count: 1,
+      });
 
-  //     postService.bindActorToPost = jest.fn();
-  //     postService.bindAudienceToPost = jest.fn();
-  //     const result = await postService.getDraftPosts(postData.id, getDraftPostsDto);
-  //     expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-  //     expect(mentionService.bindMentionsToPosts).toBeCalledWith([postData]);
-  //     expect(postService.bindActorToPost).toBeCalledTimes(1);
-  //     expect(postService.bindActorToPost).toBeCalledWith([postData]);
-  //     expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-  //     expect(postService.bindAudienceToPost).toBeCalledWith([postData]);
-  //     expect(result).toBeInstanceOf(PageDto);
+      postService.bindActorToPost = jest.fn();
+      postService.bindAudienceToPost = jest.fn();
+      const result = await postService.getDraftPosts(postData.id, getDraftPostsDto);
+      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
+      expect(mentionService.bindMentionsToPosts).toBeCalledWith([postData]);
+      expect(postService.bindActorToPost).toBeCalledTimes(1);
+      expect(postService.bindActorToPost).toBeCalledWith([postData]);
+      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(postService.bindAudienceToPost).toBeCalledWith([postData]);
+      expect(result).toBeInstanceOf(PageDto);
 
-  //     expect(result.list[0]).toBeInstanceOf(PostResponseDto);
-  //   });
-  // });
+      expect(result.list[0]).toBeInstanceOf(PostResponseDto);
+    });
+  });
 
   describe('getPost', () => {
     const getPostDto: GetPostDto = {
@@ -811,7 +822,7 @@ describe('PostService', () => {
         ...mockedPostResponse,
         toJSON: () => mockedPostResponse,
       });
-      jest.spyOn(authorityService, 'canReadPost').mockReturnThis()
+      jest.spyOn(authorityService, 'checkCanReadPost').mockReturnThis()
       jest.spyOn(commentService, 'getComments').mockResolvedValueOnce(mockedPostResponse.comments);
       jest.spyOn(postService, 'bindActorToPost').mockReturnThis;
       jest.spyOn(postService, 'bindAudienceToPost').mockReturnThis();

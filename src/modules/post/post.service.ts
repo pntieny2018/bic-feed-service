@@ -689,13 +689,16 @@ export class PostService {
           setting.isImportant === false ? null : setting.importantExpiredAt;
       }
 
-      let newMediaids = [];
+      let newMediaIds = [];
       transaction = await this._sequelizeConnection.transaction();
       if (media) {
         const { files, images, videos } = media;
-        newMediaids = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this._mediaService.checkValidMedia(newMediaids, authUserId);
-        const mediaList = await this._mediaService.getMediaList({ where: { id: newMediaids } });
+        newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
+        const mediaList =
+          newMediaIds.length === 0
+            ? []
+            : await this._mediaService.getMediaList({ where: { id: newMediaIds } });
         if (
           mediaList.filter(
             (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
@@ -717,7 +720,7 @@ export class PostService {
       });
 
       if (media) {
-        await this._mediaService.sync(post.id, EntityType.POST, newMediaids, transaction);
+        await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
       }
 
       if (mentions) {
@@ -730,7 +733,7 @@ export class PostService {
 
       return true;
     } catch (error) {
-      await transaction.rollback();
+      if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }

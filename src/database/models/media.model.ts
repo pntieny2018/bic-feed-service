@@ -36,8 +36,8 @@ export interface IMedia {
   url: string;
   type: MediaType;
   isDraft: boolean;
-  posts: PostModel[];
-  comments: CommentModel[];
+  posts?: PostModel[];
+  comments?: CommentModel[];
   createdAt?: Date;
   name: string;
   originName?: string;
