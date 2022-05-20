@@ -53,6 +53,8 @@ export interface IPost {
   mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
+  giphyId?: string;
+  markedReadPost?: boolean;
 }
 @Table({
   tableName: 'posts',

@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostPolicyService } from '../post-policy.service';
-import { mockedPostList } from './mocks/data/post-list.mock';
 import { IPost, PostModel } from '../../../database/models/post.model';
 import { PostAllow } from '..';
-import { BadRequestException } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { getModelToken } from '@nestjs/sequelize';
 import { LogicException } from '../../../common/exceptions';
+import { mockedPostData } from './mocks/response/post.response.mock';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('PostPolicyService', () => {
   let postService: PostPolicyService;
@@ -47,7 +47,7 @@ describe('PostPolicyService', () => {
 
   describe('allow', () => {
     it('Throw exception', async () => {
-      let post: IPost = mockedPostList[0];
+      let post = createMock<PostModel>(mockedPostData);
       post.canReact = false;
       try {
         await postService.allow(post, PostAllow.REACT);
