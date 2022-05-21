@@ -12,6 +12,8 @@ spec:
       app: bein-stream-backend-api
   template:
     metadata:
+      annotations:
+        secrets.doppler.com/reload: 'true'
       labels:
         app: bein-stream-backend-api
     spec:
@@ -34,12 +36,8 @@ spec:
               memory: 256Mi
               cpu: '0.2'
 
-          # Use all environment variables defined in the pro-stream-configmap and pro-stream-secret 
+          # Use all environment variables defined in Doppler
           envFrom:
-            # - configMapRef:
-            #     name: pro-stream-configmap
-            # - secretRef:
-            #     name: pro-stream-secret
             - secretRef:
                 name: bic-stream-pro-managed-secret
                 
