@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.POSTGRES_SCHEMA;
+const schemaName = process.env.DB_SCHEMA;
 const tableName = 'posts';
 
 module.exports = {
@@ -25,7 +25,7 @@ module.exports = {
         comments_count: {
           type: Sequelize.INTEGER,
           allowNull: false,
-          defaultValue: 0
+          defaultValue: 0,
         },
         is_important: {
           type: Sequelize.BOOLEAN,

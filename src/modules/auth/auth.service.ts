@@ -77,6 +77,7 @@ export class AuthService {
     user.profile = await this._userService.get(user.id);
 
     if (!user.profile) {
+      this._logger.debug(JSON.stringify(user, null, 4));
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
 

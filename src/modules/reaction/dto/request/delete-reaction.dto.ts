@@ -1,7 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { emoji } from 'node-emoji';
 import { Expose } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { ReactionEnum } from '../../reaction.enum';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, ValidateIf } from 'class-validator';
 
 export class DeleteReactionDto {
   @ApiProperty({ example: 'POST' })
@@ -15,9 +16,17 @@ export class DeleteReactionDto {
   @Expose()
   public targetId: number;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ required: false })
   @IsNumber()
   @IsNotEmpty()
   @Expose()
-  public reactionId: number;
+  @ValidateIf((object) => !object['reactionName'])
+  public reactionId?: number;
+
+  @ApiProperty({ example: 'smile', description: Object.keys(emoji).join(',') })
+  @IsNotEmpty()
+  @Expose()
+  @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
+  @ValidateIf((object) => !object['reactionId'])
+  public reactionName?: string;
 }

@@ -11,7 +11,7 @@ export class GetUserFollowsDto {
   @IsNumberString({}, { each: true })
   @Type(() => Array)
   @Transform(({ value }) => {
-    if (typeof value === 'string') {
+    if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
     return value;
@@ -24,7 +24,7 @@ export class GetUserFollowsDto {
   @Type(() => Array)
   @IsNumberString({}, { each: true })
   @Transform(({ value }) => {
-    if (typeof value === 'string') {
+    if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
     return value;

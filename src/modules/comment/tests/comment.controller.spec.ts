@@ -3,11 +3,12 @@ import { CommentController } from '../comment.controller';
 import { CommentService } from '../comment.service';
 import { authUserMock } from './mocks/user.mock';
 import { createTextCommentDto } from './mocks/create-comment-dto.mock';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 
 describe('CommentController', () => {
   let controller: CommentController;
   let commentService;
-
+  let internalEventEmitterService: InternalEventEmitterService
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
@@ -20,6 +21,13 @@ describe('CommentController', () => {
             destroy: jest.fn(),
             getComment: jest.fn(),
             getComments: jest.fn(),
+            getCommentLink: jest.fn(),
+          },
+        },
+        {
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
           },
         },
       ],
@@ -27,6 +35,8 @@ describe('CommentController', () => {
 
     controller = module.get<CommentController>(CommentController);
     commentService = module.get<CommentService>(CommentService);
+    internalEventEmitterService = module.get<InternalEventEmitterService>(InternalEventEmitterService);
+    
   });
 
   it('should be defined', () => {
@@ -86,14 +96,14 @@ describe('CommentController', () => {
   describe('CommentController.get', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.get(authUserMock, 1);
+      await controller.get(authUserMock, 1, {});
       expect(logSpy).toBeCalled();
     });
 
-    it('CommentService.get should be called', async () => {
-      commentService.getComment.mockResolvedValue([]);
-      await controller.get(authUserMock, 1);
-      expect(commentService.getComment).toBeCalled();
+    it('CommentService.getCommentLink should be called', async () => {
+      commentService.getCommentLink.mockResolvedValue([]);
+      await controller.get(authUserMock, 1, {});
+      expect(commentService.getCommentLink).toBeCalled();
     });
   });
 

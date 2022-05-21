@@ -17,6 +17,7 @@ describe('GetCommentsPipe', function () {
       postId: 1,
       limit: 25,
       order: OrderEnum.DESC,
+      childOrder: OrderEnum.DESC,
       childLimit: 10,
       parentId: 0,
     });

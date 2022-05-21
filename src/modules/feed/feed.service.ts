@@ -1,26 +1,27 @@
-import sequelize from 'sequelize';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { GetTimelineDto } from './dto/request';
-import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
+import { Op } from 'sequelize';
+import { UserDto } from '../auth';
 import { MentionService } from '../mention';
+import { ReactionService } from '../reaction';
+import { GetTimelineDto } from './dto/request';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { ClassTransformer } from 'class-transformer';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
+import { QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { MediaModel } from '../../database/models/media.model';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostMediaModel } from '../../database/models/post-media.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
-import { CommonReactionService } from '../reaction/services';
-import { UserDto } from '../auth';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { Inject, Logger, Injectable, forwardRef, BadRequestException, Post } from '@nestjs/common';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class FeedService {
@@ -28,13 +29,15 @@ export class FeedService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    private readonly _commonReaction: CommonReactionService,
+    private readonly _reactionService: ReactionService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
     private _newsFeedModel: typeof UserNewsFeedModel,
+    @InjectModel(UserSeenPostModel)
+    private _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
     private _sequelizeConnection: Sequelize
@@ -52,13 +55,13 @@ export class FeedService {
     try {
       const authUserId = authUser.id;
       const constraints = FeedService._getIdConstrains(getNewsFeedDto);
-      const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
+      const totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
       );
       let importantPostsExc = Promise.resolve([]);
       if (offset < totalImportantPosts) {
-        importantPostsExc = this._getNewsFeedData({
+        importantPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           limit: limit + 1,
           authUserId,
@@ -68,7 +71,7 @@ export class FeedService {
 
       let normalPostsExc = Promise.resolve([]);
       if (offset + limit >= totalImportantPosts) {
-        normalPostsExc = this._getNewsFeedData({
+        normalPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
           limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
@@ -76,15 +79,32 @@ export class FeedService {
           isImportant: false,
         });
       }
+
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
-      const posts = this.groupPosts(rows);
+
+      let normalSeenPost = [];
+      if (limit >= rows.length) {
+        const unSeenCount = await this._newsFeedModel.count({
+          where: { isSeenPost: false, userId: authUserId },
+        });
+        normalSeenPost = await PostModel.getNewsFeedData({
+          ...getNewsFeedDto,
+          offset: Math.max(0, offset - unSeenCount),
+          limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
+          authUserId,
+          isImportant: false,
+          isSeen: true,
+        });
+      }
+
+      const posts = this.groupPosts(rows.concat(normalSeenPost));
 
       const hasNextPage = posts.length === limit + 1 ? true : false;
       if (hasNextPage) posts.pop();
 
       await Promise.all([
-        this._commonReaction.bindReactionToPosts(posts),
+        this._reactionService.bindReactionToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
         this._postService.bindActorToPost(posts),
         this._postService.bindAudienceToPost(posts),
@@ -107,6 +127,24 @@ export class FeedService {
     }
   }
 
+  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+    try {
+      await this._userSeenPostModel.bulkCreate(
+        postIds.map((postId) => ({ postId, userId })),
+        { ignoreDuplicates: true }
+      );
+
+      await this._newsFeedModel.update(
+        { isSeenPost: true },
+        {
+          where: { userId, postId: { [Op.in]: postIds } },
+        }
+      );
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+    }
+  }
+
   /**
    * Get Timeline
    * @param authUser UserDto
@@ -120,9 +158,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = [groupId, ...group.child].filter((groupId) =>
-      authUser.profile.groups.includes(groupId)
-    );
+    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,
@@ -133,14 +169,14 @@ export class FeedService {
     const authUserId = authUser.id;
     const constraints = FeedService._getIdConstrains(getTimelineDto);
 
-    const totalImportantPosts = await this._postService.getTotalImportantPostInGroups(
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
       authUserId,
       groupIds,
       constraints
     );
     let importantPostsExc = Promise.resolve([]);
     if (offset < totalImportantPosts) {
-      importantPostsExc = this._getTimelineData({
+      importantPostsExc = PostModel.getTimelineData({
         ...getTimelineDto,
         limit: limit + 1,
         groupIds,
@@ -150,7 +186,7 @@ export class FeedService {
     }
     let normalPostsExc = Promise.resolve([]);
     if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = this._getTimelineData({
+      normalPostsExc = PostModel.getTimelineData({
         ...getTimelineDto,
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
@@ -160,12 +196,14 @@ export class FeedService {
       });
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
+    console.log('importantPosts=', importantPosts);
+    console.log('normalPosts=', normalPosts);
     const rows = importantPosts.concat(normalPosts);
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
     if (hasNextPage) posts.pop();
     await Promise.all([
-      this._commonReaction.bindReactionToPosts(posts),
+      this._reactionService.bindReactionToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
       this._postService.bindActorToPost(posts),
       this._postService.bindAudienceToPost(posts),
@@ -223,6 +261,7 @@ export class FeedService {
         importantExpiredAt,
         isDraft,
         content,
+        markedReadPost,
         canComment,
         canReact,
         canShare,
@@ -268,6 +307,7 @@ export class FeedService {
           isDraft,
           content,
           canComment,
+          markedReadPost,
           canReact,
           canShare,
           createdBy,
@@ -303,6 +343,7 @@ export class FeedService {
           id: post.mediaId,
           url: post.url,
           name: post.name,
+          type: post.type,
           width: post.width,
           height: post.height,
           extension: post.extension,
@@ -310,199 +351,5 @@ export class FeedService {
       }
     });
     return result;
-  }
-
-  private async _getTimelineData({
-    authUser,
-    groupIds,
-    isImportant,
-    idGT,
-    idGTE,
-    idLT,
-    idLTE,
-    offset,
-    limit,
-    order,
-  }: {
-    authUser: UserDto;
-    groupIds: number[];
-    isImportant: boolean;
-    idGT?: number;
-    idGTE?: any;
-    idLT?: any;
-    idLTE?: any;
-    offset?: number;
-    limit?: number;
-    order?: OrderEnum;
-  }): Promise<any[]> {
-    let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
-    const mentionTable = MentionModel.tableName;
-    const postReactionTable = PostReactionModel.tableName;
-    const mediaTable = MediaModel.tableName;
-    const postMediaTable = PostMediaModel.tableName;
-
-    const authUserId = authUser.id;
-    if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
-    } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
-    }
-    const query = `SELECT 
-    "PostModel".*,
-    "groups"."group_id" as "groupId",
-    "mentions"."user_id" as "userId",
-    "ownerReactions"."reaction_name" as "reactionName",
-    "ownerReactions"."id" as "postReactionId",
-    "ownerReactions"."created_at" as "reactCreatedAt",
-    "media"."id" as "mediaId",
-    "media"."url",
-    "media"."name",
-    "media"."type",
-    "media"."width",
-    "media"."height",
-    "media"."extension"
-    FROM (
-      SELECT 
-      "p"."id", 
-      "p"."comments_count" AS "commentsCount",
-      ${isImportant ? 'true' : 'false'} AS "isImportant", 
-      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt"
-      FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false AND EXISTS(
-        SELECT 1
-        from ${schema}.${postGroupTable} AS g
-        WHERE g.post_id = p.id
-        AND g.group_id IN(:groupIds)
-      ) ${condition}
-      ORDER BY "p"."created_at" ${order}
-      OFFSET :offset LIMIT :limit
-    ) AS "PostModel"
-      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
-        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}`;
-    const rows: any[] = await this._sequelizeConnection.query(query, {
-      replacements: {
-        groupIds,
-        offset,
-        limit: limit,
-        authUserId,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
-      },
-      type: QueryTypes.SELECT,
-    });
-
-    return rows;
-  }
-
-  private async _getNewsFeedData({
-    authUserId,
-    isImportant,
-    idGT,
-    idGTE,
-    idLT,
-    idLTE,
-    offset,
-    limit,
-    order,
-  }: {
-    authUserId: number;
-    isImportant: boolean;
-    idGT?: number;
-    idGTE?: any;
-    idLT?: any;
-    idLTE?: any;
-    offset?: number;
-    limit?: number;
-    order?: OrderEnum;
-  }): Promise<any[]> {
-    let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const userNewsFeedModel = UserNewsFeedModel.tableName;
-    const mentionTable = MentionModel.tableName;
-    const postReactionTable = PostReactionModel.tableName;
-    const mediaTable = MediaModel.tableName;
-    const postMediaTable = PostMediaModel.tableName;
-    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
-    if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.${userMarkReadPostTable} as u
-        WHERE u.user_id = 15 AND u.post_id = p.id
-      )`;
-    } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
-    }
-    const query = `SELECT 
-    "PostModel".*,
-    "groups"."group_id" as "groupId",
-    "mentions"."user_id" as "userId",
-    "ownerReactions"."reaction_name" as "reactionName",
-    "ownerReactions"."id" as "postReactionId",
-    "ownerReactions"."created_at" as "reactCreatedAt",
-    "media"."id" as "mediaId",
-    "media"."url",
-    "media"."name",
-    "media"."type",
-    "media"."width",
-    "media"."height",
-    "media"."extension"
-    FROM (
-      SELECT 
-      "p"."id", 
-      "p"."comments_count" AS "commentsCount",
-      ${isImportant ? 'true' : 'false'} AS "isImportant",
-      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt"
-      FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false AND EXISTS(
-        SELECT 1
-        from ${schema}.${userNewsFeedModel} AS u
-        WHERE u.post_id = p.id
-        AND u.user_id  = :authUserId
-      ) ${condition}
-      ORDER BY "p"."created_at" ${order}
-      OFFSET :offset LIMIT :limit
-    ) AS "PostModel"
-      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
-        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}
-      `;
-    const rows: any[] = await this._sequelizeConnection.query(query, {
-      replacements: {
-        offset,
-        limit: limit,
-        authUserId,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
-      },
-      type: QueryTypes.SELECT,
-    });
-
-    return rows;
   }
 }
