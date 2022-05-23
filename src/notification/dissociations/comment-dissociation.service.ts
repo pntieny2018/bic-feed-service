@@ -283,7 +283,9 @@ export class CommentDissociationService {
 
   public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
     const { schema } = getDatabaseConfig();
-
+    if (!userIds.length) {
+      return [];
+    }
     const rows = await this._sequelize.query(
       ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
                    SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
