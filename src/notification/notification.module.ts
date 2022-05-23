@@ -30,16 +30,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
         useFactory: register,
         inject: [ConfigService],
       },
-      {
-        name: COMMENT_PRODUCER,
-        useFactory: register,
-        inject: [ConfigService],
-      },
-      {
-        name: REACTION_PRODUCER,
-        useFactory: register,
-        inject: [ConfigService],
-      },
     ]),
   ],
   providers: [
