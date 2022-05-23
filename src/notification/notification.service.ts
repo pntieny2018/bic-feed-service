@@ -63,7 +63,5 @@ export class NotificationService implements OnModuleInit {
 
   public async onModuleInit(): Promise<any> {
     await this._postProducer.connect();
-    await this._commentProducer.connect();
-    await this._reactionProducer.connect();
   }
 }
