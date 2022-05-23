@@ -176,10 +176,12 @@ export class CommentDissociationService {
             where: {
               mentionableType: MentionableType.COMMENT,
             },
+            required: false,
           },
           {
             model: CommentModel,
             as: 'child',
+            required: false,
             include: [
               {
                 model: MentionModel,
