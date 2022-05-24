@@ -8,10 +8,10 @@ import { CompressionTypes } from '@nestjs/microservices/external/kafka.interface
 export class NotificationService implements OnModuleInit {
   private _logger = new Logger(NotificationService.name);
 
-  public constructor(@Inject(POST_PRODUCER) private _postProducer: ClientKafka) {}
+  public constructor(@Inject(POST_PRODUCER) private _producer: ClientKafka) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer['producer'].send({
+    return this._producer['producer'].send({
       topic: `${process.env.KAFKA_ENV}.${TOPIC.POST}`,
       messages: [
         {
@@ -28,7 +28,7 @@ export class NotificationService implements OnModuleInit {
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer['producer'].send({
+    return this._producer['producer'].send({
       topic: `${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`,
       messages: [
         {
@@ -45,7 +45,7 @@ export class NotificationService implements OnModuleInit {
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer['producer'].send({
+    return this._producer['producer'].send({
       topic: `${process.env.KAFKA_ENV}.${TOPIC.REACTION}`,
       messages: [
         {
@@ -62,6 +62,6 @@ export class NotificationService implements OnModuleInit {
   }
 
   public async onModuleInit(): Promise<any> {
-    await this._postProducer.connect();
+    await this._producer.connect();
   }
 }
