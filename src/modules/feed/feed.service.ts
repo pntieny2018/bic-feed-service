@@ -297,6 +297,7 @@ export class FeedService {
                   name: post.name,
                   type: post.type,
                   width: post.width,
+                  size: post.size,
                   height: post.height,
                   extension: post.extension,
                 },
@@ -347,6 +348,7 @@ export class FeedService {
           name: post.name,
           type: post.type,
           width: post.width,
+          size: post.size,
           height: post.height,
           extension: post.extension,
         });
