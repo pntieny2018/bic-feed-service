@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Logger,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
 import {
   CreateCommentDto,
   UpdateCommentDto,
@@ -55,11 +44,11 @@ export class CommentController {
   })
   @Get('/')
   public getList(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comments');
-    return this._commentService.getComments(user, getCommentsDto);
+    return this._commentService.getComments(getCommentsDto, user);
   }
 
   @ApiOperation({ summary: 'Create new comment' })

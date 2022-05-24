@@ -14,6 +14,7 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { PostEditedHistoryModel } from './post-edited-history.model';
 import { CommentEditedHistoryModel } from './comment-edited-history.model';
 import { UserSeenPostModel } from './user-seen-post.model';
+import { GiphyModel } from './giphy.model';
 
 export default [
   PostModel,
@@ -32,4 +33,5 @@ export default [
   PostEditedHistoryModel,
   CommentEditedHistoryModel,
   UserSeenPostModel,
+  GiphyModel,
 ];

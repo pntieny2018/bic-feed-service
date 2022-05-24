@@ -59,6 +59,14 @@ export class CommentResponseDto {
     name: 'created_at',
   })
   @Expose()
+  public giphyId?: string;
+
+  @ApiProperty()
+  @Expose()
+  public giphyUrl?: string;
+
+  @ApiProperty()
+  @Expose()
   public createdAt?: Date;
 
   @ApiProperty({

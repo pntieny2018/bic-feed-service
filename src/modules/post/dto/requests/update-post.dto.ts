@@ -15,7 +15,7 @@ export class UpdatePostDto {
       ['group_ids']: [1],
     },
   })
-  @IsNotEmpty()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
   public audience: AudienceRequestDto;
@@ -25,11 +25,7 @@ export class UpdatePostDto {
     type: String,
     example: 'Bla bla bla...',
   })
-  @IsNotEmpty()
-  @ValidateIf(
-    (o) =>
-      o.media?.images.length === 0 && o.media?.videos.length === 0 && o.media?.files.length === 0
-  )
+  @IsOptional()
   @Type(() => String)
   public content: string = null;
 
@@ -49,11 +45,10 @@ export class UpdatePostDto {
       files: [],
     },
   })
-  @IsNotEmpty()
-  @ValidateIf((o) => o.content === null || o.content == undefined)
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
-  public media: MediaDto = { files: [], images: [], videos: [] };
+  public media?: MediaDto;
 
   @ApiProperty({
     description: 'Setting post',
@@ -70,13 +65,7 @@ export class UpdatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => PostSettingDto)
-  public setting?: PostSettingDto = {
-    canShare: true,
-    canReact: true,
-    canComment: true,
-    isImportant: false,
-    importantExpiredAt: null,
-  };
+  public setting?: PostSettingDto;
 
   @ApiProperty({
     type: UserMentionDto,
@@ -107,7 +96,7 @@ export class UpdatePostDto {
     }
     return value;
   })
-  public mentions?: number[] = [];
+  public mentions?: number[];
 
   public isDraft?: boolean;
 }

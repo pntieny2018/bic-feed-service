@@ -4,6 +4,7 @@ import { CommentService } from '../comment.service';
 import { authUserMock } from './mocks/user.mock';
 import { createTextCommentDto } from './mocks/create-comment-dto.mock';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { SentryService } from '../../../../libs/sentry/src';
 
 describe('CommentController', () => {
   let controller: CommentController;
@@ -28,6 +29,12 @@ describe('CommentController', () => {
           provide: InternalEventEmitterService,
           useValue: {
             emit: jest.fn(),
+          },
+        },
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
           },
         },
       ],

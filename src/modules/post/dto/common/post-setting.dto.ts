@@ -15,7 +15,7 @@ export class PostSettingDto {
   @Expose({
     name: 'can_react',
   })
-  public canReact?: boolean = true;
+  public canReact?: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -29,7 +29,7 @@ export class PostSettingDto {
   @Expose({
     name: 'can_share',
   })
-  public canShare?: boolean = true;
+  public canShare?: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -43,7 +43,7 @@ export class PostSettingDto {
   @Expose({
     name: 'can_comment',
   })
-  public canComment?: boolean = true;
+  public canComment?: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -58,7 +58,7 @@ export class PostSettingDto {
   @Expose({
     name: 'is_important',
   })
-  public isImportant?: boolean = false;
+  public isImportant?: boolean;
 
   @ApiProperty({
     required: false,
@@ -74,5 +74,5 @@ export class PostSettingDto {
   @Expose({
     name: 'important_expired_at',
   })
-  public importantExpiredAt?: Date = null;
+  public importantExpiredAt?: Date;
 }

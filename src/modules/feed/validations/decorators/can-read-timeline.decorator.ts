@@ -6,6 +6,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import { SentryService } from '../../../../../libs/sentry/src';
 import { UserService } from '../../../../shared/user';
 import { UserDto } from '../../../auth';
 
@@ -16,7 +17,10 @@ const VALIDATOR_CONSTRAINT_NAME = 'CanReadTimelineConstraint';
 export class CanReadTimelineConstraint implements ValidatorConstraintInterface {
   private readonly _logger = new Logger(CanReadTimelineConstraint.name);
 
-  public constructor(private readonly _userService: UserService) {}
+  public constructor(
+    private readonly _userService: UserService,
+    private readonly _sentryService: SentryService
+  ) {}
 
   public defaultMessage(): string {
     return "Group's timeline not found";
@@ -29,6 +33,7 @@ export class CanReadTimelineConstraint implements ValidatorConstraintInterface {
       return userSharedDto.groups.includes(groupId);
     } catch (e) {
       this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
       return false;
     }
   }

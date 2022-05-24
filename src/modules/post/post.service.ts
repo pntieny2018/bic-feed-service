@@ -1,5 +1,10 @@
 import { PageDto } from '../../common/dto';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import {
+  HTTP_STATUS_ID,
+  KAFKA_PRODUCER,
+  KAFKA_TOPIC,
+  MentionableType,
+} from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
@@ -19,7 +24,7 @@ import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { MediaModel } from '../../database/models/media.model';
+import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -36,6 +41,10 @@ import { PostEditedHistoryModel } from '../../database/models/post-edited-histor
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
 import sequelize from 'sequelize';
+import { ClientKafka } from '@nestjs/microservices';
+import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
+import { PostMediaModel } from '../../database/models/post-media.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class PostService {
@@ -72,7 +81,10 @@ export class PostService {
     @Inject(forwardRef(() => FeedService))
     private _feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
-    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel
+    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
+    @Inject(KAFKA_PRODUCER)
+    private readonly _client: ClientKafka,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -241,6 +253,7 @@ export class PostService {
       size: limit,
     };
   }
+
   /**
    * Get Draft Posts
    * @param authUserId auth user ID
@@ -337,7 +350,7 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
         },
         {
           model: PostReactionModel,
@@ -349,16 +362,13 @@ export class PostService {
         },
       ],
     });
-
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-
-    await this._authorityService.canReadPost(user, post);
+    await this._authorityService.checkCanReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
       comments = await this._commentService.getComments(
-        user,
         {
           postId,
           childLimit: getPostDto.childCommentLimit,
@@ -366,6 +376,7 @@ export class PostService {
           childOrder: getPostDto.childCommentOrder,
           limit: getPostDto.commentLimit,
         },
+        user,
         false
       );
     }
@@ -380,6 +391,72 @@ export class PostService {
     const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
+    result['comments'] = comments;
+    return result;
+  }
+
+  /**
+   * Get Public Post
+   * @param postId string
+   * @param user UserDto
+   * @param getPostDto GetPostDto
+   * @returns Promise resolve PostResponseDto
+   * @throws HttpException
+   */
+  public async getPublicPost(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+    const post = await this._postModel.findOne({
+      attributes: {
+        exclude: ['updatedBy'],
+      },
+      where: { id: postId },
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+          attributes: ['userId'],
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+        },
+      ],
+    });
+
+    if (!post) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+    }
+    await this._authorityService.checkPublicPost(post);
+    let comments = null;
+    if (getPostDto.withComment) {
+      comments = await this._commentService.getComments({
+        postId,
+        childLimit: getPostDto.childCommentLimit,
+        order: getPostDto.commentOrder,
+        childOrder: getPostDto.childCommentOrder,
+        limit: getPostDto.commentLimit,
+      });
+    }
+    const jsonPost = post.toJSON();
+    await Promise.all([
+      this._reactionService.bindReactionToPosts([jsonPost]),
+      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.bindActorToPost([jsonPost]),
+      this.bindAudienceToPost([jsonPost]),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+      excludeExtraneousValues: true,
+    });
+
     result['comments'] = comments;
     return result;
   }
@@ -473,7 +550,7 @@ export class PostService {
    * @throws HttpException
    */
   public async createPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
-    const transaction = await this._sequelizeConnection.transaction();
+    let transaction;
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
       const authUserId = authUser.id;
@@ -484,14 +561,14 @@ export class PostService {
       const { groupIds } = audience;
       await this._authorityService.checkCanCreatePost(authUser, groupIds);
 
-      if (mentions.length) {
+      if (mentions && mentions.length) {
         await this._mentionService.checkValidMentions(groupIds, mentions);
       }
 
-      const { files, videos, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-
+      transaction = await this._sequelizeConnection.transaction();
       const post = await this._postModel.create(
         {
           isDraft: true,
@@ -503,10 +580,10 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
+          isProcessing: false,
         },
         { transaction }
       );
-
       if (uniqueMediaIds.length) {
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
@@ -530,6 +607,7 @@ export class PostService {
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
+      this._sentryService.captureException(error);
       throw error;
     }
   }
@@ -561,7 +639,7 @@ export class PostService {
    * @throws HttpException
    */
   public async updatePost(
-    postId: string,
+    post: PostResponseDto,
     authUser: UserDto,
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
@@ -571,54 +649,89 @@ export class PostService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
-    const transaction = await this._sequelizeConnection.transaction();
+    let transaction;
     try {
-      const { content, media, setting, mentions, audience, isDraft } = updatePostDto;
-
-      const { groupIds } = audience;
-      const post = await this._postModel.findByPk(postId);
+      const { content, media, setting, mentions, audience } = updatePostDto;
+      await this.checkContent(updatePostDto);
       await this.checkPostOwner(post, authUser.id);
-      await this._authorityService.checkCanUpdatePost(authUser, groupIds);
-
-      const mentionUserIds = mentions;
-      if (mentionUserIds.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentionUserIds);
+      const oldGroupIds = post.audience.groups.map((group) => group.id);
+      if (audience) {
+        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
       }
 
-      const { files, videos, images } = media;
-      const uniqueMediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
+      if (mentions && mentions.length) {
+        await this._mentionService.checkValidMentions(
+          audience ? audience.groupIds : oldGroupIds,
+          mentions
+        );
+      }
 
       const dataUpdate = {
-        content,
         updatedBy: authUserId,
-        isImportant: setting.isImportant,
-        importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-        canShare: setting.canShare,
-        canComment: setting.canComment,
-        canReact: setting.canReact,
       };
-      if (isDraft) dataUpdate['createdAt'] = new Date();
+
+      if (content !== null) {
+        dataUpdate['content'] = content;
+      }
+      if (setting.hasOwnProperty('canShare')) {
+        dataUpdate['canShare'] = setting.canShare;
+      }
+      if (setting.hasOwnProperty('canComment')) {
+        dataUpdate['canComment'] = setting.canComment;
+      }
+      if (setting.hasOwnProperty('canReact')) {
+        dataUpdate['canReact'] = setting.canReact;
+      }
+      if (setting.hasOwnProperty('isImportant')) {
+        dataUpdate['isImportant'] = setting.isImportant;
+      }
+      if (setting.hasOwnProperty('importantExpiredAt')) {
+        dataUpdate['importantExpiredAt'] =
+          setting.isImportant === false ? null : setting.importantExpiredAt;
+      }
+      let newMediaIds = [];
+      transaction = await this._sequelizeConnection.transaction();
+      if (media) {
+        const { files, images, videos } = media;
+        newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
+        const mediaList =
+          newMediaIds.length === 0
+            ? []
+            : await this._mediaService.getMediaList({ where: { id: newMediaIds } });
+        if (
+          mediaList.filter(
+            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+          ).length > 0
+        ) {
+          dataUpdate['isDraft'] = true;
+          dataUpdate['isProcessing'] = true;
+        }
+      }
+
       await this._postModel.update(dataUpdate, {
         where: {
-          id: postId,
+          id: post.id,
           createdBy: authUserId,
         },
         transaction,
       });
-      await this._mediaService.sync(postId, EntityType.POST, uniqueMediaIds, transaction);
-      await this._mentionService.setMention(
-        mentionUserIds,
-        MentionableType.POST,
-        postId,
-        transaction
-      );
-      await this.setGroupByPost(groupIds, postId, transaction);
+
+      if (media) {
+        await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
+      }
+
+      if (mentions) {
+        await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
+      }
+      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+        await this.setGroupByPost(audience.groupIds, post.id, transaction);
+      }
       await transaction.commit();
 
       return true;
     } catch (error) {
-      await transaction.rollback();
+      if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }
@@ -633,17 +746,43 @@ export class PostService {
    */
   public async publishPost(postId: string, authUserId: number): Promise<boolean> {
     try {
-      const post = await this._postModel.findByPk(postId);
+      const post = await this._postModel.findOne({
+        where: {
+          id: postId,
+        },
+        include: [
+          {
+            model: MediaModel,
+            through: {
+              attributes: [],
+            },
+            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'uploadId', 'status'],
+            required: false,
+          },
+        ],
+      });
       await this.checkPostOwner(post, authUserId);
-      const countMedia = await this._mediaService.countMediaByPost(postId);
 
-      if (post.content === null && countMedia === 0) {
+      if (post.content === null && post.media.length === 0) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
       }
 
+      if (post.isDraft === false) return false;
+
+      let isDraft = false;
+      let isProcessing = false;
+      if (
+        post.media.filter(
+          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+        ).length > 0
+      ) {
+        isDraft = true;
+        isProcessing = true;
+      }
       await this._postModel.update(
         {
-          isDraft: false,
+          isDraft,
+          isProcessing,
           createdAt: new Date(),
         },
         {
@@ -891,6 +1030,7 @@ export class PostService {
       return posts.map((p) => p.postId);
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return [];
     }
   }
@@ -1089,6 +1229,113 @@ export class PostService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       throw e;
+    }
+  }
+
+  public async getPostsByMedia(uploadId: string): Promise<PostResponseDto[]> {
+    const posts = await this._postModel.findAll({
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          required: true,
+          where: {
+            uploadId,
+          },
+        },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+        },
+      ],
+    });
+
+    const jsonPosts = posts.map((p) => p.toJSON());
+    await Promise.all([
+      this.bindAudienceToPost(jsonPosts),
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+    ]);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
+  }
+
+  public async updatePostStatus(postId: string): Promise<void> {
+    const { schema } = getDatabaseConfig();
+    const postMedia = PostMediaModel.tableName;
+    const post = PostModel.tableName;
+    const media = MediaModel.tableName;
+    const query = ` UPDATE ${schema}.${post}
+                SET is_processing = tmp.is_processing, is_draft = tmp.is_processing
+                FROM (
+                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = 'completed' THEN 1 ELSE 0 END 
+		                ) < COUNT(m.id) THEN true ELSE false END as is_processing
+                  FROM ${schema}.${media} as m
+                  JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
+                  WHERE pm.post_id = :postId
+                  GROUP BY pm.post_id
+                ) as tmp 
+                WHERE tmp.post_id = ${schema}.${post}.id`;
+    await this._sequelizeConnection.query(query, {
+      replacements: {
+        postId,
+      },
+      type: QueryTypes.UPDATE,
+      raw: true,
+    });
+  }
+
+  public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
+    const { videoId, hlsUrl, meta } = processVideoResponseDto;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    const posts = await this.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this.updatePostStatus(post.id);
+    });
+  }
+
+  public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
+    const { videoId, hlsUrl, meta } = processVideoResponseDto;
+    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    const posts = await this.getPostsByMedia(videoId);
+    posts.forEach((post) => {
+      this.updatePostStatus(post.id);
+    });
+  }
+
+  public async processVideo(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    try {
+      this._client.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+        key: null,
+        value: JSON.stringify({ videoIds: ids }),
+      });
+      this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
+    }
+  }
+
+  public checkContent(updatePostDto: UpdatePostDto): void {
+    const { content, media } = updatePostDto;
+    if (
+      content === '' &&
+      media?.files.length === 0 &&
+      media?.videos.length === 0 &&
+      media?.images.length === 0
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
     }
   }
 }

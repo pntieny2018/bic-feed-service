@@ -25,20 +25,31 @@ export enum MediaType {
   FILE = 'file',
 }
 
+export enum MediaStatus {
+  WAITING_PROCESS = 'waiting_process',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
 export interface IMedia {
   id: string;
   createdBy: number;
   url: string;
   type: MediaType;
   isDraft: boolean;
-  posts: PostModel[];
-  comments: CommentModel[];
+  posts?: PostModel[];
+  comments?: CommentModel[];
   createdAt?: Date;
   name: string;
   originName?: string;
   width?: number;
   height?: number;
   extension?: string;
+  uploadId?: string;
+  status: MediaStatus;
+  size?: number;
+  mimeType?: string;
 }
 @Table({
   tableName: 'media',
@@ -54,6 +65,9 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @Column
   public url: string;
+
+  @Column
+  public uploadId: string;
 
   @Column
   public type: MediaType;
@@ -91,4 +105,14 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @Column
   public extension?: string;
+
+  @Column
+  public status: MediaStatus;
+
+  @Default(0)
+  @Column
+  public size?: number;
+
+  @Column
+  public mimeType?: string;
 }

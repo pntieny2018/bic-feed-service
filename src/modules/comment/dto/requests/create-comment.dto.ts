@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
 import { UserMentionDto } from '../../../mention/dto';
+import { GiphyDto } from '../../../giphy/dto/requests';
 
 export class CreateCommentDto {
   @ApiProperty({
@@ -22,7 +23,7 @@ export class CreateCommentDto {
   @IsNotEmpty()
   @ValidateIf(
     (o) =>
-      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0 || o.giphy?.id)
   )
   public content: string;
 
@@ -78,4 +79,18 @@ export class CreateCommentDto {
     return value;
   })
   public mentions?: number[] = [];
+
+  @ApiProperty({
+    type: GiphyDto,
+    example: {
+      id: '3pZipqyo1sqHDfJGtz',
+      type: 'gif',
+    }
+  })
+  @IsNotEmpty()
+  @ValidateIf(
+    (o) => !(o.content || o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+  )
+  @Type(() => GiphyDto)
+  public giphy?: GiphyDto = null;
 }

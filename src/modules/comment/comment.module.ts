@@ -1,7 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CommentController } from './comment.controller';
 import { CommentService } from './comment.service';
-import { DatabaseModule } from '../../database';
 import { MentionModule } from '../mention';
 import { UserModule } from '../../shared/user';
 import { PostModule } from '../post';
@@ -10,10 +9,10 @@ import { MediaModule } from '../media';
 import { GroupModule } from '../../shared/group';
 import { ReactionModule } from '../reaction';
 import { FollowModule } from '../follow';
+import { GiphyModule } from '../giphy';
 
 @Module({
   imports: [
-    DatabaseModule,
     AuthorityModule,
     FollowModule,
     forwardRef(() => PostModule),
@@ -22,6 +21,7 @@ import { FollowModule } from '../follow';
     MediaModule,
     GroupModule,
     ReactionModule,
+    GiphyModule,
   ],
   controllers: [CommentController],
   providers: [CommentService],

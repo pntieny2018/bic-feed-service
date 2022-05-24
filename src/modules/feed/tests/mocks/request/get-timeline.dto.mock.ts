@@ -1,7 +1,7 @@
 import { GetTimelineDto } from '../../../dto/request';
 
 export const mockedGetTimeLineDto: GetTimelineDto = {
-  groupId: 1,
+  groupId: 2,
   offset: 0,
-  limit: 10,
+  limit: 5,
 };
