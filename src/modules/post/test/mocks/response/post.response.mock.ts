@@ -12,7 +12,7 @@ export const mockedPostResponse: PostResponseDto = {
     videos: [],
     images: [
       {
-        id: 1,
+        id: 'd838659a-85ef-47ba-91e6-902aa6174142',
         name: 'filename.jpg',
         uploadId: null,
         status: MediaStatus.COMPLETED,

@@ -1,17 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Expose, Transform, Type } from 'class-transformer';
-import { IDocumentMetadata } from './interfaces';
-import { basename } from 'path';
+import { Expose, Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { MediaStatus } from '../../../database/models/media.model';
+import { IDocumentMetadata } from './interfaces';
 
 export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
-  @Type(() => Number)
-  @IsNumber()
+  @Type(() => String)
+  @IsUUID()
   @IsNotEmpty()
   @Expose()
-  public id: number;
+  public id: string;
 
   @ApiProperty()
   @IsOptional()

@@ -1,16 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
-import { IsDateString } from 'class-validator';
+import { IsDateString, IsUUID } from 'class-validator';
 import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 
 export class PostEditedHistoryDto {
   @ApiProperty({
     description: 'Post ID',
-    type: Number,
+    type: String,
   })
+  @IsUUID()
   @Expose()
-  public postId: number;
+  public postId: string;
 
   @ApiProperty({
     description: 'Post content',

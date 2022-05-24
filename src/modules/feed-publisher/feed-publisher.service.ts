@@ -160,8 +160,8 @@ export class FeedPublisherService {
       `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
     );
     const differenceGroupIds = [
-      ...ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds),
-      ...ArrayHelper.differenceArrNumber(oldGroupIds, currentGroupIds),
+      ...ArrayHelper.arrDifferenceElements(currentGroupIds, oldGroupIds),
+      ...ArrayHelper.arrDifferenceElements(oldGroupIds, currentGroupIds),
     ];
     this._logger.debug(`[fanoutOnWrite]: differenceGroupIds: ${differenceGroupIds}`);
     if (differenceGroupIds.length) {
