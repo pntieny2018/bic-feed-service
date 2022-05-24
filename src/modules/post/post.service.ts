@@ -688,7 +688,6 @@ export class PostService {
         dataUpdate['importantExpiredAt'] =
           setting.isImportant === false ? null : setting.importantExpiredAt;
       }
-
       let newMediaIds = [];
       transaction = await this._sequelizeConnection.transaction();
       if (media) {
@@ -706,8 +705,6 @@ export class PostService {
         ) {
           dataUpdate['isDraft'] = true;
           dataUpdate['isProcessing'] = true;
-          if (post.isDraft === false)
-            await this._feedService.deleteNewsFeedByPost(post.id, transaction);
         }
       }
 

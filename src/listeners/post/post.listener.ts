@@ -16,6 +16,7 @@ import { SentryService } from '../../../libs/sentry/src';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { FeedService } from '../../modules/feed/feed.service';
 
 @Injectable()
 export class PostListener {
@@ -27,7 +28,8 @@ export class PostListener {
     private readonly _notificationService: NotificationService,
     private readonly _postService: PostService,
     private readonly _sentryService: SentryService,
-    private readonly _mediaService: MediaService
+    private readonly _mediaService: MediaService,
+    private readonly _feedService: FeedService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -136,10 +138,20 @@ export class PostListener {
     const { oldPost, newPost, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
 
-    const uploadIds = media.videos
-      .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
-      .map((i) => i.uploadId);
-    this._postService.processVideo(uploadIds);
+    if (oldPost.isDraft === false) {
+      const uploadIds = media.videos
+        .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+        .map((i) => i.uploadId);
+      this._postService.processVideo(uploadIds);
+    }
+
+    if (oldPost.isDraft === false && isDraft === true) {
+      this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
+    }
+
     if (isDraft) return;
 
     this._postService
