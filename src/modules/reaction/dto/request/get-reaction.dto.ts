@@ -3,16 +3,26 @@ import { ReactionEnum } from '../../reaction.enum';
 import { OrderEnum } from '../../../../common/dto';
 import { IsUUID } from 'class-validator';
 import { NIL as NIL_UUID } from 'uuid';
+import { Expose } from 'class-transformer';
 
 export class GetReactionDto {
-  @ApiProperty()
+  @ApiProperty({
+    name: 'reaction_name',
+  })
+  @Expose({
+    name: 'reaction_name',
+  })
   public reactionName: string;
 
   @ApiProperty({
     type: String,
     example: '494d8a84-fbc3-4a8f-a8a9-530a26b2007f',
+    name: 'target_id',
   })
   @IsUUID()
+  @Expose({
+    name: 'target_id',
+  })
   public targetId: string;
 
   @ApiProperty({
@@ -23,8 +33,12 @@ export class GetReactionDto {
   @ApiProperty({
     required: false,
     default: NIL_UUID,
+    name: 'latest_id',
   })
   @IsUUID()
+  @Expose({
+    name: 'latest_id',
+  })
   public latestId = NIL_UUID;
 
   @ApiProperty({

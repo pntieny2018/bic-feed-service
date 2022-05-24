@@ -10,6 +10,7 @@ import { CommentResponseDto } from '../../../comment/dto/response';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
+import { PostSettingResponseDto } from './post-setting-response.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -57,7 +58,7 @@ export class PostResponseDto {
 
   @ApiProperty({
     description: 'Setting post',
-    type: PostSettingDto,
+    type: PostSettingResponseDto,
   })
   @Expose()
   @Transform(({ obj, value }) => {
@@ -77,6 +78,7 @@ export class PostResponseDto {
   @ApiProperty({
     description: 'To know draft post or not',
     type: Boolean,
+    name: 'is_draft'
   })
   @Expose()
   public isDraft: boolean;
@@ -119,6 +121,7 @@ export class PostResponseDto {
   @ApiProperty({
     description: 'Total number of comments',
     type: Number,
+    name: 'comments_count'
   })
   @Expose()
   public commentsCount: number;
@@ -139,6 +142,7 @@ export class PostResponseDto {
         fullname: 'Tui Day Ne',
       },
     },
+    name: 'reactions_count'
   })
   @Transform(({ value }) => {
     if (value && value !== '1=' && typeof value === 'string') {
@@ -162,24 +166,28 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: Boolean,
-  })
+    name: 'marked_read_post'
+})
   @Expose()
   public markedReadPost?: boolean;
 
   @ApiProperty({
     type: Date,
+    name: 'created_at'
   })
   @Expose()
   public createdAt: Date;
 
   @ApiProperty({
     type: Date,
+    name: 'updated_at'
   })
   @Expose()
   public updatedAt?: Date;
 
   @ApiProperty({
     type: Number,
+    name: 'created_by'
   })
   @Expose()
   public createdBy: number;
@@ -192,6 +200,7 @@ export class PostResponseDto {
 
   @ApiProperty({
     type: [ReactionResponseDto],
+    name: 'owner_reactions'
   })
   @Expose()
   public ownerReactions?: ReactionResponseDto[] = [];

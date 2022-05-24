@@ -15,6 +15,7 @@ export class RecentSearchesDto {
     description: 'List recent search',
     type: RecentSearchDto,
     isArray: true,
+    name: 'recent_searches',
   })
   @Type(() => RecentSearchDto)
   @Expose()

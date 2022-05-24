@@ -47,9 +47,12 @@ export class VideoMetadataDto implements IDocumentMetadata {
     required: false,
     description: 'Origin video name',
     example: 'example.mp4',
+    name: 'origin_name',
   })
   @IsString()
   @IsOptional()
-  @Expose()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 }

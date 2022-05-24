@@ -10,7 +10,9 @@ export class ReactionResponseDto {
   @Expose()
   public id: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'reaction_name'
+  })
   @Expose()
   public reactionName: string;
 
@@ -18,7 +20,9 @@ export class ReactionResponseDto {
   @Expose()
   public actor?: UserDataShareDto = null;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'created_at'
+  })
   @Expose()
   public createdAt: Date;
 

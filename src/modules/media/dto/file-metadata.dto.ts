@@ -44,9 +44,13 @@ export class FileMetadataDto implements IDocumentMetadata {
     required: false,
     description: 'Origin file name',
     example: 'example.txt',
+    name: 'origin_name',
   })
   @IsNotEmpty()
   @IsString()
   @IsOptional()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 }
