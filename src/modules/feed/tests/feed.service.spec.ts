@@ -8,11 +8,11 @@ import { GroupService } from '../../../shared/group';
 import { MentionService } from '../../mention';
 import { PostService } from '../../post/post.service';
 import { BadRequestException } from '@nestjs/common';
-import { mockedTimelineAll } from './mocks/data/timeline.data';
+import { mockedTimelineAll } from './mocks/data/timeline.data.mock';
 import { mockedGroups } from './mocks/data/groups.data.mock';
 import { mockedUserAuth } from './mocks/data/user-auth.data.mock';
 import { mockedGetTimeLineDto } from './mocks/request/get-timeline.dto.mock';
-import { mockedTimelineResponse } from './mocks/response/timeline.response.mock';
+import { mockedTimelineResponse, mockTimelineResponse } from './mocks/response/timeline.response.mock';
 import { mockedNewsFeed } from './mocks/data/newsfeed.data.mock';
 import { mockedNewsFeedResponse } from './mocks/response/newsfeed.response.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
@@ -20,6 +20,8 @@ import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model'
 import { Sequelize } from 'sequelize-typescript';
 import { ReactionService } from '../../reaction';
 import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
+import { GroupPrivacy, GroupSharedDto } from '../../../shared/group/dto';
+import { GetTimelineDto } from '../dto/request';
 
 class EPostModel extends PostModel {
   public reactionsCount: string;
@@ -131,28 +133,44 @@ describe('FeedService', () => {
     jest.clearAllMocks();
   });
 
-  describe('User get timeline', () => {
+  describe('getTimeline', () => {
     it('Should get successfully with predefined timeline', async () => {
-      const mockFindAllData = createMock<PostModel[]>(mockedTimelineAll);
-      mockFindAllData.forEach((e) => {
-        e.toJSON = () => e;
-      });
-      jest.spyOn(groupService, 'get').mockResolvedValue(mockedGroups[0]);
-      const jsonPosts = mockFindAllData.map((r) => r.toJSON());
-      jest.spyOn(postService, 'getTotalImportantPostInGroups').mockResolvedValue(1);
-      //jest.spyOn(feedService, '_getTimelineData').mockResolvedValue([]);
+      mockTimelineResponse;
+      const mockGroup: GroupSharedDto = {
+        id: 1,
+        name: 'group 1',
+        icon: 'icon 1',
+        privacy: GroupPrivacy.PUBLIC,
+        child: {
+          public: [2, 3],
+          open: [],
+          private: [],
+          secret: []
+        }
+      };
+      const mockedGetTimeLineDto: GetTimelineDto = {
+        groupId: 2,
+        offset: 0,
+        limit: 5,
+      };
+
+      jest.spyOn(groupService, 'get').mockResolvedValue(mockGroup);
+      jest.spyOn(groupService, 'getGroupIdsCanAccess').mockReturnValue([1,2,3]);
+      jest.spyOn(PostModel, 'getTotalImportantPostInGroups').mockResolvedValue(0);
+      jest.spyOn(PostModel, 'getTimelineData').mockResolvedValue([]);
       
       const result = await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
       
-      expect(feedService.groupPosts).toBeCalledTimes(1);
-      expect(result.meta).toStrictEqual(mockedTimelineResponse.meta);
+      expect(groupService.get).toBeCalledTimes(1);
+      expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
+      expect(PostModel.getTotalImportantPostInGroups).toBeCalledTimes(0);
+      expect(mockTimelineResponse).toStrictEqual(mockedTimelineResponse);
     });
 
     it('Should return BadRequestException if group found post', async () => {
-      const input = createMock<PostModel[]>([] as PostModel[]);
       jest.spyOn(groupService, 'get').mockResolvedValue(null);
       try {
-      const result = await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
+      await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
       } catch (e) {
         expect(e).toBeInstanceOf(BadRequestException);
       }

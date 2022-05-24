@@ -1,74 +1,22 @@
-import { CommentResponseDto } from '../../../../comment/dto/response/comment.response.dto';
-import { PageDto } from '../../../../../common/dto/pagination/page.dto';
-export const mockedComments = {
-  list: [
-    {
-      ownerReactions: [],
-      id: 1,
-      edited: false,
-      totalReply: 0,
-      actor: {
-        id: 59,
-        username: 'aaa',
-        avatar: 'aaa',
-        fullname: 'aaaaa',
-      },
-      parentId: 0,
-      parent: null,
-      postId: 1,
-      content: 'aaaa',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      media: {
-        videos: [],
-        images: [],
-        files: [],
-      },
-      reactionsCount: null,
-      child: [
-        {
-          id: 3,
-          edited: false,
-          actor: {
-            id: 1,
-            username: 'aaa',
-            avatar: 'aaa',
-            fullname: 'aaaaa',
-          },
-          parentId: 1,
-          postId: 1,
-          content: 'cccc',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          media: {
-            videos: [],
-            images: [],
-            files: [],
-          },
-          totalReply: 0,
-          reactionsCount: null,
-          ownerReactions: null,
-        },
-      ],
-    },
-  ],
-  meta: {
-    total: 1,
-    limit: 1,
-  },
-};
-export const mockedPostResponse = {
+import { MediaStatus } from '../../../../../database/models/media.model';
+import { IPost } from '../../../../../database/models/post.model';
+import { GroupPrivacy } from '../../../../../shared/group/dto';
+import { PostResponseDto } from '../../../dto/responses';
+
+export const mockedPostResponse: PostResponseDto = {
   ownerReactions: [],
-  id: 1,
-  content: 'aaaa',
+  id: '40dc4093-1bd0-4105-869f-8504e1986141',
+  content: 'bbbbbb',
   media: {
     files: [],
     videos: [],
     images: [
       {
         id: 1,
-        name: 'image 0',
-        url: 'https://google.com',
+        name: 'filename.jpg',
+        uploadId: null,
+        status: MediaStatus.COMPLETED,
+        url: 'http://google.co',
         width: null,
         height: null,
       },
@@ -82,33 +30,75 @@ export const mockedPostResponse = {
     importantExpiredAt: null,
   },
   isDraft: true,
+  isProcessing: false,
   actor: {
-    id: 59,
-    username: 'trangha',
-    fullname: 'Hà Phạm Diễm Trang',
+    id: 15,
+    username: 'quannhac',
+    fullname: 'Lý Quân Nhạc',
+    avatar:
+      'https://bein-entity-attribute-stg.s3.ap-southeast-1.amazonaws.com/user/avatar/Avatar_Profile.png',
+    email: 'quannhac@tgm.vn',
   },
-  mentions: [
-    {
-      admin: {
+  mentions: {},
+  commentsCount: 0,
+  reactionsCount: {},
+  markedReadPost: false,
+  createdAt: new Date('2022-05-19T07:23:55.601Z'),
+  updatedAt: new Date('2022-05-19T07:23:55.601Z'),
+  createdBy: 15,
+  audience: {
+    groups: [
+      {
         id: 1,
-        username: 'admin',
-        fullname: 'Bein Admin 1',
+        name: 'EVOL Community',
+        icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
+        privacy: GroupPrivacy.PUBLIC,
       },
+    ],
+  },
+  comments: {
+    list: [],
+    meta: {
+      limit: 10,
+      offset: 0,
+      hasNextPage: false,
+      hasPreviousPage: false,
     },
+  },
+};
+
+export const mockedPostData = {
+  id: 1,
+  commentsCount: 3,
+  isImportant: false,
+  importantExpiredAt: null,
+  isDraft: true,
+  canComment: true,
+  canReact: true,
+  isProcessing: false,
+  canShare: true,
+  content: 'bbbbbb',
+  giphyId: null,
+  createdBy: 15,
+  updatedBy: 15,
+  createdAt: new Date('2022-05-18T11:05:11.998Z'),
+  updatedAt: new Date('2022-05-19T07:19:14.130Z'),
+  markedReadPost: false,
+  groups: [
     {
-      vinc: {
-        id: 2,
-        username: 'vinc',
-        fullname: 'Nhâm Chấn Vĩ',
-      },
+      groupId: 1,
+      postId: 1,
     },
   ],
-  commentsCount: 0,
-  reactionsCount: null,
-  createdAt: '2022-04-07T03:46:32.790Z',
-  createdBy: 59,
-  audience: {
-    groups: [],
-  },
-  comments: mockedComments,
+  mentions: [],
+  media: [],
+  ownerReactions: [
+    {
+      id: 2,
+      postId: 3,
+      reactionName: 'bb',
+      createdBy: 15,
+      createdAt: '2022-05-18T11:05:31.990Z',
+    },
+  ],
 };

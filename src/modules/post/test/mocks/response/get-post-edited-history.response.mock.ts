@@ -1,7 +1,7 @@
 import { PageDto } from '../../../../../common/dto';
 import { PostEditedHistoryDto } from '../../../dto/responses';
 
-export const mockGetPostEditedHistoryResult: PageDto<PostEditedHistoryDto> = {
+export const mockedGetPostEditedHistoryResult: PageDto<PostEditedHistoryDto> = {
   list: [
     {
       postId: 7,

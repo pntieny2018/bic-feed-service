@@ -19,7 +19,7 @@ export class PostPolicyService {
    * @param action PostAllow
    * @returns Promise resolve boolean
    */
-  public allow(post: IPost | PostResponseDto, action: PostAllow): void {
+  public async allow(post: IPost | PostResponseDto, action: PostAllow): Promise<void> {
     if (post instanceof PostResponseDto && !post.setting[action]) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
     } else if (!(post instanceof PostResponseDto) && !post[action]) {

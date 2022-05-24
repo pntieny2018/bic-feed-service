@@ -44,6 +44,7 @@ export interface IComment {
   edited?: boolean;
   parent?: IComment;
   content?: string;
+  giphyId?: string;
   createdBy: number;
   updatedBy: number;
   createdAt?: Date;
@@ -92,6 +93,10 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @Column
   public edited?: boolean;
+
+  @AllowNull(true)
+  @Column
+  public giphyId: string;
 
   @Column
   public updatedBy: number;

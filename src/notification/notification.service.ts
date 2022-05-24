@@ -1,30 +1,18 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
-import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER, TOPIC } from './producer.constants';
-import { CompressionTypes } from '@nestjs/microservices/external/kafka.interface';
+import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../common/constants';
 
 @Injectable()
-export class NotificationService implements OnModuleInit {
+export class NotificationService {
   private _logger = new Logger(NotificationService.name);
 
-  public constructor(
-    @Inject(POST_PRODUCER) private _postProducer: ClientKafka,
-    @Inject(COMMENT_PRODUCER) private _commentProducer: ClientKafka,
-    @Inject(REACTION_PRODUCER) private _reactionProducer: ClientKafka
-  ) {}
+  public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._postProducer['producer'].send({
-      topic: `${process.env.KAFKA_ENV}.${TOPIC.POST}`,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
+      key: payload.key,
+      value: JSON.stringify(payload.value),
     });
     // return lastValueFrom(
     //   this._postProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.POST}`, payload)
@@ -32,16 +20,9 @@ export class NotificationService implements OnModuleInit {
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._commentProducer['producer'].send({
-      topic: `${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.COMMENT, {
+      key: payload.key,
+      value: JSON.stringify(payload.value),
     });
     // return lastValueFrom(
     //   this._commentProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`, payload)
@@ -49,26 +30,12 @@ export class NotificationService implements OnModuleInit {
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    console.log(JSON.stringify(payload.value.event));
-    return this._reactionProducer['producer'].send({
-      topic: `${process.env.KAFKA_ENV}.${TOPIC.REACTION}`,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REACTION, {
+      key: payload.key,
+      value: JSON.stringify(payload.value),
     });
     // return lastValueFrom(
     //   this._reactionProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.REACTION}`, payload)
     // ).catch((ex) => this._logger.error(ex, ex.stack));
-  }
-
-  public async onModuleInit(): Promise<any> {
-    await this._postProducer.connect();
-    await this._commentProducer.connect();
-    await this._reactionProducer.connect();
   }
 }

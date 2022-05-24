@@ -8,13 +8,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CommentService } from '../../modules/comment';
 import { CommentNotificationService } from '../../notification/services';
 import { NIL as NIL_UUID } from 'uuid';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class CommentListener {
   private _logger = new Logger(CommentListener.name);
   public constructor(
     private _commentService: CommentService,
-    private _commentNotificationService: CommentNotificationService
+    private _commentNotificationService: CommentNotificationService,
+    private _sentryService: SentryService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
@@ -32,7 +34,10 @@ export class CommentListener {
     }
     this._commentNotificationService
       .create(event.getEventName(), actor, commentResponse)
-      .catch((ex) => this._logger.error(ex, ex.stack));
+      .catch((ex) => {
+        this._logger.error(ex, ex.stack);
+        this._sentryService.captureException(ex);
+      });
   }
 
   @On(CommentHasBeenUpdatedEvent)
@@ -43,7 +48,10 @@ export class CommentListener {
 
     this._commentNotificationService
       .update(event.getEventName(), actor, oldComment, commentResponse)
-      .catch((ex) => this._logger.error(ex, ex.stack));
+      .catch((ex) => {
+        this._logger.error(ex, ex.stack);
+        this._sentryService.captureException(ex);
+      });
   }
 
   @On(CommentHasBeenDeletedEvent)
@@ -51,8 +59,9 @@ export class CommentListener {
     this._logger.debug(`[CommentHasBeenDeletedEvent]: ${JSON.stringify(event)}`);
     const { comment, actor } = event.payload;
 
-    this._commentNotificationService
-      .destroy(event.getEventName(), comment)
-      .catch((ex) => this._logger.error(ex, ex.stack));
+    this._commentNotificationService.destroy(event.getEventName(), comment).catch((ex) => {
+      this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
+    });
   }
 }
