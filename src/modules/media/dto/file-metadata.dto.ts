@@ -1,7 +1,7 @@
 import { basename } from 'path';
 import { ApiProperty } from '@nestjs/swagger';
 import { IDocumentMetadata } from './interfaces';
-import { Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class FileMetadataDto implements IDocumentMetadata {
@@ -33,9 +33,13 @@ export class FileMetadataDto implements IDocumentMetadata {
     required: false,
     description: 'Origin file name',
     example: 'example.txt',
+    name: 'origin_name',
   })
   @IsNotEmpty()
   @IsString()
   @IsOptional()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 }

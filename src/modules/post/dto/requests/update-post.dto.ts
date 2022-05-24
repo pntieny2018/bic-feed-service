@@ -1,16 +1,6 @@
-import { UserSharedDto } from './../../../../shared/user/dto/user-shared.dto';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  isArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsArray,
-  ValidateNested,
-  IsObject,
-  ValidateIf,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
@@ -21,8 +11,8 @@ export class UpdatePostDto {
     description: 'Audience',
     type: AudienceRequestDto,
     example: {
-      userIds: [],
-      groupIds: [1],
+      ['user_ids']: [],
+      ['group_ids']: [1],
     },
   })
   @IsNotEmpty()

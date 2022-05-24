@@ -24,7 +24,7 @@ export class CommentResponseDto {
   public edited = false;
 
   @ApiProperty({
-    name: 'parent_id'
+    name: 'parent_id',
   })
   @IsUUID()
   @Expose()
@@ -35,7 +35,7 @@ export class CommentResponseDto {
   public parent?: CommentResponseDto;
 
   @ApiProperty({
-    name: 'post_id'
+    name: 'post_id',
   })
   @IsUUID()
   @Expose()
@@ -46,7 +46,7 @@ export class CommentResponseDto {
   public post?: IPost;
 
   @ApiProperty({
-    name: 'total_reply'
+    name: 'total_reply',
   })
   @Expose()
   public totalReply = 0;
@@ -56,19 +56,19 @@ export class CommentResponseDto {
   public content?: string;
 
   @ApiProperty({
-    name: 'created_at'
+    name: 'created_at',
   })
   @Expose()
   public createdAt?: Date;
 
   @ApiProperty({
-    name: 'updated_at'
+    name: 'updated_at',
   })
   @Expose()
   public updatedAt?: Date;
 
   @ApiProperty({
-    name: 'created_by'
+    name: 'created_by',
   })
   @Expose()
   public createdBy?: number;
@@ -95,7 +95,7 @@ export class CommentResponseDto {
 
   @ApiProperty({
     type: [ReactionResponseDto],
-    name: 'owner_reactions'
+    name: 'owner_reactions',
   })
   @Expose()
   public ownerReactions: ReactionResponseDto[] = [];
@@ -105,7 +105,7 @@ export class CommentResponseDto {
     additionalProperties: {
       type: 'object',
     },
-    name: 'reactions_count'
+    name: 'reactions_count',
   })
   @Transform(({ value }) => {
     if (value && value !== '1=' && typeof value === 'string') {

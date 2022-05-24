@@ -1,0 +1,44 @@
+# version: '3.6'
+
+# services:
+#   akhq:
+#     # build:
+#     #   context: .
+#     image: tchiotludo/akhq
+#     environment:
+#       AKHQ_CONFIGURATION: |
+#         akhq:
+#           connections:
+#             ccloud:
+#               properties:
+#                 bootstrap.servers: "pkc-l9wvm.ap-southeast-1.aws.confluent.cloud:9092"
+#                 security.protocol: SASL_SSL
+#                 sasl.mechanism: PLAIN
+#                 sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="ERRGDNUW63GSXKP3" password="+2X+dCEoOkGt/5eyB+yGvfOU9EM3KOoeIdaXV0hvalUCvLu3THtKqfW2kI0vAHcG";
+#     ports:
+#       - 8030:8080
+
+version: '3.6'
+
+services:
+  akhq:
+    # build:
+    #   context: .
+    image: tchiotludo/akhq
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            ccloud:
+              properties:
+                bootstrap.servers: kafka.beincomm.com:32100
+                ssl.truststore.location: /home/kafka/ca.p12
+                ssl.truststore.password: elpenRadjVmG
+                ssl.keystore.type: PKCS12
+                security.protocol: SASL_SSL
+                sasl.mechanism: SCRAM-SHA-512
+                sasl.jaas.config: org.apache.kafka.common.security.scram.ScramLoginModule required username="kafka-test" password="password";
+    ports:
+      - 8030:8080
+    volumes:
+      - ./:/home/kafka
