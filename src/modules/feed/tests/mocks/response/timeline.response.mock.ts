@@ -1,18 +1,17 @@
-export const mockedTimelineResponse = {
+export const mockTimelineResponse = {
   list: [
     {
       ownerReactions: [],
-      id: 5,
-      content: 'aaaa',
+      id: 5000015,
+      content: 'aaaaaaa',
       media: {
         files: [],
         videos: [],
         images: [
           {
             id: 1,
-            name: 'image 0',
-            url: 'https://google.com',
-            originName: null,
+            name: 'Filename.jpg',
+            url: 'http://google.com/....',
             width: null,
             height: null,
           },
@@ -25,119 +24,105 @@ export const mockedTimelineResponse = {
         isImportant: false,
         importantExpiredAt: null,
       },
-      isDraft: true,
+      isDraft: false,
       actor: {
-        id: 59,
+        id: 15,
         username: 'trangha',
         fullname: 'Hà Phạm Diễm Trang',
         avatar:
           'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/52134/Di%E1%BB%85m%20Trang.jpg',
       },
-      mentions: [
-        {
-          admin: {
-            id: 1,
-            username: 'admin',
-            fullname: 'Bein Admin 1',
-            avatar: 'https://cdn.dribbble.com/users/81809/screenshots/3460815/piccolo.jpg',
-          },
+      mentions: {
+        admin: {
+          id: 1,
+          username: 'admin',
+          fullname: 'Bein Admin 1',
+          avatar: 'https://cdn.dribbble.com/users/81809/screenshots/3460815/piccolo.jpg',
         },
-        {
-          vinc: {
-            id: 2,
-            username: 'vinc',
-            fullname: 'Nhâm Chấn Vĩ',
-            avatar:
-              'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/65731/NCV.jpg',
-          },
-        },
-      ],
+      },
       commentsCount: 0,
-      reactionsCount: null,
-      createdAt: '2022-04-08T07:26:08.800Z',
-      createdBy: 59,
-      audience: {
-        groups: [
-          {
-            id: 2,
-            name: 'Crypto Inner Circle',
-            icon: 'https://cdn.dribbble.com/users/183984/screenshots/2565088/pokemon_2.jpg',
-            child: [3],
-          },
-        ],
-      },
-    },
-    {
-      ownerReactions: [],
-      id: 4,
-      content: 'Bla bla bla...',
-      media: {
-        files: [],
-        videos: [],
-        images: [
-          {
-            id: 1,
-            name: 'image 0',
-            url: 'https://google.com',
-            originName: null,
-            width: null,
-            height: null,
-          },
-        ],
-      },
-      setting: {
-        canReact: true,
-        canComment: true,
-        canShare: true,
-        isImportant: false,
-        importantExpiredAt: null,
-      },
-      isDraft: true,
-      actor: {
-        id: 59,
-        username: 'trangha',
-        fullname: 'Hà Phạm Diễm Trang',
-        avatar:
-          'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/52134/Di%E1%BB%85m%20Trang.jpg',
-      },
-      mentions: [
-        {
-          admin: {
-            id: 1,
-            username: 'admin',
-            fullname: 'Bein Admin 1',
-            avatar: 'https://cdn.dribbble.com/users/81809/screenshots/3460815/piccolo.jpg',
-          },
-        },
-        {
-          vinc: {
-            id: 2,
-            username: 'vinc',
-            fullname: 'Nhâm Chấn Vĩ',
-            avatar:
-              'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/65731/NCV.jpg',
-          },
-        },
-      ],
-      commentsCount: 0,
-      reactionsCount: null,
-      createdAt: '2022-04-08T04:17:03.522Z',
-      createdBy: 59,
+      reactionsCount: {},
+      markedReadPost: false,
+      createdAt: '2022-04-20T06:47:16.975Z',
+      updatedAt: '2022-04-20T06:47:16.975Z',
+      createdBy: 15,
       audience: {
         groups: [
           {
             id: 1,
             name: 'EVOL Community',
             icon: 'https://cdn.dribbble.com/users/183984/screenshots/2562247/pokemon.jpg',
-            child: [2, 3],
+            privacy: 'open',
+          },
+          {
+            id: 6,
+            name: 'Bein Community',
+            icon: 'https://cdn.dribbble.com/users/183984/screenshots/2562247/pokemon.jpg',
+            privacy: 'open',
+          },
+        ],
+      },
+    },
+    {
+      ownerReactions: [],
+      id: 5000014,
+      content: 'sdfsdf',
+      media: {
+        videos: [],
+        images: [],
+        files: [],
+      },
+      setting: {
+        canReact: true,
+        canComment: true,
+        canShare: true,
+        isImportant: false,
+        importantExpiredAt: null,
+      },
+      isDraft: false,
+      actor: {
+        id: 15,
+        username: 'trangha',
+        fullname: 'Hà Phạm Diễm Trang',
+        avatar:
+          'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/52134/Di%E1%BB%85m%20Trang.jpg',
+      },
+      mentions: {
+        vinc: {
+          id: 2,
+          username: 'vinc',
+          fullname: 'Nhâm Chấn Vĩ',
+          avatar:
+            'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/65731/NCV.jpg',
+        },
+      },
+      commentsCount: 0,
+      reactionsCount: {},
+      markedReadPost: false,
+      createdAt: '2022-04-20T06:45:11.553Z',
+      updatedAt: '2022-04-20T06:45:35.898Z',
+      createdBy: 15,
+      audience: {
+        groups: [
+          {
+            id: 1,
+            name: 'EVOL Community',
+            icon: 'https://cdn.dribbble.com/users/183984/screenshots/2562247/pokemon.jpg',
+            privacy: 'open',
+          },
+          {
+            id: 6,
+            name: 'Bein Community',
+            icon: 'https://cdn.dribbble.com/users/183984/screenshots/2562247/pokemon.jpg',
+            privacy: 'open',
           },
         ],
       },
     },
   ],
   meta: {
-    total: 2,
-    limit: 10,
+    limit: 5,
     offset: 0,
+    hasNextPage: true,
   },
 };

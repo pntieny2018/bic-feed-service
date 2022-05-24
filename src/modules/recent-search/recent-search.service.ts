@@ -11,6 +11,7 @@ import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchModel } from '../../database/models/recent-search.model';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import { LIMIT_TOTAL_RECENT_SEARCH, RecentSearchType } from './recent-search-type.constants';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class RecentSearchService {
@@ -22,7 +23,8 @@ export class RecentSearchService {
 
   public constructor(
     @InjectModel(RecentSearchModel)
-    private _recentSearchModel: typeof RecentSearchModel //private _sentryService: SentryService
+    private _recentSearchModel: typeof RecentSearchModel,
+    private _sentryService: SentryService
   ) {}
 
   /**
@@ -56,7 +58,7 @@ export class RecentSearchService {
       );
     } catch (error) {
       this._logger.error(error, error.stack);
-      //this._sentryService.captureException(error);
+      this._sentryService.captureException(error);
       throw new InternalServerErrorException('Internal server error');
     }
   }
@@ -101,7 +103,7 @@ export class RecentSearchService {
       });
     } catch (error) {
       this._logger.error(error, error?.stack);
-      //this._sentryService.captureException(error);
+      this._sentryService.captureException(error);
 
       throw new HttpException("Can't create recent search", HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -125,7 +127,7 @@ export class RecentSearchService {
       return true;
     } catch (error) {
       this._logger.error(error);
-      //this._sentryService.captureException(error);
+      this._sentryService.captureException(error);
 
       throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -150,7 +152,7 @@ export class RecentSearchService {
       return true;
     } catch (error) {
       this._logger.log(error);
-      //this._sentryService.captureException(error);
+      this._sentryService.captureException(error);
 
       throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
     }

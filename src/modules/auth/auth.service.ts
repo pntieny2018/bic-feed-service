@@ -11,6 +11,7 @@ import { UserService } from '../../shared/user';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,8 @@ export class AuthService {
   public constructor(
     private _userService: UserService,
     private _httpService: HttpService,
-    private _configService: ConfigService
+    private _configService: ConfigService,
+    private _sentryService: SentryService
   ) {}
 
   public async login(token: string): Promise<UserDto> {

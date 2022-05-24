@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 import { UserMentionDto } from '../../../mention/dto';
+import { GiphyDto } from '../../../giphy/dto/requests';
 
 export class CreateCommentDto {
   @ApiProperty({
@@ -26,7 +27,7 @@ export class CreateCommentDto {
   @IsNotEmpty()
   @ValidateIf(
     (o) =>
-      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0 || o.giphy?.id)
   )
   public content: string;
 
@@ -82,4 +83,18 @@ export class CreateCommentDto {
     return value;
   })
   public mentions?: number[] = [];
+
+  @ApiProperty({
+    type: GiphyDto,
+    example: {
+      id: '3pZipqyo1sqHDfJGtz',
+      type: 'gif',
+    }
+  })
+  @IsNotEmpty()
+  @ValidateIf(
+    (o) => !(o.content || o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+  )
+  @Type(() => GiphyDto)
+  public giphy?: GiphyDto = null;
 }
