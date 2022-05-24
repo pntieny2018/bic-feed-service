@@ -45,6 +45,14 @@ export class VideoMetadataDto implements IDocumentMetadata {
 
   @ApiProperty({
     required: false,
+    description: 'Size',
+  })
+  @IsOptional()
+  @Expose()
+  public size?: number;
+
+  @ApiProperty({
+    required: false,
     description: 'Origin video name',
     example: 'example.mp4',
   })
