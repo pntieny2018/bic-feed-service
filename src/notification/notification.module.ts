@@ -8,7 +8,7 @@ import { ClientsModule } from '@nestjs/microservices';
 import { CommentDissociationService } from './dissociations';
 import { NotificationService } from './notification.service';
 import { Transport } from '@nestjs/microservices/enums/transport.enum';
-import { COMMENT_PRODUCER, POST_PRODUCER, REACTION_PRODUCER } from './producer.constants';
+import { POST_PRODUCER } from './producer.constants';
 import { CommentActivityService, PostActivityService, ReactionActivityService } from './activities';
 import { KafkaOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 
