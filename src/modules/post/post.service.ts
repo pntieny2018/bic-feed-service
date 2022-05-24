@@ -706,7 +706,7 @@ export class PostService {
           ).length > 0
         ) {
           dataUpdate['isDraft'] = true;
-          dataUpdate['isProcessing'] = true;
+          dataUpdate['isProcessing'] = post.isDraft === true ? false : true;
         }
       }
 
