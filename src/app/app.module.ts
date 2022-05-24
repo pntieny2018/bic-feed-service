@@ -2,6 +2,7 @@ import { LibModule } from './lib.module';
 import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { PostModule } from '../modules/post';
+import { SeriesModule } from '../modules/series';
 import { ListenerModule } from '../listeners';
 import { GroupModule } from '../shared/group';
 import { MediaModule } from '../modules/media';
@@ -43,6 +44,7 @@ import { GiphyModule } from '../modules/giphy';
     FeedGeneratorModule,
     FeedPublisherModule,
     GiphyModule,
+    SeriesModule,
   ],
   controllers: [AppController],
   providers: [],
