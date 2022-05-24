@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
 import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
-import { mockedUpdatePostDto } from './mocks/request/update-post.mock';
+import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedUserAuth } from './mocks/data/user-auth.mock';
 import { GetPostDto, SearchPostsDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
