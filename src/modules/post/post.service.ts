@@ -651,7 +651,9 @@ export class PostService {
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
-      await this.checkContent(updatePostDto);
+      if (post.isDraft === false) {
+        await this.checkContent(updatePostDto);
+      }
       await this.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
