@@ -32,7 +32,6 @@ export class CommentNotificationService {
       commentLimit: 0,
       childCommentLimit: 0,
     });
-    const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
 
     if (commentResponse.parentId) {
       commentActivity = this._commentActivityService.createReplyCommentPayload(
@@ -48,7 +47,7 @@ export class CommentNotificationService {
     const recipient = await this._commentDissociationService.dissociateComment(
       commentResponse.actor.id,
       commentResponse.id,
-      groupAudienceIds
+      postResponse
     );
     const recipientObj = {
       commentRecipient: CommentRecipientDto.init(),
