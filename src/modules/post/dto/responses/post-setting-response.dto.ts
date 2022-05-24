@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsBoolean, IsDateString, ValidateIf, IsNotEmpty } from 'class-validator';
-import { Expose } from 'class-transformer';
+import { PostSettingDto } from '../common/post-setting.dto';
 
-export class PostSettingDto {
+export class PostSettingResponseDto extends PostSettingDto {
   @ApiProperty({
     type: Boolean,
     default: true,
@@ -12,10 +12,7 @@ export class PostSettingDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Expose({
-    name: 'can_react',
-  })
-  public canReact?: boolean;
+  public canReact?: boolean = true;
 
   @ApiProperty({
     type: Boolean,
@@ -26,10 +23,7 @@ export class PostSettingDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Expose({
-    name: 'can_share',
-  })
-  public canShare?: boolean;
+  public canShare?: boolean = true;
 
   @ApiProperty({
     type: Boolean,
@@ -40,10 +34,7 @@ export class PostSettingDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Expose({
-    name: 'can_comment',
-  })
-  public canComment?: boolean;
+  public canComment?: boolean = true;
 
   @ApiProperty({
     type: Boolean,
@@ -55,10 +46,7 @@ export class PostSettingDto {
   })
   @IsOptional()
   @IsBoolean()
-  @Expose({
-    name: 'is_important',
-  })
-  public isImportant?: boolean;
+  public isImportant?: boolean = false;
 
   @ApiProperty({
     required: false,
@@ -71,8 +59,5 @@ export class PostSettingDto {
   @ValidateIf((i) => i.isImportant === true)
   @IsNotEmpty()
   @IsDateString()
-  @Expose({
-    name: 'important_expired_at',
-  })
-  public importantExpiredAt?: Date;
+  public importantExpiredAt?: Date = null;
 }

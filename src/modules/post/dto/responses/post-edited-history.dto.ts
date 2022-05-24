@@ -45,6 +45,7 @@ export class PostEditedHistoryDto {
     description: 'Edited at',
     type: String,
     default: '2022-04-17T02:35:30.947+07',
+    name: 'edited_at',
   })
   @IsDateString()
   @Expose()

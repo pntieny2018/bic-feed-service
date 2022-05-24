@@ -21,12 +21,12 @@ export class CommentDetailResponseDto {
     example: {
       list: [
         {
-          totalReply: 0,
-          ownerReactions: [
+          ['total_reply']: 0,
+          ['owner_reactions']: [
             {
               id: 8,
-              reactionName: 'cccc',
-              createdAt: '2022-05-03T11:21:52.451Z',
+              ['reaction_name']: 'cccc',
+              ['created_at']: '2022-05-03T11:21:52.451Z',
             },
           ],
           id: 161,
@@ -37,19 +37,19 @@ export class CommentDetailResponseDto {
             avatar:
               'https://s3.amazonaws.com/hrpartner/3hHQzQLEwIQgJ43broUzUA/employee/57423/Anh%20Thi%E1%BB%87n.jpg',
           },
-          parentId: 50002,
-          postId: 1001,
+          ['parent_id']: 50002,
+          ['post_id']: 1001,
           content: 'comment aaaa.....',
-          createdAt: '2022-04-28T09:41:21.169Z',
-          updatedAt: null,
+          ['created_at']: '2022-04-28T09:41:21.169Z',
+          ['updated_at']: null,
           media: {
             videos: [],
             images: [],
             files: [],
           },
-          reactionsCount: {
-            '0': {
-              cccc: 1,
+          ['reactions_count']: {
+            ['0']: {
+              smile: 1,
             },
           },
           mentions: [],
@@ -58,8 +58,8 @@ export class CommentDetailResponseDto {
       meta: {
         limit: 5,
         offset: 0,
-        hasNextPage: false,
-        hasPreviousPage: false,
+        ['has_next_page']: false,
+        ['has_previous_page']: false,
       },
     },
   })

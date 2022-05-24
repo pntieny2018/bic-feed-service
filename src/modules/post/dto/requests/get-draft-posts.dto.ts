@@ -1,2 +1,2 @@
-import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
+import { PageOptionsDto } from '../../../../common/dto';
 export class GetDraftPostDto extends PageOptionsDto {}

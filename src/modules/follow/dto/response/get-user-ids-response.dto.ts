@@ -8,7 +8,9 @@ export class GetUserIdsResponseDto {
   @Expose()
   public limit: number;
 
-  @Expose()
+  @Expose({
+    name: 'followed_at'
+  })
   public followedAt: string;
 
   @Expose()

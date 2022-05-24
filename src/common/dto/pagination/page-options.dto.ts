@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { PAGING_DEFAULT_LIMIT } from '../../constants';
@@ -38,25 +38,41 @@ export class PageOptionsDto {
 
   @ApiProperty({
     required: false,
+    name: 'id_gte',
   })
   @IsOptional()
+  @Expose({
+    name: 'id_gte',
+  })
   public idGTE?: number = 0;
 
   @ApiProperty({
     required: false,
+    name: 'id_lte',
   })
   @IsOptional()
+  @Expose({
+    name: 'id_lte',
+  })
   public idLTE?: number = undefined;
 
   @ApiProperty({
     required: false,
+    name: 'id_gt',
   })
   @IsOptional()
+  @Expose({
+    name: 'id_gt',
+  })
   public idGT?: number = undefined;
 
   @ApiProperty({
     required: false,
+    name: 'id_lt',
   })
   @IsOptional()
+  @Expose({
+    name: 'id_lt',
+  })
   public idLT?: number = undefined;
 }

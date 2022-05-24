@@ -47,10 +47,13 @@ export class ImageMetadataDto implements IDocumentMetadata {
     required: false,
     description: 'Origin image name',
     example: 'example.jpg',
+    name: 'origin_name',
   })
   @IsString()
   @IsOptional()
-  @Expose()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 
   @ApiProperty({

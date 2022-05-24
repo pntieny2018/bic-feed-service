@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsString } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 export class SearchPostsDto extends PageOptionsDto {
@@ -41,16 +41,24 @@ export class SearchPostsDto extends PageOptionsDto {
   @ApiProperty({
     description: 'filter posts created_time > start_time',
     required: false,
+    name: 'start_time',
   })
   @IsOptional()
   @IsDateString()
+  @Expose({
+    name: 'start_time',
+  })
   public startTime?: string;
 
   @ApiProperty({
     description: 'filter posts created_time < end_time',
     required: false,
+    name: 'end_time',
   })
   @IsOptional()
   @IsDateString()
+  @Expose({
+    name: 'end_time',
+  })
   public endTime?: string;
 }
