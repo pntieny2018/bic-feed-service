@@ -24,7 +24,7 @@ export class CommentDissociationService {
 
   public async dissociateComment(
     actorId: number,
-    commentId: number,
+    commentId: string,
     postResponse: PostResponseDto
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const recipient = CommentRecipientDto.init();

@@ -23,7 +23,7 @@ export const mockNotificationPayloadDto = {
 };
 
 export const mockPostResponseDto: PostResponseDto = {
-  id: 99,
+  id: '40dc4093-1bd0-4105-469f-8504e1986145',
   content: 'hello world',
   highlight: 'nothing',
   media: {
