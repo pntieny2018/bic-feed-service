@@ -9,6 +9,7 @@ import { CommentModule } from '../modules/comment';
 import { MediaModule } from '../modules/media';
 import { FollowListener } from './follow/follow.listener';
 import { UserModule } from '../shared/user';
+import { FeedModule } from '../modules/feed';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserModule } from '../shared/user';
     FeedPublisherModule,
     MediaModule,
     UserModule,
+    FeedModule,
   ],
   providers: [PostListener, CommentListener, ReactionListener, FollowListener],
 })

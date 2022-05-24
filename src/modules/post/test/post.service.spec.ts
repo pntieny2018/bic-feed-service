@@ -280,7 +280,7 @@ describe('PostService', () => {
     });
   });
 
-  describe.only('updatePost', () => {
+  describe('updatePost', () => {
     const mockedDataUpdatePost = createMock<PostModel>(mockedPostData);
     const mockedMedia= createMock<MediaModel[]>([
       {
@@ -346,27 +346,27 @@ describe('PostService', () => {
     });
   });
 
-  describe('publishPost', () => {
-    //const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
-    //const authUserId = mockedDataUpdatePost.createdBy;
+  describe.only('publishPost', () => {
+    const mockedDataUpdatePost = createMock<PostModel>(mockedPostData);
+    const authUserId = mockedDataUpdatePost.createdBy;
     it('Should return result successfully', async () => {
-      // postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
-      // mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
-      // postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
+      postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
 
-      // const result = await postService.publishPost(mockedDataUpdatePost.id, authUserId);
-      // expect(result).toBe(true);
+      const result = await postService.publishPost(mockedDataUpdatePost.id, mockedDataUpdatePost.createdBy);
+      expect(result).toBe(true);
 
-      // expect(postModelMock.update).toHaveBeenCalledTimes(1);
+      expect(postModelMock.update).toHaveBeenCalledTimes(1);
 
-      // const [dataUpdate, condition]: any = postModelMock.update.mock.calls[0];
-      // expect(dataUpdate).toStrictEqual({
-      //   isDraft: false,
-      // });
-      // expect(condition.where).toStrictEqual({
-      //   id: mockedDataUpdatePost.id,
-      //   createdBy: authUserId,
-      // });
+      const [dataUpdate, condition]: any = postModelMock.update.mock.calls[0];
+      expect(dataUpdate).toStrictEqual({
+        isDraft: false,
+      });
+      expect(condition.where).toStrictEqual({
+        id: mockedDataUpdatePost.id,
+        createdBy: authUserId,
+      });
     });
 
     it('Should catch BadRequestException if content is null', async () => {
