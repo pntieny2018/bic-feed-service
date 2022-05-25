@@ -21,16 +21,21 @@ export class FeedPublisherService {
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUserNewsFeed(userId: number, postIds: number[]): Promise<void> {
-    this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userId, postIds })}`);
+  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: number[]): Promise<void> {
+    this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
 
     try {
-      await this._userNewsFeedModel.bulkCreate(
-        postIds.map((postId) => ({
-          userId: userId,
-          postId: postId,
-        }))
-      );
+      const insertData = postIds
+        .map((postId) => {
+          return userIds.map((userId) => ({
+            userId: userId,
+            postId: postId,
+          }));
+        })
+        .flat();
+      if (insertData && insertData.length) {
+        await this._userNewsFeedModel.bulkCreate(insertData);
+      }
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
       this._sentryService.captureException(ex);

@@ -4,6 +4,19 @@ const schemaName = process.env.DB_SCHEMA;
 const tableName = 'media';
 module.exports = {
   async up(queryInterface, Sequelize) {
+    await queryInterface.addColumn(
+      {
+        tableName: tableName,
+        schema: schemaName,
+      },
+      'status',
+      {
+        type: Sequelize.ENUM('waiting_process', 'processing', 'completed', 'failed'),
+        allowNull: true,
+        default: 'completed',
+      }
+    );
+
     await queryInterface.changeColumn(
       {
         tableName: tableName,
@@ -49,18 +62,6 @@ module.exports = {
         allowNull: true,
       }
     );
-    await queryInterface.addColumn(
-      {
-        tableName: tableName,
-        schema: schemaName,
-      },
-      'status',
-      {
-        type: Sequelize.ENUM('waiting_process', 'processing', 'completed', 'failed'),
-        allowNull: false,
-        default: 'completed'
-      }
-    );
   },
 
   async down(queryInterface, Sequelize) {
@@ -104,6 +105,5 @@ module.exports = {
       },
       'status'
     );
-    
   },
 };
