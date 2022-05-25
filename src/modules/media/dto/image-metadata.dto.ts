@@ -45,6 +45,14 @@ export class ImageMetadataDto implements IDocumentMetadata {
 
   @ApiProperty({
     required: false,
+    description: 'Size',
+  })
+  @IsOptional()
+  @Expose()
+  public size?: number;
+
+  @ApiProperty({
+    required: false,
     description: 'Origin image name',
     example: 'example.jpg',
     name: 'origin_name',

@@ -1,9 +1,9 @@
 export class UsersHasBeenUnfollowedEventPayload {
   public userIds: number[];
-  public groupId: number;
+  public groupIds: number[];
 
-  public constructor(userIds: number[], groupId: number) {
+  public constructor(userIds: number[], groupIds: number[]) {
     this.userIds = userIds;
-    this.groupId = groupId;
+    this.groupIds = groupIds;
   }
 }

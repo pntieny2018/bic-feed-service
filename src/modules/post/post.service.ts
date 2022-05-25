@@ -52,39 +52,39 @@ export class PostService {
    * Logger
    * @private
    */
-  private _logger = new Logger(PostService.name);
+  protected logger = new Logger(PostService.name);
 
   /**
    *  ClassTransformer
    * @private
    */
-  private _classTransformer = new ClassTransformer();
+  protected classTransformer = new ClassTransformer();
 
   public constructor(
     @InjectConnection()
-    private _sequelizeConnection: Sequelize,
+    protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
-    private _postModel: typeof PostModel,
+    protected postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
-    private _postGroupModel: typeof PostGroupModel,
+    protected postGroupModel: typeof PostGroupModel,
     @InjectModel(UserMarkReadPostModel)
-    private _userMarkReadPostModel: typeof UserMarkReadPostModel,
-    private _userService: UserService,
-    private _groupService: GroupService,
-    private _mediaService: MediaService,
-    private _mentionService: MentionService,
+    protected userMarkReadPostModel: typeof UserMarkReadPostModel,
+    protected userService: UserService,
+    protected groupService: GroupService,
+    protected mediaService: MediaService,
+    protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
-    private _commentService: CommentService,
-    private _authorityService: AuthorityService,
-    private _searchService: ElasticsearchService,
-    private _reactionService: ReactionService,
+    protected commentService: CommentService,
+    protected authorityService: AuthorityService,
+    protected searchService: ElasticsearchService,
+    protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
-    private _feedService: FeedService,
+    protected feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
-    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
+    protected readonly postEditedHistoryModel: typeof PostEditedHistoryModel,
     @Inject(KAFKA_PRODUCER)
-    private readonly _client: ClientKafka,
-    private readonly _sentryService: SentryService
+    protected readonly client: ClientKafka,
+    protected readonly sentryService: SentryService
   ) {}
 
   /**
@@ -109,7 +109,7 @@ export class PostService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    const response = await this._searchService.search(payload);
+    const response = await this.searchService.search(payload);
     const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
       const source = item._source;
@@ -126,7 +126,7 @@ export class PostService {
       this.bindCommentsCount(posts),
     ]);
 
-    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });
 
@@ -266,7 +266,7 @@ export class PostService {
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order } = getDraftPostDto;
-    const { rows, count } = await this._postModel.findAndCountAll<PostModel>({
+    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
       where: {
         createdBy: authUserId,
         isDraft: true,
@@ -285,7 +285,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size'],
           required: false,
         },
         {
@@ -299,11 +299,11 @@ export class PostService {
     });
     const jsonPosts = rows.map((r) => r.toJSON());
     await Promise.all([
-      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.mentionService.bindMentionsToPosts(jsonPosts),
       this.bindActorToPost(jsonPosts),
       this.bindAudienceToPost(jsonPosts),
     ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
 
@@ -327,7 +327,7 @@ export class PostService {
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
-    const post = await this._postModel.findOne({
+    const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
         include: [PostModel.loadMarkReadPost(user.id)],
@@ -365,10 +365,10 @@ export class PostService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this._authorityService.checkCanReadPost(user, post);
+    await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
-      comments = await this._commentService.getComments(
+      comments = await this.commentService.getComments(
         {
           postId,
           childLimit: getPostDto.childCommentLimit,
@@ -382,13 +382,13 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToPosts([jsonPost]),
-      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.reactionService.bindReactionToPosts([jsonPost]),
+      this.mentionService.bindMentionsToPosts([jsonPost]),
       this.bindActorToPost([jsonPost]),
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
     result['comments'] = comments;
@@ -404,7 +404,7 @@ export class PostService {
    * @throws HttpException
    */
   public async getPublicPost(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
-    const post = await this._postModel.findOne({
+    const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
       },
@@ -434,10 +434,10 @@ export class PostService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this._authorityService.checkPublicPost(post);
+    await this.authorityService.checkPublicPost(post);
     let comments = null;
     if (getPostDto.withComment) {
-      comments = await this._commentService.getComments({
+      comments = await this.commentService.getComments({
         postId,
         childLimit: getPostDto.childCommentLimit,
         order: getPostDto.commentOrder,
@@ -447,13 +447,13 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToPosts([jsonPost]),
-      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.reactionService.bindReactionToPosts([jsonPost]),
+      this.mentionService.bindMentionsToPosts([jsonPost]),
       this.bindActorToPost([jsonPost]),
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
 
@@ -478,7 +478,7 @@ export class PostService {
         groupIds.push(...postGroups.map((m) => m.groupId || m.id));
       }
     }
-    const dataGroups = await this._groupService.getMany(groupIds);
+    const dataGroups = await this.groupService.getMany(groupIds);
     for (const post of posts) {
       let groups = [];
       let postGroups = post.groups;
@@ -511,7 +511,7 @@ export class PostService {
         userIds.push(post.createdBy);
       }
     }
-    const users = await this._userService.getMany(userIds);
+    const users = await this.userService.getMany(userIds);
     for (const post of posts) {
       if (post.actor?.id) {
         post.actor = users.find((i) => i.id === post.actor.id);
@@ -531,7 +531,7 @@ export class PostService {
     for (const post of posts) {
       postIds.push(post.id);
     }
-    const result = await this._postModel.findAll({
+    const result = await this.postModel.findAll({
       raw: true,
       attributes: ['id', 'commentsCount'],
       where: { id: postIds },
@@ -559,17 +559,17 @@ export class PostService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
       const { groupIds } = audience;
-      await this._authorityService.checkCanCreatePost(authUser, groupIds);
+      await this.authorityService.checkCanCreatePost(authUser, groupIds);
 
       if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentions);
+        await this.mentionService.checkValidMentions(groupIds, mentions);
       }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      transaction = await this._sequelizeConnection.transaction();
-      const post = await this._postModel.create(
+      await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
+      transaction = await this.sequelizeConnection.transaction();
+      const post = await this.postModel.create(
         {
           isDraft: true,
           content,
@@ -585,13 +585,13 @@ export class PostService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
+        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
       await this.addPostGroup(groupIds, post.id, transaction);
 
       if (mentions.length) {
-        await this._mentionService.create(
+        await this.mentionService.create(
           mentions.map((userId) => ({
             entityId: post.id,
             userId,
@@ -606,8 +606,8 @@ export class PostService {
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
+      this.logger.error(error, error?.stack);
+      this.sentryService.captureException(error);
       throw error;
     }
   }
@@ -622,7 +622,7 @@ export class PostService {
     postId: string,
     { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
   ): Promise<any> {
-    return this._postEditedHistoryModel.create({
+    return this.postEditedHistoryModel.create({
       postId: postId,
       editedAt: newData.updatedAt ?? newData.createdAt,
       oldData: oldData,
@@ -652,15 +652,17 @@ export class PostService {
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
-      await this.checkContent(updatePostDto);
+      if (post.isDraft === false) {
+        await this.checkContent(updatePostDto);
+      }
       await this.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
+        await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
       }
 
       if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(
+        await this.mentionService.checkValidMentions(
           audience ? audience.groupIds : oldGroupIds,
           mentions
         );
@@ -690,26 +692,26 @@ export class PostService {
           setting.isImportant === false ? null : setting.importantExpiredAt;
       }
       let newMediaIds = [];
-      transaction = await this._sequelizeConnection.transaction();
+      transaction = await this.sequelizeConnection.transaction();
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
+        await this.mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList =
           newMediaIds.length === 0
             ? []
-            : await this._mediaService.getMediaList({ where: { id: newMediaIds } });
+            : await this.mediaService.getMediaList({ where: { id: newMediaIds } });
         if (
           mediaList.filter(
             (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
           ).length > 0
         ) {
           dataUpdate['isDraft'] = true;
-          dataUpdate['isProcessing'] = true;
+          dataUpdate['isProcessing'] = post.isDraft === true ? false : true;
         }
       }
 
-      await this._postModel.update(dataUpdate, {
+      await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
           createdBy: authUserId,
@@ -718,11 +720,11 @@ export class PostService {
       });
 
       if (media) {
-        await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
+        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
       }
 
       if (mentions) {
-        await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
+        await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
       if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
@@ -732,7 +734,7 @@ export class PostService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this.logger.error(error, error?.stack);
       throw error;
     }
   }
@@ -746,7 +748,7 @@ export class PostService {
    */
   public async publishPost(postId: string, authUserId: number): Promise<boolean> {
     try {
-      const post = await this._postModel.findOne({
+      const post = await this.postModel.findOne({
         where: {
           id: postId,
         },
@@ -779,7 +781,7 @@ export class PostService {
         isDraft = true;
         isProcessing = true;
       }
-      await this._postModel.update(
+      await this.postModel.update(
         {
           isDraft,
           isProcessing,
@@ -794,7 +796,7 @@ export class PostService {
       );
       return true;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this.logger.error(error, error?.stack);
       throw error;
     }
   }
@@ -827,20 +829,20 @@ export class PostService {
    * @throws HttpException
    */
   public async deletePost(postId: string, authUser: UserDto): Promise<IPost> {
-    const transaction = await this._sequelizeConnection.transaction();
+    const transaction = await this.sequelizeConnection.transaction();
     try {
-      const post = await this._postModel.findByPk(postId);
+      const post = await this.postModel.findByPk(postId);
       await this.checkPostOwner(post, authUser.id);
       await Promise.all([
-        this._mentionService.setMention([], MentionableType.POST, postId, transaction),
-        this._mediaService.sync(postId, EntityType.POST, [], transaction),
+        this.mentionService.setMention([], MentionableType.POST, postId, transaction),
+        this.mediaService.sync(postId, EntityType.POST, [], transaction),
         this.setGroupByPost([], postId, transaction),
-        this._reactionService.deleteReactionByPostIds([postId]),
-        this._commentService.deleteCommentsByPost(postId, transaction),
-        this._feedService.deleteNewsFeedByPost(postId, transaction),
-        this._userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+        this.reactionService.deleteReactionByPostIds([postId]),
+        this.commentService.deleteCommentsByPost(postId, transaction),
+        this.feedService.deleteNewsFeedByPost(postId, transaction),
+        this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
       ]);
-      await this._postModel.destroy({
+      await this.postModel.destroy({
         where: {
           id: postId,
           createdBy: authUser.id,
@@ -851,7 +853,7 @@ export class PostService {
 
       return post;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this.logger.error(error, error?.stack);
       await transaction.rollback();
       throw error;
     }
@@ -861,8 +863,8 @@ export class PostService {
    * Delete post edited history
    * @param postId string
    */
-  public async deletePostEditedHistory(postId: string): Promise<any> {
-    return this._postEditedHistoryModel.destroy({
+  public async deletePostEditedHistory(postId: number): Promise<any> {
+    return this.postEditedHistoryModel.destroy({
       where: {
         postId: postId,
       },
@@ -887,7 +889,7 @@ export class PostService {
       postId: postId,
       groupId,
     }));
-    await this._postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
+    await this.postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
     return true;
   }
 
@@ -904,14 +906,14 @@ export class PostService {
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
-    const currentGroups = await this._postGroupModel.findAll({
+    const currentGroups = await this.postGroupModel.findAll({
       where: { postId },
     });
     const currentGroupIds = currentGroups.map((i) => i.groupId);
 
     const deleteGroupIds = ArrayHelper.arrDifferenceElements(currentGroupIds, groupIds);
     if (deleteGroupIds.length) {
-      await this._postGroupModel.destroy({
+      await this.postGroupModel.destroy({
         where: { groupId: deleteGroupIds, postId },
         transaction,
       });
@@ -919,7 +921,7 @@ export class PostService {
 
     const addGroupIds = ArrayHelper.arrDifferenceElements(groupIds, currentGroupIds);
     if (addGroupIds.length) {
-      await this._postGroupModel.bulkCreate(
+      await this.postGroupModel.bulkCreate(
         addGroupIds.map((groupId) => ({
           postId,
           groupId,
@@ -1010,7 +1012,7 @@ export class PostService {
       };
     }
 
-    const post = await this._postModel.findOne(conditions);
+    const post = await this.postModel.findOne(conditions);
 
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
@@ -1018,39 +1020,39 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<string[]> {
+  public async findPostIdsByGroupId(groupIds: number[], take = 1000): Promise<string[]> {
     try {
-      const posts = await this._postGroupModel.findAll({
+      const posts = await this.postGroupModel.findAll({
         where: {
-          groupId: groupId,
+          groupId: groupIds,
         },
         limit: take,
-        order: ['createdAt', 'DESC'],
+        order: [['createdAt', 'DESC']],
       });
       return posts.map((p) => p.postId);
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
-      this._sentryService.captureException(ex);
+      this.logger.error(ex, ex.stack);
+      this.sentryService.captureException(ex);
       return [];
     }
   }
 
-  public async markReadPost(postId: string, userId: number): Promise<void> {
-    const post = await this._postModel.findByPk(postId);
+  public async markReadPost(postId: number, userId: number): Promise<void> {
+    const post = await this.postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
     if (post && post.createdBy === userId) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_NOT_ALLOW);
     }
-    const readPost = await this._userMarkReadPostModel.findOne({
+    const readPost = await this.userMarkReadPostModel.findOne({
       where: {
         postId,
         userId,
       },
     });
     if (!readPost) {
-      await this._userMarkReadPostModel.create({
+      await this.userMarkReadPostModel.create({
         postId,
         userId,
       });
@@ -1074,7 +1076,7 @@ export class PostService {
         AND g.group_id IN(:groupIds)
       )
     ${constraints ?? ''}`;
-    const result: any = await this._sequelizeConnection.query(query, {
+    const result: any = await this.sequelizeConnection.query(query, {
       replacements: {
         groupIds,
         userId,
@@ -1104,7 +1106,7 @@ export class PostService {
         AND u.user_id = :userId
       )
     ${constraints}`;
-    const result: any = await this._sequelizeConnection.query(query, {
+    const result: any = await this.sequelizeConnection.query(query, {
       replacements: {
         userId,
       },
@@ -1149,7 +1151,7 @@ export class PostService {
         };
         conditions['editedAt'] = {
           [Op.gte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
             idGT
           )}
           `),
@@ -1160,7 +1162,7 @@ export class PostService {
       if (idGTE) {
         conditions['editedAt'] = {
           [Op.gte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
             idGTE
           )}
           `),
@@ -1175,7 +1177,7 @@ export class PostService {
         };
         conditions['editedAt'] = {
           [Op.lte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
             idLT
           )}
           `),
@@ -1186,7 +1188,7 @@ export class PostService {
       if (idLTE) {
         conditions['editedAt'] = {
           [Op.lte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this._sequelizeConnection.escape(
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
             idLT
           )}
           `),
@@ -1200,7 +1202,7 @@ export class PostService {
         };
       }
 
-      const { rows, count } = await this._postEditedHistoryModel.findAndCountAll({
+      const { rows, count } = await this.postEditedHistoryModel.findAndCountAll({
         where: {
           ...conditions,
         },
@@ -1227,13 +1229,13 @@ export class PostService {
         total: count,
       });
     } catch (e) {
-      this._logger.error(e, e?.stack);
+      this.logger.error(e, e?.stack);
       throw e;
     }
   }
 
   public async getPostsByMedia(uploadId: string): Promise<PostResponseDto[]> {
-    const posts = await this._postModel.findAll({
+    const posts = await this.postModel.findAll({
       include: [
         {
           model: MediaModel,
@@ -1261,10 +1263,10 @@ export class PostService {
     const jsonPosts = posts.map((p) => p.toJSON());
     await Promise.all([
       this.bindAudienceToPost(jsonPosts),
-      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this.mentionService.bindMentionsToPosts(jsonPosts),
       this.bindActorToPost(jsonPosts),
     ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
     return result;
@@ -1286,7 +1288,7 @@ export class PostService {
                   GROUP BY pm.post_id
                 ) as tmp 
                 WHERE tmp.post_id = ${schema}.${post}.id`;
-    await this._sequelizeConnection.query(query, {
+    await this.sequelizeConnection.query(query, {
       replacements: {
         postId,
       },
@@ -1297,7 +1299,7 @@ export class PostService {
 
   public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
     const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    await this.mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
     const posts = await this.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
@@ -1306,7 +1308,7 @@ export class PostService {
 
   public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
     const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    await this.mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
     const posts = await this.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
@@ -1316,14 +1318,14 @@ export class PostService {
   public async processVideo(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     try {
-      this._client.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+      this.client.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
-      this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
+      this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
-      this._logger.error(e, e?.stack);
-      this._sentryService.captureException(e);
+      this.logger.error(e, e?.stack);
+      this.sentryService.captureException(e);
     }
   }
 

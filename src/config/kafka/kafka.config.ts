@@ -6,7 +6,11 @@ export const getKafkaConfig = (): IKafkaConfig => ({
   postfixId: process.env.KAFKA_POSTFIXID,
   client: {
     clientId: process.env.KAFKA_CLIENT_ID,
-    ssl: true,
+    ssl: {
+      ca: process.env.KAFKA_SSL_CA,
+      key: process.env.KAFKA_SSL_KEY,
+      cert: process.env.KAFKA_SSL_CERT,
+    },
     brokers: [process.env.KAFKA_BOOTSTRAP_SERVERS],
     sasl: {
       mechanism: process.env.KAFKA_SASL_MECHANISMS as any,

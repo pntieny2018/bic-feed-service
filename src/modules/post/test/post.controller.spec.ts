@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { PostController } from '../post.controller';
 import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
-import { mockedUpdatePostDto } from './mocks/request/update-post.mock';
+import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedUserAuth } from './mocks/data/user-auth.mock';
 import { GetPostDto, SearchPostsDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
@@ -113,7 +113,8 @@ describe('PostController', () => {
       postService.getPost = jest.fn().mockResolvedValue(mockedPostResponse);
       const result = await postController.updatePost(userDto, mockedPostResponse.id, mockedUpdatePostDto);
       expect(postService.updatePost).toBeCalledTimes(1);
-      expect(postService.updatePost).toBeCalledWith(mockedPostResponse, userDto, mockedUpdatePostDto);
+      expect(postService.checkPostOwner).toBeCalledTimes(1);
+      expect(postService.updatePost).toBeCalledWith(mockedPostResponse.id, userDto, mockedUpdatePostDto);
       expect(postService.getPost).toBeCalledTimes(2);
       expect(postService.getPost).toBeCalledWith(1, userDto, new GetPostDto());
       expect(result).toBe(mockedPostResponse);
@@ -138,10 +139,16 @@ describe('PostController', () => {
     it('Delete post successfully', async () => {
       const mockedDataDeletePost = createMock<PostModel>(mockedPostData);
       jest.spyOn(postService, 'deletePost').mockResolvedValueOnce(mockedDataDeletePost);
-      const result = await postController.deletePost(userDto, mockedDataDeletePost.id);
+      const result = await postController.deletePost(userDto, mockedPostResponse.id);
       expect(postService.deletePost).toBeCalledTimes(1);
-      expect(postService.deletePost).toBeCalledWith(mockedDataDeletePost.id, userDto);
+      expect(postService.deletePost).toBeCalledWith(mockedPostResponse.id, userDto.id);
       expect(result).toBe(true);
+
+      // expect(eventEmitter.emit).toBeCalledTimes(1);
+      // expect(eventEmitter.emit).toBeCalledWith(
+      //   DeletedPostEvent.event,
+      //   new DeletedPostEvent(mockedPostDeleted, userDto.profile)
+      // );
     });
   });
 });
