@@ -171,15 +171,20 @@ export class CommentDissociationService {
     try {
       const recipient = ReplyCommentRecipientDto.init();
 
-      const parentComment = await this._commentModel.findOne({
+      let parentComment = await this._commentModel.findOne({
         include: [
           {
             model: MentionModel,
             as: 'mentions',
+            where: {
+              mentionableType: MentionableType.COMMENT,
+            },
+            required: false,
           },
           {
             model: CommentModel,
             as: 'child',
+            required: false,
             include: [
               {
                 model: MentionModel,
@@ -203,6 +208,7 @@ export class CommentDissociationService {
       if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
       }
+      parentComment = parentComment.toJSON();
 
       const parentCommentCreatorId =
         parentComment.createdBy === actorId ? null : parentComment.createdBy;
@@ -243,7 +249,6 @@ export class CommentDissociationService {
        *        4. also replied on a comment you are replied.
        *        5. replied on a comment you are mentioned. (mentioned user in parent comment)
        */
-
       for (const validUserId of validUserIds.filter((id) => id !== actorId)) {
         if (!handledUserIds.includes(validUserId)) {
           if (mentionedUserIdsInComment.includes(validUserId)) {
@@ -284,7 +289,9 @@ export class CommentDissociationService {
 
   public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
     const { schema } = getDatabaseConfig();
-
+    if (!userIds.length) {
+      return [];
+    }
     const rows = await this._sequelize.query(
       ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
                    SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
