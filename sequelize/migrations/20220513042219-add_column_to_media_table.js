@@ -13,7 +13,7 @@ module.exports = {
       {
         type: Sequelize.ENUM('waiting_process', 'processing', 'completed', 'failed'),
         allowNull: true,
-        default: 'completed',
+        defaultValue: 'completed',
       }
     );
 
