@@ -1,14 +1,8 @@
-import { PageDto } from '../../common/dto';
-import {
-  HTTP_STATUS_ID,
-  KAFKA_PRODUCER,
-  KAFKA_TOPIC,
-  MentionableType,
-} from '../../common/constants';
+import { HTTP_STATUS_ID, KAFKA_PRODUCER, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -18,7 +12,6 @@ import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
-import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -26,65 +19,62 @@ import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { EntityIdDto } from '../../common/dto';
-import { CommentModel } from '../../database/models/comment.model';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import { plainToInstance } from 'class-transformer';
-import { Op, QueryTypes, Transaction } from 'sequelize';
-import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
-import { GetPostEditedHistoryDto } from './dto/requests';
-import { PostEditedHistoryDto } from './dto/responses';
 import { ClientKafka } from '@nestjs/microservices';
-import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
-import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '../../../libs/sentry/src';
+import { PostService } from './post.service';
 
 @Injectable()
-export class ArticleService {
-  /**
-   * Logger
-   * @private
-   */
-  private _logger = new Logger(ArticleService.name);
-
-  /**
-   *  ClassTransformer
-   * @private
-   */
-  private _classTransformer = new ClassTransformer();
-
+export class ArticleService extends PostService {
   public constructor(
     @InjectConnection()
-    private _sequelizeConnection: Sequelize,
+    protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
-    private _postModel: typeof PostModel,
+    protected postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
-    private _postGroupModel: typeof PostGroupModel,
+    protected postGroupModel: typeof PostGroupModel,
     @InjectModel(UserMarkReadPostModel)
-    private _userMarkReadPostModel: typeof UserMarkReadPostModel,
-    private _userService: UserService,
-    private _groupService: GroupService,
-    private _mediaService: MediaService,
-    private _mentionService: MentionService,
+    protected userMarkReadPostModel: typeof UserMarkReadPostModel,
+    protected userService: UserService,
+    protected groupService: GroupService,
+    protected mediaService: MediaService,
+    protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
-    private _commentService: CommentService,
-    private _authorityService: AuthorityService,
-    private _searchService: ElasticsearchService,
-    private _reactionService: ReactionService,
+    protected commentService: CommentService,
+    protected authorityService: AuthorityService,
+    protected searchService: ElasticsearchService,
+    protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
-    private _feedService: FeedService,
+    protected feedService: FeedService,
     @InjectModel(PostEditedHistoryModel)
-    private readonly _postEditedHistoryModel: typeof PostEditedHistoryModel,
+    protected readonly postEditedHistoryModel: typeof PostEditedHistoryModel,
     @Inject(KAFKA_PRODUCER)
-    private readonly _client: ClientKafka,
-    private readonly _sentryService: SentryService
-  ) {}
+    protected readonly client: ClientKafka,
+    protected readonly sentryService: SentryService
+  ) {
+    super(
+      sequelizeConnection,
+      postModel,
+      postGroupModel,
+      userMarkReadPostModel,
+      userService,
+      groupService,
+      mediaService,
+      mentionService,
+      commentService,
+      authorityService,
+      searchService,
+      reactionService,
+      feedService,
+      postEditedHistoryModel,
+      client,
+      sentryService
+    );
+  }
 
   /**
    * Get Post
@@ -99,7 +89,7 @@ export class ArticleService {
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
-    const post = await this._postModel.findOne({
+    const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
         include: [PostModel.loadMarkReadPost(user.id)],
@@ -137,10 +127,10 @@ export class ArticleService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this._authorityService.checkCanReadPost(user, post);
+    await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
     if (getPostDto.withComment) {
-      comments = await this._commentService.getComments(
+      comments = await this.commentService.getComments(
         {
           postId,
           childLimit: getPostDto.childCommentLimit,
@@ -154,13 +144,13 @@ export class ArticleService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToPosts([jsonPost]),
-      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.reactionService.bindReactionToPosts([jsonPost]),
+      this.mentionService.bindMentionsToPosts([jsonPost]),
       this.bindActorToPost([jsonPost]),
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
     result['comments'] = comments;
@@ -175,8 +165,8 @@ export class ArticleService {
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
-  public async getPublicPost(postId: number, getPostDto?: GetPostDto): Promise<PostResponseDto> {
-    const post = await this._postModel.findOne({
+  public async getPublicArticle(postId: number, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+    const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
       },
@@ -206,10 +196,10 @@ export class ArticleService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this._authorityService.checkPublicPost(post);
+    await this.authorityService.checkPublicPost(post);
     let comments = null;
     if (getPostDto.withComment) {
-      comments = await this._commentService.getComments({
+      comments = await this.commentService.getComments({
         postId,
         childLimit: getPostDto.childCommentLimit,
         order: getPostDto.commentOrder,
@@ -219,13 +209,13 @@ export class ArticleService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToPosts([jsonPost]),
-      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this.reactionService.bindReactionToPosts([jsonPost]),
+      this.mentionService.bindMentionsToPosts([jsonPost]),
       this.bindActorToPost([jsonPost]),
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this._classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
 
@@ -240,7 +230,7 @@ export class ArticleService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
+  public async createArticle(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
@@ -250,17 +240,17 @@ export class ArticleService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
       const { groupIds } = audience;
-      await this._authorityService.checkCanCreatePost(authUser, groupIds);
+      await this.authorityService.checkCanCreatePost(authUser, groupIds);
 
       if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentions);
+        await this.mentionService.checkValidMentions(groupIds, mentions);
       }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      transaction = await this._sequelizeConnection.transaction();
-      const post = await this._postModel.create(
+      await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
+      transaction = await this.sequelizeConnection.transaction();
+      const post = await this.postModel.create(
         {
           isDraft: true,
           content,
@@ -276,13 +266,13 @@ export class ArticleService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
+        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
       await this.addPostGroup(groupIds, post.id, transaction);
 
       if (mentions.length) {
-        await this._mentionService.create(
+        await this.mentionService.create(
           mentions.map((userId) => ({
             entityId: post.id,
             userId,
@@ -297,8 +287,8 @@ export class ArticleService {
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
+      this.logger.error(error, error?.stack);
+      this.sentryService.captureException(error);
       throw error;
     }
   }
@@ -311,7 +301,7 @@ export class ArticleService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async updatePost(
+  public async updateArticle(
     post: PostResponseDto,
     authUser: UserDto,
     updatePostDto: UpdatePostDto
@@ -331,11 +321,11 @@ export class ArticleService {
       await this.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
+        await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
       }
 
       if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(
+        await this.mentionService.checkValidMentions(
           audience ? audience.groupIds : oldGroupIds,
           mentions
         );
@@ -365,15 +355,15 @@ export class ArticleService {
           setting.isImportant === false ? null : setting.importantExpiredAt;
       }
       let newMediaIds = [];
-      transaction = await this._sequelizeConnection.transaction();
+      transaction = await this.sequelizeConnection.transaction();
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
+        await this.mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList =
           newMediaIds.length === 0
             ? []
-            : await this._mediaService.getMediaList({ where: { id: newMediaIds } });
+            : await this.mediaService.getMediaList({ where: { id: newMediaIds } });
         if (
           mediaList.filter(
             (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
@@ -384,7 +374,7 @@ export class ArticleService {
         }
       }
 
-      await this._postModel.update(dataUpdate, {
+      await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
           createdBy: authUserId,
@@ -393,11 +383,11 @@ export class ArticleService {
       });
 
       if (media) {
-        await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
+        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
       }
 
       if (mentions) {
-        await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
+        await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
       if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
@@ -407,8 +397,19 @@ export class ArticleService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this.logger.error(error, error?.stack);
       throw error;
     }
+  }
+
+  /**
+   * Delete post by id
+   * @param postId postID
+   * @param authUserId auth user ID
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public deleteArticle(id: number, user: UserDto): Promise<IPost> {
+    return this.deletePost(id, user);
   }
 }

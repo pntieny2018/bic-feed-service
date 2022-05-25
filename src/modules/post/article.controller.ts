@@ -16,7 +16,7 @@ import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
-} from '../../events/article';
+} from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { PostResponseDto } from './dto/responses';
@@ -29,7 +29,7 @@ import { GetPostPipe } from './pipes';
   version: APP_VERSION,
   path: 'articles',
 })
-export class PostController {
+export class ArticleController {
   public constructor(
     private _articleService: ArticleService,
     private _eventEmitter: InternalEventEmitterService
@@ -45,8 +45,8 @@ export class PostController {
     @Param('articleId', ParseIntPipe) articleId: number,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
-    if (user === null) return this._articleService.getPublicPost(articleId, getPostDto);
-    else return this._articleService.getPost(articleId, user, getPostDto);
+    if (user === null) return this._articleService.getPublicArticle(articleId, getPostDto);
+    else return this._articleService.getArticle(articleId, user, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create article' })
@@ -61,7 +61,7 @@ export class PostController {
   ): Promise<PostResponseDto> {
     const created = await this._articleService.createPost(user, createPostDto);
     if (created) {
-      return await this._articleService.getPost(created.id, user, new GetPostDto());
+      return await this._articleService.getArticle(created.id, user, new GetPostDto());
     }
   }
 
@@ -76,10 +76,14 @@ export class PostController {
     @Param('articleId', ParseIntPipe) articleId: number,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const articleBefore = await this._articleService.getPost(articleId, user, new GetPostDto());
-    const isUpdated = await this._articleService.updatePost(articleBefore, user, updatePostDto);
+    const articleBefore = await this._articleService.getArticle(articleId, user, new GetPostDto());
+    const isUpdated = await this._articleService.updateArticle(articleBefore, user, updatePostDto);
     if (isUpdated) {
-      const articleUpdated = await this._articleService.getPost(articleId, user, new GetPostDto());
+      const articleUpdated = await this._articleService.getArticle(
+        articleId,
+        user,
+        new GetPostDto()
+      );
       this._eventEmitter.emit(
         new PostHasBeenUpdatedEvent({
           oldPost: articleBefore,
@@ -102,11 +106,11 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('id', ParseIntPipe) articleId: number
   ): Promise<boolean> {
-    const articleDeleted = await this._articleService.deletePost(articleId, user);
+    const articleDeleted = await this._articleService.deleteArticle(articleId, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
-          article: articleDeleted,
+          post: articleDeleted,
           actor: user.profile,
         })
       );
