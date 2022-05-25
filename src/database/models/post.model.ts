@@ -412,8 +412,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
-      AND is_seen_post = ${isSeen ? true : false}
-      ORDER BY "p"."created_at" ${order}
+      ORDER BY "p"."created_at" ${order}, "p"."is_seen_post" ASC
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
