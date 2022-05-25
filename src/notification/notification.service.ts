@@ -5,8 +5,6 @@ import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../common/constants';
 
 @Injectable()
 export class NotificationService {
-  private _logger = new Logger(NotificationService.name);
-
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
@@ -14,9 +12,6 @@ export class NotificationService {
       key: payload.key,
       value: JSON.stringify(payload.value),
     });
-    // return lastValueFrom(
-    //   this._postProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.POST}`, payload)
-    // ).catch((ex) => this._logger.error(ex, ex.stack));
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
@@ -24,9 +19,6 @@ export class NotificationService {
       key: payload.key,
       value: JSON.stringify(payload.value),
     });
-    // return lastValueFrom(
-    //   this._commentProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`, payload)
-    // ).catch((ex) => this._logger.error(ex, ex.stack));
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
@@ -34,8 +26,9 @@ export class NotificationService {
       key: payload.key,
       value: JSON.stringify(payload.value),
     });
-    // return lastValueFrom(
-    //   this._reactionProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.REACTION}`, payload)
-    // ).catch((ex) => this._logger.error(ex, ex.stack));
+  }
+
+  public async onModuleInit(): Promise<any> {
+    await this._kafkaProducer.connect();
   }
 }

@@ -346,7 +346,7 @@ describe('PostService', () => {
     });
   });
 
-  describe.only('publishPost', () => {
+  describe('publishPost', () => {
     const mockedDataUpdatePost = createMock<PostModel>(mockedPostData);
     const authUserId = mockedDataUpdatePost.createdBy;
     it('Should return result successfully', async () => {

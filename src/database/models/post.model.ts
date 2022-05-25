@@ -286,6 +286,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."url",
     "media"."name",
     "media"."type",
+    "media"."size",
     "media"."width",
     "media"."height",
     "media"."extension"
@@ -405,6 +406,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."name",
     "media"."type",
     "media"."width",
+    "media"."size",
     "media"."height",
     "media"."extension"
     FROM (
