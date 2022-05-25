@@ -36,7 +36,7 @@ spec:
               memory: 256Mi
               cpu: '0.2'
 
-          # Use all environment variables defined in Doppler 
+          # Use all environment variables defined in Doppler
           envFrom:
             - secretRef:
                 name: bic-stream-stg-managed-secret

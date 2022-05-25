@@ -3,9 +3,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
 import { PostService } from '../../modules/post/post.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
-import { SentryService } from '../../../libs/sentry/src';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { SentryService } from '@app/sentry';
+import { InjectConnection } from '@nestjs/sequelize';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { ExceptionHelper } from '../../common/helpers';
@@ -42,15 +41,15 @@ export class FollowListener {
       payload: { userIds, groupId },
     } = event;
 
-    userIds.forEach(async (userId: number) => {
-      return this.userUnfollowGroup(userId, groupId).catch((e) => {
+    userIds.forEach((userId: number) => {
+      this.detachPosts(userId, groupId).catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
     });
   }
 
-  public async userUnfollowGroup(userId: number, groupId: number): Promise<any> {
+  public async detachPosts(userId: number, groupId: number): Promise<any> {
     this._logger.debug(`[userUnfollowGroup] userId: ${userId}. groupId: ${groupId}`);
 
     const userSharedDto = await this._userService.get(userId);
