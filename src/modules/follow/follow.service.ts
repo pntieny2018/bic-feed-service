@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
+import { SentryService } from '@app/sentry';
 import { Sequelize } from 'sequelize-typescript';
+import { ArrayHelper } from '../../common/helpers';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { getDatabaseConfig } from '../../config/database';
@@ -8,8 +10,6 @@ import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import { ArrayHelper } from '../../common/helpers';
-import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FollowService {
