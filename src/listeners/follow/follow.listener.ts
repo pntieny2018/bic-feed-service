@@ -28,11 +28,15 @@ export class FollowListener {
   public async onUsersFollowGroups(event: UsersHasBeenFollowedEvent): Promise<void> {
     const { payload } = event;
 
-    const postIds = await this._postService.findPostIdsByGroupId(payload.groupIds[0]);
+    const { userIds, groupIds } = payload;
 
-    payload.userIds.map((userId) =>
-      this._feedPublishService.attachPostsForUserNewsFeed(userId, postIds)
-    );
+    const postIds = await this._postService.findPostIdsByGroupId(groupIds);
+
+    if (postIds && postIds.length) {
+      this._feedPublishService
+        .attachPostsForUsersNewsFeed(userIds, postIds)
+        .catch((ex) => this._sentryService.captureException(ex));
+    }
   }
 
   @On(UsersHasBeenUnfollowedEvent)
@@ -53,12 +57,16 @@ export class FollowListener {
     this._logger.debug(`[userUnfollowGroup] userId: ${userId}. groupId: ${groupId}`);
 
     const userSharedDto = await this._userService.get(userId);
+
     if (!userSharedDto) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
-    const groupIds = (userSharedDto.groups ?? []).filter((gId) => gId !== groupId);
+    let groupIds = (userSharedDto.groups ?? []).filter((gId) => gId !== groupId);
 
+    if (!groupIds.length) {
+      groupIds = [0];
+    }
     const { schema } = getDatabaseConfig();
 
     const query = `

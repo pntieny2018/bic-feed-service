@@ -1019,11 +1019,11 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupId: number, take = 1000): Promise<number[]> {
+  public async findPostIdsByGroupId(groupIds: number[], take = 1000): Promise<number[]> {
     try {
       const posts = await this._postGroupModel.findAll({
         where: {
-          groupId: groupId,
+          groupId: groupIds,
         },
         limit: take,
         order: ['createdAt', 'DESC'],
