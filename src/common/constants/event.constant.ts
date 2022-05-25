@@ -6,6 +6,8 @@ export const PostWillBeDeleted = 'post.will.be.deleted';
 export const PostHasBeenPublished = 'post.has.been.published';
 export const PostHasBeenUpdated = 'post.has.been.updated';
 export const PostHasBeenDeleted = 'post.has.been.deleted';
+export const PostVideoHasBeenPublished = 'post_video.has.been.published';
+export const PostVideoHasBeenFailed = 'post_video.has.been.failed';
 
 // post
 export const CommentWillBeCreated = 'comment.will.be.created';

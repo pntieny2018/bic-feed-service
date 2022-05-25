@@ -5,7 +5,7 @@ export class PostSettingDto {
   @ApiProperty({ type: Boolean, default: true, required: false, description: 'Allow to react' })
   @IsOptional()
   @IsBoolean()
-  public canReact?: boolean = true;
+  public canReact?: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -15,12 +15,12 @@ export class PostSettingDto {
   })
   @IsOptional()
   @IsBoolean()
-  public canShare?: boolean = true;
+  public canShare?: boolean;
 
   @ApiProperty({ type: Boolean, default: true, required: false, description: 'Allow to comment' })
   @IsOptional()
   @IsBoolean()
-  public canComment?: boolean = true;
+  public canComment?: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -31,7 +31,7 @@ export class PostSettingDto {
   })
   @IsOptional()
   @IsBoolean()
-  public isImportant?: boolean = false;
+  public isImportant?: boolean;
 
   @ApiProperty({
     required: false,
@@ -43,5 +43,5 @@ export class PostSettingDto {
   @ValidateIf((i) => i.isImportant === true)
   @IsNotEmpty()
   @IsDateString()
-  public importantExpiredAt?: Date = null;
+  public importantExpiredAt?: Date;
 }

@@ -18,9 +18,12 @@ import { RecentSearchModule } from '../modules/recent-search';
 import { ReactionCountModule } from '../shared/reaction-count';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
+import { DatabaseModule } from '../database';
+import { GiphyModule } from '../modules/giphy';
 
 @Module({
   imports: [
+    DatabaseModule,
     LibModule,
     AuthModule,
     CommentModule,
@@ -39,9 +42,11 @@ import { FeedGeneratorModule } from '../modules/feed-generator';
     ReactionCountModule,
     FeedGeneratorModule,
     FeedPublisherModule,
+    GiphyModule,
   ],
   controllers: [AppController],
   providers: [],
+  exports: [],
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {

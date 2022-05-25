@@ -22,6 +22,7 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { Inject, Logger, Injectable, forwardRef, BadRequestException, Post } from '@nestjs/common';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FeedService {
@@ -40,7 +41,8 @@ export class FeedService {
     private _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
-    private _sequelizeConnection: Sequelize
+    private _sequelizeConnection: Sequelize,
+    private _sentryService: SentryService
   ) {}
 
   /**
@@ -119,6 +121,7 @@ export class FeedService {
       });
     } catch (e) {
       this._logger.error(e, e.stack);
+      this._sentryService.captureException(e);
       return new PageDto<PostResponseDto>([], {
         limit,
         offset,
@@ -142,6 +145,7 @@ export class FeedService {
       );
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
@@ -196,8 +200,6 @@ export class FeedService {
       });
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    console.log('importantPosts=', importantPosts);
-    console.log('normalPosts=', normalPosts);
     const rows = importantPosts.concat(normalPosts);
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
@@ -295,6 +297,7 @@ export class FeedService {
                   name: post.name,
                   type: post.type,
                   width: post.width,
+                  size: post.size,
                   height: post.height,
                   extension: post.extension,
                 },
@@ -345,6 +348,7 @@ export class FeedService {
           name: post.name,
           type: post.type,
           width: post.width,
+          size: post.size,
           height: post.height,
           extension: post.extension,
         });

@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IDocumentMetadata } from './interfaces';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { MediaStatus } from '../../../database/models/media.model';
 
 export class ImageMetadataDto implements IDocumentMetadata {
   @ApiProperty()
@@ -23,6 +24,16 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @Expose()
   public name?: string;
 
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public uploadId?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public status?: MediaStatus;
+
   @ApiProperty({
     required: false,
     description: 'URL',
@@ -31,6 +42,14 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @IsOptional()
   @Expose()
   public url?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Size',
+  })
+  @IsOptional()
+  @Expose()
+  public size?: number;
 
   @ApiProperty({
     required: false,

@@ -40,7 +40,6 @@ spec:
           envFrom:
             - secretRef:
                 name: bic-stream-pro-managed-secret
-                
       # Docker credentials to access theBein private registry
       imagePullSecrets:
         - name: dockerhubregistrykey

@@ -10,13 +10,15 @@ import { MentionModel } from '../../database/models/mention.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class CommentDissociationService {
   private _logger = new Logger(CommentDissociationService.name);
   public constructor(
     @InjectConnection() private readonly _sequelize: Sequelize,
-    @InjectModel(CommentModel) private readonly _commentModel: typeof CommentModel
+    @InjectModel(CommentModel) private readonly _commentModel: typeof CommentModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   public async dissociateComment(
@@ -156,6 +158,7 @@ export class CommentDissociationService {
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return recipient;
     }
   }
@@ -279,6 +282,7 @@ export class CommentDissociationService {
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return null;
     }
   }

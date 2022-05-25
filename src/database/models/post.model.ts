@@ -1,6 +1,6 @@
 import { MentionModel, IMention } from './mention.model';
-import { MediaType, IMedia } from './media.model';
-import { DataTypes, Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
+import { IMedia } from './media.model';
+import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -9,7 +9,6 @@ import {
   CreatedAt,
   Default,
   HasMany,
-  Length,
   Model,
   PrimaryKey,
   Table,
@@ -45,6 +44,7 @@ export interface IPost {
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
+  isProcessing?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   comments?: IComment[];
@@ -53,6 +53,8 @@ export interface IPost {
   mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
+  giphyId?: string;
+  markedReadPost?: boolean;
 }
 @Table({
   tableName: 'posts',
@@ -83,11 +85,18 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public canReact: boolean;
 
   @Column
+  public isProcessing: boolean;
+
+  @Column
   public canShare: boolean;
 
   @AllowNull(true)
   @Column
   public content: string;
+
+  @AllowNull(true)
+  @Column
+  public giphyId: string;
 
   @AllowNull(false)
   @Column
@@ -275,6 +284,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."url",
     "media"."name",
     "media"."type",
+    "media"."size",
     "media"."width",
     "media"."height",
     "media"."extension"
@@ -394,6 +404,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."name",
     "media"."type",
     "media"."width",
+    "media"."size",
     "media"."height",
     "media"."extension"
     FROM (
