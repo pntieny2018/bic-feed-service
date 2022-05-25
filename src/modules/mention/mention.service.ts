@@ -163,7 +163,7 @@ export class MentionService {
     });
     const currentMentionUserIds = currentMentions.map((i) => i.userId);
 
-    const deleteUserIds = ArrayHelper.differenceArrNumber(currentMentionUserIds, userIds);
+    const deleteUserIds = ArrayHelper.arrDifferenceElements(currentMentionUserIds, userIds);
     if (deleteUserIds.length) {
       await this._mentionModel.destroy({
         where: { mentionableType, entityId, userId: deleteUserIds },
@@ -171,7 +171,7 @@ export class MentionService {
       });
     }
 
-    const addUserIds = ArrayHelper.differenceArrNumber(userIds, currentMentionUserIds);
+    const addUserIds = ArrayHelper.arrDifferenceElements(userIds, currentMentionUserIds);
     if (addUserIds.length) {
       await this._mentionModel.bulkCreate(
         addUserIds.map((userId) => ({

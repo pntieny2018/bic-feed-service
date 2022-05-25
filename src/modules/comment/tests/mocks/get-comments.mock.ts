@@ -215,13 +215,13 @@ export const getCommentMock = {
   ownerReactions: [
     {
       id: 1,
-      commentId: 57,
+      commentId: '57dc4093-1bd0-4105-869f-8504e1986145',
       reactionName: 'kiss',
       createdBy: 1,
       createdAt: '2022-03-16T04:22:23.480Z',
     },
   ],
-  id: 57,
+  id: '57dc4093-1bd0-4105-869f-8504e1986145',
   parentId: null,
   postId: 1,
   content: 'hello my fen @username2',

@@ -909,7 +909,7 @@ export class PostService {
     });
     const currentGroupIds = currentGroups.map((i) => i.groupId);
 
-    const deleteGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, groupIds);
+    const deleteGroupIds = ArrayHelper.arrDifferenceElements(currentGroupIds, groupIds);
     if (deleteGroupIds.length) {
       await this._postGroupModel.destroy({
         where: { groupId: deleteGroupIds, postId },
@@ -917,7 +917,7 @@ export class PostService {
       });
     }
 
-    const addGroupIds = ArrayHelper.differenceArrNumber(groupIds, currentGroupIds);
+    const addGroupIds = ArrayHelper.arrDifferenceElements(groupIds, currentGroupIds);
     if (addGroupIds.length) {
       await this._postGroupModel.bulkCreate(
         addGroupIds.map((groupId) => ({

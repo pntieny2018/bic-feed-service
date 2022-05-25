@@ -9,7 +9,7 @@ export const mockedUpdatePostDto: UpdatePostDto = {
   media: {
     images: [
       {
-        id: 1,
+        id: 'd838659a-85ef-47ba-91e6-902aa6174142',
       },
     ],
     videos: [],
