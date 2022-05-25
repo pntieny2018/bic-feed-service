@@ -26,6 +26,7 @@ export class FollowListener {
 
   @On(UsersHasBeenFollowedEvent)
   public async onUsersFollowGroups(event: UsersHasBeenFollowedEvent): Promise<void> {
+    this._logger.debug(`[onUsersFollowGroups]: ${JSON.stringify(event)}`);
     const { payload } = event;
 
     const { userIds, groupIds } = payload;
@@ -41,6 +42,7 @@ export class FollowListener {
 
   @On(UsersHasBeenUnfollowedEvent)
   public async onUsersUnFollowGroup(event: UsersHasBeenUnfollowedEvent): Promise<void> {
+    this._logger.debug(`[onUsersUnFollowGroup]: ${JSON.stringify(event)}`);
     const {
       payload: { userIds, groupId },
     } = event;

@@ -1026,7 +1026,7 @@ export class PostService {
           groupId: groupIds,
         },
         limit: take,
-        order: ['createdAt', 'DESC'],
+        order: [['createdAt', 'DESC']],
       });
       return posts.map((p) => p.postId);
     } catch (ex) {
