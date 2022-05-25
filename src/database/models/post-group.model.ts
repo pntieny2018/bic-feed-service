@@ -7,7 +7,7 @@ export interface IPostGroup {
 }
 @Table({
   tableName: 'posts_groups',
-  timestamps: false,
+  timestamps: true,
 })
 export class PostGroupModel extends Model implements IPostGroup {
   @ForeignKey(() => PostModel)
