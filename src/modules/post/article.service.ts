@@ -27,6 +27,8 @@ import { PostEditedHistoryModel } from '../../database/models/post-edited-histor
 import { ClientKafka } from '@nestjs/microservices';
 import { SentryService } from '../../../libs/sentry/src';
 import { PostService } from './post.service';
+import { CreateArticleDto } from './dto/requests/create-article.dto';
+import { ArticleResponseDto } from './dto/responses/article.response.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -88,7 +90,7 @@ export class ArticleService extends PostService {
     postId: number,
     user: UserDto,
     getPostDto?: GetPostDto
-  ): Promise<PostResponseDto> {
+  ): Promise<ArticleResponseDto> {
     const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -150,7 +152,7 @@ export class ArticleService extends PostService {
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
     result['comments'] = comments;
@@ -165,7 +167,10 @@ export class ArticleService extends PostService {
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
-  public async getPublicArticle(postId: number, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+  public async getPublicArticle(
+    postId: number,
+    getPostDto?: GetPostDto
+  ): Promise<ArticleResponseDto> {
     const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -215,7 +220,7 @@ export class ArticleService extends PostService {
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
 
@@ -230,10 +235,13 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createArticle(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
+  public async createArticle(
+    authUser: UserDto,
+    createArticleDto: CreateArticleDto
+  ): Promise<IPost> {
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = createPostDto;
+      const { content, media, setting, mentions, audience } = createArticleDto;
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
