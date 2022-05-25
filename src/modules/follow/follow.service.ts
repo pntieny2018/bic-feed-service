@@ -69,7 +69,9 @@ export class FollowService {
     try {
       await this._followModel.destroy({
         where: {
-          groupId: unfollowDto.groupId,
+          groupId: {
+            [Op.in]: unfollowDto.groupIds,
+          },
           userId: {
             [Op.in]: unfollowDto.userIds,
           },
