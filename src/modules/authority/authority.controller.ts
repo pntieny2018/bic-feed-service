@@ -5,7 +5,7 @@ import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
 
 @ApiSecurity('authorization')
-@ApiTags('Recent Searches')
+@ApiTags('Authorization')
 @Controller({
   path: 'authorization',
   version: APP_VERSION,
