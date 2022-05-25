@@ -23,18 +23,21 @@ export class FeedPublisherService {
 
   public async attachPostsForUsersNewsFeed(userIds: number[], postIds: number[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
-
+    const schema = this._databaseConfig.schema;
     try {
-      const insertData = postIds
-        .map((postId) => {
-          return userIds.map((userId) => ({
-            userId: userId,
-            postId: postId,
-          }));
+      const data = userIds
+        .map((userId) => {
+          return postIds.map((postId) => `(${userId},${postId},false)`);
         })
         .flat();
-      if (insertData && insertData.length) {
-        await this._userNewsFeedModel.bulkCreate(insertData);
+
+      if (data && data.length) {
+        await this._userNewsFeedModel.sequelize.query(
+          `INSERT INTO ${schema}.${
+            this._userNewsFeedModel.tableName
+          } (user_id,post_id, is_seen_post) 
+             VALUES ${data.join(',')} ON CONFLICT  (user_id,post_id) DO NOTHING;`
+        );
       }
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
