@@ -1,5 +1,6 @@
 import { RedisService } from '@app/redis';
 import { Injectable, Logger } from '@nestjs/common';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class ReactionCountService {
@@ -7,7 +8,10 @@ export class ReactionCountService {
 
   private _logger = new Logger(ReactionCountService.name);
 
-  public constructor(private _store: RedisService) {}
+  public constructor(
+    private _store: RedisService,
+    private readonly _sentryService: SentryService
+  ) {}
 
   public async getTotalKind(targetType: string, entityId: number): Promise<number> {
     try {
@@ -20,6 +24,7 @@ export class ReactionCountService {
       return parseInt(total);
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return null;
     }
   }
@@ -32,6 +37,7 @@ export class ReactionCountService {
       );
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
@@ -46,6 +52,7 @@ export class ReactionCountService {
       );
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 }

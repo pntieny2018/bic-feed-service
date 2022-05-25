@@ -1,23 +1,15 @@
-import { PostResponseDto } from '../dto/responses/post.response.dto';
 import { PageDto } from '../../../common/dto/pagination/page.dto';
 import { GetPostDto } from './../dto/requests/get-post.dto';
 import { mockedGroups } from './mocks/data/groups.mock';
-import { MentionableType } from '../../../common/constants';
+import { HTTP_STATUS_ID, KAFKA_PRODUCER, MentionableType } from '../../../common/constants';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostService } from '../post.service';
 import { IPost, PostModel } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { mockedPostList } from './mocks/data/post-list.mock';
 import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
-import { mockedUpdatePostDto } from './mocks/request/update-post.mock';
+import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedSearchResponse } from './mocks/response/search.response.mock';
 
-import {
-  mockedUserAuth,
-  mockedUserAuthNullProfile,
-  mockedUsers,
-} from './mocks/data/user-auth.mock';
 import {
   BadRequestException,
   ForbiddenException,
@@ -38,55 +30,55 @@ import { EntityIdDto } from '../../../common/dto';
 import { CommentModule, CommentService } from '../../comment';
 import { AuthorityService } from '../../authority';
 import { PostPolicyService } from '../post-policy.service';
-import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { mockedComments, mockedPostResponse } from './mocks/response/post.response.mock';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SearchPostsDto } from '../dto/requests';
 import { ElasticsearchHelper } from '../../../common/helpers';
 import { EntityType } from '../../media/media.constants';
-import { CommonReactionService, DeleteReactionService } from '../../reaction/services';
 import { FeedService } from '../../feed/feed.service';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { LogicException } from '../../../common/exceptions';
 import { Sequelize } from 'sequelize-typescript';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
+import { ReactionService } from '../../reaction';
+
+import { ClientKafka, ClientsModule } from '@nestjs/microservices';
+import { authUserMock } from '../../comment/tests/mocks/user.mock';
+import { mockedPostCreated } from './mocks/response/create-post.response.mock';
+import { mockedUserAuth } from './mocks/data/user-auth.mock';
+import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
+import { PostResponseDto } from '../dto/responses';
+import { IMedia, MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
 
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
   let postGroupModelMock;
   let userMarkedImportantPostModelMock;
-  let postEditedHistoryModelMock;
-  let sentryService: SentryService;
   let userService: UserService;
   let groupService: GroupService;
   let mediaService: MediaService;
   let mentionService: MentionService;
   let commentService: CommentService;
   let feedService: FeedService;
-  let deleteReactionService: DeleteReactionService;
+  let reactionService: ReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
-  let commonReactionService: CommonReactionService;
   let transactionMock;
+  let clientKafka;
   let sequelize: Sequelize;
+  let postEditedHistoryModelMock: typeof PostEditedHistoryModel;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      imports: [RedisModule],
+      imports: [RedisModule, ClientsModule],
       providers: [
         PostService,
         PostPolicyService,
+        AuthorityService,
         {
           provide: ElasticsearchService,
           useValue: {
             search: jest.fn(),
-          },
-        },
-        {
-          provide: AuthorityService,
-          useValue: {
-            allowAccess: jest.fn(),
           },
         },
         {
@@ -103,19 +95,14 @@ describe('PostService', () => {
           },
         },
         {
-          provide: CommonReactionService,
+          provide: ReactionService,
           useValue: {
             bindReactionToPosts: jest.fn(),
+            deleteReactionByPostIds: jest.fn()
           },
         },
         {
-          provide: InternalEventEmitterService,
-          useValue: {
-            emit: jest.fn(),
-          },
-        },
-        {
-          provide: EventEmitter2,
+          provide: KAFKA_PRODUCER,
           useValue: {
             emit: jest.fn(),
           },
@@ -133,12 +120,7 @@ describe('PostService', () => {
             get: jest.fn(),
             getMany: jest.fn(),
             isMemberOfGroups: jest.fn(),
-          },
-        },
-        {
-          provide: DeleteReactionService,
-          useValue: {
-            deleteReactionByPostIds: jest.fn(),
+            getGroupIdsCanAccess: jest.fn(),
           },
         },
         {
@@ -147,6 +129,7 @@ describe('PostService', () => {
             checkValidMedia: jest.fn(),
             countMediaByPost: jest.fn(),
             sync: jest.fn(),
+            getMediaList: jest.fn(),
           },
         },
         {
@@ -155,6 +138,7 @@ describe('PostService', () => {
             checkValidMentions: jest.fn(),
             bindMentionsToPosts: jest.fn(),
             setMention: jest.fn(),
+            create: jest.fn()
           },
         },
         {
@@ -216,22 +200,17 @@ describe('PostService', () => {
     userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(
       getModelToken(UserMarkReadPostModel)
     );
-    postEditedHistoryModelMock = moduleRef.get<typeof PostEditedHistoryModel>(
-      getModelToken(PostEditedHistoryModel)
-    );
-    sentryService = moduleRef.get<SentryService>(SentryService);
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
     mentionService = moduleRef.get<MentionService>(MentionService);
     mediaService = moduleRef.get<MediaService>(MediaService);
     commentService = moduleRef.get<CommentService>(CommentService);
     feedService = moduleRef.get<FeedService>(FeedService);
-    deleteReactionService = moduleRef.get<DeleteReactionService>(DeleteReactionService);
+    reactionService = moduleRef.get<ReactionService>(ReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
-    commonReactionService = moduleRef.get<CommonReactionService>(CommonReactionService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
-
+    clientKafka = moduleRef.get<ClientKafka>(KAFKA_PRODUCER);
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),
       commit: jest.fn(),
@@ -248,225 +227,134 @@ describe('PostService', () => {
 
   describe('createPost', () => {
     it('Create post successfully', async () => {
-      const mockedDataCreatePost = createMock<PostModel>(mockedPostList[0]);
-      const { files, videos, images } = mockedCreatePostDto.media;
-      const { groupIds } = mockedCreatePostDto.audience;
-      let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
+      jest.spyOn(authorityService, 'checkCanCreatePost').mockReturnThis();
+      jest.spyOn(mediaService, 'checkValidMedia').mockReturnThis();
+      jest.spyOn(mediaService, 'sync').mockReturnThis();
+      jest.spyOn(mentionService, 'create').mockReturnThis();
+      jest.spyOn(postService, 'addPostGroup').mockReturnThis();
+      postModelMock.create.mockResolvedValueOnce(mockedPostCreated)
 
-      groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
-      mentionService.checkValidMentions = jest.fn().mockResolvedValue(true);
-      mentionService.create = jest.fn();
-      postService.addPostGroup = jest.fn().mockResolvedValue(true);
-      mediaService.activeMedia = jest.fn();
-
-      postModelMock.create.mockResolvedValueOnce(mockedDataCreatePost);
-      postGroupModelMock.bulkCreate.mockResolvedValueOnce(true);
-
-      const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
-
-      expect(groupService.isMemberOfGroups).toBeCalledTimes(1);
-
-      const mentionUserIds = mockedCreatePostDto.mentions;
-      expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mentionUserIds);
-      expect(mediaService.checkValidMedia).toBeCalledTimes(1);
-
-      expect(postModelMock.create).toHaveBeenCalledTimes(1);
+      await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       expect(sequelize.transaction).toBeCalledTimes(1);
-
-      expect(mediaService.sync).toBeCalledTimes(1);
-      expect(mentionService.create).toBeCalledWith(
-        mockedCreatePostDto.mentions.map((i) => ({
-          entityId: mockedDataCreatePost.id,
-          userId: i,
-          mentionableType: MentionableType.POST,
-        })),
-        { transactionMock }
-      );
-      expect(postService.addPostGroup).toBeCalledTimes(1);
-      expect(postService.addPostGroup).toHaveBeenCalledWith(
-        groupIds,
-        mockedDataCreatePost.id,
-        transactionMock
-      );
       expect(transactionMock.commit).toBeCalledTimes(1);
-
-      const createPostQuery: any = postModelMock.create.mock.calls[0][0];
-
-      //add Reaction
-      expect(createPostQuery).toStrictEqual({
+      expect(transactionMock.rollback).not.toBeCalled();
+      expect(mediaService.sync).toBeCalledTimes(1);
+      expect(mentionService.create).not.toBeCalled();
+      expect(postService.addPostGroup).toBeCalledTimes(1);
+      expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({ isDraft: true,
         content: mockedCreatePostDto.content,
-        isDraft: true,
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,
         isImportant: mockedCreatePostDto.setting.isImportant,
-        importantExpiredAt:
-          mockedCreatePostDto.setting.isImportant === false
-            ? null
-            : mockedCreatePostDto.setting.importantExpiredAt,
+        importantExpiredAt: mockedCreatePostDto.setting.importantExpiredAt,
         canShare: mockedCreatePostDto.setting.canShare,
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
-      });
+        isProcessing: false 
+      })
     });
 
     it('Should catch exception if creator not found in cache', async () => {
       userService.get = jest.fn().mockResolvedValue(null);
-
+      authUserMock.profile = null;
       try {
-        const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
-    it('Should catch exception if groups is invalid', async () => {
-      userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
-      groupService.isMemberOfGroups = jest.fn().mockResolvedValue(false);
-      try {
-        const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+        const result = await postService.createPost(authUserMock, mockedCreatePostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
     });
 
     it('Should rollback if have an exception when insert data into DB', async () => {
-      userService.get = jest.fn().mockResolvedValue(true);
-      groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
-      mediaService.activeMedia = jest.fn().mockResolvedValue(true);
-
+      jest.spyOn(authorityService, 'checkCanCreatePost').mockReturnThis();
+      jest.spyOn(mediaService, 'checkValidMedia').mockReturnThis();
+      jest.spyOn(mentionService, 'create').mockReturnThis();
       postModelMock.create.mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        const result = await postService.createPost(mockedUserAuth, mockedCreatePostDto);
-
+        await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+      } catch (error) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
-      } catch (error) {
         expect(transactionMock.rollback).toBeCalledTimes(1);
       }
     });
   });
 
   describe('updatePost', () => {
-    const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
+    const mockedDataUpdatePost = createMock<PostModel>(mockedPostData);
+    const mockedMedia= createMock<MediaModel[]>([
+      {
+        id: 1,
+        url: "aaaa",
+        name: "aaa",
+        isDraft: false,
+        type: MediaType.IMAGE,
+        status: MediaStatus.COMPLETED,
+        createdBy: mockedUserAuth.id,
+      }
+    ])
     it('Update post successfully', async () => {
-      const { files, videos, images } = mockedUpdatePostDto.media;
-      let mediaIds = [...new Set([...files, ...videos, ...images].map((i) => i.id))];
-      const { groupIds } = mockedUpdatePostDto.audience;
-      const mentionUserIds = mockedUpdatePostDto.mentions;
-      postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
-      groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
-      mentionService.checkValidMentions = jest.fn().mockResolvedValue(true);
-      postService.setGroupByPost = jest.fn().mockResolvedValue(true);
-      mediaService.sync = jest.fn();
-
-      postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
-      postGroupModelMock.bulkCreate.mockResolvedValueOnce(true);
-
-      const result = await postService.updatePost(
-        mockedDataUpdatePost.id,
-        mockedUserAuth,
-        mockedUpdatePostDto
-      );
-      expect(result).toBe(true);
-
-      expect(groupService.isMemberOfGroups).toBeCalledTimes(1);
-      expect(mentionService.checkValidMentions).toBeCalledWith(groupIds, mentionUserIds);
-      expect(mediaService.checkValidMedia).toBeCalledTimes(1);
-
+      jest.spyOn(authorityService, 'checkCanUpdatePost').mockReturnThis();
+      jest.spyOn(mediaService, 'checkValidMedia').mockReturnThis();
+      jest.spyOn(mediaService, 'sync').mockReturnThis();
+      jest.spyOn(mentionService, 'create').mockReturnThis();
+      jest.spyOn(postService, 'setGroupByPost').mockReturnThis();
+      jest.spyOn(mediaService, 'getMediaList').mockResolvedValueOnce(mockedMedia);
+      postModelMock.update.mockResolvedValueOnce(mockedPostCreated)
+      await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
       expect(sequelize.transaction).toBeCalledTimes(1);
-
-      expect(postModelMock.update).toHaveBeenCalledTimes(1);
-      expect(mediaService.sync).toHaveBeenCalledWith(
-        mockedDataUpdatePost.id,
-        EntityType.POST,
-        mediaIds,
-        transactionMock
-      );
-      expect(mentionService.setMention).toBeCalledWith(
-        mentionUserIds,
-        MentionableType.POST,
-        mockedDataUpdatePost.id,
-        transactionMock
-      );
-
-      expect(postService.setGroupByPost).toBeCalledTimes(1);
-      expect(postService.setGroupByPost).toHaveBeenCalledWith(
-        groupIds,
-        mockedDataUpdatePost.id,
-        transactionMock
-      );
       expect(transactionMock.commit).toBeCalledTimes(1);
-
-      const updatePostQuery: any = postModelMock.update.mock.calls[0][0];
-
-      //add Reaction
-      expect(updatePostQuery).toStrictEqual({
+      expect(transactionMock.rollback).not.toBeCalled();
+      expect(mediaService.sync).toBeCalledTimes(1);
+      expect(mentionService.create).not.toBeCalled();
+      expect(postService.setGroupByPost).toBeCalledTimes(1);
+      expect(postModelMock.update.mock.calls[0][0]).toStrictEqual({
         content: mockedUpdatePostDto.content,
         updatedBy: mockedUserAuth.id,
-        isImportant: mockedUpdatePostDto.setting.isImportant,
-        importantExpiredAt:
-          mockedUpdatePostDto.setting.isImportant === false
-            ? null
-            : mockedUpdatePostDto.setting.importantExpiredAt,
-        canShare: mockedUpdatePostDto.setting.canShare,
-        canComment: mockedUpdatePostDto.setting.canComment,
-        canReact: mockedUpdatePostDto.setting.canReact,
-      });
+        isImportant: mockedCreatePostDto.setting.isImportant,
+        importantExpiredAt: mockedCreatePostDto.setting.importantExpiredAt,
+        canShare: mockedCreatePostDto.setting.canShare,
+        canComment: mockedCreatePostDto.setting.canComment,
+        canReact: mockedCreatePostDto.setting.canReact
+      })
     });
 
     it('Should catch exception if creator not found in cache', async () => {
-      try {
-        await postService.updatePost(
-          mockedDataUpdatePost.id,
-          mockedUserAuthNullProfile,
-          mockedUpdatePostDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
+      
     });
 
     it('Should catch exception if groups is invalid', async () => {
-      groupService.isMemberOfGroups = jest.fn().mockResolvedValue(false);
-      try {
-        await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedUpdatePostDto);
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
+      
     });
 
     it('Should rollback if have an exception when update data into DB', async () => {
-      const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
-      groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
-      postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
+      // const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
+      // groupService.isMemberOfGroups = jest.fn().mockResolvedValue(true);
+      // mediaService.checkValidMedia = jest.fn().mockResolvedValue(true);
+      // postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
 
-      postModelMock.update.mockRejectedValue(new Error('Any error when insert data to DB'));
+      // postModelMock.update.mockRejectedValue(new Error('Any error when insert data to DB'));
 
-      try {
-        await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedCreatePostDto);
+      // try {
+      //   await postService.updatePost(mockedDataUpdatePost.id, mockedUserAuth, mockedCreatePostDto);
 
-        expect(sequelize.transaction).toBeCalledTimes(1);
-        expect(transactionMock.commit).not.toBeCalled();
-      } catch (error) {
-        expect(transactionMock.rollback).toBeCalledTimes(1);
-      }
+      //   expect(sequelize.transaction).toBeCalledTimes(1);
+      //   expect(transactionMock.commit).not.toBeCalled();
+      // } catch (error) {
+      //   expect(transactionMock.rollback).toBeCalledTimes(1);
+      // }
     });
   });
 
-  describe('publishPost', () => {
-    const mockedDataUpdatePost = createMock<PostModel>(mockedPostList[0]);
+  describe.only('publishPost', () => {
+    const mockedDataUpdatePost = createMock<PostModel>(mockedPostData);
     const authUserId = mockedDataUpdatePost.createdBy;
     it('Should return result successfully', async () => {
-      postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
+      postModelMock.findOne.mockResolvedValueOnce(mockedDataUpdatePost);
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       postModelMock.update.mockResolvedValueOnce(mockedDataUpdatePost);
 
-      const result = await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+      const result = await postService.publishPost(mockedDataUpdatePost.id, mockedDataUpdatePost.createdBy);
       expect(result).toBe(true);
 
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
@@ -482,67 +370,69 @@ describe('PostService', () => {
     });
 
     it('Should catch BadRequestException if content is null', async () => {
-      mockedDataUpdatePost.content = null;
-      postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
-      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
-      try {
-        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
-      } catch (error) {
-        expect(error).toBeInstanceOf(LogicException);
-      }
+      // mockedDataUpdatePost.content = null;
+      // postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
+      // mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      // try {
+      //   await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+      // } catch (error) {
+      //   expect(error).toBeInstanceOf(LogicException);
+      // }
     });
 
     it('Should catch NotFoundException if post not found', async () => {
-      postModelMock.findByPk.mockResolvedValueOnce(null);
-      try {
-        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
-      } catch (error) {
-        expect(error).toBeInstanceOf(LogicException);
-      }
+      // postModelMock.findByPk.mockResolvedValueOnce(null);
+      // try {
+      //   await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+      // } catch (error) {
+      //   expect(error).toBeInstanceOf(LogicException);
+      // }
     });
 
     it('Should catch ForbiddenException if user is not owner', async () => {
-      postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
-      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
-      try {
-        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
-      } catch (error) {
-        expect(error).toBeInstanceOf(LogicException);
-      }
+      // postModelMock.findByPk.mockResolvedValueOnce(mockedDataUpdatePost);
+      // mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      // try {
+      //   await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+      // } catch (error) {
+      //   expect(error).toBeInstanceOf(LogicException);
+      // }
     });
   });
 
   describe('deletePost', () => {
-    const mockedDataDeletePost = createMock<PostModel>(mockedPostList[0]);
+    const mockedDataDeletePost = createMock<PostModel>(mockedPostData);
     it('Delete post successfully', async () => {
-      mentionService.resolveMentions = jest
-        .fn()
-        .mockResolvedValueOnce(mockedUpdatePostDto.mentions);
-      mediaService.sync = jest.fn();
-      postService.setGroupByPost = jest.fn().mockResolvedValueOnce(true);
-      postModelMock.findOne.mockResolvedValueOnce(mockedDataDeletePost);
+      jest.spyOn(postService, 'checkPostOwner').mockReturnThis();
+      jest.spyOn(mentionService, 'setMention').mockReturnThis();
+      jest.spyOn(postService, 'setGroupByPost').mockReturnThis();
+      jest.spyOn(mediaService, 'sync').mockReturnThis();
 
-      postModelMock.destroy.mockResolvedValueOnce(mockedDataDeletePost);
+      jest.spyOn(reactionService, 'deleteReactionByPostIds').mockReturnThis();
+      jest.spyOn(commentService, 'deleteCommentsByPost').mockReturnThis();
+      jest.spyOn(feedService, 'deleteNewsFeedByPost').mockReturnThis();
+
+      userMarkedImportantPostModelMock.destroy.mockResolvedValueOnce(mockedDataDeletePost)
+
+      postModelMock.findByPk.mockResolvedValueOnce(mockedDataDeletePost);
 
       const result = await postService.deletePost(
         mockedDataDeletePost.id,
-        mockedDataDeletePost.createdBy
+        mockedUserAuth
       );
-      expect(result).toStrictEqual(mockedDataDeletePost);
-
       expect(postModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
-      expect(deleteReactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      expect(reactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
       expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       const [condition] = postModelMock.destroy.mock.calls[0];
       expect(condition.where).toStrictEqual({
         id: mockedDataDeletePost.id,
-        createdBy: mockedDataDeletePost.createdBy,
+        createdBy: mockedUserAuth.id,
       });
     });
 
@@ -550,17 +440,18 @@ describe('PostService', () => {
       postModelMock.findOne.mockResolvedValueOnce(mockedDataDeletePost);
       postModelMock.destroy.mockRejectedValue(new Error('Any error when insert data to DB'));
       try {
-        await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth.id);
-        expect(transactionMock.commit).not.toBeCalledTimes(1);
+        await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
       } catch (error) {
+        expect(transactionMock.commit).not.toBeCalledTimes(1);
         expect(transactionMock.rollback).toBeCalledTimes(1);
       }
     });
 
     it('Should throw exception if user is not owner', async () => {
-      postModelMock.findOne.mockResolvedValueOnce(mockedDataDeletePost);
+      postModelMock.findByPk.mockResolvedValueOnce(mockedDataDeletePost);
+      mockedUserAuth.id = mockedDataDeletePost.createdBy + 1;
       try {
-        await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth.id + 1);
+        await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -569,7 +460,7 @@ describe('PostService', () => {
     it('Should throw exception if post not exist', async () => {
       postModelMock.findOne.mockResolvedValueOnce(null);
       try {
-        await postService.deletePost(1, 1);
+        await postService.deletePost(1, mockedUserAuth);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -640,7 +531,7 @@ describe('PostService', () => {
       reactionPostId: 1,
     };
     it('Should get post successfully', async () => {
-      const mockedPost = createMock<PostModel>(mockedPostList[0]);
+      const mockedPost = createMock<PostModel>(mockedPostCreated);
       postModelMock.findOne.mockResolvedValueOnce(mockedPost);
       const result = await postService.findPost(entity);
       expect(postModelMock.findOne).toBeCalledTimes(1);
@@ -673,7 +564,7 @@ describe('PostService', () => {
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
       postService.getPayloadSearch = jest.fn();
 
-      //postService.bindActorToPost = jest.fn();
+      postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
       postService.bindCommentsCount = jest.fn();
       const result = await postService.searchPosts(mockedUserAuth, searchDto);
@@ -681,8 +572,8 @@ describe('PostService', () => {
       expect(elasticSearchService.search).toBeCalledTimes(1);
       expect(postService.getPayloadSearch).toBeCalledWith(searchDto, mockedUserAuth.profile.groups);
 
-      //expect(postService.bindActorToPost).toBeCalledTimes(1);
-      //expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
+      expect(postService.bindActorToPost).toBeCalledTimes(1);
+      expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
       expect(postService.bindCommentsCount).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
@@ -696,8 +587,9 @@ describe('PostService', () => {
         offset: 0,
         limit: 1,
       };
+      mockedUserAuth.profile = null;
       elasticSearchService.search = jest.fn().mockResolvedValue(mockedSearchResponse);
-      const result = await postService.searchPosts(mockedUserAuthNullProfile, searchDto);
+      const result = await postService.searchPosts(mockedUserAuth, searchDto);
       expect(elasticSearchService.search).not.toBeCalled();
       expect(result).toBeInstanceOf(PageDto);
 
@@ -885,7 +777,7 @@ describe('PostService', () => {
   });
 
   describe('getDraftPost', () => {
-    const postData = mockedPostList[0];
+    const postData = mockedPostData;
     const getDraftPostsDto: GetDraftPostDto = {
       limit: 1,
     };
@@ -919,29 +811,36 @@ describe('PostService', () => {
   });
 
   describe('getPost', () => {
-    const postData = mockedPostList[0];
     const getPostDto: GetPostDto = {
       commentLimit: 1,
       childCommentLimit: 1,
+      withComment: true
     };
-
+    
     it('Should get post successfully', async () => {
       postModelMock.findOne.mockResolvedValueOnce({
-        ...postData,
-        toJSON: () => postData,
+        ...mockedPostResponse,
+        toJSON: () => mockedPostResponse,
       });
-      commentService.getComments = jest.fn().mockResolvedValueOnce(mockedComments);
+      jest.spyOn(authorityService, 'checkCanReadPost').mockReturnThis()
+      jest.spyOn(commentService, 'getComments').mockResolvedValueOnce(mockedPostResponse.comments);
+      jest.spyOn(postService, 'bindActorToPost').mockReturnThis;
+      jest.spyOn(postService, 'bindAudienceToPost').mockReturnThis();
+      jest.spyOn(reactionService, 'bindReactionToPosts').mockReturnThis();
+      jest.spyOn(mentionService, 'bindMentionsToPosts').mockReturnThis();
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
-      const result = await postService.getPost(postData.id, mockedUserAuth, getPostDto);
-      expect(result.comments).toStrictEqual(mockedComments);
-      expect(postService.bindActorToPost).toBeCalledWith([postData]);
-      expect(postService.bindAudienceToPost).toBeCalledWith([postData]);
+      const result = await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
+      expect(result.comments).toStrictEqual(mockedPostResponse.comments);
+      expect(postService.bindActorToPost).toBeCalledTimes(1);
+      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
+      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
     });
     it('Post not found', async () => {
       postModelMock.findOne.mockResolvedValueOnce(null);
       try {
-        await postService.getPost(postData.id, mockedUserAuth, getPostDto);
+        await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -949,16 +848,15 @@ describe('PostService', () => {
 
     it('Catch ForbiddenException when access a post in invalid group', async () => {
       postModelMock.findOne.mockResolvedValueOnce({
-        ...postData,
-        toJSON: () => postData,
+        ...mockedPostResponse,
       });
-      authorityService.allowAccess = jest
+      authorityService.checkCanReadPost = jest
         .fn()
         .mockRejectedValueOnce(
           new LogicException('You do not have permission to perform this action !')
         );
       try {
-        await postService.getPost(postData.id, mockedUserAuth, getPostDto);
+        await postService.getPost(mockedPostResponse.id, mockedUserAuth, getPostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -966,16 +864,20 @@ describe('PostService', () => {
   });
 
   describe('bindActorToPost', () => {
-    const posts = [{ createdBy: mockedUsers[0].id, actor: null }];
+    const posts = [{ createdBy: 1, actor: null }];
     it('Should bind actor successfully', async () => {
-      userService.getMany = jest.fn().mockResolvedValueOnce(mockedUsers);
+      userService.getMany = jest.fn().mockResolvedValueOnce([
+        {
+          id:1
+        }
+      ]);
       await postService.bindActorToPost(posts);
-      expect(posts[0].actor).toStrictEqual(mockedUsers[0]);
+      expect(posts[0].actor).toStrictEqual({id:1});
     });
   });
 
   describe('bindCommentsCount', () => {
-    const posts = [{ id: mockedPostList[0].id, commentsCount: 0 }];
+    const posts = [{ id: 1, commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
       await postService.bindCommentsCount(posts);
@@ -1000,4 +902,65 @@ describe('PostService', () => {
       expect(posts[0].audience.groups).toStrictEqual([mockedGroups[0]]);
     });
   });
+
+//   describe('getPostEditedHistory', () => {
+//     it('User not in post groups', async () => {
+//       postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
+//       postService.checkPostOwner = jest
+//         .fn()
+//         .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
+//       postEditedHistoryModelMock.findAndCountAll = jest
+//         .fn()
+//         .mockResolvedValue({ rows: [], count: 0 });
+//       try {
+//         await postService.getPostEditedHistory(
+//           mockUserDto,
+//           mockPostFindOne.id,
+//           mockGetPostEditedHistoryDto
+//         );
+//       } catch (e) {
+//         console.log(e);
+//       }
+//       expect(postService.checkPostOwner).toBeCalledTimes(1);
+//       expect(postService.checkPostOwner).toBeCalledWith(mockUserDto, mockPostFindOne);
+//       expect(postService.findPost).toBeCalledTimes(1);
+//       expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
+//     });
+
+//     it('Post is not published and user is not post owner', async () => {
+//       postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
+//       postEditedHistoryModelMock.findAndCountAll = jest
+//         .fn()
+//         .mockResolvedValue({ rows: [], count: 0 });
+//       try {
+//         await postService.getPostEditedHistory(
+//           { id: mockUserDto.id + 100 },
+//           mockPostFindOne.id,
+//           mockGetPostEditedHistoryDto
+//         );
+//       } catch (e) {
+//         console.log(e);
+//       }
+//       expect(postService.checkPostOwner).toBeCalledTimes(1);
+//       expect(postService.findPost).toBeCalledTimes(1);
+//       expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
+//     });
+
+//     it('All conditions are valid', async () => {
+//       postService.findPost = jest.fn().mockResolvedValue(mockPostFindOne);
+//       postEditedHistoryModelMock.findAndCountAll = jest.fn().mockResolvedValue({
+//         rows: mockPostEditedHistoryFindAndCountAll,
+//         count: mockPostEditedHistoryFindAndCountAll.length,
+//       });
+//       const result = await postService.getPostEditedHistory(
+//         mockUserDto,
+//         mockPostFindOne.id,
+//         mockGetPostEditedHistoryDto
+//       );
+//       expect(result).toEqual(mockGetPostEditedHistoryResult);
+//       expect(postService.checkPostOwner).toBeCalledTimes(1);
+//       expect(postService.findPost).toBeCalledTimes(1);
+//       expect(postService.findPost).toBeCalledWith({ postId: mockPostFindOne.id });
+//     });
+// });
 });

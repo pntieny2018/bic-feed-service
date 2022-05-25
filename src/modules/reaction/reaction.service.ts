@@ -14,7 +14,7 @@ import {
 } from '../../database/models/comment-reaction.model';
 import { LogicException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
-import { LOCK, Op, QueryTypes, Transaction } from 'sequelize';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ReactionCountService } from '../../shared/reaction-count';
@@ -31,8 +31,14 @@ import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/requ
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { FollowService } from '../follow';
+import sequelize from 'sequelize';
+import { NIL as NIL_UUID } from 'uuid';
+import { SentryService } from '../../../libs/sentry/src';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
+const SERIALIZE_TRANSACTION_ERROR =
+  'could not serialize access due to read/write dependencies among transactions';
+const SERIALIZE_TRANSACTION_MAX_ATTEMPT = 3;
 
 @Injectable()
 export class ReactionService {
@@ -55,7 +61,8 @@ export class ReactionService {
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _reactionNotificationService: ReactionActivityService
+    private readonly _reactionNotificationService: ReactionActivityService,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -64,19 +71,28 @@ export class ReactionService {
    * @returns Promise resolve ReactionsResponseDto
    */
   public async getReactions(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
+    const { schema } = getDatabaseConfig();
     const response = new ReactionsResponseDto();
     const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
-    const conditions =
-      latestId === 0
-        ? {}
-        : {
-            id: {
-              [Op.lt]: latestId,
-            },
-          };
+
+    const conditions = {};
+    if (latestId !== NIL_UUID) {
+      conditions['id'] = {
+        [Op.not]: latestId,
+      };
+    }
 
     switch (target) {
       case ReactionEnum.POST:
+        if (latestId !== NIL_UUID) {
+          conditions['createdAt'] = {
+            [Op.gte]: sequelize.literal(
+              `(SELECT pr.created_at FROM ${schema}.posts_reactions AS pr WHERE id=${this._sequelize.escape(
+                latestId
+              )})`
+            ),
+          };
+        }
         const rsp = await this._postReactionModel.findAll({
           where: {
             reactionName: reactionName,
@@ -84,16 +100,25 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
         const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
         return {
           order: order,
           list: await this._bindActorToReaction(reactionsPost),
           limit: limit,
-          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : 0,
+          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : null,
         };
       case ReactionEnum.COMMENT:
+        if (latestId !== NIL_UUID) {
+          conditions['createdAt'] = {
+            [Op.gte]: sequelize.literal(
+              `(SELECT cr.created_at FROM ${schema}.comments_reactions AS cr WHERE id=${this._sequelize.escape(
+                latestId
+              )})`
+            ),
+          };
+        }
         const rsc = await this._commentReactionModel.findAll({
           where: {
             reactionName: reactionName,
@@ -101,16 +126,16 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', order]],
+          order: [['createdAt', 'DESC']],
         });
 
         const reactionsComment = (rsc ?? []).map((r) => r.toJSON());
+
         return {
-          order: order,
           list: await this._bindActorToReaction(reactionsComment),
           limit: limit,
           latestId:
-            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : 0,
+            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : null,
         };
     }
 
@@ -161,13 +186,19 @@ export class ReactionService {
    * Create post reaction
    * @param userDto UserDto
    * @param createReactionDto CreateReactionDto
+   * @param attempt Number
    * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createPostReaction(
     userDto: UserDto,
-    createReactionDto: CreateReactionDto
+    createReactionDto: CreateReactionDto,
+    attempt = 0
   ): Promise<ReactionResponseDto> {
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
+
     this._logger.debug(`[_createPostReaction]: ${JSON.stringify(createReactionDto)}`);
 
     const { id: userId } = userDto;
@@ -178,7 +209,7 @@ export class ReactionService {
         childCommentLimit: 0,
       });
 
-      this._postPolicyService.allow(post, PostAllow.REACT);
+      await this._postPolicyService.allow(post, PostAllow.REACT);
 
       const { schema } = getDatabaseConfig();
       const rc = await this._sequelize.transaction(
@@ -245,7 +276,10 @@ export class ReactionService {
               },
             });
           })
-          .catch((ex) => this._logger.error(ex, ex.stack));
+          .catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
 
         return reaction;
       }
@@ -253,10 +287,16 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
+        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
+        this._sentryService.captureException(e);
         throw new LogicException(e.message);
+      }
+      if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(e);
+        return this._createPostReaction(userDto, createReactionDto, attempt + 1);
       }
 
       throw e;
@@ -267,13 +307,19 @@ export class ReactionService {
    * Create comment reaction
    * @param userDto UserDto
    * @param createReactionDto CreateReactionDto
+   * @param attempt
    * @returns Promise resolve ReactionResponseDto
    * @throws HttpException
    */
   private async _createCommentReaction(
     userDto: UserDto,
-    createReactionDto: CreateReactionDto
+    createReactionDto: CreateReactionDto,
+    attempt = 0
   ): Promise<ReactionResponseDto> {
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
+
     const { id: userId } = userDto;
 
     const { reactionName, targetId: commentId } = createReactionDto;
@@ -293,7 +339,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const { schema } = getDatabaseConfig();
     try {
@@ -329,9 +375,10 @@ export class ReactionService {
           },
         });
 
-        const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+        const type =
+          comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
-        const ownerId = comment.parentId ? comment.parent.actor.id : comment.actor.id;
+        const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
 
         this._followService
           .getValidUserIds(
@@ -366,7 +413,10 @@ export class ReactionService {
               },
             });
           })
-          .catch((ex) => this._logger.error(ex, ex.stack));
+          .catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
 
         return reaction;
       }
@@ -374,11 +424,19 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
+        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
+        this._sentryService.captureException(e);
         throw new LogicException(e.message);
       }
+
+      if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(e);
+        return this._createCommentReaction(userDto, createReactionDto, attempt + 1);
+      }
+
       throw e;
     }
   }
@@ -408,40 +466,46 @@ export class ReactionService {
    * Delete post reaction
    * @param userDto UserDto
    * @param deleteReactionDto DeleteReactionDto
+   * @param attempt
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deletePostReaction(
     userDto: UserDto,
-    deleteReactionDto: DeleteReactionDto
+    deleteReactionDto: DeleteReactionDto,
+    attempt = 0
   ): Promise<IPostReaction> {
     this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
+
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
 
     const post = await this._postService.getPost(deleteReactionDto.targetId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const conditions = {};
 
     if (deleteReactionDto.reactionName) {
       conditions['reactionName'] = deleteReactionDto.reactionName;
-    }
-
-    if (deleteReactionDto.reactionId) {
+    } else if (deleteReactionDto.reactionId) {
       conditions['id'] = deleteReactionDto.reactionId;
     }
 
     const trx = await this._sequelize.transaction({
       isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
     });
+
     try {
       const existedReaction = await this._postReactionModel.findOne({
         where: {
           ...conditions,
           createdBy: userDto.id,
+          postId: deleteReactionDto.targetId,
         },
         transaction: trx,
       });
@@ -449,9 +513,14 @@ export class ReactionService {
       if (!existedReaction) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
       }
+
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._postReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          postId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
       await trx.commit();
@@ -474,7 +543,7 @@ export class ReactionService {
           ),
           post: post,
         },
-        'create'
+        'remove'
       );
 
       this._notificationService.publishReactionNotification({
@@ -491,6 +560,10 @@ export class ReactionService {
       await trx.rollback();
       this._logger.error(ex, ex.message, ex.stack);
 
+      if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(ex);
+        return this._deletePostReaction(userDto, deleteReactionDto, attempt + 1);
+      }
       throw ex;
     }
   }
@@ -499,15 +572,22 @@ export class ReactionService {
    * Delete comment reaction
    * @param userDto UserDto
    * @param deleteReactionDto DeleteReactionDto
+   * @param attempt
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deleteCommentReaction(
     userDto: UserDto,
-    deleteReactionDto: DeleteReactionDto
+    deleteReactionDto: DeleteReactionDto,
+    attempt = 0
   ): Promise<ICommentReaction> {
+    this._logger.debug(`[_deleteCommentReaction]: ${JSON.stringify(deleteReactionDto)},${attempt}`);
+
+    if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
+      throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
+    }
     const { id: userId } = userDto;
-    const { reactionId, targetId } = deleteReactionDto;
+    const { targetId } = deleteReactionDto;
 
     const comment = await this._commentService.findComment(targetId);
 
@@ -524,13 +604,12 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
     }
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const conditions = {};
     if (deleteReactionDto.reactionName) {
       conditions['reactionName'] = deleteReactionDto.reactionName;
-    }
-    if (deleteReactionDto.reactionId) {
+    } else if (deleteReactionDto.reactionId) {
       conditions['id'] = deleteReactionDto.reactionId;
     }
     const trx = await this._sequelize.transaction({
@@ -539,11 +618,11 @@ export class ReactionService {
     try {
       const existedReaction = await this._commentReactionModel.findOne({
         where: {
-          id: reactionId,
+          ...conditions,
           createdBy: userId,
+          commentId: deleteReactionDto.targetId,
         },
         transaction: trx,
-        lock: LOCK.SHARE,
       });
 
       if (!existedReaction) {
@@ -552,13 +631,18 @@ export class ReactionService {
 
       const response = existedReaction.toJSON();
 
-      await existedReaction.destroy({
+      await this._commentReactionModel.destroy({
+        where: {
+          id: existedReaction.id,
+          commentId: deleteReactionDto.targetId,
+        },
         transaction: trx,
       });
 
       await trx.commit();
 
-      const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+      const type =
+        comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
       const actor = {
         id: userId,
@@ -595,20 +679,25 @@ export class ReactionService {
       await trx.rollback();
       this._logger.error(ex, ex.stack);
 
+      if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(ex);
+        return this._deleteCommentReaction(userDto, deleteReactionDto, attempt + 1);
+      }
+
       throw ex;
     }
   }
 
   /**
    * Delete reaction by commentIds
-   * @param commentIds number[]
+   * @param commentIds string[]
    * @returns Promise resolve boolean
    * @throws HttpException
    * @param commentIds
    * @param transaction Transaction
    */
   public async deleteReactionByCommentIds(
-    commentIds: number[],
+    commentIds: string[],
     transaction: Transaction
   ): Promise<number> {
     return this._commentReactionModel.destroy({
@@ -621,11 +710,11 @@ export class ReactionService {
 
   /**
    * Delete reaction by postIds
-   * @param postIds number[]
+   * @param postIds string[]
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteReactionByPostIds(postIds: number[]): Promise<number> {
+  public async deleteReactionByPostIds(postIds: string[]): Promise<number> {
     return this._postReactionModel.destroy({
       where: {
         postId: postIds,
@@ -710,15 +799,23 @@ export class ReactionService {
       raw: true,
     });
     for (const comment of comments) {
-      comment.reactionsCount = reactions.filter((i) => {
-        return i.commentId === comment.id;
-      });
+      const reactionsCount = {};
+      reactions
+        .filter((i) => {
+          return i.commentId === comment.id;
+        })
+        .forEach((v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) }));
+      comment.reactionsCount = reactionsCount;
       //Map reaction to child comment
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
-          cm.reactionsCount = reactions.filter((r) => {
-            return r.commentId === cm.id;
-          });
+          const childRC = {};
+          reactions
+            .filter((r) => {
+              return r.commentId === cm.id;
+            })
+            .forEach((v, i) => (childRC[i] = { [v.reactionName]: parseInt(v.total) }));
+          cm.reactionsCount = childRC;
         }
       }
     }

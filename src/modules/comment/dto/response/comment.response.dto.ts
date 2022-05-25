@@ -7,11 +7,13 @@ import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { MediaService } from '../../../media';
 import { IPost } from '../../../../database/models/post.model';
 import { PageDto } from '../../../../common/dto';
+import { IsUUID } from 'class-validator';
 
 export class CommentResponseDto {
   @ApiProperty()
+  @IsUUID()
   @Expose()
-  public id: number;
+  public id: string;
 
   @ApiProperty()
   @Expose()
@@ -19,25 +21,33 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public edited?: boolean;
+  public edited = false;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'parent_id',
+  })
+  @IsUUID()
   @Expose()
-  public parentId: number;
+  public parentId: string;
 
   @ApiProperty()
   @Expose()
   public parent?: CommentResponseDto;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'post_id',
+  })
+  @IsUUID()
   @Expose()
-  public postId: number;
+  public postId: string;
 
   @ApiProperty()
   @Expose()
   public post?: IPost;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'total_reply',
+  })
   @Expose()
   public totalReply = 0;
 
@@ -45,15 +55,29 @@ export class CommentResponseDto {
   @Expose()
   public content?: string;
 
+  @ApiProperty({
+    name: 'created_at',
+  })
+  @Expose()
+  public giphyId?: string;
+
+  @ApiProperty()
+  @Expose()
+  public giphyUrl?: string;
+
   @ApiProperty()
   @Expose()
   public createdAt?: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'updated_at',
+  })
   @Expose()
   public updatedAt?: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'created_by',
+  })
   @Expose()
   public createdBy?: number;
 
@@ -79,6 +103,7 @@ export class CommentResponseDto {
 
   @ApiProperty({
     type: [ReactionResponseDto],
+    name: 'owner_reactions',
   })
   @Expose()
   public ownerReactions: ReactionResponseDto[] = [];
@@ -88,6 +113,7 @@ export class CommentResponseDto {
     additionalProperties: {
       type: 'object',
     },
+    name: 'reactions_count',
   })
   @Transform(({ value }) => {
     if (value && value !== '1=' && typeof value === 'string') {

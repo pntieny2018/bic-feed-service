@@ -1,26 +1,32 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
+import { IsUUID } from 'class-validator';
 import { UserDataShareDto } from '../../../../shared/user/dto';
 
 @Exclude()
 export class ReactionResponseDto {
   @ApiProperty()
+  @IsUUID()
   @Expose()
-  public id: number;
+  public id: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'reaction_name'
+  })
   @Expose()
   public reactionName: string;
 
   @ApiProperty()
   @Expose()
-  public actor: UserDataShareDto = null;
+  public actor?: UserDataShareDto = null;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'created_at'
+  })
   @Expose()
   public createdAt: Date;
 
-  public constructor(id: number, reactionName: string, actor: UserDataShareDto, createdAt: Date) {
+  public constructor(id: string, reactionName: string, actor: UserDataShareDto, createdAt: Date) {
     this.id = id;
     this.reactionName = reactionName;
     this.actor = actor;

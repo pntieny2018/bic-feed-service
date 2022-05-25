@@ -7,6 +7,7 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FeedPublisherService {
@@ -16,10 +17,11 @@ export class FeedPublisherService {
   public constructor(
     private _followService: FollowService,
     @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
-    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel
+    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel,
+    private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUserNewsFeed(userId: number, postIds: number[]): Promise<void> {
+  public async attachPostsForUserNewsFeed(userId: number, postIds: string[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userId, postIds })}`);
 
     try {
@@ -31,26 +33,26 @@ export class FeedPublisherService {
       );
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
   /**
    * Attach post for any NewsFeed
    * @param userIds Array<Number>
-   * @param postId Array<Number>
+   * @param postId String
    */
-  public async attachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
+  public async attachPostForAnyNewsFeed(userIds: number[], postId: string): Promise<void> {
     this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
     const schema = this._databaseConfig.schema;
     try {
-      const seenPostData = await this._userSeenPostModel.findAll(
-        {
-          where: { postId, userId: { [Op.in]: userIds} }
-        }
-      );
+      const seenPostData = await this._userSeenPostModel.findAll({
+        where: { postId, userId: { [Op.in]: userIds } },
+      });
       const seenPostDataMap = seenPostData.reduce(
-        (dataMap, seenPostRecord) => ({userId: true}),
-        {})
+        (dataMap, seenPostRecord) => ({ userId: true }),
+        {}
+      );
       const data = userIds
         .map((userId) => {
           return `(${userId},${postId}, ${!!seenPostDataMap[userId]})`;
@@ -63,15 +65,16 @@ export class FeedPublisherService {
       );
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
   /**
    * Detach post for any NewsFeed
    * @param userIds Array<Number>
-   * @param postId Array<Number>
+   * @param postId String
    */
-  public async detachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
+  public async detachPostForAnyNewsFeed(userIds: number[], postId: string): Promise<void> {
     this._logger.debug(`[detachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
 
     try {
@@ -85,12 +88,13 @@ export class FeedPublisherService {
       });
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
   protected async processFanout(
     userId: number,
-    postId: number,
+    postId: string,
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
     this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
@@ -140,6 +144,7 @@ export class FeedPublisherService {
         }
       } catch (ex) {
         this._logger.error(ex, ex.stack);
+        this._sentryService.captureException(ex);
         break;
       }
     }
@@ -147,7 +152,7 @@ export class FeedPublisherService {
 
   public fanoutOnWrite(
     createdBy: number,
-    postId: number,
+    postId: string,
     currentGroupIds: number[],
     oldGroupIds: number[]
   ): void {
@@ -155,8 +160,8 @@ export class FeedPublisherService {
       `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
     );
     const differenceGroupIds = [
-      ...ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds),
-      ...ArrayHelper.differenceArrNumber(oldGroupIds, currentGroupIds),
+      ...ArrayHelper.arrDifferenceElements(currentGroupIds, oldGroupIds),
+      ...ArrayHelper.arrDifferenceElements(oldGroupIds, currentGroupIds),
     ];
     this._logger.debug(`[fanoutOnWrite]: differenceGroupIds: ${differenceGroupIds}`);
     if (differenceGroupIds.length) {
@@ -175,7 +180,10 @@ export class FeedPublisherService {
           attached: attachedGroupIds,
           old: oldGroupIds,
           detached: [],
-        }).catch((ex) => this._logger.error(ex, ex.stack));
+        }).catch((ex) => {
+          this._logger.error(ex, ex.stack);
+          this._sentryService.captureException(ex);
+        });
       } else if (detachedGroupIds.length > 0) {
         if (attachedGroupIds.length > 0) {
           this.processFanout(createdBy, postId, {
@@ -185,14 +193,20 @@ export class FeedPublisherService {
               ...detachedGroupIds,
             ],
             detached: [],
-          }).catch((ex) => this._logger.error(ex, ex.stack));
+          }).catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
         }
         if (detachedGroupIds[0] != 0)
           this.processFanout(createdBy, postId, {
             attached: [],
             detached: detachedGroupIds,
             current: currentGroupIds,
-          }).catch((ex) => this._logger.error(ex, ex.stack));
+          }).catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
       }
     }
   }

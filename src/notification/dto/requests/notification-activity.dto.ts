@@ -2,12 +2,13 @@ import { v4 } from 'uuid';
 import { TypeActivity, VerbActivity } from '../../notification.constants';
 
 export class ActivityObject {
-  public id: number;
+  public id: string;
   public actor: ActorObject;
   public setting?: SettingObject;
   public content?: string;
   public media?: MediaObject;
   public mentions?: MentionObject;
+  public reactionsOfActor?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
   public audience: AudienceObject[];
   public comment?: CommentObject;
@@ -51,19 +52,20 @@ export class AudienceObject {
 }
 
 export class ReactionObject {
-  public id: number;
-  public actor: ActorObject;
+  public id: string;
+  public actor?: ActorObject;
   public reactionName: string;
   public createdAt: Date;
 }
 
 export class CommentObject {
-  public id: number;
+  public id: string;
   public actor: ActorObject;
   public content?: string;
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reaction?: ReactionObject;
+  public reactionsOfActor?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
   public child?: CommentObject;
   public createdAt: Date;
@@ -75,6 +77,7 @@ export class NotificationActivity {
   public object: ActivityObject;
   public verb: VerbActivity | string;
   public target: TypeActivity;
+  public ignore?: number[];
   public createdAt: Date;
   public updatedAt: Date;
 

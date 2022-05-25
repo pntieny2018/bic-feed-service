@@ -1,16 +1,17 @@
-import { basename } from 'path';
 import { ApiProperty } from '@nestjs/swagger';
-import { IDocumentMetadata } from './interfaces';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { basename } from 'path';
+import { MediaStatus } from '../../../database/models/media.model';
+import { IDocumentMetadata } from './interfaces';
 
 export class ImageMetadataDto implements IDocumentMetadata {
   @ApiProperty()
-  @Type(() => Number)
-  @IsNumber()
+  @Type(() => String)
+  @IsUUID()
   @IsNotEmpty()
   @Expose()
-  public id: number;
+  public id: string;
 
   @ApiProperty({
     required: true,
@@ -22,6 +23,16 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @Transform((params) => (params.value ? basename(`${params.value}`) : null))
   @Expose()
   public name?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public uploadId?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public status?: MediaStatus;
 
   @ApiProperty({
     required: false,
@@ -36,10 +47,13 @@ export class ImageMetadataDto implements IDocumentMetadata {
     required: false,
     description: 'Origin image name',
     example: 'example.jpg',
+    name: 'origin_name',
   })
   @IsString()
   @IsOptional()
-  @Expose()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 
   @ApiProperty({

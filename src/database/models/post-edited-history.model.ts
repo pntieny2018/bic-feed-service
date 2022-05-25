@@ -1,10 +1,11 @@
+import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import { AllowNull, AutoIncrement, Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 
 export interface IPostEditedHistory {
   id: number;
-  postId: number;
+  postId: string;
   editedAt: Date;
   oldData: PostResponseDto;
   newData: PostResponseDto;
@@ -23,8 +24,9 @@ export class PostEditedHistoryModel
   @Column
   public id: number;
 
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @AllowNull(false)
   @Column

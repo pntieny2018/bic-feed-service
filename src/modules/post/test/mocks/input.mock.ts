@@ -5,7 +5,7 @@ export const mockUserDto: UserDto = {
   id: 33,
 };
 
-export const mockPostFindOne: IPost = {
+export const mockPostFindOne = {
   id: 100,
   createdBy: mockUserDto.id,
   content: 'haha how are you',
@@ -23,7 +23,7 @@ export const mockPostFindOne: IPost = {
       groupId: 3,
     },
   ],
-} as IPost;
+};
 
 export const mockPostEditedHistoryFindAndCountAll = [
   {

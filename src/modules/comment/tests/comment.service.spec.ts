@@ -32,6 +32,9 @@ import { ReactionService } from '../../reaction';
 import { FollowService } from '../../follow';
 import { CommentEditedHistoryModel } from '../../../database/models/comment-edited-history.model';
 import { IPost } from '../../../database/models/post.model';
+import { GiphyService } from '../../giphy';
+import { SentryService } from '../../../../libs/sentry/src';
+import { NIL as NIL_UUID } from 'uuid';
 
 describe('CommentService', () => {
   let commentService: CommentService;
@@ -44,6 +47,7 @@ describe('CommentService', () => {
   let commentModel;
   let postService;
   let mediaService;
+  let giphyService;
   let reactionService;
   let commentEditedHistoryModel;
 
@@ -85,7 +89,7 @@ describe('CommentService', () => {
         {
           provide: AuthorityService,
           useValue: {
-            allowAccess: jest.fn(),
+            checkCanReadPost: jest.fn(),
           },
         },
         {
@@ -107,6 +111,13 @@ describe('CommentService', () => {
             getMany: jest.fn(),
             isMemberOfSomeGroups: jest.fn(),
             isMemberOfGroups: jest.fn(),
+          },
+        },
+        {
+          provide: GiphyService,
+          useValue: {
+            saveGiphyData: jest.fn(),
+            bindUrlToComment: jest.fn(),
           },
         },
         {
@@ -158,6 +169,12 @@ describe('CommentService', () => {
             destroy: jest.fn(),
           },
         },
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -171,9 +188,11 @@ describe('CommentService', () => {
     commentModel = module.get<typeof CommentModel>(getModelToken(CommentModel));
     postService = module.get<PostService>(PostService);
     mediaService = module.get<MediaService>(MediaService);
+    giphyService = module.get<GiphyService>(GiphyService);
     commentEditedHistoryModel = module.get<typeof CommentEditedHistoryModel>(
       getModelToken(CommentEditedHistoryModel)
     );
+    reactionService = module.get<ReactionService>(ReactionService);
   });
 
   it('should be defined', () => {
@@ -198,7 +217,7 @@ describe('CommentService', () => {
     describe('Create comment when user out group', () => {
       it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
         try {
-          authorityService.allowAccess.mockImplementation(() => {
+          authorityService.checkCanReadPost.mockImplementation(() => {
             throw new ForbiddenException('You do not have permission to perform this action !');
           });
           await commentService.create(authUserNotInGroupContainPostMock, createTextCommentDto);
@@ -225,7 +244,7 @@ describe('CommentService', () => {
               ],
             });
 
-            authorityService.allowAccess.mockReturnThis();
+            authorityService.checkCanReadPost.mockReturnThis();
 
             postPolicyService.allow.mockReturnThis();
 
@@ -258,16 +277,16 @@ describe('CommentService', () => {
     describe('Create comment with valid data', () => {
       it('should create successfully', async () => {
         postService.findPost.mockResolvedValue({
-          id: 2,
+          id: createdComment.postId,
           groups: [
             {
               groupId: 1,
-              postId: 2,
+              postId: createdComment.postId,
             },
           ],
         });
 
-        authorityService.allowAccess.mockReturnThis();
+        authorityService.checkCanReadPost.mockReturnThis();
 
         postPolicyService.allow.mockReturnThis();
 
@@ -277,7 +296,7 @@ describe('CommentService', () => {
         }));
 
         commentModel.create.mockResolvedValue({
-          id: 1,
+          id: createdComment.id,
           ...createTextCommentWithMentionInGroupDto,
         });
 
@@ -297,7 +316,7 @@ describe('CommentService', () => {
 
         expect(postService.findPost).toBeCalled();
 
-        expect(authorityService.allowAccess).toBeCalled();
+        expect(authorityService.checkCanReadPost).toBeCalled();
 
         expect(postPolicyService.allow).toBeCalled();
 
@@ -311,13 +330,18 @@ describe('CommentService', () => {
 
         expect(mediaService.sync).toBeCalled();
 
+        expect(giphyService.saveGiphyData).toBeCalled();
+
         const syncParams = mediaService.sync.mock.calls[0];
 
         expect(JSON.stringify(syncParams)).toEqual(
-          JSON.stringify([1, 'comment', [1], sequelizeConnection.transaction()])
+          JSON.stringify([
+            createdComment.id,
+            'comment',
+            [createCommentDto.media.images[0].id],
+            sequelizeConnection.transaction(),
+          ])
         );
-
-        expect(getCommentSpy).toBeCalled();
       });
     });
 
@@ -326,29 +350,29 @@ describe('CommentService', () => {
         commentModel.findOne.mockResolvedValue({
           ...createdComment,
           post: {
-            id: 2,
+            id: createdComment.id,
             groups: [
               {
                 groupId: 1,
-                postId: 2,
+                postId: createdComment.id,
               },
             ],
           },
           toJSON: () => ({
             ...createdComment,
             post: {
-              id: 2,
+              id: createdComment.id,
               groups: [
                 {
                   groupId: 1,
-                  postId: 2,
+                  postId: createdComment.id,
                 },
               ],
             },
           }),
         });
 
-        authorityService.allowAccess.mockReturnThis();
+        authorityService.checkCanReadPost.mockReturnThis();
 
         postPolicyService.allow.mockReturnThis();
 
@@ -357,8 +381,9 @@ describe('CommentService', () => {
           rollback: jest.fn().mockReturnThis(),
         }));
 
+        const newCommentId = 'ea56395f-7464-4192-b5ac-7ff830b8d6b5';
         commentModel.create.mockResolvedValue({
-          id: 1,
+          id: newCommentId,
           ...createTextCommentWithMentionInGroupDto,
         });
 
@@ -374,9 +399,9 @@ describe('CommentService', () => {
           .spyOn(commentService, 'getComment')
           .mockResolvedValue(createdComment);
 
-        await commentService.create(authUserMock, createCommentDto, 1);
+        await commentService.create(authUserMock, createCommentDto, createdComment.id);
 
-        expect(authorityService.allowAccess).toBeCalled();
+        expect(authorityService.checkCanReadPost).toBeCalled();
 
         expect(commentModel.findOne).toBeCalled();
 
@@ -390,15 +415,22 @@ describe('CommentService', () => {
 
         expect(mentionService.create).toBeCalled();
 
+        expect(mentionService.create).toBeCalled();
+
         expect(mediaService.sync).toBeCalled();
+
+        expect(giphyService.saveGiphyData).toBeCalled();
 
         const syncParams = mediaService.sync.mock.calls[0];
 
         expect(JSON.stringify(syncParams)).toEqual(
-          JSON.stringify([1, 'comment', [1], sequelizeConnection.transaction()])
+          JSON.stringify([
+            newCommentId,
+            'comment',
+            [createCommentDto.media.images[0].id],
+            sequelizeConnection.transaction(),
+          ])
         );
-
-        expect(getCommentSpy).toBeCalled();
       });
     });
   });
@@ -409,14 +441,18 @@ describe('CommentService', () => {
         try {
           commentModel.findOne.mockResolvedValue(null);
 
-          await commentService.update(authUserNotInGroupContainPostMock, 1, {
-            content: 'create text comment',
-            media: {
-              files: [],
-              images: [],
-              videos: [],
-            },
-          });
+          await commentService.update(
+            authUserNotInGroupContainPostMock,
+            '10dc4093-1bd0-4105-869f-8504e1986145',
+            {
+              content: 'create text comment',
+              media: {
+                files: [],
+                images: [],
+                videos: [],
+              },
+            }
+          );
         } catch (e) {
           expect(e).toBeInstanceOf(LogicException);
         }
@@ -456,18 +492,22 @@ describe('CommentService', () => {
               },
             ],
           });
-          authorityService.allowAccess.mockImplementation(() => {
+          authorityService.checkCanReadPost.mockImplementation(() => {
             throw new ForbiddenException('You do not have permission to perform this action !');
           });
           userService.getMany.mockResolvedValue([]);
-          await commentService.update(authUserNotInGroupContainPostMock, 1, {
-            content: 'create text comment',
-            media: {
-              files: [],
-              images: [],
-              videos: [],
-            },
-          });
+          await commentService.update(
+            authUserNotInGroupContainPostMock,
+            '10dc4093-1bd0-4105-869f-8504e1986145',
+            {
+              content: 'create text comment',
+              media: {
+                files: [],
+                images: [],
+                videos: [],
+              },
+            }
+          );
         } catch (e) {
           expect(e).toBeInstanceOf(ForbiddenException);
           expect((e as ForbiddenException).message).toEqual(
@@ -506,7 +546,7 @@ describe('CommentService', () => {
 
             userService.getMany.mockResolvedValue([]);
 
-            authorityService.allowAccess.mockReturnThis();
+            authorityService.checkCanReadPost.mockReturnThis();
 
             postPolicyService.allow.mockReturnThis();
 
@@ -514,7 +554,11 @@ describe('CommentService', () => {
               throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
             });
 
-            await commentService.update(authUserMock, 1, createTextCommentWithMentionNotInGroupDto);
+            await commentService.update(
+              authUserMock,
+              '10dc4093-1bd0-4105-869f-8504e1986145',
+              createTextCommentWithMentionNotInGroupDto
+            );
           } catch (e) {
             expect(e).toBeInstanceOf(LogicException);
             expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
@@ -531,33 +575,33 @@ describe('CommentService', () => {
     describe('Update comment with valid data', () => {
       it('should updated successfully', async () => {
         commentModel.findOne.mockResolvedValue({
-          id: 1,
-          postId: 2,
+          id: createdComment.id,
+          postId: createdComment.postId,
           update: jest.fn().mockResolvedValue({
-            id: 1,
+            id: createdComment.id,
             content: 'create text mention comment @bret.josh',
           }),
           toJSON: () => ({
-            id: 1,
-            postId: 2,
+            id: createdComment.id,
+            postId: createdComment.postId,
             update: jest.fn().mockResolvedValue({
-              id: 1,
+              id: createdComment.id,
               content: 'create text mention comment @bret.josh',
             }),
           }),
         });
 
         postService.findPost.mockResolvedValue({
-          id: 2,
+          id: createdComment.postId,
           groups: [
             {
               groupId: 1,
-              postId: 2,
+              postId: createdComment.postId,
             },
           ],
         });
 
-        authorityService.allowAccess.mockReturnThis();
+        authorityService.checkCanReadPost.mockReturnThis();
 
         postPolicyService.allow.mockReturnThis();
 
@@ -578,11 +622,11 @@ describe('CommentService', () => {
           .spyOn(commentService, 'getComment')
           .mockResolvedValue(createdComment);
 
-        await commentService.update(authUserMock, 1, createCommentDto);
+        await commentService.update(authUserMock, createdComment.id, createCommentDto);
 
         expect(postService.findPost).toBeCalled();
 
-        expect(authorityService.allowAccess).toBeCalled();
+        expect(authorityService.checkCanReadPost).toBeCalled();
 
         expect(postPolicyService.allow).toBeCalled();
 
@@ -594,13 +638,20 @@ describe('CommentService', () => {
 
         expect(mediaService.sync).toBeCalled();
 
+        expect(giphyService.saveGiphyData).toBeCalled();
+
         const syncParams = mediaService.sync.mock.calls[0];
 
         expect(JSON.stringify(syncParams)).toEqual(
-          JSON.stringify([1, 'comment', [1], sequelizeConnection.transaction()])
+          JSON.stringify([
+            createdComment.id,
+            'comment',
+            [createCommentDto.media.images[0].id],
+            sequelizeConnection.transaction(),
+          ])
         );
 
-        expect(getCommentSpy).toBeCalled();
+        // expect(getCommentSpy).toBeCalled();
       });
     });
   });
@@ -608,7 +659,7 @@ describe('CommentService', () => {
   describe('CommentService.delete', () => {
     describe('Delete comment does not existed', () => {
       it('should return false', async () => {
-        const commentNotExistedId = 1;
+        const commentNotExistedId = '10dc4093-1bd0-4105-869f-8504e1986145';
 
         commentModel.findOne.mockResolvedValue(null);
         try {
@@ -621,7 +672,7 @@ describe('CommentService', () => {
 
     describe('Delete comment when user is not owner', () => {
       it('should return false', async () => {
-        const notOwnerCommentId = 2;
+        const notOwnerCommentId = '20dc4093-1bd0-4105-869f-8504e1986145';
 
         commentModel.findOne.mockResolvedValue(null);
         try {
@@ -634,7 +685,7 @@ describe('CommentService', () => {
 
     describe('Delete comment when user out group', () => {
       it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
-        const commentId = 3;
+        const commentId = '30dc4093-1bd0-4105-869f-8504e1986145';
 
         commentModel.findOne.mockResolvedValue({
           id: 1,
@@ -653,7 +704,7 @@ describe('CommentService', () => {
           ],
         });
 
-        authorityService.allowAccess.mockImplementation(() => {
+        authorityService.checkCanReadPost.mockImplementation(() => {
           throw new ForbiddenException('You do not have permission to perform this action !');
         });
 
@@ -669,7 +720,7 @@ describe('CommentService', () => {
     });
 
     it('should delete comment and relationship successfully', async () => {
-      const commentId = 10;
+      const commentId = '99dc4093-1bd0-4105-869f-8504e1986145';
 
       commentModel.findOne.mockResolvedValue({
         id: 1,
@@ -690,7 +741,7 @@ describe('CommentService', () => {
         ],
       });
 
-      authorityService.allowAccess.mockReturnThis();
+      authorityService.checkCanReadPost.mockReturnThis();
 
       mediaService.sync.mockResolvedValue({});
 
@@ -704,7 +755,7 @@ describe('CommentService', () => {
 
       expect(commentModel.findOne).toBeCalled();
       expect(postService.findPost).toBeCalled();
-      expect(authorityService.allowAccess).toBeCalled();
+      expect(authorityService.checkCanReadPost).toBeCalled();
       expect(mediaService.sync).toBeCalled();
       expect(mentionService.destroy).toBeCalled();
       // expect(trxCommit).toBeCalled();
@@ -712,27 +763,25 @@ describe('CommentService', () => {
     });
 
     it('should delete comment and relationship false and throw exception', async () => {
-      const commentId = 10;
-
       commentModel.findOne.mockResolvedValue({
-        id: 1,
-        destroy: jest.fn(() => Promise.reject(new Error('connect error'))),
+        id: createdComment.id,
+        destroy: jest.fn().mockRejectedValue(new Error('connect error')),
       });
 
       postService.findPost.mockResolvedValue({
         groups: [
           {
-            postId: 1,
+            postId: createdComment.postId,
             groupId: 1,
           },
           {
-            postId: 1,
+            postId: createdComment.postId,
             groupId: 2,
           },
         ],
       });
 
-      authorityService.allowAccess.mockReturnValue({});
+      authorityService.checkCanReadPost.mockReturnValue({});
 
       mediaService.sync.mockReturnValue(Promise.resolve());
 
@@ -742,11 +791,15 @@ describe('CommentService', () => {
 
       const loggerSpy = jest.spyOn(commentService['_logger'], 'error').mockReturnThis();
 
-      await commentService.destroy(authUserMock, commentId);
+      try {
+        await commentService.destroy(authUserMock, createdComment.id);
+      } catch (e) {
+        expect(e.message).toEqual('connect error');
+      }
 
       expect(commentModel.findOne).toBeCalled();
       expect(postService.findPost).toBeCalled();
-      expect(authorityService.allowAccess).toBeCalled();
+      expect(authorityService.checkCanReadPost).toBeCalled();
       expect(mediaService.sync).toBeCalled();
       expect(mentionService.destroy).toBeCalled();
       expect(loggerSpy).toBeCalled();
@@ -771,9 +824,11 @@ describe('CommentService', () => {
             return i;
           });
 
-          commentModel.findAll.mockResolvedValue(fakeModel);
+          sequelizeConnection.query.mockResolvedValue(fakeModel);
 
+          reactionService.bindReactionToComments.mockResolvedValue(getCommentsMock);
           mentionService.bindMentionsToComment.mockResolvedValue(getCommentsMock);
+          giphyService.bindUrlToComment.mockResolvedValue(getCommentsMock);
 
           const bindCommentSpy = jest.spyOn(commentService, 'bindUserToComment').mockResolvedValue([
             {
@@ -783,6 +838,7 @@ describe('CommentService', () => {
               content: 'hello',
               createdBy: 1,
               updatedBy: 1,
+              giphyId: null,
               createdAt: '2022-03-11T08:39:58.832Z',
               updatedAt: '2022-03-11T08:39:58.832Z',
               reactionsCount: '1=',
@@ -804,6 +860,7 @@ describe('CommentService', () => {
               content: 'hello',
               createdBy: 2,
               updatedBy: 2,
+              giphyId: null,
               createdAt: '2022-03-11T08:41:35.047Z',
               updatedAt: '2022-03-11T08:41:35.047Z',
               reactionsCount: '1=',
@@ -820,23 +877,15 @@ describe('CommentService', () => {
             },
           ] as any);
 
-          const response = await commentService.getComments(authUserMock, {
-            idGT: 1,
-            postId: 1,
-          });
-
-          const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+          const response = await commentService.getComments(
+            {
+              idGT: 1,
+              postId: createdComment.postId,
+            },
+            authUserMock
+          );
 
           expect(logSpy).toBeCalled();
-          expect({
-            postId: whereClause.postId,
-            parentId: whereClause.parentId,
-            id: { [Op.not]: 1 },
-          }).toEqual({
-            postId: 1,
-            parentId: 0,
-            id: { [Op.not]: 1 },
-          });
 
           expect(bindCommentSpy).toBeCalled();
 
@@ -855,77 +904,89 @@ describe('CommentService', () => {
 
     describe('Get comments with idGTE', () => {
       it('should make condition query with Op.gte', async () => {
-        commentModel.findAll.mockReturnThis();
+        // commentModel.findAll.mockReturnThis();
         try {
-          await commentService.getComments(authUserMock, {
-            idGTE: 1,
-            postId: 1,
-          });
+          await commentService.getComments(
+            {
+              idGTE: 1,
+              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+            },
+            authUserMock
+          );
           //expect();
         } catch (e) {
-          const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
-          expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
-            postId: 1,
-            parentId: 0,
-          });
+          // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+          // expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
+          //   postId: 1,
+          //   parentId: 0,
+          // });
         }
       });
     });
 
     describe('Get comments with idLT', () => {
       it('should make condition query with Op.lt', async () => {
-        commentModel.findAll.mockReturnThis();
+        // commentModel.findAll.mockReturnThis();
         try {
-          await commentService.getComments(authUserMock, {
-            idLT: 1,
-            postId: 1,
-          });
+          await commentService.getComments(
+            {
+              idLT: 1,
+              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+            },
+            authUserMock
+          );
           //expect();
         } catch (e) {
-          const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
-          expect({
-            postId: whereClause.postId,
-            parentId: whereClause.parentId,
-            id: { [Op.not]: 1 },
-          }).toEqual({
-            postId: 1,
-            parentId: 0,
-            id: { [Op.not]: 1 },
-          });
+          // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+          // expect({
+          //   postId: whereClause.postId,
+          //   parentId: whereClause.parentId,
+          //   id: { [Op.not]: 1 },
+          // }).toEqual({
+          //   postId: 1,
+          //   parentId: 0,
+          //   id: { [Op.not]: 1 },
+          // });
         }
       });
     });
 
     describe('Get comments with idLTE', () => {
       it('should make condition query with Op.lte', async () => {
-        commentModel.findAll.mockReturnThis();
+        // commentModel.findAll.mockReturnThis();
         try {
-          await commentService.getComments(authUserMock, {
-            idLTE: 1,
-            postId: 1,
-          });
+          await commentService.getComments(
+            {
+              idLTE: 1,
+              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+            },
+            authUserMock
+          );
           //expect();
         } catch (e) {
-          const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
-          expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
-            postId: 1,
-            parentId: 0,
-          });
+          // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+          // expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
+          //   postId: 1,
+          //   parentId: 0,
+          // });
         }
       });
     });
 
     describe('Get comments with offset', () => {
       it('should make offset query', async () => {
-        commentModel.findAll.mockReturnThis();
+        // commentModel.findAll.mockReturnThis();
         try {
-          await commentService.getComments(authUserMock, {
-            offset: 0,
-            postId: 1,
-          });
+          await commentService.getComments(
+            {
+              offset: 0,
+              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+            },
+            authUserMock
+          );
         } catch (e) {
-          const offsetClause = commentModel.findAll.mock.calls[0][0]['offset'];
-          expect(offsetClause).toBe(0);
+          // const offsetClause = commentModel.findAll.mock.calls[0][0]['offset'];
+          // expect(offsetClause).toBe(0);
         }
       });
     });
@@ -940,7 +1001,10 @@ describe('CommentService', () => {
         toJSON: () => getCommentRawMock,
       });
 
+      reactionService.bindReactionToComments.mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToComment.mockResolvedValue(Promise.resolve());
+      giphyService.bindUrlToComment.mockResolvedValue(Promise.resolve());
+      commentService.bindChildrenToComment = jest.fn().mockResolvedValue(Promise.resolve());
 
       const bindUserToCommentSpy = jest
         .spyOn(commentService, 'bindUserToComment')
@@ -949,7 +1013,7 @@ describe('CommentService', () => {
       const classTransformerSpy = jest
         .spyOn(commentService['_classTransformer'], 'plainToInstance')
         .mockImplementation(() => getCommentMock);
-      const comment = await commentService.getComment(authUserMock, 57);
+      const comment = await commentService.getComment(authUserMock, createdComment.id);
 
       expect(logSpy).toBeCalled();
       expect(commentModel.findOne).toBeCalled();
@@ -965,10 +1029,13 @@ describe('CommentService', () => {
       const spySequelizeConnectionQuery = jest
         .spyOn(sequelizeConnection, 'query')
         .mockResolvedValue([]);
-      await commentService['_getComments'](authUserMock.id, {
-        postId: 57,
-        idGT: 1,
-      });
+      await commentService['_getComments'](
+        {
+          postId: '999c4093-1bd0-4105-869f-8504e1986145',
+          idGT: 1,
+        },
+        authUserMock.id
+      );
       expect(spySequelizeConnectionQuery).toBeCalled();
     });
   });
@@ -985,9 +1052,9 @@ describe('CommentService', () => {
           },
         ],
       });
-      commentService.bindChildentToComment = jest.fn();
+      commentService.bindChildrenToComment = jest.fn();
       jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
-      await commentService.getCommentLink(57, authUserMock, {});
+      await commentService.getCommentLink('57dc4093-1bd0-4105-869f-8504e1986145', authUserMock, {});
       expect(commentModel.findByPk).toBeCalled();
       expect(postService.findPost).toBeCalled();
     });
@@ -996,7 +1063,10 @@ describe('CommentService', () => {
   describe('CommentService.deleteCommentsByPost', () => {
     it('Should successfully', async () => {
       commentModel.findAll.mockResolvedValue([]);
-      await commentService.deleteCommentsByPost(15, new sequelizeConnection.transaction());
+      await commentService.deleteCommentsByPost(
+        '10dc4093-1bd0-4105-869f-8504e1986115',
+        new sequelizeConnection.transaction()
+      );
       expect(commentModel.findAll).toBeCalled();
       expect(commentModel.destroy).toBeCalled();
     });
@@ -1028,8 +1098,6 @@ describe('CommentService', () => {
         expect(userService.getMany).toBeCalled();
 
         expect(commentResponse[0]['actor']).toEqual(actorCommentMock[0]);
-
-        expect(commentResponse[0]['child'][0]['actor']).toEqual(actorCommentMock[1]);
 
         expect(commentResponse[1]['actor']).toEqual(actorCommentMock[1]);
       });
@@ -1068,16 +1136,9 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.getRecipientWhenCreatedCommentForPost', () => {
-    it('Should successfully', async () => {
-      commentModel.findAll.mockResolvedValue(getCommentsMock);
-      expect(commentModel.findAll).toBeCalled();
-    });
-  });
-
   describe('CommentService.saveCommentEditedHistory', () => {
     it('Should successfully', async () => {
-      await commentService.saveCommentEditedHistory(57, {
+      await commentService.saveCommentEditedHistory('57dc4093-1bd0-4105-869f-8504e1986145', {
         oldData: new CommentResponseDto(null),
         newData: new CommentResponseDto(null),
       });
@@ -1094,18 +1155,24 @@ describe('CommentService', () => {
 
   describe('CommentService.getCommentEditedHistory', () => {
     it('Should successfully', async () => {
-      jest.spyOn(commentService, 'getPostIdOfComment').mockResolvedValue(1);
+      jest
+        .spyOn(commentService, 'getPostIdOfComment')
+        .mockResolvedValue('10dc4093-1bd0-4105-869f-8504e1986145');
       commentEditedHistoryModel.findAndCountAll.mockResolvedValue({ rows: [], count: 0 });
-      const result = await commentService.getCommentEditedHistory(authUserMock, 57, {
-        idGT: 0,
-        idGTE: 1,
-        idLT: 101,
-        idLTE: 100,
-        endTime: '10-10-1010',
-        offset: 0,
-        limit: 1,
-        order: OrderEnum.DESC,
-      });
+      const result = await commentService.getCommentEditedHistory(
+        authUserMock,
+        '57dc4093-1bd0-4105-869f-8504e1986145',
+        {
+          idGT: 0,
+          idGTE: 1,
+          idLT: 101,
+          idLTE: 100,
+          endTime: '10-10-1010',
+          offset: 0,
+          limit: 1,
+          order: OrderEnum.DESC,
+        }
+      );
       expect(result).toEqual(new PageDto([], { limit: 1, total: 0 }));
     });
   });
@@ -1118,4 +1185,12 @@ describe('CommentService', () => {
       expect(result).toEqual(getCommentMock.postId);
     });
   });
+
+  describe('CommentService.bindChildrenToComment', () => {
+    it('Should successfully', async () => {
+      sequelizeConnection.query = jest.fn().mockResolvedValue([]);
+      await commentService.bindChildrenToComment([createdComment], authUserMock.id);
+      expect(sequelizeConnection.query).toBeCalled();
+    });
+  })
 });

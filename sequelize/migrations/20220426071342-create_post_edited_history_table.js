@@ -14,7 +14,7 @@ module.exports = {
           type: Sequelize.INTEGER,
         },
         post_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
         },
         edited_at: {

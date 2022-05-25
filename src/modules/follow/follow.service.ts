@@ -9,6 +9,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
 import { ArrayHelper } from '../../common/helpers';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FollowService {
@@ -19,7 +20,8 @@ export class FollowService {
   public constructor(
     @InjectConnection() private _sequelize: Sequelize,
     private _eventEmitter: InternalEventEmitterService,
-    @InjectModel(FollowModel) private _followModel: typeof FollowModel
+    @InjectModel(FollowModel) private _followModel: typeof FollowModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -38,9 +40,21 @@ export class FollowService {
           }))
         )
         .flat();
-      await this._followModel.bulkCreate(bulkCreateData);
+
+      const insertData = bulkCreateData
+        .map((record) => {
+          return `(${record.userId},${record.groupId})`;
+        })
+        .join(',');
+
+      await this._followModel.sequelize.query(
+        `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id) 
+             VALUES ${insertData} ON CONFLICT (user_id,post_id) DO NOTHING;`
+      );
+
       this._eventEmitter.emit(new UsersHasBeenFollowedEvent(createFollowDto));
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
     }
   }
@@ -63,6 +77,7 @@ export class FollowService {
       });
       this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
     }
   }
@@ -81,7 +96,7 @@ export class FollowService {
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
-    return ArrayHelper.differenceArrNumber(userIds, targetIds);
+    return ArrayHelper.arrDifferenceElements(userIds, targetIds);
   }
 
   /**
@@ -141,7 +156,7 @@ export class FollowService {
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-
+      this._sentryService.captureException(ex);
       return {
         userIds: [],
         latestFollowId: 0,
@@ -203,7 +218,7 @@ export class FollowService {
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-
+      this._sentryService.captureException(ex);
       return {
         userIds: [],
         latestFollowId: 0,

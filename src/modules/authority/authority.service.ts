@@ -4,14 +4,45 @@ import { GroupService } from '../../shared/group';
 import { IPost } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-
+import { GroupPrivacy } from '../../shared/group/dto';
 @Injectable()
 export class AuthorityService {
   public constructor(private _groupService: GroupService) {}
 
-  public allowAccess(user: UserDto, post: IPost): void {
-    const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
+  public async checkPublicPost(post: IPost): Promise<void> {
+    const groupIds = (post.groups ?? []).map((g) => g.groupId);
+    const groups = await this._groupService.getMany(groupIds);
+    let isPublic = false;
+    groups.forEach((g) => {
+      if (g.privacy === GroupPrivacy.PUBLIC) {
+        isPublic = true;
+        return;
+      }
+    });
 
+    if (!isPublic) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
+  }
+
+  public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
+    const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
+  }
+
+  public checkCanCreatePost(user: UserDto, groupAudienceIds: number[]): void {
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
+  }
+
+  public checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 

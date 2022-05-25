@@ -11,8 +11,8 @@ module.exports = {
       {
         id: {
           primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.literal("gen_random_uuid()")
         },
         mentionable_type: {
           type: Sequelize.ENUM,
@@ -20,7 +20,7 @@ module.exports = {
           allowNull: false,
         },
         entity_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
         },
         user_id: {

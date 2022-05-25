@@ -1,15 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RedisModule } from '@app/redis';
-import { UserModule } from '../shared/user';
-import { PostModule } from '../modules/post';
-import { DatabaseModule } from '../database';
-import { GroupModule } from '../shared/group';
-import { MediaModule } from '../modules/media';
 import { IRedisConfig } from '../config/redis';
-import { SeedCommand } from './seed/seed.command';
 import { configs } from '../config/configuration';
-import { MentionModule } from '../modules/mention';
-import { CommentModule } from '../modules/comment';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { InternalEventEmitterModule } from '../app/custom/event-emitter';
@@ -49,7 +41,6 @@ import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
       inject: [ConfigService],
     }),
     InternalEventEmitterModule,
-    DatabaseModule,
     FeedPublisherModule,
     // CommentModule,
     // PostModule,

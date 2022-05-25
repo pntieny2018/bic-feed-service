@@ -1,16 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { MediaStatus } from '../../../database/models/media.model';
 import { IDocumentMetadata } from './interfaces';
-import { basename } from 'path';
 
 export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
-  @Type(() => Number)
-  @IsNumber()
+  @Type(() => String)
+  @IsUUID()
   @IsNotEmpty()
   @Expose()
-  public id: number;
+  public id: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public uploadId?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public status?: MediaStatus;
 
   @ApiProperty({
     required: true,
@@ -18,7 +28,7 @@ export class VideoMetadataDto implements IDocumentMetadata {
     example: 'ba7339bc-5204-4009-9d43-89b6d2787747.mp4',
   })
   @IsString()
-  @Transform((params) => basename(params.value))
+  //@Transform((params) => basename(params.value) ?? params.value)
   @IsOptional()
   @Expose()
   public name?: string;
@@ -36,9 +46,12 @@ export class VideoMetadataDto implements IDocumentMetadata {
     required: false,
     description: 'Origin video name',
     example: 'example.mp4',
+    name: 'origin_name',
   })
   @IsString()
   @IsOptional()
-  @Expose()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 }

@@ -1,27 +1,21 @@
-import { Op } from 'sequelize';
-import { UserDto } from '../auth';
-import { MentionService } from '../mention';
-import { ReactionService } from '../reaction';
-import { GetTimelineDto } from './dto/request';
-import { GroupService } from '../../shared/group';
-import { PostService } from '../post/post.service';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { PostResponseDto } from '../post/dto/responses';
+import { Op, Sequelize, Transaction } from 'sequelize';
+import { SentryService } from '../../../libs/sentry/src';
+import { PageDto } from '../../common/dto';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
-import { QueryTypes, Sequelize, Transaction } from 'sequelize';
-import { MediaModel } from '../../database/models/media.model';
-import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { MentionModel } from '../../database/models/mention.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { Inject, Logger, Injectable, forwardRef, BadRequestException } from '@nestjs/common';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { GroupService } from '../../shared/group';
+import { UserDto } from '../auth';
+import { MentionService } from '../mention';
+import { PostResponseDto } from '../post/dto/responses';
+import { PostService } from '../post/post.service';
+import { ReactionService } from '../reaction';
+import { GetTimelineDto } from './dto/request';
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 
 @Injectable()
 export class FeedService {
@@ -40,7 +34,8 @@ export class FeedService {
     private _userSeenPostModel: typeof UserSeenPostModel,
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
-    private _sequelizeConnection: Sequelize
+    private _sequelizeConnection: Sequelize,
+    private _sentryService: SentryService
   ) {}
 
   /**
@@ -54,14 +49,14 @@ export class FeedService {
     const { limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
-      const constraints = FeedService._getIdConstrains(getNewsFeedDto);
+      const constraints = this._getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
       );
       let importantPostsExc = Promise.resolve([]);
       if (offset < totalImportantPosts) {
-        importantPostsExc = this._getNewsFeedData({
+        importantPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           limit: limit + 1,
           authUserId,
@@ -71,7 +66,7 @@ export class FeedService {
 
       let normalPostsExc = Promise.resolve([]);
       if (offset + limit >= totalImportantPosts) {
-        normalPostsExc = this._getNewsFeedData({
+        normalPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
           limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
@@ -88,7 +83,7 @@ export class FeedService {
         const unSeenCount = await this._newsFeedModel.count({
           where: { isSeenPost: false, userId: authUserId },
         });
-        normalSeenPost = await this._getNewsFeedData({
+        normalSeenPost = await PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - unSeenCount),
           limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
@@ -119,6 +114,7 @@ export class FeedService {
       });
     } catch (e) {
       this._logger.error(e, e.stack);
+      this._sentryService.captureException(e);
       return new PageDto<PostResponseDto>([], {
         limit,
         offset,
@@ -142,6 +138,7 @@ export class FeedService {
       );
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
     }
   }
 
@@ -158,9 +155,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = [groupId, ...group.child].filter((groupId) =>
-      authUser.profile.groups.includes(groupId)
-    );
+    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,
@@ -169,16 +164,16 @@ export class FeedService {
       });
     }
     const authUserId = authUser.id;
-    const constraints = FeedService._getIdConstrains(getTimelineDto);
+    const constraints = this._getIdConstrains(getTimelineDto);
 
-    const totalImportantPosts = await this._postService.getTotalImportantPostInGroups(
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
       authUserId,
       groupIds,
       constraints
     );
     let importantPostsExc = Promise.resolve([]);
     if (offset < totalImportantPosts) {
-      importantPostsExc = this._getTimelineData({
+      importantPostsExc = PostModel.getTimelineData({
         ...getTimelineDto,
         limit: limit + 1,
         groupIds,
@@ -188,7 +183,7 @@ export class FeedService {
     }
     let normalPostsExc = Promise.resolve([]);
     if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = this._getTimelineData({
+      normalPostsExc = PostModel.getTimelineData({
         ...getTimelineDto,
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
@@ -224,30 +219,42 @@ export class FeedService {
    * @param getTimelineDto GetTimelineDto
    * @returns object
    */
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+  private _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+    const { schema } = getDatabaseConfig();
+    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
     let constraints = '';
-    if (getTimelineDto.idGT) {
-      constraints += 'AND p.id > :idGT';
+    if (idGT) {
+      constraints += `AND p.id != ${this._sequelizeConnection.escape(idGT)}`;
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idGTE) {
-      constraints += 'AND p.id >= :idGTE';
+    if (idGTE) {
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idLT) {
-      constraints += 'AND p.id < :idLT';
+    if (idLT) {
+      constraints += `AND p.id != ${this._sequelizeConnection.escape(idLT)}`;
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idLT
+      )})`;
     }
-    if (getTimelineDto.idLTE) {
-      constraints += 'AND p.id <= :idLTE';
+    if (idLTE) {
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idLT
+      )})`;
     }
     return constraints;
   }
 
   /**
    * Delete newsfeed by post
-   * @param postId number
+   * @param postId string
    * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: number, transaction: Transaction): Promise<number> {
+  public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 
@@ -351,209 +358,5 @@ export class FeedService {
       }
     });
     return result;
-  }
-
-  private async _getTimelineData({
-    authUser,
-    groupIds,
-    isImportant,
-    idGT,
-    idGTE,
-    idLT,
-    idLTE,
-    offset,
-    limit,
-    order,
-  }: {
-    authUser: UserDto;
-    groupIds: number[];
-    isImportant: boolean;
-    idGT?: number;
-    idGTE?: any;
-    idLT?: any;
-    idLTE?: any;
-    offset?: number;
-    limit?: number;
-    order?: OrderEnum;
-  }): Promise<any[]> {
-    let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
-    const mentionTable = MentionModel.tableName;
-    const postReactionTable = PostReactionModel.tableName;
-    const mediaTable = MediaModel.tableName;
-    const postMediaTable = PostMediaModel.tableName;
-    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const authUserId = authUser.id;
-    if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
-    } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
-    }
-    const query = `SELECT 
-    "PostModel".*,
-    "groups"."group_id" as "groupId",
-    "mentions"."user_id" as "userId",
-    "ownerReactions"."reaction_name" as "reactionName",
-    "ownerReactions"."id" as "postReactionId",
-    "ownerReactions"."created_at" as "reactCreatedAt",
-    "media"."id" as "mediaId",
-    "media"."url",
-    "media"."name",
-    "media"."type",
-    "media"."width",
-    "media"."height",
-    "media"."extension"
-    FROM (
-      SELECT 
-      "p"."id", 
-      "p"."comments_count" AS "commentsCount",
-      "p"."is_important" AS "isImportant", 
-      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt",
-      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
-        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
-      ) AS "markedReadPost"
-      FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false AND EXISTS(
-        SELECT 1
-        from ${schema}.${postGroupTable} AS g
-        WHERE g.post_id = p.id
-        AND g.group_id IN(:groupIds)
-      ) ${condition}
-      ORDER BY "p"."created_at" ${order}
-      OFFSET :offset LIMIT :limit
-    ) AS "PostModel"
-      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
-        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}`;
-    const rows: any[] = await this._sequelizeConnection.query(query, {
-      replacements: {
-        groupIds,
-        offset,
-        limit: limit,
-        authUserId,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
-      },
-      type: QueryTypes.SELECT,
-    });
-
-    return rows;
-  }
-
-  private async _getNewsFeedData({
-    authUserId,
-    isImportant,
-    isSeen,
-    idGT,
-    idGTE,
-    idLT,
-    idLTE,
-    offset,
-    limit,
-    order,
-  }: {
-    authUserId: number;
-    isImportant: boolean;
-    isSeen?: boolean;
-    idGT?: number;
-    idGTE?: any;
-    idLT?: any;
-    idLTE?: any;
-    offset?: number;
-    limit?: number;
-    order?: OrderEnum;
-  }): Promise<any[]> {
-    let condition = FeedService._getIdConstrains({ idGT, idGTE, idLT, idLTE });
-    const { schema } = getDatabaseConfig();
-    const postTable = PostModel.tableName;
-    const userNewsFeedTable = UserNewsFeedModel.tableName;
-    const mentionTable = MentionModel.tableName;
-    const postReactionTable = PostReactionModel.tableName;
-    const mediaTable = MediaModel.tableName;
-    const postMediaTable = PostMediaModel.tableName;
-    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
-    let subSelect = `SELECT "p"."id", 
-    "p"."comments_count" AS "commentsCount",
-    "p"."is_important" AS "isImportant", 
-    "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-    "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-    "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-    "createdAt", "p"."updated_at" AS "updatedAt"`;
-    if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.${userMarkReadPostTable} as u
-        WHERE u.user_id = :authUserId AND u.post_id = p.id
-      )`;
-      subSelect += `, false AS "markedReadPost"`;
-    } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW() OR EXISTS(
-				SELECT 1
-				FROM ${schema}.${userMarkReadPostTable} as u
-				WHERE u.user_id = :authUserId AND u.post_id = p.id
-		  ))`;
-      subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
-                                  WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
-                      ) AS "markedReadPost"`;
-    }
-    const query = `SELECT 
-    "PostModel".*,
-    "groups"."group_id" as "groupId",
-    "mentions"."user_id" as "userId",
-    "ownerReactions"."reaction_name" as "reactionName",
-    "ownerReactions"."id" as "postReactionId",
-    "ownerReactions"."created_at" as "reactCreatedAt",
-    "media"."id" as "mediaId",
-    "media"."url",
-    "media"."name",
-    "media"."type",
-    "media"."width",
-    "media"."height",
-    "media"."extension"
-    FROM (
-      ${subSelect}
-      FROM ${schema}.${postTable} AS "p"
-      INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
-      WHERE "p"."is_draft" = false ${condition}
-      AND is_seen_post = ${isSeen ? true : false}
-      ORDER BY "p"."created_at" ${order}
-      OFFSET :offset LIMIT :limit
-    ) AS "PostModel"
-      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
-        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}
-      `;
-    const rows: any[] = await this._sequelizeConnection.query(query, {
-      replacements: {
-        offset,
-        limit: limit,
-        authUserId,
-        idGT,
-        idGTE,
-        idLT,
-        idLTE,
-      },
-      type: QueryTypes.SELECT,
-    });
-
-    return rows;
   }
 }

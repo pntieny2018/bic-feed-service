@@ -3,37 +3,38 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { PostModel } from '../../database/models/post.model';
 import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentModel } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
+import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
+import { NIL as NIL_UUID } from 'uuid';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class CommentDissociationService {
   private _logger = new Logger(CommentDissociationService.name);
   public constructor(
     @InjectConnection() private readonly _sequelize: Sequelize,
-    @InjectModel(CommentModel) private readonly _commentModel: typeof CommentModel
+    @InjectModel(CommentModel) private readonly _commentModel: typeof CommentModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   public async dissociateComment(
     actorId: number,
-    commentId: number,
-    groupAudienceIds: number[]
+    commentId: string,
+    postResponse: PostResponseDto
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const recipient = CommentRecipientDto.init();
-
+    const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
+    const postMentions = Array.isArray(postResponse.mentions)
+      ? []
+      : Object.values(postResponse.mentions);
     try {
       let comment = await this._commentModel.findOne({
         include: [
-          {
-            model: PostModel,
-            as: 'post',
-            attributes: ['createdBy'],
-          },
           {
             association: 'mentions',
             required: false,
@@ -52,11 +53,7 @@ export class CommentDissociationService {
 
       comment = comment.toJSON();
 
-      if (!comment.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
-      }
-
-      if (comment.parentId) {
+      if (comment.parentId !== NIL_UUID) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
 
@@ -64,12 +61,12 @@ export class CommentDissociationService {
        * User who created post
        * Will equal null if post creator comment to self's post
        */
-      const postOwnerId = comment.post.createdBy === actorId ? null : comment.post.createdBy;
+      const postOwnerId = postResponse.actor.id === actorId ? null : postResponse.actor.id;
 
       /**
        * users who mentioned in post
        */
-      const mentionedUsersInPost = (comment.post.mentions ?? []).map((mention) => mention.userId);
+      const mentionedUsersInPost = postMentions.map((mention) => mention.id);
 
       /**
        * users who mentioned in created comment
@@ -78,6 +75,7 @@ export class CommentDissociationService {
 
       let prevComments = await this._commentModel.findAll({
         where: {
+          postId: comment.postId,
           id: {
             [Op.lt]: commentId,
           },
@@ -97,7 +95,6 @@ export class CommentDissociationService {
         order: [['createdAt', 'DESC']],
         limit: 50,
       });
-
       if (!prevComments) {
         prevComments = [];
       }
@@ -110,13 +107,21 @@ export class CommentDissociationService {
       /**
        * users who was checked if users followed group audience
        */
+      const checkUserIds = [
+        postOwnerId,
+        ...mentionedUsersInComment,
+        ...actorIdsOfPrevComments,
+        ...mentionedUsersInPost,
+      ];
+
+      if (!checkUserIds.length) {
+        return recipient;
+      }
+
       const validUserIds = await this.getValidUserIds(
-        [...new Set([postOwnerId, ...mentionedUsersInComment, ...actorIdsOfPrevComments])].filter(
-          (id) => id
-        ),
+        [...new Set(checkUserIds)].filter((id) => id),
         groupAudienceIds
       );
-
       /**
        * priority:
        *        1. mentioned you in a comment.
@@ -146,7 +151,7 @@ export class CommentDissociationService {
             continue;
           }
           if (actorIdsOfPrevComments.includes(validUserId)) {
-            actorIdsOfPrevComments.push(validUserId);
+            recipient.actorIdsOfPrevComments.push(validUserId);
             handledUserIds.push(validUserId);
           }
         }
@@ -154,6 +159,7 @@ export class CommentDissociationService {
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return recipient;
     }
   }
@@ -272,6 +278,7 @@ export class CommentDissociationService {
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       return null;
     }
   }

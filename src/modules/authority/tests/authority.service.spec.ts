@@ -27,11 +27,11 @@ describe('AuthorityService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
-  describe('AuthorityService.allowAccess', () => {
+  describe('AuthorityService.checkCanReadPost', () => {
     describe('when user is valid', () => {
       it('next', () => {
         groupService.isMemberOfSomeGroups.mockReturnValue(true);
-        service.allowAccess(
+        service.checkCanReadPost(
           {
             id: 1,
             username: 'martine.baumbach',
@@ -62,7 +62,7 @@ describe('AuthorityService', () => {
       it('should throw ForbiddenException', () => {
         try {
           groupService.isMemberOfSomeGroups.mockReturnValue(false);
-          service.allowAccess(
+          service.checkCanReadPost(
             {
               id: 1,
               username: 'martine.baumbach',

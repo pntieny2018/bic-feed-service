@@ -1,0 +1,25 @@
+import { UpdatePostDto } from '../../../dto/requests';
+
+export const mockedUpdatePostDto: UpdatePostDto = {
+  audience: {
+    groupIds: [2],
+    userIds: [],
+  },
+  content: 'bbb',
+  media: {
+    images: [
+      {
+        id: 'd838659a-85ef-47ba-91e6-902aa6174142',
+      },
+    ],
+    videos: [],
+    files: [],
+  },
+  setting: {
+    canReact: true,
+    canComment: true,
+    canShare: true,
+    isImportant: false,
+    importantExpiredAt: null,
+  },
+};

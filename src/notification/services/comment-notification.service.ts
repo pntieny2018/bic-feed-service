@@ -8,6 +8,7 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { UserDto } from '../../modules/auth';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class CommentNotificationService {
@@ -32,9 +33,8 @@ export class CommentNotificationService {
       commentLimit: 0,
       childCommentLimit: 0,
     });
-    const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
 
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       commentActivity = this._commentActivityService.createReplyCommentPayload(
         postResponse,
         commentResponse
@@ -48,13 +48,13 @@ export class CommentNotificationService {
     const recipient = await this._commentDissociationService.dissociateComment(
       commentResponse.actor.id,
       commentResponse.id,
-      groupAudienceIds
+      postResponse
     );
     const recipientObj = {
       commentRecipient: CommentRecipientDto.init(),
       replyCommentRecipient: ReplyCommentRecipientDto.init(),
     };
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       recipientObj.replyCommentRecipient = recipient as any;
     } else {
       recipientObj.commentRecipient = recipient as any;
@@ -96,7 +96,7 @@ export class CommentNotificationService {
 
     let commentActivity;
 
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       commentActivity = this._commentActivityService.createReplyCommentPayload(
         postResponse,
         commentResponse
@@ -112,7 +112,7 @@ export class CommentNotificationService {
       commentRecipient: null,
       replyCommentRecipient: null,
     };
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       recipientObj.replyCommentRecipient = new ReplyCommentRecipientDto(
         null,
         validMentionUserIds,

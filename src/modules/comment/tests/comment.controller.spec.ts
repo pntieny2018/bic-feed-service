@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CommentController } from '../comment.controller';
 import { CommentService } from '../comment.service';
 import { authUserMock } from './mocks/user.mock';
-import { createTextCommentDto } from './mocks/create-comment-dto.mock';
+import { createdComment, createTextCommentDto } from './mocks/create-comment-dto.mock';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { SentryService } from '../../../../libs/sentry/src';
 
 describe('CommentController', () => {
   let controller: CommentController;
   let commentService;
-
+  let internalEventEmitterService: InternalEventEmitterService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
@@ -21,6 +23,19 @@ describe('CommentController', () => {
             getComment: jest.fn(),
             getComments: jest.fn(),
             getCommentLink: jest.fn(),
+            getCommentEditedHistory: jest.fn(),
+          },
+        },
+        {
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
           },
         },
       ],
@@ -28,6 +43,9 @@ describe('CommentController', () => {
 
     controller = module.get<CommentController>(CommentController);
     commentService = module.get<CommentService>(CommentService);
+    internalEventEmitterService = module.get<InternalEventEmitterService>(
+      InternalEventEmitterService
+    );
   });
 
   it('should be defined', () => {
@@ -38,7 +56,7 @@ describe('CommentController', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
       await controller.getList(authUserMock, {
-        postId: 1,
+        postId: createdComment.postId,
         limit: 10,
         childLimit: 10,
       });
@@ -48,7 +66,7 @@ describe('CommentController', () => {
     it('CommentService.getComments should be called', async () => {
       commentService.getComments.mockResolvedValue([]);
       await controller.getList(authUserMock, {
-        postId: 1,
+        postId: createdComment.postId,
         limit: 10,
         childLimit: 10,
       });
@@ -59,7 +77,7 @@ describe('CommentController', () => {
   describe('CommentController.create', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.create(authUserMock, createTextCommentDto);
+      await controller.create(authUserMock, createTextCommentDto).catch(() => {});
       expect(logSpy).toBeCalled();
     });
 
@@ -73,13 +91,13 @@ describe('CommentController', () => {
   describe('CommentController.reply', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.reply(authUserMock, 1, createTextCommentDto);
+      await controller.reply(authUserMock, createdComment.id, createTextCommentDto).catch(() => {});
       expect(logSpy).toBeCalled();
     });
 
     it('CommentService.create should be called', async () => {
       commentService.create.mockResolvedValue({});
-      await controller.reply(authUserMock, 1, createTextCommentDto);
+      await controller.reply(authUserMock, createdComment.id, createTextCommentDto);
       expect(commentService.create).toBeCalled();
     });
   });
@@ -87,13 +105,13 @@ describe('CommentController', () => {
   describe('CommentController.get', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.get(authUserMock, 1, {});
+      await controller.get(authUserMock, createdComment.id, {});
       expect(logSpy).toBeCalled();
     });
 
     it('CommentService.getCommentLink should be called', async () => {
       commentService.getCommentLink.mockResolvedValue([]);
-      await controller.get(authUserMock, 1, {});
+      await controller.get(authUserMock, createdComment.id, {});
       expect(commentService.getCommentLink).toBeCalled();
     });
   });
@@ -101,17 +119,23 @@ describe('CommentController', () => {
   describe('CommentController.update', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.update(authUserMock, 1, {
-        content: '1,2,3',
-      });
+      commentService.update = jest.fn().mockResolvedValue({ comment: { id: createdComment.id } });
+      internalEventEmitterService.emit = jest.fn().mockResolvedValue(Promise.resolve());
+      commentService.getComment = jest.fn().mockResolvedValue('OK');
+      await controller
+        .update(authUserMock, createdComment.id, {
+          content: '1,2,3',
+        })
       expect(logSpy).toBeCalled();
     });
 
     it('CommentService.update should be called', async () => {
       commentService.update.mockResolvedValue([]);
-      await controller.update(authUserMock, 1, {
-        content: '1,2,3',
-      });
+      await controller
+        .update(authUserMock, createdComment.id, {
+          content: '1,2,3',
+        })
+        .catch(() => {});
       expect(commentService.update).toBeCalled();
     });
   });
@@ -119,14 +143,22 @@ describe('CommentController', () => {
   describe('CommentController.destroy', () => {
     it('logger should be called', async () => {
       const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.destroy(authUserMock, 1);
+      await controller.destroy(authUserMock, createdComment.id);
       expect(logSpy).toBeCalled();
     });
 
     it('CommentService.destroy should be called', async () => {
       commentService.destroy.mockResolvedValue([]);
-      await controller.destroy(authUserMock, 1);
+      await controller.destroy(authUserMock, createdComment.id);
       expect(commentService.destroy).toBeCalled();
+    });
+  });
+
+  describe('CommentController.getCommentEditedHistory', () => {
+    it('Should successfully', async () => {
+      commentService.getCommentEditedHistory = jest.fn().mockResolvedValue(Promise.resolve());
+      await controller.getCommentEditedHistory(authUserMock, createdComment.id, null);
+      expect(commentService.getCommentEditedHistory).toBeCalledTimes(1);
     });
   });
 });

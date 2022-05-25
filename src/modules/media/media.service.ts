@@ -8,19 +8,20 @@ import {
 import { UserDto } from '../auth';
 import { FileMetadataDto, ImageMetadataDto, RemoveMediaDto, VideoMetadataDto } from './dto';
 import { EntityType } from './media.constants';
-import { Sequelize } from 'sequelize-typescript';
+import { ModelStatic, Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
+import { Attributes, FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommentMediaModel } from '../../database/models/comment-media.model';
-import { IMedia, MediaModel, MediaType } from '../../database/models/media.model';
+import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class MediaService {
@@ -29,7 +30,8 @@ export class MediaService {
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
-    @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel
+    @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -48,6 +50,10 @@ export class MediaService {
       extension,
       width,
       height,
+      uploadId,
+      status,
+      size,
+      mimeType,
     }: {
       url: string;
       uploadType: UploadType;
@@ -56,6 +62,10 @@ export class MediaService {
       extension: string;
       width: number;
       height: number;
+      uploadId?: string;
+      status: MediaStatus;
+      size?: number;
+      mimeType?: string;
     }
   ): Promise<any> {
     this._logger.debug(
@@ -67,6 +77,8 @@ export class MediaService {
         extension,
         width,
         height,
+        uploadId,
+        status,
       })}`
     );
     try {
@@ -80,8 +92,13 @@ export class MediaService {
         type: typeArr[1] as MediaType,
         width: width,
         height: height,
+        uploadId,
+        status,
+        size: size ?? null,
+        mimeType: mimeType ?? null,
       });
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new InternalServerErrorException("Can't create media");
     }
   }
@@ -122,6 +139,7 @@ export class MediaService {
       return true;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
       await trx.rollback();
       throw new LogicException(HTTP_STATUS_ID.API_MEDIA_DELETE_ERROR);
     }
@@ -142,7 +160,7 @@ export class MediaService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkValidMedia(mediaIds: number[], createdBy: number): Promise<boolean> {
+  public async checkValidMedia(mediaIds: string[], createdBy: number): Promise<boolean> {
     if (mediaIds.length === 0) return true;
 
     const getMediaList = await this._mediaModel.findAll({
@@ -155,28 +173,6 @@ export class MediaService {
     if (getMediaList.length < mediaIds.length) {
       throw new HttpException('Media ID is invalid', HttpStatus.BAD_REQUEST);
     }
-
-    return true;
-  }
-
-  /**
-   * Validate Mention
-   * @param mediaIds Array of Media ID
-   * @param createdBy created_by of post
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async activeMedia(mediaIds: number[], createdBy: number): Promise<boolean> {
-    if (mediaIds.length === 0) return true;
-
-    await this._mediaModel.update(
-      {
-        isDraft: false,
-      },
-      {
-        where: { id: mediaIds, createdBy },
-      }
-    );
 
     return true;
   }
@@ -218,9 +214,9 @@ export class MediaService {
   }
 
   public async sync(
-    entityId: number,
+    entityId: string,
     entityType: EntityType,
-    mediaIds: number[],
+    mediaIds: string[],
     transaction: Transaction
   ): Promise<void> {
     const changes = {
@@ -249,14 +245,14 @@ export class MediaService {
 
     const currentMediaIds = currentMedia.map((m) => m.mediaId);
 
-    changes.attached = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
+    changes.attached = ArrayHelper.arrDifferenceElements(mediaIds, currentMediaIds);
 
-    changes.detached = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
+    changes.detached = ArrayHelper.arrDifferenceElements(currentMediaIds, mediaIds);
 
     const getAttachedData = (
       data: number[],
       entityKey: string,
-      entityId: number,
+      entityId: string,
       mediaKey: string
     ): any[] =>
       data.map((id) => ({
@@ -267,7 +263,7 @@ export class MediaService {
     const getDetachedData = (
       data: number[],
       entityKey: string,
-      entityId: number,
+      entityId: string,
       mediaKey: string
     ): object => ({
       where: {
@@ -343,7 +339,7 @@ export class MediaService {
   }
 
   public async deleteMediaByEntityIds(
-    entityIds: number[],
+    entityIds: string[],
     entityType: EntityType,
     transaction: Transaction
   ): Promise<void> {
@@ -378,9 +374,24 @@ export class MediaService {
     await this.updateMediaDraft(mediaIds, transaction);
   }
 
-  public async countMediaByPost(postId: number): Promise<number> {
+  public async countMediaByPost(postId: string): Promise<number> {
     return await this._postMediaModel.count({
       where: { postId },
+    });
+  }
+
+  public async updateData(
+    uploadIds: string[],
+    dataUpdate: {
+      url?: string;
+      status: MediaStatus;
+      mimeType?: string;
+    }
+  ): Promise<void> {
+    await this._mediaModel.update(dataUpdate, {
+      where: {
+        uploadId: uploadIds,
+      },
     });
   }
 }

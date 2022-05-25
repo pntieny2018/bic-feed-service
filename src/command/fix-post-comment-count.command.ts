@@ -34,7 +34,6 @@ export class FixPostCommentCountCommand implements CommandRunner {
         await posts[0].update({
           commentsCount: total,
         });
-        console.log(`update post comment count of ${posts[0].id} : ${total}`);
         offset += limit;
       } catch (e) {}
     }

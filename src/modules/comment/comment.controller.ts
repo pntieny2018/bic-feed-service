@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Logger,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
 import {
   CreateCommentDto,
   UpdateCommentDto,
@@ -33,6 +22,7 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
+import { NIL as NIL_UUID } from 'uuid';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -54,11 +44,11 @@ export class CommentController {
   })
   @Get('/')
   public getList(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
     this._logger.debug('get comments');
-    return this._commentService.getComments(user, getCommentsDto);
+    return this._commentService.getComments(getCommentsDto, user);
   }
 
   @ApiOperation({ summary: 'Create new comment' })
@@ -102,7 +92,7 @@ export class CommentController {
   @Post('/:commentId/reply')
   public async reply(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
+    @Param('commentId') commentId: string,
     @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('reply comment');
@@ -110,7 +100,7 @@ export class CommentController {
       user,
       {
         ...createReplyCommentDto,
-        postId: 0,
+        postId: NIL_UUID,
       },
       commentId
     );
@@ -138,7 +128,7 @@ export class CommentController {
   @Get('/:commentId')
   public get(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
+    @Param('commentId') commentId: string,
     @Query() getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
@@ -152,7 +142,7 @@ export class CommentController {
   @Get('/:commentId/edited-history')
   public getCommentEditedHistory(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
+    @Param('commentId') commentId: string,
     @Query() getCommentEditedHistoryDto: GetCommentEditedHistoryDto
   ): Promise<PageDto<CommentEditedHistoryDto>> {
     return this._commentService.getCommentEditedHistory(
@@ -173,14 +163,13 @@ export class CommentController {
   @Put('/:commentId')
   public async update(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number,
+    @Param('commentId') commentId: string,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('update comment');
     const response = await this._commentService.update(user, commentId, updateCommentDto);
 
     const commentResponse = await this._commentService.getComment(user, response.comment.id);
-
     this._eventEmitter.emit(
       new CommentHasBeenUpdatedEvent({
         actor: user,
@@ -202,7 +191,7 @@ export class CommentController {
   @Delete('/:commentId')
   public async destroy(
     @AuthUser() user: UserDto,
-    @Param('commentId', ParseIntPipe) commentId: number
+    @Param('commentId') commentId: string
   ): Promise<boolean> {
     this._logger.debug('delete comment');
     const comment = await this._commentService.destroy(user, commentId);

@@ -1,5 +1,5 @@
 export interface IDocumentMetadata {
-  id: number;
+  id: string;
   name?: string;
   originName?: string;
   width?: number;
