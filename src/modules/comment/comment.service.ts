@@ -363,7 +363,8 @@ export class CommentService {
 
     if (checkAccess && user) {
       await this._authorityService.checkCanReadPost(user, post);
-    } else {
+    }
+    if (checkAccess && !user) {
       await this._authorityService.checkPublicPost(post);
     }
     const userId = user ? user.id : null;
