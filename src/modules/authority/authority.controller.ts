@@ -1,6 +1,6 @@
 //import { AuthUser, UserInfoDto } from '../auth';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
-import { Controller, Get} from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
 
