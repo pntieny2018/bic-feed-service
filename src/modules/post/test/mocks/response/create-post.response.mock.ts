@@ -63,7 +63,7 @@ export const mockedCreatePostResponse = {
 };
 
 export const mockedPostCreated = {
-  id: 5,
+  id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   isDraft: true,
   content: 'bbbbbb',
   createdBy: 15,

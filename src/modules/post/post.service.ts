@@ -1320,7 +1320,7 @@ export class PostService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
-      this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
+      await this._mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
