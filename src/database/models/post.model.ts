@@ -55,6 +55,10 @@ export interface IPost {
   reactionsCount?: string;
   giphyId?: string;
   markedReadPost?: boolean;
+  isArticle: boolean;
+  title?: string;
+  summary?: string;
+  views: number;
 }
 @Table({
   tableName: 'posts',
@@ -90,9 +94,23 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public canShare: boolean;
 
+  @Column
+  public isArticle: boolean;
+
   @AllowNull(true)
   @Column
   public content: string;
+
+  @AllowNull(true)
+  @Column
+  public title: string;
+
+  @AllowNull(true)
+  @Column
+  public summary: string;
+
+  @Column
+  public views: number;
 
   @AllowNull(true)
   @Column

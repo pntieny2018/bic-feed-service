@@ -1,18 +1,17 @@
-require('dotenv').config();
-
+'use strict';
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'media';
+const tableName = 'posts';
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.changeColumn(
+  async up (queryInterface, Sequelize) {
+    await queryInterface.addColumn(
       {
         tableName: tableName,
         schema: schemaName,
       },
-      'url',
+      'is_article',
       {
-        type: Sequelize.STRING,
-        allowNull: true,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       }
     );
     await queryInterface.addColumn(
@@ -20,90 +19,64 @@ module.exports = {
         tableName: tableName,
         schema: schemaName,
       },
-      'size',
+      'title',
+      {
+        type: Sequelize.STRING(500)
+      }
+    );
+
+    await queryInterface.addColumn(
+      {
+        tableName: tableName,
+        schema: schemaName,
+      },
+      'summary',
+      {
+        type: Sequelize.STRING(5000)
+      }
+    );
+
+    await queryInterface.addColumn(
+      {
+        tableName: tableName,
+        schema: schemaName,
+      },
+      'views',
       {
         type: Sequelize.INTEGER,
-        allowNull: true,
-      }
-    );
-
-    await queryInterface.addColumn(
-      {
-        tableName: tableName,
-        schema: schemaName,
-      },
-      'mime_type',
-      {
-        type: Sequelize.STRING(20),
-        allowNull: true,
-      }
-    );
-    await queryInterface.addColumn(
-      {
-        tableName: tableName,
-        schema: schemaName,
-      },
-      'upload_id',
-      {
-        type: Sequelize.UUID,
-        allowNull: true,
-      }
-    );
-    await queryInterface.addColumn(
-      {
-        tableName: tableName,
-        schema: schemaName,
-      },
-      'status',
-      {
-        type: Sequelize.ENUM('waiting_process', 'processing', 'completed', 'failed'),
-        allowNull: false,
-        defaultValue: 'completed'
+        defaultValue: 0
       }
     );
   },
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.changeColumn(
+  async down (queryInterface, Sequelize) {
+    await queryInterface.removeColumn(
       {
         tableName: tableName,
         schema: schemaName,
       },
-      'url',
-      {
-        type: Sequelize.STRING,
-        allowNull: false,
-      }
+      'is_article'
     );
     await queryInterface.removeColumn(
       {
         tableName: tableName,
         schema: schemaName,
       },
-      'size'
-    );
-
-    await queryInterface.removeColumn(
-      {
-        tableName: tableName,
-        schema: schemaName,
-      },
-      'mime_type'
+      'title'
     );
     await queryInterface.removeColumn(
       {
         tableName: tableName,
         schema: schemaName,
       },
-      'upload_id'
+      'summary'
     );
     await queryInterface.removeColumn(
       {
         tableName: tableName,
         schema: schemaName,
       },
-      'status'
+      'views'
     );
-    
-  },
+  }
 };

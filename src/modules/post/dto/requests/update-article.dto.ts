@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 import { UpdatePostDto } from '.';
 
 export class UpdateArticleDto extends UpdatePostDto {
@@ -7,5 +7,17 @@ export class UpdateArticleDto extends UpdatePostDto {
     type: [String],
   })
   @IsNotEmpty()
-  public categories: string[] = [];
+  public categories: string[];
+
+  @ApiProperty({
+    type: [String],
+  })
+  @IsOptional()
+  public series?: string[];
+
+  @ApiProperty({
+    type: [String],
+  })
+  @IsOptional()
+  public hashtags?: string[];
 }

@@ -18,12 +18,12 @@ import {
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
-import { GetPostDto } from './dto/requests';
 import { ArticleService } from './article.service';
 import { GetPostPipe } from './pipes';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { GetArticleDto } from './dto/requests/get-article.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -45,10 +45,10 @@ export class ArticleController {
   public getArticle(
     @AuthUser(false) user: UserDto,
     @Param('articleId', ParseIntPipe) articleId: number,
-    @Query(GetPostPipe) getPostDto: GetPostDto
+    @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    if (user === null) return this._articleService.getPublicArticle(articleId, getPostDto);
-    else return this._articleService.getArticle(articleId, user, getPostDto);
+    if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
+    else return this._articleService.getArticle(articleId, user, getArticleDto);
   }
 
   @ApiOperation({ summary: 'Create article' })
@@ -63,7 +63,7 @@ export class ArticleController {
   ): Promise<ArticleResponseDto> {
     const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
-      const article = await this._articleService.getArticle(created.id, user, new GetPostDto());
+      const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
       this._eventEmitter.emit(
         new PostHasBeenPublishedEvent({
           post: article,
@@ -85,7 +85,11 @@ export class ArticleController {
     @Param('articleId', ParseIntPipe) articleId: number,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const articleBefore = await this._articleService.getArticle(articleId, user, new GetPostDto());
+    const articleBefore = await this._articleService.getArticle(
+      articleId,
+      user,
+      new GetArticleDto()
+    );
     const isUpdated = await this._articleService.updateArticle(
       articleBefore,
       user,
@@ -95,7 +99,7 @@ export class ArticleController {
       const articleUpdated = await this._articleService.getArticle(
         articleId,
         user,
-        new GetPostDto()
+        new GetArticleDto()
       );
       this._eventEmitter.emit(
         new PostHasBeenUpdatedEvent({
