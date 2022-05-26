@@ -663,7 +663,11 @@ describe('ReactionService', () => {
     describe('Function: deleteReactionByPostIds', () => {
       it('Should successfully', async () => {
         postReactionModel.destroy = jest.fn().mockResolvedValue(3);
-        const result = await reactionService.deleteReactionByPostIds([10, 11, 12]);
+        const result = await reactionService.deleteReactionByPostIds([
+          'b0f2f8fc-2a13-4408-9a7a-564e15e9a895',
+          '6039c8c3-0511-465a-b9a9-a2666c98f946',
+          'edc7ec02-fc29-4e48-96e8-f93d2c593054',
+        ]);
         expect(result).toEqual(3);
       });
     });
@@ -671,7 +675,14 @@ describe('ReactionService', () => {
     describe('Function: deleteReactionByCommentIds', () => {
       it('Should successfully', async () => {
         commentReactionModel.destroy = jest.fn().mockResolvedValue(3);
-        const result = await reactionService.deleteReactionByCommentIds([10, 11, 12], null);
+        const result = await reactionService.deleteReactionByCommentIds(
+          [
+            '158c94a0-3e89-4b2b-9731-f7a5ad313dc7',
+            '70fd7a3f-d200-45b0-8f43-637bd5823055',
+            'd16e555e-006f-4e63-bce7-56760f315a6e',
+          ],
+          null
+        );
         expect(result).toEqual(3);
       });
     });

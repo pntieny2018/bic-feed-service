@@ -863,7 +863,7 @@ export class PostService {
    * Delete post edited history
    * @param postId string
    */
-  public async deletePostEditedHistory(postId: number): Promise<any> {
+  public async deletePostEditedHistory(postId: string): Promise<any> {
     return this.postEditedHistoryModel.destroy({
       where: {
         postId: postId,
@@ -1037,7 +1037,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: number, userId: number): Promise<void> {
+  public async markReadPost(postId: string, userId: number): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
@@ -1322,7 +1322,7 @@ export class PostService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
-      this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
+      await this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this.logger.error(e, e?.stack);
       this.sentryService.captureException(e);

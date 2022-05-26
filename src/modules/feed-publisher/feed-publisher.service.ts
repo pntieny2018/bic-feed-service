@@ -21,7 +21,7 @@ export class FeedPublisherService {
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: number[]): Promise<void> {
+  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: string[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
     const schema = this._databaseConfig.schema;
     try {

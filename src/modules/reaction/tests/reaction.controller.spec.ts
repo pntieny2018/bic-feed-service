@@ -13,7 +13,6 @@ import { NotificationService } from '../../../notification';
 import { GroupService } from '../../../shared/group';
 import { UserService } from '../../../shared/user';
 import { mockUserDto } from '../../post/test/mocks/input.mock';
-import { ActionReaction } from '../dto/request';
 import { ReactionController } from '../reaction.controller';
 import { ReactionService } from '../reaction.service';
 import {

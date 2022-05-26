@@ -2,13 +2,15 @@
 
 const schemaName = process.env.DB_SCHEMA;
 
+// TODO: need `public` in `public.gen_random_uuid()` when using postgres version < 14.
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     const t = await queryInterface.sequelize.transaction();
     return queryInterface
       .addColumn({ tableName: `posts`, schema: schemaName }, 'uuid', {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.literal("gen_random_uuid()"),
+        defaultValue: Sequelize.literal("public.gen_random_uuid()"),
         allowNull: false,
         primaryKey: false,
       }, { transaction: t })
@@ -16,7 +18,7 @@ module.exports = {
         return queryInterface
           .addColumn({ tableName: `comments`, schema: schemaName }, 'uuid', {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal("gen_random_uuid()"),
+            defaultValue: Sequelize.literal("public.gen_random_uuid()"),
             allowNull: false,
             primaryKey: false
           }, { transaction: t })
@@ -25,7 +27,7 @@ module.exports = {
         return queryInterface
           .addColumn({ tableName: `media`, schema: schemaName }, 'uuid', {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal("gen_random_uuid()"),
+            defaultValue: Sequelize.literal("public.gen_random_uuid()"),
             allowNull: false,
             primaryKey: false
           }, { transaction: t })
@@ -34,7 +36,7 @@ module.exports = {
         return queryInterface
           .addColumn({ tableName: `posts_reactions`, schema: schemaName }, 'uuid', {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal("gen_random_uuid()"),
+            defaultValue: Sequelize.literal("public.gen_random_uuid()"),
             allowNull: false,
             primaryKey: false
           }, { transaction: t })
@@ -43,7 +45,7 @@ module.exports = {
         return queryInterface
           .addColumn({ tableName: `comments_reactions`, schema: schemaName }, 'uuid', {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal("gen_random_uuid()"),
+            defaultValue: Sequelize.literal("public.gen_random_uuid()"),
             allowNull: false,
             primaryKey: false
           }, { transaction: t })
@@ -52,7 +54,7 @@ module.exports = {
         return queryInterface
           .addColumn({ tableName: `mentions`, schema: schemaName }, 'uuid', {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal("gen_random_uuid()"),
+            defaultValue: Sequelize.literal("public.gen_random_uuid()"),
             allowNull: false,
             primaryKey: false
           }, { transaction: t })

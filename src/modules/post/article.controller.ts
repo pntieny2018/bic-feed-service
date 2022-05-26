@@ -1,26 +1,12 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
+import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
+import { ArticleService } from './article.service';
 import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { PostResponseDto } from './dto/responses';
-import { ArticleService } from './article.service';
 import { GetPostPipe } from './pipes';
 
 @ApiSecurity('authorization')
@@ -42,7 +28,7 @@ export class ArticleController {
   @Get('/:articleId')
   public getPost(
     @AuthUser(false) user: UserDto,
-    @Param('articleId', ParseIntPipe) articleId: number,
+    @Param('articleId') articleId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._articleService.getPublicArticle(articleId, getPostDto);
@@ -73,7 +59,7 @@ export class ArticleController {
   @Put('/:articleId')
   public async updatePost(
     @AuthUser() user: UserDto,
-    @Param('articleId', ParseIntPipe) articleId: number,
+    @Param('articleId') articleId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const articleBefore = await this._articleService.getArticle(articleId, user, new GetPostDto());
@@ -104,7 +90,7 @@ export class ArticleController {
   @Delete('/:id')
   public async deleteArticle(
     @AuthUser() user: UserDto,
-    @Param('id', ParseIntPipe) articleId: number
+    @Param('id') articleId: string
   ): Promise<boolean> {
     const articleDeleted = await this._articleService.deleteArticle(articleId, user);
     if (articleDeleted) {
