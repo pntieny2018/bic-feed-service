@@ -14,17 +14,12 @@ import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 
-export enum CategoryLevel {
-  LEVEL_1 = '1',
-  LEVEL_2 = '2',
-}
-
 export interface ICategory {
   id: string;
   parentId: string;
   name: string;
   slug?: string;
-  level: CategoryLevel;
+  level: number;
   active: boolean;
   createdBy: number;
   updatedBy: number;
@@ -33,7 +28,7 @@ export interface ICategory {
 }
 
 @Table({
-  tableName: 'comments',
+  tableName: 'categories',
 })
 export class CategoryModel
   extends Model<ICategory, Optional<ICategory, 'id'>>
@@ -51,7 +46,7 @@ export class CategoryModel
   @Column
   public parentId: string;
 
-  @Default(false)
+  @Default(true)
   @Column
   public active: boolean;
 
@@ -59,9 +54,8 @@ export class CategoryModel
   @Column
   public name: string;
 
-  @Default(CategoryLevel.LEVEL_1)
   @Column
-  public level: CategoryLevel;
+  public level: number;
 
   @Length({ max: 255 })
   @Column

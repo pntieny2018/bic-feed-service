@@ -2,7 +2,7 @@ require('dotenv').config();
 const  { NIL: NIL_UUID } = require('uuid');
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'category';
+const tableName = 'categories';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -28,13 +28,13 @@ module.exports = {
           allowNull: true,
         },
         level: {
-          type: Sequelize.ENUM('1', '2'),
+          type: Sequelize.SMALLINT,
           allowNull: false,
         },
         active: {
           type: Sequelize.BOOLEAN,
           allowNull: false,
-          defaultValue: false,
+          defaultValue: true,
         },
         created_by: {
           type: Sequelize.INTEGER,
@@ -61,6 +61,9 @@ module.exports = {
     );
 
     await queryInterface.addIndex(tableName, ['created_by']);
+    await queryInterface.addIndex(tableName, ['slug'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {
