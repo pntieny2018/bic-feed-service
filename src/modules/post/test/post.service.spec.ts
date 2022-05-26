@@ -41,13 +41,13 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostPolicyService } from '../post-policy.service';
 
 import { ClientKafka, ClientsModule } from '@nestjs/microservices';
-import { MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostResponseDto } from '../dto/responses';
+import { mockGetPostEditedHistoryDto } from './mocks/request/get-post-edited-history.dto.mock';
 import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
-import { mockGetPostEditedHistoryDto } from './mocks/request/get-post-edited-history.dto.mock';
-import { mockedGetPostEditedHistoryResult } from './mocks/response/get-post-edited-history.response.mock';
+
+jest.mock('../article.service');
 
 describe('PostService', () => {
   let postService: PostService;
