@@ -38,5 +38,6 @@ wallaby.js
 dev.env
 sbx.env
 stg.env
+local.env
 data
 .scannerwork
