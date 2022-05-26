@@ -49,7 +49,7 @@ import { mockedUserAuth } from './mocks/data/user-auth.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { PostResponseDto } from '../dto/responses';
 import { IMedia, MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
-
+jest.mock('../article.service');
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;

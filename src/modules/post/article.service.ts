@@ -29,7 +29,6 @@ import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
-console.log('PostService=', PostService);
 @Injectable()
 export class ArticleService extends PostService {
   public constructor(
