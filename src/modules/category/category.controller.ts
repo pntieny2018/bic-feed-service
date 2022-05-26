@@ -1,11 +1,13 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
 import { AuthUser, UserDto } from '../auth';
 import { CreateCategoryDto } from './dto/requests/create-category.dto';
 import { CategoryService } from './category.service';
+import { PageDto } from '../../common/dto';
+import { GetCategoryDto } from './dto/requests/get-category.dto';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')
@@ -15,6 +17,22 @@ import { CategoryService } from './category.service';
 })
 export class CategoryController {
   public constructor(private _categoryService: CategoryService) {}
+
+  @ApiOperation({ summary: 'Get categories' })
+  @ApiOkResponse({
+    type: CategoryResponseDto,
+    description: 'Get category successfully',
+  })
+  @ResponseMessages({
+    success: 'Get category successfully',
+  })
+  @Get('/')
+  public async get(
+    @AuthUser() user: UserDto,
+    @Query() getCategoryDto: GetCategoryDto
+  ): Promise<PageDto<CategoryResponseDto>> {
+    return this._categoryService.getCategory(user, getCategoryDto);
+  }
 
   @ApiOperation({ summary: 'Create new category' })
   @ApiOkResponse({
