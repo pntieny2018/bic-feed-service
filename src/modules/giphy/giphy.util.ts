@@ -1,3 +1,7 @@
+const prefix = 'https://i.giphy.com/'
+const suffix = '.gif'
+
 export function createUrlFromId(id) {
-  return `https://i.giphy.com/${id}.gif`
+  if(!id) return null;
+  return prefix + id + suffix;
 }

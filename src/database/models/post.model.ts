@@ -340,7 +340,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public static async getNewsFeedData({
     authUserId,
     isImportant,
-    isSeen,
     idGT,
     idGTE,
     idLT,
@@ -351,7 +350,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }: {
     authUserId: number;
     isImportant: boolean;
-    isSeen?: boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
@@ -376,7 +374,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
     "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
     "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-    "createdAt", "p"."updated_at" AS "updatedAt"`;
+    "createdAt", "p"."updated_at" AS "updatedAt", "is_seen_post" AS "isSeenPost"`;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
         SELECT 1
@@ -414,8 +412,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
-      AND is_seen_post = ${isSeen ? true : false}
-      ORDER BY "p"."created_at" ${order}
+      ORDER BY "is_seen_post" ASC, "p"."created_at" ${order} 
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
@@ -425,8 +422,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}
+      ORDER BY "PostModel"."isSeenPost" ASC,"PostModel"."createdAt" ${order}
       `;
+    // ORDER BY "isSeenPost" ASC, "PostModel"."createdAt" ${order}
+
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
         offset,
