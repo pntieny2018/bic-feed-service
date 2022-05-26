@@ -155,6 +155,12 @@ describe('PostController', () => {
       expect(postService.deletePost).toBeCalledTimes(1);
       expect(postService.deletePost).toBeCalledWith(mockedPostData.id, userDto);
       expect(result).toBe(true);
+
+      // expect(eventEmitter.emit).toBeCalledTimes(1);
+      // expect(eventEmitter.emit).toBeCalledWith(
+      //   DeletedPostEvent.event,
+      //   new DeletedPostEvent(mockedPostDeleted, userDto.profile)
+      // );
     });
   });
 });

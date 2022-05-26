@@ -1,4 +1,4 @@
 export class UnfollowDto {
-  public groupId: number;
+  public groupIds: number[];
   public userIds: number[];
 }
