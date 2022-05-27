@@ -32,7 +32,7 @@ import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
 import sequelize from 'sequelize';
-import { NIL as NIL_UUID } from 'uuid';
+import { NIL, NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '../../../libs/sentry/src';
 import { GiphyService } from '../giphy';
 
@@ -459,7 +459,7 @@ export class CommentService {
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
     const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
-    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId)}`;
+    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId ?? NIL)}`;
     if (postId) {
       condition += ` AND "c".post_id = ${this._sequelizeConnection.escape(postId)}`;
     }
