@@ -38,7 +38,7 @@ module.exports = {
               END IF;
               
               INSERT INTO ${schemaName}.${tableName}(id,created_by,comment_id,reaction_name,created_at)
-              VALUES (public.gen_random_uuid(),ccr_created_by,ccr_comment_id,ccr_reaction_name,CURRENT_TIMESTAMP)
+              VALUES (${schemaName}.gen_random_uuid(),ccr_created_by,ccr_comment_id,ccr_reaction_name,CURRENT_TIMESTAMP)
               RETURNING id into ccr_id;
           END;$$
     `);
