@@ -35,6 +35,7 @@ import sequelize from 'sequelize';
 import { NIL, NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '../../../libs/sentry/src';
 import { GiphyService } from '../giphy';
+import { createUrlFromId } from '../giphy/giphy.util';
 
 @Injectable()
 export class CommentService {
@@ -746,7 +747,8 @@ export class CommentService {
               "created_by" AS "createdBy", 
               "updated_by" AS "updatedBy", 
               "created_at" AS "createdAt", 
-              "updated_at" AS "updatedAt" 
+              "updated_at" AS "updatedAt",
+              "giphy_id" AS "giphyId"
         FROM ${schema}."comments" AS "CommentModel" 
         WHERE "CommentModel"."parent_id" = ${this._sequelizeConnection.escape(comment.id)} 
         ORDER BY "CommentModel"."created_at" DESC LIMIT :limit
@@ -1110,6 +1112,7 @@ export class CommentService {
           parentId,
           postId,
           giphyId,
+          giphyUrl: createUrlFromId(giphyId),
           edited,
           content,
           totalReply,
