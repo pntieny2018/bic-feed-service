@@ -27,6 +27,13 @@ export class AuthorityService {
 
   public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
+    const dataGroups = await this._groupService.getMany(groupAudienceIds);
+    if (
+      dataGroups.filter((g) => g.privacy === GroupPrivacy.PUBLIC || g.privacy === GroupPrivacy.OPEN)
+        .length > 0
+    ) {
+      return;
+    }
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
     if (!canAccess) {

@@ -1,10 +1,11 @@
 'use strict';
 
 const schemaName = process.env.DB_SCHEMA;
+const dbVersion = parseInt(process.env.DB_VER) ?? 14;
+const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
+
 // When using postgres version < 14.
 // must CREATE EXTENSION pgcrypto;
-// and using <schema>.gen_random_uuid
-// schema is where install extension
 // TODO: need `public` in `public.gen_random_uuid()` when using postgres version < 14.
 
 module.exports = {
@@ -16,7 +17,7 @@ module.exports = {
         'uuid',
         {
           type: Sequelize.UUID,
-          defaultValue: Sequelize.literal('public.gen_random_uuid()'),
+          defaultValue: Sequelize.literal(genRandomUUID),
           allowNull: false,
           primaryKey: false,
         },
@@ -28,7 +29,7 @@ module.exports = {
           'uuid',
           {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal('public.gen_random_uuid()'),
+            defaultValue: Sequelize.literal(genRandomUUID),
             allowNull: false,
             primaryKey: false,
           },
@@ -41,7 +42,7 @@ module.exports = {
           'uuid',
           {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal('public.gen_random_uuid()'),
+            defaultValue: Sequelize.literal(genRandomUUID),
             allowNull: false,
             primaryKey: false,
           },
@@ -54,7 +55,7 @@ module.exports = {
           'uuid',
           {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal('public.gen_random_uuid()'),
+            defaultValue: Sequelize.literal(genRandomUUID),
             allowNull: false,
             primaryKey: false,
           },
@@ -67,7 +68,7 @@ module.exports = {
           'uuid',
           {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal('public.gen_random_uuid()'),
+            defaultValue: Sequelize.literal(genRandomUUID),
             allowNull: false,
             primaryKey: false,
           },
@@ -80,7 +81,7 @@ module.exports = {
           'uuid',
           {
             type: Sequelize.UUID,
-            defaultValue: Sequelize.literal('public.gen_random_uuid()'),
+            defaultValue: Sequelize.literal(genRandomUUID),
             allowNull: false,
             primaryKey: false,
           },
