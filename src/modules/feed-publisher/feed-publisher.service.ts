@@ -71,7 +71,7 @@ export class FeedPublisherService {
       );
       const data = userIds
         .map((userId) => {
-          return `(${userId},${postId}, ${!!seenPostDataMap[userId]})`;
+          return `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`;
         })
         .join(',');
 
