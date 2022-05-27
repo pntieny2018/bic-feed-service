@@ -20,7 +20,7 @@ import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
 import { DatabaseModule } from '../database';
 import { GiphyModule } from '../modules/giphy';
-import { CategoryModule } from '../modules/category/category.module';
+import { CategoryModule } from '../modules/category';
 
 @Module({
   imports: [
