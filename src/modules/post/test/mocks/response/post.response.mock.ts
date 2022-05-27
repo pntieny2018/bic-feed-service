@@ -32,7 +32,7 @@ export const mockedPostResponse: PostResponseDto = {
   isDraft: true,
   isProcessing: false,
   actor: {
-    id: 15,
+    id: 1,
     username: 'quannhac',
     fullname: 'Lý Quân Nhạc',
     avatar:
@@ -45,7 +45,7 @@ export const mockedPostResponse: PostResponseDto = {
   markedReadPost: false,
   createdAt: new Date('2022-05-19T07:23:55.601Z'),
   updatedAt: new Date('2022-05-19T07:23:55.601Z'),
-  createdBy: 15,
+  createdBy: 1,
   audience: {
     groups: [
       {
@@ -68,7 +68,7 @@ export const mockedPostResponse: PostResponseDto = {
 };
 
 export const mockedPostData = {
-  id: 1,
+  id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   commentsCount: 3,
   isImportant: false,
   importantExpiredAt: null,
@@ -87,7 +87,7 @@ export const mockedPostData = {
   groups: [
     {
       groupId: 1,
-      postId: 1,
+      postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
     },
   ],
   mentions: [],
@@ -95,7 +95,7 @@ export const mockedPostData = {
   ownerReactions: [
     {
       id: 2,
-      postId: 3,
+      postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
       reactionName: 'bb',
       createdBy: 15,
       createdAt: '2022-05-18T11:05:31.990Z',

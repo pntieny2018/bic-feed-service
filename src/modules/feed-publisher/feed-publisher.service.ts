@@ -21,16 +21,32 @@ export class FeedPublisherService {
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUserNewsFeed(userId: number, postIds: string[]): Promise<void> {
-    this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userId, postIds })}`);
-
+  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: string[]): Promise<void> {
+    this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
+    const schema = this._databaseConfig.schema;
     try {
-      await this._userNewsFeedModel.bulkCreate(
-        postIds.map((postId) => ({
-          userId: userId,
-          postId: postId,
-        }))
+      const seenPostData = await this._userSeenPostModel.findAll({
+        where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
+      });
+      const seenPostDataMap = seenPostData.reduce(
+        (dataMap, seenPostRecord) => ({ userId: true }),
+        {}
       );
+
+      const data = userIds
+        .map((userId) => {
+          return postIds.map((postId) => `(${userId},${postId}, ${!!seenPostDataMap[userId]})`);
+        })
+        .flat();
+
+      if (data && data.length) {
+        await this._userNewsFeedModel.sequelize.query(
+          `INSERT INTO ${schema}.${
+            this._userNewsFeedModel.tableName
+          } (user_id,post_id, is_seen_post) 
+             VALUES ${data.join(',')} ON CONFLICT  (user_id,post_id) DO NOTHING;`
+        );
+      }
     } catch (ex) {
       this._logger.debug(ex, ex.stack);
       this._sentryService.captureException(ex);
@@ -55,7 +71,7 @@ export class FeedPublisherService {
       );
       const data = userIds
         .map((userId) => {
-          return `(${userId},${postId}, ${!!seenPostDataMap[userId]})`;
+          return `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`;
         })
         .join(',');
 

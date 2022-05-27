@@ -1,75 +1,110 @@
-import { IPost } from '../../../../database/models/post.model';
+import { MediaStatus, MediaType } from '../../../../database/models/media.model';
+import { GroupPrivacy } from '../../../../shared/group/dto';
 import { UserDto } from '../../../auth';
+import { VideoProcessStatus } from '../../post.constants';
 
 export const mockUserDto: UserDto = {
   id: 33,
 };
 
-export const mockPostFindOne = {
-  id: 100,
+export const mockIPost = {
+  id: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
   createdBy: mockUserDto.id,
   content: 'haha how are you',
   groups: [
     {
-      postId: 100,
+      postId: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
       groupId: 1,
     },
     {
-      postId: 100,
+      postId: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
       groupId: 2,
     },
     {
-      postId: 100,
+      postId: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
       groupId: 3,
     },
   ],
 };
 
-export const mockPostEditedHistoryFindAndCountAll = [
+export const mockPostEditedHistoryModelArr = [
   {
     toJSON: () => ({
-      id: 11,
-      postId: 7,
-      content: 'have videos',
-      editedAt: '2022-04-26T09:20:42.646Z',
-      media: [
-        {
-          id: 2,
-          url: 'http://google.com',
-          type: 'video',
-          isDraft: true,
-          createdBy: 3,
-          name: 'a file',
-          originName: null,
-          width: null,
-          height: null,
-          extension: null,
-          PostEditedHistoryMediaModel: { postEditedHistoryId: 11, mediaId: 2 },
-        },
-      ],
+      newData: {
+        id: '7673eeea-8b75-4dc6-acba-fa5d5b9d32a0',
+        content: 'have videos',
+        updatedAt: '2022-04-26T09:20:42.646Z',
+        media: [
+          {
+            id: 2,
+            url: 'http://google.com',
+            type: 'video',
+            isDraft: true,
+            createdBy: 3,
+            name: 'a file',
+            width: null,
+            height: null,
+            extension: null,
+            PostEditedHistoryMediaModel: { postEditedHistoryId: 11, mediaId: 2 },
+          },
+        ],
+      },
     }),
   },
   {
     toJSON: () => ({
-      id: 10,
-      postId: 7,
-      content: 'image...',
-      editedAt: '2022-04-26T09:20:23.252Z',
-      media: [
-        {
-          id: 1,
-          url: 'http://google.com',
-          type: 'image',
-          isDraft: true,
-          createdBy: 3,
-          name: 'an image',
-          originName: null,
-          width: null,
-          height: null,
-          extension: null,
-          PostEditedHistoryMediaModel: { postEditedHistoryId: 10, mediaId: 1 },
-        },
-      ],
+      newData: {
+        id: '7673eeea-8b75-4dc6-acba-fa5d5b9d32a0',
+        content: 'image...',
+        updatedAt: '2022-04-26T09:20:23.252Z',
+        media: [
+          {
+            id: 1,
+            url: 'http://google.com',
+            type: 'image',
+            isDraft: true,
+            createdBy: 3,
+            name: 'an image',
+            width: null,
+            height: null,
+            extension: null,
+            PostEditedHistoryMediaModel: { postEditedHistoryId: 10, mediaId: 1 },
+          },
+        ],
+      },
     }),
   },
 ];
+
+export const mockedGroups = [
+  {
+    id: 1,
+    name: 'Name of group',
+    icon: 'icon link',
+    privacy: GroupPrivacy.PUBLIC,
+    child: {
+      public: [],
+      open: [],
+      private: [],
+      secret: [],
+    },
+  },
+];
+
+export const mockMediaModelArray = [
+  {
+    id: 'd838659a-85ef-47ba-91e6-902aa6174142',
+    createdBy: 1,
+    url: 'http://google.co',
+    type: MediaType.IMAGE,
+    isDraft: false,
+    name: 'filename.jpg',
+    status: MediaStatus.COMPLETED,
+  },
+];
+
+export const mockProcessVideoResponseDto = {
+  videoId: '85e62698-9d06-4358-93a2-fa4aa79e27b2',
+  status: VideoProcessStatus.DONE,
+  hlsUrl: 'http://google.com/videos/1',
+};

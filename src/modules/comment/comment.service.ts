@@ -32,9 +32,10 @@ import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
 import sequelize from 'sequelize';
-import { NIL as NIL_UUID } from 'uuid';
+import { NIL, NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '../../../libs/sentry/src';
 import { GiphyService } from '../giphy';
+import { createUrlFromId } from '../giphy/giphy.util';
 
 @Injectable()
 export class CommentService {
@@ -365,7 +366,8 @@ export class CommentService {
 
     if (checkAccess && user) {
       await this._authorityService.checkCanReadPost(user, post);
-    } else {
+    }
+    if (checkAccess && !user) {
       await this._authorityService.checkPublicPost(post);
     }
     const userId = user ? user.id : null;
@@ -458,7 +460,7 @@ export class CommentService {
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
     const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
-    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId)}`;
+    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId ?? NIL)}`;
     if (postId) {
       condition += ` AND "c".post_id = ${this._sequelizeConnection.escape(postId)}`;
     }
@@ -745,7 +747,8 @@ export class CommentService {
               "created_by" AS "createdBy", 
               "updated_by" AS "updatedBy", 
               "created_at" AS "createdAt", 
-              "updated_at" AS "updatedAt" 
+              "updated_at" AS "updatedAt",
+              "giphy_id" AS "giphyId"
         FROM ${schema}."comments" AS "CommentModel" 
         WHERE "CommentModel"."parent_id" = ${this._sequelizeConnection.escape(comment.id)} 
         ORDER BY "CommentModel"."created_at" DESC LIMIT :limit
@@ -1109,6 +1112,7 @@ export class CommentService {
           parentId,
           postId,
           giphyId,
+          giphyUrl: createUrlFromId(giphyId),
           edited,
           content,
           totalReply,

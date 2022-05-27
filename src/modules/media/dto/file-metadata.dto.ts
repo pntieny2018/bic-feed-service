@@ -27,6 +27,14 @@ export class FileMetadataDto implements IDocumentMetadata {
   @Expose()
   public uploadId?: string;
 
+  @ApiProperty({
+    required: false,
+    description: 'Size',
+  })
+  @IsOptional()
+  @Expose()
+  public size?: number;
+
   @ApiProperty()
   @IsOptional()
   @Expose()

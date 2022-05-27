@@ -78,22 +78,7 @@ export class FeedService {
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
 
-      let normalSeenPost = [];
-      if (limit >= rows.length) {
-        const unSeenCount = await this._newsFeedModel.count({
-          where: { isSeenPost: false, userId: authUserId },
-        });
-        normalSeenPost = await PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          offset: Math.max(0, offset - unSeenCount),
-          limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
-          authUserId,
-          isImportant: false,
-          isSeen: true,
-        });
-      }
-
-      const posts = this.groupPosts(rows.concat(normalSeenPost));
+      const posts = this.groupPosts(rows);
 
       const hasNextPage = posts.length === limit + 1 ? true : false;
       if (hasNextPage) posts.pop();
@@ -302,6 +287,7 @@ export class FeedService {
                   name: post.name,
                   type: post.type,
                   width: post.width,
+                  size: post.size,
                   height: post.height,
                   extension: post.extension,
                 },
@@ -352,6 +338,7 @@ export class FeedService {
           name: post.name,
           type: post.type,
           width: post.width,
+          size: post.size,
           height: post.height,
           extension: post.extension,
         });

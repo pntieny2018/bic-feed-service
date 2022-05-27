@@ -1,6 +1,4 @@
-import { CreateCommentDto } from '../../dto/requests';
-import { actorComment, userMentionInGroupMock, userMentionNotInGroupMock } from './user.mock';
-import { CommentResponseDto } from '../../dto/response/comment.response.dto';
+import { userMentionInGroupMock, userMentionNotInGroupMock } from './user.mock';
 
 const createTextCommentDto = {
   postId: '10dc4093-1bd0-4105-869f-8504e1986145',
