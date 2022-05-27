@@ -61,7 +61,7 @@ export class MediaController {
       width = des.width;
       height = des.height;
     }
-    return this._mediaService.create(user, {
+    const result = await this._mediaService.create(user, {
       url,
       name: url.split('/').pop(),
       uploadType,
@@ -71,6 +71,7 @@ export class MediaController {
       height,
       status: MediaStatus.COMPLETED,
     });
+    return result.toJSON();
   }
 
   @ApiOperation({ summary: 'Delete Media' })
