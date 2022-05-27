@@ -1,5 +1,5 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
@@ -17,7 +17,7 @@ import { GetCategoryDto } from './dto/requests/get-category.dto';
 })
 export class CategoryController {
   public constructor(private _categoryService: CategoryService) {}
-
+  private _logger = new Logger(CategoryController.name);
   @ApiOperation({ summary: 'Get categories' })
   @ApiOkResponse({
     type: CategoryResponseDto,
@@ -31,6 +31,7 @@ export class CategoryController {
     @AuthUser() user: UserDto,
     @Query() getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
+    this._logger.debug('get category');
     return this._categoryService.getCategory(user, getCategoryDto);
   }
 
@@ -47,6 +48,7 @@ export class CategoryController {
     @AuthUser() user: UserDto,
     @Body() createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
+    this._logger.debug('create category');
     return this._categoryService.createCategory(user, createCategoryDto);
   }
 }

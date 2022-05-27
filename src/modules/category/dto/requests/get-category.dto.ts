@@ -7,12 +7,12 @@ export class GetCategoryDto extends PageOptionsDto {
   @ApiProperty({ type: String })
   @Type(() => String)
   @IsOptional()
-  public name: string;
+  public name?: string;
 
   @ApiProperty({ type: Number })
   @Type(() => Number)
   @IsOptional()
-  public level: number;
+  public level?: number;
 
   @ApiProperty({
     name: 'is_created_by_me',
@@ -20,5 +20,5 @@ export class GetCategoryDto extends PageOptionsDto {
   })
   @Type(() => Boolean)
   @IsOptional()
-  public isCreatedByMe: boolean;
+  public isCreatedByMe?: boolean;
 }

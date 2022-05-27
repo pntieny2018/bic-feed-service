@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
 import { CreateCategoryDto } from './dto/requests/create-category.dto';
 import { InjectModel } from '@nestjs/sequelize';
@@ -14,11 +14,13 @@ import { Op } from 'sequelize';
 @Injectable()
 export class CategoryService {
   public constructor(@InjectModel(CategoryModel) private _categoryModel: typeof CategoryModel) {}
+  private _logger = new Logger(CategoryService.name);
 
   public async getCategory(
     user: UserDto,
     getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
+    this._logger.debug('getCategory');
     const conditions = {};
     if (getCategoryDto.isCreatedByMe) {
       conditions['createBy'] = user.id;
@@ -33,8 +35,8 @@ export class CategoryService {
 
     const pagingResult = getResult
       .slice(
-        (getCategoryDto.offset - 1) * getCategoryDto.limit,
-        getCategoryDto.limit * getCategoryDto.offset
+        getCategoryDto.offset * getCategoryDto.limit,
+        getCategoryDto.limit * (getCategoryDto.offset + 1)
       )
       .map((e) => new CategoryResponseDto(e));
 
@@ -49,6 +51,8 @@ export class CategoryService {
     user: UserDto,
     createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
+    this._logger.debug('createCategory');
+
     if (createCategoryDto.parentId === NIL_UUID) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_CATEGORY_NOT_ALLOW);
     }
