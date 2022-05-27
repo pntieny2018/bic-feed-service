@@ -33,7 +33,7 @@ import { IPostReaction, PostReactionModel } from '../../database/models/post-rea
 import { FollowService } from '../follow';
 import sequelize from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -217,18 +217,11 @@ export class ReactionService {
           isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
         },
         (t) => {
-          return this._sequelize.query(
-            `CALL ${schema}.create_post_reaction($postId,$userId,$reactionName,null)`,
-            {
-              bind: {
-                postId: postId,
-                userId: userId,
-                reactionName: reactionName,
-              },
-              transaction: t,
-              type: QueryTypes.SELECT,
-            }
-          );
+          return this._sequelize.query(`CALL ${schema}.create_post_reaction(?,?,?,null)`, {
+            replacements: [postId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          });
         }
       );
       if (rc !== null && rc.length > 0 && rc[0]['cpr_id']) {
@@ -348,18 +341,11 @@ export class ReactionService {
           isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
         },
         (t) => {
-          return this._sequelize.query(
-            `CALL ${schema}.create_comment_reaction($commentId,$userId,$reactionName,null)`,
-            {
-              bind: {
-                commentId: commentId,
-                userId: userId,
-                reactionName: reactionName,
-              },
-              transaction: t,
-              type: QueryTypes.SELECT,
-            }
-          );
+          return this._sequelize.query(`CALL ${schema}.create_comment_reaction(?,?,?,null)`, {
+            bind: [commentId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          });
         }
       );
       if (rc !== null && rc.length > 0 && rc[0]['ccr_id']) {
