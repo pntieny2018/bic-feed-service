@@ -11,7 +11,7 @@ import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class CommentDissociationService {
