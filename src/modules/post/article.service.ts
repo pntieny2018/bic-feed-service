@@ -85,7 +85,7 @@ export class ArticleService extends PostService {
    * @throws HttpException
    */
   public async getArticle(
-    postId: number,
+    postId: string,
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
@@ -165,7 +165,7 @@ export class ArticleService extends PostService {
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
-  public async getPublicArticle(postId: number, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+  public async getPublicArticle(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
     const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -409,7 +409,7 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public deleteArticle(id: number, user: UserDto): Promise<IPost> {
+  public deleteArticle(id: string, user: UserDto): Promise<IPost> {
     return this.deletePost(id, user);
   }
 }

@@ -1,5 +1,5 @@
 export class RemoveMentionDto {
-  public postId?: number;
-  public commentId?: number;
+  public postId?: string;
+  public commentId?: string;
   public mentionIds?: number[];
 }

@@ -160,7 +160,7 @@ export class MediaService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkValidMedia(mediaIds: number[], createdBy: number): Promise<boolean> {
+  public async checkValidMedia(mediaIds: string[], createdBy: number): Promise<boolean> {
     if (mediaIds.length === 0) return true;
 
     const getMediaList = await this._mediaModel.findAll({
@@ -214,9 +214,9 @@ export class MediaService {
   }
 
   public async sync(
-    entityId: number,
+    entityId: string,
     entityType: EntityType,
-    mediaIds: number[],
+    mediaIds: string[],
     transaction: Transaction
   ): Promise<void> {
     const changes = {
@@ -245,14 +245,14 @@ export class MediaService {
 
     const currentMediaIds = currentMedia.map((m) => m.mediaId);
 
-    changes.attached = ArrayHelper.differenceArrNumber(mediaIds, currentMediaIds);
+    changes.attached = ArrayHelper.arrDifferenceElements(mediaIds, currentMediaIds);
 
-    changes.detached = ArrayHelper.differenceArrNumber(currentMediaIds, mediaIds);
+    changes.detached = ArrayHelper.arrDifferenceElements(currentMediaIds, mediaIds);
 
     const getAttachedData = (
       data: number[],
       entityKey: string,
-      entityId: number,
+      entityId: string,
       mediaKey: string
     ): any[] =>
       data.map((id) => ({
@@ -263,7 +263,7 @@ export class MediaService {
     const getDetachedData = (
       data: number[],
       entityKey: string,
-      entityId: number,
+      entityId: string,
       mediaKey: string
     ): object => ({
       where: {
@@ -339,7 +339,7 @@ export class MediaService {
   }
 
   public async deleteMediaByEntityIds(
-    entityIds: number[],
+    entityIds: string[],
     entityType: EntityType,
     transaction: Transaction
   ): Promise<void> {
@@ -374,7 +374,7 @@ export class MediaService {
     await this.updateMediaDraft(mediaIds, transaction);
   }
 
-  public async countMediaByPost(postId: number): Promise<number> {
+  public async countMediaByPost(postId: string): Promise<number> {
     return await this._postMediaModel.count({
       where: { postId },
     });

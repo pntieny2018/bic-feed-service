@@ -1,18 +1,22 @@
 import { MediaDto } from '../../../media/dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
-import { UserDataShareDto } from '../../../../shared/user/dto';
+import { Expose, Transform, Type } from 'class-transformer';
+import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
 import { UserMentionDto } from '../../../mention/dto';
 import { GiphyDto } from '../../../giphy/dto/requests';
 
 export class CreateCommentDto {
   @ApiProperty({
-    type: Number,
+    type: String,
+    example: '40dc4093-1bd0-4105-869f-8504e1986145',
+    name: 'post_id',
   })
   @IsNotEmpty()
-  @IsNumber()
-  public postId: number;
+  @IsUUID()
+  @Expose({
+    name: 'post_id',
+  })
+  public postId: string;
 
   @ApiProperty({ type: String })
   @Type(() => String)

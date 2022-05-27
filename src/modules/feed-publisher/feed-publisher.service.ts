@@ -21,7 +21,7 @@ export class FeedPublisherService {
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: number[]): Promise<void> {
+  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: string[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
     const schema = this._databaseConfig.schema;
     try {
@@ -56,9 +56,9 @@ export class FeedPublisherService {
   /**
    * Attach post for any NewsFeed
    * @param userIds Array<Number>
-   * @param postId Array<Number>
+   * @param postId String
    */
-  public async attachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
+  public async attachPostForAnyNewsFeed(userIds: number[], postId: string): Promise<void> {
     this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
     const schema = this._databaseConfig.schema;
     try {
@@ -88,9 +88,9 @@ export class FeedPublisherService {
   /**
    * Detach post for any NewsFeed
    * @param userIds Array<Number>
-   * @param postId Array<Number>
+   * @param postId String
    */
-  public async detachPostForAnyNewsFeed(userIds: number[], postId: number): Promise<void> {
+  public async detachPostForAnyNewsFeed(userIds: number[], postId: string): Promise<void> {
     this._logger.debug(`[detachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
 
     try {
@@ -110,7 +110,7 @@ export class FeedPublisherService {
 
   protected async processFanout(
     userId: number,
-    postId: number,
+    postId: string,
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
     this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
@@ -168,7 +168,7 @@ export class FeedPublisherService {
 
   public fanoutOnWrite(
     createdBy: number,
-    postId: number,
+    postId: string,
     currentGroupIds: number[],
     oldGroupIds: number[]
   ): void {
@@ -176,8 +176,8 @@ export class FeedPublisherService {
       `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
     );
     const differenceGroupIds = [
-      ...ArrayHelper.differenceArrNumber(currentGroupIds, oldGroupIds),
-      ...ArrayHelper.differenceArrNumber(oldGroupIds, currentGroupIds),
+      ...ArrayHelper.arrDifferenceElements(currentGroupIds, oldGroupIds),
+      ...ArrayHelper.arrDifferenceElements(oldGroupIds, currentGroupIds),
     ];
     this._logger.debug(`[fanoutOnWrite]: differenceGroupIds: ${differenceGroupIds}`);
     if (differenceGroupIds.length) {

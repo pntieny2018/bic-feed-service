@@ -98,7 +98,7 @@ export class FollowService {
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
-    return ArrayHelper.differenceArrNumber(userIds, targetIds);
+    return ArrayHelper.arrDifferenceElements(userIds, targetIds);
   }
 
   /**

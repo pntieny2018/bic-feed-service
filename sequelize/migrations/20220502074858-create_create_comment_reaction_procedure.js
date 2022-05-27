@@ -1,19 +1,21 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.DB_SCHEMA;
 const tableName = 'comments_reactions';
 const procedureName = 'create_comment_reaction';
+const schemaName = process.env.DB_SCHEMA;
+const dbVersion = parseInt(process.env.DB_VER) ?? 14;
+const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
 
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.query(`
           SET SEARCH_PATH = ${schemaName};
           CREATE OR REPLACE PROCEDURE ${procedureName}(
-              ccr_comment_id  IN INTEGER,
+              ccr_comment_id  IN UUID,
               ccr_created_by IN INTEGER,
               ccr_reaction_name IN VARCHAR(100),
-              ccr_id INOUT INTEGER
+              ccr_id INOUT UUID
           )
           LANGUAGE plpgsql    
           AS $$
@@ -38,7 +40,7 @@ module.exports = {
               END IF;
               
               INSERT INTO ${schemaName}.${tableName}(id,created_by,comment_id,reaction_name,created_at)
-              VALUES (nextval('${schemaName}.${tableName}_id_seq'::regclass),ccr_created_by,ccr_comment_id,ccr_reaction_name,CURRENT_TIMESTAMP)
+              VALUES (${genRandomUUID},ccr_created_by,ccr_comment_id,ccr_reaction_name,CURRENT_TIMESTAMP)
               RETURNING id into ccr_id;
           END;$$
     `);

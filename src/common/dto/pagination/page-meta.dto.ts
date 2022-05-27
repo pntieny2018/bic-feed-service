@@ -13,10 +13,10 @@ export class PageMetaDto {
   @ApiProperty()
   public total?: number;
 
-  @ApiProperty()
+  @ApiProperty({ name: 'has_previous_page' })
   public hasPreviousPage?: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ name: 'has_next_page' })
   public hasNextPage?: boolean;
 
   public constructor({ pageOptionsDto, total }: IPageMeta) {

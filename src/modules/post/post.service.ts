@@ -40,6 +40,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
+import sequelize from 'sequelize';
 import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
@@ -51,7 +52,7 @@ export class PostService {
    * Logger
    * @private
    */
-   protected logger = new Logger(PostService.name);
+  protected logger = new Logger(PostService.name);
 
   /**
    *  ClassTransformer
@@ -315,14 +316,14 @@ export class PostService {
 
   /**
    * Get Post
-   * @param postId number
+   * @param postId string
    * @param user UserDto
    * @param getPostDto GetPostDto
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
   public async getPost(
-    postId: number,
+    postId: string,
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
@@ -396,13 +397,13 @@ export class PostService {
 
   /**
    * Get Public Post
-   * @param postId number
+   * @param postId string
    * @param user UserDto
    * @param getPostDto GetPostDto
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
-  public async getPublicPost(postId: number, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+  public async getPublicPost(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
     const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -615,12 +616,12 @@ export class PostService {
 
   /**
    * Save post edited history
-   * @param postId number
+   * @param postId string
    * @param Object { oldData: PostResponseDto; newData: PostResponseDto }
    * @returns Promise resolve void
    */
   public async savePostEditedHistory(
-    postId: number,
+    postId: string,
     { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
   ): Promise<any> {
     return this.postEditedHistoryModel.create({
@@ -633,7 +634,7 @@ export class PostService {
 
   /**
    * Update Post except isDraft
-   * @param postId postID
+   * @param postId string
    * @param authUser UserDto
    * @param updatePostDto UpdatePostDto
    * @returns Promise resolve boolean
@@ -747,7 +748,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishPost(postId: number, authUserId: number): Promise<boolean> {
+  public async publishPost(postId: string, authUserId: number): Promise<boolean> {
     try {
       const post = await this.postModel.findOne({
         where: {
@@ -824,12 +825,12 @@ export class PostService {
 
   /**
    * Delete post by id
-   * @param postId postID
+   * @param postId string
    * @param authUserId auth user ID
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: number, authUser: UserDto): Promise<IPost> {
+  public async deletePost(postId: string, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
     try {
       const post = await this.postModel.findByPk(postId);
@@ -862,9 +863,9 @@ export class PostService {
 
   /**
    * Delete post edited history
-   * @param postId number
+   * @param postId string
    */
-  public async deletePostEditedHistory(postId: number): Promise<any> {
+  public async deletePostEditedHistory(postId: string): Promise<any> {
     return this.postEditedHistoryModel.destroy({
       where: {
         postId: postId,
@@ -875,14 +876,14 @@ export class PostService {
   /**
    * Add group to post
    * @param groupIds Array of Group ID
-   * @param postId PostID
+   * @param postId string
    * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async addPostGroup(
     groupIds: number[],
-    postId: number,
+    postId: string,
     transaction: Transaction
   ): Promise<boolean> {
     if (groupIds.length === 0) return true;
@@ -904,7 +905,7 @@ export class PostService {
    */
   public async setGroupByPost(
     groupIds: number[],
-    postId: number,
+    postId: string,
     transaction: Transaction
   ): Promise<boolean> {
     const currentGroups = await this.postGroupModel.findAll({
@@ -912,7 +913,7 @@ export class PostService {
     });
     const currentGroupIds = currentGroups.map((i) => i.groupId);
 
-    const deleteGroupIds = ArrayHelper.differenceArrNumber(currentGroupIds, groupIds);
+    const deleteGroupIds = ArrayHelper.arrDifferenceElements(currentGroupIds, groupIds);
     if (deleteGroupIds.length) {
       await this.postGroupModel.destroy({
         where: { groupId: deleteGroupIds, postId },
@@ -920,7 +921,7 @@ export class PostService {
       });
     }
 
-    const addGroupIds = ArrayHelper.differenceArrNumber(groupIds, currentGroupIds);
+    const addGroupIds = ArrayHelper.arrDifferenceElements(groupIds, currentGroupIds);
     if (addGroupIds.length) {
       await this.postGroupModel.bulkCreate(
         addGroupIds.map((groupId) => ({
@@ -1021,7 +1022,7 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupIds: number[], take = 1000): Promise<number[]> {
+  public async findPostIdsByGroupId(groupIds: number[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
         where: {
@@ -1038,7 +1039,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: number, userId: number): Promise<void> {
+  public async markReadPost(postId: string, userId: number): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
@@ -1061,18 +1062,74 @@ export class PostService {
     return;
   }
 
+  public async getTotalImportantPostInGroups(
+    userId: number,
+    groupIds: number[],
+    constraints?: string
+  ): Promise<number> {
+    const { schema } = getDatabaseConfig();
+    const query = `SELECT COUNT(*) as total
+    FROM ${schema}.posts as p
+    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    AND EXISTS(
+        SELECT 1
+        from ${schema}.posts_groups AS g
+        WHERE g.post_id = p.id
+        AND g.group_id IN(:groupIds)
+      )
+    ${constraints ?? ''}`;
+    const result: any = await this.sequelizeConnection.query(query, {
+      replacements: {
+        groupIds,
+        userId,
+      },
+      type: QueryTypes.SELECT,
+    });
+    return result[0].total;
+  }
+
+  public async getTotalImportantPostInNewsFeed(
+    userId: number,
+    constraints: string
+  ): Promise<number> {
+    const { schema } = getDatabaseConfig();
+    const query = `SELECT COUNT(*) as total
+    FROM ${schema}.posts as p
+    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    AND NOT EXISTS (
+        SELECT 1
+        FROM ${schema}.users_mark_read_posts as u
+        WHERE u.user_id = :userId AND u.post_id = p.id
+      )
+    AND EXISTS(
+        SELECT 1
+        from ${schema}.user_newsfeed AS u
+        WHERE u.post_id = p.id
+        AND u.user_id = :userId
+      )
+    ${constraints}`;
+    const result: any = await this.sequelizeConnection.query(query, {
+      replacements: {
+        userId,
+      },
+      type: QueryTypes.SELECT,
+    });
+    return result[0].total;
+  }
+
   /**
    * Get post edited history
    * @param user UserDto
-   * @param postId number
+   * @param postId string
    * @param getPostEditedHistoryDto GetPostEditedHistoryDto
    * @returns Promise resolve PageDto
    */
   public async getPostEditedHistory(
     user: UserDto,
-    postId: number,
+    postId: string,
     getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
+    const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
       await this.checkPostOwner(post, user.id);
@@ -1088,29 +1145,59 @@ export class PostService {
 
       const conditions = {};
       conditions['postId'] = postId;
+
       if (idGT) {
         conditions['id'] = {
-          [Op.gt]: idGT,
-        };
-      }
-      if (idGTE) {
-        conditions['id'] = {
-          [Op.gte]: idGTE,
+          [Op.not]: idGT,
           ...conditions['id'],
         };
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
+            idGT
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
       }
+
+      if (idGTE) {
+        conditions['editedAt'] = {
+          [Op.gte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
+            idGTE
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (idLT) {
         conditions['id'] = {
-          [Op.lt]: idLT,
+          [Op.not]: idLT,
           ...conditions['id'],
         };
-      }
-      if (idLTE) {
-        conditions['id'] = {
-          [Op.lte]: idLTE,
-          ...conditions,
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
+            idLT
+          )}
+          `),
+          ...conditions['editedAt'],
         };
       }
+
+      if (idLTE) {
+        conditions['editedAt'] = {
+          [Op.lte]: sequelize.literal(`
+            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
+            idLT
+          )}
+          `),
+          ...conditions['editedAt'],
+        };
+      }
+
       if (endTime) {
         conditions['editedAt'] = {
           [Op.lt]: endTime,
@@ -1187,7 +1274,7 @@ export class PostService {
     return result;
   }
 
-  public async updatePostStatus(postId: number): Promise<void> {
+  public async updatePostStatus(postId: string): Promise<void> {
     const { schema } = getDatabaseConfig();
     const postMedia = PostMediaModel.tableName;
     const post = PostModel.tableName;
@@ -1237,7 +1324,7 @@ export class PostService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
-      this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
+      await this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this.logger.error(e, e?.stack);
       this.sentryService.captureException(e);
