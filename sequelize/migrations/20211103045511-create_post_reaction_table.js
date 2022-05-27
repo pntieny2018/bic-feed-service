@@ -11,7 +11,7 @@ module.exports = {
         id: {
           primaryKey: true,
           type: Sequelize.UUID,
-          defaultValue: Sequelize.literal("gen_random_uuid()")
+          defaultValue: Sequelize.literal("public.gen_random_uuid()")
         },
         created_by: {
           type: Sequelize.INTEGER,
