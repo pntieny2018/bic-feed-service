@@ -11,7 +11,6 @@ export class CreateReactionDto {
     name: 'reaction_name',
   })
   @IsNotEmpty()
-  @Expose()
   @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
   @Expose({
     name: 'reaction_name',
@@ -20,7 +19,6 @@ export class CreateReactionDto {
 
   @ApiProperty({ example: 'POST' })
   @IsNotEmpty()
-  @Expose()
   public target: ReactionEnum;
 
   @ApiProperty({
