@@ -157,7 +157,7 @@ export class PostListener {
     this._postService
       .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
       .catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
       });
 
