@@ -112,7 +112,7 @@ export class ArticleService extends PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
         {
           model: PostReactionModel,
@@ -188,7 +188,7 @@ export class ArticleService extends PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
       ],
     });
