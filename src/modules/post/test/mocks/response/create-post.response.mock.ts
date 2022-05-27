@@ -9,7 +9,6 @@ export const mockedCreatePostResponse = {
       {
         id: 1,
         name: 'filename.jpg',
-        uploadId: null,
         status: 'completed',
         url: 'http://google.co',
         width: null,
