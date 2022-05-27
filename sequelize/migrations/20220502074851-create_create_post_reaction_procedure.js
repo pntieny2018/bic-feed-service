@@ -38,7 +38,7 @@ module.exports = {
               END IF;
               
               INSERT INTO ${schemaName}.${tableName}(id,created_by,post_id,reaction_name,created_at)
-              VALUES (gen_random_uuid(),cpr_created_by,cpr_post_id,cpr_reaction_name,CURRENT_TIMESTAMP)
+              VALUES (public.gen_random_uuid(),cpr_created_by,cpr_post_id,cpr_reaction_name,CURRENT_TIMESTAMP)
               RETURNING id into cpr_id;
           END;$$
     `);
