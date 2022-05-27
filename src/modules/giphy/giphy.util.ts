@@ -8,6 +8,6 @@ export function createUrlFromId(id?: string, type: GiphyType = GiphyType.GIF_FUL
   if (type === GiphyType.GIF_FULL) {
     return 'https://i.giphy.com/' + id + '.gif';
   } else if (type === GiphyType.GIF_PREVIEW) {
-    return 'https://i.giphy.com/media/' + id + '/giphy-preview.gif';
+    return 'https://i.giphy.com/media/' + id + '/200w_d.gif';
   }
 }
