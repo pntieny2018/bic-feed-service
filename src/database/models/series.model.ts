@@ -30,7 +30,6 @@ export interface ISeries {
 export class SeriesModel extends Model<ISeries, Omit<ISeries, 'id'>> implements ISeries {
     @PrimaryKey
     @IsUUID()
-    @Default(() => uuid_v4())
     @Column
     public id: string;
 
