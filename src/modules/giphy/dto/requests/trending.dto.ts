@@ -4,10 +4,10 @@ import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
 
 export enum Rating {
-  g= 'g',
+  g = 'g',
   pg = 'pg',
   pg13 = 'pg-13',
-  r = 'r'
+  r = 'r',
 }
 
 export class TrendingDto {
