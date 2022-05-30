@@ -44,7 +44,7 @@ import sequelize from 'sequelize';
 import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 
 @Injectable()
@@ -489,7 +489,7 @@ export class PostService {
         const mappedGroups = [];
         postGroups.forEach((group) => {
           const dataGroup = dataGroups.find((i) => i.id === group.id || i.id === group.groupId);
-          if(dataGroup && dataGroup.child) {
+          if (dataGroup && dataGroup.child) {
             delete dataGroup.child;
           }
           if (dataGroup) mappedGroups.push(dataGroup);

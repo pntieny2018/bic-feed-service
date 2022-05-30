@@ -27,7 +27,7 @@ import { CommentMediaModel } from '../../database/models/comment-media.model';
 import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class MediaService {

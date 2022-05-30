@@ -25,7 +25,7 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { ClientKafka } from '@nestjs/microservices';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { PostService } from './post.service';
 
 @Injectable()

@@ -1,6 +1,6 @@
 import { RedisService } from '@app/redis';
 import { Injectable, Logger } from '@nestjs/common';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class ReactionCountService {
