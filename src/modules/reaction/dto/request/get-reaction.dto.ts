@@ -1,7 +1,7 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { ReactionEnum } from '../../reaction.enum';
 import { OrderEnum } from '../../../../common/dto';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { NIL as NIL_UUID } from 'uuid';
 import { Expose } from 'class-transformer';
 
@@ -39,12 +39,14 @@ export class GetReactionDto {
   @Expose({
     name: 'latest_id',
   })
+  @IsOptional()
   public latestId = NIL_UUID;
 
   @ApiProperty({
     required: false,
     default: 25,
   })
+  @IsOptional()
   public limit = 25;
 
   @ApiProperty({
@@ -53,6 +55,7 @@ export class GetReactionDto {
     enum: OrderEnum,
     description: 'Order by Created At',
   })
+  @IsOptional()
   @ApiHideProperty()
   public order: OrderEnum;
 }

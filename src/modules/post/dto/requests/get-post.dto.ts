@@ -69,7 +69,7 @@ export class GetPostDto {
   @Expose({
     name: 'with_comment',
   })
-  public withComment?: boolean = true;
+  public withComment?: boolean = false;
 
   public constructor(data: Partial<GetPostDto> = {}) {
     Object.assign(this, data);

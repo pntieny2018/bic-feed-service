@@ -8,7 +8,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CommentService } from '../../modules/comment';
 import { CommentNotificationService } from '../../notification/services';
 import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class CommentListener {

@@ -342,7 +342,7 @@ export class ReactionService {
         },
         (t) => {
           return this._sequelize.query(`CALL ${schema}.create_comment_reaction(?,?,?,null)`, {
-            bind: [commentId, userId, reactionName],
+            replacements: [commentId, userId, reactionName],
             transaction: t,
             type: QueryTypes.SELECT,
           });

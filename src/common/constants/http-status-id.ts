@@ -61,5 +61,9 @@ export const HTTP_STATUS_ID = {
   APP_POST_AS_READ_NOT_ALLOW: 'app.post.not_allow',
   APP_POST_NOT_FOUND: 'app.post.not_found',
 
+  // SERIES
+  APP_SERIES_NOT_FOUND: 'app.series.not_found',
+
   APP_USER_NOT_FOUND: 'app.user.not_found',
+  APP_CATEGORY_NOT_ALLOW: 'app.post.not_allow',
 };

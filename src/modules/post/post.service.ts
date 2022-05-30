@@ -44,7 +44,7 @@ import sequelize from 'sequelize';
 import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 
 @Injectable()
@@ -441,6 +441,7 @@ export class PostService {
     if (getPostDto.withComment) {
       comments = await this.commentService.getComments({
         postId,
+        parentId: NIL,
         childLimit: getPostDto.childCommentLimit,
         order: getPostDto.commentOrder,
         childOrder: getPostDto.childCommentOrder,
