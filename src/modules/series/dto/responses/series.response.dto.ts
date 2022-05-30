@@ -34,42 +34,54 @@ export class SeriesResponseDto {
     type: Number,
     name: 'created_by'
   })
-  @Expose()
+  @Expose({
+    name: 'created_by',
+  })
   public createdBy: number;
 
   @ApiProperty({
     type: Number,
     name: 'updated_by'
   })
-  @Expose()
+  @Expose({
+    name: 'updated_by',
+  })
   public updatedBy: number;
 
   @ApiProperty({
     type: Number,
     name: 'total_article'
   })
-  @Expose()
+  @Expose({
+    name: 'total_article',
+  })
   public totalArticle: number;
 
   @ApiProperty({
     type: Number,
     name: 'total_view'
   })
-  @Expose()
+  @Expose({
+    name: 'total_view',
+  })
   public totalView: number;
 
   @ApiProperty({
     type: Date,
     name: 'created_at'
   })
-  @Expose()
+  @Expose({
+    name: 'created_at',
+  })
   public createdAt: Date;
 
   @ApiProperty({
     type: Date,
     name: 'updated_at'
   })
-  @Expose()
+  @Expose({
+    name: 'updated_at',
+  })
   public updatedAt: Date;
 
 

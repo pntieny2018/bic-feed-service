@@ -1,12 +1,20 @@
 import { IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import {Expose, Type} from 'class-transformer';
 
 export const OrderFields = ['updatedAt', 'totalArticle', 'totalView']
 
 export class GetSeriesDto {
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description: 'sort by updatedAt || updatedAt || updatedAt',
+    type: String,
+    name: 'order_field',
+  })
   @IsOptional()
+  @Expose({
+    name: 'order_field',
+  })
   public orderField?: string;
 
 
