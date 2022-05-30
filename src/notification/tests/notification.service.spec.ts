@@ -2,7 +2,7 @@ import { ClientKafka } from '@nestjs/microservices';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { KAFKA_PRODUCER } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { PostService } from '../../modules/post/post.service';
@@ -230,7 +230,6 @@ describe('NotificationService', () => {
         mockCommentModel as unknown as CommentModel,
         [1, 2, 3]
       );
-
     });
 
     it('Func: getValidUserIds', async () => {

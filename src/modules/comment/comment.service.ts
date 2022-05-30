@@ -1,15 +1,20 @@
 import { UserDto } from '../auth';
+import sequelize from 'sequelize';
 import { PostAllow } from '../post';
+import { GiphyService } from '../giphy';
 import { MediaService } from '../media';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { MentionService } from '../mention';
 import { FollowService } from '../follow';
+import { SentryService } from '@app/sentry';
+import { NIL, NIL as NIL_UUID } from 'uuid';
+import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
 import { PostService } from '../post/post.service';
+import { createUrlFromId } from '../giphy/giphy.util';
 import { EntityType } from '../media/media.constants';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { ExceptionHelper } from '../../common/helpers';
 import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UserDataShareDto } from '../../shared/user/dto';
@@ -27,15 +32,10 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
-import { CommentEditedHistoryDto, CommentResponseDto, CommentsResponseDto } from './dto/response';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
-import sequelize from 'sequelize';
-import { NIL, NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
-import { GiphyService } from '../giphy';
-import { createUrlFromId } from '../giphy/giphy.util';
 
 @Injectable()
 export class CommentService {
