@@ -24,6 +24,12 @@ export class CommentActivityService {
         actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
         content: comment.content,
         media: comment.media,
+        giphy: comment.giphyId
+          ? {
+              giphyId: comment.giphyId,
+              giphyUrl: comment.giphyUrl,
+            }
+          : null,
         mentions: comment.mentions as any,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
@@ -62,11 +68,23 @@ export class CommentActivityService {
         mentions: parent.mentions as any,
         createdAt: parent.createdAt,
         updatedAt: parent.updatedAt,
+        giphy: parent.giphyId
+          ? {
+              giphyId: parent.giphyId,
+              giphyUrl: parent.giphyUrl,
+            }
+          : null,
         child: {
           id: comment.id,
           actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
           content: comment.content,
           media: comment.media,
+          giphy: comment.giphyId
+            ? {
+                giphyId: comment.giphyId,
+                giphyUrl: comment.giphyUrl,
+              }
+            : null,
           createdAt: comment.createdAt,
           updatedAt: comment.updatedAt,
         },
