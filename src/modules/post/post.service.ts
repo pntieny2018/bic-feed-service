@@ -1301,7 +1301,14 @@ export class PostService {
 
   public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
     const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    await this.mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    const dataUpdate = {
+      url: hlsUrl,
+      status: MediaStatus.COMPLETED,
+    };
+    if (meta.name) dataUpdate['name'] = meta.name;
+    if (meta.mimeType) dataUpdate['mimeType'] = meta.mimeType;
+    if (meta.size) dataUpdate['size'] = meta.size;
+    await this.mediaService.updateData([videoId], dataUpdate);
     const posts = await this.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
