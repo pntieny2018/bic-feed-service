@@ -36,7 +36,7 @@ import { FeedService } from '../../feed/feed.service';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
 import { ReactionService } from '../../reaction';
-import { SearchPostsDto } from '../dto/requests';
+import { SearchPostsDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostPolicyService } from '../post-policy.service';
 
@@ -208,7 +208,7 @@ describe('PostService', () => {
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
-
+      mediaService.createIfNotExist = jest.fn().mockReturnThis();
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.addPostGroup = jest.fn().mockResolvedValue(Promise.resolve());
@@ -283,7 +283,21 @@ describe('PostService', () => {
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
-
+      mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
+        {
+          id: mockedUpdatePostDto.media.images[0].id,
+          name: 'filename.jpg',
+          origin: 'filename.jpg',
+          size: 1000,
+          url: 'http://googl.com',
+          width: 100,
+          type: MediaType.IMAGE,
+          createdBy: mockedUserAuth.id,
+          updatedBy: mockedUserAuth.id,
+          height: 100,
+          status: MediaStatus.COMPLETED,
+        }
+      ]);
       postModelMock.update.mockResolvedValueOnce(mockedPostCreated);
 
       postModelMock.update = jest.fn().mockResolvedValue(mockedPostCreated);
@@ -343,15 +357,31 @@ describe('PostService', () => {
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
-
+      mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
+        {
+          id: mockedUpdatePostDto.media.images[0].id,
+          name: 'filename.jpg',
+          origin: 'filename.jpg',
+          size: 1000,
+          url: 'http://googl.com',
+          width: 100,
+          type: MediaType.IMAGE,
+          createdBy: mockedUserAuth.id,
+          updatedBy: mockedUserAuth.id,
+          height: 100,
+          status: MediaStatus.COMPLETED,
+        }
+      ]);
       postModelMock.update = jest
         .fn()
-        .mockResolvedValue(new Error('Any error when insert data to DB'));
+        .mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
         await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
       } catch (e) {
-        expect(e.message).toEqual('Any error when insert data to DB');
+        expect(sequelize.transaction).toBeCalledTimes(1);
+        expect(transactionMock.commit).not.toBeCalledTimes(1);
+        expect(transactionMock.rollback).toBeCalledTimes(1);
       }
     });
   });
@@ -1126,6 +1156,29 @@ describe('PostService', () => {
 
       expect(postService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.findPost).toBeCalledTimes(1);
+    });
+  });
+
+
+  describe('checkContent', () => {
+    it('Should successfully', async () => {
+      const updatePostDto: UpdatePostDto = {
+        content: '',
+        audience: {
+          groupIds: [1],
+        },
+        media: {
+          images: [],
+          files: [],
+          videos: []
+        }
+      }
+      try{
+      const result = postService.checkContent(updatePostDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+      
     });
   });
 });

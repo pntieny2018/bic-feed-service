@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
+import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { GetPostPipe } from './pipes';
@@ -68,7 +68,7 @@ export class ArticleController {
   @Put('/:articleId')
   public async updateArticle(
     @AuthUser() user: UserDto,
-    @Param('articleId', ParseIntPipe) articleId: number,
+    @Param('articleId') articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
     const articleBefore = await this._articleService.getArticle(

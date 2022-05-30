@@ -178,7 +178,7 @@ export class MediaService {
     return true;
   }
 
-  public async createIfNotExist(data: MediaDto, createdBy: number) {
+  public async createIfNotExist(data: MediaDto, createdBy: number): Promise<IMedia[]> {
     const { images, files, videos } = data;
     const insertData = [];
     const mediaIds = [];

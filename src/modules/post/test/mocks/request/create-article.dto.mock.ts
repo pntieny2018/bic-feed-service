@@ -15,7 +15,7 @@ export const mockedCreateArticleDto: CreateArticleDto = {
   media: {
     images: [
       {
-        id: 1,
+        id: '9afb93ac-a150-4323-b7ef-5e809bf9b722',
       },
     ],
     videos: [],
