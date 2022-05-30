@@ -1,7 +1,7 @@
 import { HTTP_STATUS_ID, KAFKA_PRODUCER, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -12,70 +12,45 @@ import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { FeedService } from '../feed/feed.service';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
-import { ClientKafka } from '@nestjs/microservices';
 import { SentryService } from '../../../libs/sentry/src';
-import { PostService } from './post.service';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
+import { ClassTransformer } from 'class-transformer';
+import { PostService } from '../post/post.service';
 @Injectable()
-export class ArticleService extends PostService {
+export class ArticleService {
+  /**
+   * Logger
+   * @protected
+   */
+  protected logger = new Logger(ArticleService.name);
+
+  /**
+   *  ClassTransformer
+   * @protected
+   */
+  protected classTransformer = new ClassTransformer();
   public constructor(
     @InjectConnection()
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    @InjectModel(PostGroupModel)
-    protected postGroupModel: typeof PostGroupModel,
-    @InjectModel(UserMarkReadPostModel)
-    protected userMarkReadPostModel: typeof UserMarkReadPostModel,
-    protected userService: UserService,
-    protected groupService: GroupService,
-    protected mediaService: MediaService,
-    protected mentionService: MentionService,
-    @Inject(forwardRef(() => CommentService))
+    protected postService: PostService,
     protected commentService: CommentService,
-    protected authorityService: AuthorityService,
-    protected searchService: ElasticsearchService,
     protected reactionService: ReactionService,
-    @Inject(forwardRef(() => FeedService))
-    protected feedService: FeedService,
-    @InjectModel(PostEditedHistoryModel)
-    protected readonly postEditedHistoryModel: typeof PostEditedHistoryModel,
-    @Inject(KAFKA_PRODUCER)
-    protected readonly client: ClientKafka,
+    protected mentionService: MentionService,
+    protected mediaService: MediaService,
+    protected authorityService: AuthorityService,
     protected readonly sentryService: SentryService
-  ) {
-    super(
-      sequelizeConnection,
-      postModel,
-      postGroupModel,
-      userMarkReadPostModel,
-      userService,
-      groupService,
-      mediaService,
-      mentionService,
-      commentService,
-      authorityService,
-      searchService,
-      reactionService,
-      feedService,
-      postEditedHistoryModel,
-      client,
-      sentryService
-    );
-  }
+  ) {}
 
   /**
    * Get Post
@@ -147,8 +122,8 @@ export class ArticleService extends PostService {
     await Promise.all([
       this.reactionService.bindReactionToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.bindActorToPost([jsonPost]),
-      this.bindAudienceToPost([jsonPost]),
+      this.postService.bindActorToPost([jsonPost]),
+      this.postService.bindAudienceToPost([jsonPost]),
     ]);
 
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
@@ -215,8 +190,8 @@ export class ArticleService extends PostService {
     await Promise.all([
       this.reactionService.bindReactionToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.bindActorToPost([jsonPost]),
-      this.bindAudienceToPost([jsonPost]),
+      this.postService.bindActorToPost([jsonPost]),
+      this.postService.bindAudienceToPost([jsonPost]),
     ]);
 
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
@@ -306,7 +281,7 @@ export class ArticleService extends PostService {
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      await this.addPostGroup(groupIds, post.id, transaction);
+      await this.postService.addPostGroup(groupIds, post.id, transaction);
 
       if (mentions.length) {
         await this.mentionService.create(
@@ -353,9 +328,9 @@ export class ArticleService extends PostService {
     try {
       const { content, media, setting, mentions, audience, series, categories } = updateArticleDto;
       if (post.isDraft === false) {
-        await this.checkContent(updateArticleDto);
+        await this.postService.checkContent(updateArticleDto);
       }
-      await this.checkPostOwner(post, authUser.id);
+      await this.postService.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
         await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
@@ -427,7 +402,7 @@ export class ArticleService extends PostService {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
       if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
-        await this.setGroupByPost(audience.groupIds, post.id, transaction);
+        await this.postService.setGroupByPost(audience.groupIds, post.id, transaction);
       }
       await transaction.commit();
 
@@ -446,7 +421,7 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public deleteArticle(id: string, user: UserDto): Promise<IPost> {
-    return this.deletePost(id, user);
+  public async deleteArticle(id: string, user: UserDto): Promise<any> {
+    return this.postService.deletePost(id, user);
   }
 }

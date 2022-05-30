@@ -20,6 +20,7 @@ import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
 import { DatabaseModule } from '../database';
 import { GiphyModule } from '../modules/giphy';
+import { ArticleModule } from '../modules/article';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { GiphyModule } from '../modules/giphy';
     FeedGeneratorModule,
     FeedPublisherModule,
     GiphyModule,
+    ArticleModule,
   ],
   controllers: [AppController],
   providers: [],

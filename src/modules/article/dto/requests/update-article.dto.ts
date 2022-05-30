@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional } from 'class-validator';
-import { UpdatePostDto } from '.';
+import { UpdatePostDto } from '../../../post/dto/requests';
 
 export class UpdateArticleDto extends UpdatePostDto {
   @ApiProperty({

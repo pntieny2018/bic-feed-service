@@ -51,13 +51,13 @@ import { NIL } from 'uuid';
 export class PostService {
   /**
    * Logger
-   * @private
+   * @protected
    */
   protected logger = new Logger(PostService.name);
 
   /**
    *  ClassTransformer
-   * @private
+   * @protected
    */
   protected classTransformer = new ClassTransformer();
 

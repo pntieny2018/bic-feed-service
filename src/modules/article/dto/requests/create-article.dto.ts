@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional } from 'class-validator';
-import { CreatePostDto } from '.';
+import { CreatePostDto } from '../../../post/dto/requests';
 
 export class CreateArticleDto extends CreatePostDto {
   @ApiProperty({

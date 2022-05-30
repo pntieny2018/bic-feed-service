@@ -1,9 +1,18 @@
-import { CreatePostDto } from '../../../dto/requests';
-import { CreateArticleDto } from '../../../dto/requests/create-article.dto';
+import { CreateArticleDto } from "../../../dto/requests";
 
 export const mockedCreateArticleDto: CreateArticleDto = {
-  categories: ['aaa'],
-  series: ['aaaa'],
+  categories: [
+    {
+      id: '111-aaa',
+      name: 'Technical',
+    },
+  ],
+  series: [{
+    {
+      id: '111-ss',
+      name: 'Serial 1',
+    },
+  }],
   hashtags: ['sfddsf'],
   title: 'aaa',
   summary: 'bbbb',
