@@ -11,8 +11,6 @@ import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
 
-jest.mock('../article.service');
-
 describe('PostController', () => {
   let postService: PostService;
   let postController: PostController;

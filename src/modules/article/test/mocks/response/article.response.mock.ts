@@ -1,13 +1,13 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
 import { IPost } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
-import { PostResponseDto } from '../../../dto/responses';
+import { ArticleResponseDto } from '../../../dto/responses';
 
-export const mockedPostResponse: PostResponseDto = {
+export const mockedArticleResponse: ArticleResponseDto = {
   ownerReactions: [],
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
-  isArticle: false,
+  isArticle: true,
   media: {
     files: [],
     videos: [],
@@ -65,11 +65,24 @@ export const mockedPostResponse: PostResponseDto = {
       hasPreviousPage: false,
     },
   },
+  categories: [
+    {
+      id: 'aaa',
+      name: 'Technical',
+    },
+  ],
+  series: [
+    {
+      id: 'aaa',
+      name: 'Technical',
+    },
+  ],
 };
 
-export const mockedPostData = {
+export const mockedArticleData = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   commentsCount: 3,
+  isArticle: true,
   isImportant: false,
   importantExpiredAt: null,
   isDraft: true,

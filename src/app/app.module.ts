@@ -21,6 +21,7 @@ import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
 import { DatabaseModule } from '../database';
 import { GiphyModule } from '../modules/giphy';
+import { ArticleModule } from '../modules/article';
 import { CategoryModule } from '../modules/category';
 import { HashtagModule } from '../modules/hashtag';
 
@@ -46,6 +47,7 @@ import { HashtagModule } from '../modules/hashtag';
     FeedGeneratorModule,
     FeedPublisherModule,
     GiphyModule,
+    ArticleModule,
     SeriesModule,
     CategoryModule,
     HashtagModule,
