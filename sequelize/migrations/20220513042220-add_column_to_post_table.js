@@ -12,7 +12,7 @@ module.exports = {
       'is_processing',
       {
         type: Sequelize.BOOLEAN,
-        default: false,
+        defaultValue: false,
       }
     );
   },
