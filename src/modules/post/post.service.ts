@@ -51,13 +51,13 @@ import { NIL } from 'uuid';
 export class PostService {
   /**
    * Logger
-   * @private
+   * @protected
    */
   protected logger = new Logger(PostService.name);
 
   /**
    *  ClassTransformer
-   * @private
+   * @protected
    */
   protected classTransformer = new ClassTransformer();
 
@@ -441,6 +441,7 @@ export class PostService {
     if (getPostDto.withComment) {
       comments = await this.commentService.getComments({
         postId,
+        parentId: NIL,
         childLimit: getPostDto.childCommentLimit,
         order: getPostDto.commentOrder,
         childOrder: getPostDto.childCommentOrder,
@@ -1301,7 +1302,14 @@ export class PostService {
 
   public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
     const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    await this.mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    const dataUpdate = {
+      url: hlsUrl,
+      status: MediaStatus.COMPLETED,
+    };
+    if (meta?.name) dataUpdate['name'] = meta.name;
+    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
+    if (meta?.size) dataUpdate['size'] = meta.size;
+    await this.mediaService.updateData([videoId], dataUpdate);
     const posts = await this.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this.updatePostStatus(post.id);
@@ -1310,7 +1318,14 @@ export class PostService {
 
   public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
     const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    await this.mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    const dataUpdate = {
+      url: hlsUrl,
+      status: MediaStatus.COMPLETED,
+    };
+    if (meta?.name) dataUpdate['name'] = meta.name;
+    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
+    if (meta?.size) dataUpdate['size'] = meta.size;
+    await this.mediaService.updateData([videoId], dataUpdate);
     const posts = await this.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this.updatePostStatus(post.id);

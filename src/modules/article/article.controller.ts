@@ -2,12 +2,18 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
-import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
-import { PostResponseDto } from './dto/responses';
-import { GetPostPipe } from './pipes';
+import { ArticleResponseDto } from './dto/responses/article.response.dto';
+import { CreateArticleDto } from './dto/requests/create-article.dto';
+import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { GetArticleDto } from './dto/requests/get-article.dto';
+import { GetPostPipe } from '../post/pipes';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -23,52 +29,67 @@ export class ArticleController {
 
   @ApiOperation({ summary: 'Get article detail' })
   @ApiOkResponse({
-    type: PostResponseDto,
+    type: ArticleResponseDto,
   })
   @Get('/:articleId')
-  public getPost(
+  public getArticle(
     @AuthUser(false) user: UserDto,
     @Param('articleId') articleId: string,
-    @Query(GetPostPipe) getPostDto: GetPostDto
-  ): Promise<PostResponseDto> {
-    if (user === null) return this._articleService.getPublicArticle(articleId, getPostDto);
-    else return this._articleService.getArticle(articleId, user, getPostDto);
+    @Query(GetPostPipe) getArticleDto: GetArticleDto
+  ): Promise<ArticleResponseDto> {
+    if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
+    else return this._articleService.getArticle(articleId, user, getArticleDto);
   }
 
   @ApiOperation({ summary: 'Create article' })
   @ApiOkResponse({
-    type: PostResponseDto,
+    type: ArticleResponseDto,
     description: 'Create article successfully',
   })
   @Post('/')
-  public async createPost(
+  public async createArticle(
     @AuthUser() user: UserDto,
-    @Body() createPostDto: CreatePostDto
-  ): Promise<PostResponseDto> {
-    const created = await this._articleService.createPost(user, createPostDto);
+    @Body() createArticleDto: CreateArticleDto
+  ): Promise<ArticleResponseDto> {
+    const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
-      return await this._articleService.getArticle(created.id, user, new GetPostDto());
+      const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
+      this._eventEmitter.emit(
+        new PostHasBeenPublishedEvent({
+          post: article,
+          actor: user.profile,
+        })
+      );
+      return article;
     }
   }
 
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
-    type: PostResponseDto,
+    type: ArticleResponseDto,
     description: 'Update article successfully',
   })
   @Put('/:articleId')
-  public async updatePost(
+  public async updateArticle(
     @AuthUser() user: UserDto,
     @Param('articleId') articleId: string,
-    @Body() updatePostDto: UpdatePostDto
-  ): Promise<PostResponseDto> {
-    const articleBefore = await this._articleService.getArticle(articleId, user, new GetPostDto());
-    const isUpdated = await this._articleService.updateArticle(articleBefore, user, updatePostDto);
+    @Body() updateArticleDto: UpdateArticleDto
+  ): Promise<ArticleResponseDto> {
+    const articleBefore = await this._articleService.getArticle(
+      articleId,
+      user,
+      new GetArticleDto()
+    );
+    const isUpdated = await this._articleService.updateArticle(
+      articleBefore,
+      user,
+      updateArticleDto
+    );
     if (isUpdated) {
       const articleUpdated = await this._articleService.getArticle(
         articleId,
         user,
-        new GetPostDto()
+        new GetArticleDto()
       );
       this._eventEmitter.emit(
         new PostHasBeenUpdatedEvent({

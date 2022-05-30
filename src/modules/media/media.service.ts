@@ -178,7 +178,7 @@ export class MediaService {
     return true;
   }
 
-  public async createIfNotExist(data: MediaDto, createdBy: number) {
+  public async createIfNotExist(data: MediaDto, createdBy: number): Promise<IMedia[]> {
     const { images, files, videos } = data;
     const insertData = [];
     const mediaIds = [];
@@ -186,7 +186,7 @@ export class MediaService {
       mediaIds.push(i.id);
       insertData.push({
         id: i.id,
-        name: i.name ?? null,
+        name: i.name ?? 'temporary',
         origin: i.name ?? null,
         size: i.size ?? 0,
         url: i.url ?? null,
@@ -449,6 +449,8 @@ export class MediaService {
   public async updateData(
     ids: string[],
     dataUpdate: {
+      name?: string;
+      size?: number;
       url?: string;
       status: MediaStatus;
       mimeType?: string;
