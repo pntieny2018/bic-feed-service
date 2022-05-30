@@ -19,9 +19,4 @@ export class CreateCategoryDto {
   @Type(() => String)
   @IsNotEmpty()
   public name: string;
-
-  @ApiProperty({ type: String })
-  @Type(() => String)
-  @IsNotEmpty()
-  public slug: string;
 }

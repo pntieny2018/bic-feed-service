@@ -4,7 +4,7 @@ import { CreateCategoryDto } from './dto/requests/create-category.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { CategoryModel } from '../../database/models/category.model';
 import { NIL as NIL_UUID } from 'uuid';
-import { ExceptionHelper } from '../../common/helpers';
+import { ExceptionHelper, StringHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UserDto } from '../auth';
 import { PageDto } from '../../common/dto';
@@ -69,7 +69,7 @@ export class CategoryService {
       parentId: createCategoryDto.parentId,
       active: true,
       name: createCategoryDto.name,
-      slug: createCategoryDto.slug,
+      slug: StringHelper.convertToSlug(createCategoryDto.name),
       level: parent.level + 1,
       createdBy: user.id,
       updatedBy: user.id,

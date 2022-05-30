@@ -21,11 +21,11 @@ module.exports = {
         },
         name: {
           type: Sequelize.STRING(5000),
-          allowNull: true,
+          allowNull: false,
         },
         slug: {
           type: Sequelize.STRING(5000),
-          allowNull: true,
+          allowNull: false,
         },
         level: {
           type: Sequelize.SMALLINT,
@@ -61,9 +61,6 @@ module.exports = {
     );
 
     await queryInterface.addIndex(tableName, ['created_by']);
-    await queryInterface.addIndex(tableName, ['slug'], {
-      unique: true,
-    });
   },
 
   down: async (queryInterface) => {
