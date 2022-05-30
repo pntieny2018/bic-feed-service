@@ -1,6 +1,6 @@
 import {
   Body,
-  Controller,
+  Controller, Delete,
   Get, Logger,
   Param,
   Post,
@@ -88,7 +88,7 @@ export class SeriesController {
     type: SeriesResponseDto,
     description: 'Delete series successfully',
   })
-  @Put('/:id')
+  @Delete('/:id')
   public async deleteSeries(
     @AuthUser() user: UserDto,
     @Param('id') seriesId: string

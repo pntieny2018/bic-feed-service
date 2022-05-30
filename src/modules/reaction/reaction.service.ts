@@ -497,7 +497,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
       }
 
       const response = existedReaction.toJSON();
@@ -612,7 +612,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
       }
 
       const response = existedReaction.toJSON();

@@ -7,7 +7,7 @@ export const OrderFields = ['updatedAt', 'totalArticle', 'totalView']
 export class GetSeriesDto {
   @ApiProperty({
     required: false,
-    description: 'sort by updatedAt || updatedAt || updatedAt',
+    description: 'sort by updatedAt || totalArticle || totalView',
     type: String,
     name: 'order_field',
   })

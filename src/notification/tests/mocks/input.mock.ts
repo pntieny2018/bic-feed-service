@@ -26,6 +26,7 @@ export const mockPostResponseDto: PostResponseDto = {
   id: '40dc4093-1bd0-4105-469f-8504e1986145',
   content: 'hello world',
   highlight: 'nothing',
+  isArticle: false,
   media: {
     files: [],
     videos: [],

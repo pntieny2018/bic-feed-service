@@ -2,14 +2,18 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
-import { GetPostPipe } from './pipes';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
+import { GetPostPipe } from '../post/pipes';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
