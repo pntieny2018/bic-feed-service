@@ -27,11 +27,6 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @ApiProperty()
   @IsOptional()
   @Expose()
-  public uploadId?: string;
-
-  @ApiProperty()
-  @IsOptional()
-  @Expose()
   public status?: MediaStatus;
 
   @ApiProperty({

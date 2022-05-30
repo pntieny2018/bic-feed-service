@@ -1,10 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
 import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../common/constants';
 
 @Injectable()
-export class NotificationService {
+export class NotificationService implements OnModuleInit {
   private readonly _logger = new Logger(NotificationService.name);
 
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
@@ -41,5 +41,9 @@ export class NotificationService {
       topic: KAFKA_TOPIC.STREAM.REACTION,
       messages: [{ key: payload.key, value: JSON.stringify(payload.value) }],
     });
+  }
+
+  public async onModuleInit(): Promise<void> {
+    await this._kafkaProducer.connect();
   }
 }

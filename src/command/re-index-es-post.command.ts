@@ -42,7 +42,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
       ],
     });
