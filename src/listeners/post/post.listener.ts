@@ -74,10 +74,10 @@ export class PostListener {
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
       post;
 
-    const uploadIds = media.videos
+    const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
-      .map((i) => i.uploadId);
-    this._postService.processVideo(uploadIds).catch((ex) => this._logger.debug(ex));
+      .map((i) => i.id);
+    this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
 
     if (isDraft) return;
 
@@ -139,10 +139,10 @@ export class PostListener {
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
 
     if (oldPost.isDraft === false) {
-      const uploadIds = media.videos
+      const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
-        .map((i) => i.uploadId);
-      this._postService.processVideo(uploadIds).catch((ex) => this._logger.debug(ex));
+        .map((i) => i.id);
+      this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldPost.isDraft === false && isDraft === true) {

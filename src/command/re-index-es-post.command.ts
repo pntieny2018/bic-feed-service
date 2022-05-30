@@ -1,7 +1,6 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../database/models/post.model';
-import { ElasticsearchHelper } from '../common/helpers';
 import { PostGroupModel } from '../database/models/post-group.model';
 import { MediaModel } from '../database/models/media.model';
 import { PostResponseDto } from '../modules/post/dto/responses';
@@ -14,7 +13,7 @@ import { Logger } from '@nestjs/common';
 
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
-  private logger = new Logger(ReIndexEsPostCommand.name);
+  private _logger = new Logger(ReIndexEsPostCommand.name);
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     public readonly userService: UserService,
@@ -42,7 +41,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
       ],
     });
@@ -70,13 +69,15 @@ export class ReIndexEsPostCommand implements CommandRunner {
         actor: result.actor,
       };
 
-      const index = ElasticsearchHelper.INDEX.POST;
+      const index = 'sbx_stream_posts';
 
-      this.logger.log('processing post:', dataIndex.id);
+      this._logger.log('processing post:', dataIndex.id);
 
-      await this._elasticsearchService.index({ index, id: `${dataIndex.id}`, body: dataIndex });
+      await this._elasticsearchService
+        .index({ index, id: `${dataIndex.id}`, body: dataIndex })
+        .catch((ex) => this._logger.debug(ex));
 
-      this.logger.log('deliver post:', dataIndex.id);
+      this._logger.log('deliver post:', dataIndex.id);
     }
   }
 

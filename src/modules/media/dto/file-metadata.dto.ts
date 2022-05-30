@@ -22,11 +22,6 @@ export class FileMetadataDto implements IDocumentMetadata {
   @Transform((params) => basename(params.value))
   public name?: string;
 
-  @ApiProperty()
-  @IsOptional()
-  @Expose()
-  public uploadId?: string;
-
   @ApiProperty({
     required: false,
     description: 'Size',

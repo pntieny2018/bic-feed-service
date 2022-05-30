@@ -45,6 +45,7 @@ import { ClientKafka } from '@nestjs/microservices';
 import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '../../../libs/sentry/src';
+import { NIL } from 'uuid';
 
 @Injectable()
 export class PostService {
@@ -350,7 +351,7 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
         {
           model: PostReactionModel,
@@ -371,6 +372,7 @@ export class PostService {
       comments = await this.commentService.getComments(
         {
           postId,
+          parentId: NIL,
           childLimit: getPostDto.childCommentLimit,
           order: getPostDto.commentOrder,
           childOrder: getPostDto.childCommentOrder,
@@ -426,7 +428,7 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
       ],
     });
@@ -587,6 +589,7 @@ export class PostService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
+        await this.mediaService.createIfNotExist(media, authUserId);
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
@@ -699,10 +702,7 @@ export class PostService {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
         await this.mediaService.checkValidMedia(newMediaIds, authUserId);
-        const mediaList =
-          newMediaIds.length === 0
-            ? []
-            : await this.mediaService.getMediaList({ where: { id: newMediaIds } });
+        const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
         if (
           mediaList.filter(
             (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
@@ -760,7 +760,7 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'uploadId', 'status'],
+            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
             required: false,
           },
         ],
@@ -1236,7 +1236,7 @@ export class PostService {
     }
   }
 
-  public async getPostsByMedia(uploadId: string): Promise<PostResponseDto[]> {
+  public async getPostsByMedia(id: string): Promise<PostResponseDto[]> {
     const posts = await this.postModel.findAll({
       include: [
         {
@@ -1247,7 +1247,7 @@ export class PostService {
           attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
           required: true,
           where: {
-            uploadId,
+            id,
           },
         },
         {
