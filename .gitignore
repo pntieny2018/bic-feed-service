@@ -42,3 +42,4 @@ stg.env
 local.env
 data
 .scannerwork
+yarn.lock

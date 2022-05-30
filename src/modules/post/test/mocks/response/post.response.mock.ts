@@ -7,6 +7,7 @@ export const mockedPostResponse: PostResponseDto = {
   ownerReactions: [],
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
+  isArticle: false,
   media: {
     files: [],
     videos: [],

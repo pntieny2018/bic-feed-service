@@ -1,19 +1,9 @@
-import { CreateArticleDto } from "../../../dto/requests";
+import { CreateArticleDto } from '../../../dto/requests';
 
 export const mockedCreateArticleDto: CreateArticleDto = {
-  categories: [
-    {
-      id: '111-aaa',
-      name: 'Technical',
-    },
-  ],
-  series: [{
-    {
-      id: '111-ss',
-      name: 'Serial 1',
-    },
-  }],
-  hashtags: ['sfddsf'],
+  categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
+  series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
+  hashtags: ['Hastag1'],
   title: 'aaa',
   summary: 'bbbb',
   audience: {

@@ -79,9 +79,10 @@ export const mockedArticleResponse: ArticleResponseDto = {
   ],
 };
 
-export const mockedPostData = {
+export const mockedArticleData = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   commentsCount: 3,
+  isArticle: true,
   isImportant: false,
   importantExpiredAt: null,
   isDraft: true,

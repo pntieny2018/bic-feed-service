@@ -55,6 +55,7 @@ export const mockPostResponseDto: PostResponseDto = {
   id: mockCreateReactionDto.post.targetId,
   content: 'hello world',
   highlight: 'nothing',
+  isArticle: false,
   media: {
     files: [],
     videos: [],

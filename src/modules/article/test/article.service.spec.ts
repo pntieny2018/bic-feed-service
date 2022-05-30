@@ -18,6 +18,7 @@ import { ClientsModule } from '@nestjs/microservices';
 import { ArticleService } from '../article.service';
 import { mockedUserAuth } from './mocks/data/user-auth.mock';
 import { PostService } from '../../post/post.service';
+import { mockedArticleData, mockedArticleResponse } from './mocks/response/article.response.mock';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -135,14 +136,11 @@ describe('ArticleService', () => {
   });
 
   describe('deleteArticle', () => {
+    const mockedDataDeletePost = createMock<PostModel>(mockedArticleData);
     it('Should delete article successfully', async () => {
-      jest.spyOn(postService, 'deletePost').mockResolvedValueOnce({
-        id: 'abcd'
-      });
+      jest.spyOn(postService, 'deletePost').mockResolvedValueOnce(mockedDataDeletePost);
       const result = await articleService.deleteArticle('abcd', mockedUserAuth);
-      expect(result).toStrictEqual({
-        id: 'abcd'
-      });
+      expect(result).toStrictEqual(mockedDataDeletePost);
     });
 
   });
