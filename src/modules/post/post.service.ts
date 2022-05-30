@@ -441,6 +441,7 @@ export class PostService {
     if (getPostDto.withComment) {
       comments = await this.commentService.getComments({
         postId,
+        parentId: NIL,
         childLimit: getPostDto.childCommentLimit,
         order: getPostDto.commentOrder,
         childOrder: getPostDto.childCommentOrder,
