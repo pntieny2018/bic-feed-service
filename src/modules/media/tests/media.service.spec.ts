@@ -5,7 +5,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { MediaModel } from '../../../database/models/media.model';
 import { PostMediaModel } from '../../../database/models/post-media.model';
 import { CommentMediaModel } from '../../../database/models/comment-media.model';
-import { SentryService } from '../../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 describe('MediaService', () => {
   let service: MediaService;

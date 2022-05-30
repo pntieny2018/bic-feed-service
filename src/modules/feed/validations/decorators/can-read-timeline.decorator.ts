@@ -6,7 +6,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { SentryService } from '../../../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { UserService } from '../../../../shared/user';
 import { UserDto } from '../../../auth';
 

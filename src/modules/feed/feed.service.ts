@@ -2,7 +2,7 @@ import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@ne
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Op, Sequelize, Transaction } from 'sequelize';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { PageDto } from '../../common/dto';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
