@@ -20,6 +20,10 @@ export class GetPostPipe implements PipeTransform {
       getPostDto.childCommentLimit = 10;
     }
 
+    if (!getPostDto.withComment) {
+      getPostDto.withComment = false;
+    }
+
     return getPostDto;
   }
 }
