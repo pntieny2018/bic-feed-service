@@ -7,7 +7,7 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class FeedPublisherService {
@@ -35,7 +35,7 @@ export class FeedPublisherService {
 
       const data = userIds
         .map((userId) => {
-          return postIds.map((postId) => `(${userId},${postId}, ${!!seenPostDataMap[userId]})`);
+          return postIds.map((postId) => `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`);
         })
         .flat();
 

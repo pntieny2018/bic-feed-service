@@ -4,7 +4,7 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
 import { ReactionService } from '..';
-import { SentryService } from '../../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { LogicException } from '../../../common/exceptions';

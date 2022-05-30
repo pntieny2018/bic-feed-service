@@ -1,7 +1,6 @@
 import { HTTP_STATUS_ID, KAFKA_PRODUCER, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
@@ -10,7 +9,6 @@ import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
-import { PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
 import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
@@ -25,9 +23,12 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { ClientKafka } from '@nestjs/microservices';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { PostService } from './post.service';
-
+import { CreateArticleDto } from './dto/requests/create-article.dto';
+import { ArticleResponseDto } from './dto/responses/article.response.dto';
+import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { GetArticleDto } from './dto/requests/get-article.dto';
 @Injectable()
 export class ArticleService extends PostService {
   public constructor(
@@ -87,8 +88,8 @@ export class ArticleService extends PostService {
   public async getArticle(
     postId: string,
     user: UserDto,
-    getPostDto?: GetPostDto
-  ): Promise<PostResponseDto> {
+    getArticleDto?: GetArticleDto
+  ): Promise<ArticleResponseDto> {
     const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -112,7 +113,7 @@ export class ArticleService extends PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
         {
           model: PostReactionModel,
@@ -129,14 +130,14 @@ export class ArticleService extends PostService {
     }
     await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
-    if (getPostDto.withComment) {
+    if (getArticleDto.withComment) {
       comments = await this.commentService.getComments(
         {
           postId,
-          childLimit: getPostDto.childCommentLimit,
-          order: getPostDto.commentOrder,
-          childOrder: getPostDto.childCommentOrder,
-          limit: getPostDto.commentLimit,
+          childLimit: getArticleDto.childCommentLimit,
+          order: getArticleDto.commentOrder,
+          childOrder: getArticleDto.childCommentOrder,
+          limit: getArticleDto.commentLimit,
         },
         user,
         false
@@ -150,7 +151,7 @@ export class ArticleService extends PostService {
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
     result['comments'] = comments;
@@ -161,11 +162,14 @@ export class ArticleService extends PostService {
    * Get Public Post
    * @param postId number
    * @param user UserDto
-   * @param getPostDto GetPostDto
-   * @returns Promise resolve PostResponseDto
+   * @param getArticleDto GetArticleDto
+   * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
    */
-  public async getPublicArticle(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
+  public async getPublicArticle(
+    postId: string,
+    getArticleDto?: GetArticleDto
+  ): Promise<ArticleResponseDto> {
     const post = await this.postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
@@ -188,7 +192,7 @@ export class ArticleService extends PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
       ],
     });
@@ -198,13 +202,13 @@ export class ArticleService extends PostService {
     }
     await this.authorityService.checkPublicPost(post);
     let comments = null;
-    if (getPostDto.withComment) {
+    if (getArticleDto.withComment) {
       comments = await this.commentService.getComments({
         postId,
-        childLimit: getPostDto.childCommentLimit,
-        order: getPostDto.commentOrder,
-        childOrder: getPostDto.childCommentOrder,
-        limit: getPostDto.commentLimit,
+        childLimit: getArticleDto.childCommentLimit,
+        order: getArticleDto.commentOrder,
+        childOrder: getArticleDto.childCommentOrder,
+        limit: getArticleDto.commentLimit,
       });
     }
     const jsonPost = post.toJSON();
@@ -215,7 +219,7 @@ export class ArticleService extends PostService {
       this.bindAudienceToPost([jsonPost]),
     ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
 
@@ -230,10 +234,24 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createArticle(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
+  public async createArticle(
+    authUser: UserDto,
+    createArticleDto: CreateArticleDto
+  ): Promise<IPost> {
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = createPostDto;
+      const {
+        title,
+        summary,
+        content,
+        media,
+        setting,
+        mentions,
+        audience,
+        categories,
+        hashtags,
+        series,
+      } = createArticleDto;
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
@@ -241,6 +259,21 @@ export class ArticleService extends PostService {
       }
       const { groupIds } = audience;
       await this.authorityService.checkCanCreatePost(authUser, groupIds);
+
+      if (categories && categories.length) {
+        //TODO
+        //await this.mentionService.checkValidMentions(groupIds, mentions);
+      }
+
+      if (hashtags && hashtags.length) {
+        //TODO
+        //await this.mentionService.checkValidMentions(groupIds, mentions);
+      }
+
+      if (series && series.length) {
+        //TODO
+        //await this.mentionService.checkValidMentions(groupIds, mentions);
+      }
 
       if (mentions && mentions.length) {
         await this.mentionService.checkValidMentions(groupIds, mentions);
@@ -252,7 +285,9 @@ export class ArticleService extends PostService {
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
-          isDraft: true,
+          title,
+          summary,
+          isDraft: false,
           content,
           createdBy: authUserId,
           updatedBy: authUserId,
@@ -262,6 +297,8 @@ export class ArticleService extends PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
+          isArticle: true,
+          views: 0,
         },
         { transaction }
       );
@@ -297,14 +334,14 @@ export class ArticleService extends PostService {
    * Update Post except isDraft
    * @param postId postID
    * @param authUser UserDto
-   * @param updatePostDto UpdatePostDto
+   * @param UpdateArticleDto UpdateArticleDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   public async updateArticle(
-    post: PostResponseDto,
+    post: ArticleResponseDto,
     authUser: UserDto,
-    updatePostDto: UpdatePostDto
+    updateArticleDto: UpdateArticleDto
   ): Promise<boolean> {
     const authUserId = authUser.id;
     const creator = authUser.profile;
@@ -314,9 +351,9 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = updatePostDto;
+      const { content, media, setting, mentions, audience, series, categories } = updateArticleDto;
       if (post.isDraft === false) {
-        await this.checkContent(updatePostDto);
+        await this.checkContent(updateArticleDto);
       }
       await this.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);

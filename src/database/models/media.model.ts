@@ -46,7 +46,6 @@ export interface IMedia {
   width?: number;
   height?: number;
   extension?: string;
-  uploadId?: string;
   status: MediaStatus;
   size?: number;
   mimeType?: string;
@@ -65,9 +64,6 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @Column
   public url: string;
-
-  @Column
-  public uploadId: string;
 
   @Column
   public type: MediaType;

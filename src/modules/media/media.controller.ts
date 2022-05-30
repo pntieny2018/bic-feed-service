@@ -24,7 +24,6 @@ import { MediaService } from './media.service';
 import { AuthUser, UserDto } from '../auth';
 import { ResponseMessages } from '../../common/decorators';
 import { MediaHelper } from './media.helper';
-import { CreateMediaDto } from './dto/request/create-media.dto';
 import { MediaStatus } from '../../database/models/media.model';
 
 @ApiTags('Media')
@@ -62,7 +61,7 @@ export class MediaController {
       width = des.width;
       height = des.height;
     }
-    return this._mediaService.create(user, {
+    const result = await this._mediaService.create(user, {
       url,
       name: url.split('/').pop(),
       uploadType,
@@ -72,6 +71,7 @@ export class MediaController {
       height,
       status: MediaStatus.COMPLETED,
     });
+    return result.toJSON();
   }
 
   @ApiOperation({ summary: 'Delete Media' })
@@ -91,37 +91,6 @@ export class MediaController {
   public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: number): Promise<any> {
     return this._mediaService.destroy(user, {
       mediaIds: [mediaId],
-    });
-  }
-
-  @ApiOperation({ summary: 'Create Media' })
-  @ApiOkResponse({
-    description: 'Create media successfully',
-  })
-  @Post('/create')
-  @ResponseMessages({
-    success: 'Create media successfully',
-    validator: {
-      fails: 'Create media fails',
-    },
-  })
-  public async createMedia(
-    @AuthUser() user: UserDto,
-    @Body() createMediaDto: CreateMediaDto
-  ): Promise<any> {
-    const { url, extension, uploadId, uploadType, name, size, mimeType } = createMediaDto;
-    return this._mediaService.create(user, {
-      url: url ?? null,
-      name,
-      uploadType,
-      originName: name,
-      extension: extension ?? null,
-      uploadId,
-      width: null,
-      height: null,
-      status: MediaStatus.WAITING_PROCESS,
-      size,
-      mimeType,
     });
   }
 }
