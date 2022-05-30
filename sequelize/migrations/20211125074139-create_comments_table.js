@@ -1,8 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.DB_SCHEMA;
 const tableName = 'comments';
+const schemaName = process.env.DB_SCHEMA;
+const dbVersion = parseInt(process.env.DB_VER) ?? 14;
+const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
+
+const { NIL: NIL_UUID } = require('uuid');
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
@@ -10,18 +15,18 @@ module.exports = {
       {
         id: {
           primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.literal(genRandomUUID),
         },
         post_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: { model: 'posts', key: 'id' },
         },
         parent_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
-          defaultValue: 0,
+          defaultValue: NIL_UUID,
         },
         total_reply: {
           type: Sequelize.INTEGER,

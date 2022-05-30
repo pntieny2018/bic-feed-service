@@ -9,7 +9,6 @@ export const mockedCreatePostResponse = {
       {
         id: 1,
         name: 'filename.jpg',
-        uploadId: null,
         status: 'completed',
         url: 'http://google.co',
         width: null,
@@ -63,7 +62,7 @@ export const mockedCreatePostResponse = {
 };
 
 export const mockedPostCreated = {
-  id: 5,
+  id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   isDraft: true,
   content: 'bbbbbb',
   createdBy: 15,

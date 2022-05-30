@@ -9,7 +9,7 @@ export class CleanRecentSearchesDto {
     enum: RecentSearchType,
   })
   @IsEnum(RecentSearchType, {
-    message: 'Target must be "post" | "article" | "artical" | "all"',
+    message: 'Target must be "post" | "article"  | "all"',
   })
   @IsNotEmpty()
   public target: RecentSearchType;

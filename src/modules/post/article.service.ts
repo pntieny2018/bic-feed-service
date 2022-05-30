@@ -86,7 +86,7 @@ export class ArticleService extends PostService {
    * @throws HttpException
    */
   public async getArticle(
-    postId: number,
+    postId: string,
     user: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
@@ -113,7 +113,7 @@ export class ArticleService extends PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
         {
           model: PostReactionModel,
@@ -167,7 +167,7 @@ export class ArticleService extends PostService {
    * @throws HttpException
    */
   public async getPublicArticle(
-    postId: number,
+    postId: string,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
     const post = await this.postModel.findOne({
@@ -192,7 +192,7 @@ export class ArticleService extends PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'uploadId'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
         },
       ],
     });
@@ -446,7 +446,7 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public deleteArticle(id: number, user: UserDto): Promise<IPost> {
+  public deleteArticle(id: string, user: UserDto): Promise<IPost> {
     return this.deletePost(id, user);
   }
 }

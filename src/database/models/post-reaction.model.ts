@@ -1,7 +1,8 @@
+import { IsUUID } from 'class-validator';
 import {
-  AutoIncrement,
   Column,
   CreatedAt,
+  Default,
   ForeignKey,
   Model,
   PrimaryKey,
@@ -10,10 +11,11 @@ import {
 import { Optional } from 'sequelize/types';
 import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
+import { v4 as uuid_v4 } from 'uuid';
 
 export interface IPostReaction {
-  id: number;
-  postId?: number;
+  id: string;
+  postId?: string;
   reactionName: string;
   createdBy?: number;
   createdAt?: Date;
@@ -27,13 +29,15 @@ export class PostReactionModel
   implements IPostReaction
 {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
-  public id: number;
+  public id: string;
 
   @ForeignKey(() => PostModel)
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @ForeignKey(() => MediaModel)
   @Column

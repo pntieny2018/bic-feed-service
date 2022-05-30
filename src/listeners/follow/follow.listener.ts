@@ -26,39 +26,49 @@ export class FollowListener {
 
   @On(UsersHasBeenFollowedEvent)
   public async onUsersFollowGroups(event: UsersHasBeenFollowedEvent): Promise<void> {
+    this._logger.debug(`[onUsersFollowGroups]: ${JSON.stringify(event)}`);
     const { payload } = event;
 
-    const postIds = await this._postService.findPostIdsByGroupId(payload.groupIds[0]);
+    const { userIds, groupIds } = payload;
 
-    payload.userIds.map((userId) =>
-      this._feedPublishService.attachPostsForUserNewsFeed(userId, postIds)
-    );
+    const postIds = await this._postService.findPostIdsByGroupId(groupIds);
+
+    if (postIds && postIds.length) {
+      this._feedPublishService
+        .attachPostsForUsersNewsFeed(userIds, postIds)
+        .catch((ex) => this._sentryService.captureException(ex));
+    }
   }
 
   @On(UsersHasBeenUnfollowedEvent)
   public async onUsersUnFollowGroup(event: UsersHasBeenUnfollowedEvent): Promise<void> {
+    this._logger.debug(`[onUsersUnFollowGroup]: ${JSON.stringify(event)}`);
     const {
-      payload: { userIds, groupId },
+      payload: { userIds, groupIds },
     } = event;
 
     userIds.forEach((userId: number) => {
-      this.detachPosts(userId, groupId).catch((e) => {
+      this.detachPosts(userId, groupIds).catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
     });
   }
 
-  public async detachPosts(userId: number, groupId: number): Promise<any> {
-    this._logger.debug(`[userUnfollowGroup] userId: ${userId}. groupId: ${groupId}`);
+  public async detachPosts(userId: number, groupIds: number[]): Promise<any> {
+    this._logger.debug(`[userUnfollowGroup] userId: ${userId}. groupId: ${groupIds}`);
 
     const userSharedDto = await this._userService.get(userId);
+
     if (!userSharedDto) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
 
-    const groupIds = (userSharedDto.groups ?? []).filter((gId) => gId !== groupId);
+    let filterGroup = (userSharedDto.groups ?? []).filter((gId) => !groupIds.includes(gId));
 
+    if (!filterGroup.length) {
+      filterGroup = [0];
+    }
     const { schema } = getDatabaseConfig();
 
     const query = `
@@ -75,7 +85,7 @@ export class FollowListener {
           FROM ${schema}.user_newsfeed AS "un_sq"
           WHERE "un_sq".user_id = :userId
         ) AS "un_need_to_delete"
-        WHERE "un_need_to_delete".groups_of_post && ARRAY[${groupIds}] = false
+        WHERE "un_need_to_delete".groups_of_post && ARRAY[${filterGroup}] = false
       )
     `;
 

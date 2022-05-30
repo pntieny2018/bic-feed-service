@@ -1,9 +1,21 @@
-import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { IsUUID } from 'class-validator';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
 export interface IPostGroup {
-  postId: number;
+  postId: string;
   groupId: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 @Table({
   tableName: 'posts_groups',
@@ -11,8 +23,9 @@ export interface IPostGroup {
 export class PostGroupModel extends Model implements IPostGroup {
   @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @PrimaryKey
   @Column
@@ -20,4 +33,12 @@ export class PostGroupModel extends Model implements IPostGroup {
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;
+
+  @CreatedAt
+  @Column
+  public createdAt?: Date;
+
+  @UpdatedAt
+  @Column
+  public updatedAt?: Date;
 }

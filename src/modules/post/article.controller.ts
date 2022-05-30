@@ -1,22 +1,8 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
+import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { GetPostPipe } from './pipes';
@@ -44,7 +30,7 @@ export class ArticleController {
   @Get('/:articleId')
   public getArticle(
     @AuthUser(false) user: UserDto,
-    @Param('articleId', ParseIntPipe) articleId: number,
+    @Param('articleId') articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
     if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
@@ -121,7 +107,7 @@ export class ArticleController {
   @Delete('/:id')
   public async deleteArticle(
     @AuthUser() user: UserDto,
-    @Param('id', ParseIntPipe) articleId: number
+    @Param('id') articleId: string
   ): Promise<boolean> {
     const articleDeleted = await this._articleService.deleteArticle(articleId, user);
     if (articleDeleted) {

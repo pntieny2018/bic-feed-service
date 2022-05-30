@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
+import { SentryService } from '@app/sentry';
 import { Sequelize } from 'sequelize-typescript';
+import { ArrayHelper } from '../../common/helpers';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { getDatabaseConfig } from '../../config/database';
@@ -8,8 +10,6 @@ import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import { ArrayHelper } from '../../common/helpers';
-import { SentryService } from '../../../libs/sentry/src';
 
 @Injectable()
 export class FollowService {
@@ -69,7 +69,9 @@ export class FollowService {
     try {
       await this._followModel.destroy({
         where: {
-          groupId: unfollowDto.groupId,
+          groupId: {
+            [Op.in]: unfollowDto.groupIds,
+          },
           userId: {
             [Op.in]: unfollowDto.userIds,
           },
@@ -96,7 +98,7 @@ export class FollowService {
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
-    return ArrayHelper.differenceArrNumber(userIds, targetIds);
+    return ArrayHelper.arrDifferenceElements(userIds, targetIds);
   }
 
   /**

@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { GiphyType } from '../../../../database/models/giphy.model';
-
 
 export class GiphyDto {
   @ApiProperty({ type: String })

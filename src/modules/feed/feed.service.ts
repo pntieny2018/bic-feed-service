@@ -1,28 +1,21 @@
-import { Op } from 'sequelize';
-import { UserDto } from '../auth';
-import { MentionService } from '../mention';
-import { ReactionService } from '../reaction';
-import { GetTimelineDto } from './dto/request';
-import { GroupService } from '../../shared/group';
-import { PostService } from '../post/post.service';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { PostResponseDto } from '../post/dto/responses';
+import { Op, Sequelize, Transaction } from 'sequelize';
+import { SentryService } from '../../../libs/sentry/src';
+import { PageDto } from '../../common/dto';
 import { getDatabaseConfig } from '../../config/database';
 import { PostModel } from '../../database/models/post.model';
-import { QueryTypes, Sequelize, Transaction } from 'sequelize';
-import { MediaModel } from '../../database/models/media.model';
-import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { MentionModel } from '../../database/models/mention.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { Inject, Logger, Injectable, forwardRef, BadRequestException, Post } from '@nestjs/common';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { SentryService } from '../../../libs/sentry/src';
+import { GroupService } from '../../shared/group';
+import { UserDto } from '../auth';
+import { MentionService } from '../mention';
+import { PostResponseDto } from '../post/dto/responses';
+import { PostService } from '../post/post.service';
+import { ReactionService } from '../reaction';
+import { GetTimelineDto } from './dto/request';
+import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 
 @Injectable()
 export class FeedService {
@@ -56,8 +49,8 @@ export class FeedService {
     const { limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
-      const constraints = FeedService._getIdConstrains(getNewsFeedDto);
-      const totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
+      const constraints = this._getIdConstrains(getNewsFeedDto);
+      const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
       );
@@ -85,22 +78,7 @@ export class FeedService {
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
 
-      let normalSeenPost = [];
-      if (limit >= rows.length) {
-        const unSeenCount = await this._newsFeedModel.count({
-          where: { isSeenPost: false, userId: authUserId },
-        });
-        normalSeenPost = await PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          offset: Math.max(0, offset - unSeenCount),
-          limit: Math.min(limit + 1, limit + offset - unSeenCount + 1),
-          authUserId,
-          isImportant: false,
-          isSeen: true,
-        });
-      }
-
-      const posts = this.groupPosts(rows.concat(normalSeenPost));
+      const posts = this.groupPosts(rows);
 
       const hasNextPage = posts.length === limit + 1 ? true : false;
       if (hasNextPage) posts.pop();
@@ -171,7 +149,7 @@ export class FeedService {
       });
     }
     const authUserId = authUser.id;
-    const constraints = FeedService._getIdConstrains(getTimelineDto);
+    const constraints = this._getIdConstrains(getTimelineDto);
 
     const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
       authUserId,
@@ -226,30 +204,42 @@ export class FeedService {
    * @param getTimelineDto GetTimelineDto
    * @returns object
    */
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+  private _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+    const { schema } = getDatabaseConfig();
+    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
     let constraints = '';
-    if (getTimelineDto.idGT) {
-      constraints += 'AND p.id > :idGT';
+    if (idGT) {
+      constraints += `AND p.id != ${this._sequelizeConnection.escape(idGT)}`;
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idGTE) {
-      constraints += 'AND p.id >= :idGTE';
+    if (idGTE) {
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idLT) {
-      constraints += 'AND p.id < :idLT';
+    if (idLT) {
+      constraints += `AND p.id != ${this._sequelizeConnection.escape(idLT)}`;
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idLT
+      )})`;
     }
-    if (getTimelineDto.idLTE) {
-      constraints += 'AND p.id <= :idLTE';
+    if (idLTE) {
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
+        idLT
+      )})`;
     }
     return constraints;
   }
 
   /**
    * Delete newsfeed by post
-   * @param postId number
+   * @param postId string
    * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: number, transaction: Transaction): Promise<number> {
+  public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 

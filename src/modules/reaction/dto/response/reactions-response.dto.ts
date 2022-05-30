@@ -1,12 +1,16 @@
 import { ReactionResponseDto } from './reaction-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
 
 export class ReactionsResponseDto {
   @ApiProperty()
   public list: ReactionResponseDto[];
 
-  @ApiProperty()
-  public latestId: number;
+  @ApiProperty({
+    name: 'latest_id'
+  })
+  @IsUUID()
+  public latestId: string;
 
   @ApiProperty({
     type: Number,

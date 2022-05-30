@@ -11,8 +11,8 @@ export class CreatePostDto {
     description: 'Audience',
     type: AudienceRequestDto,
     example: {
-      userIds: [],
-      groupIds: [1],
+      ['user_ids']: [],
+      ['group_ids']: [1],
     },
   })
   @IsNotEmpty()
@@ -55,11 +55,11 @@ export class CreatePostDto {
     type: PostSettingDto,
     required: false,
     example: {
-      canShare: true,
-      canReact: true,
-      canComment: true,
-      isImportant: false,
-      importantExpiredAt: null,
+      ['can_share']: true,
+      ['can_react']: true,
+      ['can_comment']: true,
+      ['is_important']: false,
+      ['important_expired_at']: null,
     },
   })
   @IsOptional()
