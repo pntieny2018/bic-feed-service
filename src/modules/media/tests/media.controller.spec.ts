@@ -32,4 +32,11 @@ describe('MediaController', () => {
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
+
+  describe('MediaController.create', () => {
+    it('should _uploadService.upload and _mediaService.create called', async () => {
+    });
+  })
+
+
 });

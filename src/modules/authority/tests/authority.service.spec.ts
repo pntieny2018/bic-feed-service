@@ -3,6 +3,7 @@ import { AuthorityService } from '../authority.service';
 import { GroupService } from '../../../shared/group';
 import { authUserMock } from '../../comment/tests/mocks/user.mock';
 import { ForbiddenException } from '@nestjs/common';
+import { GroupPrivacy, GroupSharedDto } from '../../../shared/group/dto';
 
 describe('AuthorityService', () => {
   let service: AuthorityService;
@@ -14,6 +15,7 @@ describe('AuthorityService', () => {
         {
           provide: GroupService,
           useValue: {
+            getMany: jest.fn(),
             isMemberOfSomeGroups: jest.fn(),
           },
         },
@@ -29,9 +31,22 @@ describe('AuthorityService', () => {
   });
   describe('AuthorityService.checkCanReadPost', () => {
     describe('when user is valid', () => {
-      it('next', () => {
+      it('next', async () => {
+        const mockGroup: GroupSharedDto = {
+          id: 1,
+          name: 'group 1',
+          icon: 'icon 1',
+          privacy: GroupPrivacy.PRIVATE,
+          child: {
+            public: [2, 3],
+            open: [],
+            private: [],
+            secret: []
+          }
+        };
+        groupService.getMany.mockReturnValue([mockGroup]);
         groupService.isMemberOfSomeGroups.mockReturnValue(true);
-        service.checkCanReadPost(
+        await service.checkCanReadPost(
           {
             id: 1,
             username: 'martine.baumbach',
