@@ -25,10 +25,12 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Boolean,
-    name: 'active',
+    name: 'is_active',
   })
-  @Expose()
-  public active: boolean;
+  @Expose({
+    name: 'is_active',
+  })
+  public isActive: boolean;
 
   @ApiProperty({
     type: Number,

@@ -11,5 +11,5 @@ export class UpdateSeriesDto {
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
   @IsOptional()
-  public active: boolean;
+  public isActive: boolean;
 }
