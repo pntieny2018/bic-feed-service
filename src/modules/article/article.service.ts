@@ -1,4 +1,4 @@
-import { HTTP_STATUS_ID } from '../../common/constants';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { Injectable, Logger } from '@nestjs/common';
@@ -17,6 +17,7 @@ import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
 import { ClassTransformer } from 'class-transformer';
 import { PostService } from '../post/post.service';
+import { EntityType } from '../media/media.constants';
 @Injectable()
 export class ArticleService {
   /**
@@ -96,9 +97,58 @@ export class ArticleService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
 
-      //return post;
+      const { groupIds } = audience;
+      await this.authorityService.checkCanCreatePost(authUser, groupIds);
+
+      if (mentions && mentions.length) {
+        await this.mentionService.checkValidMentions(groupIds, mentions);
+      }
+
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+      await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
+      transaction = await this.sequelizeConnection.transaction();
+      const post = await this.postModel.create(
+        {
+          title,
+          summary,
+          isDraft: true,
+          isArticle: true,
+          content,
+          createdBy: authUserId,
+          updatedBy: authUserId,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
+          isProcessing: false,
+        },
+        { transaction }
+      );
+      if (uniqueMediaIds.length) {
+        await this.mediaService.createIfNotExist(media, authUserId);
+        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
+      }
+
+      await this.postService.addPostGroup(groupIds, post.id, transaction);
+
+      if (mentions.length) {
+        await this.mentionService.create(
+          mentions.map((userId) => ({
+            entityId: post.id,
+            userId,
+            mentionableType: MentionableType.POST,
+          })),
+          transaction
+        );
+      }
+
+      await transaction.commit();
+
+      return post;
     } catch (error) {
-      // if (typeof transaction !== 'undefined') await transaction.rollback();
+      if (typeof transaction !== 'undefined') await transaction.rollback();
       this.logger.error(error, error?.stack);
       this.sentryService.captureException(error);
       throw error;
