@@ -11,5 +11,5 @@ export class CreateSeriesDto {
   @ApiProperty({ type: Boolean })
   @Type(() => Boolean)
   @IsOptional()
-  public active: boolean;
+  public isActive: boolean;
 }
