@@ -880,11 +880,10 @@ module.exports = {
             }
           ),
           queryInterface.addIndex(
-            { tableName: `follows`, schema: schemaName },
-            ['user_id', 'group_id'],
+            { tableName: `user_newsfeed`, schema: schemaName },
+            ['post_id', 'user_id'],
             {
               unique: true,
-              transaction: t,
             }
           ),
         ]);
