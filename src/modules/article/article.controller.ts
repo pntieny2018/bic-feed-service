@@ -14,6 +14,8 @@ import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetPostPipe } from '../post/pipes';
+import { PageDto } from '../../common/dto';
+import { SearchArticlesDto } from './dto/requests/search-article.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -26,6 +28,18 @@ export class ArticleController {
     private _articleService: ArticleService,
     private _eventEmitter: InternalEventEmitterService
   ) {}
+
+  @ApiOperation({ summary: 'Search article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/')
+  public searchArticles(
+    @AuthUser() user: UserDto,
+    @Query() searchArticlesDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.searchArticle(user, searchArticlesDto);
+  }
 
   @ApiOperation({ summary: 'Get article detail' })
   @ApiOkResponse({
