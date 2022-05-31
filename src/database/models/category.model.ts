@@ -20,7 +20,7 @@ export interface ICategory {
   name: string;
   slug?: string;
   level: number;
-  active: boolean;
+  isActive: boolean;
   createdBy: number;
   updatedBy: number;
   createdAt?: Date;
@@ -48,7 +48,7 @@ export class CategoryModel
 
   @Default(true)
   @Column
-  public active: boolean;
+  public isActive: boolean;
 
   @Length({ max: 5000 })
   @Column

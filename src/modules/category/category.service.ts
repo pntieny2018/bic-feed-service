@@ -59,7 +59,7 @@ export class CategoryService {
     }
 
     const parent = await this._categoryModel.findOne({
-      where: { id: createCategoryDto.parentId, active: true },
+      where: { id: createCategoryDto.parentId, isActive: true },
     });
 
     if (!parent) {
@@ -68,7 +68,7 @@ export class CategoryService {
 
     const createResult = await this._categoryModel.create({
       parentId: createCategoryDto.parentId,
-      active: true,
+      isActive: true,
       name: createCategoryDto.name,
       slug: StringHelper.convertToSlug(createCategoryDto.name),
       level: parent.level + 1,
