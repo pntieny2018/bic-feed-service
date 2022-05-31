@@ -8,11 +8,12 @@ import { Sequelize } from 'sequelize-typescript';
 import { SeriesResponseDto } from './dto/responses';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
-import { ExceptionHelper } from '../../common/helpers';
-import { Op } from 'sequelize';
+import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
+import { Op, Transaction } from 'sequelize';
 import { SentryService } from '../../../libs/sentry/src';
 import { ISeries, SeriesModel } from '../../database/models/series.model';
 import slugify from 'slugify';
+import { PostSeriesModel } from '../../database/models/post-series.model';
 
 @Injectable()
 export class SeriesService {
@@ -33,6 +34,8 @@ export class SeriesService {
     private _sequelizeConnection: Sequelize,
     @InjectModel(SeriesModel)
     private _seriesModel: typeof SeriesModel,
+    @InjectModel(PostSeriesModel)
+    private _postSeriesModel: typeof PostSeriesModel,
     private readonly _sentryService: SentryService
   ) {}
 
@@ -240,5 +243,78 @@ export class SeriesService {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
     return true;
+  }
+
+  /**
+   * Add post to series
+   * @param seriesIds Array of Series ID
+   * @param postId string
+   * @param transaction Transaction
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async addSeriesToCategories(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<boolean> {
+    if (seriesIds.length === 0) return true;
+    const dataCreate = seriesIds.map((seriesId) => ({
+      postId: postId,
+      seriesId,
+    }));
+    await this._postSeriesModel.bulkCreate(dataCreate, { transaction });
+    return true;
+  }
+
+  /**
+   * Delete/Insert series by post
+   * @param seriesIds Array of Series ID
+   * @param postId PostID
+   * @param transaction Transaction
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async setSeriesByPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<boolean> {
+    const currentSeries = await this._postSeriesModel.findAll({
+      where: { postId },
+    });
+    const currentSeriesIds = currentSeries.map((i) => i.seriesId);
+
+    const deleteSeriesIds = ArrayHelper.arrDifferenceElements(currentSeriesIds, seriesIds);
+    if (deleteSeriesIds.length) {
+      await this._postSeriesModel.destroy({
+        where: { seriesId: deleteSeriesIds, postId },
+        transaction,
+      });
+    }
+
+    const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
+    if (addSeriesIds.length) {
+      await this._postSeriesModel.bulkCreate(
+        addSeriesIds.map((seriesId) => ({
+          postId,
+          seriesId,
+        })),
+        { transaction }
+      );
+    }
+    return true;
+  }
+
+  public async checkValidSeries(seriesIds: string[], userId: string): Promise<void> {
+    const seriesCount = await this._seriesModel.count({
+      where: {
+        id: seriesIds,
+        createdBy: userId,
+      },
+    });
+    if (seriesCount < seriesIds.length) {
+      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_INVALID_PARAMETER);
+    }
   }
 }

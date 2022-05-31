@@ -101,12 +101,12 @@ export class CategoryService {
       postId: postId,
       categoryId,
     }));
-    await this._categoryModel.bulkCreate(dataCreate, { transaction });
+    await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
     return true;
   }
 
   /**
-   * Delete/Insert group by post
+   * Delete/Insert category by post
    * @param categoryIds Array of Category ID
    * @param postId PostID
    * @param transaction Transaction
@@ -118,10 +118,10 @@ export class CategoryService {
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
-    const currentGroups = await this._postCategoryModel.findAll({
+    const currentCategories = await this._postCategoryModel.findAll({
       where: { postId },
     });
-    const currentCategoryIds = currentGroups.map((i) => i.categoryId);
+    const currentCategoryIds = currentCategories.map((i) => i.categoryId);
 
     const deleteCategoryIds = ArrayHelper.arrDifferenceElements(currentCategoryIds, categoryIds);
     if (deleteCategoryIds.length) {
@@ -134,9 +134,9 @@ export class CategoryService {
     const addCategoryIds = ArrayHelper.arrDifferenceElements(categoryIds, currentCategoryIds);
     if (addCategoryIds.length) {
       await this._postCategoryModel.bulkCreate(
-        addCategoryIds.map((groupId) => ({
+        addCategoryIds.map((categoryId) => ({
           postId,
-          groupId,
+          categoryId,
         })),
         { transaction }
       );
