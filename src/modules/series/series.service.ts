@@ -12,8 +12,7 @@ import { ExceptionHelper } from '../../common/helpers';
 import { Op } from 'sequelize';
 import { SentryService } from '../../../libs/sentry/src';
 import { ISeries, SeriesModel } from '../../database/models/series.model';
-
-const slugify = require('slugify');
+import slugify from 'slugify';
 
 @Injectable()
 export class SeriesService {
@@ -111,7 +110,7 @@ export class SeriesService {
   ): Promise<SeriesResponseDto> {
     let transaction;
     try {
-      const { name, active } = createSeriesDto;
+      const { name, isActive } = createSeriesDto;
       const slug = slugify(name);
       const authUserId = authUser.id;
       const creator = authUser.profile;
@@ -122,7 +121,7 @@ export class SeriesService {
       const series = await this._seriesModel.create(
         {
           name,
-          active,
+          isActive,
           slug,
           createdBy: authUserId,
           updatedBy: authUserId,
@@ -162,12 +161,12 @@ export class SeriesService {
       }
       const seriesBefore = await this.getSeriesById(seriesId);
       await this.checkSeriesOwner(seriesBefore, authUserId);
-      const { name, active } = updateSeriesDto;
+      const { name, isActive } = updateSeriesDto;
       const slug = slugify(name);
       transaction = await this._sequelizeConnection.transaction();
       const dataUpdate = {
         name,
-        active,
+        isActive,
         slug,
       };
       await this._seriesModel.update(dataUpdate, {

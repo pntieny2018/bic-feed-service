@@ -15,7 +15,7 @@ export interface ISeries {
   id?: string;
   name: string;
   slug: string;
-  active: boolean;
+  isActive: boolean;
   createdBy: number;
   updatedBy: number;
   totalArticle: number;
@@ -41,7 +41,7 @@ export class SeriesModel extends Model<ISeries, Omit<ISeries, 'id'>> implements 
   public slug: string;
 
   @Column
-  public active: boolean;
+  public isActive: boolean;
 
   @Column
   public createdBy: number;

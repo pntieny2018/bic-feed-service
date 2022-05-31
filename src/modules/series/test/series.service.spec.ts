@@ -95,7 +95,6 @@ describe('SeriesService', () => {
       });
       const result = await seriesService.getSeries(getSeriesDto);
       expect(result.list[0].name).toStrictEqual(mockedSeriesCreated.name);
-      expect(result.list[0].active).toStrictEqual(mockedSeriesCreated.active);
     });
 
     it('Should catch exception when query DB error', async () => {
@@ -118,7 +117,7 @@ describe('SeriesService', () => {
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
       expect(seriesModelMock.create.mock.calls[0][0]).toStrictEqual({
-        active: true,
+        isActive: true,
         name: mockedCreateSeriesDto.name,
         slug: slugify(mockedCreateSeriesDto.name),
         createdBy: mockedUserAuth.id,
@@ -157,7 +156,7 @@ describe('SeriesService', () => {
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
       expect(seriesModelMock.update.mock.calls[0][0]).toStrictEqual({
-        active: true,
+        isActive: true,
         name: mockedDataUpdateSeries.name,
         slug: slugify(mockedDataUpdateSeries.name),
       });
@@ -264,7 +263,6 @@ describe('SeriesService', () => {
       seriesModelMock.findOne.mockResolvedValue(mockSeries);
       const result = await seriesService.getSeriesById(mockedSeriesCreated.id);
       expect(result.name).toEqual(mockedSeriesCreated.name);
-      expect(result.active).toEqual(mockedSeriesCreated.active);
     });
 
     it('Should catch exception if series not found', async () => {
