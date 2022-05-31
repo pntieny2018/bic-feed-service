@@ -10,7 +10,8 @@ import { MentionModel } from '../../database/models/mention.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
-import { SentryService } from '../../../libs/sentry/src';
+import { NIL as NIL_UUID } from 'uuid';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class CommentDissociationService {
@@ -23,7 +24,7 @@ export class CommentDissociationService {
 
   public async dissociateComment(
     actorId: number,
-    commentId: number,
+    commentId: string,
     postResponse: PostResponseDto
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const recipient = CommentRecipientDto.init();
@@ -52,7 +53,7 @@ export class CommentDissociationService {
 
       comment = comment.toJSON();
 
-      if (comment.parentId) {
+      if (comment.parentId !== NIL_UUID) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
 

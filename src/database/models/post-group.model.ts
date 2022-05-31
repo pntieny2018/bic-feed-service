@@ -1,3 +1,4 @@
+import { IsUUID } from 'class-validator';
 import {
   BelongsTo,
   Column,
@@ -11,7 +12,7 @@ import {
 import { PostModel } from './post.model';
 
 export interface IPostGroup {
-  postId: number;
+  postId: string;
   groupId: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -22,8 +23,9 @@ export interface IPostGroup {
 export class PostGroupModel extends Model implements IPostGroup {
   @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @PrimaryKey
   @Column

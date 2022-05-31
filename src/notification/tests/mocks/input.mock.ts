@@ -23,9 +23,10 @@ export const mockNotificationPayloadDto = {
 };
 
 export const mockPostResponseDto: PostResponseDto = {
-  id: 99,
+  id: '40dc4093-1bd0-4105-469f-8504e1986145',
   content: 'hello world',
   highlight: 'nothing',
+  isArticle: false,
   media: {
     files: [],
     videos: [],
@@ -84,13 +85,13 @@ export const mockReactionResponseDto = {
   actor: {
     ...mockUserSharedDto,
   },
-  id: 100,
+  id: '100',
   reactionName: 'smile',
   createdAt: new Date(0),
 };
 
 export const mockCommentResponseDto = {
-  id: 99,
+  id: '99',
   actor: mockUserSharedDto,
   edited: false,
   parentId: null,
@@ -105,7 +106,7 @@ export const mockCommentResponseDto = {
 };
 
 export const mockCommentResponseWithParentDto = {
-  id: 100,
+  id: '100',
   actor: mockUserSharedDto,
   edited: false,
   parentId: mockCommentResponseDto.id,
@@ -123,7 +124,7 @@ export const mockCommentModel = {
   updatedBy: mockUserSharedDto.id,
   mentions: [
     {
-      id: 1000,
+      id: '1000',
       mentionableType: MentionableType.COMMENT,
       entityId: mockCommentResponseDto.id,
       userId: 99,

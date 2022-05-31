@@ -1,8 +1,9 @@
+import { IsUUID } from 'class-validator';
 import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
 export interface IUserMarkedImportantPost {
-  postId: number;
+  postId: string;
   userId: number;
 }
 @Table({
@@ -12,8 +13,9 @@ export interface IUserMarkedImportantPost {
 export class UserMarkReadPostModel extends Model implements IUserMarkedImportantPost {
   @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @PrimaryKey
   @Column

@@ -52,7 +52,7 @@ export const HTTP_STATUS_ID = {
   APP_COMMENT_REPLY_EXISTING: 'app.comment.reply.existing.app_error',
   APP_POST_SETTING_DISABLE: 'app.post.setting.disable.app_error',
   APP_POST_EXISTING: 'app.post.existing.app_error',
-  APP_REACTION_EXISTING: 'app.reaction.existing.app_error',
+  APP_REACTION_NOT_EXISTING: 'app.reaction.not_existing.app_error',
   APP_REACTION_UNIQUE: 'app.reaction.unique.app_error',
   APP_REACTION_TARGET_EXISTING: 'app.reaction.target.existing.app_error',
   APP_REACTION_RATE_LIMIT_KIND: 'app.reaction.rate_limit.kind.app_error',
@@ -61,5 +61,9 @@ export const HTTP_STATUS_ID = {
   APP_POST_AS_READ_NOT_ALLOW: 'app.post.not_allow',
   APP_POST_NOT_FOUND: 'app.post.not_found',
 
+  // SERIES
+  APP_SERIES_NOT_FOUND: 'app.series.not_found',
+
   APP_USER_NOT_FOUND: 'app.user.not_found',
+  APP_CATEGORY_NOT_ALLOW: 'app.post.not_allow',
 };

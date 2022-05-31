@@ -1,10 +1,11 @@
+import { IsUUID } from 'class-validator';
 import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { MediaModel } from './media.model';
 import { PostModel } from './post.model';
 
 export interface IPostMedia {
-  postId: number;
-  mediaId: number;
+  postId: string;
+  mediaId: string;
 }
 @Table({
   tableName: 'posts_media',
@@ -13,13 +14,15 @@ export interface IPostMedia {
 export class PostMediaModel extends Model implements IPostMedia {
   @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @ForeignKey(() => MediaModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public mediaId: number;
+  public mediaId: string;
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;

@@ -1,10 +1,11 @@
 import { BelongsTo, Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { MediaModel } from './media.model';
 import { CommentModel } from './comment.model';
+import { IsUUID } from 'class-validator';
 
 export interface ICommentMedia {
-  commentId: number;
-  mediaId: number;
+  commentId: string;
+  mediaId: string;
 }
 @Table({
   tableName: 'comments_media',
@@ -14,13 +15,15 @@ export interface ICommentMedia {
 export class CommentMediaModel extends Model<ICommentMedia> implements ICommentMedia {
   @PrimaryKey
   @ForeignKey(() => CommentModel)
+  @IsUUID()
   @Column
-  public commentId: number;
+  public commentId: string;
 
   @PrimaryKey
   @ForeignKey(() => MediaModel)
+  @IsUUID()
   @Column
-  public mediaId: number;
+  public mediaId: string;
 
   @BelongsTo(() => CommentModel)
   public comment: CommentModel;

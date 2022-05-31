@@ -28,6 +28,8 @@ import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
 import { BelongsToManyAddAssociationsMixin, Optional } from 'sequelize';
+import { IsUUID } from 'class-validator';
+import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -35,10 +37,10 @@ export enum ActionEnum {
 }
 
 export interface IComment {
-  id: number;
+  id: string;
   actor: UserDataShareDto;
-  postId: number;
-  parentId?: number;
+  postId: string;
+  parentId?: string;
   edited?: boolean;
   parent?: IComment;
   content?: string;
@@ -60,22 +62,24 @@ export interface IComment {
 })
 export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> implements IComment {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
-  public id: number;
+  public id: string;
 
   public actor: UserDataShareDto;
 
-  @AllowNull(true)
+  @AllowNull(false)
   @ForeignKey(() => CommentModel)
-  @Default(0)
+  @IsUUID()
   @Column
-  public parentId: number;
+  public parentId: string;
 
   @ForeignKey(() => PostModel)
   @AllowNull(false)
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @Length({ max: 5000 })
   @Column
@@ -196,7 +200,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     comment: CommentModel,
     action: ActionEnum
   ): Promise<void> {
-    if (comment.parentId && comment.parentId > 0) {
+    if (comment.parentId !== NIL_UUID) {
       const parentComment = await comment.sequelize
         .model(CommentModel.name)
         .findByPk(comment.parentId);
@@ -207,13 +211,13 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   /**
    * Update Comment Count For Post
    * @param sequelize Sequelize
-   * @param postId Number
+   * @param postId String
    * @param action ActionEnum
    * @private
    */
   private static async _updateCommentCountForPost(
     sequelize: Sequelize,
-    postId: number,
+    postId: string,
     action: ActionEnum
   ): Promise<void> {
     const post = await sequelize.model(PostModel.name).findByPk(postId);
