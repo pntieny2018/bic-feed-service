@@ -9,8 +9,6 @@ import { mockedUserAuth } from './mocks/input.mock';
 import { GetNewsFeedDto } from '../dto/request/get-newsfeed.dto';
 
 jest.mock('../feed.service');
-jest.mock('../../post/article.service');
-
 describe('FeedController', () => {
   let feedController: FeedController;
   let feedService: FeedService;

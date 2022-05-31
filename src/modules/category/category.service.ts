@@ -11,10 +11,14 @@ import { PageDto } from '../../common/dto';
 import { GetCategoryDto } from './dto/requests/get-category.dto';
 import { Op, Transaction } from 'sequelize';
 import { LogicException } from '../../common/exceptions';
+import { PostCategoryModel } from '../../database/models/post-category.model';
 
 @Injectable()
 export class CategoryService {
-  public constructor(@InjectModel(CategoryModel) private _categoryModel: typeof CategoryModel) {}
+  public constructor(
+    @InjectModel(CategoryModel) private _categoryModel: typeof CategoryModel,
+    @InjectModel(PostCategoryModel) private _postCategoryModel: typeof PostCategoryModel
+  ) {}
   private _logger = new Logger(CategoryService.name);
 
   public async getCategory(
@@ -114,14 +118,14 @@ export class CategoryService {
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
-    const currentGroups = await this._categoryModel.findAll({
+    const currentGroups = await this._postCategoryModel.findAll({
       where: { postId },
     });
     const currentCategoryIds = currentGroups.map((i) => i.categoryId);
 
     const deleteCategoryIds = ArrayHelper.arrDifferenceElements(currentCategoryIds, categoryIds);
     if (deleteCategoryIds.length) {
-      await this._categoryModel.destroy({
+      await this._postCategoryModel.destroy({
         where: { categoryId: deleteCategoryIds, postId },
         transaction,
       });
@@ -129,7 +133,7 @@ export class CategoryService {
 
     const addCategoryIds = ArrayHelper.arrDifferenceElements(categoryIds, currentCategoryIds);
     if (addCategoryIds.length) {
-      await this._categoryModel.bulkCreate(
+      await this._postCategoryModel.bulkCreate(
         addCategoryIds.map((groupId) => ({
           postId,
           groupId,
