@@ -17,7 +17,7 @@ export class FeedPublisherService {
   public constructor(
     private _followService: FollowService,
     @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
-    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel,
+    @InjectModel(UserSeenPostModel) private _userSeenPostModel: typeof UserSeenPostModel,
     private readonly _sentryService: SentryService
   ) {}
 

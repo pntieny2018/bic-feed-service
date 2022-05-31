@@ -108,7 +108,7 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+  public async markSeenPosts(postIds: string[], userId: number): Promise<void> {
     try {
       await this._userSeenPostModel.bulkCreate(
         postIds.map((postId) => ({ postId, userId })),
