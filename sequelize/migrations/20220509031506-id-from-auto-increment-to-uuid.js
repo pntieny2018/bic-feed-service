@@ -862,6 +862,34 @@ module.exports = {
         ]);
       })
       .then(() => {
+        return Promise.all([
+          queryInterface.addIndex(
+            { tableName: `comments_reactions`, schema: schemaName },
+            ['comment_id', 'reaction_name', 'created_by'],
+            {
+              unique: true,
+              transaction: t,
+            }
+          ),
+          queryInterface.addIndex(
+            { tableName: `posts_reactions`, schema: schemaName },
+            ['post_id', 'reaction_name', 'created_by'],
+            {
+              unique: true,
+              transaction: t,
+            }
+          ),
+          queryInterface.addIndex(
+            { tableName: `follows`, schema: schemaName },
+            ['user_id', 'group_id'],
+            {
+              unique: true,
+              transaction: t,
+            }
+          ),
+        ]);
+      })
+      .then(() => {
         return t.commit();
       })
       .catch((e) => {
