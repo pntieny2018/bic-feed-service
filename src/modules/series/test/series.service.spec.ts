@@ -1,20 +1,21 @@
-import {GetSeriesDto} from './../dto/requests/get-series.dto';
-import {Test, TestingModule} from '@nestjs/testing';
-import {SeriesService} from '../series.service';
-import {SeriesModel} from '../../../database/models/series.model';
-import {getModelToken} from '@nestjs/sequelize';
-import {mockedCreateSeriesDto, mockedSeriesCreated} from './mocks/request/create-series.dto.mock';
-import {mockedSeriesUpdated} from './mocks/request/update-series.dto.mock';
-import {createMock} from '@golevelup/ts-jest';
-import {Transaction} from 'sequelize';
-import {LogicException} from '../../../common/exceptions';
-import {Sequelize} from 'sequelize-typescript';
-import {authUserMock} from '../../comment/tests/mocks/user.mock';
-import {mockedSeriesResponse} from './mocks/response/series.response.mock';
-import {mockedUserAuth} from './mocks/user-auth.mock';
-import {SentryService} from '../../../../libs/sentry/src';
-import {ExceptionHelper} from '../../../common/helpers';
-import {mockedSeriesDeleted} from './mocks/request/delete-series.dto.mock';
+import { GetSeriesDto } from './../dto/requests/get-series.dto';
+import { Test, TestingModule } from '@nestjs/testing';
+import { SeriesService } from '../series.service';
+import { SeriesModel } from '../../../database/models/series.model';
+import { getModelToken } from '@nestjs/sequelize';
+import { mockedCreateSeriesDto, mockedSeriesCreated } from './mocks/request/create-series.dto.mock';
+import { mockedSeriesUpdated } from './mocks/request/update-series.dto.mock';
+import { createMock } from '@golevelup/ts-jest';
+import { Transaction } from 'sequelize';
+import { LogicException } from '../../../common/exceptions';
+import { Sequelize } from 'sequelize-typescript';
+import { authUserMock } from '../../comment/tests/mocks/user.mock';
+import { mockedSeriesResponse } from './mocks/response/series.response.mock';
+import { mockedUserAuth } from './mocks/user-auth.mock';
+import { SentryService } from '../../../../libs/sentry/src';
+import { ExceptionHelper } from '../../../common/helpers';
+import { mockedSeriesDeleted } from './mocks/request/delete-series.dto.mock';
+
 const slugify = require('slugify');
 
 describe('SeriesService', () => {
@@ -98,7 +99,9 @@ describe('SeriesService', () => {
     });
 
     it('Should catch exception when query DB error', async () => {
-      seriesModelMock.findAndCountAll.mockRejectedValue(new Error('Any error when findAndCountAll data in DB'));
+      seriesModelMock.findAndCountAll.mockRejectedValue(
+        new Error('Any error when findAndCountAll data in DB')
+      );
       try {
         await seriesService.getSeries(getSeriesDto);
       } catch (error) {
@@ -120,7 +123,7 @@ describe('SeriesService', () => {
         slug: slugify(mockedCreateSeriesDto.name),
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,
-      })
+      });
     });
 
     it('Should catch exception if creator not found in cache', async () => {
@@ -157,7 +160,7 @@ describe('SeriesService', () => {
         active: true,
         name: mockedDataUpdateSeries.name,
         slug: slugify(mockedDataUpdateSeries.name),
-      })
+      });
     });
 
     it('Should catch exception if series not found', async () => {
@@ -197,7 +200,7 @@ describe('SeriesService', () => {
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
-    })
+    });
 
     it('Should catch exception if series not found', async () => {
       seriesService.getSeriesById = jest.fn().mockResolvedValue(null);
@@ -230,13 +233,13 @@ describe('SeriesService', () => {
 
   describe('checkSeriesOwner', () => {
     it('check series owner true', async () => {
-      const result = await seriesService.checkSeriesOwner(mockedSeriesResponse, 1)
+      const result = await seriesService.checkSeriesOwner(mockedSeriesResponse, 1);
       expect(result).toEqual(true);
-    })
+    });
 
     it('Should catch exception if series not found', async () => {
       try {
-        await seriesService.checkSeriesOwner(null, 1)
+        await seriesService.checkSeriesOwner(null, 1);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -244,7 +247,7 @@ describe('SeriesService', () => {
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
       try {
-        await seriesService.checkSeriesOwner(mockedSeriesResponse, 2)
+        await seriesService.checkSeriesOwner(mockedSeriesResponse, 2);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -259,15 +262,15 @@ describe('SeriesService', () => {
         toJSON: () => seriesData,
       };
       seriesModelMock.findOne.mockResolvedValue(mockSeries);
-      const result = await seriesService.getSeriesById(mockedSeriesCreated.id)
+      const result = await seriesService.getSeriesById(mockedSeriesCreated.id);
       expect(result.name).toEqual(mockedSeriesCreated.name);
       expect(result.active).toEqual(mockedSeriesCreated.active);
-    })
+    });
 
     it('Should catch exception if series not found', async () => {
       seriesModelMock.findOne.mockRejectedValue(new Error('Any error when findOne data in DB'));
       try {
-        await seriesService.getSeriesById('')
+        await seriesService.getSeriesById('');
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
       }

@@ -1,7 +1,5 @@
 import { v4 } from 'uuid';
 import { TypeActivity, VerbActivity } from '../../notification.constants';
-import { Expose } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class ActivityObject {
   public id: string;
@@ -17,10 +15,6 @@ export class ActivityObject {
   public reaction?: ReactionObject;
   public createdAt: Date;
   public updatedAt: Date;
-}
-export class GiphyObject {
-  public giphyId: string;
-  public giphyUrl: string;
 }
 
 export class SettingObject {
@@ -71,7 +65,8 @@ export class CommentObject {
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reaction?: ReactionObject;
-  public giphy?: GiphyObject;
+  public giphyId?: string;
+  public giphyUrl?: string;
   public reactionsOfActor?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
   public child?: CommentObject;

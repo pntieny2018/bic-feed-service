@@ -2,27 +2,31 @@
 require('dotenv').config();
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'follows';
+const tableName = 'posts_categories';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
       tableName,
       {
-        id: {
+        post_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
           primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
+          references: { model: 'posts', key: 'id' },
         },
-        user_id: {
-          type: Sequelize.INTEGER,
+        category_id: {
+          type: Sequelize.UUID,
           allowNull: false,
-        },
-        group_id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
+          primaryKey: true,
+          references: { model: 'categories', key: 'id' },
         },
         created_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        },
+        updated_at: {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
@@ -32,9 +36,7 @@ module.exports = {
         schema: schemaName,
       }
     );
-
-    await queryInterface.addIndex(tableName, ['user_id', 'group_id'], {
-      indexName: 'user_group_index',
+    await queryInterface.addIndex(tableName, ['post_id', 'category_id'], {
       unique: true,
     });
   },
