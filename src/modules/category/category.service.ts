@@ -16,8 +16,10 @@ import { PostCategoryModel } from '../../database/models/post-category.model';
 @Injectable()
 export class CategoryService {
   public constructor(
-    @InjectModel(CategoryModel) private _categoryModel: typeof CategoryModel,
-    @InjectModel(PostCategoryModel) private _postCategoryModel: typeof PostCategoryModel
+    @InjectModel(CategoryModel)
+    private _categoryModel: typeof CategoryModel,
+    @InjectModel(PostCategoryModel)
+    private _postCategoryModel: typeof PostCategoryModel
   ) {}
   private _logger = new Logger(CategoryService.name);
 
@@ -96,13 +98,13 @@ export class CategoryService {
     postId: string,
     transaction: Transaction
   ): Promise<void> {
-    if (categoryIds.length === 0) return;
-    const dataCreate = categoryIds.map((categoryId) => ({
-      postId: postId,
-      categoryId,
-    }));
-    await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
-    return;
+    // if (categoryIds.length === 0) return;
+    // const dataCreate = categoryIds.map((categoryId) => ({
+    //   postId: postId,
+    //   categoryId,
+    // }));
+    // await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
+    // return;
   }
 
   /**

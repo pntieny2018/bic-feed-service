@@ -63,7 +63,9 @@ export class ArticleService {
     postId: string,
     user: UserDto,
     getArticleDto?: GetArticleDto
-  ): Promise<any> {}
+  ): Promise<any> {
+    return this._postService.getPost(postId, user, getArticleDto);
+  }
 
   /**
    * Get Public Post
@@ -120,7 +122,7 @@ export class ArticleService {
         {
           title,
           summary,
-          isDraft: true,
+          isDraft: false,
           isArticle: true,
           content,
           createdBy: authUserId,
@@ -173,6 +175,16 @@ export class ArticleService {
   }
 
   /**
+   * Publish article
+   * @param authUser UserDto
+   * @param createArticleDto CreateArticleDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async publishArticle(articleId: string, authUserId: number): Promise<boolean> {
+    return this._postService.publishPost(articleId, authUserId);
+  }
+  /**
    * Update Post except isDraft
    * @param postId postID
    * @param authUser UserDto
@@ -195,15 +207,15 @@ export class ArticleService {
     try {
       const { content, media, setting, mentions, audience, series, categories } = updateArticleDto;
       if (post.isDraft === false) {
-        await this.postService.checkContent(updateArticleDto);
+        await this._postService.checkContent(updateArticleDto);
       }
-      await this.postService.checkPostOwner(post, authUser.id);
+      await this._postService.checkPostOwner(post, authUser.id);
       // await transaction.commit();
 
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(error, error?.stack);
+      this._logger.error(error, error?.stack);
       throw error;
     }
   }
@@ -216,6 +228,6 @@ export class ArticleService {
    * @throws HttpException
    */
   public async deleteArticle(id: string, user: UserDto): Promise<any> {
-    return this.postService.deletePost(id, user);
+    return this._postService.deletePost(id, user);
   }
 }
