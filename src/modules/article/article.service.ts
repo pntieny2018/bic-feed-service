@@ -1,4 +1,4 @@
-import { HTTP_STATUS_ID } from '../../common/constants';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { Injectable, Logger } from '@nestjs/common';
@@ -20,32 +20,38 @@ import { PostService } from '../post/post.service';
 import { PageDto } from '../../common/dto';
 import { SearchArticlesDto } from './dto/requests/search-article.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { EntityType } from '../media/media.constants';
+import { CategoryService } from '../category/category.service';
+import { SeriesService } from '../series/series.service';
+import { HashtagService } from '../hashtag/hashtag.service';
 @Injectable()
 export class ArticleService {
   /**
    * Logger
-   * @protected
+   * @private
    */
-  protected logger = new Logger(ArticleService.name);
+  private _logger = new Logger(ArticleService.name);
 
   /**
    *  ClassTransformer
-   * @protected
+   * @private
    */
-  protected classTransformer = new ClassTransformer();
+  private _classTransformer = new ClassTransformer();
   public constructor(
     @InjectConnection()
-    protected sequelizeConnection: Sequelize,
+    private _sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
-    protected postModel: typeof PostModel,
-    protected postService: PostService,
-    protected commentService: CommentService,
-    protected reactionService: ReactionService,
-    protected mentionService: MentionService,
-    protected mediaService: MediaService,
-    protected authorityService: AuthorityService,
-    protected searchService: ElasticsearchService,
-    protected readonly sentryService: SentryService
+    private readonly _postModel: typeof PostModel,
+    private readonly _postService: PostService,
+    private readonly _commentService: CommentService,
+    private readonly _reactionService: ReactionService,
+    private readonly _mentionService: MentionService,
+    private readonly _mediaService: MediaService,
+    private readonly _categoryService: CategoryService,
+    private readonly _seriesService: SeriesService,
+    private readonly _hashtagService: HashtagService,
+    private readonly _authorityService: AuthorityService,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -239,15 +245,85 @@ export class ArticleService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
       }
 
-      //return post;
+      const { groupIds } = audience;
+      await this._authorityService.checkCanCreatePost(authUser, groupIds);
+
+      if (mentions && mentions.length) {
+        await this._mentionService.checkValidMentions(groupIds, mentions);
+      }
+
+      const { files, images, videos } = media;
+      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
+      await this._categoryService.checkValidCategory(categories, authUserId);
+      await this._seriesService.checkValidSeries(series, authUserId);
+      transaction = await this._sequelizeConnection.transaction();
+      const post = await this._postModel.create(
+        {
+          title,
+          summary,
+          isDraft: false,
+          isArticle: true,
+          content,
+          createdBy: authUserId,
+          updatedBy: authUserId,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
+          isProcessing: false,
+        },
+        { transaction }
+      );
+      if (uniqueMediaIds.length) {
+        await this._mediaService.createIfNotExist(media, authUserId);
+        await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
+      }
+
+      let hashtagIds = [];
+      if (hashtags) {
+        hashtagIds = await this._hashtagService.findOrCreateHashtags(hashtags);
+      }
+      await Promise.all([
+        this._seriesService.addPostToSeries(series, post.id, transaction),
+        this._hashtagService.addPostToHashtags(hashtagIds, post.id, transaction),
+        this._categoryService.addPostToCategories(categories, post.id, transaction),
+        this._postService.addPostGroup(groupIds, post.id, transaction),
+      ]);
+
+      if (mentions.length) {
+        await this._mentionService.create(
+          mentions.map((userId) => ({
+            entityId: post.id,
+            userId,
+            mentionableType: MentionableType.POST,
+          })),
+          transaction
+        );
+      }
+
+      await transaction.commit();
+
+      return post;
     } catch (error) {
-      // if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(error, error?.stack);
-      this.sentryService.captureException(error);
+      if (typeof transaction !== 'undefined') await transaction.rollback();
+      this._logger.error(error, error?.stack);
+      this._sentryService.captureException(error);
       throw error;
     }
   }
 
+  /**
+   * Publish article
+   * @param authUser UserDto
+   * @param createArticleDto CreateArticleDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async publishArticle(articleId: string, authUserId: number): Promise<boolean> {
+    return this._postService.publishPost(articleId, authUserId);
+  }
   /**
    * Update Post except isDraft
    * @param postId postID
@@ -271,15 +347,15 @@ export class ArticleService {
     try {
       const { content, media, setting, mentions, audience, series, categories } = updateArticleDto;
       if (post.isDraft === false) {
-        await this.postService.checkContent(updateArticleDto);
+        await this._postService.checkContent(updateArticleDto);
       }
-      await this.postService.checkPostOwner(post, authUser.id);
+      await this._postService.checkPostOwner(post, authUser.id);
       // await transaction.commit();
 
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(error, error?.stack);
+      this._logger.error(error, error?.stack);
       throw error;
     }
   }
@@ -292,6 +368,6 @@ export class ArticleService {
    * @throws HttpException
    */
   public async deleteArticle(id: string, user: UserDto): Promise<any> {
-    return this.postService.deletePost(id, user);
+    return this._postService.deletePost(id, user);
   }
 }
