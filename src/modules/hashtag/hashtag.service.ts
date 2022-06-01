@@ -9,6 +9,7 @@ import { PageDto } from '../../common/dto';
 import { GetHashtagDto } from './dto/requests/get-hashtag.dto';
 import { Op, Transaction } from 'sequelize';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
+import { String } from 'aws-sdk/clients/appstream';
 
 @Injectable()
 export class HashtagService {
@@ -46,16 +47,15 @@ export class HashtagService {
     });
   }
 
-  public async createHashtag(
-    user: UserDto,
-    createHashtagDto: CreateHashtagDto
-  ): Promise<HashtagResponseDto> {
+  public async createHashtag(hashtagName: string): Promise<HashtagResponseDto> {
     this._logger.debug('createHashtag');
-    const name = StringHelper.convertToSlug(createHashtagDto.name);
+    const name = hashtagName.trim();
+    const slug = StringHelper.convertToSlug(hashtagName);
     const findOrCreateResult = await this._hashtagModel.findOrCreate({
-      where: { name: name },
+      where: { name },
       defaults: {
-        name: name,
+        name,
+        slug,
       },
     });
 
@@ -74,14 +74,13 @@ export class HashtagService {
     hashtagIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
-    if (hashtagIds.length === 0) return true;
+  ): Promise<void> {
+    if (hashtagIds.length === 0) return;
     const dataCreate = hashtagIds.map((hashtagId) => ({
       postId: postId,
       hashtagId,
     }));
     await this._postHashtagModel.bulkCreate(dataCreate, { transaction });
-    return true;
   }
 
   /**
@@ -96,7 +95,7 @@ export class HashtagService {
     hashtagIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
+  ): Promise<void> {
     const currentHashtags = await this._postHashtagModel.findAll({
       where: { postId },
     });
@@ -120,6 +119,18 @@ export class HashtagService {
         { transaction }
       );
     }
-    return true;
+  }
+
+  public async findOrCreateHashtags(hashtags: { name: string; id?: string }[]): Promise<string[]> {
+    const hashtagIds = [];
+    hashtags.forEach(async (ht) => {
+      let newHt = { ...ht };
+      if (!ht.id) {
+        newHt = await this.createHashtag(ht.name);
+      }
+      hashtagIds.push(newHt.id);
+    });
+
+    return hashtagIds;
   }
 }

@@ -253,18 +253,18 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addSeriesToCategories(
+  public async addPostToSeries(
     seriesIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
-    if (seriesIds.length === 0) return true;
+  ): Promise<void> {
+    if (seriesIds.length === 0) return;
     const dataCreate = seriesIds.map((seriesId) => ({
       postId: postId,
       seriesId,
     }));
     await this._postSeriesModel.bulkCreate(dataCreate, { transaction });
-    return true;
+    return;
   }
 
   /**
@@ -279,7 +279,7 @@ export class SeriesService {
     seriesIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
+  ): Promise<void> {
     const currentSeries = await this._postSeriesModel.findAll({
       where: { postId },
     });
@@ -303,10 +303,9 @@ export class SeriesService {
         { transaction }
       );
     }
-    return true;
   }
 
-  public async checkValidSeries(seriesIds: string[], userId: string): Promise<void> {
+  public async checkValidSeries(seriesIds: string[], userId: number): Promise<void> {
     const seriesCount = await this._seriesModel.count({
       where: {
         id: seriesIds,

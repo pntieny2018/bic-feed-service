@@ -49,6 +49,6 @@ export class HashtagController {
     @Body() createHashtagDto: CreateHashtagDto
   ): Promise<HashtagResponseDto> {
     this._logger.debug('create hashtag');
-    return this._hashtagService.createHashtag(user, createHashtagDto);
+    return this._hashtagService.createHashtag(createHashtagDto.name);
   }
 }

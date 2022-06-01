@@ -95,14 +95,14 @@ export class CategoryService {
     categoryIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
-    if (categoryIds.length === 0) return true;
+  ): Promise<void> {
+    if (categoryIds.length === 0) return;
     const dataCreate = categoryIds.map((categoryId) => ({
       postId: postId,
       categoryId,
     }));
     await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
-    return true;
+    return;
   }
 
   /**
@@ -117,7 +117,7 @@ export class CategoryService {
     categoryIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
+  ): Promise<void> {
     const currentCategories = await this._postCategoryModel.findAll({
       where: { postId },
     });
@@ -141,10 +141,9 @@ export class CategoryService {
         { transaction }
       );
     }
-    return true;
   }
 
-  public async checkValidCategory(categoryIds: string[], userId: string): Promise<void> {
+  public async checkValidCategory(categoryIds: string[], userId: number): Promise<void> {
     const categoryCount = await this._categoryModel.count({
       where: {
         id: categoryIds,
