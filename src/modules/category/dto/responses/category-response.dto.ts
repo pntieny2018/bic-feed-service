@@ -53,7 +53,7 @@ export class CategoryResponseDto {
   public constructor(iCategory: ICategory) {
     this.id = iCategory.id;
     this.parentId = iCategory.parentId;
-    this.active = iCategory.active;
+    this.active = iCategory.isActive;
     this.name = iCategory.name;
     this.slug = iCategory.slug;
     this.level = iCategory.level;

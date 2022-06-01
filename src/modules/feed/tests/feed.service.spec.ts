@@ -17,8 +17,6 @@ import { mockedUserAuth, mockGroup } from './mocks/input.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
 import { mockedGetTimeLineDto } from './mocks/request/get-timeline.dto.mock';
 
-jest.mock('../../post/article.service');
-
 class EPostModel extends PostModel {
   public reactionsCount: string;
 

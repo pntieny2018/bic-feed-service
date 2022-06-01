@@ -6,6 +6,7 @@ import { v4 as uuid_v4 } from 'uuid';
 export interface IHashtag {
   id: string;
   name: string;
+  slug: string;
   createdAt?: Date;
 }
 
@@ -20,9 +21,13 @@ export class HashtagModel extends Model<IHashtag, Optional<IHashtag, 'id'>> impl
   @Column
   public id: string;
 
-  @Length({ max: 5000 })
+  @Length({ max: 255 })
   @Column
   public name: string;
+
+  @Length({ max: 255 })
+  @Column
+  public slug: string;
 
   @CreatedAt
   @Column

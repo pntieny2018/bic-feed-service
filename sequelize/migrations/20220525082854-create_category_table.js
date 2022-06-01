@@ -32,7 +32,7 @@ module.exports = {
           type: Sequelize.SMALLINT,
           allowNull: false,
         },
-        active: {
+        isActive: {
           type: Sequelize.BOOLEAN,
           allowNull: false,
           defaultValue: true,

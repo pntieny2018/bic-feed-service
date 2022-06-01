@@ -16,7 +16,11 @@ module.exports = {
           defaultValue: Sequelize.literal(genRandomUUID)
         },
         name: {
-          type: Sequelize.STRING(5000),
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        slug: {
+          type: Sequelize.STRING(255),
           allowNull: false,
         },
         created_at: {
