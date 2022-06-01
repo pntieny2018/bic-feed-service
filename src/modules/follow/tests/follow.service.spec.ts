@@ -11,11 +11,13 @@ import {
   emptyUserIdsCreateFollowDtoMock,
 } from './mocks/create-follow-dto.mock';
 import { emitKeypressEvents } from 'readline';
+import { LogicException } from '../../../common/exceptions';
 
 describe('FollowService', () => {
   let followService: FollowService;
   let internalEventEmitterService;
   let sequelize;
+  let sentry;
   let model;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -64,6 +66,7 @@ describe('FollowService', () => {
     followService = module.get<FollowService>(FollowService);
     sequelize = module.get<Sequelize>(Sequelize);
     internalEventEmitterService = module.get<InternalEventEmitterService>(InternalEventEmitterService);
+    sentry = module.get<SentryService>(SentryService);
     model = module.get<typeof FollowModel>(getModelToken(FollowModel))
   });
 
@@ -92,6 +95,15 @@ describe('FollowService', () => {
       expect(model.sequelize.query).toBeCalled();
       expect(internalEventEmitterService.emit).toBeCalled();
     })
+    it('should call logger and sentry if query fail', async () => {
+      sequelize.query.mockRejectedValue(new Error('Whatever error'));
+      try {
+        await followService.follow(emptyCreateFollowDtoMock)
+
+      } catch (e) {
+        expect(sentry.captureException).toBeCalled()
+      }
+    })
   })
 
   describe('FollowService.unfollow', () => {
@@ -99,6 +111,75 @@ describe('FollowService', () => {
       await followService.unfollow(createFollowDtoMock)
       expect(model.destroy).toBeCalled()
       expect(internalEventEmitterService.emit).toBeCalled()
+    })
+    it('should call logger and sentry if query fail', async () => {
+      model.destroy.mockRejectedValue(new Error('Whatever error'));
+      try {
+        await followService.unfollow(createFollowDtoMock)
+
+      } catch (e) {
+        expect(sentry.captureException).toBeCalled()
+      }
+    })
+  })
+
+  describe('FollowService.getUniqueUserFollows', () => {
+    it('should call query', async () => {
+      sequelize.query.mockResolvedValue([[{user_id: 1, id: 2}], false])
+      await followService.getUniqueUserFollows([], [1,2], [1,2,3])
+      expect(sequelize.query).toBeCalled()
+    })
+
+    it('should call logger and sentry if query fail', async () => {
+      const logSpy = jest.spyOn(followService['_logger'], 'error').mockReturnThis();
+
+      sequelize.query.mockRejectedValue(new Error('Whatever error'));
+      try {
+        await followService.getUniqueUserFollows([], [1,2], [1,2,3])
+
+      } catch (e) {
+        expect(logSpy).toBeCalled();
+        expect(sentry.captureException).toBeCalled()
+      }
+    })
+  })
+
+  describe('FollowService.filterUserFollows', () => {
+    it('should call query', async () => {
+      const logSpy = jest.spyOn(followService['_logger'], 'debug').mockReturnThis();
+
+      sequelize.query.mockResolvedValue([[{user_id: 1, id: 2}], false])
+      await followService.filterUserFollows([], [1,2])
+      expect(logSpy).toBeCalled();
+      expect(sequelize.query).toBeCalled()
+    })
+
+    it('should call logger and sentry if query fail', async () => {
+      const logSpy = jest.spyOn(followService['_logger'], 'error').mockReturnThis();
+
+      sequelize.query.mockRejectedValue(new Error('Whatever error'));
+      try {
+        await followService.filterUserFollows([], [1,2])
+
+      } catch (e) {
+        expect(logSpy).toBeCalled();
+        expect(sentry.captureException).toBeCalled()
+      }
+    })
+  })
+
+  describe('FollowService.getValidUserIds', () => {
+    it('should call query', async () => {
+      sequelize.query.mockResolvedValue([[{user_id: 1, id: 2}], false])
+      await followService.getValidUserIds([2,3], [1,2])
+      expect(sequelize.query).toBeCalled()
+    })
+
+    it('should return [] if query null', async () => {
+      sequelize.query.mockResolvedValue(null)
+      const value = await followService.getValidUserIds([2,3], [1,2])
+      expect(sequelize.query).toBeCalled()
+      expect(value).toEqual([])
     })
   })
 
