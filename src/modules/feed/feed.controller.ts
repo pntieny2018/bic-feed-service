@@ -66,7 +66,7 @@ export class FeedController {
   }
 
   @ApiOperation({ summary: 'Get users seen post' })
-  @Get('/seen/:postId/user')
+  @Get('/seen/user')
   public async getUserSeenPost(
     @AuthUser() user: UserDto,
     @Query() getUserSeenPostDto: GetUserSeenPostDto
