@@ -54,12 +54,6 @@ export class ArticleController {
     const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
       const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
-      this._eventEmitter.emit(
-        new PostHasBeenPublishedEvent({
-          post: article,
-          actor: user.profile,
-        })
-      );
       return article;
     }
   }
@@ -100,6 +94,29 @@ export class ArticleController {
       );
 
       return articleUpdated;
+    }
+  }
+
+  @ApiOperation({ summary: 'Publish article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+    description: 'Publish article successfully',
+  })
+  @Put('/:articleId/publish')
+  public async publishPost(
+    @AuthUser() user: UserDto,
+    @Param('articleId') articleId: string
+  ): Promise<ArticleResponseDto> {
+    const isPublished = await this._articleService.publishArticle(articleId, user.id);
+    if (isPublished) {
+      const post = await this._articleService.getArticle(articleId, user, new GetArticleDto());
+      this._eventEmitter.emit(
+        new PostHasBeenPublishedEvent({
+          post: post,
+          actor: user.profile,
+        })
+      );
+      return post;
     }
   }
 

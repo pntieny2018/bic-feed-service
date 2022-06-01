@@ -1,26 +1,13 @@
-import {
-  Body,
-  Controller, Delete,
-  Get, Logger,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { PageDto } from '../../common/dto';
-import {
-  GetSeriesDto,
-  CreateSeriesDto,
-  UpdateSeriesDto
-} from './dto/requests';
+import { GetSeriesDto, CreateSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
 import { SeriesService } from './series.service';
 import { GetSeriesPipe } from './pipes';
 import { ResponseMessages } from '../../common/decorators';
-import {AuthUser, UserDto} from '../auth';
-
+import { AuthUser, UserDto } from '../auth';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -30,9 +17,8 @@ import {AuthUser, UserDto} from '../auth';
 })
 export class SeriesController {
   private _logger = new Logger(SeriesController.name);
-  public constructor(
-    private seriesService: SeriesService,
-  ) {}
+
+  public constructor(private seriesService: SeriesService) {}
 
   @ApiOperation({ summary: 'Get series' })
   @ResponseMessages({
@@ -40,7 +26,7 @@ export class SeriesController {
   })
   @Get('/')
   public getSeries(
-      @Query(GetSeriesPipe) getSeriesDto: GetSeriesDto
+    @Query(GetSeriesPipe) getSeriesDto: GetSeriesDto
   ): Promise<PageDto<SeriesResponseDto>> {
     this._logger.debug('get series');
     return this.seriesService.getSeries(getSeriesDto);

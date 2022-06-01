@@ -3,7 +3,12 @@ import { CreateArticleDto } from '../../../dto/requests';
 export const mockedCreateArticleDto: CreateArticleDto = {
   categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
   series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
-  hashtags: ['Hastag1'],
+  hashtags: [
+    {
+      id: '1232',
+      name: 'abcd',
+    },
+  ],
   title: 'aaa',
   summary: 'bbbb',
   audience: {

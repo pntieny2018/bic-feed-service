@@ -44,7 +44,7 @@ describe('SeriesController', () => {
   describe('getSeries', () => {
     it('Get series successfully', async () => {
       seriesService.getSeries = jest.fn().mockResolvedValue(true);
-      const getSeriesDto: GetSeriesDto = {}
+      const getSeriesDto: GetSeriesDto = {};
       await seriesController.getSeries(getSeriesDto);
       expect(seriesService.getSeries).toBeCalledTimes(1);
       expect(seriesService.getSeries).toBeCalledWith({});
@@ -68,9 +68,17 @@ describe('SeriesController', () => {
     it('Update series successfully', async () => {
       seriesService.updateSeries = jest.fn().mockResolvedValue(true);
       seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
-      const result = await seriesController.updateSeries(userDto, mockedSeriesResponse.id, mockedUpdateSeriesDto);
+      const result = await seriesController.updateSeries(
+        userDto,
+        mockedSeriesResponse.id,
+        mockedUpdateSeriesDto
+      );
       expect(seriesService.updateSeries).toBeCalledTimes(1);
-      expect(seriesService.updateSeries).toBeCalledWith(userDto, mockedSeriesResponse.id, mockedUpdateSeriesDto);
+      expect(seriesService.updateSeries).toBeCalledWith(
+        userDto,
+        mockedSeriesResponse.id,
+        mockedUpdateSeriesDto
+      );
       expect(seriesService.getSeriesById).toBeCalledTimes(1);
       expect(seriesService.getSeriesById).toBeCalledWith(mockedSeriesResponse.id);
       expect(result).toBe(mockedSeriesResponse);
