@@ -49,7 +49,7 @@ export class FeedService {
     const { limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
-      const constraints = this._getIdConstrains(getNewsFeedDto);
+      const constraints = PostModel.getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
@@ -108,7 +108,7 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+  public async markSeenPosts(postIds: string[], userId: number): Promise<void> {
     try {
       await this._userSeenPostModel.bulkCreate(
         postIds.map((postId) => ({ postId, userId })),
@@ -149,7 +149,7 @@ export class FeedService {
       });
     }
     const authUserId = authUser.id;
-    const constraints = this._getIdConstrains(getTimelineDto);
+    const constraints = PostModel.getIdConstrains(getTimelineDto);
 
     const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
       authUserId,
@@ -197,40 +197,6 @@ export class FeedService {
       offset,
       hasNextPage,
     });
-  }
-
-  /**
-   * Get id constrains
-   * @param getTimelineDto GetTimelineDto
-   * @returns object
-   */
-  private _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
-    const { schema } = getDatabaseConfig();
-    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
-    let constraints = '';
-    if (idGT) {
-      constraints += `AND p.id != ${this._sequelizeConnection.escape(idGT)}`;
-      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idGT
-      )})`;
-    }
-    if (idGTE) {
-      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idGT
-      )})`;
-    }
-    if (idLT) {
-      constraints += `AND p.id != ${this._sequelizeConnection.escape(idLT)}`;
-      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idLT
-      )})`;
-    }
-    if (idLTE) {
-      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idLT
-      )})`;
-    }
-    return constraints;
   }
 
   /**
