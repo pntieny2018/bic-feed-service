@@ -32,6 +32,13 @@ import { UserDto } from '../../modules/auth';
 import { OrderEnum } from '../../common/dto';
 import { GetTimelineDto } from '../../modules/feed/dto/request';
 import { GetNewsFeedDto } from '../../modules/feed/dto/request/get-newsfeed.dto';
+import { CategoryModel } from './category.model';
+import { SeriesModel } from './series.model';
+import { HashtagModel } from './hashtag.model';
+import { PostCategoryModel } from './post-category.model';
+import { PostSeriesModel } from './post-series.model';
+import { PostHashtagModel } from './post-hashtag.model';
+import { GetListArticlesDto } from '../../modules/article/dto/requests/get-list-article.dto';
 
 export interface IPost {
   id: string;
@@ -61,6 +68,7 @@ export interface IPost {
   summary?: string;
   views: number;
 }
+
 @Table({
   tableName: 'posts',
 })
@@ -360,6 +368,144 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         idGTE,
         idLT,
         idLTE,
+      },
+      type: QueryTypes.SELECT,
+    });
+
+    return rows;
+  }
+
+  public static getArticleConstrains(getListArticlesDto: GetListArticlesDto): string {
+    const { schema } = getDatabaseConfig();
+    let constraints = '';
+    const { categories, series, hashtags } = getListArticlesDto;
+    if (categories && categories.length > 0) {
+      constraints += ``;
+    }
+    if (series && series.length > 0) {
+      constraints += ``;
+    }
+    if (hashtags && hashtags.length > 0) {
+      constraints += ``;
+    }
+    return constraints;
+  }
+
+  public static async getListArticle({
+    authUser,
+    groupIds,
+    isImportant,
+    categories,
+    series,
+    hashtags,
+    offset,
+    limit,
+    order,
+  }: {
+    authUser: UserDto;
+    groupIds: number[];
+    isImportant: boolean;
+    categories: string[];
+    series: string[];
+    hashtags: string[];
+    offset?: number;
+    limit?: number;
+    order?: OrderEnum;
+  }): Promise<any[]> {
+    // let condition = this.getArticleConstrains({ categories, series, hashtags });
+    let condition = ''; // TODO later
+    const { schema } = getDatabaseConfig();
+    const postTable = PostModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
+    const mentionTable = MentionModel.tableName;
+    const postReactionTable = PostReactionModel.tableName;
+    const mediaTable = MediaModel.tableName;
+    const postMediaTable = PostMediaModel.tableName;
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    const categoryTable = CategoryModel.tableName;
+    const postCategoryTable = PostCategoryModel.tableName;
+    const seriesTable = SeriesModel.tableName;
+    const postSeriesTable = PostSeriesModel.tableName;
+    const hashtagTable = HashtagModel.tableName;
+    const postHashtagTable = PostHashtagModel.tableName;
+    const authUserId = authUser.id;
+    if (isImportant) {
+      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
+    } else {
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
+    }
+    const query = `SELECT 
+    "PostModel".*,
+    "groups"."group_id" as "groupId",
+    "mentions"."user_id" as "userId",
+    "ownerReactions"."reaction_name" as "reactionName",
+    "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
+    "media"."id" as "mediaId",
+    "media"."url",
+    "media"."name",
+    "media"."type",
+    "media"."size",
+    "media"."width",
+    "media"."height",
+    "media"."extension",
+    "category"."id" as "categoryId",
+    "category"."name",
+    "series"."id" as "seriesId",
+    "series"."name",
+    "hashtag"."id" as "hashtagId",
+    "hashtag"."name",
+    FROM (
+      SELECT 
+      "p"."id", 
+      "p"."comments_count" AS "commentsCount",
+      "p"."is_important" AS "isImportant", 
+      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
+      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
+      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+      "createdAt", "p"."updated_at" AS "updatedAt",
+      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+      ) AS "markedReadPost"
+      FROM ${schema}.${postTable} AS "p"
+      WHERE "p"."is_draft" = false AND EXISTS(
+        SELECT 1
+        from ${schema}.${postGroupTable} AS g
+        WHERE g.post_id = p.id
+        AND g.group_id IN(:groupIds)
+      ) ${condition}
+      ORDER BY "p"."created_at" ${order}
+      OFFSET :offset LIMIT :limit
+    ) AS "PostModel"
+      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
+      LEFT OUTER JOIN ( 
+        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
+        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
+      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
+      LEFT OUTER JOIN ( 
+        ${schema}.${postCategoryTable} AS "category->PostCategoryModel" 
+        INNER JOIN ${schema}.${categoryTable} AS "category" ON "category"."id" = "category->PostCategoryModel"."category_id"
+      ) ON "PostModel"."id" = "category->PostCategoryModel"."post_id" 
+      LEFT OUTER JOIN ( 
+        ${schema}.${postSeriesTable} AS "series->PostSeriesModel" 
+        INNER JOIN ${schema}.${seriesTable} AS "series" ON "series"."id" = "series->PostSeriesModel"."series_id"
+      ) ON "PostModel"."id" = "series->PostSeriesModel"."post_id" 
+      LEFT OUTER JOIN ( 
+        ${schema}.${postHashtagTable} AS "hashtag->PostHashtagModel" 
+        INNER JOIN ${schema}.${hashtagTable} AS "hashtag" ON "hashtag"."id" = "hashtag->PostHashtagModel"."hashtag_id"
+      ) ON "PostModel"."id" = "hashtag->PostHashtagModel"."post_id" 
+      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY "PostModel"."createdAt" ${order}`;
+    const rows: any[] = await this.sequelize.query(query, {
+      replacements: {
+        groupIds,
+        offset,
+        limit: limit,
+        authUserId,
+        categories,
+        series,
+        hashtags,
       },
       type: QueryTypes.SELECT,
     });

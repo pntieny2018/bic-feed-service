@@ -1,7 +1,7 @@
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -24,6 +24,10 @@ import { EntityType } from '../media/media.constants';
 import { CategoryService } from '../category/category.service';
 import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
+import { GetListArticlesDto } from './dto/requests/get-list-article.dto';
+import { PostResponseDto } from '../post/dto/responses';
+import { GroupService } from '../../shared/group';
+
 @Injectable()
 export class ArticleService {
   /**
@@ -37,12 +41,14 @@ export class ArticleService {
    * @private
    */
   private _classTransformer = new ClassTransformer();
+
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
     private readonly _postService: PostService,
+    private readonly _groupService: GroupService,
     private readonly _commentService: CommentService,
     private readonly _reactionService: ReactionService,
     private readonly _mentionService: MentionService,
@@ -97,6 +103,92 @@ export class ArticleService {
 
     return new PageDto<ArticleResponseDto>(result, {
       total: response.body.hits.total.value,
+      limit,
+      offset,
+    });
+  }
+
+  /**
+   * Get list Article
+   * @throws HttpException
+   * @param authUser UserDto
+   * @param getListArticlesDto GetListArticlesDto
+   * @returns Promise resolve PageDto<ArticleResponseDto>
+   */
+  public async getList(
+    authUser: UserDto,
+    getListArticlesDto: GetListArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, groupId } = getListArticlesDto;
+    const group = await this._groupService.get(groupId);
+    if (!group) {
+      throw new BadRequestException(`Group ${groupId} not found`);
+    }
+    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
+    if (groupIds.length === 0) {
+      return new PageDto<ArticleResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+    const user = authUser.profile;
+    if (!user || user.groups.length === 0) {
+      return new PageDto<ArticleResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+
+    const authUserId = authUser.id;
+    const constraints = PostModel.getArticleConstrains(getListArticlesDto);
+
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
+      authUserId,
+      groupIds,
+      constraints
+    );
+    let importantPostsExc = Promise.resolve([]);
+    if (offset < totalImportantPosts) {
+      importantPostsExc = PostModel.getTimelineData({
+        ...getListArticlesDto,
+        limit: limit + 1,
+        groupIds,
+        authUser,
+        isImportant: true,
+      });
+    }
+    let normalPostsExc = Promise.resolve([]);
+    if (offset + limit >= totalImportantPosts) {
+      normalPostsExc = PostModel.getTimelineData({
+        ...getListArticlesDto,
+        offset: Math.max(0, offset - totalImportantPosts),
+        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
+        groupIds,
+        authUser,
+        isImportant: false,
+      });
+    }
+    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
+    const rows = importantPosts.concat(normalPosts);
+    const posts = this.groupPosts(rows);
+    const hasNextPage = posts.length === limit + 1 ? true : false;
+    if (hasNextPage) posts.pop();
+
+    await Promise.all([
+      this._reactionService.bindReactionToPosts(posts),
+      this._mentionService.bindMentionsToPosts(posts),
+      this._postService.bindActorToPost(posts),
+      this._postService.bindAudienceToPost(posts),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      hasNextPage,
       limit,
       offset,
     });
@@ -325,6 +417,7 @@ export class ArticleService {
   public async publishArticle(articleId: string, authUserId: number): Promise<boolean> {
     return this._postService.publishPost(articleId, authUserId);
   }
+
   /**
    * Update Post except isDraft
    * @param postId postID
@@ -370,5 +463,109 @@ export class ArticleService {
    */
   public async deleteArticle(id: string, user: UserDto): Promise<any> {
     return this._postService.deletePost(id, user);
+  }
+
+  public groupPosts(posts: any[]): any[] {
+    const result = [];
+    posts.forEach((post) => {
+      const {
+        id,
+        commentsCount,
+        isImportant,
+        importantExpiredAt,
+        isDraft,
+        content,
+        markedReadPost,
+        canComment,
+        canReact,
+        canShare,
+        createdBy,
+        updatedBy,
+        createdAt,
+        updatedAt,
+        isNowImportant,
+      } = post;
+      const postAdded = result.find((i) => i.id === post.id);
+      if (!postAdded) {
+        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
+        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const ownerReactions =
+          post.postReactionId === null
+            ? []
+            : [
+                {
+                  id: post.postReactionId,
+                  reactionName: post.reactionName,
+                  createdAt: post.reactCreatedAt,
+                },
+              ];
+        const media =
+          post.mediaId === null
+            ? []
+            : [
+                {
+                  id: post.mediaId,
+                  url: post.url,
+                  name: post.name,
+                  type: post.type,
+                  width: post.width,
+                  size: post.size,
+                  height: post.height,
+                  extension: post.extension,
+                },
+              ];
+        result.push({
+          id,
+          commentsCount,
+          isImportant,
+          importantExpiredAt,
+          isDraft,
+          content,
+          canComment,
+          markedReadPost,
+          canReact,
+          canShare,
+          createdBy,
+          updatedBy,
+          createdAt,
+          updatedAt,
+          isNowImportant,
+          groups,
+          mentions,
+          media,
+          ownerReactions,
+        });
+        return;
+      }
+      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
+        postAdded.groups.push({ groupId: post.groupId });
+      }
+      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
+        postAdded.mentions.push({ userId: post.userId });
+      }
+      if (
+        post.postReactionId !== null &&
+        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
+      ) {
+        postAdded.ownerReactions.push({
+          id: post.postReactionId,
+          reactionName: post.reactionName,
+          createdAt: post.reactCreatedAt,
+        });
+      }
+      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
+        postAdded.media.push({
+          id: post.mediaId,
+          url: post.url,
+          name: post.name,
+          type: post.type,
+          width: post.width,
+          size: post.size,
+          height: post.height,
+          extension: post.extension,
+        });
+      }
+    });
+    return result;
   }
 }

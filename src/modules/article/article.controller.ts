@@ -16,6 +16,7 @@ import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetPostPipe } from '../post/pipes';
 import { PageDto } from '../../common/dto';
 import { SearchArticlesDto } from './dto/requests/search-article.dto';
+import { GetListArticlesDto } from './dto/requests/get-list-article.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -39,6 +40,18 @@ export class ArticleController {
     @Query() searchArticlesDto: SearchArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     return this._articleService.searchArticle(user, searchArticlesDto);
+  }
+
+  @ApiOperation({ summary: 'Get list article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/articles')
+  public getList(
+    @AuthUser() user: UserDto,
+    @Query() getListArticlesDto: GetListArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.getList(user, getListArticlesDto);
   }
 
   @ApiOperation({ summary: 'Get article detail' })
