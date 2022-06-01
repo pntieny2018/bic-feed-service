@@ -436,7 +436,7 @@ export class PostService {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    await this.authorityService.checkPublicPost(post);
+    await this.authorityService.checkIsPublicPost(post);
     let comments = null;
     if (getPostDto.withComment) {
       comments = await this.commentService.getComments({
@@ -577,6 +577,7 @@ export class PostService {
       const post = await this.postModel.create(
         {
           isDraft: true,
+          isArticle: false,
           content,
           createdBy: authUserId,
           updatedBy: authUserId,
@@ -749,7 +750,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishPost(postId: string, authUserId: number): Promise<boolean> {
+  public async publishPost(postId: string, authUser: UserDto): Promise<boolean> {
     try {
       const post = await this.postModel.findOne({
         where: {
@@ -764,9 +765,18 @@ export class PostService {
             attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
             required: false,
           },
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
         ],
       });
+      const authUserId = authUser.id;
       await this.checkPostOwner(post, authUserId);
+
+      const groupIds = post.groups.map((g) => g.groupId);
+      await this.authorityService.checkCanCreatePost(authUser, groupIds);
 
       if (post.content === null && post.media.length === 0) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
@@ -834,8 +844,21 @@ export class PostService {
   public async deletePost(postId: string, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
     try {
-      const post = await this.postModel.findByPk(postId);
+      const post = await this.postModel.findOne({
+        where: {
+          id: postId,
+        },
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
+        ],
+      });
       await this.checkPostOwner(post, authUser.id);
+      const groupIds = post.groups.map((g) => g.groupId);
+      await this.authorityService.checkCanDeletePost(authUser, groupIds);
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
         this.mediaService.sync(postId, EntityType.POST, [], transaction),
