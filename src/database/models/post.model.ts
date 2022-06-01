@@ -220,19 +220,31 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     return null;
   }
 
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+  public static getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+    const { schema } = getDatabaseConfig();
+    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
     let constraints = '';
-    if (getTimelineDto.idGT) {
-      constraints += 'AND p.id > :idGT';
+    if (idGT) {
+      constraints += `AND p.id != ${this.sequelize.escape(idGT)}`;
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idGTE) {
-      constraints += 'AND p.id >= :idGTE';
+    if (idGTE) {
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idLT) {
-      constraints += 'AND p.id < :idLT';
+    if (idLT) {
+      constraints += `AND p.id != ${this.sequelize.escape(idLT)}`;
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idLT
+      )})`;
     }
-    if (getTimelineDto.idLTE) {
-      constraints += 'AND p.id <= :idLTE';
+    if (idLTE) {
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idLT
+      )})`;
     }
     return constraints;
   }
@@ -260,7 +272,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     limit?: number;
     order?: OrderEnum;
   }): Promise<any[]> {
-    let condition = this._getIdConstrains({ idGT, idGTE, idLT, idLTE });
+    let condition = this.getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -358,7 +370,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     limit?: number;
     order?: OrderEnum;
   }): Promise<any[]> {
-    let condition = this._getIdConstrains({ idGT, idGTE, idLT, idLTE });
+    let condition = this.getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const userNewsFeedTable = UserNewsFeedModel.tableName;
