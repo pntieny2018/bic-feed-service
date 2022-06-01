@@ -212,7 +212,7 @@ export class PostResponseDto {
   @ApiProperty({
     type: Boolean,
   })
-  @Expose({ name: 'is_article' })
+  @Expose()
   public isArticle: boolean;
 
   public constructor(data: Partial<PostResponseDto>) {

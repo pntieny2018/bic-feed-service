@@ -4,6 +4,20 @@ import { PostResponseDto } from '../../../post/dto/responses';
 
 export class ArticleResponseDto extends PostResponseDto {
   @ApiProperty({
+    description: 'Title',
+    type: String,
+  })
+  @Expose()
+  public title: string;
+
+  @ApiProperty({
+    description: 'Summary',
+    type: String,
+  })
+  @Expose()
+  public summary: string;
+
+  @ApiProperty({
     description: 'Categories',
     type: String,
   })
