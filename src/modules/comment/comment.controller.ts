@@ -23,6 +23,7 @@ import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 import { NIL as NIL_UUID } from 'uuid';
+import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -129,7 +130,7 @@ export class CommentController {
   public get(
     @AuthUser() user: UserDto,
     @Param('commentId') commentId: string,
-    @Query() getCommentLinkDto: GetCommentLinkDto
+    @Query(GetCommentLinkPipe) getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
     return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
