@@ -63,7 +63,9 @@ export class ArticleService {
     postId: string,
     user: UserDto,
     getArticleDto?: GetArticleDto
-  ): Promise<any> {}
+  ): Promise<any> {
+    return this._postService.getPost(postId, user, getArticleDto);
+  }
 
   /**
    * Get Public Post
@@ -120,7 +122,7 @@ export class ArticleService {
         {
           title,
           summary,
-          isDraft: true,
+          isDraft: false,
           isArticle: true,
           content,
           createdBy: authUserId,
@@ -172,6 +174,16 @@ export class ArticleService {
     }
   }
 
+  /**
+   * Publish article
+   * @param authUser UserDto
+   * @param createArticleDto CreateArticleDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async publishArticle(articleId: string, authUserId: number): Promise<boolean> {
+    return this._postService.publishPost(articleId, authUserId);
+  }
   /**
    * Update Post except isDraft
    * @param postId postID
