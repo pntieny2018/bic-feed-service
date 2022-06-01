@@ -3,8 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Op, Sequelize, Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
-import { PageDto } from '../../common/dto';
-import { getDatabaseConfig } from '../../config/database';
+import { PageDto, PageMetaDto } from '../../common/dto';
 import { PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
@@ -16,6 +15,11 @@ import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
+import { UserDataShareDto } from '../../shared/user/dto';
+import { ExceptionHelper } from '../../common/helpers';
+import { HTTP_STATUS_ID } from '../../common/constants';
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { UserService } from '../../shared/user';
 
 @Injectable()
 export class FeedService {
@@ -24,6 +28,7 @@ export class FeedService {
 
   public constructor(
     private readonly _reactionService: ReactionService,
+    private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
@@ -80,7 +85,7 @@ export class FeedService {
 
       const posts = this.groupPosts(rows);
 
-      const hasNextPage = posts.length === limit + 1 ? true : false;
+      const hasNextPage = posts.length === limit + 1;
       if (hasNextPage) posts.pop();
 
       await Promise.all([
@@ -108,7 +113,59 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+  public async getUsersSeenPots(
+    user: UserDto,
+    getUserSeenPostDto: GetUserSeenPostDto
+  ): Promise<PageDto<UserDataShareDto>> {
+    try {
+      const { postId } = getUserSeenPostDto;
+
+      const post = await this._postService.findPost({
+        postId: postId,
+      });
+
+      const groups = post.groups.map((g) => g.groupId);
+      const groupsOfUser = user.profile.groups;
+
+      if (!this._groupService.isMemberOfSomeGroups(groups, groupsOfUser)) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
+
+      const usersSeenPost = await this._userSeenPostModel.findAll({
+        where: {
+          postId: postId,
+        },
+        order: [['createdAt', 'DESC']],
+        limit: getUserSeenPostDto?.limit || 20,
+        offset: getUserSeenPostDto?.offset || 0,
+      });
+
+      const total = await this._userSeenPostModel.count({
+        where: {
+          postId: postId,
+        },
+      });
+
+      const users = await this._userService.getMany(usersSeenPost.map((usp) => usp.userId));
+
+      return new PageDto<UserDataShareDto>(
+        users,
+        new PageMetaDto({
+          total: total ?? 0,
+          pageOptionsDto: {
+            limit: getUserSeenPostDto?.limit || 20,
+            offset: getUserSeenPostDto?.offset || 0,
+          },
+        })
+      );
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
+      throw ex;
+    }
+  }
+
+  public async markSeenPosts(postIds: string[], userId: number): Promise<void> {
     try {
       await this._userSeenPostModel.bulkCreate(
         postIds.map((postId) => ({ postId, userId })),
@@ -180,7 +237,7 @@ export class FeedService {
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
     const rows = importantPosts.concat(normalPosts);
     const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1 ? true : false;
+    const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     await Promise.all([
       this._reactionService.bindReactionToPosts(posts),

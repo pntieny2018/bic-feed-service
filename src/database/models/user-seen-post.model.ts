@@ -1,15 +1,17 @@
 import { IsUUID } from 'class-validator';
-import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 
 export interface IUserSeenPost {
   postId: string;
   userId: number;
+  createdAt?: Date;
 }
 
 @Table({
   tableName: 'users_seen_posts',
-  timestamps: false,
+  createdAt: true,
+  updatedAt: false,
 })
 export class UserSeenPostModel extends Model implements IUserSeenPost {
   @ForeignKey(() => PostModel)
@@ -21,4 +23,8 @@ export class UserSeenPostModel extends Model implements IUserSeenPost {
   @PrimaryKey
   @Column
   public userId: number;
+
+  @CreatedAt
+  @Column
+  public createdAt?: Date;
 }

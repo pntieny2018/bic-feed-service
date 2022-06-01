@@ -8,6 +8,8 @@ import { FeedService } from './feed.service';
 import { PostResponseDto } from '../post/dto/responses';
 import { APP_VERSION } from '../../common/constants';
 import { PutMarkSeenPostDto } from './dto/request/put-mark-seen-post.dto';
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { UserDataShareDto } from '../../shared/user/dto';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -57,9 +59,18 @@ export class FeedController {
   @Put('/seen/:ids')
   public async markSeenPost(
     @AuthUser() user: UserDto,
-    @Param('ids', PutMarkSeenPostDto) postId: number[]
+    @Param('ids', PutMarkSeenPostDto) postId: string[]
   ): Promise<boolean> {
     await this._feedService.markSeenPosts(postId, user.id);
     return true;
+  }
+
+  @ApiOperation({ summary: 'Get users seen post' })
+  @Get('/seen/user')
+  public async getUserSeenPost(
+    @AuthUser() user: UserDto,
+    @Query() getUserSeenPostDto: GetUserSeenPostDto
+  ): Promise<PageDto<UserDataShareDto>> {
+    return this._feedService.getUsersSeenPots(user, getUserSeenPostDto);
   }
 }
