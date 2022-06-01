@@ -7,7 +7,6 @@ import { PostMediaModel } from '../../../database/models/post-media.model';
 import { CommentMediaModel } from '../../../database/models/comment-media.model';
 import { SentryService } from '@app/sentry';
 import { mockUserDto } from '../../post/test/mocks/input.mock';
-import { fileMock } from './mocks/file.mock';
 import { createMediaDtoMock } from './mocks/create-media-dto.mock';
 import { createMock } from '@golevelup/ts-jest';
 import { Transaction } from 'sequelize';
@@ -55,6 +54,7 @@ describe('MediaService', () => {
             create: jest.fn(),
             destroy: jest.fn(),
             count: jest.fn(),
+            bulkCreate: jest.fn(),
           },
         },
         {
@@ -66,6 +66,7 @@ describe('MediaService', () => {
             update: jest.fn(),
             create: jest.fn(),
             destroy: jest.fn(),
+            bulkCreate: jest.fn(),
           },
         },
       ],
@@ -174,7 +175,7 @@ describe('MediaService', () => {
     });
   })
 
-  describe('filterMediaType.countMediaByPost', () => {
+  describe('MediaService.countMediaByPost', () => {
     it('should return if success', async () => {
       postMediaModel.count.mockResolvedValue(Promise.resolve(1))
       const returnValue = await service.countMediaByPost('12123')
@@ -183,11 +184,39 @@ describe('MediaService', () => {
     });
   })
 
-  describe('filterMediaType.updateData', () => {
+  describe('MediaService.updateData', () => {
     it('should return if success', async () => {
       mediaModel.update.mockResolvedValue(Promise.resolve({}))
       const returnValue = await service.updateData(['12123'], { status: MediaStatus.COMPLETED })
       expect(mediaModel.update).toBeCalled()
+    });
+  })
+
+  describe('MediaService.updateMediaDraft', () => {
+    it('should return if success', async () => {
+      sequelize.query.mockResolvedValue(Promise.resolve({}))
+      const returnValue = await service.updateMediaDraft([1], null)
+      expect(sequelize.query).toBeCalled()
+      expect(returnValue).toEqual(true)
+    });
+  })
+
+  describe('MediaService.sync', () => {
+    it('should return if success', async () => {
+      postMediaModel.findAll.mockResolvedValue(Promise.resolve([{mediaId: 1}]))
+      const returnValue = await service.sync('1', EntityType.POST, ['1'], null)
+      expect(postMediaModel.findAll).toBeCalled()
+      expect(postMediaModel.bulkCreate).toBeCalled()
+      expect(postMediaModel.destroy).toBeCalled()
+    });
+  })
+
+  describe('MediaService.deleteMediaByEntityIds', () => {
+    it('should return if success', async () => {
+      postMediaModel.findAll.mockResolvedValue(Promise.resolve([{mediaId: 1}]))
+      const returnValue = await service.deleteMediaByEntityIds(['1'], EntityType.POST, null)
+      expect(postMediaModel.findAll).toBeCalled()
+      expect(postMediaModel.destroy).toBeCalled()
     });
   })
 
