@@ -195,15 +195,15 @@ export class ArticleService {
     try {
       const { content, media, setting, mentions, audience, series, categories } = updateArticleDto;
       if (post.isDraft === false) {
-        await this.postService.checkContent(updateArticleDto);
+        await this._postService.checkContent(updateArticleDto);
       }
-      await this.postService.checkPostOwner(post, authUser.id);
+      await this._postService.checkPostOwner(post, authUser.id);
       // await transaction.commit();
 
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this.logger.error(error, error?.stack);
+      this._logger.error(error, error?.stack);
       throw error;
     }
   }
@@ -216,6 +216,6 @@ export class ArticleService {
    * @throws HttpException
    */
   public async deleteArticle(id: string, user: UserDto): Promise<any> {
-    return this.postService.deletePost(id, user);
+    return this._postService.deletePost(id, user);
   }
 }
