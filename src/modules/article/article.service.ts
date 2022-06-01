@@ -51,6 +51,7 @@ export class ArticleService {
     private readonly _seriesService: SeriesService,
     private readonly _hashtagService: HashtagService,
     private readonly _authorityService: AuthorityService,
+    private readonly _searchService: ElasticsearchService,
     private readonly _sentryService: SentryService
   ) {}
 
@@ -76,7 +77,7 @@ export class ArticleService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchArticlesDto, groupIds);
-    const response = await this.searchService.search(payload);
+    const response = await this._searchService.search(payload);
     const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
       const source = item._source;
@@ -85,12 +86,12 @@ export class ArticleService {
     });
 
     await Promise.all([
-      this.postService.bindActorToPost(posts),
-      this.postService.bindAudienceToPost(posts),
-      this.postService.bindCommentsCount(posts),
+      this._postService.bindActorToPost(posts),
+      this._postService.bindAudienceToPost(posts),
+      this._postService.bindCommentsCount(posts),
     ]);
 
-    const result = this.classTransformer.plainToInstance(ArticleResponseDto, posts, {
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
       excludeExtraneousValues: true,
     });
 
@@ -180,10 +181,10 @@ export class ArticleService {
     user: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const post = await this.postService.getPost(postId, user, getArticleDto);
+    const post = await this._postService.getPost(postId, user, getArticleDto);
     const categories = [];
     const series = [];
-    const article = this.classTransformer.plainToInstance(
+    const article = this._classTransformer.plainToInstance(
       ArticleResponseDto,
       { categories, series, ...post },
       {
@@ -204,10 +205,10 @@ export class ArticleService {
     postId: string,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const post = await this.postService.getPublicPost(postId, getArticleDto);
+    const post = await this._postService.getPublicPost(postId, getArticleDto);
     const categories = [];
     const series = [];
-    const article = this.classTransformer.plainToInstance(
+    const article = this._classTransformer.plainToInstance(
       ArticleResponseDto,
       { categories, series, ...post },
       {
