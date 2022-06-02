@@ -5,6 +5,8 @@ import { ArticleResponseDto } from '../../../dto/responses';
 
 export const mockedArticleResponse: ArticleResponseDto = {
   ownerReactions: [],
+  title: 'aaa',
+  summary: 'bbb',
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
   isArticle: true,

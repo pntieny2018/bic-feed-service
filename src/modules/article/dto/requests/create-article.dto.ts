@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional } from 'class-validator';
 import { CreatePostDto } from '../../../post/dto/requests';
-import { HashtagDto } from './hashtag.dto';
-
+import { Transform } from 'class-transformer';
 export class CreateArticleDto extends CreatePostDto {
   @ApiProperty({
     type: String,
@@ -20,17 +19,35 @@ export class CreateArticleDto extends CreatePostDto {
     type: [String],
   })
   @IsNotEmpty()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
   public categories: string[] = [];
 
   @ApiProperty({
     type: [String],
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
   public series?: string[] = [];
 
   @ApiProperty({
-    type: [HashtagDto],
+    type: [String],
   })
   @IsOptional()
-  public hashtags?: HashtagDto[] = [];
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  public hashtags?: string[] = [];
 }
