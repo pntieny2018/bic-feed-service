@@ -91,7 +91,7 @@ export class PostController {
   })
   @Get('/:postId')
   public getPost(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Param('postId') postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
