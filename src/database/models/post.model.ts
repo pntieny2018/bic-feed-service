@@ -1,6 +1,6 @@
 import { MentionModel, IMention } from './mention.model';
 import { IMedia } from './media.model';
-import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
+import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes, DataTypes } from 'sequelize';
 import {
   AllowNull,
   BelongsToMany,
@@ -39,7 +39,14 @@ import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
 import { GetArticleDto, GetListArticlesDto } from '../../modules/article/dto/requests';
+import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 
+export enum PostPrivacy {
+  PUBLIC = 'PUBLIC',
+  OPEN = 'OPEN',
+  PRIVATE = 'PRIVATE',
+  SECRET = 'SECRET',
+}
 export interface IPost {
   id: string;
   createdBy: number;
@@ -70,6 +77,8 @@ export interface IPost {
   categories?: ICategory[];
   series?: ISeries[];
   hashtags?: IHashtag[];
+  privacy?: PostPrivacy;
+  hashtagsJson?: HashtagResponseDto[];
 }
 
 @Table({
@@ -128,6 +137,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public giphyId: string;
+
+  @Column
+  public privacy: PostPrivacy;
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public hashtagsJson: HashtagResponseDto[];
 
   @AllowNull(false)
   @Column
@@ -393,8 +410,21 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     getListArticlesDto: GetListArticlesDto,
     authUser: UserDto
   ): Promise<any[]> {
-    const { groupId, offset, limit, order } = getListArticlesDto;
-    let condition = this.getIdConstrains(getListArticlesDto);
+    const {
+      groupId,
+      categories,
+      hashtags,
+      series,
+      offset,
+      limit,
+      order,
+      idGT,
+      idGTE,
+      idLT,
+      idLTE,
+    } = getListArticlesDto;
+    const groupIds = authUser.profile.groups;
+    const condition = this.getIdConstrains(getListArticlesDto);
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -404,11 +434,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const authUserId = authUser.id;
-    if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
-    } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
-    }
     const query = `SELECT 
     "PostModel".*,
     "groups"."group_id" as "groupId",

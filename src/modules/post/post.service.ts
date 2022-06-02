@@ -6,7 +6,7 @@ import {
   MentionableType,
 } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
@@ -46,6 +46,7 @@ import { ProcessVideoResponseDto } from './dto/responses/process-video-response.
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
+import { GroupPrivacy } from '../../shared/group/dto';
 
 @Injectable()
 export class PostService {
@@ -574,6 +575,7 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
       transaction = await this.sequelizeConnection.transaction();
+      const postPrivacy = await this.getPrivacyPost(groupIds);
       const post = await this.postModel.create(
         {
           isDraft: true,
@@ -587,6 +589,8 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
+          privacy: postPrivacy,
+          hashtagsJson: [],
         },
         { transaction }
       );
@@ -637,6 +641,25 @@ export class PostService {
     });
   }
 
+  public async getPrivacyPost(groupIds: number[]): Promise<PostPrivacy> {
+    if (groupIds.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+    }
+    const groups = await this.groupService.getMany(groupIds);
+    let totalPrivate = 0;
+    let totalSecret = 0;
+    let totalOpen = 0;
+    groups.forEach((g) => {
+      if (g.privacy === GroupPrivacy.PUBLIC) return PostPrivacy.PUBLIC;
+      if (g.privacy === GroupPrivacy.OPEN) totalOpen++;
+      if (g.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+      if (g.privacy === GroupPrivacy.SECRET) totalSecret++;
+    });
+
+    if (totalOpen > 0) return PostPrivacy.OPEN;
+    if (totalPrivate > 0) return PostPrivacy.PRIVATE;
+    return PostPrivacy.SECRET;
+  }
   /**
    * Update Post except isDraft
    * @param postId string
@@ -659,6 +682,9 @@ export class PostService {
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
+      const dataUpdate = {
+        updatedBy: authUserId,
+      };
       if (post.isDraft === false) {
         await this.checkContent(updatePostDto);
       }
@@ -666,6 +692,8 @@ export class PostService {
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
         await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
+        const postPrivacy = await this.getPrivacyPost(audience.groupIds);
+        dataUpdate['privacy'] = postPrivacy;
       }
 
       if (mentions && mentions.length) {
@@ -674,10 +702,6 @@ export class PostService {
           mentions
         );
       }
-
-      const dataUpdate = {
-        updatedBy: authUserId,
-      };
 
       if (content !== null) {
         dataUpdate['content'] = content;
@@ -794,10 +818,12 @@ export class PostService {
         isDraft = true;
         isProcessing = true;
       }
+      const postPrivacy = await this.getPrivacyPost(groupIds);
       await this.postModel.update(
         {
           isDraft,
           isProcessing,
+          privacy: postPrivacy,
           createdAt: new Date(),
         },
         {

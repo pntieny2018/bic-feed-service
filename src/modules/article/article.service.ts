@@ -23,7 +23,6 @@ import { EntityType } from '../media/media.constants';
 import { CategoryService } from '../category/category.service';
 import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
-import { PostResponseDto } from '../post/dto/responses';
 import { GroupService } from '../../shared/group';
 import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
@@ -127,29 +126,7 @@ export class ArticleService {
     authUser: UserDto,
     getListArticlesDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset, categories, series, hashtags, groupId } = getListArticlesDto;
-    const group = await this._groupService.get(groupId);
-    if (!group) {
-      throw new BadRequestException(`Group ${groupId} not found`);
-    }
-    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
-    if (groupIds.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
-        hasNextPage: false,
-        limit,
-        offset,
-      });
-    }
-    const user = authUser.profile;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
-        hasNextPage: false,
-        limit,
-        offset,
-      });
-    }
-
-    const authUserId = authUser.id;
+    const { limit, offset } = getListArticlesDto;
     const rows = await PostModel.getArticlesData(getListArticlesDto, authUser);
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
@@ -255,7 +232,7 @@ export class ArticleService {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [PostModel.loadMarkReadPost(user.id)],
+        include: [['hashtags_json', 'hashtags'], PostModel.loadMarkReadPost(user.id)],
       },
       where: { id: postId },
       include: [
@@ -271,15 +248,6 @@ export class ArticleService {
         {
           model: CategoryModel,
           as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: HashtagModel,
-          as: 'hashtags',
           required: false,
           through: {
             attributes: [],
@@ -362,6 +330,7 @@ export class ArticleService {
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
+        include: [['hashtags_json', 'hashtags']],
       },
       where: { id: postId },
       include: [
@@ -377,15 +346,6 @@ export class ArticleService {
         {
           model: CategoryModel,
           as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: HashtagModel,
-          as: 'hashtags',
           required: false,
           through: {
             attributes: [],
@@ -483,6 +443,11 @@ export class ArticleService {
       await this._categoryService.checkValidCategory(categories, authUserId);
       await this._seriesService.checkValidSeries(series, authUserId);
       transaction = await this._sequelizeConnection.transaction();
+      const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
+      let hashtagArr = [];
+      if (hashtags) {
+        hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
+      }
       const post = await this._postModel.create(
         {
           title,
@@ -498,6 +463,8 @@ export class ArticleService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
+          privacy: postPrivacy,
+          hashtagsJson: hashtagArr,
         },
         { transaction }
       );
@@ -506,13 +473,13 @@ export class ArticleService {
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      let hashtagIds = [];
-      if (hashtags) {
-        hashtagIds = await this._hashtagService.findOrCreateHashtags(hashtags);
-      }
       await Promise.all([
         this._seriesService.addPostToSeries(series, post.id, transaction),
-        this._hashtagService.addPostToHashtags(hashtagIds, post.id, transaction),
+        this._hashtagService.addPostToHashtags(
+          hashtagArr.map((h) => h.id),
+          post.id,
+          transaction
+        ),
         this._categoryService.addPostToCategories(categories, post.id, transaction),
         this._postService.addPostGroup(groupIds, post.id, transaction),
       ]);
@@ -583,6 +550,10 @@ export class ArticleService {
         series,
         hashtags,
       } = updateArticleDto;
+      const dataUpdate = {
+        updatedBy: authUserId,
+      };
+
       if (categories && categories.length === 0) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_CATEGORY_REQUIRED);
       }
@@ -593,6 +564,8 @@ export class ArticleService {
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
         await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
+        const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
+        dataUpdate['privacy'] = postPrivacy;
       }
 
       if (mentions && mentions.length) {
@@ -601,10 +574,6 @@ export class ArticleService {
           mentions
         );
       }
-
-      const dataUpdate = {
-        updatedBy: authUserId,
-      };
 
       if (content !== null) {
         dataUpdate['content'] = content;
@@ -648,14 +617,6 @@ export class ArticleService {
         }
       }
 
-      await this._postModel.update(dataUpdate, {
-        where: {
-          id: post.id,
-          createdBy: authUserId,
-        },
-        transaction,
-      });
-
       if (media) {
         await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
       }
@@ -674,9 +635,21 @@ export class ArticleService {
         await this._seriesService.setSeriesByPost(series, post.id, transaction);
       }
       if (hashtags) {
-        const hashtagIds = await this._hashtagService.findOrCreateHashtags(hashtags);
-        await this._hashtagService.setHashtagsByPost(hashtagIds, post.id, transaction);
+        const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
+        await this._hashtagService.setHashtagsByPost(
+          hashtagArr.map((i) => i.id),
+          post.id,
+          transaction
+        );
+        dataUpdate['hashtagsJson'] = hashtagArr;
       }
+      await this._postModel.update(dataUpdate, {
+        where: {
+          id: post.id,
+          createdBy: authUserId,
+        },
+        transaction,
+      });
       await transaction.commit();
 
       return true;

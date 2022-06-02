@@ -34,7 +34,7 @@ export class ArticleController {
   @ApiOkResponse({
     type: ArticleResponseDto,
   })
-  @Get('/')
+  @Get('/search')
   public searchArticles(
     @AuthUser() user: UserDto,
     @Query() searchArticlesDto: SearchArticlesDto
@@ -46,7 +46,7 @@ export class ArticleController {
   @ApiOkResponse({
     type: ArticleResponseDto,
   })
-  @Get('/articles')
+  @Get('/')
   public getList(
     @AuthUser() user: UserDto,
     @Query() getListArticlesDto: GetListArticlesDto
