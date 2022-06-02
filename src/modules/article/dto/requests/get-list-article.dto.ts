@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
-import { SearchPostsDto } from '../../../post/dto/requests';
 import { Expose, Type } from 'class-transformer';
 import { PageOptionsDto } from '../../../../common/dto';
 

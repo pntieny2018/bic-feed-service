@@ -150,42 +150,7 @@ export class ArticleService {
     }
 
     const authUserId = authUser.id;
-    const constraints = PostModel.getArticleConstrains(getListArticlesDto);
-
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      authUserId,
-      groupIds,
-      constraints
-    );
-    let importantPostsExc = Promise.resolve([]);
-    if (offset < totalImportantPosts) {
-      importantPostsExc = PostModel.getListArticle({
-        categories,
-        series,
-        hashtags,
-        limit: limit + 1,
-        groupIds,
-        authUser,
-        isImportant: true,
-        constraints,
-      });
-    }
-    let normalPostsExc = Promise.resolve([]);
-    if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = PostModel.getListArticle({
-        categories,
-        series,
-        hashtags,
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
-        groupIds,
-        authUser,
-        isImportant: false,
-        constraints,
-      });
-    }
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
+    const rows = await PostModel.getArticlesData(getListArticlesDto, authUser);
     const posts = this.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1 ? true : false;
     if (hasNextPage) posts.pop();

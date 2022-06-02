@@ -38,7 +38,7 @@ import { HashtagModel, IHashtag } from './hashtag.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
-import { GetListArticlesDto } from '../../modules/article/dto/requests';
+import { GetArticleDto, GetListArticlesDto } from '../../modules/article/dto/requests';
 
 export interface IPost {
   id: string;
@@ -258,7 +258,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     return null;
   }
 
-  public static getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+  public static getIdConstrains(
+    getTimelineDto: GetTimelineDto | GetNewsFeedDto | GetListArticlesDto
+  ): string {
     const { schema } = getDatabaseConfig();
     const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
     let constraints = '';
@@ -387,47 +389,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     return rows;
   }
 
-  public static getArticleConstrains(getListArticlesDto: GetListArticlesDto): string {
-    const { schema } = getDatabaseConfig();
-    let constraints = '';
-    constraints += `AND "p"."is_article" = true`;
-    const { categories, series, hashtags, groupId } = getListArticlesDto;
-    if (categories && categories.length > 0) {
-      constraints += ``;
-    }
-    if (series && series.length > 0) {
-      constraints += ``;
-    }
-    if (hashtags && hashtags.length > 0) {
-      constraints += ``;
-    }
-    return constraints;
-  }
-
-  public static async getListArticle({
-    authUser,
-    groupIds,
-    isImportant,
-    categories,
-    series,
-    hashtags,
-    offset,
-    limit,
-    order,
-    constraints,
-  }: {
-    authUser: UserDto;
-    groupIds: number[];
-    isImportant: boolean;
-    categories: string[];
-    series: string[];
-    hashtags: string[];
-    offset?: number;
-    limit?: number;
-    order?: OrderEnum;
-    constraints: string;
-  }): Promise<any[]> {
-    let condition = constraints;
+  public static async getArticlesData(
+    getListArticlesDto: GetListArticlesDto,
+    authUser: UserDto
+  ): Promise<any[]> {
+    const { groupId, offset, limit, order } = getListArticlesDto;
+    let condition = this.getIdConstrains(getListArticlesDto);
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -436,12 +403,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const categoryTable = CategoryModel.tableName;
-    const postCategoryTable = PostCategoryModel.tableName;
-    const seriesTable = SeriesModel.tableName;
-    const postSeriesTable = PostSeriesModel.tableName;
-    const hashtagTable = HashtagModel.tableName;
-    const postHashtagTable = PostHashtagModel.tableName;
     const authUserId = authUser.id;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
@@ -462,13 +423,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."size",
     "media"."width",
     "media"."height",
-    "media"."extension",
-    "category"."id" as "categoryId",
-    "category"."name",
-    "series"."id" as "seriesId",
-    "series"."name",
-    "hashtag"."id" as "hashtagId",
-    "hashtag"."name",
+    "media"."extension"
     FROM (
       SELECT 
       "p"."id", 
@@ -477,7 +432,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt", "p"."is_article" AS "isArticle",
+      "createdAt", "p"."updated_at" AS "updatedAt",
       COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"
@@ -496,18 +451,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         ${schema}.${postMediaTable} AS "media->PostMediaModel" 
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ( 
-        ${schema}.${postCategoryTable} AS "category->PostCategoryModel" 
-        INNER JOIN ${schema}.${categoryTable} AS "category" ON "category"."id" = "category->PostCategoryModel"."category_id"
-      ) ON "PostModel"."id" = "category->PostCategoryModel"."post_id" 
-      LEFT OUTER JOIN ( 
-        ${schema}.${postSeriesTable} AS "series->PostSeriesModel" 
-        INNER JOIN ${schema}.${seriesTable} AS "series" ON "series"."id" = "series->PostSeriesModel"."series_id"
-      ) ON "PostModel"."id" = "series->PostSeriesModel"."post_id" 
-      LEFT OUTER JOIN ( 
-        ${schema}.${postHashtagTable} AS "hashtag->PostHashtagModel" 
-        INNER JOIN ${schema}.${hashtagTable} AS "hashtag" ON "hashtag"."id" = "hashtag->PostHashtagModel"."hashtag_id"
-      ) ON "PostModel"."id" = "hashtag->PostHashtagModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
       ORDER BY "PostModel"."createdAt" ${order}`;
@@ -517,9 +460,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         offset,
         limit: limit,
         authUserId,
-        categories,
-        series,
-        hashtags,
+        idGT,
+        idGTE,
+        idLT,
+        idLTE,
       },
       type: QueryTypes.SELECT,
     });
