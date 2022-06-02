@@ -69,7 +69,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
         actor: result.actor,
       };
 
-      const index = 'sbx_stream_posts';
+      const index = 'stg_stream_posts';
 
       this._logger.log('processing post:', dataIndex.id);
 

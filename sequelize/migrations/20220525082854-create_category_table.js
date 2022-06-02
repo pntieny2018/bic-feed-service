@@ -32,18 +32,18 @@ module.exports = {
           type: Sequelize.SMALLINT,
           allowNull: false,
         },
-        active: {
+        isActive: {
           type: Sequelize.BOOLEAN,
           allowNull: false,
           defaultValue: true,
         },
         created_by: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         updated_by: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         created_at: {
           type: Sequelize.DATE,

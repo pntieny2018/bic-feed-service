@@ -2,7 +2,7 @@ export const modelGetResult = [
   {
     id: 'fd3bccfb-8c4c-4fb7-8c00-80cf5b6f102d',
     parentId: '00000000-0000-0000-0000-000000000000',
-    active: true,
+    isActive: true,
     name: 'bein',
     level: 1,
     slug: 'bein',
@@ -14,7 +14,7 @@ export const modelGetResult = [
   {
     id: '1cde7990-83eb-41d6-b317-3e3c26d19d98',
     parentId: 'fd3bccfb-8c4c-4fb7-8c00-80cf5b6f102d',
-    active: true,
+    isActive: true,
     name: 'Toai Nguyet',
     level: 2,
     slug: 'ylgr',
@@ -26,7 +26,7 @@ export const modelGetResult = [
   {
     id: 'eeeb08df-a59f-4ac5-bc68-1440fd2a22cd',
     parentId: 'fd3bccfb-8c4c-4fb7-8c00-80cf5b6f102d',
-    active: true,
+    isActive: true,
     name: 'Toai Nguyet 2',
     level: 2,
     slug: 'ylgr2',
@@ -38,7 +38,7 @@ export const modelGetResult = [
   {
     id: 'db3431fe-ae93-4dec-9e2b-5f50e8a125f9',
     parentId: 'fd3bccfb-8c4c-4fb7-8c00-80cf5b6f102d',
-    active: true,
+    isActive: true,
     name: 'Toai Nguyet 3',
     level: 2,
     slug: 'ylgr3',
@@ -50,7 +50,7 @@ export const modelGetResult = [
   {
     id: '49fc0c0a-9e9f-40ff-a25c-be01df01f08b',
     parentId: '1cde7990-83eb-41d6-b317-3e3c26d19d98',
-    active: true,
+    isActive: true,
     name: 'Toai Nguyet 4',
     level: 3,
     slug: 'ylgr4',

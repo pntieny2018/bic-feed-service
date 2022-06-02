@@ -11,11 +11,12 @@ import { CategoryResponseDto } from '../dto/responses/category-response.dto';
 import { createCategoryDto } from './mocks/create-category-dto.mock';
 import { BadRequestException } from '@nestjs/common';
 import { LogicException } from '../../../common/exceptions';
+import { PostCategoryModel } from '../../../database/models/post-category.model';
 
 describe('CategoryService', () => {
   let categoryService;
   let categoryModel;
-
+  let postCategoryModel;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -43,11 +44,20 @@ describe('CategoryService', () => {
             findByPk: jest.fn(),
           },
         },
+        {
+          provide: getModelToken(PostCategoryModel),
+          useValue: {
+            bulkCreate: jest.fn(),
+            findAll: jest.fn(),
+            destroy: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     categoryService = module.get<CategoryService>(CategoryService);
     categoryModel = module.get<typeof CategoryModel>(getModelToken(CategoryModel));
+    postCategoryModel = module.get<typeof PostCategoryModel>(getModelToken(PostCategoryModel));
   })
 
   describe('CategoryService.getCategory', () => {

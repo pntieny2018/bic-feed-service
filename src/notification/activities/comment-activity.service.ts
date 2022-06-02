@@ -4,11 +4,12 @@ import { ActivityObject, NotificationActivity } from '../dto/requests/notificati
 import { ObjectHelper } from '../../common/helpers';
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { Injectable } from '@nestjs/common';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
 
 @Injectable()
 export class CommentActivityService {
   public createCommentPayload(
-    post: PostResponseDto,
+    post: PostResponseDto | ArticleResponseDto,
     comment: CommentResponseDto
   ): NotificationActivity {
     const activityObject: ActivityObject = {
