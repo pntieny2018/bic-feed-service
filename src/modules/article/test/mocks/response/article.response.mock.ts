@@ -79,6 +79,12 @@ export const mockedArticleResponse: ArticleResponseDto = {
       name: 'Technical',
     },
   ],
+  hashtags: [
+    {
+      id: 'h1',
+      name: '#Vietnam',
+    },
+  ],
 };
 
 export const mockedArticleData = {

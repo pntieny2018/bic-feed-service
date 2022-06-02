@@ -2,6 +2,44 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { PostResponseDto } from '../../../post/dto/responses';
 
+class CategoryResponseDto {
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public id: string;
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public name: string;
+}
+
+class SeriesResponseDto {
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public id: string;
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public name: string;
+}
+
+class HashtagResponseDto {
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public id: string;
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public name: string;
+}
 export class ArticleResponseDto extends PostResponseDto {
   @ApiProperty({
     description: 'Title',
@@ -19,17 +57,24 @@ export class ArticleResponseDto extends PostResponseDto {
 
   @ApiProperty({
     description: 'Categories',
-    type: String,
+    type: [CategoryResponseDto],
   })
   @Expose()
-  public categories: any;
+  public categories: CategoryResponseDto[];
 
   @ApiProperty({
     description: 'Series',
-    type: String,
+    type: [SeriesResponseDto],
   })
   @Expose()
-  public series: any;
+  public series: SeriesResponseDto[];
+
+  @ApiProperty({
+    description: 'Hashtags',
+    type: [HashtagResponseDto],
+  })
+  @Expose()
+  public hashtags: HashtagResponseDto[];
 
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);
