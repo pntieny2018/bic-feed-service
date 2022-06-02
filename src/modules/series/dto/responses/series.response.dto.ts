@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsUUID } from 'class-validator';
-import { Column, CreatedAt, UpdatedAt } from "sequelize-typescript";
+import { Column, CreatedAt, UpdatedAt } from 'sequelize-typescript';
 
 export class SeriesResponseDto {
   @ApiProperty()
@@ -11,28 +11,30 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: String,
-    name: 'name'
+    name: 'name',
   })
   @Expose()
   public name: string;
 
   @ApiProperty({
     type: String,
-    name: 'slug'
+    name: 'slug',
   })
   @Expose()
   public slug: string;
 
   @ApiProperty({
     type: Boolean,
-    name: 'active'
+    name: 'is_active',
   })
-  @Expose()
-  public active: boolean;
+  @Expose({
+    name: 'is_active',
+  })
+  public isActive: boolean;
 
   @ApiProperty({
     type: Number,
-    name: 'created_by'
+    name: 'created_by',
   })
   @Expose({
     name: 'created_by',
@@ -41,7 +43,7 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Number,
-    name: 'updated_by'
+    name: 'updated_by',
   })
   @Expose({
     name: 'updated_by',
@@ -50,7 +52,7 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Number,
-    name: 'total_article'
+    name: 'total_article',
   })
   @Expose({
     name: 'total_article',
@@ -59,7 +61,7 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Number,
-    name: 'total_view'
+    name: 'total_view',
   })
   @Expose({
     name: 'total_view',
@@ -68,7 +70,7 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Date,
-    name: 'created_at'
+    name: 'created_at',
   })
   @Expose({
     name: 'created_at',
@@ -77,13 +79,12 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Date,
-    name: 'updated_at'
+    name: 'updated_at',
   })
   @Expose({
     name: 'updated_at',
   })
   public updatedAt: Date;
-
 
   public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);

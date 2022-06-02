@@ -884,6 +884,7 @@ module.exports = {
             ['post_id', 'user_id'],
             {
               unique: true,
+              transaction: t,
             }
           ),
         ]);

@@ -509,6 +509,7 @@ export class ReactionService {
         },
         transaction: trx,
       });
+
       await trx.commit();
 
       const actor = {

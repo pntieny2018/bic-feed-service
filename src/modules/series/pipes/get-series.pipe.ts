@@ -1,4 +1,4 @@
-import {GetSeriesDto, OrderFields} from '../dto/requests';
+import { GetSeriesDto, OrderFields } from '../dto/requests';
 import { Injectable, PipeTransform } from '@nestjs/common';
 
 @Injectable()

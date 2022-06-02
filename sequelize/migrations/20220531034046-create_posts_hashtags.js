@@ -1,29 +1,32 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
-const  { NIL: NIL_UUID } = require('uuid');
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'hashtags';
-const dbVersion = parseInt(process.env.DB_VER) ?? 14;
-const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
+const tableName = 'posts_hashtags';
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
       tableName,
       {
-        id: {
-          primaryKey: true,
+        post_id: {
           type: Sequelize.UUID,
-          defaultValue: Sequelize.literal(genRandomUUID)
-        },
-        name: {
-          type: Sequelize.STRING(255),
           allowNull: false,
+          primaryKey: true,
+          references: { model: 'posts', key: 'id' },
         },
-        slug: {
-          type: Sequelize.STRING(255),
+        hashtag_id: {
+          type: Sequelize.UUID,
           allowNull: false,
+          primaryKey: true,
+          references: { model: 'hashtags', key: 'id' },
         },
         created_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        },
+        updated_at: {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
@@ -33,7 +36,9 @@ module.exports = {
         schema: schemaName,
       }
     );
-
+    await queryInterface.addIndex(tableName, ['post_id', 'hashtag_id'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

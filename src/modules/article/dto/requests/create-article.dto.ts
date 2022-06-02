@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional } from 'class-validator';
 import { CreatePostDto } from '../../../post/dto/requests';
+import { HashtagDto } from './hashtag.dto';
 
 export class CreateArticleDto extends CreatePostDto {
   @ApiProperty({
@@ -28,8 +29,8 @@ export class CreateArticleDto extends CreatePostDto {
   public series?: string[] = [];
 
   @ApiProperty({
-    type: [String],
+    type: [HashtagDto],
   })
   @IsOptional()
-  public hashtags?: string[] = [];
+  public hashtags?: HashtagDto[] = [];
 }
