@@ -18,18 +18,17 @@ import { GetArticleDto } from './dto/requests/get-article.dto';
 import { ClassTransformer } from 'class-transformer';
 import { PostService } from '../post/post.service';
 import { PageDto } from '../../common/dto';
-import { SearchArticlesDto } from './dto/requests/search-article.dto';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
 import { CategoryService } from '../category/category.service';
 import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
-import { GetListArticlesDto } from './dto/requests/get-list-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GroupService } from '../../shared/group';
-
 import { MediaStatus } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
+import { GetListArticlesDto, SearchArticlesDto } from './dto/requests';
+
 @Injectable()
 export class ArticleService {
   /**
@@ -121,7 +120,7 @@ export class ArticleService {
     authUser: UserDto,
     getListArticlesDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset, groupId } = getListArticlesDto;
+    const { limit, offset, categories, series, hashtags, groupId } = getListArticlesDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -129,7 +128,7 @@ export class ArticleService {
     const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<ArticleResponseDto>([], {
-        total: 0,
+        hasNextPage: false,
         limit,
         offset,
       });
@@ -137,7 +136,7 @@ export class ArticleService {
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleResponseDto>([], {
-        total: 0,
+        hasNextPage: false,
         limit,
         offset,
       });
@@ -153,23 +152,29 @@ export class ArticleService {
     );
     let importantPostsExc = Promise.resolve([]);
     if (offset < totalImportantPosts) {
-      importantPostsExc = PostModel.getTimelineData({
-        ...getListArticlesDto,
+      importantPostsExc = PostModel.getListArticle({
+        categories,
+        series,
+        hashtags,
         limit: limit + 1,
         groupIds,
         authUser,
         isImportant: true,
+        constraints,
       });
     }
     let normalPostsExc = Promise.resolve([]);
     if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = PostModel.getTimelineData({
-        ...getListArticlesDto,
+      normalPostsExc = PostModel.getListArticle({
+        categories,
+        series,
+        hashtags,
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
         groupIds,
         authUser,
         isImportant: false,
+        constraints,
       });
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
@@ -276,6 +281,9 @@ export class ArticleService {
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
     const post = await this._postService.getPost(postId, user, getArticleDto);
+    if (!post.isArticle) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_ARTICLE);
+    }
     const categories = [];
     const series = [];
     const article = this._classTransformer.plainToInstance(

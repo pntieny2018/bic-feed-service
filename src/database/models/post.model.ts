@@ -38,7 +38,7 @@ import { HashtagModel } from './hashtag.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
-import { GetListArticlesDto } from '../../modules/article/dto/requests/get-list-article.dto';
+import { GetListArticlesDto } from '../../modules/article/dto/requests';
 
 export interface IPost {
   id: string;
@@ -378,7 +378,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public static getArticleConstrains(getListArticlesDto: GetListArticlesDto): string {
     const { schema } = getDatabaseConfig();
     let constraints = '';
-    const { categories, series, hashtags } = getListArticlesDto;
+    constraints += `AND "p"."is_article" = true`;
+    const { categories, series, hashtags, groupId } = getListArticlesDto;
     if (categories && categories.length > 0) {
       constraints += ``;
     }
@@ -401,6 +402,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     offset,
     limit,
     order,
+    constraints,
   }: {
     authUser: UserDto;
     groupIds: number[];
@@ -411,9 +413,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     offset?: number;
     limit?: number;
     order?: OrderEnum;
+    constraints: string;
   }): Promise<any[]> {
-    // let condition = this.getArticleConstrains({ categories, series, hashtags });
-    let condition = ''; // TODO later
+    let condition = constraints;
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -463,7 +465,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-      "createdAt", "p"."updated_at" AS "updatedAt",
+      "createdAt", "p"."updated_at" AS "updatedAt", "p"."is_article" AS "isArticle",
       COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"

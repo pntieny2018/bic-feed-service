@@ -16,7 +16,7 @@ import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetPostPipe } from '../post/pipes';
 import { PageDto } from '../../common/dto';
 import { SearchArticlesDto } from './dto/requests/search-article.dto';
-import { GetListArticlesDto } from './dto/requests/get-list-article.dto';
+import { GetListArticlesDto } from './dto/requests';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
