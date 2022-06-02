@@ -10,6 +10,7 @@ import { MediaModule } from '../modules/media';
 import { FollowListener } from './follow/follow.listener';
 import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
+import { SeriesModule } from '../modules/series';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FeedModule } from '../modules/feed';
     MediaModule,
     UserModule,
     FeedModule,
+    SeriesModule,
   ],
   providers: [PostListener, CommentListener, ReactionListener, FollowListener],
 })

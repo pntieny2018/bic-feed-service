@@ -62,6 +62,7 @@ export const HTTP_STATUS_ID = {
   APP_POST_NOT_FOUND: 'app.post.not_found',
 
   // SERIES
+  APP_ARTICLE_CATEGORY_REQUIRED: 'app.article.category_required',
   APP_SERIES_NOT_FOUND: 'app.series.not_found',
   APP_SERIES_INVALID_PARAMETER: 'app.series.invalid_parameter',
   APP_USER_NOT_FOUND: 'app.user.not_found',
