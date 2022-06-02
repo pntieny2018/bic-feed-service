@@ -17,6 +17,9 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
+import { SeriesModule } from '../../modules/series';
+import { SeriesService } from '../../modules/series/series.service';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
 
 @Injectable()
 export class PostListener {
@@ -29,7 +32,8 @@ export class PostListener {
     private readonly _postService: PostService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _seriesService: SeriesService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -71,8 +75,18 @@ export class PostListener {
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { post, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
-      post;
+    const {
+      isDraft,
+      id,
+      content,
+      commentsCount,
+      media,
+      mentions,
+      setting,
+      audience,
+      createdAt,
+      isArticle,
+    } = post;
 
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
@@ -92,6 +106,7 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
+    //this._seriesService.updateTotalArticle()
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
@@ -103,6 +118,12 @@ export class PostListener {
 
     const dataIndex = {
       id,
+      isArticle,
+      categories: post instanceof ArticleResponseDto ? post.categories : [],
+      series: post instanceof ArticleResponseDto ? post.series : [],
+      hashtags: post instanceof ArticleResponseDto ? post.hashtags : [],
+      title: post instanceof ArticleResponseDto ? post.title : null,
+      summary: post instanceof ArticleResponseDto ? post.summary : null,
       commentsCount,
       content,
       media,
@@ -112,6 +133,10 @@ export class PostListener {
       createdAt,
       actor,
     };
+
+    if (post instanceof ArticleResponseDto) {
+      this._seriesService.updateTotalArticle(post.categories.map((c) => c.id));
+    }
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
       this._logger.debug(e);
@@ -136,7 +161,8 @@ export class PostListener {
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
+    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, isArticle } =
+      newPost;
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
@@ -150,6 +176,10 @@ export class PostListener {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
+    }
+
+    if (newPost instanceof ArticleResponseDto) {
+      this._seriesService.updateTotalArticle(newPost.categories.map((c) => c.id));
     }
 
     if (isDraft) return;
@@ -183,6 +213,12 @@ export class PostListener {
       audience,
       setting,
       actor,
+      isArticle,
+      categories: newPost instanceof ArticleResponseDto ? newPost.categories : [],
+      series: newPost instanceof ArticleResponseDto ? newPost.series : [],
+      hashtags: newPost instanceof ArticleResponseDto ? newPost.hashtags : [],
+      title: newPost instanceof ArticleResponseDto ? newPost.title : null,
+      summary: newPost instanceof ArticleResponseDto ? newPost.summary : null,
     };
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })

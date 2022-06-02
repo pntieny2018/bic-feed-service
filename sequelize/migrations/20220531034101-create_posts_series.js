@@ -13,6 +13,7 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
           primaryKey: true,
+          onDelete: 'CASCADE',
           references: { model: 'posts', key: 'id' },
         },
         series_id: {
