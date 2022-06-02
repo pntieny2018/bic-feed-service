@@ -9,7 +9,7 @@ import { GroupPrivacy } from '../../shared/group/dto';
 export class AuthorityService {
   public constructor(private _groupService: GroupService) {}
 
-  public async checkPublicPost(post: IPost): Promise<void> {
+  public async checkIsPublicPost(post: IPost): Promise<void> {
     const groupIds = (post.groups ?? []).map((g) => g.groupId);
     const groups = await this._groupService.getMany(groupIds);
     let isPublic = false;
@@ -56,5 +56,9 @@ export class AuthorityService {
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
+  }
+
+  public checkCanDeletePost(user: UserDto, groupAudienceIds: number[]): void {
+    return this.checkCanUpdatePost(user, groupAudienceIds);
   }
 }

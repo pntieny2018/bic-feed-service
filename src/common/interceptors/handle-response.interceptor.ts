@@ -18,7 +18,12 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
         }
         return {
           code: HTTP_STATUS_ID.API_OK,
-          data: typeof data === 'object' ? snakecaseKeys(data) : data,
+          data:
+            typeof data === 'object'
+              ? snakecaseKeys(data, {
+                  exclude: [/-/],
+                })
+              : data,
           meta: {
             message: message,
           },

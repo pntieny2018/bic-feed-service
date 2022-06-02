@@ -10,6 +10,7 @@ import { GetHashtagDto } from './dto/requests/get-hashtag.dto';
 import { Op, Transaction } from 'sequelize';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { String } from 'aws-sdk/clients/appstream';
+import { identity } from 'rxjs';
 
 @Injectable()
 export class HashtagService {
@@ -121,15 +122,27 @@ export class HashtagService {
     }
   }
 
-  public async findOrCreateHashtags(hashtags: { name: string; id?: string }[]): Promise<string[]> {
-    const hashtagIds = [];
-    hashtags.forEach(async (ht) => {
-      let newHt = { ...ht };
-      if (!ht.id) {
-        newHt = await this.createHashtag(ht.name);
-      }
-      hashtagIds.push(newHt.id);
+  public async findOrCreateHashtags(hashtagsName: string[]): Promise<string[]> {
+    if (hashtagsName.length === 0) return [];
+    const dataInsert = [];
+    let hashtagIds = [];
+    const hashtags = await this._hashtagModel.findAll({
+      where: {
+        name: hashtagsName,
+      },
     });
+    hashtagIds = hashtags.map((h) => h.id);
+    hashtagsName.forEach(async (name) => {
+      if (!hashtags.find((h) => h.name === name)) {
+        dataInsert.push({
+          name,
+          slug: StringHelper.convertToSlug(name),
+        });
+      }
+    });
+
+    const result = await this._hashtagModel.bulkCreate(dataInsert);
+    hashtagIds.push(...result.map((i) => i.id));
 
     return hashtagIds;
   }

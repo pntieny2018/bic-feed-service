@@ -98,13 +98,13 @@ export class CategoryService {
     postId: string,
     transaction: Transaction
   ): Promise<void> {
-    // if (categoryIds.length === 0) return;
-    // const dataCreate = categoryIds.map((categoryId) => ({
-    //   postId: postId,
-    //   categoryId,
-    // }));
-    // await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
-    // return;
+    if (categoryIds.length === 0) return;
+    const dataCreate = categoryIds.map((categoryId) => ({
+      postId: postId,
+      categoryId,
+    }));
+    await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
+    return;
   }
 
   /**
