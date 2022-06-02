@@ -414,7 +414,7 @@ export class PostService {
       include: [
         {
           model: PostGroupModel,
-          as: 'groups',
+          as: 'groups',p
           required: false,
           attributes: ['groupId'],
         },

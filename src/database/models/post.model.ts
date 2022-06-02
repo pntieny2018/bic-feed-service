@@ -32,9 +32,9 @@ import { UserDto } from '../../modules/auth';
 import { OrderEnum } from '../../common/dto';
 import { GetTimelineDto } from '../../modules/feed/dto/request';
 import { GetNewsFeedDto } from '../../modules/feed/dto/request/get-newsfeed.dto';
-import { CategoryModel } from './category.model';
-import { SeriesModel } from './series.model';
-import { HashtagModel } from './hashtag.model';
+import { CategoryModel, ICategory } from './category.model';
+import { ISeries, SeriesModel } from './series.model';
+import { HashtagModel, IHashtag } from './hashtag.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
@@ -67,6 +67,9 @@ export interface IPost {
   title?: string;
   summary?: string;
   views: number;
+  categories?: ICategory[];
+  series?: ISeries[];
+  hashtags?: IHashtag[];
 }
 
 @Table({
@@ -147,6 +150,15 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @BelongsToMany(() => MediaModel, () => PostMediaModel)
   public media?: MediaModel[];
+
+  @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
+  public categories?: CategoryModel[];
+
+  @BelongsToMany(() => HashtagModel, () => PostHashtagModel)
+  public hashtags?: HashtagModel[];
+
+  @BelongsToMany(() => SeriesModel, () => PostSeriesModel)
+  public series?: SeriesModel[];
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',

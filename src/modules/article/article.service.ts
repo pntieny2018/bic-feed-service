@@ -25,9 +25,16 @@ import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
 import { PostResponseDto } from '../post/dto/responses';
 import { GroupService } from '../../shared/group';
-import { MediaStatus } from '../../database/models/media.model';
+import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { GetListArticlesDto, SearchArticlesDto } from './dto/requests';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { NIL } from 'uuid';
+import { CategoryModel } from '../../database/models/category.model';
+import { SeriesModel } from '../../database/models/series.model';
+import { HashtagModel } from '../../database/models/hashtag.model';
 
 @Injectable()
 export class ArticleService {
@@ -280,20 +287,100 @@ export class ArticleService {
     user: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const post = await this._postService.getPost(postId, user, getArticleDto);
-    if (!post.isArticle) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_ARTICLE);
+    const post = await this._postModel.findOne({
+      attributes: {
+        exclude: ['updatedBy'],
+        include: [PostModel.loadMarkReadPost(user.id)],
+      },
+      where: { id: postId },
+      include: [
+        {
+          model: SeriesModel,
+          as: 'series',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        },
+        {
+          model: CategoryModel,
+          as: 'categories',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        },
+        {
+          model: HashtagModel,
+          as: 'hashtags',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+          attributes: ['userId'],
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: user.id,
+          },
+        },
+      ],
+    });
+    if (!post) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
     }
-    const categories = [];
-    const series = [];
-    const article = this._classTransformer.plainToInstance(
-      ArticleResponseDto,
-      { categories, series, ...post },
-      {
-        excludeExtraneousValues: true,
-      }
-    );
-    return article;
+    await this._authorityService.checkCanReadArticle(user, post);
+    let comments = null;
+    if (getArticleDto.withComment) {
+      comments = await this._commentService.getComments(
+        {
+          postId,
+          parentId: NIL,
+          childLimit: getArticleDto.childCommentLimit,
+          order: getArticleDto.commentOrder,
+          childOrder: getArticleDto.childCommentOrder,
+          limit: getArticleDto.commentLimit,
+        },
+        user,
+        false
+      );
+    }
+    const jsonPost = post.toJSON();
+    await Promise.all([
+      this._reactionService.bindReactionToPosts([jsonPost]),
+      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this._postService.bindActorToPost([jsonPost]),
+      this._postService.bindAudienceToPost([jsonPost]),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
+      excludeExtraneousValues: true,
+    });
+    result['comments'] = comments;
+    return result;
   }
 
   /**
@@ -307,17 +394,87 @@ export class ArticleService {
     postId: string,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const post = await this._postService.getPublicPost(postId, getArticleDto);
-    const categories = [];
-    const series = [];
-    const article = this._classTransformer.plainToInstance(
-      ArticleResponseDto,
-      { categories, series, ...post },
-      {
-        excludeExtraneousValues: true,
-      }
-    );
-    return article;
+    const post = await this._postModel.findOne({
+      attributes: {
+        exclude: ['updatedBy'],
+      },
+      where: { id: postId },
+      include: [
+        {
+          model: SeriesModel,
+          as: 'series',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        },
+        {
+          model: CategoryModel,
+          as: 'categories',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        },
+        {
+          model: HashtagModel,
+          as: 'hashtags',
+          required: false,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+        },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+          attributes: ['userId'],
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+        },
+      ],
+    });
+    if (!post) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+    }
+    await this._authorityService.checkIsPublicArticle(post);
+    let comments = null;
+    if (getArticleDto.withComment) {
+      comments = await this._commentService.getComments({
+        postId,
+        parentId: NIL,
+        childLimit: getArticleDto.childCommentLimit,
+        order: getArticleDto.commentOrder,
+        childOrder: getArticleDto.childCommentOrder,
+        limit: getArticleDto.commentLimit,
+      });
+    }
+    const jsonPost = post.toJSON();
+    await Promise.all([
+      this._reactionService.bindReactionToPosts([jsonPost]),
+      this._mentionService.bindMentionsToPosts([jsonPost]),
+      this._postService.bindActorToPost([jsonPost]),
+      this._postService.bindAudienceToPost([jsonPost]),
+    ]);
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
+      excludeExtraneousValues: true,
+    });
+    result['comments'] = comments;
+    return result;
   }
 
   /**

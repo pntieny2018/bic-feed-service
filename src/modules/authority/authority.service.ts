@@ -61,4 +61,12 @@ export class AuthorityService {
   public checkCanDeletePost(user: UserDto, groupAudienceIds: number[]): void {
     return this.checkCanUpdatePost(user, groupAudienceIds);
   }
+
+  public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
+    return this.checkCanReadPost(user, post);
+  }
+
+  public async checkIsPublicArticle(post: IPost): Promise<void> {
+    return this.checkIsPublicPost(post);
+  }
 }
