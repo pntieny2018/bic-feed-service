@@ -3,6 +3,7 @@ import {
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
+import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationService } from '../../notification';
@@ -12,7 +13,6 @@ import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
 import { MediaStatus } from '../../database/models/media.model';
-import { SentryService } from '../../../libs/sentry/src';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
@@ -54,12 +54,34 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
+      const activity = this._postActivityService.createPayload({
+        actor: actor,
+        commentsCount: post.commentsCount,
+        content: post.content,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+        createdBy: post.createdBy,
+        isDraft: post.isDraft,
+        isProcessing: false,
+        setting: {
+          canComment: post.canComment,
+          canReact: post.canReact,
+          canShare: post.canShare,
+        },
+        id: post.id,
+        audience: {
+          users: [],
+          groups: (post?.groups ?? []).map((g) => g.groupId) as any,
+        },
+        isArticle: false,
+      });
+
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
           actor,
           event: event.getEventName(),
-          data: post,
+          data: activity,
         },
       });
 
@@ -244,7 +266,7 @@ export class PostListener {
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { videoId, hlsUrl, meta } = event.payload;
+    const { videoId, hlsUrl } = event.payload;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
@@ -297,7 +319,7 @@ export class PostListener {
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
 
-    const { videoId, hlsUrl, meta } = event.payload;
+    const { videoId, hlsUrl } = event.payload;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
