@@ -316,4 +316,8 @@ export class SeriesService {
       throw new LogicException(HTTP_STATUS_ID.APP_SERIES_INVALID_PARAMETER);
     }
   }
+
+  public async updateTotalArticle(seriesIds: string[]): Promise<void> {
+    return SeriesModel.updateTotalArticle(seriesIds);
+  }
 }

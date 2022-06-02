@@ -8,7 +8,7 @@ import { MentionService } from '../mention';
 import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
-import { ExceptionHelper } from '../../common/helpers';
+import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { SentryService } from '../../../libs/sentry/src';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
@@ -21,6 +21,8 @@ import { EntityType } from '../media/media.constants';
 import { CategoryService } from '../category/category.service';
 import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
+import { MediaStatus } from '../../database/models/media.model';
+import { LogicException } from '../../common/exceptions';
 @Injectable()
 export class ArticleService {
   /**
@@ -122,7 +124,7 @@ export class ArticleService {
         {
           title,
           summary,
-          isDraft: false,
+          isDraft: true,
           isArticle: true,
           content,
           createdBy: authUserId,
@@ -181,8 +183,8 @@ export class ArticleService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishArticle(articleId: string, authUserId: number): Promise<boolean> {
-    return this._postService.publishPost(articleId, authUserId);
+  public async publishArticle(articleId: string, authUser: UserDto): Promise<boolean> {
+    return this._postService.publishPost(articleId, authUser);
   }
   /**
    * Update Post except isDraft
@@ -205,12 +207,113 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { content, media, setting, mentions, audience, series, categories } = updateArticleDto;
+      const {
+        summary,
+        title,
+        content,
+        media,
+        setting,
+        mentions,
+        audience,
+        categories,
+        series,
+        hashtags,
+      } = updateArticleDto;
+      if (categories && categories.length === 0) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_CATEGORY_REQUIRED);
+      }
       if (post.isDraft === false) {
         await this._postService.checkContent(updateArticleDto);
       }
       await this._postService.checkPostOwner(post, authUser.id);
-      // await transaction.commit();
+      const oldGroupIds = post.audience.groups.map((group) => group.id);
+      if (audience) {
+        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
+      }
+
+      if (mentions && mentions.length) {
+        await this._mentionService.checkValidMentions(
+          audience ? audience.groupIds : oldGroupIds,
+          mentions
+        );
+      }
+
+      const dataUpdate = {
+        updatedBy: authUserId,
+      };
+
+      if (content !== null) {
+        dataUpdate['content'] = content;
+      }
+      if (title !== null) {
+        dataUpdate['title'] = title;
+      }
+      if (summary !== null) {
+        dataUpdate['summary'] = summary;
+      }
+      if (setting && setting.hasOwnProperty('canShare')) {
+        dataUpdate['canShare'] = setting.canShare;
+      }
+      if (setting && setting.hasOwnProperty('canComment')) {
+        dataUpdate['canComment'] = setting.canComment;
+      }
+      if (setting && setting.hasOwnProperty('canReact')) {
+        dataUpdate['canReact'] = setting.canReact;
+      }
+      if (setting && setting.hasOwnProperty('isImportant')) {
+        dataUpdate['isImportant'] = setting.isImportant;
+      }
+      if (setting && setting.hasOwnProperty('importantExpiredAt')) {
+        dataUpdate['importantExpiredAt'] =
+          setting.isImportant === false ? null : setting.importantExpiredAt;
+      }
+      let newMediaIds = [];
+      transaction = await this._sequelizeConnection.transaction();
+      if (media) {
+        const { files, images, videos } = media;
+        newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
+        const mediaList = await this._mediaService.createIfNotExist(media, authUserId);
+        if (
+          mediaList.filter(
+            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+          ).length > 0
+        ) {
+          dataUpdate['isDraft'] = true;
+          dataUpdate['isProcessing'] = post.isDraft === true ? false : true;
+        }
+      }
+
+      await this._postModel.update(dataUpdate, {
+        where: {
+          id: post.id,
+          createdBy: authUserId,
+        },
+        transaction,
+      });
+
+      if (media) {
+        await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
+      }
+
+      if (mentions) {
+        await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
+      }
+      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+        await this._postService.setGroupByPost(audience.groupIds, post.id, transaction);
+      }
+
+      if (categories) {
+        await this._categoryService.setCategoriesByPost(categories, post.id, transaction);
+      }
+      if (series) {
+        await this._seriesService.setSeriesByPost(series, post.id, transaction);
+      }
+      if (hashtags) {
+        const hashtagIds = await this._hashtagService.findOrCreateHashtags(hashtags);
+        await this._hashtagService.setHashtagsByPost(hashtagIds, post.id, transaction);
+      }
+      await transaction.commit();
 
       return true;
     } catch (error) {
