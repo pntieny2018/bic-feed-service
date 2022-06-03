@@ -6,7 +6,7 @@ import {
   MentionableType,
 } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
@@ -46,6 +46,8 @@ import { ProcessVideoResponseDto } from './dto/responses/process-video-response.
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
+import { GroupPrivacy } from '../../shared/group/dto';
+import { SeriesModel } from '../../database/models/series.model';
 
 @Injectable()
 export class PostService {
@@ -574,6 +576,7 @@ export class PostService {
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
       transaction = await this.sequelizeConnection.transaction();
+      const postPrivacy = await this.getPrivacyPost(groupIds);
       const post = await this.postModel.create(
         {
           isDraft: true,
@@ -587,6 +590,8 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
+          privacy: postPrivacy,
+          hashtagsJson: [],
         },
         { transaction }
       );
@@ -637,6 +642,25 @@ export class PostService {
     });
   }
 
+  public async getPrivacyPost(groupIds: number[]): Promise<PostPrivacy> {
+    if (groupIds.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+    }
+    const groups = await this.groupService.getMany(groupIds);
+    let totalPrivate = 0;
+    let totalOpen = 0;
+    for (const group of groups) {
+      if (group.privacy === GroupPrivacy.PUBLIC) {
+        return PostPrivacy.PUBLIC;
+      }
+      if (group.privacy === GroupPrivacy.OPEN) totalOpen++;
+      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+    }
+
+    if (totalOpen > 0) return PostPrivacy.OPEN;
+    if (totalPrivate > 0) return PostPrivacy.PRIVATE;
+    return PostPrivacy.SECRET;
+  }
   /**
    * Update Post except isDraft
    * @param postId string
@@ -659,6 +683,9 @@ export class PostService {
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
+      const dataUpdate = {
+        updatedBy: authUserId,
+      };
       if (post.isDraft === false) {
         await this.checkContent(updatePostDto);
       }
@@ -666,6 +693,8 @@ export class PostService {
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
         await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
+        const postPrivacy = await this.getPrivacyPost(audience.groupIds);
+        dataUpdate['privacy'] = postPrivacy;
       }
 
       if (mentions && mentions.length) {
@@ -674,10 +703,6 @@ export class PostService {
           mentions
         );
       }
-
-      const dataUpdate = {
-        updatedBy: authUserId,
-      };
 
       if (content !== null) {
         dataUpdate['content'] = content;
@@ -794,10 +819,12 @@ export class PostService {
         isDraft = true;
         isProcessing = true;
       }
+      const postPrivacy = await this.getPrivacyPost(groupIds);
       await this.postModel.update(
         {
           isDraft,
           isProcessing,
+          privacy: postPrivacy,
           createdAt: new Date(),
         },
         {
@@ -853,6 +880,15 @@ export class PostService {
             model: PostGroupModel,
             as: 'groups',
             attributes: ['groupId'],
+          },
+          {
+            model: SeriesModel,
+            as: 'series',
+            through: {
+              attributes: [],
+            },
+            required: false,
+            attributes: ['id'],
           },
         ],
       });
@@ -1379,5 +1415,127 @@ export class PostService {
     ) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
     }
+  }
+
+  public async updatePostPrivacy(postId: string): Promise<void> {
+    const post = await this.findPost({ postId });
+    const groupIds = post.groups.map((g) => g.groupId);
+    const privacy = await this.getPrivacyPost(groupIds);
+    await this.postModel.update(
+      { privacy },
+      {
+        where: {
+          id: postId,
+        },
+      }
+    );
+  }
+
+  public groupPosts(posts: any[]): any[] {
+    const result = [];
+    posts.forEach((post) => {
+      const {
+        id,
+        commentsCount,
+        isImportant,
+        importantExpiredAt,
+        isDraft,
+        content,
+        markedReadPost,
+        canComment,
+        canReact,
+        canShare,
+        createdBy,
+        updatedBy,
+        createdAt,
+        updatedAt,
+        canAccess,
+        isArticle,
+        isNowImportant,
+      } = post;
+      const postAdded = result.find((i) => i.id === post.id);
+      if (!postAdded) {
+        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
+        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const ownerReactions =
+          post.postReactionId === null
+            ? []
+            : [
+                {
+                  id: post.postReactionId,
+                  reactionName: post.reactionName,
+                  createdAt: post.reactCreatedAt,
+                },
+              ];
+        const media =
+          post.mediaId === null
+            ? []
+            : [
+                {
+                  id: post.mediaId,
+                  url: post.url,
+                  name: post.name,
+                  type: post.type,
+                  width: post.width,
+                  size: post.size,
+                  height: post.height,
+                  extension: post.extension,
+                },
+              ];
+        result.push({
+          id,
+          commentsCount,
+          isImportant,
+          importantExpiredAt,
+          isDraft,
+          content,
+          canComment,
+          markedReadPost,
+          canReact,
+          canShare,
+          createdBy,
+          updatedBy,
+          createdAt,
+          updatedAt,
+          isNowImportant,
+          groups,
+          mentions,
+          media,
+          ownerReactions,
+          canAccess,
+          isArticle,
+        });
+        return;
+      }
+      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
+        postAdded.groups.push({ groupId: post.groupId });
+      }
+      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
+        postAdded.mentions.push({ userId: post.userId });
+      }
+      if (
+        post.postReactionId !== null &&
+        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
+      ) {
+        postAdded.ownerReactions.push({
+          id: post.postReactionId,
+          reactionName: post.reactionName,
+          createdAt: post.reactCreatedAt,
+        });
+      }
+      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
+        postAdded.media.push({
+          id: post.mediaId,
+          url: post.url,
+          name: post.name,
+          type: post.type,
+          width: post.width,
+          size: post.size,
+          height: post.height,
+          extension: post.extension,
+        });
+      }
+    });
+    return result;
   }
 }

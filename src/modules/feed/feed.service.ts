@@ -83,7 +83,7 @@ export class FeedService {
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
 
-      const posts = this.groupPosts(rows);
+      const posts = this._postService.groupPosts(rows);
 
       const hasNextPage = posts.length === limit + 1;
       if (hasNextPage) posts.pop();
@@ -236,7 +236,7 @@ export class FeedService {
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
     const rows = importantPosts.concat(normalPosts);
-    const posts = this.groupPosts(rows);
+    const posts = this._postService.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     await Promise.all([
@@ -264,109 +264,5 @@ export class FeedService {
    */
   public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
-  }
-
-  public groupPosts(posts: any[]): any[] {
-    const result = [];
-    posts.forEach((post) => {
-      const {
-        id,
-        commentsCount,
-        isImportant,
-        importantExpiredAt,
-        isDraft,
-        content,
-        markedReadPost,
-        canComment,
-        canReact,
-        canShare,
-        createdBy,
-        updatedBy,
-        createdAt,
-        updatedAt,
-        isNowImportant,
-      } = post;
-      const postAdded = result.find((i) => i.id === post.id);
-      if (!postAdded) {
-        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
-        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
-        const ownerReactions =
-          post.postReactionId === null
-            ? []
-            : [
-                {
-                  id: post.postReactionId,
-                  reactionName: post.reactionName,
-                  createdAt: post.reactCreatedAt,
-                },
-              ];
-        const media =
-          post.mediaId === null
-            ? []
-            : [
-                {
-                  id: post.mediaId,
-                  url: post.url,
-                  name: post.name,
-                  type: post.type,
-                  width: post.width,
-                  size: post.size,
-                  height: post.height,
-                  extension: post.extension,
-                },
-              ];
-        result.push({
-          id,
-          commentsCount,
-          isImportant,
-          importantExpiredAt,
-          isDraft,
-          content,
-          canComment,
-          markedReadPost,
-          canReact,
-          canShare,
-          createdBy,
-          updatedBy,
-          createdAt,
-          updatedAt,
-          isNowImportant,
-          groups,
-          mentions,
-          media,
-          ownerReactions,
-        });
-        return;
-      }
-      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
-        postAdded.groups.push({ groupId: post.groupId });
-      }
-      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
-        postAdded.mentions.push({ userId: post.userId });
-      }
-      if (
-        post.postReactionId !== null &&
-        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
-      ) {
-        postAdded.ownerReactions.push({
-          id: post.postReactionId,
-          reactionName: post.reactionName,
-          createdAt: post.reactCreatedAt,
-        });
-      }
-      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
-        postAdded.media.push({
-          id: post.mediaId,
-          url: post.url,
-          name: post.name,
-          type: post.type,
-          width: post.width,
-          size: post.size,
-          height: post.height,
-          extension: post.extension,
-        });
-      }
-    });
-    return result;
   }
 }
