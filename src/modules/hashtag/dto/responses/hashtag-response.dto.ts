@@ -13,6 +13,10 @@ export class HashtagResponseDto {
   @Expose()
   public name: string;
 
+  @ApiProperty()
+  @Expose()
+  public slug: string;
+
   @ApiProperty({
     name: 'created_at',
   })
@@ -22,6 +26,7 @@ export class HashtagResponseDto {
   public constructor(iHashtag: IHashtag) {
     this.id = iHashtag.id;
     this.name = iHashtag.name;
+    this.slug = iHashtag.slug;
     this.createdAt = iHashtag.createdAt;
   }
 }
