@@ -20,6 +20,7 @@ import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesModule } from '../../modules/series';
 import { SeriesService } from '../../modules/series/series.service';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
+import { PostPrivacy } from '../../database/models/post.model';
 
 @Injectable()
 export class PostListener {
@@ -78,6 +79,7 @@ export class PostListener {
           groups: (post?.groups ?? []).map((g) => g.groupId) as any,
         },
         isArticle: false,
+        privacy: PostPrivacy.PUBLIC,
       });
 
       this._notificationService.publishPostNotification({

@@ -649,11 +649,13 @@ export class PostService {
     const groups = await this.groupService.getMany(groupIds);
     let totalPrivate = 0;
     let totalOpen = 0;
-    groups.forEach((g) => {
-      if (g.privacy === GroupPrivacy.PUBLIC) return PostPrivacy.PUBLIC;
-      if (g.privacy === GroupPrivacy.OPEN) totalOpen++;
-      if (g.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
-    });
+    for (const group of groups) {
+      if (group.privacy === GroupPrivacy.PUBLIC) {
+        return PostPrivacy.PUBLIC;
+      }
+      if (group.privacy === GroupPrivacy.OPEN) totalOpen++;
+      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+    }
 
     if (totalOpen > 0) return PostPrivacy.OPEN;
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
@@ -1427,5 +1429,113 @@ export class PostService {
         },
       }
     );
+  }
+
+  public groupPosts(posts: any[]): any[] {
+    const result = [];
+    posts.forEach((post) => {
+      const {
+        id,
+        commentsCount,
+        isImportant,
+        importantExpiredAt,
+        isDraft,
+        content,
+        markedReadPost,
+        canComment,
+        canReact,
+        canShare,
+        createdBy,
+        updatedBy,
+        createdAt,
+        updatedAt,
+        canAccess,
+        isArticle,
+        isNowImportant,
+      } = post;
+      const postAdded = result.find((i) => i.id === post.id);
+      if (!postAdded) {
+        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
+        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const ownerReactions =
+          post.postReactionId === null
+            ? []
+            : [
+                {
+                  id: post.postReactionId,
+                  reactionName: post.reactionName,
+                  createdAt: post.reactCreatedAt,
+                },
+              ];
+        const media =
+          post.mediaId === null
+            ? []
+            : [
+                {
+                  id: post.mediaId,
+                  url: post.url,
+                  name: post.name,
+                  type: post.type,
+                  width: post.width,
+                  size: post.size,
+                  height: post.height,
+                  extension: post.extension,
+                },
+              ];
+        result.push({
+          id,
+          commentsCount,
+          isImportant,
+          importantExpiredAt,
+          isDraft,
+          content,
+          canComment,
+          markedReadPost,
+          canReact,
+          canShare,
+          createdBy,
+          updatedBy,
+          createdAt,
+          updatedAt,
+          isNowImportant,
+          groups,
+          mentions,
+          media,
+          ownerReactions,
+          canAccess,
+          isArticle,
+        });
+        return;
+      }
+      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
+        postAdded.groups.push({ groupId: post.groupId });
+      }
+      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
+        postAdded.mentions.push({ userId: post.userId });
+      }
+      if (
+        post.postReactionId !== null &&
+        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
+      ) {
+        postAdded.ownerReactions.push({
+          id: post.postReactionId,
+          reactionName: post.reactionName,
+          createdAt: post.reactCreatedAt,
+        });
+      }
+      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
+        postAdded.media.push({
+          id: post.mediaId,
+          url: post.url,
+          name: post.name,
+          type: post.type,
+          width: post.width,
+          size: post.size,
+          height: post.height,
+          extension: post.extension,
+        });
+      }
+    });
+    return result;
   }
 }

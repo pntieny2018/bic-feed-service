@@ -276,10 +276,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }
 
   public static getIdConstrains(
-    getTimelineDto: GetTimelineDto | GetNewsFeedDto | GetListArticlesDto
+    getPostsDto: GetTimelineDto | GetNewsFeedDto | GetListArticlesDto
   ): string {
     const { schema } = getDatabaseConfig();
-    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
+    const { idGT, idGTE, idLT, idLTE } = getPostsDto;
+    const postCategoryTable = PostCategoryModel.tableName;
+    const postSeriesTable = PostSeriesModel.tableName;
+    const postHastagTable = PostHashtagModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
     let constraints = '';
     if (idGT) {
       constraints += `AND p.id != ${this.sequelize.escape(idGT)}`;
@@ -302,6 +306,38 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
         idLT
       )})`;
+    }
+    if ((getPostsDto as GetListArticlesDto).categories.length > 0) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postCategoryTable} AS pc
+        WHERE pc.post_id = p.id
+        AND pc.category_id IN(:categoryIds)
+      )`;
+    }
+    if ((getPostsDto as GetListArticlesDto).series.length > 0) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postSeriesTable} AS ps
+        WHERE ps.post_id = p.id
+        AND ps.series_id IN(:seriesIds)
+      )`;
+    }
+    if ((getPostsDto as GetListArticlesDto).hashtags.length > 0) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postHastagTable} AS ph
+        WHERE ph.post_id = p.id
+        AND ph.hashtag_id IN(:hashtagIds)
+      )`;
+    }
+    if ((getPostsDto as GetListArticlesDto).groupId) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postGroupTable} AS pg
+        WHERE pg.post_id = p.id
+        AND pg.group_id = :groupId
+      )`;
     }
     return constraints;
   }
@@ -417,6 +453,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       series,
       offset,
       limit,
+      orderField,
       order,
       idGT,
       idGTE,
@@ -452,23 +489,27 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     FROM (
       SELECT 
       "p"."id", 
-      "p"."comments_count" AS "commentsCount",
+      "p"."comments_count" AS "commentsCount", "p"."views",
       "p"."is_important" AS "isImportant", 
-      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
+      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", "p"."is_article" AS "isArticle",
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
       "createdAt", "p"."updated_at" AS "updatedAt",
       COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
-      ) AS "markedReadPost"
+      ) AS "markedReadPost",
+      CASE WHEN p.privacy = 'PRIVATE' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
+        WHERE spg.post_id = p.id AND spg.group_id IN(1, 2, 143, 197) ), false) = FALSE THEN TRUE ELSE FALSE END as "canAccess"
       FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false AND EXISTS(
+      WHERE "p"."is_draft" = false 
+          AND "p"."is_article" = true AND (
+          "p"."privacy" != 'SECRET' OR EXISTS(
         SELECT 1
         from ${schema}.${postGroupTable} AS g
         WHERE g.post_id = p.id
         AND g.group_id IN(:groupIds)
-      ) ${condition}
-      ORDER BY "p"."created_at" ${order}
+      )) ${condition}
+      ORDER BY "${orderField}" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
@@ -478,7 +519,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}`;
+      ORDER BY "PostModel"."${orderField}" ${order}`;
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
         groupIds,
@@ -489,6 +530,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         idGTE,
         idLT,
         idLTE,
+        groupId,
+        categoryIds: categories,
+        hashtagIds: hashtags,
+        seriesIds: series,
+        orderField,
       },
       type: QueryTypes.SELECT,
     });

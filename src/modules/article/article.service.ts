@@ -128,18 +128,18 @@ export class ArticleService {
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset } = getListArticlesDto;
     const rows = await PostModel.getArticlesData(getListArticlesDto, authUser);
-    const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1 ? true : false;
-    if (hasNextPage) posts.pop();
+    const articles = this.groupArticles(rows);
+    const hasNextPage = articles.length === limit + 1 ? true : false;
+    if (hasNextPage) articles.pop();
 
     await Promise.all([
-      this._reactionService.bindReactionToPosts(posts),
-      this._mentionService.bindMentionsToPosts(posts),
-      this._postService.bindActorToPost(posts),
-      this._postService.bindAudienceToPost(posts),
+      this._reactionService.bindReactionToPosts(articles),
+      this._mentionService.bindMentionsToPosts(articles),
+      this._postService.bindActorToPost(articles),
+      this._postService.bindAudienceToPost(articles),
     ]);
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, articles, {
       excludeExtraneousValues: true,
     });
 
@@ -671,107 +671,7 @@ export class ArticleService {
     return this._postService.deletePost(id, user);
   }
 
-  public groupPosts(posts: any[]): any[] {
-    const result = [];
-    posts.forEach((post) => {
-      const {
-        id,
-        commentsCount,
-        isImportant,
-        importantExpiredAt,
-        isDraft,
-        content,
-        markedReadPost,
-        canComment,
-        canReact,
-        canShare,
-        createdBy,
-        updatedBy,
-        createdAt,
-        updatedAt,
-        isNowImportant,
-      } = post;
-      const postAdded = result.find((i) => i.id === post.id);
-      if (!postAdded) {
-        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
-        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
-        const ownerReactions =
-          post.postReactionId === null
-            ? []
-            : [
-                {
-                  id: post.postReactionId,
-                  reactionName: post.reactionName,
-                  createdAt: post.reactCreatedAt,
-                },
-              ];
-        const media =
-          post.mediaId === null
-            ? []
-            : [
-                {
-                  id: post.mediaId,
-                  url: post.url,
-                  name: post.name,
-                  type: post.type,
-                  width: post.width,
-                  size: post.size,
-                  height: post.height,
-                  extension: post.extension,
-                },
-              ];
-        result.push({
-          id,
-          commentsCount,
-          isImportant,
-          importantExpiredAt,
-          isDraft,
-          content,
-          canComment,
-          markedReadPost,
-          canReact,
-          canShare,
-          createdBy,
-          updatedBy,
-          createdAt,
-          updatedAt,
-          isNowImportant,
-          groups,
-          mentions,
-          media,
-          ownerReactions,
-        });
-        return;
-      }
-      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
-        postAdded.groups.push({ groupId: post.groupId });
-      }
-      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
-        postAdded.mentions.push({ userId: post.userId });
-      }
-      if (
-        post.postReactionId !== null &&
-        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
-      ) {
-        postAdded.ownerReactions.push({
-          id: post.postReactionId,
-          reactionName: post.reactionName,
-          createdAt: post.reactCreatedAt,
-        });
-      }
-      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
-        postAdded.media.push({
-          id: post.mediaId,
-          url: post.url,
-          name: post.name,
-          type: post.type,
-          width: post.width,
-          size: post.size,
-          height: post.height,
-          extension: post.extension,
-        });
-      }
-    });
-    return result;
+  public groupArticles(articles: any[]): any[] {
+    return this._postService.groupPosts(articles);
   }
 }
