@@ -119,15 +119,15 @@ export class ArticleService {
    * Get list Article
    * @throws HttpException
    * @param authUser UserDto
-   * @param getListArticlesDto GetListArticlesDto
+   * @param getArticleListDto GetListArticlesDto
    * @returns Promise resolve PageDto<ArticleResponseDto>
    */
   public async getList(
     authUser: UserDto,
-    getListArticlesDto: GetListArticlesDto
+    getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset } = getListArticlesDto;
-    const rows = await PostModel.getArticlesData(getListArticlesDto, authUser);
+    const { limit, offset } = getArticleListDto;
+    const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.groupArticles(rows);
     const hasNextPage = articles.length === limit + 1 ? true : false;
     if (hasNextPage) articles.pop();

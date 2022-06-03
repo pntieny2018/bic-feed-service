@@ -49,9 +49,9 @@ export class ArticleController {
   @Get('/')
   public getList(
     @AuthUser() user: UserDto,
-    @Query() getListArticlesDto: GetListArticlesDto
+    @Query() getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getList(user, getListArticlesDto);
+    return this._articleService.getList(user, getArticleListDto);
   }
 
   @ApiOperation({ summary: 'Get article detail' })

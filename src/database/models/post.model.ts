@@ -443,7 +443,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }
 
   public static async getArticlesData(
-    getListArticlesDto: GetListArticlesDto,
+    getArticleListDto: GetListArticlesDto,
     authUser: UserDto
   ): Promise<any[]> {
     const {
@@ -459,9 +459,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       idGTE,
       idLT,
       idLTE,
-    } = getListArticlesDto;
+    } = getArticleListDto;
     const groupIds = authUser.profile.groups;
-    const condition = this.getIdConstrains(getListArticlesDto);
+    const condition = this.getIdConstrains(getArticleListDto);
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
