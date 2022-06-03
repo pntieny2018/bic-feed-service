@@ -102,12 +102,12 @@ describe('AuthorityService', () => {
     });
   });
 
-  describe('AuthorityService.checkPublicPost', () => {
+  describe('AuthorityService.checkIsPublicPost', () => {
     it('pass if GroupPrivacy.PUBLIC', async () => {
       mockGroup.privacy = GroupPrivacy.PUBLIC
       groupService.getMany.mockReturnValue([mockGroup]);
 
-      await service.checkPublicPost({
+      await service.checkIsPublicPost({
         canComment: false,
         canReact: false,
         canShare: false,
@@ -130,7 +130,7 @@ describe('AuthorityService', () => {
       mockGroup.privacy = GroupPrivacy.PRIVATE
       groupService.getMany.mockReturnValue([mockGroup]);
       try {
-        await service.checkPublicPost({
+        await service.checkIsPublicPost({
           canComment: false,
           canReact: false,
           canShare: false,
