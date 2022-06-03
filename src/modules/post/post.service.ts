@@ -47,6 +47,7 @@ import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
+import { SeriesModel } from '../../database/models/series.model';
 
 @Injectable()
 export class PostService {
@@ -879,6 +880,15 @@ export class PostService {
             model: PostGroupModel,
             as: 'groups',
             attributes: ['groupId'],
+          },
+          {
+            model: SeriesModel,
+            as: 'series',
+            through: {
+              attributes: [],
+            },
+            required: false,
+            attributes: ['id'],
           },
         ],
       });

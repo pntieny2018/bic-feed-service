@@ -86,7 +86,7 @@ export class SeriesModel extends Model<ISeries, Omit<ISeries, 'id'>> implements 
                   LEFT JOIN ${schema}.${postSeriesTable} AS ps ON ps.series_id = s.id
                   LEFT JOIN ${schema}.${postTable} AS p ON p.id = ps.post_id AND p.is_article = true AND p.is_draft = false
                   WHERE s.id IN (:seriesIds)
-                  GROUP BY s.id
+                  GROUP BY ps.series_id
                 ) as tmp
                 WHERE tmp.series_id = ${schema}.${seriesTable}.id`;
     await this.sequelize.query(query, {

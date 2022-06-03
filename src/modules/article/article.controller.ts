@@ -65,7 +65,10 @@ export class ArticleController {
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
     if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
-    else return this._articleService.getArticle(articleId, user, getArticleDto);
+    else {
+      const article = this._articleService.getArticle(articleId, user, getArticleDto);
+      return article;
+    }
   }
 
   @ApiOperation({ summary: 'Create article' })

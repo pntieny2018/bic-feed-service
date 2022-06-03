@@ -42,6 +42,10 @@ export class PostListener {
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
+    if (post.isArticle === true) {
+      this._seriesService.updateTotalArticle(post.series.map((c) => c.id));
+    }
+
     this._postService.deletePostEditedHistory(post.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
@@ -128,24 +132,27 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
-    //this._seriesService.updateTotalArticle()
-    this._notificationService.publishPostNotification({
-      key: `${post.id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: activity,
-      },
-    });
-
+    this._notificationService
+      .publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: activity,
+        },
+      })
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
     const dataIndex = {
       id,
       isArticle,
-      categories: post instanceof ArticleResponseDto ? post.categories : [],
-      series: post instanceof ArticleResponseDto ? post.series : [],
-      hashtags: post instanceof ArticleResponseDto ? post.hashtags : [],
-      title: post instanceof ArticleResponseDto ? post.title : null,
-      summary: post instanceof ArticleResponseDto ? post.summary : null,
+      categories: (post as ArticleResponseDto).categories ?? [],
+      series: (post as ArticleResponseDto).series ?? [],
+      hashtags: (post as ArticleResponseDto).hashtags ?? [],
+      title: (post as ArticleResponseDto).title ?? null,
+      summary: (post as ArticleResponseDto).summary ?? null,
       commentsCount,
       content,
       media,
@@ -155,9 +162,13 @@ export class PostListener {
       createdAt,
       actor,
     };
-
-    if (post instanceof ArticleResponseDto) {
-      this._seriesService.updateTotalArticle(post.categories.map((c) => c.id));
+    if (post.isArticle === true) {
+      this._seriesService
+        .updateTotalArticle((post as ArticleResponseDto).series.map((c) => c.id))
+        .catch((e) => {
+          this._logger.error(e, e?.stack);
+          this._sentryService.captureException(e);
+        });
     }
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
@@ -200,8 +211,10 @@ export class PostListener {
       });
     }
 
-    if (newPost instanceof ArticleResponseDto) {
-      this._seriesService.updateTotalArticle(newPost.categories.map((c) => c.id));
+    if (newPost.isArticle === true) {
+      this._seriesService.updateTotalArticle(
+        (newPost as ArticleResponseDto).series.map((c) => c.id)
+      );
     }
 
     if (isDraft) return;
@@ -236,11 +249,11 @@ export class PostListener {
       setting,
       actor,
       isArticle,
-      categories: newPost instanceof ArticleResponseDto ? newPost.categories : [],
-      series: newPost instanceof ArticleResponseDto ? newPost.series : [],
-      hashtags: newPost instanceof ArticleResponseDto ? newPost.hashtags : [],
-      title: newPost instanceof ArticleResponseDto ? newPost.title : null,
-      summary: newPost instanceof ArticleResponseDto ? newPost.summary : null,
+      categories: (newPost as ArticleResponseDto).categories ?? [],
+      series: (newPost as ArticleResponseDto).series ?? [],
+      hashtags: (newPost as ArticleResponseDto).hashtags ?? [],
+      title: (newPost as ArticleResponseDto).title ?? null,
+      summary: (newPost as ArticleResponseDto).summary ?? null,
     };
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })
