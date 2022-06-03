@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PostModel } from '../../../database/models/post.model';
+import { PostModel, PostPrivacy } from '../../../database/models/post.model';
 import { getModelToken } from '@nestjs/sequelize';
 import { createMock } from '@golevelup/ts-jest';
 import { SentryService } from '@app/sentry';
@@ -32,6 +32,11 @@ import { ElasticsearchHelper } from '../../../common/helpers';
 import { mockedSearchResponse } from '../../post/test/mocks/response/search.response.mock';
 import { PageDto } from '../../../common/dto';
 import { PostResponseDto } from '../../post/dto/responses';
+import { mockedPostCreated } from '../../post/test/mocks/response/create-post.response.mock';
+import { mockedCreatePostDto } from '../../post/test/mocks/request/create-post.dto.mock';
+import { LogicException } from '../../../common/exceptions';
+import { mockedCreateArticleDto } from './mocks/request/create-article.dto.mock';
+import { mockedArticleCreated } from './mocks/response/create-article.response.mock';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -40,6 +45,10 @@ describe('ArticleService', () => {
   let mentionService: MentionService;
   let commentService: CommentService;
   let userService: UserService;
+  let mediaService: MediaService;
+  let categoryService: CategoryService;
+  let seriesService: SeriesService;
+  let hashtagService: HashtagService;
   let elasticSearchService: ElasticsearchService;
   let postModelMock;
   let categoryModelMock;
@@ -103,12 +112,7 @@ describe('ArticleService', () => {
         },
         {
           provide: MediaService,
-          useValue: {
-            checkValidMedia: jest.fn(),
-            countMediaByPost: jest.fn(),
-            sync: jest.fn(),
-            getMediaList: jest.fn(),
-          },
+          useClass: jest.fn(),
         },
         {
           provide: Sequelize,
@@ -157,6 +161,10 @@ describe('ArticleService', () => {
     reactionService = moduleRef.get<ReactionService>(ReactionService);
     mentionService = moduleRef.get<MentionService>(MentionService);
     commentService = moduleRef.get<CommentService>(CommentService);
+    mediaService = moduleRef.get<MediaService>(MediaService);
+    categoryService = moduleRef.get<CategoryService>(CategoryService);
+    seriesService = moduleRef.get<SeriesService>(SeriesService);
+    hashtagService = moduleRef.get<HashtagService>(HashtagService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     categoryModelMock = moduleRef.get<typeof CategoryModel>(getModelToken(CategoryModel));
@@ -397,6 +405,87 @@ describe('ArticleService', () => {
       expect(result).toBeInstanceOf(PageDto);
 
       expect(result.list).toStrictEqual([]);
+    });
+  });
+
+  describe('createArticle', () => {
+    it('Create article successfully', async () => {
+      authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.addPostToCategories = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.addPostToSeries = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue(['hashtag1']);
+      hashtagService.addPostToHashtags = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
+      mediaService.createIfNotExist = jest.fn().mockReturnThis();
+      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+
+      postService.addPostGroup = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+
+      postModelMock.create = jest.fn().mockResolvedValue(mockedArticleCreated);
+
+      await articleService.createArticle(mockedUserAuth, mockedCreateArticleDto);
+
+      expect(sequelize.transaction).toBeCalledTimes(1);
+      expect(transactionMock.commit).toBeCalledTimes(1);
+      expect(transactionMock.rollback).not.toBeCalled();
+      expect(mediaService.sync).toBeCalledTimes(1);
+      expect(mentionService.create).not.toBeCalled();
+      expect(postService.addPostGroup).toBeCalledTimes(1);
+      expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
+        isDraft: true,
+        isArticle: true,
+        content: mockedCreateArticleDto.content,
+        createdBy: mockedUserAuth.id,
+        updatedBy: mockedUserAuth.id,
+        isImportant: mockedCreateArticleDto.setting.isImportant,
+        importantExpiredAt: mockedCreateArticleDto.setting.importantExpiredAt,
+        canShare: mockedCreateArticleDto.setting.canShare,
+        canComment: mockedCreateArticleDto.setting.canComment,
+        canReact: mockedCreateArticleDto.setting.canReact,
+        isProcessing: false,
+        hashtagsJson: mockedCreateArticleDto.hashtags,
+        title: mockedCreateArticleDto.title,
+        summary: mockedCreateArticleDto.summary,
+        privacy: PostPrivacy.PUBLIC,
+      });
+    });
+
+    it('Should catch exception if creator not found in cache', async () => {
+      userService.get = jest.fn().mockResolvedValue(null);
+      try {
+        const result = await articleService.createArticle(
+          { ...mockedUserAuth, profile: null },
+          mockedCreateArticleDto
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
+
+    it('Should rollback if have an exception when insert data into DB', async () => {
+      authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+
+      postModelMock.create = jest
+        .fn()
+        .mockRejectedValue(new Error('Any error when insert data to DB'));
+
+      try {
+        await articleService.createArticle(mockedUserAuth, mockedCreateArticleDto);
+      } catch (error) {
+        expect(sequelize.transaction).toBeCalledTimes(1);
+        expect(transactionMock.commit).not.toBeCalled();
+        expect(transactionMock.rollback).toBeCalledTimes(1);
+      }
     });
   });
 });
