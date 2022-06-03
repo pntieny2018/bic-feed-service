@@ -37,6 +37,10 @@ import { mockedCreatePostDto } from '../../post/test/mocks/request/create-post.d
 import { LogicException } from '../../../common/exceptions';
 import { mockedCreateArticleDto } from './mocks/request/create-article.dto.mock';
 import { mockedArticleCreated } from './mocks/response/create-article.response.mock';
+import { mockMediaModelArray } from '../../post/test/mocks/input.mock';
+import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
+import { MediaStatus, MediaType } from '../../../database/models/media.model';
+import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -472,6 +476,10 @@ describe('ArticleService', () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.getPrivacyPost = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -484,6 +492,149 @@ describe('ArticleService', () => {
       } catch (error) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
+        expect(transactionMock.rollback).toBeCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateArticle', () => {
+    it('Update article successfully', async () => {
+      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
+
+      postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+
+      categoryService.setCategoriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.setSeriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
+      hashtagService.setHashtagsByPost = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
+      mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
+        {
+          id: mockedUpdatePostDto.media.images[0].id,
+          name: 'filename.jpg',
+          origin: 'filename.jpg',
+          size: 1000,
+          url: 'http://googl.com',
+          width: 100,
+          type: MediaType.IMAGE,
+          createdBy: mockedUserAuth.id,
+          updatedBy: mockedUserAuth.id,
+          height: 100,
+          status: MediaStatus.COMPLETED,
+        },
+      ]);
+      postModelMock.update.mockResolvedValueOnce(mockedArticleCreated);
+
+      postModelMock.update = jest.fn().mockResolvedValue(mockedArticleCreated);
+
+      await articleService.updateArticle(
+        mockedArticleResponse,
+        mockedUserAuth,
+        mockedUpdateArticleDto
+      );
+
+      expect(sequelize.transaction).toBeCalledTimes(1);
+      expect(transactionMock.commit).toBeCalledTimes(1);
+      expect(transactionMock.rollback).not.toBeCalled();
+      expect(mediaService.sync).toBeCalledTimes(1);
+      expect(mentionService.create).not.toBeCalled();
+      expect(postService.setGroupByPost).toBeCalledTimes(1);
+      expect(postModelMock.update.mock.calls[0][0]).toStrictEqual({
+        content: mockedUpdateArticleDto.content,
+        updatedBy: mockedUserAuth.id,
+        isImportant: mockedCreateArticleDto.setting.isImportant,
+        importantExpiredAt: mockedCreateArticleDto.setting.importantExpiredAt,
+        canShare: mockedCreateArticleDto.setting.canShare,
+        canComment: mockedCreateArticleDto.setting.canComment,
+        canReact: mockedCreateArticleDto.setting.canReact,
+        title: mockedUpdateArticleDto.title,
+        summary: mockedUpdateArticleDto.summary,
+        privacy: PostPrivacy.PUBLIC,
+        hashtagsJson: [],
+      });
+    });
+
+    it('Should catch exception if creator not found in cache', async () => {
+      try {
+        await articleService.updateArticle(
+          mockedArticleResponse,
+          { ...mockedUserAuth, profile: null },
+          mockedUpdateArticleDto
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
+
+    it('Should catch exception if groups is invalid', async () => {
+      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      authorityService.checkCanUpdatePost = jest
+        .fn()
+        .mockRejectedValue(new Error('Not in the groups'));
+
+      try {
+        await articleService.updateArticle(
+          mockedArticleResponse,
+          mockedUserAuth,
+          mockedUpdateArticleDto
+        );
+      } catch (e) {
+        expect(e.message).toEqual('Not in the groups');
+      }
+    });
+
+    it('Should rollback if have an exception when update data into DB', async () => {
+      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
+
+      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+
+      postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+
+      mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
+      mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
+        {
+          id: mockedUpdateArticleDto.media.images[0].id,
+          name: 'filename.jpg',
+          origin: 'filename.jpg',
+          size: 1000,
+          url: 'http://googl.com',
+          width: 100,
+          type: MediaType.IMAGE,
+          createdBy: mockedUserAuth.id,
+          updatedBy: mockedUserAuth.id,
+          height: 100,
+          status: MediaStatus.COMPLETED,
+        },
+      ]);
+      postModelMock.update = jest
+        .fn()
+        .mockRejectedValue(new Error('Any error when insert data to DB'));
+
+      try {
+        await articleService.updateArticle(
+          mockedArticleResponse,
+          mockedUserAuth,
+          mockedUpdateArticleDto
+        );
+      } catch (e) {
+        expect(sequelize.transaction).toBeCalledTimes(1);
+        expect(transactionMock.commit).not.toBeCalledTimes(1);
         expect(transactionMock.rollback).toBeCalledTimes(1);
       }
     });
