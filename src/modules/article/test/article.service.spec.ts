@@ -402,9 +402,11 @@ describe('ArticleService', () => {
         offset: 0,
         limit: 1,
       };
-      mockedUserAuth.profile = null;
       elasticSearchService.search = jest.fn().mockResolvedValue(mockedSearchResponse);
-      const result = await articleService.searchArticle(mockedUserAuth, searchDto);
+      const result = await articleService.searchArticle(
+        { ...mockedUserAuth, profile: null },
+        searchDto
+      );
       expect(elasticSearchService.search).not.toBeCalled();
       expect(result).toBeInstanceOf(PageDto);
 
