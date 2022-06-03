@@ -648,13 +648,11 @@ export class PostService {
     }
     const groups = await this.groupService.getMany(groupIds);
     let totalPrivate = 0;
-    let totalSecret = 0;
     let totalOpen = 0;
     groups.forEach((g) => {
       if (g.privacy === GroupPrivacy.PUBLIC) return PostPrivacy.PUBLIC;
       if (g.privacy === GroupPrivacy.OPEN) totalOpen++;
       if (g.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
-      if (g.privacy === GroupPrivacy.SECRET) totalSecret++;
     });
 
     if (totalOpen > 0) return PostPrivacy.OPEN;
@@ -1415,5 +1413,19 @@ export class PostService {
     ) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
     }
+  }
+
+  public async updatePostPrivacy(postId: string): Promise<void> {
+    const post = await this.findPost({ postId });
+    const groupIds = post.groups.map((g) => g.groupId);
+    const privacy = await this.getPrivacyPost(groupIds);
+    await this.postModel.update(
+      { privacy },
+      {
+        where: {
+          id: postId,
+        },
+      }
+    );
   }
 }
