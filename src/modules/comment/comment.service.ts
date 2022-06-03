@@ -368,7 +368,7 @@ export class CommentService {
       await this._authorityService.checkCanReadPost(user, post);
     }
     if (checkAccess && !user) {
-      await this._authorityService.checkPublicPost(post);
+      await this._authorityService.checkIsPublicPost(post);
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
@@ -415,7 +415,7 @@ export class CommentService {
     if (user) {
       await this._authorityService.checkCanReadPost(user, post);
     } else {
-      await this._authorityService.checkPublicPost(post);
+      await this._authorityService.checkIsPublicPost(post);
     }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);

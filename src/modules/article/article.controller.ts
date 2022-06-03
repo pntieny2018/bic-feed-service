@@ -107,7 +107,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('articleId') articleId: string
   ): Promise<ArticleResponseDto> {
-    const isPublished = await this._articleService.publishArticle(articleId, user.id);
+    const isPublished = await this._articleService.publishArticle(articleId, user);
     if (isPublished) {
       const post = await this._articleService.getArticle(articleId, user, new GetArticleDto());
       this._eventEmitter.emit(

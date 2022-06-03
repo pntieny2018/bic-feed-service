@@ -153,7 +153,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<PostResponseDto> {
-    const isPublished = await this._postService.publishPost(postId, user.id);
+    const isPublished = await this._postService.publishPost(postId, user);
     if (isPublished) {
       const post = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
