@@ -682,19 +682,19 @@ export class PostService {
       if (content !== null) {
         dataUpdate['content'] = content;
       }
-      if (setting.hasOwnProperty('canShare')) {
+      if (setting && setting.hasOwnProperty('canShare')) {
         dataUpdate['canShare'] = setting.canShare;
       }
-      if (setting.hasOwnProperty('canComment')) {
+      if (setting && setting.hasOwnProperty('canComment')) {
         dataUpdate['canComment'] = setting.canComment;
       }
-      if (setting.hasOwnProperty('canReact')) {
+      if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
-      if (setting.hasOwnProperty('isImportant')) {
+      if (setting && setting.hasOwnProperty('isImportant')) {
         dataUpdate['isImportant'] = setting.isImportant;
       }
-      if (setting.hasOwnProperty('importantExpiredAt')) {
+      if (setting && setting.hasOwnProperty('importantExpiredAt')) {
         dataUpdate['importantExpiredAt'] =
           setting.isImportant === false ? null : setting.importantExpiredAt;
       }
