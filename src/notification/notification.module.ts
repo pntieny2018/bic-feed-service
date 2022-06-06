@@ -4,9 +4,10 @@ import { CommentNotificationService } from './services';
 import { CommentDissociationService } from './dissociations';
 import { NotificationService } from './notification.service';
 import { CommentActivityService, PostActivityService, ReactionActivityService } from './activities';
+import { CommentModule } from '../modules/comment';
 
 @Module({
-  imports: [forwardRef(() => PostModule)],
+  imports: [forwardRef(() => PostModule), forwardRef(() => CommentModule)],
   providers: [
     NotificationService,
     PostActivityService,
