@@ -296,8 +296,18 @@ export class PostListener {
         },
       });
 
-      const { actor, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
-        post;
+      const {
+        actor,
+        id,
+        content,
+        commentsCount,
+        media,
+        mentions,
+        setting,
+        audience,
+        createdAt,
+        isArticle,
+      } = post;
 
       const dataIndex = {
         id,
@@ -309,13 +319,23 @@ export class PostListener {
         setting,
         createdAt,
         actor,
+        isArticle,
+        categories: (post as ArticleResponseDto).categories ?? [],
+        series: (post as ArticleResponseDto).series ?? [],
+        hashtags: (post as ArticleResponseDto).hashtags ?? [],
+        title: (post as ArticleResponseDto).title ?? null,
+        summary: (post as ArticleResponseDto).summary ?? null,
       };
       const index = ElasticsearchHelper.INDEX.POST;
       this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
       });
-
+      if (post.isArticle === true) {
+        this._seriesService.updateTotalArticle(
+          (post as ArticleResponseDto).series.map((c) => c.id)
+        );
+      }
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,
