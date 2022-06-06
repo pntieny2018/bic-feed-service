@@ -20,7 +20,7 @@ export const mockedCreateArticleDto: CreateArticleDto = {
     videos: [],
     files: [],
   },
-  mentions: [],
+  mentions: [1],
   setting: {
     canReact: true,
     canComment: true,
