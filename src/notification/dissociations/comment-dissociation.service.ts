@@ -5,7 +5,7 @@ import { ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CommentModel } from '../../database/models/comment.model';
+import { CommentModel, IComment } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
@@ -25,7 +25,8 @@ export class CommentDissociationService {
   public async dissociateComment(
     actorId: number,
     commentId: string,
-    postResponse: PostResponseDto
+    postResponse: PostResponseDto,
+    cb?: (prevComments: IComment[]) => void
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
     const { schema } = getDatabaseConfig();
     const recipient = CommentRecipientDto.init();
@@ -74,34 +75,32 @@ export class CommentDissociationService {
        */
       const mentionedUsersInComment = (comment.mentions ?? []).map((m) => m.userId);
 
-      let prevComments = await this._commentModel.findAll({
+      let prevCommentsRes = await this._commentModel.findAll({
         where: {
           postId: comment.postId,
+          id: {
+            [Op.not]: comment.id,
+          },
           createdAt: {
             [Op.lte]: Sequelize.literal(
               `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${comment.id}')`
             ),
           },
-          createdBy: {
-            [Op.notIn]: postOwnerId
-              ? [
-                  ...new Set([
-                    actorId,
-                    postOwnerId,
-                    ...mentionedUsersInComment,
-                    ...mentionedUsersInPost,
-                  ]),
-                ]
-              : [...new Set([actorId, ...mentionedUsersInComment, ...mentionedUsersInPost])],
-          },
         },
         order: [['createdAt', 'DESC']],
-        limit: 50,
+        limit: 100,
       });
-      if (!prevComments) {
-        prevComments = [];
+
+      if (!prevCommentsRes) {
+        prevCommentsRes = [];
       }
 
+      const resultPrevComments = prevCommentsRes.map((c) => c.toJSON());
+      const ignoreUserIds = postOwnerId
+        ? [...new Set([actorId, postOwnerId, ...mentionedUsersInComment, ...mentionedUsersInPost])]
+        : [...new Set([actorId, ...mentionedUsersInComment, ...mentionedUsersInPost])];
+
+      const prevComments = resultPrevComments.filter((pc) => !ignoreUserIds.includes(pc.createdBy));
       /**
        * users who created prev comments
        */
@@ -159,6 +158,11 @@ export class CommentDissociationService {
           }
         }
       }
+
+      // call back to return prev comments
+      if (cb) {
+        cb(resultPrevComments);
+      }
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
@@ -197,12 +201,16 @@ export class CommentDissociationService {
               },
             ],
             where: {
+              id: {
+                [Op.not]: comment.id,
+              },
               createdAt: {
                 [Op.lte]: Sequelize.literal(
                   `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${comment.id}')`
                 ),
               },
             },
+
             limit: 100,
             order: [['createdAt', 'DESC']],
           },

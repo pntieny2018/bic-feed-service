@@ -237,7 +237,11 @@ export class PostListener {
         actor,
         event: event.getEventName(),
         data: updatedActivity,
-        oldData: oldActivity,
+        meta: {
+          post: {
+            oldData: oldActivity,
+          },
+        },
       },
     });
 
