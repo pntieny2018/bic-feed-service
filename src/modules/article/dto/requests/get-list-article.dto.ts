@@ -31,15 +31,6 @@ export class GetListArticlesDto extends PageOptionsDto {
   @IsUUID('4', { each: true })
   public hashtags?: string[] = [];
 
-  @ApiProperty({ name: 'group_id', example: 9 })
-  @Type(() => Number)
-  @IsInt()
-  @IsOptional()
-  @Expose({
-    name: 'group_id',
-  })
-  public groupId: number;
-
   @ApiProperty({ enum: OrderField, default: OrderField.CREATED_AT, required: true })
   @IsEnum(OrderField)
   @IsOptional()

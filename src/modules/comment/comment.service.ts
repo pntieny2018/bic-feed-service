@@ -1,5 +1,5 @@
 import { UserDto } from '../auth';
-import sequelize from 'sequelize';
+import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { PostAllow } from '../post';
 import { GiphyService } from '../giphy';
 import { MediaService } from '../media';
@@ -16,7 +16,6 @@ import { createUrlFromId } from '../giphy/giphy.util';
 import { EntityType } from '../media/media.constants';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { ExceptionHelper } from '../../common/helpers';
-import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { LogicException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
@@ -25,7 +24,12 @@ import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
-import { GetCommentsDto, UpdateCommentDto } from './dto/requests';
+import {
+  CreateCommentDto,
+  GetCommentEditedHistoryDto,
+  GetCommentsDto,
+  UpdateCommentDto,
+} from './dto/requests';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -33,7 +37,6 @@ import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
-import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
 
@@ -342,6 +345,51 @@ export class CommentService {
     return result;
   }
 
+  /**
+   * Get multiple comment by ids
+   * @param commentIds String
+   * @returns Promise resolve CommentResponseDto
+   */
+  public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
+    this._logger.debug(`[getComment] commentId: ${commentIds} `);
+
+    const responses = await this._commentModel.findAll({
+      order: [['createdAt', 'DESC']],
+      where: {
+        id: {
+          [Op.in]: commentIds,
+        },
+      },
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+        },
+      ],
+    });
+
+    if (!responses) {
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+    }
+    const rawComment = responses.map((r) => r.toJSON());
+    await Promise.all([
+      this._mentionService.bindMentionsToComment(rawComment),
+      this._giphyService.bindUrlToComment(rawComment),
+      this.bindUserToComment(rawComment),
+    ]);
+
+    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
+      excludeExtraneousValues: true,
+    });
+  }
   /**
    * Get comment list
    * @param user UserDto

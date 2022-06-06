@@ -283,7 +283,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postCategoryTable = PostCategoryModel.tableName;
     const postSeriesTable = PostSeriesModel.tableName;
     const postHastagTable = PostHashtagModel.tableName;
-    const postGroupTable = PostGroupModel.tableName;
     let constraints = '';
     if (idGT) {
       constraints += `AND p.id != ${this.sequelize.escape(idGT)}`;
@@ -331,14 +330,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         AND ph.hashtag_id IN(:hashtagIds)
       )`;
     }
-    // if ((getPostsDto as GetListArticlesDto).groupId) {
-    //   constraints += `AND EXISTS(
-    //     SELECT 1
-    //     from ${schema}.${postGroupTable} AS pg
-    //     WHERE pg.post_id = p.id
-    //     AND pg.group_id = :groupId
-    //   )`;
-    // }
     return constraints;
   }
 
@@ -447,7 +438,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     authUser: UserDto
   ): Promise<any[]> {
     const {
-      groupId,
       categories,
       hashtags,
       series,
@@ -530,7 +520,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         idGTE,
         idLT,
         idLTE,
-        groupId,
         categoryIds: categories,
         hashtagIds: hashtags,
         seriesIds: series,
