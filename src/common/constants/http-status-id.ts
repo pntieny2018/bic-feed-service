@@ -60,6 +60,8 @@ export const HTTP_STATUS_ID = {
   APP_POST_AS_READ_INVALID_PARAMETER: 'app.post.invalid_parameter',
   APP_POST_AS_READ_NOT_ALLOW: 'app.post.not_allow',
   APP_POST_NOT_FOUND: 'app.post.not_found',
+  APP_POST_NOT_ARTICLE: 'app.post.not_article',
+  APP_POST_GROUP_REQUIRED: 'app.post.groups_is_required',
 
   // SERIES
   APP_ARTICLE_CATEGORY_REQUIRED: 'app.article.category_required',
