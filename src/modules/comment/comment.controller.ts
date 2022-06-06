@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import {
   CreateCommentDto,
   UpdateCommentDto,
@@ -93,7 +93,7 @@ export class CommentController {
   @Post('/:commentId/reply')
   public async reply(
     @AuthUser() user: UserDto,
-    @Param('commentId') commentId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('reply comment');
@@ -129,7 +129,7 @@ export class CommentController {
   @Get('/:commentId')
   public get(
     @AuthUser() user: UserDto,
-    @Param('commentId') commentId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query(GetCommentLinkPipe) getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
     this._logger.debug('get comment');
@@ -143,7 +143,7 @@ export class CommentController {
   @Get('/:commentId/edited-history')
   public getCommentEditedHistory(
     @AuthUser() user: UserDto,
-    @Param('commentId') commentId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query() getCommentEditedHistoryDto: GetCommentEditedHistoryDto
   ): Promise<PageDto<CommentEditedHistoryDto>> {
     return this._commentService.getCommentEditedHistory(
@@ -164,7 +164,7 @@ export class CommentController {
   @Put('/:commentId')
   public async update(
     @AuthUser() user: UserDto,
-    @Param('commentId') commentId: string,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
     this._logger.debug('update comment');
@@ -192,7 +192,7 @@ export class CommentController {
   @Delete('/:commentId')
   public async destroy(
     @AuthUser() user: UserDto,
-    @Param('commentId') commentId: string
+    @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<boolean> {
     this._logger.debug('delete comment');
     const comment = await this._commentService.destroy(user, commentId);

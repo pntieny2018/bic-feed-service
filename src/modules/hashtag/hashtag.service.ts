@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HashtagResponseDto } from './dto/responses/hashtag-response.dto';
-import { CreateHashtagDto } from './dto/requests/create-hashtag.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { HashtagModel } from '../../database/models/hashtag.model';
 import { ArrayHelper, StringHelper } from '../../common/helpers';
@@ -9,8 +8,7 @@ import { PageDto } from '../../common/dto';
 import { GetHashtagDto } from './dto/requests/get-hashtag.dto';
 import { Op, Transaction } from 'sequelize';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
-import { String } from 'aws-sdk/clients/appstream';
-import { identity } from 'rxjs';
+import { ClassTransformer } from 'class-transformer';
 
 @Injectable()
 export class HashtagService {
@@ -19,7 +17,7 @@ export class HashtagService {
     @InjectModel(PostHashtagModel) private _postHashtagModel: typeof PostHashtagModel
   ) {}
   private _logger = new Logger(HashtagService.name);
-
+  private _classTransformer = new ClassTransformer();
   public async getHashtag(
     user: UserDto,
     getHashtagDto: GetHashtagDto
@@ -122,16 +120,14 @@ export class HashtagService {
     }
   }
 
-  public async findOrCreateHashtags(hashtagsName: string[]): Promise<string[]> {
+  public async findOrCreateHashtags(hashtagsName: string[]): Promise<HashtagResponseDto[]> {
     if (hashtagsName.length === 0) return [];
     const dataInsert = [];
-    let hashtagIds = [];
     const hashtags = await this._hashtagModel.findAll({
       where: {
         name: hashtagsName,
       },
     });
-    hashtagIds = hashtags.map((h) => h.id);
     hashtagsName.forEach(async (name) => {
       if (!hashtags.find((h) => h.name === name)) {
         dataInsert.push({
@@ -141,9 +137,13 @@ export class HashtagService {
       }
     });
 
-    const result = await this._hashtagModel.bulkCreate(dataInsert);
-    hashtagIds.push(...result.map((i) => i.id));
-
-    return hashtagIds;
+    const newHashtag = await this._hashtagModel.bulkCreate(dataInsert);
+    return this._classTransformer.plainToInstance(
+      HashtagResponseDto,
+      [...hashtags, ...newHashtag],
+      {
+        excludeExtraneousValues: true,
+      }
+    );
   }
 }

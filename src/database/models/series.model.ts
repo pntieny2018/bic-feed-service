@@ -7,12 +7,13 @@ import {
   Table,
   Default,
   UpdatedAt,
+  HasMany,
 } from 'sequelize-typescript';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { getDatabaseConfig } from '../../config/database';
 import { PostSeriesModel } from './post-series.model';
-import { PostModel } from './post.model';
+import { IPost, PostModel } from './post.model';
 import { QueryTypes } from 'sequelize';
 
 export interface ISeries {
@@ -26,6 +27,7 @@ export interface ISeries {
   totalView: number;
   createdAt: Date;
   updatedAt: Date;
+  posts?: IPost[];
 }
 
 @Table({
@@ -59,6 +61,9 @@ export class SeriesModel extends Model<ISeries, Omit<ISeries, 'id'>> implements 
   @Column
   public totalView: number;
 
+  @HasMany(() => PostSeriesModel)
+  public posts: PostModel[];
+
   @CreatedAt
   @Column
   public createdAt: Date;
@@ -81,7 +86,7 @@ export class SeriesModel extends Model<ISeries, Omit<ISeries, 'id'>> implements 
                   LEFT JOIN ${schema}.${postSeriesTable} AS ps ON ps.series_id = s.id
                   LEFT JOIN ${schema}.${postTable} AS p ON p.id = ps.post_id AND p.is_article = true AND p.is_draft = false
                   WHERE s.id IN (:seriesIds)
-                  GROUP BY s.id
+                  GROUP BY ps.series_id
                 ) as tmp
                 WHERE tmp.series_id = ${schema}.${seriesTable}.id`;
     await this.sequelize.query(query, {
