@@ -3,6 +3,7 @@ import { ObjectHelper } from '../../../common/helpers';
 import { UserDto } from '../../../modules/auth';
 import { PostResponseDto } from '../../../modules/post/dto/responses';
 import { GroupPrivacy } from '../../../shared/group/dto';
+import { NIL } from 'uuid';
 
 export const mockUserSharedDto = {
   id: 20,
@@ -94,7 +95,7 @@ export const mockCommentResponseDto = {
   id: '99',
   actor: mockUserSharedDto,
   edited: false,
-  parentId: null,
+  parentId: NIL,
   postId: mockPostResponseDto.id,
   totalReply: 0,
   ownerReactions: [],

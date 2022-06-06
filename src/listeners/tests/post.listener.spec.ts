@@ -14,7 +14,6 @@ import { SeriesService } from '../../modules/series/series.service';
 import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
 import { PostHasBeenDeletedEventPayload, PostHasBeenPublishedEventPayload } from '../../events/post/payload';
 import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
-import { mockedCreatePostResponse } from '../../modules/post/test/mocks/response/create-post.response.mock';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { ProcessVideoResponseDto } from '../../modules/post/dto/responses/process-video-response.dto';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';

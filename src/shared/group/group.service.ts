@@ -9,7 +9,7 @@ export class GroupService {
 
   public async get(groupId: number): Promise<GroupSharedDto> {
     const group = await this._store.get<GroupSharedDto>(`SG:${groupId}`);
-    if (group !== null && !group?.child) {
+    if (group && !group?.child) {
       group.child = {
         open: [],
         public: [],
