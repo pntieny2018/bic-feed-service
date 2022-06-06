@@ -224,6 +224,7 @@ describe('PostService', () => {
       expect(postService.addPostGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
         isDraft: true,
+        isArticle: false,
         content: mockedCreatePostDto.content,
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,
@@ -393,12 +394,12 @@ describe('PostService', () => {
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataUpdatePost);
 
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
-
+      authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-
+      mockedUserAuth.id = mockedDataUpdatePost.createdBy;
       const result = await postService.publishPost(
         mockedDataUpdatePost.id,
-        mockedDataUpdatePost.createdBy
+        mockedUserAuth
       );
       expect(result).toBe(true);
 
@@ -420,7 +421,7 @@ describe('PostService', () => {
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
 
       try {
-        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+        await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
         expect(error).toBeInstanceOf(LogicException);
       }
@@ -430,7 +431,7 @@ describe('PostService', () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(null);
 
       try {
-        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+        await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
         expect(error).toBeInstanceOf(LogicException);
       }
@@ -440,7 +441,7 @@ describe('PostService', () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       try {
-        await postService.publishPost(mockedDataUpdatePost.id, authUserId);
+        await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
         expect(error).toBeInstanceOf(LogicException);
       }
@@ -452,7 +453,7 @@ describe('PostService', () => {
 
     it('Delete post successfully', async () => {
       postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
-
+      authorityService.checkCanDeletePost = jest.fn().mockReturnThis();
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -467,7 +468,7 @@ describe('PostService', () => {
 
       userMarkedImportantPostModelMock.destroy = jest.fn().mockResolvedValue(mockedDataDeletePost);
 
-      postModelMock.findByPk = jest.fn().mockResolvedValue(mockedDataDeletePost);
+      postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataDeletePost);
 
       const result = await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
 

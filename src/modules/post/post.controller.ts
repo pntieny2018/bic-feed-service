@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -67,7 +68,7 @@ export class PostController {
   @Get('/:postId/edited-history')
   public getPostEditedHistory(
     @AuthUser() user: UserDto,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
     return this._postService.getPostEditedHistory(user, postId, getPostEditedHistoryDto);
@@ -91,8 +92,8 @@ export class PostController {
   })
   @Get('/:postId')
   public getPost(
-    @AuthUser() user: UserDto,
-    @Param('postId') postId: string,
+    @AuthUser(false) user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
@@ -123,7 +124,7 @@ export class PostController {
   @Put('/:postId')
   public async updatePost(
     @AuthUser() user: UserDto,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
@@ -150,9 +151,9 @@ export class PostController {
   @Put('/:postId/publish')
   public async publishPost(
     @AuthUser() user: UserDto,
-    @Param('postId') postId: string
+    @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<PostResponseDto> {
-    const isPublished = await this._postService.publishPost(postId, user.id);
+    const isPublished = await this._postService.publishPost(postId, user);
     if (isPublished) {
       const post = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
@@ -173,7 +174,7 @@ export class PostController {
   @Delete('/:id')
   public async deletePost(
     @AuthUser() user: UserDto,
-    @Param('id') postId: string
+    @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
     const postDeleted = await this._postService.deletePost(postId, user);
     if (postDeleted) {
@@ -195,7 +196,7 @@ export class PostController {
   @Put('/:id/mark-as-read')
   public async markReadPost(
     @AuthUser() user: UserDto,
-    @Param('id') postId: string
+    @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
     await this._postService.markReadPost(postId, user.id);
     return true;

@@ -1,13 +1,16 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { ArticleResponseDto } from '../../../dto/responses';
 
 export const mockedArticleResponse: ArticleResponseDto = {
   ownerReactions: [],
+  title: 'aaa',
+  summary: 'bbb',
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
   isArticle: true,
+  canAccess: true,
   media: {
     files: [],
     videos: [],
@@ -77,6 +80,13 @@ export const mockedArticleResponse: ArticleResponseDto = {
       name: 'Technical',
     },
   ],
+  hashtags: [
+    {
+      id: 'h1',
+      name: '#Vietnam',
+    },
+  ],
+  privacy: PostPrivacy.PUBLIC,
 };
 
 export const mockedArticleData = {

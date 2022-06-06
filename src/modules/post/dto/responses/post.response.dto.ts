@@ -11,6 +11,7 @@ import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
+import { PostPrivacy } from '../../../../database/models/post.model';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -212,8 +213,14 @@ export class PostResponseDto {
   @ApiProperty({
     type: Boolean,
   })
-  @Expose({ name: 'is_article' })
+  @Expose()
   public isArticle: boolean;
+
+  @ApiProperty({
+    enum: PostPrivacy,
+  })
+  @Expose()
+  public privacy: PostPrivacy;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

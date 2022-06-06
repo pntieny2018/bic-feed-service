@@ -17,6 +17,10 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
+import { SeriesModule } from '../../modules/series';
+import { SeriesService } from '../../modules/series/series.service';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
+import { PostPrivacy } from '../../database/models/post.model';
 
 @Injectable()
 export class PostListener {
@@ -29,7 +33,8 @@ export class PostListener {
     private readonly _postService: PostService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _seriesService: SeriesService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -37,6 +42,10 @@ export class PostListener {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
+
+    if (post.isArticle === true) {
+      this._seriesService.updateTotalArticle(post.series.map((c) => c.id));
+    }
 
     this._postService.deletePostEditedHistory(post.id).catch((e) => {
       this._logger.error(e, e?.stack);
@@ -70,6 +79,7 @@ export class PostListener {
           groups: (post?.groups ?? []).map((g) => g.groupId) as any,
         },
         isArticle: false,
+        privacy: PostPrivacy.PUBLIC,
       });
 
       this._notificationService.publishPostNotification({
@@ -93,8 +103,18 @@ export class PostListener {
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { post, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, createdAt } =
-      post;
+    const {
+      isDraft,
+      id,
+      content,
+      commentsCount,
+      media,
+      mentions,
+      setting,
+      audience,
+      createdAt,
+      isArticle,
+    } = post;
 
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
@@ -114,17 +134,27 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
-    this._notificationService.publishPostNotification({
-      key: `${post.id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: activity,
-      },
-    });
-
+    this._notificationService
+      .publishPostNotification({
+        key: `${post.id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: activity,
+        },
+      })
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
     const dataIndex = {
       id,
+      isArticle,
+      categories: (post as ArticleResponseDto).categories ?? [],
+      series: (post as ArticleResponseDto).series ?? [],
+      hashtags: (post as ArticleResponseDto).hashtags ?? [],
+      title: (post as ArticleResponseDto).title ?? null,
+      summary: (post as ArticleResponseDto).summary ?? null,
       commentsCount,
       content,
       media,
@@ -134,6 +164,14 @@ export class PostListener {
       createdAt,
       actor,
     };
+    if (post.isArticle === true) {
+      this._seriesService
+        .updateTotalArticle((post as ArticleResponseDto).series.map((c) => c.id))
+        .catch((e) => {
+          this._logger.error(e, e?.stack);
+          this._sentryService.captureException(e);
+        });
+    }
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
       this._logger.debug(e);
@@ -158,7 +196,8 @@ export class PostListener {
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience } = newPost;
+    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, isArticle } =
+      newPost;
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
@@ -172,6 +211,12 @@ export class PostListener {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
+    }
+
+    if (newPost.isArticle === true) {
+      this._seriesService.updateTotalArticle(
+        (newPost as ArticleResponseDto).series.map((c) => c.id)
+      );
     }
 
     if (isDraft) return;
@@ -205,6 +250,12 @@ export class PostListener {
       audience,
       setting,
       actor,
+      isArticle,
+      categories: (newPost as ArticleResponseDto).categories ?? [],
+      series: (newPost as ArticleResponseDto).series ?? [],
+      hashtags: (newPost as ArticleResponseDto).hashtags ?? [],
+      title: (newPost as ArticleResponseDto).title ?? null,
+      summary: (newPost as ArticleResponseDto).summary ?? null,
     };
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })

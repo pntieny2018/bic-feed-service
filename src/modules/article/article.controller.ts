@@ -14,6 +14,9 @@ import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetPostPipe } from '../post/pipes';
+import { PageDto } from '../../common/dto';
+import { SearchArticlesDto } from './dto/requests/search-article.dto';
+import { GetListArticlesDto } from './dto/requests';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -27,6 +30,30 @@ export class ArticleController {
     private _eventEmitter: InternalEventEmitterService
   ) {}
 
+  @ApiOperation({ summary: 'Search article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/search')
+  public searchArticles(
+    @AuthUser() user: UserDto,
+    @Query() searchArticlesDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.searchArticle(user, searchArticlesDto);
+  }
+
+  @ApiOperation({ summary: 'Get list article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/')
+  public getList(
+    @AuthUser() user: UserDto,
+    @Query() getArticleListDto: GetListArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.getList(user, getArticleListDto);
+  }
+
   @ApiOperation({ summary: 'Get article detail' })
   @ApiOkResponse({
     type: ArticleResponseDto,
@@ -38,7 +65,10 @@ export class ArticleController {
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
     if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
-    else return this._articleService.getArticle(articleId, user, getArticleDto);
+    else {
+      const article = this._articleService.getArticle(articleId, user, getArticleDto);
+      return article;
+    }
   }
 
   @ApiOperation({ summary: 'Create article' })
@@ -107,7 +137,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('articleId') articleId: string
   ): Promise<ArticleResponseDto> {
-    const isPublished = await this._articleService.publishArticle(articleId, user.id);
+    const isPublished = await this._articleService.publishArticle(articleId, user);
     if (isPublished) {
       const post = await this._articleService.getArticle(articleId, user, new GetArticleDto());
       this._eventEmitter.emit(

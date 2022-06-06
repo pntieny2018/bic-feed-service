@@ -47,6 +47,7 @@ module.exports = {
         defaultValue: 0
       }
     );
+    await queryInterface.addIndex(tableName, ['views']);
   },
 
   async down (queryInterface, Sequelize) {
