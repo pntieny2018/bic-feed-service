@@ -27,6 +27,7 @@ export class CommentDissociationService {
     commentId: string,
     postResponse: PostResponseDto
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
+    const { schema } = getDatabaseConfig();
     const recipient = CommentRecipientDto.init();
     const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
     const postMentions = Array.isArray(postResponse.mentions)
@@ -76,8 +77,10 @@ export class CommentDissociationService {
       let prevComments = await this._commentModel.findAll({
         where: {
           postId: comment.postId,
-          id: {
-            [Op.lt]: commentId,
+          createdAt: {
+            [Op.lte]: Sequelize.literal(
+              `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${comment.id}')`
+            ),
           },
           createdBy: {
             [Op.notIn]: postOwnerId
@@ -170,6 +173,7 @@ export class CommentDissociationService {
     groupAudienceIds: number[]
   ): Promise<ReplyCommentRecipientDto> {
     try {
+      const { schema } = getDatabaseConfig();
       const recipient = ReplyCommentRecipientDto.init();
 
       let parentComment = await this._commentModel.findOne({
@@ -193,8 +197,10 @@ export class CommentDissociationService {
               },
             ],
             where: {
-              id: {
-                [Op.lt]: comment.id,
+              createdAt: {
+                [Op.lte]: Sequelize.literal(
+                  `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${comment.id}')`
+                ),
               },
             },
             limit: 100,

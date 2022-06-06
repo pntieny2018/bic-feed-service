@@ -16,12 +16,9 @@ export class HashtagResponseDto {
   @ApiProperty({
     name: 'created_at',
   })
-  @Expose()
   public createdAt?: Date;
 
-  public constructor(iHashtag: IHashtag) {
-    this.id = iHashtag.id;
-    this.name = iHashtag.name;
-    this.createdAt = iHashtag.createdAt;
+  public constructor(data: Partial<HashtagResponseDto>) {
+    Object.assign(this, data);
   }
 }
