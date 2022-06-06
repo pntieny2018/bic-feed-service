@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { PostResponseDto } from '../../../dto/responses';
 
@@ -65,6 +65,7 @@ export const mockedPostResponse: PostResponseDto = {
       hasPreviousPage: false,
     },
   },
+  privacy: PostPrivacy.PUBLIC,
 };
 
 export const mockedPostData = {
@@ -101,4 +102,5 @@ export const mockedPostData = {
       createdAt: '2022-05-18T11:05:31.990Z',
     },
   ],
+  privacy: PostPrivacy.PUBLIC,
 };
