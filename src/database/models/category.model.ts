@@ -4,6 +4,7 @@ import {
   CreatedAt,
   Default,
   ForeignKey,
+  HasMany,
   Length,
   Model,
   PrimaryKey,
@@ -13,6 +14,8 @@ import {
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
+import { IPost, PostModel } from './post.model';
+import { PostCategoryModel } from './post-category.model';
 
 export interface ICategory {
   id: string;
@@ -25,6 +28,7 @@ export interface ICategory {
   updatedBy: number;
   createdAt?: Date;
   updatedAt?: Date;
+  posts?: IPost[];
 }
 
 @Table({
@@ -74,4 +78,7 @@ export class CategoryModel
   @UpdatedAt
   @Column
   public updatedAt?: Date;
+
+  @HasMany(() => PostCategoryModel)
+  public posts: PostModel[];
 }

@@ -1,5 +1,6 @@
 import { MentionableType } from '../../../common/constants';
 import { ObjectHelper } from '../../../common/helpers';
+import { PostPrivacy } from '../../../database/models/post.model';
 import { UserDto } from '../../../modules/auth';
 import { PostResponseDto } from '../../../modules/post/dto/responses';
 import { GroupPrivacy } from '../../../shared/group/dto';
@@ -44,6 +45,7 @@ export const mockPostResponseDto: PostResponseDto = {
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,
+  privacy: PostPrivacy.PUBLIC,
   reactionsCount: {
     [1]: {
       haha: 100,

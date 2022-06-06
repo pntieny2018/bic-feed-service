@@ -76,6 +76,13 @@ export class ArticleResponseDto extends PostResponseDto {
   @Expose()
   public hashtags: HashtagResponseDto[];
 
+  @ApiProperty({
+    description: 'Hashtags',
+    type: Boolean,
+  })
+  @Expose()
+  public canAccess: boolean;
+
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);
   }
