@@ -1,11 +1,8 @@
 import { IAppConfig } from '../config/app';
 import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from '../common/filters';
-import { INestApplication, Logger, VersioningType } from '@nestjs/common';
-import {
-  HandleResponseInterceptor,
-  InjectMessageResponseInterceptor,
-} from '../common/interceptors';
+import { INestApplication, Logger } from '@nestjs/common';
+import { HandleResponseInterceptor } from '../common/interceptors';
 
 export class AppBootstrap {
   /**
@@ -21,11 +18,11 @@ export class AppBootstrap {
       origin: '*',
     });
 
-    app.enableVersioning({
-      type: VersioningType.URI,
-    });
+    // app.enableVersioning({
+    //   type: VersioningType.URI,
+    // });
 
-    app.setGlobalPrefix(appConfig.apiPrefix);
+    // app.setGlobalPrefix(appConfig.apiPrefix);
 
     app.useGlobalInterceptors(new HandleResponseInterceptor());
 
