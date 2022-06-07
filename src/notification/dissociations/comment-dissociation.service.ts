@@ -55,7 +55,7 @@ export class CommentDissociationService {
 
       comment = comment.toJSON();
 
-      if (comment.parentId !== NIL_UUID) {
+      if (comment.parentId && comment.parentId !== NIL_UUID) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
 

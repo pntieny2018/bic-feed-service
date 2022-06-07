@@ -13,6 +13,10 @@ export class HashtagResponseDto {
   @Expose()
   public name: string;
 
+  @ApiProperty()
+  @Expose()
+  public slug: string;
+
   @ApiProperty({
     name: 'created_at',
   })

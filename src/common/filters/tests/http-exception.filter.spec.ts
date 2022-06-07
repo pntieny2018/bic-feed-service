@@ -1,7 +1,8 @@
 import { HttpExceptionFilter } from '../http-exception.filter';
 import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
-import { ValidatorException } from '../../exceptions';
+import { LogicException, ValidatorException } from '../../exceptions';
 import { StatusCode } from '../../enum';
+import { HTTP_STATUS_ID } from '../../constants';
 
 const mockJson = jest.fn();
 
@@ -51,7 +52,7 @@ describe('System header validation service', () => {
       expect(mockStatus).toBeCalledTimes(1);
       expect(mockStatus).toBeCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
       const args = mockJson.mock.calls[0][0];
-      expect(args.code).toBe(StatusCode.INTERNAL_SERVER_ERROR);
+      expect(args.code).toBe(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     });
     it('Http exception: BadRequestException', () => {
       httpExceptionFilter.catch(
@@ -65,7 +66,7 @@ describe('System header validation service', () => {
       expect(mockStatus).toBeCalledTimes(1);
       expect(mockStatus).toBeCalledWith(HttpStatus.BAD_REQUEST);
       const args = mockJson.mock.calls[0][0];
-      expect(args.code).toBe(StatusCode.BAD_REQUEST);
+      expect(args.code).toBe(HTTP_STATUS_ID.API_VALIDATION_ERROR);
     });
     it('Unknown exception', () => {
       httpExceptionFilter.catch(new Error('redis timeout'), mockArgumentsHost);
@@ -131,4 +132,17 @@ describe('System header validation service', () => {
       expect(args.meta.stack).toBeNull();
     });
   });
+
+  describe('LogicException', () => {
+    it('should show stack', () => {
+      httpExceptionFilter['_appEnv'] = 'development';
+
+      httpExceptionFilter.catch(
+        new LogicException('logic'),
+        mockArgumentsHost
+      )
+      const args = mockJson.mock.calls[0][0];
+      expect(args.meta.stack).not.toBeNull();
+    })
+  })
 });

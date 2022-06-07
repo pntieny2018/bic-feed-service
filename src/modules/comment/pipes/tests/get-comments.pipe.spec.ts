@@ -10,16 +10,16 @@ describe('GetCommentsPipe', function () {
 
   it('GetCommentsPipe.transform should set default value', () => {
     const response = getCommentsPipe.transform({
-      postId: 1,
+      postId: '1',
     });
 
     expect(response).toEqual({
-      postId: 1,
+      postId: '1',
       limit: 25,
       order: OrderEnum.DESC,
       childOrder: OrderEnum.DESC,
       childLimit: 10,
-      parentId: 0,
+      parentId: "00000000-0000-0000-0000-000000000000",
     });
   });
 });
