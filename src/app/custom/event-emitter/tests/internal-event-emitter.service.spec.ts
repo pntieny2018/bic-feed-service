@@ -32,7 +32,8 @@ describe('InternalEventEmitterService', () => {
       const eventName = 'event.name';
 
       service.emit({
-        getEventName: () => eventName,
+        payload: null,
+        getEventName: () => eventName
       });
       const params = eventEmitter2.emit.mock.calls[0][0];
       expect(params).toEqual(eventName);

@@ -16,6 +16,9 @@ import { FeedService } from '../feed.service';
 import { mockedUserAuth, mockGroup } from './mocks/input.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
 import { mockedGetTimeLineDto } from './mocks/request/get-timeline.dto.mock';
+import { mockIPost } from '../../post/test/mocks/input.mock';
+import { mockUserSeenPostModels } from '../../feed-publisher/tests/mocks/input.mock';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 
 class EPostModel extends PostModel {
   public reactionsCount: string;
@@ -250,4 +253,54 @@ describe('FeedService', () => {
       expect(sequelize.escape).toBeCalledTimes(6);
     });
   });
+
+  describe('FeedServices.getUsersSeenPots', () => {
+    it('should success', async () => {
+      postService.findPost = jest.fn().mockResolvedValue(mockIPost)
+      userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels)
+      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(true)
+      userSeenPostModel.count = jest.fn().mockResolvedValue(1)
+      userService.getMany = jest.fn().mockResolvedValue({
+        id: 1,
+        fullname: 'Bret Josh',
+        username: 'bret.josh',
+        avatar: 'https://bein.group/josh.png',
+      })
+      const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' })
+
+      expect(postService.findPost).toBeCalled()
+      expect(userSeenPostModel.findAll).toBeCalled()
+      expect(groupService.isMemberOfSomeGroups).toBeCalled()
+      expect(userSeenPostModel.count).toBeCalled()
+      expect(userService.getMany).toBeCalled()
+      expect(userInfo).toEqual({
+        "list": {
+          "avatar": "https://bein.group/josh.png",
+          "fullname": "Bret Josh",
+          "id": 1,
+          "username": "bret.josh"
+        },
+        "meta": {
+          "hasNextPage": false,
+          "hasPreviousPage": false,
+          "limit": 25,
+          "total": 1
+        }
+      })
+    })
+    it('should fail if member not in group', async () => {
+      postService.findPost = jest.fn().mockResolvedValue(mockIPost)
+      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(false)
+      sentryService.captureException = jest.fn()
+      try {
+        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' })
+      } catch (e) {
+        expect(postService.findPost).toBeCalled()
+        expect(groupService.isMemberOfSomeGroups).toBeCalled()
+        expect(sentryService.captureException).toBeCalled()
+        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN)
+      }
+
+    })
+  })
 });
