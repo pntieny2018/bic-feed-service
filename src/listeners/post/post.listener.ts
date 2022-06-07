@@ -117,7 +117,7 @@ export class PostListener {
     } = post;
 
     const mediaIds = media.videos
-      .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+      .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
     this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
 
