@@ -813,7 +813,10 @@ export class PostService {
       let isProcessing = false;
       if (
         post.media.filter(
-          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
         ).length > 0
       ) {
         isDraft = true;
