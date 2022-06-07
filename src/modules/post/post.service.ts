@@ -48,6 +48,7 @@ import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
+import { Severity } from '@sentry/node';
 
 @Injectable()
 export class PostService {
@@ -1371,6 +1372,10 @@ export class PostService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
+      this.sentryService.captureMessage(
+        `update to processing-- ${JSON.stringify(ids)}`,
+        Severity.Debug
+      );
       await this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this.logger.error(e, e?.stack);
