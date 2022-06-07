@@ -733,7 +733,10 @@ export class PostService {
         const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
         if (
           mediaList.filter(
-            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+            (m) =>
+              m.status === MediaStatus.WAITING_PROCESS ||
+              m.status === MediaStatus.PROCESSING ||
+              m.status === MediaStatus.FAILED
           ).length > 0
         ) {
           dataUpdate['isDraft'] = true;
