@@ -48,6 +48,7 @@ import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
+import { Severity } from '@sentry/node';
 
 @Injectable()
 export class PostService {
@@ -732,7 +733,10 @@ export class PostService {
         const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
         if (
           mediaList.filter(
-            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+            (m) =>
+              m.status === MediaStatus.WAITING_PROCESS ||
+              m.status === MediaStatus.PROCESSING ||
+              m.status === MediaStatus.FAILED
           ).length > 0
         ) {
           dataUpdate['isDraft'] = true;
@@ -813,7 +817,10 @@ export class PostService {
       let isProcessing = false;
       if (
         post.media.filter(
-          (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
         ).length > 0
       ) {
         isDraft = true;
@@ -1340,10 +1347,12 @@ export class PostService {
     const post = PostModel.tableName;
     const media = MediaModel.tableName;
     const query = ` UPDATE ${schema}.${post}
-                SET is_processing = tmp.is_processing, is_draft = tmp.is_processing
+                SET is_processing = tmp.is_processing, is_draft = tmp.isDraft
                 FROM (
-                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = 'completed' THEN 1 ELSE 0 END 
-		                ) < COUNT(m.id) THEN true ELSE false END as is_processing
+                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
+		                ) >= 1 THEN true ELSE false END as is_processing,
+                    CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.FAILED}' OR m.status = '${MediaStatus.PROCESSING}' OR m.status = '${MediaStatus.WAITING_PROCESS}' THEN 1 ELSE 0 END 
+		                ) >= 1 THEN true ELSE false END as isDraft
                   FROM ${schema}.${media} as m
                   JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
                   WHERE pm.post_id = :postId
@@ -1359,38 +1368,6 @@ export class PostService {
     });
   }
 
-  public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
-    const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.COMPLETED,
-    };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
-    await this.mediaService.updateData([videoId], dataUpdate);
-    const posts = await this.getPostsByMedia(videoId);
-    posts.forEach((post) => {
-      this.updatePostStatus(post.id);
-    });
-  }
-
-  public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
-    const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.COMPLETED,
-    };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
-    await this.mediaService.updateData([videoId], dataUpdate);
-    const posts = await this.getPostsByMedia(videoId);
-    posts.forEach((post) => {
-      this.updatePostStatus(post.id);
-    });
-  }
-
   public async processVideo(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     try {
@@ -1398,6 +1375,10 @@ export class PostService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
+      this.sentryService.captureMessage(
+        `update to processing-- ${JSON.stringify(ids)}`,
+        Severity.Debug
+      );
       await this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this.logger.error(e, e?.stack);
