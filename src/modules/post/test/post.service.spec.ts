@@ -1021,48 +1021,6 @@ describe('PostService', () => {
     });
   });
 
-  describe('videoPostFail', () => {
-    it('Should successfully', async () => {
-      mediaService.updateData = jest.fn().mockResolvedValue(Promise.resolve());
-
-      postService.getPostsByMedia = jest
-        .fn()
-        .mockResolvedValue([
-          { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
-          { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
-        ]);
-
-      postService.updatePostStatus = jest.fn().mockResolvedValue(Promise.resolve());
-
-      await postService.videoPostFail(mockProcessVideoResponseDto);
-
-      expect(mediaService.updateData).toBeCalledTimes(1);
-      expect(postService.getPostsByMedia).toBeCalledTimes(1);
-      expect(postService.updatePostStatus).toBeCalledTimes(2);
-    });
-  });
-
-  describe('videoPostSuccess', () => {
-    it('Should successfully', async () => {
-      mediaService.updateData = jest.fn().mockResolvedValue(Promise.resolve());
-
-      postService.getPostsByMedia = jest
-        .fn()
-        .mockResolvedValue([
-          { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
-          { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
-        ]);
-
-      postService.updatePostStatus = jest.fn().mockResolvedValue(Promise.resolve());
-
-      await postService.videoPostSuccess(mockProcessVideoResponseDto);
-
-      expect(mediaService.updateData).toBeCalledTimes(1);
-      expect(postService.getPostsByMedia).toBeCalledTimes(1);
-      expect(postService.updatePostStatus).toBeCalledTimes(2);
-    });
-  });
-
   describe('getPostsByMedia', () => {
     it('Should successfully', async () => {
       postModelMock.findAll = jest.fn().mockResolvedValue([{ toJSON: () => ({}) }]);

@@ -285,7 +285,14 @@ export class PostListener {
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { videoId, hlsUrl } = event.payload;
+    const { videoId, hlsUrl, meta } = event.payload;
+    const dataUpdate = {
+      url: hlsUrl,
+      status: MediaStatus.COMPLETED,
+    };
+    if (meta?.name) dataUpdate['name'] = meta.name;
+    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
+    if (meta?.size) dataUpdate['size'] = meta.size;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
@@ -358,7 +365,14 @@ export class PostListener {
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
 
-    const { videoId, hlsUrl } = event.payload;
+    const { videoId, hlsUrl, meta } = event.payload;
+    const dataUpdate = {
+      url: hlsUrl,
+      status: MediaStatus.COMPLETED,
+    };
+    if (meta?.name) dataUpdate['name'] = meta.name;
+    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
+    if (meta?.size) dataUpdate['size'] = meta.size;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {

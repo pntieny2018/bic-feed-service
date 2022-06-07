@@ -1342,8 +1342,8 @@ export class PostService {
     const query = ` UPDATE ${schema}.${post}
                 SET is_processing = tmp.is_processing, is_draft = tmp.is_processing
                 FROM (
-                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = 'completed' THEN 1 ELSE 0 END 
-		                ) < COUNT(m.id) THEN true ELSE false END as is_processing
+                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
+		                ) >= 1 THEN true ELSE false END as is_processing
                   FROM ${schema}.${media} as m
                   JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
                   WHERE pm.post_id = :postId
@@ -1356,38 +1356,6 @@ export class PostService {
       },
       type: QueryTypes.UPDATE,
       raw: true,
-    });
-  }
-
-  public async videoPostSuccess(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
-    const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.COMPLETED,
-    };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
-    await this.mediaService.updateData([videoId], dataUpdate);
-    const posts = await this.getPostsByMedia(videoId);
-    posts.forEach((post) => {
-      this.updatePostStatus(post.id);
-    });
-  }
-
-  public async videoPostFail(processVideoResponseDto: ProcessVideoResponseDto): Promise<void> {
-    const { videoId, hlsUrl, meta } = processVideoResponseDto;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.COMPLETED,
-    };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
-    await this.mediaService.updateData([videoId], dataUpdate);
-    const posts = await this.getPostsByMedia(videoId);
-    posts.forEach((post) => {
-      this.updatePostStatus(post.id);
     });
   }
 
