@@ -115,11 +115,10 @@ export class PostListener {
       createdAt,
       isArticle,
     } = post;
-
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    await this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
 
     if (isDraft) return;
 
@@ -134,19 +133,14 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
-    this._notificationService
-      .publishPostNotification({
-        key: `${post.id}`,
-        value: {
-          actor,
-          event: event.getEventName(),
-          data: activity,
-        },
-      })
-      .catch((e) => {
-        this._logger.error(e, e?.stack);
-        this._sentryService.captureException(e);
-      });
+    this._notificationService.publishPostNotification({
+      key: `${post.id}`,
+      value: {
+        actor,
+        event: event.getEventName(),
+        data: activity,
+      },
+    });
     const dataIndex = {
       id,
       isArticle,
