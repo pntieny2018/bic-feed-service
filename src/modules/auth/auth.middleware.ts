@@ -9,7 +9,10 @@ export class AuthMiddleware implements NestMiddleware {
   public async use(req: Request, res: Response, next: () => void): Promise<void> {
     if (req.headers?.user) {
       const payload = JSON.parse(req.headers?.user as string);
+
       req.user = await this._authService.getUser(payload);
+    } else {
+      req.user = null;
     }
 
     // const token = req.headers.authorization;
