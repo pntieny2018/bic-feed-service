@@ -1344,7 +1344,7 @@ export class PostService {
                 FROM (
                   SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
 		                ) >= 1 THEN true ELSE false END as is_processing,
-                    CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.FAILED} OR m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
+                    CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.FAILED} OR m.status = '${MediaStatus.PROCESSING}  OR m.status = '${MediaStatus.WAITING_PROCESS}' THEN 1 ELSE 0 END 
 		                ) >= 1 THEN true ELSE false END as isFailed
                   FROM ${schema}.${media} as m
                   JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
