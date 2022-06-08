@@ -531,21 +531,16 @@ export class ArticleService {
     if (!creator) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
-    let transaction;
     try {
-      transaction = await this._sequelizeConnection.transaction();
       const dataUpdate = { views: 1 };
       await this._postModel.increment(dataUpdate, {
         where: {
           id: postId,
           createdBy: authUserId,
         },
-        transaction,
       });
-      await transaction.commit();
       return true;
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }
@@ -707,5 +702,59 @@ export class ArticleService {
 
   public groupArticles(articles: any[]): any[] {
     return this._postService.groupPosts(articles);
+  }
+
+  public async getArticlesByMedia(id: string): Promise<ArticleResponseDto[]> {
+    const posts = await this._postModel.findAll({
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          required: true,
+          where: {
+            id,
+          },
+        },
+        {
+          model: CategoryModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: SeriesModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+        },
+      ],
+    });
+
+    const jsonPosts = posts.map((p) => p.toJSON());
+    await Promise.all([
+      this._postService.bindAudienceToPost(jsonPosts),
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this._postService.bindActorToPost(jsonPosts),
+    ]);
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
   }
 }

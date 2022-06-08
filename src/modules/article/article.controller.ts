@@ -12,11 +12,6 @@ import {
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
@@ -27,6 +22,11 @@ import { GetPostPipe } from '../post/pipes';
 import { PageDto } from '../../common/dto';
 import { SearchArticlesDto } from './dto/requests/search-article.dto';
 import { GetListArticlesDto } from './dto/requests';
+import {
+  ArticleHasBeenDeletedEvent,
+  ArticleHasBeenPublishedEvent,
+  ArticleHasBeenUpdatedEvent,
+} from '../../events/article';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -100,19 +100,15 @@ export class ArticleController {
 
   @ApiOperation({ summary: 'Update view article' })
   @ApiOkResponse({
-    type: ArticleResponseDto,
+    type: Boolean,
     description: 'Update view article successfully',
   })
   @Put('/:id/update-view')
   public async updateView(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
-  ): Promise<ArticleResponseDto> {
-    const isUpdated = await this._articleService.updateView(articleId, user);
-    if (isUpdated) {
-      const article = await this._articleService.getArticle(articleId, user, new GetArticleDto());
-      return article;
-    }
+  ): Promise<boolean> {
+    return this._articleService.updateView(articleId, user);
   }
 
   @ApiOperation({ summary: 'Update article' })
@@ -143,9 +139,9 @@ export class ArticleController {
         new GetArticleDto()
       );
       this._eventEmitter.emit(
-        new PostHasBeenUpdatedEvent({
-          oldPost: articleBefore,
-          newPost: articleUpdated,
+        new ArticleHasBeenUpdatedEvent({
+          oldArticle: articleBefore,
+          newArticle: articleUpdated,
           actor: user.profile,
         })
       );
@@ -166,14 +162,14 @@ export class ArticleController {
   ): Promise<ArticleResponseDto> {
     const isPublished = await this._articleService.publishArticle(articleId, user);
     if (isPublished) {
-      const post = await this._articleService.getArticle(articleId, user, new GetArticleDto());
+      const article = await this._articleService.getArticle(articleId, user, new GetArticleDto());
       this._eventEmitter.emit(
-        new PostHasBeenPublishedEvent({
-          post: post,
+        new ArticleHasBeenPublishedEvent({
+          article,
           actor: user.profile,
         })
       );
-      return post;
+      return article;
     }
   }
 
@@ -190,8 +186,8 @@ export class ArticleController {
     const articleDeleted = await this._articleService.deleteArticle(articleId, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
-        new PostHasBeenDeletedEvent({
-          post: articleDeleted,
+        new ArticleHasBeenDeletedEvent({
+          article: articleDeleted,
           actor: user.profile,
         })
       );
