@@ -9,6 +9,7 @@ export enum OrderField {
 export class GetListArticlesDto extends PageOptionsDto {
   @ApiProperty({
     type: [String],
+    required: false,
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
   @IsNotEmpty()
@@ -17,6 +18,7 @@ export class GetListArticlesDto extends PageOptionsDto {
 
   @ApiProperty({
     type: [String],
+    required: false,
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
   @IsOptional()
@@ -25,6 +27,7 @@ export class GetListArticlesDto extends PageOptionsDto {
 
   @ApiProperty({
     type: [String],
+    required: false,
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
   @IsOptional()
