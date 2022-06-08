@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
@@ -58,10 +68,10 @@ export class ArticleController {
   @ApiOkResponse({
     type: ArticleResponseDto,
   })
-  @Get('/:articleId')
+  @Get('/:id')
   public getArticle(
     @AuthUser(false) user: UserDto,
-    @Param('articleId') articleId: string,
+    @Param('id', ParseUUIDPipe) articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
     if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
@@ -93,10 +103,10 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Update view article successfully',
   })
-  @Put('/updateView')
+  @Put('/:id/update-view')
   public async updateView(
-    @Param('articleId') articleId: string,
-    @AuthUser() user: UserDto
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
     const isUpdated = await this._articleService.updateView(articleId, user);
     if (isUpdated) {
@@ -110,10 +120,10 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Update article successfully',
   })
-  @Put('/:articleId')
+  @Put('/:id')
   public async updateArticle(
     @AuthUser() user: UserDto,
-    @Param('articleId') articleId: string,
+    @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
     const articleBefore = await this._articleService.getArticle(
@@ -149,10 +159,10 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Publish article successfully',
   })
-  @Put('/:articleId/publish')
+  @Put('/:id/publish')
   public async publishPost(
     @AuthUser() user: UserDto,
-    @Param('articleId') articleId: string
+    @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
     const isPublished = await this._articleService.publishArticle(articleId, user);
     if (isPublished) {
@@ -175,7 +185,7 @@ export class ArticleController {
   @Delete('/:id')
   public async deleteArticle(
     @AuthUser() user: UserDto,
-    @Param('id') articleId: string
+    @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<boolean> {
     const articleDeleted = await this._articleService.deleteArticle(articleId, user);
     if (articleDeleted) {
