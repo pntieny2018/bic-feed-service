@@ -10,7 +10,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
   isArticle: true,
-  canAccess: true,
+  isLocked: true,
   media: {
     files: [],
     videos: [],

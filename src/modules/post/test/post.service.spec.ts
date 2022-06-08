@@ -121,6 +121,7 @@ describe('PostService', () => {
           provide: SentryService,
           useValue: {
             captureException: jest.fn(),
+            captureMessage: jest.fn()
           },
         },
         {

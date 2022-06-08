@@ -219,6 +219,22 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
+  public static loadLock(groupIds: number[], alias?: string): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+    return [
+      Sequelize.literal(`(
+        CASE WHEN "PostModel".privacy = '${
+          PostPrivacy.PRIVATE
+        }' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
+          WHERE spg.post_id = "PostModel".id AND spg.group_id IN(${groupIds.join(
+            ','
+          )}) ), FALSE) = FALSE THEN TRUE ELSE FALSE END
+               )`),
+      alias ? alias : 'isLocked',
+    ];
+  }
+
   public static loadReactionsCount(alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
     return [
@@ -451,6 +467,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       idLTE,
     } = getArticleListDto;
     const groupIds = authUser.profile.groups;
+    console.log('groupIds===', groupIds);
     const condition = this.getIdConstrains(getArticleListDto);
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
@@ -479,7 +496,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     FROM (
       SELECT 
       "p"."id", 
-      "p"."comments_count" AS "commentsCount", "p"."views",
+      "p"."comments_count" AS "commentsCount", 
+      "p"."views",
+      "p"."title",
+      "p"."summary",
       "p"."is_important" AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", "p"."is_article" AS "isArticle",
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
@@ -488,8 +508,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost",
-      CASE WHEN p.privacy = 'PRIVATE' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
-        WHERE spg.post_id = p.id AND spg.group_id IN(1, 2, 143, 197) ), false) = FALSE THEN TRUE ELSE FALSE END as "canAccess"
+      CASE WHEN p.privacy = '${PostPrivacy.PRIVATE}' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
+        WHERE spg.post_id = p.id AND spg.group_id IN(:groupIds) ), FALSE) = FALSE THEN TRUE ELSE FALSE END as "isLocked"
       FROM ${schema}.${postTable} AS "p"
       WHERE "p"."is_draft" = false 
           AND "p"."is_article" = true AND (

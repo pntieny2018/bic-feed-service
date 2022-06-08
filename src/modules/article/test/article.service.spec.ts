@@ -718,6 +718,7 @@ describe('ArticleService', () => {
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
       postService.groupPosts = jest.fn().mockResolvedValue([]);
+      articleService.maskArticleContent = jest.fn();
       reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
