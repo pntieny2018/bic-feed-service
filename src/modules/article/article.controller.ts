@@ -100,19 +100,15 @@ export class ArticleController {
 
   @ApiOperation({ summary: 'Update view article' })
   @ApiOkResponse({
-    type: ArticleResponseDto,
+    type: Boolean,
     description: 'Update view article successfully',
   })
   @Put('/:id/update-view')
   public async updateView(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
-  ): Promise<ArticleResponseDto> {
-    const isUpdated = await this._articleService.updateView(articleId, user);
-    if (isUpdated) {
-      const article = await this._articleService.getArticle(articleId, user, new GetArticleDto());
-      return article;
-    }
+  ): Promise<boolean> {
+    return this._articleService.updateView(articleId, user);
   }
 
   @ApiOperation({ summary: 'Update article' })

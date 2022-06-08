@@ -673,9 +673,13 @@ describe('ArticleService', () => {
     it('Update view successfully', async () => {
       postModelMock.increment = jest.fn();
       await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
-      expect(sequelize.transaction).toBeCalledTimes(1);
-      expect(transactionMock.commit).toBeCalledTimes(1);
-      expect(transactionMock.rollback).not.toBeCalled();
+      const dataUpdate = { views: 1 };
+      expect(postModelMock.increment).toBeCalledWith(dataUpdate, {
+        where: {
+          id: mockedArticleCreated.id,
+          createdBy: mockedUserAuth.id,
+        },
+      });
     });
 
     it('Should catch exception if creator not found in cache', async () => {
@@ -686,20 +690,6 @@ describe('ArticleService', () => {
         });
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
-    it('Should rollback if have an exception when update data into DB', async () => {
-      postModelMock.increment = jest
-        .fn()
-        .mockRejectedValue(new Error('Any error when update data to DB'));
-
-      try {
-        await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
-      } catch (e) {
-        expect(sequelize.transaction).toBeCalledTimes(1);
-        expect(transactionMock.commit).not.toBeCalledTimes(1);
-        expect(transactionMock.rollback).toBeCalledTimes(1);
       }
     });
   });
