@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { Optional } from 'sequelize';
+import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -18,6 +18,7 @@ import { CommentModel } from './comment.model';
 import { PostMediaModel } from './post-media.model';
 import { PostModel } from './post.model';
 import { v4 as uuid_v4 } from 'uuid';
+import { ThumbnailDto } from '../../modules/post/dto/responses/process-video-response.dto';
 
 export enum MediaType {
   VIDEO = 'video',
@@ -111,4 +112,9 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @Column
   public mimeType?: string;
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public thumbnails: ThumbnailDto[];
 }
