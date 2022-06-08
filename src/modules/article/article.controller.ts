@@ -88,6 +88,23 @@ export class ArticleController {
     }
   }
 
+  @ApiOperation({ summary: 'Update view article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+    description: 'Update view article successfully',
+  })
+  @Put('/updateView')
+  public async updateView(
+    @Param('articleId') articleId: string,
+    @AuthUser() user: UserDto
+  ): Promise<ArticleResponseDto> {
+    const isUpdated = await this._articleService.updateView(articleId, user);
+    if (isUpdated) {
+      const article = await this._articleService.getArticle(articleId, user, new GetArticleDto());
+      return article;
+    }
+  }
+
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
     type: ArticleResponseDto,

@@ -87,6 +87,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
     },
   ],
   privacy: PostPrivacy.PUBLIC,
+  views: 0,
 };
 
 export const mockedArticleData = {

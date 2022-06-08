@@ -482,6 +482,7 @@ describe('ArticleService', () => {
         title: mockedCreateArticleDto.title,
         summary: mockedCreateArticleDto.summary,
         privacy: PostPrivacy.PUBLIC,
+        views: 0,
       });
     });
 
@@ -660,6 +661,41 @@ describe('ArticleService', () => {
           mockedUserAuth,
           mockedUpdateArticleDto
         );
+      } catch (e) {
+        expect(sequelize.transaction).toBeCalledTimes(1);
+        expect(transactionMock.commit).not.toBeCalledTimes(1);
+        expect(transactionMock.rollback).toBeCalledTimes(1);
+      }
+    });
+  });
+
+  describe('updateView', () => {
+    it('Update view successfully', async () => {
+      postModelMock.increment = jest.fn();
+      await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
+      expect(sequelize.transaction).toBeCalledTimes(1);
+      expect(transactionMock.commit).toBeCalledTimes(1);
+      expect(transactionMock.rollback).not.toBeCalled();
+    });
+
+    it('Should catch exception if creator not found in cache', async () => {
+      try {
+        await articleService.updateView(mockedArticleCreated.id, {
+          ...mockedUserAuth,
+          profile: null,
+        });
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
+
+    it('Should rollback if have an exception when update data into DB', async () => {
+      postModelMock.increment = jest
+        .fn()
+        .mockRejectedValue(new Error('Any error when update data to DB'));
+
+      try {
+        await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
       } catch (e) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalledTimes(1);
