@@ -48,6 +48,7 @@ import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class PostService {

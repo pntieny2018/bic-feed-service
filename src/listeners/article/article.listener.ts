@@ -1,8 +1,8 @@
 import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
+  ArticleHasBeenDeletedEvent,
+  ArticleHasBeenPublishedEvent,
+  ArticleHasBeenUpdatedEvent,
+} from '../../events/article';
 import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
@@ -18,11 +18,15 @@ import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
 import { PostPrivacy } from '../../database/models/post.model';
+import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
+import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
+import { ArticleService } from '../../modules/article/article.service';
 
 @Injectable()
-export class PostListener {
-  private _logger = new Logger(PostListener.name);
+export class ArticleListener {
+  private _logger = new Logger(ArticleListener.name);
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
@@ -32,71 +36,42 @@ export class PostListener {
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
-    private readonly _seriesService: SeriesService
+    private readonly _seriesService: SeriesService,
+    private readonly _articleService: ArticleService
   ) {}
 
-  @On(PostHasBeenDeletedEvent)
-  public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
+  @On(ArticleHasBeenDeletedEvent)
+  public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { actor, post } = event.payload;
-    if (post.isDraft) return;
+    const { actor, article } = event.payload;
+    if (article.isDraft) return;
 
-    this._postService.deletePostEditedHistory(post.id).catch((e) => {
+    this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+
+    this._postService.deletePostEditedHistory(article.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
 
-    const index = ElasticsearchHelper.INDEX.POST;
-    try {
-      this._elasticsearchService.delete({ index, id: `${post.id}` }).catch((e) => {
+    const index = ElasticsearchHelper.INDEX.ARTICLE;
+    this._elasticsearchService
+      .delete({ index, id: `${article.id}` })
+      .catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
+      })
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+        return;
       });
-
-      const activity = this._postActivityService.createPayload({
-        actor: actor,
-        commentsCount: post.commentsCount,
-        content: post.content,
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        createdBy: post.createdBy,
-        isDraft: post.isDraft,
-        isProcessing: false,
-        setting: {
-          canComment: post.canComment,
-          canReact: post.canReact,
-          canShare: post.canShare,
-        },
-        id: post.id,
-        audience: {
-          users: [],
-          groups: (post?.groups ?? []).map((g) => g.groupId) as any,
-        },
-        isArticle: false,
-        privacy: PostPrivacy.PUBLIC,
-      });
-
-      this._notificationService.publishPostNotification({
-        key: `${post.id}`,
-        value: {
-          actor,
-          event: event.getEventName(),
-          data: activity,
-        },
-      });
-
-      return;
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
-      return;
-    }
+    //TODO:: send noti
   }
 
-  @On(PostHasBeenPublishedEvent)
-  public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
+  @On(ArticleHasBeenPublishedEvent)
+  public async onArticlePublished(event: ArticleHasBeenPublishedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { post, actor } = event.payload;
+    const { article, actor } = event.payload;
     const {
       isDraft,
       id,
@@ -108,7 +83,7 @@ export class PostListener {
       audience,
       createdAt,
       isArticle,
-    } = post;
+    } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
@@ -116,28 +91,21 @@ export class PostListener {
 
     if (isDraft) return;
 
-    const activity = this._postActivityService.createPayload(post);
-    if (((activity.object.mentions as any) ?? [])?.length === 0) {
-      activity.object.mentions = {};
-    }
     this._postService
-      .savePostEditedHistory(post.id, { oldData: null, newData: post })
+      .savePostEditedHistory(article.id, { oldData: null, newData: article })
       .catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
 
-    this._notificationService.publishPostNotification({
-      key: `${post.id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: activity,
-      },
-    });
     const dataIndex = {
       id,
       isArticle,
+      categories: article.categories ?? [],
+      series: article.series ?? [],
+      hashtags: article.hashtags ?? [],
+      title: article.title ?? null,
+      summary: article.summary ?? null,
       commentsCount,
       content,
       media,
@@ -147,12 +115,21 @@ export class PostListener {
       createdAt,
       actor,
     };
-    const index = ElasticsearchHelper.INDEX.POST;
+
+    this._seriesService
+      .updateTotalArticle((article as ArticleResponseDto).series.map((c) => c.id))
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
+
+    const index = ElasticsearchHelper.INDEX.ARTICLE;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
       this._logger.debug(e);
       this._sentryService.captureException(e);
     });
 
+    //TODO:: send noti
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -167,54 +144,42 @@ export class PostListener {
     }
   }
 
-  @On(PostHasBeenUpdatedEvent)
-  public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
+  @On(ArticleHasBeenUpdatedEvent)
+  public async onArticleUpdated(event: ArticleHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { oldPost, newPost, actor } = event.payload;
+    const { oldArticle, newArticle, actor } = event.payload;
     const { isDraft, id, content, commentsCount, media, mentions, setting, audience, isArticle } =
-      newPost;
+      oldArticle;
 
-    if (oldPost.isDraft === false) {
+    if (oldArticle.isDraft === false) {
       const mediaIds = media.videos
-        .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+        .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
       this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
-    if (oldPost.isDraft === false && isDraft === true) {
+    if (oldArticle.isDraft === false && isDraft === true) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
     }
 
+    this._seriesService.updateTotalArticle(
+      (oldArticle as ArticleResponseDto).series.map((c) => c.id)
+    );
+
     if (isDraft) return;
 
     this._postService
-      .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
+      .savePostEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
         this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
       });
+    //TODO:: send noti
 
-    const updatedActivity = this._postActivityService.createPayload(newPost);
-    const oldActivity = this._postActivityService.createPayload(oldPost);
-
-    this._notificationService.publishPostNotification({
-      key: `${id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: updatedActivity,
-        meta: {
-          post: {
-            oldData: oldActivity,
-          },
-        },
-      },
-    });
-
-    const index = ElasticsearchHelper.INDEX.POST;
+    const index = ElasticsearchHelper.INDEX.ARTICLE;
     const dataUpdate = {
       commentsCount,
       content,
@@ -224,6 +189,11 @@ export class PostListener {
       setting,
       actor,
       isArticle,
+      categories: newArticle.categories ?? [],
+      series: newArticle.series ?? [],
+      hashtags: newArticle.hashtags ?? [],
+      title: newArticle.title ?? null,
+      summary: newArticle.summary ?? null,
     };
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })
@@ -238,7 +208,7 @@ export class PostListener {
         actor.id,
         id,
         audience.groups.map((g) => g.id),
-        oldPost.audience.groups.map((g) => g.id)
+        oldArticle.audience.groups.map((g) => g.id)
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
@@ -246,8 +216,8 @@ export class PostListener {
     }
   }
 
-  @On(PostVideoSuccessEvent)
-  public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
+  @On(ArticleVideoSuccessEvent)
+  public async onArticleVideoSuccess(event: ArticleVideoSuccessEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { videoId, hlsUrl, meta } = event.payload;
     const dataUpdate = {
@@ -258,18 +228,10 @@ export class PostListener {
     if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
     if (meta?.size) dataUpdate['size'] = meta.size;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
-    const posts = await this._postService.getPostsByMedia(videoId);
-    posts.forEach((post) => {
-      this._postService.updatePostStatus(post.id);
-      const postActivity = this._postActivityService.createPayload(post);
-      this._notificationService.publishPostNotification({
-        key: `${post.id}`,
-        value: {
-          actor: post.actor,
-          event: event.getEventName(),
-          data: postActivity,
-        },
-      });
+    const articles = await this._articleService.getArticlesByMedia(videoId);
+    articles.forEach((article) => {
+      this._postService.updatePostStatus(article.id);
+      //TODO:: send noti
 
       const {
         actor,
@@ -282,7 +244,7 @@ export class PostListener {
         audience,
         createdAt,
         isArticle,
-      } = post;
+      } = article;
 
       const dataIndex = {
         id,
@@ -295,12 +257,20 @@ export class PostListener {
         createdAt,
         actor,
         isArticle,
+        categories: article.categories ?? [],
+        series: article.series ?? [],
+        hashtags: article.hashtags ?? [],
+        title: article.title ?? null,
+        summary: article.summary ?? null,
       };
-      const index = ElasticsearchHelper.INDEX.POST;
+      const index = ElasticsearchHelper.INDEX.ARTICLE;
       this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
       });
+      this._seriesService.updateTotalArticle(
+        (article as ArticleResponseDto).series.map((c) => c.id)
+      );
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,
@@ -315,8 +285,8 @@ export class PostListener {
     });
   }
 
-  @On(PostVideoFailedEvent)
-  public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
+  @On(ArticleVideoFailedEvent)
+  public async onArticleVideoFailed(event: ArticleVideoFailedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
 
     const { videoId, hlsUrl, meta } = event.payload;
@@ -328,18 +298,10 @@ export class PostListener {
     if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
     if (meta?.size) dataUpdate['size'] = meta.size;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
-    const posts = await this._postService.getPostsByMedia(videoId);
-    posts.forEach((post) => {
-      this._postService.updatePostStatus(post.id);
-      const postActivity = this._postActivityService.createPayload(post);
-      this._notificationService.publishPostNotification({
-        key: `${post.id}`,
-        value: {
-          actor: post.actor,
-          event: event.getEventName(),
-          data: postActivity,
-        },
-      });
+    const articles = await this._articleService.getArticlesByMedia(videoId);
+    articles.forEach((article) => {
+      this._postService.updatePostStatus(article.id);
+      //TODO:: send noti
     });
   }
 }
