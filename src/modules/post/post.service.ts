@@ -1538,4 +1538,17 @@ export class PostService {
     });
     return result;
   }
+
+  public async bulkUpdatePostPrivacy(postIds: string[], privacy: PostPrivacy): Promise<void> {
+    await this.postModel.update(
+      { privacy },
+      {
+        where: {
+          id: {
+            [Op.in]: postIds,
+          },
+        },
+      }
+    );
+  }
 }
