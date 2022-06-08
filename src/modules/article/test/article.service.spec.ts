@@ -19,7 +19,7 @@ import { ArticleService } from '../article.service';
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { PostService } from '../../post/post.service';
 import { mockedArticleData, mockedArticleResponse } from './mocks/response/article.response.mock';
-import { GetArticleDto, SearchArticlesDto } from '../dto/requests';
+import { GetArticleDto, GetListArticlesDto, SearchArticlesDto } from '../dto/requests';
 import { CategoryService } from '../../category/category.service';
 import { SeriesService } from '../../series/series.service';
 import { HashtagService } from '../../hashtag/hashtag.service';
@@ -232,6 +232,19 @@ describe('ArticleService', () => {
       expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
     });
+
+    it('Should catch exception if post not found', async () => {
+      postModelMock.findOne = jest.fn();
+      try {
+        const result = await articleService.getArticle(
+          mockedArticleData.id,
+          mockedUserAuth,
+          getArticleDto
+        );
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
   });
 
   describe('getPublicArticle', () => {
@@ -262,6 +275,15 @@ describe('ArticleService', () => {
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
       expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
+    });
+
+    it('Should catch exception if post not found', async () => {
+      postModelMock.findOne = jest.fn();
+      try {
+        const result = await articleService.getPublicArticle(mockedArticleData.id, getArticleDto);
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
     });
   });
 
@@ -428,7 +450,8 @@ describe('ArticleService', () => {
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
-      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.create = jest.fn().mockResolvedValue(mockedCreateArticleDto.mentions);
+      mentionService.checkValidMentions = jest.fn();
 
       postService.addPostGroup = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
@@ -441,7 +464,7 @@ describe('ArticleService', () => {
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
       expect(mediaService.sync).toBeCalledTimes(1);
-      expect(mentionService.create).not.toBeCalled();
+      expect(mentionService.create).toBeCalledTimes(1);
       expect(postService.addPostGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
         isDraft: true,
@@ -459,6 +482,7 @@ describe('ArticleService', () => {
         title: mockedCreateArticleDto.title,
         summary: mockedCreateArticleDto.summary,
         privacy: PostPrivacy.PUBLIC,
+        views: 0,
       });
     });
 
@@ -483,7 +507,8 @@ describe('ArticleService', () => {
       seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
 
-      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.create = jest.fn().mockResolvedValue(mockedCreateArticleDto.mentions);
+      mentionService.checkValidMentions = jest.fn();
 
       postModelMock.create = jest
         .fn()
@@ -509,6 +534,7 @@ describe('ArticleService', () => {
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.checkValidMentions = jest.fn();
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
@@ -603,6 +629,7 @@ describe('ArticleService', () => {
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.checkValidMentions = jest.fn();
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
@@ -639,6 +666,66 @@ describe('ArticleService', () => {
         expect(transactionMock.commit).not.toBeCalledTimes(1);
         expect(transactionMock.rollback).toBeCalledTimes(1);
       }
+    });
+  });
+
+  describe('updateView', () => {
+    it('Update view successfully', async () => {
+      postModelMock.increment = jest.fn();
+      await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
+      expect(sequelize.transaction).toBeCalledTimes(1);
+      expect(transactionMock.commit).toBeCalledTimes(1);
+      expect(transactionMock.rollback).not.toBeCalled();
+    });
+
+    it('Should catch exception if creator not found in cache', async () => {
+      try {
+        await articleService.updateView(mockedArticleCreated.id, {
+          ...mockedUserAuth,
+          profile: null,
+        });
+      } catch (e) {
+        expect(e).toBeInstanceOf(LogicException);
+      }
+    });
+
+    it('Should rollback if have an exception when update data into DB', async () => {
+      postModelMock.increment = jest
+        .fn()
+        .mockRejectedValue(new Error('Any error when update data to DB'));
+
+      try {
+        await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
+      } catch (e) {
+        expect(sequelize.transaction).toBeCalledTimes(1);
+        expect(transactionMock.commit).not.toBeCalledTimes(1);
+        expect(transactionMock.rollback).toBeCalledTimes(1);
+      }
+    });
+  });
+
+  describe('getList', () => {
+    it('Should get list article successfully', async () => {
+      const getArticleListDto: GetListArticlesDto = {
+        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
+        offset: 0,
+        limit: 1,
+      };
+
+      PostModel.getArticlesData = jest.fn().mockResolvedValue(Promise.resolve());
+      userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
+
+      postService.bindActorToPost = jest.fn();
+      postService.bindAudienceToPost = jest.fn();
+      postService.groupPosts = jest.fn().mockResolvedValue([]);
+      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+
+      const result = await articleService.getList(mockedUserAuth, getArticleListDto);
+
+      expect(postService.bindActorToPost).toBeCalledTimes(1);
+      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(result).toBeInstanceOf(PageDto);
     });
   });
 });

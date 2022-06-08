@@ -465,6 +465,7 @@ export class ArticleService {
           isProcessing: false,
           privacy: postPrivacy,
           hashtagsJson: hashtagArr,
+          views: 0,
         },
         { transaction }
       );
@@ -515,6 +516,39 @@ export class ArticleService {
    */
   public async publishArticle(articleId: string, authUser: UserDto): Promise<boolean> {
     return this._postService.publishPost(articleId, authUser);
+  }
+
+  /**
+   * Update view article
+   * @param postId postID
+   * @param authUser UserDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
+    const authUserId = authUser.id;
+    const creator = authUser.profile;
+    if (!creator) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+    }
+    let transaction;
+    try {
+      transaction = await this._sequelizeConnection.transaction();
+      const dataUpdate = { views: 1 };
+      await this._postModel.increment(dataUpdate, {
+        where: {
+          id: postId,
+          createdBy: authUserId,
+        },
+        transaction,
+      });
+      await transaction.commit();
+      return true;
+    } catch (error) {
+      if (typeof transaction !== 'undefined') await transaction.rollback();
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
   }
 
   /**

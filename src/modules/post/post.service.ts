@@ -42,13 +42,12 @@ import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
 import sequelize from 'sequelize';
 import { ClientKafka } from '@nestjs/microservices';
-import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
-import { ArticleResponseDto } from '../article/dto/responses';
+import { Severity } from '@sentry/node';
 
 @Injectable()
 export class PostService {
@@ -733,7 +732,10 @@ export class PostService {
         const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
         if (
           mediaList.filter(
-            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
+            (m) =>
+              m.status === MediaStatus.WAITING_PROCESS ||
+              m.status === MediaStatus.PROCESSING ||
+              m.status === MediaStatus.FAILED
           ).length > 0
         ) {
           dataUpdate['isDraft'] = true;
@@ -1372,6 +1374,10 @@ export class PostService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
+      this.sentryService.captureMessage(
+        `update to processing-- ${JSON.stringify(ids)}`,
+        Severity.Debug
+      );
       await this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this.logger.error(e, e?.stack);

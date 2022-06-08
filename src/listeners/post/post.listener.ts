@@ -19,6 +19,7 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { PostPrivacy } from '../../database/models/post.model';
+import { Severity } from '@sentry/node';
 
 @Injectable()
 export class PostListener {
@@ -176,7 +177,7 @@ export class PostListener {
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
-        .filter((m) => m.status === MediaStatus.WAITING_PROCESS)
+        .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
       this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
@@ -257,7 +258,7 @@ export class PostListener {
     if (meta?.name) dataUpdate['name'] = meta.name;
     if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
     if (meta?.size) dataUpdate['size'] = meta.size;
-    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
+    await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this._postService.updatePostStatus(post.id);
@@ -322,12 +323,12 @@ export class PostListener {
     const { videoId, hlsUrl, meta } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
-      status: MediaStatus.COMPLETED,
+      status: MediaStatus.FAILED,
     };
     if (meta?.name) dataUpdate['name'] = meta.name;
     if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
     if (meta?.size) dataUpdate['size'] = meta.size;
-    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
+    await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
       this._postService.updatePostStatus(post.id);
