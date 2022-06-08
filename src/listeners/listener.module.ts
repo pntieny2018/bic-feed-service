@@ -11,6 +11,8 @@ import { FollowListener } from './follow/follow.listener';
 import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { SeriesModule } from '../modules/series';
+import { ArticleListener } from './article';
+import { ArticleModule } from '../modules/article';
 
 @Module({
   imports: [
@@ -22,7 +24,8 @@ import { SeriesModule } from '../modules/series';
     UserModule,
     FeedModule,
     SeriesModule,
+    ArticleModule,
   ],
-  providers: [PostListener, CommentListener, ReactionListener, FollowListener],
+  providers: [PostListener, CommentListener, ReactionListener, FollowListener, ArticleListener],
 })
 export class ListenerModule {}
