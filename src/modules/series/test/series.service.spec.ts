@@ -15,6 +15,7 @@ import { mockedUserAuth } from './mocks/user-auth.mock';
 import { SentryService } from '../../../../libs/sentry/src';
 import { ExceptionHelper } from '../../../common/helpers';
 import { mockedSeriesDeleted } from './mocks/request/delete-series.dto.mock';
+import { PostSeriesModel } from '../../../database/models/post-series.model';
 
 const slugify = require('slugify');
 
@@ -24,6 +25,7 @@ describe('SeriesService', () => {
   let transactionMock;
   let sequelize: Sequelize;
   let sentryService: SentryService;
+  let postSeriesModel;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [],
@@ -58,11 +60,22 @@ describe('SeriesService', () => {
             findAndCountAll: jest.fn(),
           },
         },
+        {
+          provide: getModelToken(PostSeriesModel),
+          useValue: {
+            create: jest.fn(),
+            update: jest.fn(),
+            findOne: jest.fn(),
+            destroy: jest.fn(),
+            findAndCountAll: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     seriesService = moduleRef.get<SeriesService>(SeriesService);
     seriesModelMock = moduleRef.get<typeof SeriesModel>(getModelToken(SeriesModel));
+    postSeriesModel = moduleRef.get<typeof PostSeriesModel>(getModelToken(PostSeriesModel));
     sequelize = moduleRef.get<Sequelize>(Sequelize);
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),

@@ -16,6 +16,9 @@ import { FeedService } from '../feed.service';
 import { mockedUserAuth, mockGroup } from './mocks/input.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
 import { mockedGetTimeLineDto } from './mocks/request/get-timeline.dto.mock';
+import { mockIPost } from '../../post/test/mocks/input.mock';
+import { mockUserSeenPostModels } from '../../feed-publisher/tests/mocks/input.mock';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 
 class EPostModel extends PostModel {
   public reactionsCount: string;
@@ -54,7 +57,9 @@ describe('FeedService', () => {
         },
         {
           provide: PostService,
-          useClass: jest.fn(),
+          useValue: {
+            groupPosts: jest.fn()
+          }
         },
         {
           provide: ReactionService,
@@ -62,7 +67,9 @@ describe('FeedService', () => {
         },
         {
           provide: SentryService,
-          useClass: jest.fn(),
+          useValue: {
+            captureException: jest.fn()
+          }
         },
         {
           provide: Sequelize,
@@ -234,20 +241,70 @@ describe('FeedService', () => {
     });
   });
 
-  describe('_getIdConstrains', () => {
-    it('Should successfully', async () => {
-      sequelize.escape = jest.fn();
+  // describe('_getIdConstrains', () => {
+  //   it('Should successfully', async () => {
+  //     sequelize.escape = jest.fn();
 
-      const getTimeLineDto = {
-        idGT: 'c8efbda1-4333-430c-871a-07481c640b60',
-        idGTE: '57adfbdd-7993-49c1-8c21-136d9b2e3dc9',
-        idLT: '80f01461-af26-4fa9-97e8-787bf94f0013',
-        idLTE: '097f9763-12be-4e02-bf8e-8ddd7f8375ee',
-      };
+  //     const getTimeLineDto = {
+  //       idGT: 'c8efbda1-4333-430c-871a-07481c640b60',
+  //       idGTE: '57adfbdd-7993-49c1-8c21-136d9b2e3dc9',
+  //       idLT: '80f01461-af26-4fa9-97e8-787bf94f0013',
+  //       idLTE: '097f9763-12be-4e02-bf8e-8ddd7f8375ee',
+  //     };
 
-      feedService['_getIdConstrains'](getTimeLineDto as any as GetTimelineDto);
+  //     feedService['_getIdConstrains'](getTimeLineDto as any as GetTimelineDto);
 
-      expect(sequelize.escape).toBeCalledTimes(6);
-    });
-  });
+  //     expect(sequelize.escape).toBeCalledTimes(6);
+  //   });
+  // });
+
+  describe('FeedServices.getUsersSeenPots', () => {
+    it('should success', async () => {
+      postService.findPost = jest.fn().mockResolvedValue(mockIPost)
+      userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels)
+      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(true)
+      userSeenPostModel.count = jest.fn().mockResolvedValue(1)
+      userService.getMany = jest.fn().mockResolvedValue({
+        id: 1,
+        fullname: 'Bret Josh',
+        username: 'bret.josh',
+        avatar: 'https://bein.group/josh.png',
+      })
+      const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' })
+
+      expect(postService.findPost).toBeCalled()
+      expect(userSeenPostModel.findAll).toBeCalled()
+      expect(groupService.isMemberOfSomeGroups).toBeCalled()
+      expect(userSeenPostModel.count).toBeCalled()
+      expect(userService.getMany).toBeCalled()
+      expect(userInfo).toEqual({
+        "list": {
+          "avatar": "https://bein.group/josh.png",
+          "fullname": "Bret Josh",
+          "id": 1,
+          "username": "bret.josh"
+        },
+        "meta": {
+          "hasNextPage": false,
+          "hasPreviousPage": false,
+          "limit": 25,
+          "total": 1
+        }
+      })
+    })
+    it('should fail if member not in group', async () => {
+      postService.findPost = jest.fn().mockResolvedValue(mockIPost)
+      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(false)
+      sentryService.captureException = jest.fn()
+      try {
+        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' })
+      } catch (e) {
+        expect(postService.findPost).toBeCalled()
+        expect(groupService.isMemberOfSomeGroups).toBeCalled()
+        expect(sentryService.captureException).toBeCalled()
+        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN)
+      }
+
+    })
+  })
 });

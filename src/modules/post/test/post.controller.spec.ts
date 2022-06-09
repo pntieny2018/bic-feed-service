@@ -137,7 +137,7 @@ describe('PostController', () => {
       const result = await postController.publishPost(userDto, mockedPostResponse.id);
 
       expect(postService.publishPost).toBeCalledTimes(1);
-      expect(postService.publishPost).toBeCalledWith(mockedPostResponse.id, userDto.id);
+      expect(postService.publishPost).toBeCalledWith(mockedPostResponse.id, userDto);
       expect(postService.getPost).toBeCalledTimes(1);
       expect(postService.getPost).toBeCalledWith(mockedPostResponse.id, userDto, new GetPostDto());
       expect(result).toBe(mockedPostResponse);

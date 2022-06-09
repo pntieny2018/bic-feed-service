@@ -42,7 +42,6 @@ import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto } from './dto/responses';
 import sequelize from 'sequelize';
 import { ClientKafka } from '@nestjs/microservices';
-import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
@@ -1430,7 +1429,9 @@ export class PostService {
         updatedBy,
         createdAt,
         updatedAt,
-        canAccess,
+        isLocked,
+        title,
+        summary,
         isArticle,
         isNowImportant,
       } = post;
@@ -1483,7 +1484,9 @@ export class PostService {
           mentions,
           media,
           ownerReactions,
-          canAccess,
+          isLocked,
+          title,
+          summary,
           isArticle,
         });
         return;

@@ -1,13 +1,16 @@
 import { PostVideoHasBeenPublished } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
-import { ProcessVideoResponseDto } from '../../modules/post/dto/responses/process-video-response.dto';
+import {
+  ProcessVideoResponseDto,
+  VideoProcessingEndDto,
+} from '../../modules/post/dto/responses/process-video-response.dto';
 
-export class PostVideoSuccessEvent implements IEvent<ProcessVideoResponseDto> {
+export class PostVideoSuccessEvent implements IEvent<VideoProcessingEndDto> {
   protected static event = PostVideoHasBeenPublished;
 
-  public payload: ProcessVideoResponseDto;
+  public payload: VideoProcessingEndDto;
 
-  public constructor(payload: ProcessVideoResponseDto) {
+  public constructor(payload: VideoProcessingEndDto) {
     Object.assign(this, {
       payload: payload,
     });

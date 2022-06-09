@@ -17,9 +17,7 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
-import { SeriesModule } from '../../modules/series';
 import { SeriesService } from '../../modules/series/series.service';
-import { ArticleResponseDto } from '../../modules/article/dto/responses';
 import { PostPrivacy } from '../../database/models/post.model';
 import { Severity } from '@sentry/node';
 
@@ -43,10 +41,6 @@ export class PostListener {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
-
-    if (post.isArticle === true) {
-      this._seriesService.updateTotalArticle(post.series.map((c) => c.id));
-    }
 
     this._postService.deletePostEditedHistory(post.id).catch((e) => {
       this._logger.error(e, e?.stack);
@@ -145,11 +139,6 @@ export class PostListener {
     const dataIndex = {
       id,
       isArticle,
-      categories: (post as ArticleResponseDto).categories ?? [],
-      series: (post as ArticleResponseDto).series ?? [],
-      hashtags: (post as ArticleResponseDto).hashtags ?? [],
-      title: (post as ArticleResponseDto).title ?? null,
-      summary: (post as ArticleResponseDto).summary ?? null,
       commentsCount,
       content,
       media,
@@ -159,14 +148,6 @@ export class PostListener {
       createdAt,
       actor,
     };
-    if (post.isArticle === true) {
-      this._seriesService
-        .updateTotalArticle((post as ArticleResponseDto).series.map((c) => c.id))
-        .catch((e) => {
-          this._logger.error(e, e?.stack);
-          this._sentryService.captureException(e);
-        });
-    }
     const index = ElasticsearchHelper.INDEX.POST;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
       this._logger.debug(e);
@@ -208,12 +189,6 @@ export class PostListener {
       });
     }
 
-    if (newPost.isArticle === true) {
-      this._seriesService.updateTotalArticle(
-        (newPost as ArticleResponseDto).series.map((c) => c.id)
-      );
-    }
-
     if (isDraft) return;
 
     this._postService
@@ -250,11 +225,6 @@ export class PostListener {
       setting,
       actor,
       isArticle,
-      categories: (newPost as ArticleResponseDto).categories ?? [],
-      series: (newPost as ArticleResponseDto).series ?? [],
-      hashtags: (newPost as ArticleResponseDto).hashtags ?? [],
-      title: (newPost as ArticleResponseDto).title ?? null,
-      summary: (newPost as ArticleResponseDto).summary ?? null,
     };
     this._elasticsearchService
       .update({ index, id: `${id}`, body: { doc: dataUpdate } })
@@ -280,14 +250,15 @@ export class PostListener {
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { videoId, hlsUrl, meta } = event.payload;
+    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
       status: MediaStatus.COMPLETED,
     };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
+    if (properties?.name) dataUpdate['name'] = properties.name;
+    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
+    if (properties?.size) dataUpdate['size'] = properties.size;
+    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {
@@ -326,22 +297,12 @@ export class PostListener {
         createdAt,
         actor,
         isArticle,
-        categories: (post as ArticleResponseDto).categories ?? [],
-        series: (post as ArticleResponseDto).series ?? [],
-        hashtags: (post as ArticleResponseDto).hashtags ?? [],
-        title: (post as ArticleResponseDto).title ?? null,
-        summary: (post as ArticleResponseDto).summary ?? null,
       };
       const index = ElasticsearchHelper.INDEX.POST;
       this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
       });
-      if (post.isArticle === true) {
-        this._seriesService.updateTotalArticle(
-          (post as ArticleResponseDto).series.map((c) => c.id)
-        );
-      }
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,
@@ -360,14 +321,15 @@ export class PostListener {
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
 
-    const { videoId, hlsUrl, meta } = event.payload;
+    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
       status: MediaStatus.FAILED,
     };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
+    if (properties?.name) dataUpdate['name'] = properties.name;
+    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
+    if (properties?.size) dataUpdate['size'] = properties.size;
+    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getPostsByMedia(videoId);
     posts.forEach((post) => {

@@ -54,7 +54,12 @@ describe('NotificationService', () => {
         PostDissociationService,
         {
           provide: KAFKA_PRODUCER,
-          useClass: jest.fn(),
+          // useClass: jest.fn(),
+          useValue: {
+            producer: {
+              send: jest.fn()
+            },
+          },
         },
         {
           provide: Sequelize,
@@ -107,21 +112,18 @@ describe('NotificationService', () => {
 
   describe('NotificationService', () => {
     it('Func: publishPostNotification', async () => {
-      kafkaProducer.emit = jest.fn();
       notificationService.publishPostNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
 
     it('Func: publishCommentNotification', async () => {
-      kafkaProducer.emit = jest.fn();
       notificationService.publishCommentNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
 
     it('Func: publishReactionNotification', async () => {
-      kafkaProducer.emit = jest.fn();
       notificationService.publishReactionNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
   });
 
@@ -262,12 +264,11 @@ describe('NotificationService', () => {
     });
 
     it('Func: destroy', async () => {
-      kafkaProducer.emit = jest.fn();
       await commentNotificationService.destroy(
         'event-name',
         mockCommentModel as unknown as IComment
       );
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
   });
 });

@@ -126,7 +126,22 @@ export class ArticleService {
     authUser: UserDto,
     getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset } = getArticleListDto;
+    const { limit, offset, groupId } = getArticleListDto;
+    if (groupId) {
+      const group = await this._groupService.get(groupId);
+      if (!group) {
+        throw new BadRequestException(`Group ${groupId} not found`);
+      }
+      const groupIds = this._groupService.getGroupIdsCanAccessArticle(group, authUser);
+      if (groupIds.length === 0) {
+        return new PageDto<ArticleResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+      getArticleListDto.groupIds = groupIds;
+    }
     const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.groupArticles(rows);
     const hasNextPage = articles.length === limit + 1 ? true : false;
@@ -137,6 +152,7 @@ export class ArticleService {
       this._mentionService.bindMentionsToPosts(articles),
       this._postService.bindActorToPost(articles),
       this._postService.bindAudienceToPost(articles),
+      this.maskArticleContent(articles),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, articles, {
@@ -229,10 +245,15 @@ export class ArticleService {
     user: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
+    const groupIds = user.profile.groups;
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [['hashtags_json', 'hashtags'], PostModel.loadMarkReadPost(user.id)],
+        include: [
+          ['hashtags_json', 'hashtags'],
+          PostModel.loadMarkReadPost(user.id),
+          PostModel.loadLock(groupIds),
+        ],
       },
       where: { id: postId },
       include: [
@@ -307,6 +328,7 @@ export class ArticleService {
       this._mentionService.bindMentionsToPosts([jsonPost]),
       this._postService.bindActorToPost([jsonPost]),
       this._postService.bindAudienceToPost([jsonPost]),
+      this.maskArticleContent([jsonPost]),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
@@ -465,6 +487,7 @@ export class ArticleService {
           isProcessing: false,
           privacy: postPrivacy,
           hashtagsJson: hashtagArr,
+          views: 0,
         },
         { transaction }
       );
@@ -515,6 +538,34 @@ export class ArticleService {
    */
   public async publishArticle(articleId: string, authUser: UserDto): Promise<boolean> {
     return this._postService.publishPost(articleId, authUser);
+  }
+
+  /**
+   * Update view article
+   * @param postId postID
+   * @param authUser UserDto
+   * @returns Promise resolve boolean
+   * @throws HttpException
+   */
+  public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
+    const authUserId = authUser.id;
+    const creator = authUser.profile;
+    if (!creator) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+    }
+    try {
+      const dataUpdate = { views: 1 };
+      await this._postModel.increment(dataUpdate, {
+        where: {
+          id: postId,
+          createdBy: authUserId,
+        },
+      });
+      return true;
+    } catch (error) {
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
   }
 
   /**
@@ -673,5 +724,65 @@ export class ArticleService {
 
   public groupArticles(articles: any[]): any[] {
     return this._postService.groupPosts(articles);
+  }
+
+  public async getArticlesByMedia(id: string): Promise<ArticleResponseDto[]> {
+    const posts = await this._postModel.findAll({
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          required: true,
+          where: {
+            id,
+          },
+        },
+        {
+          model: CategoryModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: SeriesModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+          required: false,
+        },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          attributes: ['groupId'],
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+        },
+      ],
+    });
+
+    const jsonPosts = posts.map((p) => p.toJSON());
+    await Promise.all([
+      this._postService.bindAudienceToPost(jsonPosts),
+      this._mentionService.bindMentionsToPosts(jsonPosts),
+      this._postService.bindActorToPost(jsonPosts),
+    ]);
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
+  }
+
+  public async maskArticleContent(articles: any[]): Promise<void> {
+    for (const article of articles) {
+      if (article.isLocked) article.content = null;
+    }
   }
 }

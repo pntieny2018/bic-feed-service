@@ -1,12 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
@@ -17,6 +22,11 @@ import { GetPostPipe } from '../post/pipes';
 import { PageDto } from '../../common/dto';
 import { SearchArticlesDto } from './dto/requests/search-article.dto';
 import { GetListArticlesDto } from './dto/requests';
+import {
+  ArticleHasBeenDeletedEvent,
+  ArticleHasBeenPublishedEvent,
+  ArticleHasBeenUpdatedEvent,
+} from '../../events/article';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -58,10 +68,10 @@ export class ArticleController {
   @ApiOkResponse({
     type: ArticleResponseDto,
   })
-  @Get('/:articleId')
+  @Get('/:id')
   public getArticle(
     @AuthUser(false) user: UserDto,
-    @Param('articleId') articleId: string,
+    @Param('id', ParseUUIDPipe) articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
     if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
@@ -88,15 +98,28 @@ export class ArticleController {
     }
   }
 
+  @ApiOperation({ summary: 'Update view article' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Update view article successfully',
+  })
+  @Put('/:id/update-view')
+  public async updateView(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) articleId: string
+  ): Promise<boolean> {
+    return this._articleService.updateView(articleId, user);
+  }
+
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
     type: ArticleResponseDto,
     description: 'Update article successfully',
   })
-  @Put('/:articleId')
+  @Put('/:id')
   public async updateArticle(
     @AuthUser() user: UserDto,
-    @Param('articleId') articleId: string,
+    @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
     const articleBefore = await this._articleService.getArticle(
@@ -116,9 +139,9 @@ export class ArticleController {
         new GetArticleDto()
       );
       this._eventEmitter.emit(
-        new PostHasBeenUpdatedEvent({
-          oldPost: articleBefore,
-          newPost: articleUpdated,
+        new ArticleHasBeenUpdatedEvent({
+          oldArticle: articleBefore,
+          newArticle: articleUpdated,
           actor: user.profile,
         })
       );
@@ -132,21 +155,21 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Publish article successfully',
   })
-  @Put('/:articleId/publish')
+  @Put('/:id/publish')
   public async publishPost(
     @AuthUser() user: UserDto,
-    @Param('articleId') articleId: string
+    @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
     const isPublished = await this._articleService.publishArticle(articleId, user);
     if (isPublished) {
-      const post = await this._articleService.getArticle(articleId, user, new GetArticleDto());
+      const article = await this._articleService.getArticle(articleId, user, new GetArticleDto());
       this._eventEmitter.emit(
-        new PostHasBeenPublishedEvent({
-          post: post,
+        new ArticleHasBeenPublishedEvent({
+          article,
           actor: user.profile,
         })
       );
-      return post;
+      return article;
     }
   }
 
@@ -158,13 +181,13 @@ export class ArticleController {
   @Delete('/:id')
   public async deleteArticle(
     @AuthUser() user: UserDto,
-    @Param('id') articleId: string
+    @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<boolean> {
     const articleDeleted = await this._articleService.deleteArticle(articleId, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
-        new PostHasBeenDeletedEvent({
-          post: articleDeleted,
+        new ArticleHasBeenDeletedEvent({
+          article: articleDeleted,
           actor: user.profile,
         })
       );

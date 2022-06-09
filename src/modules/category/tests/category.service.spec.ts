@@ -12,6 +12,7 @@ import { createCategoryDto } from './mocks/create-category-dto.mock';
 import { BadRequestException } from '@nestjs/common';
 import { LogicException } from '../../../common/exceptions';
 import { PostCategoryModel } from '../../../database/models/post-category.model';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 
 describe('CategoryService', () => {
   let categoryService;
@@ -143,10 +144,20 @@ describe('CategoryService', () => {
       } catch (e) {
         expect(logSpy).toBeCalled();
         expect(e).toBeInstanceOf(LogicException);
-        expect((e as LogicException).message).toEqual('app.post.not_allow');
-
+        expect((e as LogicException).message).toEqual(HTTP_STATUS_ID.APP_CATEGORY_NOT_ALLOW);
       }
     });
+  })
 
+  describe('CategoryService.setCategoriesByPost', () => {
+    it('should success', async () => {
+      postCategoryModel.findAll.mockResolvedValue([{postId: '1', categoryId: '1'}]);
+
+      const categories = await categoryService.setCategoriesByPost(['2'], '1', null)
+
+      expect(postCategoryModel.findAll).toBeCalled();
+      expect(postCategoryModel.destroy).toBeCalled();
+      expect(postCategoryModel.bulkCreate).toBeCalled();
+    });
   })
 })
