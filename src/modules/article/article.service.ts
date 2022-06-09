@@ -553,21 +553,16 @@ export class ArticleService {
     if (!creator) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
     }
-    let transaction;
     try {
-      transaction = await this._sequelizeConnection.transaction();
       const dataUpdate = { views: 1 };
       await this._postModel.increment(dataUpdate, {
         where: {
           id: postId,
           createdBy: authUserId,
         },
-        transaction,
       });
-      await transaction.commit();
       return true;
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }
