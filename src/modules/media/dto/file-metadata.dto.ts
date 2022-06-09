@@ -10,6 +10,7 @@ export class FileMetadataDto implements IDocumentMetadata {
   @Type(() => String)
   @IsUUID()
   @IsNotEmpty()
+  @Expose()
   public id: string;
 
   @ApiProperty({
@@ -20,6 +21,7 @@ export class FileMetadataDto implements IDocumentMetadata {
   @IsString()
   @IsOptional()
   @Transform((params) => basename(params.value))
+  @Expose()
   public name?: string;
 
   @ApiProperty({
@@ -41,6 +43,7 @@ export class FileMetadataDto implements IDocumentMetadata {
   })
   @IsString()
   @IsOptional()
+  @Expose()
   public url?: string;
 
   @ApiProperty({
@@ -55,5 +58,27 @@ export class FileMetadataDto implements IDocumentMetadata {
   @Expose({
     name: 'origin_name',
   })
+  @Expose()
   public originName?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'pdf',
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public extension?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose({
+    name: 'mime_type',
+  })
+  public mimeType?: string;
 }

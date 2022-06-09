@@ -186,8 +186,8 @@ export class MediaService {
       mediaIds.push(i.id);
       insertData.push({
         id: i.id,
-        name: i.name ?? 'temporary',
-        origin: i.name ?? null,
+        name: i.name ?? null,
+        originName: i.name ?? null,
         size: i.size ?? 0,
         url: i.url ?? null,
         width: i.width ?? null,
@@ -204,7 +204,9 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        origin: i.name ?? null,
+        originName: i.name ?? null,
+        extension: i.extension ?? null,
+        mimeType: i.mimeType ?? null,
         size: i.size ?? 0,
         url: i.url ?? null,
         type: MediaType.FILE,
@@ -221,7 +223,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        origin: i.name ?? null,
+        originName: i.name ?? null,
         size: i.size ?? 0,
         type: MediaType.VIDEO,
         createdBy,

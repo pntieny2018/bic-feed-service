@@ -67,6 +67,26 @@ export class VideoMetadataDto implements IDocumentMetadata {
   })
   public originName?: string;
 
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'pdf',
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public extension?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose({
+    name: 'mime_type',
+  })
+  public mimeType?: string;
   @ApiProperty({ required: false, type: [ThumbnailDto] })
   @IsOptional()
   @IsArray()
