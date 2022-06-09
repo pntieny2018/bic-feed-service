@@ -1541,7 +1541,7 @@ export class PostService {
 
   public getPostPrivacyByCompareGroupPrivacy(
     groupPrivacy: GroupPrivacy,
-    postPrivacy?: PostPrivacy
+    postPrivacy: PostPrivacy
   ): PostPrivacy {
     if (groupPrivacy === GroupPrivacy.PUBLIC || postPrivacy === PostPrivacy.PUBLIC) {
       return PostPrivacy.PUBLIC;
@@ -1562,7 +1562,7 @@ export class PostService {
     const relationInfo = await this.postGroupModel.findAll({
       where: { postId: { [Op.in]: postIds } },
     });
-    const groupIds = relationInfo.map((e) => e.groupId);
+    const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
     const groupInfos = await this.groupService.getMany(groupIds);
     const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
       returnValue[elementValue.id] = elementValue.privacy;
@@ -1571,7 +1571,8 @@ export class PostService {
     const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
       if (returnValue[elementValue.postId]) {
         returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
-          groupPrivacyMapping[elementValue.groupId]
+          groupPrivacyMapping[elementValue.groupId],
+          newPrivacy
         );
       } else {
         returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
