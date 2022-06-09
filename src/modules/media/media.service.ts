@@ -230,6 +230,7 @@ export class MediaService {
         width: null,
         height: null,
         status: i.status ?? MediaStatus.COMPLETED,
+        thumbnails: i.thumbnails ?? [],
       });
     });
 
