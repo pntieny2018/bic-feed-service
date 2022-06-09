@@ -77,11 +77,11 @@ export class ArticleResponseDto extends PostResponseDto {
   public hashtags: HashtagResponseDto[];
 
   @ApiProperty({
-    description: 'canAccess',
+    description: 'isLocked',
     type: Boolean,
   })
   @Expose()
-  public canAccess: boolean;
+  public isLocked: boolean;
 
   @ApiProperty({
     description: 'views',

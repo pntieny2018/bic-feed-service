@@ -126,7 +126,22 @@ export class ArticleService {
     authUser: UserDto,
     getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset } = getArticleListDto;
+    const { limit, offset, groupId } = getArticleListDto;
+    if (groupId) {
+      const group = await this._groupService.get(groupId);
+      if (!group) {
+        throw new BadRequestException(`Group ${groupId} not found`);
+      }
+      const groupIds = this._groupService.getGroupIdsCanAccessArticle(group, authUser);
+      if (groupIds.length === 0) {
+        return new PageDto<ArticleResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+      getArticleListDto.groupIds = groupIds;
+    }
     const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.groupArticles(rows);
     const hasNextPage = articles.length === limit + 1 ? true : false;
@@ -137,6 +152,7 @@ export class ArticleService {
       this._mentionService.bindMentionsToPosts(articles),
       this._postService.bindActorToPost(articles),
       this._postService.bindAudienceToPost(articles),
+      this.maskArticleContent(articles),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, articles, {
@@ -229,10 +245,15 @@ export class ArticleService {
     user: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
+    const groupIds = user.profile.groups;
     const post = await this._postModel.findOne({
       attributes: {
         exclude: ['updatedBy'],
-        include: [['hashtags_json', 'hashtags'], PostModel.loadMarkReadPost(user.id)],
+        include: [
+          ['hashtags_json', 'hashtags'],
+          PostModel.loadMarkReadPost(user.id),
+          PostModel.loadLock(groupIds),
+        ],
       },
       where: { id: postId },
       include: [
@@ -307,6 +328,7 @@ export class ArticleService {
       this._mentionService.bindMentionsToPosts([jsonPost]),
       this._postService.bindActorToPost([jsonPost]),
       this._postService.bindAudienceToPost([jsonPost]),
+      this.maskArticleContent([jsonPost]),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
@@ -756,5 +778,11 @@ export class ArticleService {
       excludeExtraneousValues: true,
     });
     return result;
+  }
+
+  public async maskArticleContent(articles: any[]): Promise<void> {
+    for (const article of articles) {
+      if (article.isLocked) article.content = null;
+    }
   }
 }

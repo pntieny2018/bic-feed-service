@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RedisService } from '@app/redis';
 import { ChildGroup, GroupPrivacy, GroupSharedDto } from './dto';
 import { UserDto } from '../../modules/auth';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class GroupService {
@@ -47,6 +48,13 @@ export class GroupService {
     return groupIds.every((groupId) => myGroupIds.includes(groupId));
   }
 
+  /**
+   * Get all groupIds(include all child) that user can acess to SEE posts (allow public, open)
+   *
+   * @param group
+   * @param authUser
+   * @returns
+   */
   public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): number[] {
     let groupIds = [];
     if (group.privacy === GroupPrivacy.OPEN || group.privacy === GroupPrivacy.PUBLIC) {
@@ -63,6 +71,36 @@ export class GroupService {
       groupIds.push(...group.child.open);
       groupIds.push(...group.child.public);
     }
-    return groupIds;
+    return ArrayHelper.arrayUnique(groupIds);
+  }
+
+  /**
+   * Get all groupIds(include all child) that user can acess to SEE articles (allow public, open, secret)
+   *
+   * @param group
+   * @param authUser
+   * @returns
+   */
+  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): number[] {
+    let groupIds = [];
+    if (
+      group.privacy === GroupPrivacy.OPEN ||
+      group.privacy === GroupPrivacy.PUBLIC ||
+      group.privacy === GroupPrivacy.PRIVATE
+    ) {
+      groupIds = [...group.child.public, ...group.child.open, ...group.child.private];
+
+      const privateGroupIds = [...group.child.secret].filter((groupId) =>
+        authUser.profile.groups.includes(groupId)
+      );
+      groupIds.push(...privateGroupIds, group.id);
+    } else {
+      groupIds = [group.id, ...group.child.secret].filter((groupId) =>
+        authUser.profile.groups.includes(groupId)
+      );
+      groupIds.push(...group.child.open);
+      groupIds.push(...group.child.public);
+    }
+    return ArrayHelper.arrayUnique(groupIds);
   }
 }

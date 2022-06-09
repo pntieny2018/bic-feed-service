@@ -1429,7 +1429,9 @@ export class PostService {
         updatedBy,
         createdAt,
         updatedAt,
-        canAccess,
+        isLocked,
+        title,
+        summary,
         isArticle,
         isNowImportant,
       } = post;
@@ -1482,7 +1484,9 @@ export class PostService {
           mentions,
           media,
           ownerReactions,
-          canAccess,
+          isLocked,
+          title,
+          summary,
           isArticle,
         });
         return;
