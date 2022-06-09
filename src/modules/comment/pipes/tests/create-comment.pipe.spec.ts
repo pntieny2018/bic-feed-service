@@ -9,7 +9,7 @@ describe('CreateCommentPipe', function () {
 
   it('CreateCommentPipe.transform should set default value', () => {
     const response = createCommentPipe.transform({
-      postId: 1,
+      postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       mentions: null,
       content: null,
       media: {        
@@ -20,7 +20,7 @@ describe('CreateCommentPipe', function () {
     });
 
     expect(response).toEqual({
-      postId: 1,
+      postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       mentions: [],
       content: null,
       media: {        
@@ -33,7 +33,7 @@ describe('CreateCommentPipe', function () {
 
   it('CreateCommentPipe.transform should set default value when missing key', () => {
     const response = createCommentPipe.transform({
-      postId: 1,
+      postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       content: null,
       media: {
         files: null,
@@ -41,7 +41,7 @@ describe('CreateCommentPipe', function () {
     });
 
     expect(response).toEqual({
-      postId: 1,
+      postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       mentions: [],
       content: null,
       media: {        

@@ -51,4 +51,10 @@ export class ArrayHelper {
       a.every((val) => b.includes(val))
     );
   }
+
+  public static arrayUnique(arr: any[]): any[] {
+    return arr.filter((value, index, self) => {
+      return self.indexOf(value) === index;
+    });
+  }
 }
