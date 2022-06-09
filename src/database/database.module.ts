@@ -23,7 +23,7 @@ import { IDatabaseConfig } from '../config/database';
             timestamps: true,
             schema: databaseConfig.schema,
           },
-          logging: (arg) => console.log(arg),//databaseConfig.isDebug,
+          logging: databaseConfig.isDebug,
           benchmark: true,
           logQueryParameters: true,
           native: databaseConfig.ssl,
