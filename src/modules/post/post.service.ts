@@ -353,7 +353,17 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+          attributes: [
+            'id',
+            'url',
+            'size',
+            'extension',
+            'type',
+            'name',
+            'width',
+            'height',
+            'status',
+          ],
         },
         {
           model: PostReactionModel,
