@@ -219,14 +219,15 @@ export class ArticleListener {
   @On(ArticleVideoSuccessEvent)
   public async onArticleVideoSuccess(event: ArticleVideoSuccessEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { videoId, hlsUrl, meta } = event.payload;
+    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
       status: MediaStatus.COMPLETED,
     };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
+    if (properties?.name) dataUpdate['name'] = properties.name;
+    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
+    if (properties?.size) dataUpdate['size'] = properties.size;
+    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
     const articles = await this._articleService.getArticlesByMedia(videoId);
     articles.forEach((article) => {
@@ -289,14 +290,15 @@ export class ArticleListener {
   public async onArticleVideoFailed(event: ArticleVideoFailedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
 
-    const { videoId, hlsUrl, meta } = event.payload;
+    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
       status: MediaStatus.COMPLETED,
     };
-    if (meta?.name) dataUpdate['name'] = meta.name;
-    if (meta?.mimeType) dataUpdate['mimeType'] = meta.mimeType;
-    if (meta?.size) dataUpdate['size'] = meta.size;
+    if (properties?.name) dataUpdate['name'] = properties.name;
+    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
+    if (properties?.size) dataUpdate['size'] = properties.size;
+    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
     const articles = await this._articleService.getArticlesByMedia(videoId);
     articles.forEach((article) => {

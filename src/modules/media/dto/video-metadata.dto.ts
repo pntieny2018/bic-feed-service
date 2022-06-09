@@ -1,8 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Expose, Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { MediaStatus } from '../../../database/models/media.model';
 import { IDocumentMetadata } from './interfaces';
+import { ThumbnailDto } from '../../post/dto/responses/process-video-response.dto';
 
 export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
@@ -78,4 +87,12 @@ export class VideoMetadataDto implements IDocumentMetadata {
     name: 'mime_type',
   })
   public mimeType?: string;
+  @ApiProperty({ required: false, type: [ThumbnailDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ThumbnailDto)
+  @Expose()
+  @Transform(({ value }) => value ?? [])
+  public thumbnails?: ThumbnailDto[] = [];
 }
