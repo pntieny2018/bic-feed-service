@@ -12,7 +12,14 @@ export class InternalPostController {
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)
   public async privacyUpdate(@Payload('value') updatePrivacyDto: UpdatePrivacyDto): Promise<void> {
     this._logger.debug(`[privacyUpdate]: ${JSON.stringify(updatePrivacyDto)}`);
-    const postIds = await this._postSevice.findPostIdsByGroupId([updatePrivacyDto.groupId]);
-    await this._postSevice.bulkUpdatePostPrivacy(postIds, updatePrivacyDto.privacy);
+    const postIds = await this._postSevice.findPostIdsByGroupId([updatePrivacyDto.groupId], null);
+    const postIdsNeedToUpdatePrivacy = await this._postSevice.filterPostIdsNeedToUpdatePrivacy(
+      postIds,
+      updatePrivacyDto.privacy
+    );
+    await this._postSevice.bulkUpdatePostPrivacy(
+      postIdsNeedToUpdatePrivacy,
+      updatePrivacyDto.privacy
+    );
   }
 }
