@@ -11,15 +11,24 @@ import { NotificationService } from '../../notification';
 import { MediaService } from '../../modules/media';
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
-import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
-import { PostHasBeenDeletedEventPayload, PostHasBeenPublishedEventPayload } from '../../events/post/payload';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
+import {
+  PostHasBeenDeletedEventPayload,
+  PostHasBeenPublishedEventPayload,
+} from '../../events/post/payload';
 import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { ProcessVideoResponseDto } from '../../modules/post/dto/responses/process-video-response.dto';
+import {
+  ProcessVideoResponseDto,
+  VideoProcessingEndDto,
+} from '../../modules/post/dto/responses/process-video-response.dto';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 
 describe('PostListener', () => {
-
   let postListener;
   let postService;
   let feedPublisherService;
@@ -46,8 +55,7 @@ describe('PostListener', () => {
         },
         {
           provide: FeedPublisherService,
-          useValue: {
-          },
+          useValue: {},
         },
         {
           provide: PostActivityService,
@@ -91,13 +99,11 @@ describe('PostListener', () => {
         },
         {
           provide: FeedService,
-          useValue: {
-          },
+          useValue: {},
         },
         {
           provide: SeriesService,
-          useValue: {
-          },
+          useValue: {},
         },
         {
           provide: Sequelize,
@@ -118,158 +124,156 @@ describe('PostListener', () => {
     mediaService = module.get<MediaService>(MediaService);
     feedService = module.get<FeedService>(FeedService);
     seriesService = module.get<SeriesService>(SeriesService);
-  })
+  });
 
   describe('PostListener.onPostDeleted', () => {
-    const postHasBeenDeletedEvent = new PostHasBeenDeletedEvent(
-      { actor: undefined, post: {
-          canComment: false,
-          canReact: false,
-          canShare: false,
-          commentsCount: 0,
-          content: '',
-          createdBy: 0,
-          id: '',
-          isArticle: false,
-          isDraft: false,
-          isImportant: false,
-          updatedBy: 0,
-          views: 0,
-          groups: [{postId: '1', groupId: 2}]
-        } },
-    )
+    const postHasBeenDeletedEvent = new PostHasBeenDeletedEvent({
+      actor: undefined,
+      post: {
+        canComment: false,
+        canReact: false,
+        canShare: false,
+        commentsCount: 0,
+        content: '',
+        createdBy: 0,
+        id: '',
+        isArticle: false,
+        isDraft: false,
+        isImportant: false,
+        updatedBy: 0,
+        views: 0,
+        groups: [{ postId: '1', groupId: 2 }],
+      },
+    });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.deletePostEditedHistory.mockResolvedValue()
-      elasticsearchService.delete.mockResolvedValue()
-      postActivityService.createPayload.mockResolvedValue()
-      notificationService.publishPostNotification.mockResolvedValue()
-      await postListener.onPostDeleted(postHasBeenDeletedEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postService.deletePostEditedHistory).toBeCalled()
-      expect(elasticsearchService.delete).toBeCalled()
-      expect(postActivityService.createPayload).toBeCalled()
-      expect(notificationService.publishPostNotification).toBeCalled()
-    })
+      postService.deletePostEditedHistory.mockResolvedValue();
+      elasticsearchService.delete.mockResolvedValue();
+      postActivityService.createPayload.mockResolvedValue();
+      notificationService.publishPostNotification.mockResolvedValue();
+      await postListener.onPostDeleted(postHasBeenDeletedEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postService.deletePostEditedHistory).toBeCalled();
+      expect(elasticsearchService.delete).toBeCalled();
+      expect(postActivityService.createPayload).toBeCalled();
+      expect(notificationService.publishPostNotification).toBeCalled();
+    });
 
     it('should fail deletePostEditedHistory', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'error').mockReturnThis();
-      postService.deletePostEditedHistory.mockRejectedValue()
-      await postListener.onPostDeleted(postHasBeenDeletedEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postService.deletePostEditedHistory).toBeCalled()
-      expect(sentryService.captureException).toBeCalled()
-    })
+      postService.deletePostEditedHistory.mockRejectedValue();
+      await postListener.onPostDeleted(postHasBeenDeletedEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postService.deletePostEditedHistory).toBeCalled();
+      expect(sentryService.captureException).toBeCalled();
+    });
 
     it('should fail elasticsearchService.delete', async () => {
-      postService.deletePostEditedHistory.mockResolvedValue()
-      elasticsearchService.delete.mockRejectedValue()
-      await postListener.onPostDeleted(postHasBeenDeletedEvent)
-      expect(postService.deletePostEditedHistory).toBeCalled()
-      expect(elasticsearchService.delete).toBeCalled()
-      expect(sentryService.captureException).toBeCalled()
-    })
+      postService.deletePostEditedHistory.mockResolvedValue();
+      elasticsearchService.delete.mockRejectedValue();
+      await postListener.onPostDeleted(postHasBeenDeletedEvent);
+      expect(postService.deletePostEditedHistory).toBeCalled();
+      expect(elasticsearchService.delete).toBeCalled();
+      expect(sentryService.captureException).toBeCalled();
+    });
 
     it('should postActivityService.createPayload', async () => {
-      postService.deletePostEditedHistory.mockResolvedValue()
-      elasticsearchService.delete.mockResolvedValue()
-      postActivityService.createPayload.mockRejectedValue()
-      await postListener.onPostDeleted(postHasBeenDeletedEvent)
-      expect(postService.deletePostEditedHistory).toBeCalled()
-      expect(elasticsearchService.delete).toBeCalled()
-      expect(postActivityService.createPayload).toBeCalled()
-    })
-  })
+      postService.deletePostEditedHistory.mockResolvedValue();
+      elasticsearchService.delete.mockResolvedValue();
+      postActivityService.createPayload.mockRejectedValue();
+      await postListener.onPostDeleted(postHasBeenDeletedEvent);
+      expect(postService.deletePostEditedHistory).toBeCalled();
+      expect(elasticsearchService.delete).toBeCalled();
+      expect(postActivityService.createPayload).toBeCalled();
+    });
+  });
 
   describe('PostListener.onPostPublished', () => {
-    const postHasBeenPublishedEvent = new PostHasBeenPublishedEvent(
-      { actor: undefined, post: mockPostResponseDto}
-    )
+    const postHasBeenPublishedEvent = new PostHasBeenPublishedEvent({
+      actor: undefined,
+      post: mockPostResponseDto,
+    });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue()
-      postActivityService.createPayload.mockReturnValue({object: {}})
-      postService.savePostEditedHistory.mockResolvedValue()
-      elasticsearchService.index.mockResolvedValue()
-      await postListener.onPostPublished(postHasBeenPublishedEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postActivityService.createPayload).toBeCalled()
-      expect(postService.savePostEditedHistory).toBeCalled()
-      expect(elasticsearchService.index).toBeCalled()
-    })
+      postService.processVideo.mockResolvedValue();
+      postActivityService.createPayload.mockReturnValue({ object: {} });
+      postService.savePostEditedHistory.mockResolvedValue();
+      elasticsearchService.index.mockResolvedValue();
+      await postListener.onPostPublished(postHasBeenPublishedEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postActivityService.createPayload).toBeCalled();
+      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(elasticsearchService.index).toBeCalled();
+    });
     it('should success even if postService.savePostEditedHistory', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue()
-      postActivityService.createPayload.mockReturnValue({object: {}})
-      postService.savePostEditedHistory.mockRejectedValue()
-      elasticsearchService.index.mockResolvedValue()
-      await postListener.onPostPublished(postHasBeenPublishedEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postActivityService.createPayload).toBeCalled()
-      expect(postService.savePostEditedHistory).toBeCalled()
-      expect(sentryService.captureException).toBeCalled()
-      expect(elasticsearchService.index).toBeCalled()
-    })
-  })
+      postService.processVideo.mockResolvedValue();
+      postActivityService.createPayload.mockReturnValue({ object: {} });
+      postService.savePostEditedHistory.mockRejectedValue();
+      elasticsearchService.index.mockResolvedValue();
+      await postListener.onPostPublished(postHasBeenPublishedEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postActivityService.createPayload).toBeCalled();
+      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(sentryService.captureException).toBeCalled();
+      expect(elasticsearchService.index).toBeCalled();
+    });
+  });
 
   describe('PostListener.onPostUpdated', () => {
-    const postHasBeenUpdatedEvent = new PostHasBeenUpdatedEvent(
-      { actor: undefined, oldPost: mockPostResponseDto, newPost: mockPostResponseDto}
-    )
+    const postHasBeenUpdatedEvent = new PostHasBeenUpdatedEvent({
+      actor: undefined,
+      oldPost: mockPostResponseDto,
+      newPost: mockPostResponseDto,
+    });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue()
-      postActivityService.createPayload.mockReturnValue({object: {}})
-      postService.savePostEditedHistory.mockResolvedValue()
-      elasticsearchService.update.mockResolvedValue()
-      await postListener.onPostUpdated(postHasBeenUpdatedEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postService.processVideo).toBeCalled()
-      expect(postActivityService.createPayload).toBeCalled()
-      expect(postService.savePostEditedHistory).toBeCalled()
-      expect(elasticsearchService.update).toBeCalled()
-    })
-  })
+      postService.processVideo.mockResolvedValue();
+      postActivityService.createPayload.mockReturnValue({ object: {} });
+      postService.savePostEditedHistory.mockResolvedValue();
+      elasticsearchService.update.mockResolvedValue();
+      await postListener.onPostUpdated(postHasBeenUpdatedEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postService.processVideo).toBeCalled();
+      expect(postActivityService.createPayload).toBeCalled();
+      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(elasticsearchService.update).toBeCalled();
+    });
+  });
 
   describe('PostListener.onPostVideoSuccess', () => {
-    const postVideoSuccessEvent = new PostVideoSuccessEvent(
-      new ProcessVideoResponseDto()
-    )
+    const postVideoSuccessEvent = new PostVideoSuccessEvent(new VideoProcessingEndDto());
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.getPostsByMedia
-        .mockResolvedValue([
-          { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
-          { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
-        ]);
-      postService.updatePostStatus.mockResolvedValue()
-      elasticsearchService.index.mockResolvedValue()
+      postService.getPostsByMedia.mockResolvedValue([
+        { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
+        { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
+      ]);
+      postService.updatePostStatus.mockResolvedValue();
+      elasticsearchService.index.mockResolvedValue();
 
-      await postListener.onPostVideoSuccess(postVideoSuccessEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postService.getPostsByMedia).toBeCalled()
-      expect(postService.updatePostStatus).toBeCalled()
-      expect(elasticsearchService.index).toBeCalled()
-    })
-  })
+      await postListener.onPostVideoSuccess(postVideoSuccessEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postService.getPostsByMedia).toBeCalled();
+      expect(postService.updatePostStatus).toBeCalled();
+      expect(elasticsearchService.index).toBeCalled();
+    });
+  });
 
   describe('PostListener.onPostVideoFailed', () => {
-    const postVideoFailedEvent = new PostVideoFailedEvent(
-      new ProcessVideoResponseDto()
-    )
+    const postVideoFailedEvent = new PostVideoFailedEvent(new VideoProcessingEndDto());
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.getPostsByMedia
-        .mockResolvedValue([
-          { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
-          { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
-        ]);
-      postService.updatePostStatus.mockResolvedValue()
+      postService.getPostsByMedia.mockResolvedValue([
+        { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
+        { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
+      ]);
+      postService.updatePostStatus.mockResolvedValue();
 
-      await postListener.onPostVideoFailed(postVideoFailedEvent)
-      expect(loggerSpy).toBeCalled()
-      expect(postService.getPostsByMedia).toBeCalled()
-      expect(postService.updatePostStatus).toBeCalled()
-    })
-  })
-})
+      await postListener.onPostVideoFailed(postVideoFailedEvent);
+      expect(loggerSpy).toBeCalled();
+      expect(postService.getPostsByMedia).toBeCalled();
+      expect(postService.updatePostStatus).toBeCalled();
+    });
+  });
+});
