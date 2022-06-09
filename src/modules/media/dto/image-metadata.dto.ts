@@ -80,4 +80,25 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @IsOptional()
   @Expose()
   public height?: number;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'pdf',
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public extension?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose({
+    name: 'mime_type',
+  })
+  public mimeType?: string;
 }
