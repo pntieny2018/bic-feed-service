@@ -2,7 +2,7 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { HTTP_STATUS_ID, KAFKA_PRODUCER } from '../../../common/constants';
 import { PageDto } from '../../../common/dto/pagination/page.dto';
-import { PostModel } from '../../../database/models/post.model';
+import { PostModel, PostPrivacy } from '../../../database/models/post.model';
 import { PostService } from '../post.service';
 import { GetPostDto } from './../dto/requests/get-post.dto';
 import {
@@ -212,7 +212,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.addPostGroup = jest.fn().mockResolvedValue(Promise.resolve());
-
+      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       postModelMock.create = jest.fn().mockResolvedValue(mockedPostCreated);
 
       await postService.createPost(mockedUserAuth, mockedCreatePostDto);
@@ -235,6 +235,8 @@ describe('PostService', () => {
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
         isProcessing: false,
+        privacy: PostPrivacy.PUBLIC,
+        hashtagsJson: [],
       });
     });
 
@@ -282,7 +284,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-
+      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
@@ -319,6 +321,7 @@ describe('PostService', () => {
         canShare: mockedCreatePostDto.setting.canShare,
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
+        privacy: PostPrivacy.PUBLIC
       });
     });
 
@@ -356,7 +359,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-
+      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
@@ -397,6 +400,7 @@ describe('PostService', () => {
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
       authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
+      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mockedUserAuth.id = mockedDataUpdatePost.createdBy;
       const result = await postService.publishPost(
         mockedDataUpdatePost.id,
