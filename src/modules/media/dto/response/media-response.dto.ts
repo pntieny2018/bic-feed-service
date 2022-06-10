@@ -1,7 +1,4 @@
-import { ImageMetadataDto } from '../image-metadata.dto';
-import { VideoMetadataDto } from '../video-metadata.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { FileMetadataDto } from '../file-metadata.dto';
 import { Expose } from 'class-transformer';
 import { FileMetadataResponseDto } from './file-metadata-response.dto';
 import { VideoMetadataResponseDto } from './video-metadata-response.dto';
@@ -12,24 +9,24 @@ export class MediaFilterResponseDto {
     type: [FileMetadataResponseDto],
   })
   @Expose()
-  public files: FileMetadataDto[];
+  public files: FileMetadataResponseDto[];
 
   @ApiProperty({
     type: [VideoMetadataResponseDto],
   })
   @Expose()
-  public videos: VideoMetadataDto[];
+  public videos: VideoMetadataResponseDto[];
 
   @ApiProperty({
     type: [ImageMetadataResponseDto],
   })
   @Expose()
-  public images: ImageMetadataDto[];
+  public images: ImageMetadataResponseDto[];
 
   public constructor(
-    files: FileMetadataDto[],
-    videos: VideoMetadataDto[],
-    images: ImageMetadataDto[]
+    files: FileMetadataResponseDto[],
+    videos: VideoMetadataResponseDto[],
+    images: ImageMetadataResponseDto[]
   ) {
     this.videos = videos;
     this.images = images;
