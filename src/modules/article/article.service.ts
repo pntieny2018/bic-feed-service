@@ -304,7 +304,7 @@ export class ArticleService {
       ],
     });
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this._authorityService.checkCanReadArticle(user, post);
     let comments = null;
@@ -395,7 +395,7 @@ export class ArticleService {
       ],
     });
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this._authorityService.checkIsPublicArticle(post);
     let comments = null;

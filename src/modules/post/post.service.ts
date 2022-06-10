@@ -377,7 +377,7 @@ export class PostService {
       ],
     });
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
@@ -447,7 +447,7 @@ export class PostService {
     });
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this.authorityService.checkIsPublicPost(post);
     let comments = null;
@@ -869,7 +869,7 @@ export class PostService {
     authUserId: number
   ): Promise<boolean> {
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
     if (post.createdBy !== authUserId) {
@@ -1119,7 +1119,7 @@ export class PostService {
   public async markReadPost(postId: string, userId: number): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     if (post && post.createdBy === userId) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_NOT_ALLOW);

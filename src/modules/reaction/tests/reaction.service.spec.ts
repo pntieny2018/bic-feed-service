@@ -266,12 +266,12 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         postService.getPost = jest
           .fn()
-          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND));
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
         try {
           await reactionService.createReaction(mockUserDto, mockCreateReactionDto.post);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
         expect(postService.getPost).toBeCalledTimes(1);
@@ -448,12 +448,12 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         postService.getPost = jest
           .fn()
-          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND));
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
         expect(postService.getPost).toBeCalledTimes(1);
