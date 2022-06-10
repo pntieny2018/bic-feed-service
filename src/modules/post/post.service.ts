@@ -1552,7 +1552,7 @@ export class PostService {
   public async filterPostIdsNeedToUpdatePrivacy(
     postIds: string[],
     newPrivacy: PostPrivacy
-  ): Promise<string[]> {
+  ): Promise<{ [key: string]: string[] }> {
     const relationInfo = await this.postGroupModel.findAll({
       where: { postId: { [Op.in]: postIds } },
     });
@@ -1563,7 +1563,7 @@ export class PostService {
       return returnValue;
     }, {});
     const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
-      if (returnValue[elementValue.postId]) {
+      if (!returnValue[elementValue.postId]) {
         returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
           groupPrivacyMapping[elementValue.groupId],
           newPrivacy
@@ -1576,10 +1576,12 @@ export class PostService {
       }
       return returnValue;
     }, {});
-    const updatedPostIds = [];
+    const updatedPostIds = {};
     Object.entries(postPrivacyMapping).forEach(([postId, postPrivacy]) => {
-      if (postPrivacy === newPrivacy) {
-        updatedPostIds.push(postId);
+      if (!updatedPostIds[postPrivacy.toString()]) {
+        updatedPostIds[postPrivacy.toString()] = [postId];
+      } else {
+        updatedPostIds[postPrivacy.toString()].push(postId);
       }
     });
     return updatedPostIds;
