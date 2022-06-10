@@ -401,7 +401,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."size",
     "media"."width",
     "media"."height",
-    "media"."extension"
+    "media"."extension",
+    "media"."thumbnails"
     FROM (
       SELECT 
       "p"."id", 
@@ -501,7 +502,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."size",
     "media"."width",
     "media"."height",
-    "media"."extension"
+    "media"."extension",
+    "media"."thumbnails"
     FROM (
       SELECT 
       "p"."id", 
@@ -632,7 +634,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."width",
     "media"."size",
     "media"."height",
-    "media"."extension"
+    "media"."extension",
+    "media"."thumbnails"
     FROM (
       ${subSelect}
       FROM ${schema}.${postTable} AS "p"

@@ -288,7 +288,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size', 'thumbnails'],
           required: false,
         },
         {
@@ -364,6 +364,7 @@ export class PostService {
             'width',
             'height',
             'status',
+            'thumbnails',
           ],
         },
         {
@@ -441,7 +442,7 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
         },
       ],
     });
@@ -574,7 +575,7 @@ export class PostService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       const { groupIds } = audience;
       await this.authorityService.checkCanCreatePost(authUser, groupIds);
@@ -688,7 +689,7 @@ export class PostService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
 
     let transaction;
@@ -801,7 +802,7 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
             required: false,
           },
           {
@@ -1321,7 +1322,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
           required: true,
           where: {
             id,

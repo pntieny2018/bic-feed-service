@@ -47,8 +47,7 @@ export const HTTP_STATUS_ID = {
 
   // INSIDE
   APP_POST_PUBLISH_CONTENT_EMPTY: 'app.post.publish.content_empty.app_error',
-  APP_COMMENT_EXISTING: 'app.comment.existing.app_error',
-  APP_COMMENT_NOT_FOUND: 'app.comment.not_found.app_error',
+  APP_COMMENT_NOT_EXISTING: 'app.comment.existing.app_error',
   APP_COMMENT_REPLY_NOT_EXISTING: 'app.comment.reply.not_existing.app_error',
   APP_POST_SETTING_DISABLE: 'app.post.setting.disable.app_error',
   APP_POST_NOT_EXISTING: 'app.post.not_existing.app_error',
@@ -64,9 +63,9 @@ export const HTTP_STATUS_ID = {
 
   // SERIES
   APP_ARTICLE_CATEGORY_REQUIRED: 'app.article.category_required',
-  APP_SERIES_NOT_FOUND: 'app.series.not_found',
+  APP_SERIES_NOT_EXISTING: 'app.series.not_existing',
   APP_SERIES_INVALID_PARAMETER: 'app.series.invalid_parameter',
-  APP_USER_NOT_FOUND: 'app.user.not_found',
+  APP_USER_NOT_EXISTING: 'app.user.not_existing',
   APP_CATEGORY_NOT_ALLOW: 'app.category.not_allow',
 
   APP_CATEGORY_INVALID_PARAMETER: 'app.category.invalid_parameter',

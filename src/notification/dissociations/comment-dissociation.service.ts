@@ -50,7 +50,7 @@ export class CommentDissociationService {
         },
       });
       if (!comment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
       }
 
       comment = comment.toJSON();
@@ -221,7 +221,7 @@ export class CommentDissociationService {
       });
 
       if (!parentComment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
       }
       parentComment = parentComment.toJSON();
 
