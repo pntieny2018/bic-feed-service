@@ -1532,4 +1532,69 @@ export class PostService {
     });
     return result;
   }
+
+  public getPostPrivacyByCompareGroupPrivacy(
+    groupPrivacy: GroupPrivacy,
+    postPrivacy: PostPrivacy
+  ): PostPrivacy {
+    if (groupPrivacy === GroupPrivacy.PUBLIC || postPrivacy === PostPrivacy.PUBLIC) {
+      return PostPrivacy.PUBLIC;
+    }
+    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
+      return PostPrivacy.OPEN;
+    }
+    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
+      return PostPrivacy.PRIVATE;
+    }
+    return PostPrivacy.SECRET;
+  }
+
+  public async filterPostIdsNeedToUpdatePrivacy(
+    postIds: string[],
+    newPrivacy: PostPrivacy
+  ): Promise<string[]> {
+    const relationInfo = await this.postGroupModel.findAll({
+      where: { postId: { [Op.in]: postIds } },
+    });
+    const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
+    const groupInfos = await this.groupService.getMany(groupIds);
+    const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
+      returnValue[elementValue.id] = elementValue.privacy;
+      return returnValue;
+    }, {});
+    const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
+      if (returnValue[elementValue.postId]) {
+        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
+          groupPrivacyMapping[elementValue.groupId],
+          newPrivacy
+        );
+      } else {
+        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
+          groupPrivacyMapping[elementValue.groupId],
+          returnValue[elementValue.postId]
+        );
+      }
+      return returnValue;
+    }, {});
+    const updatedPostIds = [];
+    Object.entries(postPrivacyMapping).forEach(([postId, postPrivacy]) => {
+      if (postPrivacy === newPrivacy) {
+        updatedPostIds.push(postId);
+      }
+    });
+    return updatedPostIds;
+  }
+
+  public async bulkUpdatePostPrivacy(postIds: string[], privacy: PostPrivacy): Promise<void> {
+    await this.postModel.update(
+      { privacy },
+      {
+        where: {
+          id: {
+            [Op.in]: postIds,
+          },
+        },
+      }
+    );
+  }
 }
