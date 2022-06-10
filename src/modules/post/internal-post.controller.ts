@@ -1,10 +1,10 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { PostService } from './post.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { KAFKA_TOPIC } from '../../common/constants';
 import { UpdatePrivacyDto } from './dto/requests/update-privacy.dto';
 
-@Controller()
+@Controller('/test')
 export class InternalPostController {
   private _logger = new Logger(InternalPostController.name);
   public constructor(private _postSevice: PostService) {}
