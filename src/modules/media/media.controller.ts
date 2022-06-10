@@ -71,6 +71,7 @@ export class MediaController {
       height,
       size: file.size ?? 0,
       status: MediaStatus.COMPLETED,
+      mimeType: file.mimetype,
     });
     return result.toJSON();
   }
