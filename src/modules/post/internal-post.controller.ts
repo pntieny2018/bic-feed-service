@@ -3,7 +3,6 @@ import { PostService } from './post.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { KAFKA_TOPIC } from '../../common/constants';
 import { UpdatePrivacyDto } from './dto/requests/update-privacy.dto';
-import { PostPrivacy } from '../../database/models/post.model';
 
 @Controller('/test')
 export class InternalPostController {
@@ -18,26 +17,6 @@ export class InternalPostController {
       postIds,
       updatePrivacyDto.privacy
     );
-    await this._postSevice.bulkUpdatePostPrivacy(
-      postIdsNeedToUpdatePrivacy,
-      updatePrivacyDto.privacy
-    );
-  }
-
-  @Get('/')
-  public async aprivacyUpdate(): Promise<void> {
-    const updatePrivacyDto = {
-      groupId: 1,
-      privacy: PostPrivacy.SECRET,
-    };
-    this._logger.debug(`[privacyUpdate]: ${JSON.stringify(updatePrivacyDto)}`);
-    const postIds = await this._postSevice.findPostIdsByGroupId([updatePrivacyDto.groupId], null);
-    console.log('postIds=', postIds);
-    const postIdsNeedToUpdatePrivacy = await this._postSevice.filterPostIdsNeedToUpdatePrivacy(
-      postIds,
-      updatePrivacyDto.privacy
-    );
-    console.log('postIdsNeedToUpdatePrivacy=', postIdsNeedToUpdatePrivacy);
     await this._postSevice.bulkUpdatePostPrivacy(
       postIdsNeedToUpdatePrivacy,
       updatePrivacyDto.privacy
