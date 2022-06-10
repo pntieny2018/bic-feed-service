@@ -187,7 +187,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        originName: i.name ?? null,
+        originName: i.originName ?? null,
         size: i.size ?? 0,
         url: i.url ?? null,
         width: i.width ?? null,
@@ -204,7 +204,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        originName: i.name ?? null,
+        originName: i.originName ?? null,
         extension: i.extension ?? null,
         mimeType: i.mimeType ?? null,
         size: i.size ?? 0,
@@ -223,7 +223,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        originName: i.name ?? null,
+        originName: i.originName ?? null,
         size: i.size ?? 0,
         type: MediaType.VIDEO,
         createdBy,
