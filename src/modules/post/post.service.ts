@@ -360,6 +360,7 @@ export class PostService {
             'extension',
             'type',
             'name',
+            'originName',
             'width',
             'height',
             'status',
