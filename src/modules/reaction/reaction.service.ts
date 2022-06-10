@@ -320,7 +320,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(commentId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.getPost(comment.postId, userDto, {
@@ -579,7 +579,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(targetId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.getPost(comment.postId, userDto, {

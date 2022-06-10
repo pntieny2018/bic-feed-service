@@ -574,7 +574,7 @@ export class PostService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       const { groupIds } = audience;
       await this.authorityService.checkCanCreatePost(authUser, groupIds);
@@ -688,7 +688,7 @@ export class PostService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
 
     let transaction;

@@ -378,7 +378,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
@@ -580,7 +580,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);

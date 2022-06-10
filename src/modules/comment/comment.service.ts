@@ -107,12 +107,12 @@ export class CommentService {
         },
       });
 
-      if (!parentComment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
+      if (!parentComment?.post) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
 
-      if (!parentComment.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      if (!parentComment) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
       }
 
       post = parentComment.toJSON().post;
@@ -216,7 +216,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -328,7 +328,7 @@ export class CommentService {
     });
 
     if (!response) {
-      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const rawComment = response.toJSON();
     await Promise.all([
@@ -377,7 +377,7 @@ export class CommentService {
     });
 
     if (!responses) {
-      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const rawComment = responses.map((r) => r.toJSON());
     await Promise.all([
@@ -454,7 +454,7 @@ export class CommentService {
 
     const checkComment = await this._commentModel.findByPk(commentId);
     if (!checkComment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const { postId } = checkComment;
     const post = await this._postService.findPost({
@@ -684,7 +684,7 @@ export class CommentService {
       },
     });
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -926,7 +926,7 @@ export class CommentService {
     const response = await get(commentId);
 
     if (!response) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const rawComment = response.toJSON();
 
@@ -1107,7 +1107,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     return comment.postId;
