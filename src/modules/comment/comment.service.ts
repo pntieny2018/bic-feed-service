@@ -108,11 +108,11 @@ export class CommentService {
       });
 
       if (!parentComment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
       }
 
       if (!parentComment.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
 
       post = parentComment.toJSON().post;

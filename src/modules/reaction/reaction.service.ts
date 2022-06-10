@@ -329,7 +329,7 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -588,7 +588,7 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
