@@ -39,8 +39,8 @@ describe('AuthorityService', () => {
       public: [2, 3],
       open: [],
       private: [],
-      secret: []
-    }
+      secret: [],
+    },
   };
 
   const userDtoMock = {
@@ -50,7 +50,7 @@ describe('AuthorityService', () => {
         groupId: 1,
       },
     ],
-  } as any
+  } as any;
   describe('AuthorityService.checkCanReadPost', () => {
     describe('when user is valid', () => {
       it('next', async () => {
@@ -104,7 +104,7 @@ describe('AuthorityService', () => {
 
   describe('AuthorityService.checkIsPublicPost', () => {
     it('pass if GroupPrivacy.PUBLIC', async () => {
-      mockGroup.privacy = GroupPrivacy.PUBLIC
+      mockGroup.privacy = GroupPrivacy.PUBLIC;
       groupService.getMany.mockReturnValue([mockGroup]);
 
       await service.checkIsPublicPost({
@@ -112,6 +112,7 @@ describe('AuthorityService', () => {
         canReact: false,
         canShare: false,
         commentsCount: 0,
+        totalUsersSeen: 0,
         content: '',
         createdBy: 0,
         id: '',
@@ -120,14 +121,14 @@ describe('AuthorityService', () => {
         isImportant: false,
         updatedBy: 0,
         views: 0,
-        groups: [{postId: '1', groupId: 2}]
-      })
+        groups: [{ postId: '1', groupId: 2 }],
+      });
 
-      expect(groupService.getMany).toBeCalled()
-    })
+      expect(groupService.getMany).toBeCalled();
+    });
 
     it('exception if GroupPrivacy.PRIVATE', async () => {
-      mockGroup.privacy = GroupPrivacy.PRIVATE
+      mockGroup.privacy = GroupPrivacy.PRIVATE;
       groupService.getMany.mockReturnValue([mockGroup]);
       try {
         await service.checkIsPublicPost({
@@ -135,6 +136,7 @@ describe('AuthorityService', () => {
           canReact: false,
           canShare: false,
           commentsCount: 0,
+          totalUsersSeen: 0,
           content: '',
           createdBy: 0,
           id: '',
@@ -143,27 +145,27 @@ describe('AuthorityService', () => {
           isImportant: false,
           updatedBy: 0,
           views: 0,
-          groups: [{postId: '1', groupId: 2}]
-        })
+          groups: [{ postId: '1', groupId: 2 }],
+        });
       } catch (e) {
-        expect(groupService.getMany).toBeCalled()
+        expect(groupService.getMany).toBeCalled();
       }
-    })
-  })
+    });
+  });
 
   describe('AuthorityService.checkCanReadPost', () => {
     it('', async () => {
       groupService.isMemberOfGroups.mockReturnValue(true);
-      await service.checkCanCreatePost(userDtoMock, [1])
-      expect(groupService.isMemberOfGroups).toBeCalled()
-    })
-  })
+      await service.checkCanCreatePost(userDtoMock, [1]);
+      expect(groupService.isMemberOfGroups).toBeCalled();
+    });
+  });
 
   describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
       groupService.isMemberOfSomeGroups.mockReturnValue(true);
-      await service.checkCanUpdatePost(userDtoMock, [1])
-      expect(groupService.isMemberOfSomeGroups).toBeCalled()
-    })
-  })
+      await service.checkCanUpdatePost(userDtoMock, [1]);
+      expect(groupService.isMemberOfSomeGroups).toBeCalled();
+    });
+  });
 });

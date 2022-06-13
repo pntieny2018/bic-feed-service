@@ -60,6 +60,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
       const dataIndex = {
         id: result.id,
         commentsCount: result.commentsCount,
+        totalUsersSeen: result.totalUsersSeen,
         content: result.content,
         media: result.media,
         mentions: result.mentions,

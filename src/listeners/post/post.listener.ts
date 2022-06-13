@@ -57,6 +57,7 @@ export class PostListener {
       const activity = this._postActivityService.createPayload({
         actor: actor,
         commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
         content: post.content,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
@@ -103,6 +104,7 @@ export class PostListener {
       id,
       content,
       commentsCount,
+      totalUsersSeen,
       media,
       mentions,
       setting,
@@ -140,6 +142,7 @@ export class PostListener {
       id,
       isArticle,
       commentsCount,
+      totalUsersSeen,
       content,
       media,
       mentions,
@@ -172,8 +175,18 @@ export class PostListener {
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, isArticle } =
-      newPost;
+    const {
+      isDraft,
+      id,
+      content,
+      commentsCount,
+      totalUsersSeen,
+      media,
+      mentions,
+      setting,
+      audience,
+      isArticle,
+    } = newPost;
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
@@ -218,6 +231,7 @@ export class PostListener {
     const index = ElasticsearchHelper.INDEX.POST;
     const dataUpdate = {
       commentsCount,
+      totalUsersSeen,
       content,
       media,
       mentions,
@@ -278,6 +292,7 @@ export class PostListener {
         id,
         content,
         commentsCount,
+        totalUsersSeen,
         media,
         mentions,
         setting,
@@ -289,6 +304,7 @@ export class PostListener {
       const dataIndex = {
         id,
         commentsCount,
+        totalUsersSeen,
         content,
         media,
         mentions,
