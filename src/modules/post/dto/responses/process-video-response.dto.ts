@@ -1,4 +1,5 @@
 import { VideoProcessStatus } from '../..';
+import { Expose } from 'class-transformer';
 
 export class ProcessVideoMetadataResponseDto {
   public name: string;
@@ -25,8 +26,11 @@ export class IPropertiesAttribute {
 }
 
 export class ThumbnailDto {
+  @Expose()
   public width: number;
+  @Expose()
   public height: number;
+  @Expose()
   public url: string;
 }
 
