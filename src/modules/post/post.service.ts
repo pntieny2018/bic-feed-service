@@ -288,7 +288,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size', 'thumbnails'],
           required: false,
         },
         {
@@ -360,9 +360,11 @@ export class PostService {
             'extension',
             'type',
             'name',
+            'originName',
             'width',
             'height',
             'status',
+            'thumbnails',
           ],
         },
         {
@@ -376,7 +378,7 @@ export class PostService {
       ],
     });
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
@@ -440,13 +442,13 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
         },
       ],
     });
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this.authorityService.checkIsPublicPost(post);
     let comments = null;
@@ -573,7 +575,7 @@ export class PostService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       const { groupIds } = audience;
       await this.authorityService.checkCanCreatePost(authUser, groupIds);
@@ -687,7 +689,7 @@ export class PostService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
 
     let transaction;
@@ -800,7 +802,7 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
             required: false,
           },
           {
@@ -868,7 +870,7 @@ export class PostService {
     authUserId: number
   ): Promise<boolean> {
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
     if (post.createdBy !== authUserId) {
@@ -1093,7 +1095,7 @@ export class PostService {
     const post = await this.postModel.findOne(conditions);
 
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     return post.toJSON();
   }
@@ -1118,7 +1120,7 @@ export class PostService {
   public async markReadPost(postId: string, userId: number): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     if (post && post.createdBy === userId) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_AS_READ_NOT_ALLOW);
@@ -1320,7 +1322,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
           required: true,
           where: {
             id,
@@ -1427,6 +1429,7 @@ export class PostService {
       const {
         id,
         commentsCount,
+        totalUsersSeen,
         isImportant,
         importantExpiredAt,
         isDraft,
@@ -1477,6 +1480,7 @@ export class PostService {
         result.push({
           id,
           commentsCount,
+          totalUsersSeen,
           isImportant,
           importantExpiredAt,
           isDraft,
@@ -1531,5 +1535,72 @@ export class PostService {
       }
     });
     return result;
+  }
+
+  public getPostPrivacyByCompareGroupPrivacy(
+    groupPrivacy: GroupPrivacy,
+    postPrivacy: PostPrivacy
+  ): PostPrivacy {
+    if (groupPrivacy === GroupPrivacy.PUBLIC || postPrivacy === PostPrivacy.PUBLIC) {
+      return PostPrivacy.PUBLIC;
+    }
+    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
+      return PostPrivacy.OPEN;
+    }
+    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
+      return PostPrivacy.PRIVATE;
+    }
+    return PostPrivacy.SECRET;
+  }
+
+  public async filterPostIdsNeedToUpdatePrivacy(
+    postIds: string[],
+    newPrivacy: PostPrivacy
+  ): Promise<{ [key: string]: string[] }> {
+    const relationInfo = await this.postGroupModel.findAll({
+      where: { postId: { [Op.in]: postIds } },
+    });
+    const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
+    const groupInfos = await this.groupService.getMany(groupIds);
+    const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
+      returnValue[elementValue.id] = elementValue.privacy;
+      return returnValue;
+    }, {});
+    const postPrivacyMapping = relationInfo.reduce((returnValue, elementValue) => {
+      if (!returnValue[elementValue.postId]) {
+        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
+          groupPrivacyMapping[elementValue.groupId],
+          newPrivacy
+        );
+      } else {
+        returnValue[elementValue.postId] = this.getPostPrivacyByCompareGroupPrivacy(
+          groupPrivacyMapping[elementValue.groupId],
+          returnValue[elementValue.postId]
+        );
+      }
+      return returnValue;
+    }, {});
+    const updatedPostIds = {};
+    Object.entries(postPrivacyMapping).forEach(([postId, postPrivacy]) => {
+      if (!updatedPostIds[postPrivacy.toString()]) {
+        updatedPostIds[postPrivacy.toString()] = [postId];
+      } else {
+        updatedPostIds[postPrivacy.toString()].push(postId);
+      }
+    });
+    return updatedPostIds;
+  }
+
+  public async bulkUpdatePostPrivacy(postIds: string[], privacy: PostPrivacy): Promise<void> {
+    await this.postModel.update(
+      { privacy },
+      {
+        where: {
+          id: {
+            [Op.in]: postIds,
+          },
+        },
+      }
+    );
   }
 }

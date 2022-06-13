@@ -27,6 +27,7 @@ import { ArticleService } from '../../modules/article/article.service';
 @Injectable()
 export class ArticleListener {
   private _logger = new Logger(ArticleListener.name);
+
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
@@ -77,6 +78,7 @@ export class ArticleListener {
       id,
       content,
       commentsCount,
+      totalUsersSeen,
       media,
       mentions,
       setting,
@@ -107,6 +109,7 @@ export class ArticleListener {
       title: article.title ?? null,
       summary: article.summary ?? null,
       commentsCount,
+      totalUsersSeen,
       content,
       media,
       mentions,
@@ -148,8 +151,18 @@ export class ArticleListener {
   public async onArticleUpdated(event: ArticleHasBeenUpdatedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldArticle, newArticle, actor } = event.payload;
-    const { isDraft, id, content, commentsCount, media, mentions, setting, audience, isArticle } =
-      oldArticle;
+    const {
+      isDraft,
+      id,
+      content,
+      commentsCount,
+      totalUsersSeen,
+      media,
+      mentions,
+      setting,
+      audience,
+      isArticle,
+    } = oldArticle;
 
     if (oldArticle.isDraft === false) {
       const mediaIds = media.videos
@@ -182,6 +195,7 @@ export class ArticleListener {
     const index = ElasticsearchHelper.INDEX.ARTICLE;
     const dataUpdate = {
       commentsCount,
+      totalUsersSeen,
       content,
       media,
       mentions,
@@ -239,6 +253,7 @@ export class ArticleListener {
         id,
         content,
         commentsCount,
+        totalUsersSeen,
         media,
         mentions,
         setting,
@@ -250,6 +265,7 @@ export class ArticleListener {
       const dataIndex = {
         id,
         commentsCount,
+        totalUsersSeen,
         content,
         media,
         mentions,

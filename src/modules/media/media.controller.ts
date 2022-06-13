@@ -69,7 +69,9 @@ export class MediaController {
       extension: file.mimetype.split('/').pop(),
       width,
       height,
+      size: file.size ?? 0,
       status: MediaStatus.COMPLETED,
+      mimeType: file.mimetype,
     });
     return result.toJSON();
   }

@@ -118,7 +118,7 @@ export class SeriesService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       transaction = await this._sequelizeConnection.transaction();
       const series = await this._seriesModel.create(
@@ -160,7 +160,7 @@ export class SeriesService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       const seriesBefore = await this.getSeriesById(seriesId);
       await this.checkSeriesOwner(seriesBefore, authUserId);
@@ -202,7 +202,7 @@ export class SeriesService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       const series = await this.getSeriesById(seriesId);
       await this.checkSeriesOwner(series, authUserId);
@@ -236,7 +236,7 @@ export class SeriesService {
     authUserId: number
   ): Promise<boolean> {
     if (!series) {
-      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
     }
 
     if (series.createdBy !== authUserId) {

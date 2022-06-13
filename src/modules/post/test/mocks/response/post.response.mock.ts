@@ -41,6 +41,7 @@ export const mockedPostResponse: PostResponseDto = {
   },
   mentions: {},
   commentsCount: 0,
+  totalUsersSeen: 0,
   reactionsCount: {},
   markedReadPost: false,
   createdAt: new Date('2022-05-19T07:23:55.601Z'),

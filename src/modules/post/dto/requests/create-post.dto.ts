@@ -43,7 +43,6 @@ export class CreatePostDto {
       ],
       videos: [],
       files: [],
-      thumbnails: [],
     },
   })
   @IsOptional()

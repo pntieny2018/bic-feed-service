@@ -291,7 +291,7 @@ export class ArticleService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
         },
         {
           model: PostReactionModel,
@@ -304,7 +304,7 @@ export class ArticleService {
       ],
     });
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this._authorityService.checkCanReadArticle(user, post);
     let comments = null;
@@ -390,12 +390,12 @@ export class ArticleService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
         },
       ],
     });
     if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
     await this._authorityService.checkIsPublicArticle(post);
     let comments = null;
@@ -449,7 +449,7 @@ export class ArticleService {
       const authUserId = authUser.id;
       const creator = authUser.profile;
       if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
 
       const { groupIds } = audience;
@@ -551,7 +551,7 @@ export class ArticleService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
     try {
       const dataUpdate = { views: 1 };
@@ -584,7 +584,7 @@ export class ArticleService {
     const authUserId = authUser.id;
     const creator = authUser.profile;
     if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
 
     let transaction;
@@ -734,7 +734,7 @@ export class ArticleService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
           required: true,
           where: {
             id,

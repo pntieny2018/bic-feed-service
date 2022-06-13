@@ -28,6 +28,9 @@ import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/model
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { SentryService } from '@app/sentry';
+import { FileMetadataResponseDto } from './dto/response/file-metadata-response.dto';
+import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
+import { VideoMetadataResponseDto } from './dto/response/video-metadata-response.dto';
 
 @Injectable()
 export class MediaService {
@@ -187,7 +190,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        originName: i.name ?? null,
+        originName: i.originName ?? null,
         size: i.size ?? 0,
         url: i.url ?? null,
         width: i.width ?? null,
@@ -204,7 +207,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        originName: i.name ?? null,
+        originName: i.originName ?? null,
         extension: i.extension ?? null,
         mimeType: i.mimeType ?? null,
         size: i.size ?? 0,
@@ -223,7 +226,7 @@ export class MediaService {
       insertData.push({
         id: i.id,
         name: i.name ?? null,
-        originName: i.name ?? null,
+        originName: i.originName ?? null,
         size: i.size ?? 0,
         type: MediaType.VIDEO,
         createdBy,
@@ -397,10 +400,10 @@ export class MediaService {
     media.forEach((media: IMedia) => {
       const TypeMediaDto =
         media.type === 'file'
-          ? FileMetadataDto
+          ? FileMetadataResponseDto
           : media.type === 'image'
-          ? ImageMetadataDto
-          : VideoMetadataDto;
+          ? ImageMetadataResponseDto
+          : VideoMetadataResponseDto;
       const typeMediaDto = plainToInstance(TypeMediaDto, media, { excludeExtraneousValues: true });
       if (mediaTypes[`${media.type}s`]) mediaTypes[`${media.type}s`].push(typeMediaDto);
     });

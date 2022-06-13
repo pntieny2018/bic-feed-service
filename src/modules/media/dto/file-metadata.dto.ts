@@ -58,7 +58,6 @@ export class FileMetadataDto implements IDocumentMetadata {
   @Expose({
     name: 'origin_name',
   })
-  @Expose()
   public originName?: string;
 
   @ApiProperty({
