@@ -145,6 +145,7 @@ describe('ArticleListener', () => {
     const articleHasBeenDeletedEvent = new ArticleHasBeenDeletedEvent({
       actor: undefined,
       article: {
+        totalUsersSeen: 0,
         canComment: false,
         canReact: false,
         canShare: false,
