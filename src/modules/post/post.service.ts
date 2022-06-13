@@ -126,7 +126,7 @@ export class PostService {
     await Promise.all([
       this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
-      this.bindCommentsCount(posts),
+      this.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
@@ -539,25 +539,31 @@ export class PostService {
       }
     }
   }
+
   /**
-   * Bind commentsCount info to post
+   * Bind data info to post
    * @param posts Array of post
+   * @param objects {commentsCount: boolean, totalUsersSeen: boolean}
    * @returns Promise resolve void
    * @throws HttpException
    */
-  public async bindCommentsCount(posts: any[]): Promise<void> {
+  public async bindPostData(posts: any[], objects: any): Promise<void> {
     const postIds = [];
     for (const post of posts) {
       postIds.push(post.id);
     }
+    const attributeArr = ['id'];
+    if (objects?.commentsCount) attributeArr.push('commentsCount');
+    if (objects?.totalUsersSeen) attributeArr.push('totalUsersSeen');
     const result = await this.postModel.findAll({
       raw: true,
-      attributes: ['id', 'commentsCount'],
+      attributes: attributeArr,
       where: { id: postIds },
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      post.commentsCount = findPost?.commentsCount || 0;
+      if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
+      if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
     }
   }
 
