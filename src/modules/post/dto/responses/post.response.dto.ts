@@ -128,6 +128,14 @@ export class PostResponseDto {
   public commentsCount: number;
 
   @ApiProperty({
+    description: 'Total users seen post',
+    type: Number,
+    name: 'total_users_seen',
+  })
+  @Expose()
+  public totalUsersSeen: number;
+
+  @ApiProperty({
     type: 'object',
     example: {
       [0]: {

@@ -73,6 +73,7 @@ export const mockPostResponseDto: PostResponseDto = {
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,
+  totalUsersSeen: 0,
   reactionsCount: {},
   markedReadPost: false,
   createdAt: new Date('2022-05-19T02:53:48.135Z'),

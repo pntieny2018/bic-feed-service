@@ -45,6 +45,7 @@ export const mockPostResponseDto: PostResponseDto = {
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,
+  totalUsersSeen: 0,
   privacy: PostPrivacy.PUBLIC,
   reactionsCount: {
     [1]: {
