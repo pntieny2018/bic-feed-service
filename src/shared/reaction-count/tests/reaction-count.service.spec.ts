@@ -47,8 +47,8 @@ describe('ReactionCountService', () => {
     });
 
     it('should fail', async () => {
+      redisService.get.mockRejectedValue(new Error('1'))
       const data = await service.getTotalKind('1', 1);
-      redisService.get.mockRejectedValue()
       expect(sentryService.captureException).toBeCalled()
     })
   });
@@ -61,8 +61,8 @@ describe('ReactionCountService', () => {
     });
 
     it('should fail', async () => {
+      redisService.set.mockRejectedValue(new Error('2'))
       const data = await service.increment('1', 1);
-      redisService.set.mockRejectedValue()
       expect(sentryService.captureException).toBeCalled()
     })
   });
@@ -74,8 +74,8 @@ describe('ReactionCountService', () => {
     });
 
     it('should fail', async () => {
+      redisService.set.mockRejectedValue(new Error('3'))
       const data = await service.decrement('1', 1);
-      redisService.set.mockRejectedValue()
       expect(sentryService.captureException).toBeCalled()
     })
   });
