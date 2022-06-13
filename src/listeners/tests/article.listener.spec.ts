@@ -29,6 +29,7 @@ import { VideoProcessingEndDto } from '../../modules/post/dto/responses/process-
 describe('ArticleListener', () => {
   let articleListener;
   let postService;
+  let articleService;
   let feedPublisherService;
   let sentryService;
   let elasticsearchService;
@@ -93,6 +94,7 @@ describe('ArticleListener', () => {
           provide: FeedPublisherService,
           useValue: {
             attachArticlesForUsersNewsFeed: jest.fn(),
+            fanoutOnWrite: jest.fn(),
           },
         },
         {
@@ -127,6 +129,7 @@ describe('ArticleListener', () => {
     }).compile();
 
     articleListener = module.get<ArticleListener>(ArticleListener);
+    articleService = module.get<ArticleService>(ArticleService);
     elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
     feedPublisherService = module.get<FeedPublisherService>(FeedPublisherService);
     notificationService = module.get<NotificationService>(NotificationService);
@@ -160,10 +163,9 @@ describe('ArticleListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.deletePostEditedHistory.mockResolvedValue();
-      elasticsearchService.delete.mockResolvedValue();
       seriesService.updateTotalArticle.mockResolvedValue()
       postService.deletePostEditedHistory.mockResolvedValue()
+      elasticsearchService.delete.mockResolvedValue();
       await articleListener.onArticleDeleted(articleHasBeenDeletedEvent);
       expect(loggerSpy).toBeCalled();
       expect(postService.deletePostEditedHistory).toBeCalled();
@@ -172,10 +174,10 @@ describe('ArticleListener', () => {
       expect( postService.deletePostEditedHistory).toBeCalled();
     });
 
-    it('should fail deletePostEditedHistory', async () => {
+    it('should continue even deletePostEditedHistory', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'error').mockReturnThis();
       postService.deletePostEditedHistory.mockRejectedValue();
-      elasticsearchService.delete.mockRejectedValue()
+      elasticsearchService.delete.mockRejectedValue();
       await articleListener.onArticleDeleted(articleHasBeenDeletedEvent);
       expect(loggerSpy).toBeCalled();
       expect(postService.deletePostEditedHistory).toBeCalled();
@@ -183,21 +185,16 @@ describe('ArticleListener', () => {
     });
 
     it('should fail elasticsearchService.delete', async () => {
+      seriesService.updateTotalArticle.mockResolvedValue()
       postService.deletePostEditedHistory.mockResolvedValue();
       elasticsearchService.delete.mockRejectedValue();
       await articleListener.onArticleDeleted(articleHasBeenDeletedEvent);
+      expect(seriesService.updateTotalArticle).toBeCalled();
       expect(postService.deletePostEditedHistory).toBeCalled();
       expect(elasticsearchService.delete).toBeCalled();
       expect(sentryService.captureException).toBeCalled();
     });
 
-    it('should articleActivityService.createPayload', async () => {
-      postService.deletePostEditedHistory.mockResolvedValue();
-      elasticsearchService.delete.mockResolvedValue();
-      await articleListener.onArticleDeleted(articleHasBeenDeletedEvent);
-      expect(postService.deletePostEditedHistory).toBeCalled();
-      expect(elasticsearchService.delete).toBeCalled();
-    });
   });
 
   describe('ArticleListener.onArticlePublished', () => {
@@ -205,59 +202,86 @@ describe('ArticleListener', () => {
       actor: undefined,
       article: mockedArticleResponse,
     });
-    it('should success', async () => {
+    it('should success even processVideo and savePostEditedHistory and updateTotalArticle error', async () => {
+      articleHasBeenPublishedEvent.payload.article.isDraft = false
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      postService.processVideo.mockRejectedValue(new Error('1'))
+      postService.savePostEditedHistory.mockRejectedValue(new Error('2'))
+      seriesService.updateTotalArticle.mockRejectedValue(new Error('3'))
+      elasticsearchService.index.mockResolvedValue()
+      feedPublisherService.fanoutOnWrite.mockResolvedValue()
       await articleListener.onArticlePublished(articleHasBeenPublishedEvent);
       expect(loggerSpy).toBeCalled();
+      expect(postService.processVideo).toBeCalled();
+      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(seriesService.updateTotalArticle).toBeCalled();
+      expect(elasticsearchService.index).toBeCalled();
+      expect(sentryService.captureException).toBeCalled();
     });
   });
 
   describe('ArticleListener.onArticleUpdated', () => {
+    const newArticle = JSON.parse(JSON.stringify(mockedArticleResponse))
+    newArticle.isDraft = false
     const articleHasBeenUpdatedEvent = new ArticleHasBeenUpdatedEvent({
       actor: undefined,
       oldArticle: mockedArticleResponse,
-      newArticle: mockedArticleResponse,
+      newArticle: newArticle,
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
+      postService.processVideo.mockResolvedValue()
+      postService.savePostEditedHistory.mockResolvedValue()
+      elasticsearchService.update.mockResolvedValue()
+      feedPublisherService.fanoutOnWrite.mockResolvedValue()
+
       await articleListener.onArticleUpdated(articleHasBeenUpdatedEvent);
-      expect(loggerSpy).toBeCalled();
+      expect(postService.processVideo).toBeCalled();
+      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(elasticsearchService.update).toBeCalled();
     });
   });
 
   describe('ArticleListener.onArticleVideoSuccess', () => {
     const articleVideoSuccessEvent = new ArticleVideoSuccessEvent(new VideoProcessingEndDto());
+    articleVideoSuccessEvent.payload.properties = {}
+    articleVideoSuccessEvent.payload.properties.name = '123'
+    articleVideoSuccessEvent.payload.properties.size = 12
+    articleVideoSuccessEvent.payload.properties.mimeType = '1212'
+    articleVideoSuccessEvent.payload.properties.codec = '1212'
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.getPostsByMedia.mockResolvedValue([
-        { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
-        { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
-      ]);
-      postService.updatePostStatus.mockResolvedValue();
-      elasticsearchService.index.mockResolvedValue();
-
+      mediaService.updateData.mockResolvedValue()
+      articleService.getArticlesByMedia.mockResolvedValue([mockedArticleResponse])
+      elasticsearchService.index.mockResolvedValue()
+      seriesService.updateTotalArticle.mockResolvedValue()
+      feedPublisherService.fanoutOnWrite.mockResolvedValue()
       await articleListener.onArticleVideoSuccess(articleVideoSuccessEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.getPostsByMedia).toBeCalled();
-      expect(postService.updatePostStatus).toBeCalled();
+      expect(mediaService.updateData).toBeCalled();
+      expect(articleService.getArticlesByMedia).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
+      expect(seriesService.updateTotalArticle).toBeCalled();
+      expect(feedPublisherService.fanoutOnWrite).toBeCalled();
     });
   });
 
   describe('ArticleListener.onArticleVideoFailed', () => {
     const articleVideoFailedEvent = new ArticleVideoFailedEvent(new VideoProcessingEndDto());
+    articleVideoFailedEvent.payload.properties = {}
+    articleVideoFailedEvent.payload.properties.name = '123'
+    articleVideoFailedEvent.payload.properties.size = 12
+    articleVideoFailedEvent.payload.properties.mimeType = '1212'
+    articleVideoFailedEvent.payload.properties.codec = '1212'
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.getPostsByMedia.mockResolvedValue([
-        { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
-        { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
-      ]);
-      postService.updatePostStatus.mockResolvedValue();
-
+      mediaService.updateData.mockResolvedValue()
+      articleService.getArticlesByMedia.mockResolvedValue([mockedArticleResponse])
+      postService.updatePostStatus.mockResolvedValue()
       await articleListener.onArticleVideoFailed(articleVideoFailedEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.getPostsByMedia).toBeCalled();
+      expect(mediaService.updateData).toBeCalled();
+      expect(articleService.getArticlesByMedia).toBeCalled();
       expect(postService.updatePostStatus).toBeCalled();
     });
   });
