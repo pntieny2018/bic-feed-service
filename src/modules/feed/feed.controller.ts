@@ -48,9 +48,8 @@ export class FeedController {
 
   @ApiOperation({ summary: 'Mark seen post' })
   @ApiParam({
-    name: 'ids',
-    description: 'Ids of seen post',
-    example: '400,401,402',
+    name: 'id',
+    description: 'Id of seen post',
     required: true,
   })
   @ApiOkResponse({
