@@ -53,6 +53,7 @@ export interface IPost {
   updatedBy: number;
   content: string;
   commentsCount: number;
+  totalUsersSeen: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
   isDraft: boolean;
@@ -93,6 +94,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @Column
   public commentsCount: number;
+
+  @Column
+  public totalUsersSeen: number;
 
   @Default(false)
   @Column
@@ -407,6 +411,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount",
+      "p"."total_users_seen" AS "totalUsersSeen",
       "p"."is_important" AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
@@ -508,6 +513,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount", 
+      "p"."total_users_seen" AS "totalUsersSeen",
       "p"."views",
       "p"."title",
       "p"."summary",
@@ -598,6 +604,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postGroupTable = PostGroupModel.tableName;
     let subSelect = `SELECT "p"."id", 
     "p"."comments_count" AS "commentsCount",
+    "p"."total_users_seen" AS "totalUsersSeen",
     "p"."is_important" AS "isImportant", 
     "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
     "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 

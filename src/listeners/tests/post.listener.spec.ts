@@ -134,6 +134,7 @@ describe('PostListener', () => {
         canReact: false,
         canShare: false,
         commentsCount: 0,
+        totalUsersSeen: 0,
         content: '',
         createdBy: 0,
         id: '',

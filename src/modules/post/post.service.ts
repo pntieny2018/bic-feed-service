@@ -1429,6 +1429,7 @@ export class PostService {
       const {
         id,
         commentsCount,
+        totalUsersSeen,
         isImportant,
         importantExpiredAt,
         isDraft,
@@ -1479,6 +1480,7 @@ export class PostService {
         result.push({
           id,
           commentsCount,
+          totalUsersSeen,
           isImportant,
           importantExpiredAt,
           isDraft,
