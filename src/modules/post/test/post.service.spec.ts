@@ -121,7 +121,7 @@ describe('PostService', () => {
           provide: SentryService,
           useValue: {
             captureException: jest.fn(),
-            captureMessage: jest.fn()
+            captureMessage: jest.fn(),
           },
         },
         {
@@ -299,7 +299,7 @@ describe('PostService', () => {
           updatedBy: mockedUserAuth.id,
           height: 100,
           status: MediaStatus.COMPLETED,
-        }
+        },
       ]);
       postModelMock.update.mockResolvedValueOnce(mockedPostCreated);
 
@@ -321,7 +321,7 @@ describe('PostService', () => {
         canShare: mockedCreatePostDto.setting.canShare,
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
-        privacy: PostPrivacy.PUBLIC
+        privacy: PostPrivacy.PUBLIC,
       });
     });
 
@@ -374,7 +374,7 @@ describe('PostService', () => {
           updatedBy: mockedUserAuth.id,
           height: 100,
           status: MediaStatus.COMPLETED,
-        }
+        },
       ]);
       postModelMock.update = jest
         .fn()
@@ -402,10 +402,7 @@ describe('PostService', () => {
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mockedUserAuth.id = mockedDataUpdatePost.createdBy;
-      const result = await postService.publishPost(
-        mockedDataUpdatePost.id,
-        mockedUserAuth
-      );
+      const result = await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
       expect(result).toBe(true);
 
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
@@ -638,7 +635,7 @@ describe('PostService', () => {
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
-      postService.bindCommentsCount = jest.fn();
+      postService.bindPostData = jest.fn();
 
       const result = await postService.searchPosts(mockedUserAuth, searchDto);
 
@@ -649,7 +646,7 @@ describe('PostService', () => {
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindCommentsCount).toBeCalledTimes(1);
+      expect(postService.bindPostData).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 
@@ -964,11 +961,11 @@ describe('PostService', () => {
     });
   });
 
-  describe('bindCommentsCount', () => {
+  describe('bindPostData', () => {
     const posts = [{ id: 1, commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
-      await postService.bindCommentsCount(posts);
+      await postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true });
       expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
@@ -1122,7 +1119,6 @@ describe('PostService', () => {
     });
   });
 
-
   describe('checkContent', () => {
     it('Should successfully', async () => {
       const updatePostDto: UpdatePostDto = {
@@ -1133,15 +1129,14 @@ describe('PostService', () => {
         media: {
           images: [],
           files: [],
-          videos: []
-        }
-      }
-      try{
-      const result = postService.checkContent(updatePostDto);
+          videos: [],
+        },
+      };
+      try {
+        const result = postService.checkContent(updatePostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
-      
     });
   });
 });
