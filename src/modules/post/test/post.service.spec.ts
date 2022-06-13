@@ -633,7 +633,7 @@ describe('PostService', () => {
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
-      postService.bindCommentsCount = jest.fn();
+      postService.bindPostData = jest.fn();
 
       const result = await postService.searchPosts(mockedUserAuth, searchDto);
 
@@ -644,7 +644,7 @@ describe('PostService', () => {
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindCommentsCount).toBeCalledTimes(1);
+      expect(postService.bindPostData).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 
@@ -959,11 +959,11 @@ describe('PostService', () => {
     });
   });
 
-  describe('bindCommentsCount', () => {
+  describe('bindPostData', () => {
     const posts = [{ id: 1, commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
-      await postService.bindCommentsCount(posts);
+      await postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true });
       expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
