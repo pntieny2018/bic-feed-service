@@ -7,7 +7,7 @@ import { SentryService } from '@app/sentry';
 describe('ReactionCountService', () => {
   let service: ReactionCountService;
   let redisService;
-
+  let sentryService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -32,6 +32,7 @@ describe('ReactionCountService', () => {
     service = module.get<ReactionCountService>(ReactionCountService);
 
     redisService = module.get<RedisService>(RedisService);
+    sentryService = module.get<SentryService>(SentryService);
   });
 
   it('should be defined', () => {
@@ -43,8 +44,13 @@ describe('ReactionCountService', () => {
       const data = await service.getTotalKind('1', 1);
       expect(data).toEqual(0);
       expect(redisService.get).toBeCalled();
-
     });
+
+    it('should fail', async () => {
+      const data = await service.getTotalKind('1', 1);
+      redisService.get.mockRejectedValue()
+      expect(sentryService.captureException).toBeCalled()
+    })
   });
 
   describe('ReactionCountService.increment', () => {
@@ -53,6 +59,12 @@ describe('ReactionCountService', () => {
       expect(redisService.set).toBeCalled();
       expect(redisService.get).toBeCalled();
     });
+
+    it('should fail', async () => {
+      const data = await service.increment('1', 1);
+      redisService.set.mockRejectedValue()
+      expect(sentryService.captureException).toBeCalled()
+    })
   });
 
   describe('ReactionCountService.decrement', () => {
@@ -60,5 +72,11 @@ describe('ReactionCountService', () => {
       service.decrement('1', 1);
       expect(redisService.get).toBeCalled();
     });
+
+    it('should fail', async () => {
+      const data = await service.decrement('1', 1);
+      redisService.set.mockRejectedValue()
+      expect(sentryService.captureException).toBeCalled()
+    })
   });
 });
