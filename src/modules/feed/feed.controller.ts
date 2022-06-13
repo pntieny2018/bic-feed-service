@@ -59,7 +59,7 @@ export class FeedController {
   @Put('/seen/:ids')
   public async markSeenPost(
     @AuthUser() user: UserDto,
-    @Param('ids', PutMarkSeenPostDto) postId: string[]
+    @Param('ids', ParseArrayPipe) postId: string[]
   ): Promise<boolean> {
     await this._feedService.markSeenPosts(postId, user.id);
     return true;
