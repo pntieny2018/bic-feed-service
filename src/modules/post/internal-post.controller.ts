@@ -5,7 +5,6 @@ import { KAFKA_TOPIC } from '../../common/constants';
 import { UpdatePrivacyDto } from './dto/requests/update-privacy.dto';
 import { PostPrivacy } from '../../database/models/post.model';
 
-@Controller('/test')
 export class InternalPostController {
   private _logger = new Logger(InternalPostController.name);
   public constructor(private _postSevice: PostService) {}
