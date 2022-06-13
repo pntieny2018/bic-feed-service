@@ -50,6 +50,7 @@ export interface IMedia {
   status: MediaStatus;
   size?: number;
   mimeType?: string;
+  thumbnails?: ThumbnailDto[];
 }
 @Table({
   tableName: 'media',
