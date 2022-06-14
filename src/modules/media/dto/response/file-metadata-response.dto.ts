@@ -8,11 +8,20 @@ export class FileMetadataResponseDto extends FileMetadataDto {
     required: false,
     description: 'Origin file name',
     example: 'example.txt',
-    name: 'origin_name'
+    name: 'origin_name',
   })
   @IsNotEmpty()
   @IsString()
   @IsOptional()
   @Expose()
   public originName?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public mimeType?: string;
 }
