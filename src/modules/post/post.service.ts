@@ -269,22 +269,8 @@ export class PostService {
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order } = getDraftPostDto;
-    const mediaInclude = {
-      model: MediaModel,
-      through: {
-        attributes: [],
-      },
-      attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size', 'thumbnails', 'status'],
-      required: false,
-      where: {},
-    };
-    if (getDraftPostDto.isFailed) {
-      mediaInclude.required = true;
-      mediaInclude.where = {
-        status: MediaStatus.FAILED,
-      };
-    }
-    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+
+    const rows = await this.postModel.findAll<PostModel>({
       where: {
         createdBy: authUserId,
         isDraft: true,
@@ -298,32 +284,53 @@ export class PostService {
           attributes: ['groupId'],
           required: false,
         },
-        mediaInclude,
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'size',
+            'thumbnails',
+            'status',
+          ],
+          required: false,
+        },
         {
           model: MentionModel,
           required: false,
         },
       ],
-      offset: offset,
-      limit: limit,
       order: [['createdAt', order]],
     });
-    const jsonPosts = rows.map((r) => r.toJSON());
+    const jsonPostsFilterByMediaStatus = rows
+      .map((r) => r.toJSON())
+      .filter((row) => {
+        if (getDraftPostDto.isFailed === null) return true;
+        const failedItem = row.media.find((e) => e.status === MediaStatus.FAILED);
+        return (
+          (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
+        );
+      });
     await Promise.all([
-      this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.bindActorToPost(jsonPosts),
-      this.bindAudienceToPost(jsonPosts),
+      this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
+      this.bindActorToPost(jsonPostsFilterByMediaStatus),
+      this.bindAudienceToPost(jsonPostsFilterByMediaStatus),
     ]);
-    const result = this.classTransformer.plainToInstance(
-      PostResponseDto,
-      jsonPosts,
-      {
+    const result = this.classTransformer
+      .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
         excludeExtraneousValues: true,
-      }
-    );
+      })
+      .slice(offset * limit, limit * (offset + 1));
 
     return new PageDto<PostResponseDto>(result, {
-      total: count,
+      total: jsonPostsFilterByMediaStatus.length,
       limit,
       offset,
     });
