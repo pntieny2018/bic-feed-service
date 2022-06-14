@@ -1584,6 +1584,7 @@ export class PostService {
           size: post.size,
           height: post.height,
           extension: post.extension,
+          mimeType: post.mimeType,
         });
       }
     });
