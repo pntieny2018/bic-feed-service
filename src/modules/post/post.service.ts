@@ -962,7 +962,9 @@ export class PostService {
       });
       await this.checkPostOwner(post, authUser.id);
       const groupIds = post.groups.map((g) => g.groupId);
-      await this.authorityService.checkCanDeletePost(authUser, groupIds);
+      if (post.isDraft === false) {
+        await this.authorityService.checkCanDeletePost(authUser, groupIds);
+      }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
         this.mediaService.sync(postId, EntityType.POST, [], transaction),
