@@ -288,7 +288,17 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'size',
+            'mimeType',
+            'thumbnails',
+          ],
           required: false,
         },
         {
@@ -364,6 +374,7 @@ export class PostService {
             'width',
             'height',
             'status',
+            'mimeType',
             'thumbnails',
           ],
         },
@@ -442,7 +453,18 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'size',
+            'width',
+            'height',
+            'status',
+            'mimeType',
+            'thumbnails',
+          ],
         },
       ],
     });
@@ -679,6 +701,7 @@ export class PostService {
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
   }
+
   /**
    * Update Post except isDraft
    * @param postId string
@@ -808,7 +831,17 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+            attributes: [
+              'id',
+              'url',
+              'type',
+              'name',
+              'width',
+              'height',
+              'status',
+              'mimeType',
+              'thumbnails',
+            ],
             required: false,
           },
           {
@@ -864,6 +897,7 @@ export class PostService {
       throw error;
     }
   }
+
   /**
    * Check post exist and owner
    * @param post PostResponseDto
@@ -1328,7 +1362,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'mimeType', 'thumbnails'],
           required: true,
           where: {
             id,
