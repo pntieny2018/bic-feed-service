@@ -14,7 +14,9 @@ export class GetDraftPostDto extends PageOptionsDto {
   @IsBoolean()
   @Expose({ name: 'is_failed' })
   @Transform(({ value }) => {
-    return value !== 'false';
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
   })
-  public isFailed?: boolean = true;
+  public isFailed?: boolean;
 }
