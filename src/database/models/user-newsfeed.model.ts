@@ -1,8 +1,17 @@
-import { BelongsTo, Column, Default, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { IsUUID } from 'class-validator';
+import {
+  BelongsTo,
+  Column,
+  Default,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
 import { PostModel } from './post.model';
 export interface IUserNewsFeed {
   userId: number;
-  postId: number;
+  postId: string;
 }
 @Table({
   tableName: 'user_newsfeed',
@@ -15,8 +24,9 @@ export class UserNewsFeedModel extends Model implements IUserNewsFeed {
 
   @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
   @Column
-  public postId: number;
+  public postId: string;
 
   @Default(false)
   @Column

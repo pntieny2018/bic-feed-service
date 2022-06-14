@@ -8,6 +8,7 @@ import {
   ValidationPipe,
   ValidationError,
 } from '@nestjs/common';
+import { StringHelper } from '../common/helpers';
 
 export type ConstraintItem = { title: string; message: string[] };
 
@@ -52,7 +53,13 @@ function buildErrors(errors: ValidationError[]): ConstraintItem[] {
 
   properties.forEach((p, index) => {
     const item: ConstraintItem = {
-      message: Object.values(errors[index].constraints),
+      message: Object.values(errors[index].constraints).map((ct) => {
+        let msg = StringHelper.camelToSnakeCase(ct, ['UUID', 'uuid']);
+        if (msg[0] === '_') {
+          msg = msg.slice(1);
+        }
+        return msg;
+      }),
       title: p,
     };
     constraints.push(item);

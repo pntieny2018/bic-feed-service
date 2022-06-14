@@ -2,6 +2,7 @@ import { LibModule } from './lib.module';
 import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { PostModule } from '../modules/post';
+import { SeriesModule } from '../modules/series';
 import { ListenerModule } from '../listeners';
 import { GroupModule } from '../shared/group';
 import { MediaModule } from '../modules/media';
@@ -18,9 +19,15 @@ import { RecentSearchModule } from '../modules/recent-search';
 import { ReactionCountModule } from '../shared/reaction-count';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
+import { DatabaseModule } from '../database';
+import { GiphyModule } from '../modules/giphy';
+import { ArticleModule } from '../modules/article';
+import { CategoryModule } from '../modules/category';
+import { HashtagModule } from '../modules/hashtag';
 
 @Module({
   imports: [
+    DatabaseModule,
     LibModule,
     AuthModule,
     CommentModule,
@@ -39,15 +46,18 @@ import { FeedGeneratorModule } from '../modules/feed-generator';
     ReactionCountModule,
     FeedGeneratorModule,
     FeedPublisherModule,
+    GiphyModule,
+    ArticleModule,
+    SeriesModule,
+    CategoryModule,
+    HashtagModule,
   ],
   controllers: [AppController],
   providers: [],
+  exports: [],
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(AuthMiddleware)
-      .exclude('/api/health-check', 'api/v1/follows', 'api/v1/app')
-      .forRoutes('*');
+    consumer.apply(AuthMiddleware).forRoutes('*');
   }
 }

@@ -18,7 +18,7 @@ module.exports = {
           allowNull: false,
         },
         post_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
         },
         is_seen_post: {

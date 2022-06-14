@@ -47,19 +47,26 @@ export const HTTP_STATUS_ID = {
 
   // INSIDE
   APP_POST_PUBLISH_CONTENT_EMPTY: 'app.post.publish.content_empty.app_error',
-  APP_COMMENT_EXISTING: 'app.comment.existing.app_error',
-  APP_COMMENT_NOT_FOUND: 'app.comment.not_found.app_error',
-  APP_COMMENT_REPLY_EXISTING: 'app.comment.reply.existing.app_error',
+  APP_COMMENT_NOT_EXISTING: 'app.comment.existing.app_error',
+  APP_COMMENT_REPLY_NOT_EXISTING: 'app.comment.reply.not_existing.app_error',
   APP_POST_SETTING_DISABLE: 'app.post.setting.disable.app_error',
-  APP_POST_EXISTING: 'app.post.existing.app_error',
-  APP_REACTION_EXISTING: 'app.reaction.existing.app_error',
+  APP_POST_NOT_EXISTING: 'app.post.not_existing.app_error',
+  APP_REACTION_NOT_EXISTING: 'app.reaction.not_existing.app_error',
   APP_REACTION_UNIQUE: 'app.reaction.unique.app_error',
   APP_REACTION_TARGET_EXISTING: 'app.reaction.target.existing.app_error',
   APP_REACTION_RATE_LIMIT_KIND: 'app.reaction.rate_limit.kind.app_error',
   APP_AUTH_TOKEN_EXPIRED: 'app.auth_token.expired',
   APP_POST_AS_READ_INVALID_PARAMETER: 'app.post.invalid_parameter',
   APP_POST_AS_READ_NOT_ALLOW: 'app.post.not_allow',
-  APP_POST_NOT_FOUND: 'app.post.not_found',
+  APP_POST_NOT_ARTICLE: 'app.post.not_article',
+  APP_POST_GROUP_REQUIRED: 'app.post.groups_is_required',
 
-  APP_USER_NOT_FOUND: 'app.user.not_found',
+  // SERIES
+  APP_ARTICLE_CATEGORY_REQUIRED: 'app.article.category_required',
+  APP_SERIES_NOT_EXISTING: 'app.series.not_existing',
+  APP_SERIES_INVALID_PARAMETER: 'app.series.invalid_parameter',
+  APP_USER_NOT_EXISTING: 'app.user.not_existing',
+  APP_CATEGORY_NOT_ALLOW: 'app.category.not_allow',
+
+  APP_CATEGORY_INVALID_PARAMETER: 'app.category.invalid_parameter',
 };

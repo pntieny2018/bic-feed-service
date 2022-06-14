@@ -8,6 +8,8 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { UserDto } from '../../modules/auth';
+import { NIL as NIL_UUID } from 'uuid';
+import { CommentService } from '../../modules/comment';
 
 @Injectable()
 export class CommentNotificationService {
@@ -15,6 +17,8 @@ export class CommentNotificationService {
   public constructor(
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
+    @Inject(forwardRef(() => CommentService))
+    private readonly _commentService: CommentService,
     private readonly _notificationService: NotificationService,
     private _commentActivityService: CommentActivityService,
     private _commentDissociationService: CommentDissociationService
@@ -33,7 +37,19 @@ export class CommentNotificationService {
       childCommentLimit: 0,
     });
 
-    if (commentResponse.parentId) {
+    const prevComments: IComment[] = [];
+    const prevCommentActivities: NotificationActivity[] = [];
+
+    const recipient = await this._commentDissociationService.dissociateComment(
+      commentResponse.actor.id,
+      commentResponse.id,
+      postResponse,
+      (result) => {
+        prevComments.push(...result);
+      }
+    );
+
+    if (commentResponse.parentId !== NIL_UUID) {
       commentActivity = this._commentActivityService.createReplyCommentPayload(
         postResponse,
         commentResponse
@@ -43,20 +59,27 @@ export class CommentNotificationService {
         postResponse,
         commentResponse
       );
+      if (prevComments.length) {
+        const commentResponses = await this._commentService.getCommentsByIds(
+          prevComments.map((c) => c.id)
+        );
+        prevCommentActivities.push(
+          ...commentResponses.map((cr) =>
+            this._commentActivityService.createCommentPayload(postResponse, cr)
+          )
+        );
+      }
     }
-    const recipient = await this._commentDissociationService.dissociateComment(
-      commentResponse.actor.id,
-      commentResponse.id,
-      postResponse
-    );
+
     const recipientObj = {
       commentRecipient: CommentRecipientDto.init(),
       replyCommentRecipient: ReplyCommentRecipientDto.init(),
     };
-    if (commentResponse.parentId) {
-      recipientObj.replyCommentRecipient = recipient as any;
+
+    if (commentResponse.parentId !== NIL_UUID) {
+      recipientObj.replyCommentRecipient = recipient as ReplyCommentRecipientDto;
     } else {
-      recipientObj.commentRecipient = recipient as any;
+      recipientObj.commentRecipient = recipient as CommentRecipientDto;
     }
 
     this._notificationService.publishCommentNotification<NotificationActivity>({
@@ -65,7 +88,12 @@ export class CommentNotificationService {
         actor: commentResponse.actor,
         event: event,
         data: commentActivity,
-        ...recipientObj,
+        meta: {
+          comment: {
+            ...recipientObj,
+            prevCommentActivities,
+          },
+        },
       },
     });
   }
@@ -95,7 +123,7 @@ export class CommentNotificationService {
 
     let commentActivity;
 
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       commentActivity = this._commentActivityService.createReplyCommentPayload(
         postResponse,
         commentResponse
@@ -111,7 +139,7 @@ export class CommentNotificationService {
       commentRecipient: null,
       replyCommentRecipient: null,
     };
-    if (commentResponse.parentId) {
+    if (commentResponse.parentId !== NIL_UUID) {
       recipientObj.replyCommentRecipient = new ReplyCommentRecipientDto(
         null,
         validMentionUserIds,

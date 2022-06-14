@@ -9,13 +9,13 @@ module.exports = {
       tableName,
       {
         comment_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           primaryKey: true,
           references: { model: 'comments', key: 'id' },
         },
         media_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           primaryKey: true,
           references: { model: 'media', key: 'id' },

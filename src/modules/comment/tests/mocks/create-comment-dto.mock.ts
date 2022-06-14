@@ -1,9 +1,7 @@
-import { CreateCommentDto } from '../../dto/requests';
-import { actorComment, userMentionInGroupMock, userMentionNotInGroupMock } from './user.mock';
-import { CommentResponseDto } from '../../dto/response/comment.response.dto';
+import { userMentionInGroupMock, userMentionNotInGroupMock } from './user.mock';
 
-const createTextCommentDto: CreateCommentDto = {
-  postId: 1,
+const createTextCommentDto = {
+  postId: '10dc4093-1bd0-4105-869f-8504e1986145',
   content: 'create text comment',
   media: {
     files: [],
@@ -12,8 +10,8 @@ const createTextCommentDto: CreateCommentDto = {
   },
 };
 
-const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
-  postId: 1,
+const createTextCommentWithMentionInGroupDto = {
+  postId: '10dc4093-1bd0-4105-869f-8504e1986145',
   content: 'create text mention comment @bret.josh',
   media: {
     files: [],
@@ -23,8 +21,8 @@ const createTextCommentWithMentionInGroupDto: CreateCommentDto = {
   mentions: [userMentionInGroupMock.id],
 };
 
-const createCommentWithPostNotFoundDto: CreateCommentDto = {
-  postId: 2,
+const createCommentWithPostNotFoundDto = {
+  postId: '20dc4093-1bd0-4105-869f-8504e1986145',
   content: 'create text comment',
   media: {
     files: [],
@@ -33,20 +31,20 @@ const createCommentWithPostNotFoundDto: CreateCommentDto = {
   },
 };
 
-const createMediaNotFoundCommentDto: CreateCommentDto = {
-  postId: 1,
+const createMediaNotFoundCommentDto = {
+  postId: '10dc4093-1bd0-4105-869f-8504e1986145',
   content: 'hello @caitlyn.back',
   media: {
     files: [
       {
-        id: 1,
+        id: '1a7339bc-5204-4009-9d43-89b6d2787747',
         name: '',
         originName: 'file.txt',
       },
     ],
     images: [
       {
-        id: 2,
+        id: 'ba7339bc-5204-4009-9d43-89b6d2787747',
         name: 'ba7339bc-5204-4009-9d43-89b6d2787747.png',
         originName: 'image.png',
         width: 200,
@@ -55,23 +53,23 @@ const createMediaNotFoundCommentDto: CreateCommentDto = {
     ],
     videos: [
       {
-        id: 3,
-        name: 'ba7339bc-5204-4009-9d43-89b6d2787747.mp4',
+        id: 'ba7339bc-5204-4009-9d43-89b6d2787748',
+        name: 'ba7339bc-5204-4009-9d43-89b6d2787748.mp4',
         originName: 'video.mp4',
       },
     ],
   },
 };
 
-const createCommentDto: CreateCommentDto = {
-  postId: 1,
+const createCommentDto = {
+  postId: '10dc4093-1bd0-4105-869f-8504e1986145',
   content: 'hello @caitlyn.back',
   media: {
     files: [],
     images: [
       {
-        id: 1,
-        name: 'ba7339bc-5204-4009-9d43-89b6d2787747.png',
+        id: 'ba7339bc-5204-4009-9d43-89b6d2787712',
+        name: 'ba7339bc-5204-4009-9d43-89b6d2787712.png',
         originName: 'love-is-war.png',
         width: 50,
         height: 50,
@@ -82,8 +80,8 @@ const createCommentDto: CreateCommentDto = {
   mentions: [3],
 };
 
-const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
-  postId: 1,
+const createTextCommentWithMentionNotInGroupDto = {
+  postId: '10dc4093-1bd0-4105-869f-8504e1986145',
   content: 'create text mention comment @caitlyn.back',
   media: {
     files: [],
@@ -93,8 +91,8 @@ const createTextCommentWithMentionNotInGroupDto: CreateCommentDto = {
   mentions: [userMentionNotInGroupMock.id],
 };
 
-export const createdComment: CommentResponseDto = {
-  id: 1,
+export const createdComment = {
+  id: '8d8c3656-451a-43ed-9d30-72d6d73489f4',
   totalReply: 0,
   edited: false,
   actor: {
@@ -104,14 +102,14 @@ export const createdComment: CommentResponseDto = {
     avatar: 'https://bein.group/baumbach.png',
   },
   ownerReactions: null,
-  parentId: 0,
-  postId: 2,
+  parentId: '00000000-0000-0000-0000-000000000000',
+  postId: '20dc4093-1bd0-4105-869f-8504e1986145',
   content: 'hello @caitlyn.back',
   createdAt: new Date(),
   media: {
     images: [
       {
-        id: 1,
+        id: '0cdbe3ad-55b5-4376-ae67-46eefae22374',
         url: 'https://photo.com/ba7339bc-5204-4009-9d43-89b6d2787747.png',
         name: 'ba7339bc-5204-4009-9d43-89b6d2787747.png',
         originName: 'love-is-war.png',

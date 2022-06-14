@@ -1,11 +1,11 @@
 export class ArrayHelper {
   /**
-   * Get difference from two number array
-   * @param a1 Number[]
-   * @param a2 Number[]
-   * @returns String[] Difference member of a1 vs a2
+   * Get difference from two array
+   * @param a1 any[]
+   * @param a2 any[]
+   * @returns any[] Difference member of a1 vs a2
    */
-  public static differenceArrNumber(a1: number[], a2: number[]): number[] {
+  public static arrDifferenceElements(a1: any[], a2: any[]): any[] {
     const a2Set = new Set(a2);
     return a1.filter(function (x) {
       return !a2Set.has(x);
@@ -50,5 +50,11 @@ export class ArrayHelper {
       a.length === b.length &&
       a.every((val) => b.includes(val))
     );
+  }
+
+  public static arrayUnique(arr: any[]): any[] {
+    return arr.filter((value, index, self) => {
+      return self.indexOf(value) === index;
+    });
   }
 }

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
+import { Expose } from 'class-transformer';
 
 export enum UploadType {
   POST_IMAGE = 'post_image',
@@ -14,7 +15,10 @@ export class UploadDto {
   @ApiProperty({ type: 'string', format: 'binary' })
   public file: any;
 
-  @ApiProperty({ enum: UploadType })
+  @ApiProperty({ enum: UploadType, name: 'upload_type' })
+  @Expose({
+    name: 'upload_type',
+  })
   public uploadType: UploadType;
 }
 

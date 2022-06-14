@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GroupService } from '../group.service';
 import { RedisService } from '@app/redis';
 import { sharedGroupMock } from './mocks/shared-group.mock';
+import { mockedUserAuth } from '../../../modules/post/test/mocks/user.mock';
 
 describe('GroupService', () => {
   let service: GroupService;
@@ -70,7 +71,7 @@ describe('GroupService', () => {
       expect(redisService.mget).toBeCalled();
       const keys = redisService.mget.mock.calls[0][0];
       expect(keys.length).toBe(groupIds.length);
-      expect(keys.every((k) => k.indexOf('GS:') > -1)).toBe(true);
+      expect(keys.every((k) => k.indexOf('SG:') > -1)).toBe(true);
       expect(data).toEqual(sharedGroupMock);
     });
 
@@ -81,7 +82,7 @@ describe('GroupService', () => {
       expect(redisService.mget).toBeCalled();
       const keys = redisService.mget.mock.calls[0][0];
       expect(keys.length).toBeLessThan(groupIds.length);
-      expect(keys.every((k) => k.indexOf('GS:') > -1)).toBe(true);
+      expect(keys.every((k) => k.indexOf('SG:') > -1)).toBe(true);
       expect(data).toEqual(sharedGroupMock);
     });
   });
@@ -105,6 +106,20 @@ describe('GroupService', () => {
     it('is not member', () => {
       const isMember = service.isMemberOfGroups([1, 2], [2, 4]);
       expect(isMember).toBe(false);
+    });
+  });
+
+  describe('GroupService.getGroupIdsCanAccess', () => {
+    it('return list access', () => {
+      const listAccess = service.getGroupIdsCanAccess(sharedGroupMock[0], mockedUserAuth);
+      expect(listAccess).toEqual([1, 2]);
+    });
+  });
+
+  describe('GroupService.getGroupIdsCanAccessArticle', () => {
+    it('return list access', () => {
+      const listAccess = service.getGroupIdsCanAccessArticle(sharedGroupMock[2], mockedUserAuth);
+      expect(listAccess).toEqual([4, 5, 3]);
     });
   });
 });

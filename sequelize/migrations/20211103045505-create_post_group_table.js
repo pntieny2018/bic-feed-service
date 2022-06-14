@@ -10,7 +10,7 @@ module.exports = {
       tableName,
       {
         post_id: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           primaryKey: true,
           references: { model: 'posts', key: 'id' },

@@ -4,3 +4,8 @@ export enum PostAllow {
   COMMENT = 'canComment',
   REACT = 'canReact',
 }
+
+export enum VideoProcessStatus {
+  DONE = 'DONE',
+  ERROR = 'ERROR',
+}

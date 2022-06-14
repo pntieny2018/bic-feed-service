@@ -1,26 +1,49 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsBoolean, IsDateString, ValidateIf, IsNotEmpty } from 'class-validator';
+import { Expose } from 'class-transformer';
 
 export class PostSettingDto {
-  @ApiProperty({ type: Boolean, default: true, required: false, description: 'Allow to react' })
+  @ApiProperty({
+    type: Boolean,
+    default: true,
+    required: false,
+    description: 'Allow to react',
+    name: 'can_react',
+  })
   @IsOptional()
   @IsBoolean()
-  public canReact?: boolean = true;
+  @Expose({
+    name: 'can_react',
+  })
+  public canReact?: boolean;
 
   @ApiProperty({
     type: Boolean,
     default: true,
     required: false,
     description: 'Allow to share post',
+    name: 'can_share',
   })
   @IsOptional()
   @IsBoolean()
-  public canShare?: boolean = true;
+  @Expose({
+    name: 'can_share',
+  })
+  public canShare?: boolean;
 
-  @ApiProperty({ type: Boolean, default: true, required: false, description: 'Allow to comment' })
+  @ApiProperty({
+    type: Boolean,
+    default: true,
+    required: false,
+    description: 'Allow to comment',
+    name: 'can_comment',
+  })
   @IsOptional()
   @IsBoolean()
-  public canComment?: boolean = true;
+  @Expose({
+    name: 'can_comment',
+  })
+  public canComment?: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -28,10 +51,14 @@ export class PostSettingDto {
     default: false,
     required: false,
     description: 'Set important post',
+    name: 'is_important',
   })
   @IsOptional()
   @IsBoolean()
-  public isImportant?: boolean = false;
+  @Expose({
+    name: 'is_important',
+  })
+  public isImportant?: boolean;
 
   @ApiProperty({
     required: false,
@@ -39,9 +66,13 @@ export class PostSettingDto {
     type: Date,
     description: 'Set important expire time',
     default: null,
+    name: 'important_expired_at',
   })
   @ValidateIf((i) => i.isImportant === true)
   @IsNotEmpty()
   @IsDateString()
-  public importantExpiredAt?: Date = null;
+  @Expose({
+    name: 'important_expired_at',
+  })
+  public importantExpiredAt?: Date;
 }

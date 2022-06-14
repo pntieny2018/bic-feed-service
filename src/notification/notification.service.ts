@@ -1,67 +1,49 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { NotificationPayloadDto } from './dto/requests/notification-payload.dto';
-import { POST_PRODUCER, TOPIC } from './producer.constants';
-import { CompressionTypes } from '@nestjs/microservices/external/kafka.interface';
+import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../common/constants';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
-  private _logger = new Logger(NotificationService.name);
+  private readonly _logger = new Logger(NotificationService.name);
 
-  public constructor(@Inject(POST_PRODUCER) private _producer: ClientKafka) {}
+  public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._producer['producer'].send({
-      topic: `${process.env.KAFKA_ENV}.${TOPIC.POST}`,
+    this._logger.debug(`[publishPostNotification]: ${payload.key}`);
+    return this._kafkaProducer['producer'].send({
+      topic: KAFKA_TOPIC.STREAM.POST,
       messages: [
         {
           key: payload.key,
           value: JSON.stringify(payload.value),
         },
       ],
-      acks: 1,
-      compression: CompressionTypes.None,
     });
-    // return lastValueFrom(
-    //   this._postProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.POST}`, payload)
-    // ).catch((ex) => this._logger.error(ex, ex.stack));
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._producer['producer'].send({
-      topic: `${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`,
+    this._logger.debug(`[publishCommentNotification]: ${payload.key}`);
+    return this._kafkaProducer['producer'].send({
+      topic: KAFKA_TOPIC.STREAM.COMMENT,
       messages: [
         {
           key: payload.key,
           value: JSON.stringify(payload.value),
         },
       ],
-      acks: 1,
-      compression: CompressionTypes.None,
     });
-    // return lastValueFrom(
-    //   this._commentProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.COMMENT}`, payload)
-    // ).catch((ex) => this._logger.error(ex, ex.stack));
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._producer['producer'].send({
-      topic: `${process.env.KAFKA_ENV}.${TOPIC.REACTION}`,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-      acks: 1,
-      compression: CompressionTypes.None,
+    this._logger.debug(`[publishReactionNotification]: ${payload.key}`);
+    return this._kafkaProducer['producer'].send({
+      topic: KAFKA_TOPIC.STREAM.REACTION,
+      messages: [{ key: payload.key, value: JSON.stringify(payload.value) }],
     });
-    // return lastValueFrom(
-    //   this._reactionProducer.emit(`${process.env.KAFKA_ENV}.${TOPIC.REACTION}`, payload)
-    // ).catch((ex) => this._logger.error(ex, ex.stack));
   }
 
-  public async onModuleInit(): Promise<any> {
-    await this._producer.connect();
+  public async onModuleInit(): Promise<void> {
+    await this._kafkaProducer.connect();
   }
 }

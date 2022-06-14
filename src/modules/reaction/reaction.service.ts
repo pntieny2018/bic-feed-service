@@ -31,6 +31,9 @@ import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/requ
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { FollowService } from '../follow';
+import sequelize from 'sequelize';
+import { NIL as NIL_UUID } from 'uuid';
+import { SentryService } from '@app/sentry';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -58,7 +61,8 @@ export class ReactionService {
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
-    private readonly _reactionNotificationService: ReactionActivityService
+    private readonly _reactionNotificationService: ReactionActivityService,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -67,19 +71,28 @@ export class ReactionService {
    * @returns Promise resolve ReactionsResponseDto
    */
   public async getReactions(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
+    const { schema } = getDatabaseConfig();
     const response = new ReactionsResponseDto();
     const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
-    const conditions =
-      latestId === 0
-        ? {}
-        : {
-            id: {
-              [Op.lt]: latestId,
-            },
-          };
+
+    const conditions = {};
+    if (latestId !== NIL_UUID) {
+      conditions['id'] = {
+        [Op.not]: latestId,
+      };
+    }
 
     switch (target) {
       case ReactionEnum.POST:
+        if (latestId !== NIL_UUID) {
+          conditions['createdAt'] = {
+            [Op.gte]: sequelize.literal(
+              `(SELECT pr.created_at FROM ${schema}.posts_reactions AS pr WHERE id=${this._sequelize.escape(
+                latestId
+              )})`
+            ),
+          };
+        }
         const rsp = await this._postReactionModel.findAll({
           where: {
             reactionName: reactionName,
@@ -94,9 +107,18 @@ export class ReactionService {
           order: order,
           list: await this._bindActorToReaction(reactionsPost),
           limit: limit,
-          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : 0,
+          latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : null,
         };
       case ReactionEnum.COMMENT:
+        if (latestId !== NIL_UUID) {
+          conditions['createdAt'] = {
+            [Op.gte]: sequelize.literal(
+              `(SELECT cr.created_at FROM ${schema}.comments_reactions AS cr WHERE id=${this._sequelize.escape(
+                latestId
+              )})`
+            ),
+          };
+        }
         const rsc = await this._commentReactionModel.findAll({
           where: {
             reactionName: reactionName,
@@ -113,7 +135,7 @@ export class ReactionService {
           list: await this._bindActorToReaction(reactionsComment),
           limit: limit,
           latestId:
-            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : 0,
+            reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : null,
         };
     }
 
@@ -187,7 +209,7 @@ export class ReactionService {
         childCommentLimit: 0,
       });
 
-      this._postPolicyService.allow(post, PostAllow.REACT);
+      await this._postPolicyService.allow(post, PostAllow.REACT);
 
       const { schema } = getDatabaseConfig();
       const rc = await this._sequelize.transaction(
@@ -195,18 +217,11 @@ export class ReactionService {
           isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
         },
         (t) => {
-          return this._sequelize.query(
-            `CALL ${schema}.create_post_reaction($postId,$userId,$reactionName,null)`,
-            {
-              bind: {
-                postId: postId,
-                userId: userId,
-                reactionName: reactionName,
-              },
-              transaction: t,
-              type: QueryTypes.SELECT,
-            }
-          );
+          return this._sequelize.query(`CALL ${schema}.create_post_reaction(?,?,?,null)`, {
+            replacements: [postId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          });
         }
       );
       if (rc !== null && rc.length > 0 && rc[0]['cpr_id']) {
@@ -254,7 +269,10 @@ export class ReactionService {
               },
             });
           })
-          .catch((ex) => this._logger.error(ex, ex.stack));
+          .catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
 
         return reaction;
       }
@@ -262,12 +280,15 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
+        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
+        this._sentryService.captureException(e);
         throw new LogicException(e.message);
       }
       if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(e);
         return this._createPostReaction(userDto, createReactionDto, attempt + 1);
       }
 
@@ -299,7 +320,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(commentId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.getPost(comment.postId, userDto, {
@@ -308,10 +329,10 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const { schema } = getDatabaseConfig();
     try {
@@ -320,18 +341,11 @@ export class ReactionService {
           isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
         },
         (t) => {
-          return this._sequelize.query(
-            `CALL ${schema}.create_comment_reaction($commentId,$userId,$reactionName,null)`,
-            {
-              bind: {
-                commentId: commentId,
-                userId: userId,
-                reactionName: reactionName,
-              },
-              transaction: t,
-              type: QueryTypes.SELECT,
-            }
-          );
+          return this._sequelize.query(`CALL ${schema}.create_comment_reaction(?,?,?,null)`, {
+            replacements: [commentId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          });
         }
       );
       if (rc !== null && rc.length > 0 && rc[0]['ccr_id']) {
@@ -347,9 +361,10 @@ export class ReactionService {
           },
         });
 
-        const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+        const type =
+          comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
-        const ownerId = comment.parentId ? comment.parent.actor.id : comment.actor.id;
+        const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
 
         this._followService
           .getValidUserIds(
@@ -384,7 +399,10 @@ export class ReactionService {
               },
             });
           })
-          .catch((ex) => this._logger.error(ex, ex.stack));
+          .catch((ex) => {
+            this._logger.error(ex, ex.stack);
+            this._sentryService.captureException(ex);
+          });
 
         return reaction;
       }
@@ -392,13 +410,16 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(e, e?.stack);
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
+        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
+        this._sentryService.captureException(e);
         throw new LogicException(e.message);
       }
 
       if (e.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(e);
         return this._createCommentReaction(userDto, createReactionDto, attempt + 1);
       }
 
@@ -451,7 +472,7 @@ export class ReactionService {
       childCommentLimit: 0,
     });
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const conditions = {};
 
@@ -476,7 +497,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
       }
 
       const response = existedReaction.toJSON();
@@ -488,6 +509,7 @@ export class ReactionService {
         },
         transaction: trx,
       });
+
       await trx.commit();
 
       const actor = {
@@ -526,6 +548,7 @@ export class ReactionService {
       this._logger.error(ex, ex.message, ex.stack);
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(ex);
         return this._deletePostReaction(userDto, deleteReactionDto, attempt + 1);
       }
       throw ex;
@@ -556,7 +579,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(targetId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.getPost(comment.postId, userDto, {
@@ -565,10 +588,10 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    this._postPolicyService.allow(post, PostAllow.REACT);
+    await this._postPolicyService.allow(post, PostAllow.REACT);
 
     const conditions = {};
     if (deleteReactionDto.reactionName) {
@@ -590,7 +613,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
       }
 
       const response = existedReaction.toJSON();
@@ -605,7 +628,8 @@ export class ReactionService {
 
       await trx.commit();
 
-      const type = comment.parentId ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+      const type =
+        comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
 
       const actor = {
         id: userId,
@@ -643,6 +667,7 @@ export class ReactionService {
       this._logger.error(ex, ex.stack);
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
+        this._sentryService.captureException(ex);
         return this._deleteCommentReaction(userDto, deleteReactionDto, attempt + 1);
       }
 
@@ -652,14 +677,14 @@ export class ReactionService {
 
   /**
    * Delete reaction by commentIds
-   * @param commentIds number[]
+   * @param commentIds string[]
    * @returns Promise resolve boolean
    * @throws HttpException
    * @param commentIds
    * @param transaction Transaction
    */
   public async deleteReactionByCommentIds(
-    commentIds: number[],
+    commentIds: string[],
     transaction: Transaction
   ): Promise<number> {
     return this._commentReactionModel.destroy({
@@ -672,11 +697,11 @@ export class ReactionService {
 
   /**
    * Delete reaction by postIds
-   * @param postIds number[]
+   * @param postIds string[]
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteReactionByPostIds(postIds: number[]): Promise<number> {
+  public async deleteReactionByPostIds(postIds: string[]): Promise<number> {
     return this._postReactionModel.destroy({
       where: {
         postId: postIds,

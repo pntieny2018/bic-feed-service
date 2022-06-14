@@ -1,8 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.DB_SCHEMA;
 const tableName = 'media';
+const schemaName = process.env.DB_SCHEMA;
+const dbVersion = parseInt(process.env.DB_VER) ?? 14;
+const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -11,8 +13,8 @@ module.exports = {
       {
         id: {
           primaryKey: true,
-          autoIncrement: true,
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.literal(genRandomUUID),
         },
         created_by: {
           type: Sequelize.INTEGER,

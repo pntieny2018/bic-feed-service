@@ -1,16 +1,17 @@
-import { basename } from 'path';
 import { ApiProperty } from '@nestjs/swagger';
-import { IDocumentMetadata } from './interfaces';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { basename } from 'path';
+import { MediaStatus } from '../../../database/models/media.model';
+import { IDocumentMetadata } from './interfaces';
 
 export class ImageMetadataDto implements IDocumentMetadata {
   @ApiProperty()
-  @Type(() => Number)
-  @IsNumber()
+  @Type(() => String)
+  @IsUUID()
   @IsNotEmpty()
   @Expose()
-  public id: number;
+  public id: string;
 
   @ApiProperty({
     required: true,
@@ -23,6 +24,11 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @Expose()
   public name?: string;
 
+  @ApiProperty()
+  @IsOptional()
+  @Expose()
+  public status?: MediaStatus;
+
   @ApiProperty({
     required: false,
     description: 'URL',
@@ -34,12 +40,23 @@ export class ImageMetadataDto implements IDocumentMetadata {
 
   @ApiProperty({
     required: false,
+    description: 'Size',
+  })
+  @IsOptional()
+  @Expose()
+  public size?: number;
+
+  @ApiProperty({
+    required: false,
     description: 'Origin image name',
     example: 'example.jpg',
+    name: 'origin_name',
   })
   @IsString()
   @IsOptional()
-  @Expose()
+  @Expose({
+    name: 'origin_name',
+  })
   public originName?: string;
 
   @ApiProperty({
@@ -63,4 +80,25 @@ export class ImageMetadataDto implements IDocumentMetadata {
   @IsOptional()
   @Expose()
   public height?: number;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+    example: 'pdf',
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public extension?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose({
+    name: 'mime_type',
+  })
+  public mimeType?: string;
 }

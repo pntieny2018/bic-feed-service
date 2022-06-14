@@ -3,6 +3,8 @@ import { Response } from 'express';
 import { ResponseDto } from '../dto';
 import { map, Observable } from 'rxjs';
 import { HTTP_STATUS_ID } from '../constants';
+import snakecaseKeys from 'snakecase-keys';
+import { ObjectHelper } from '../helpers';
 
 @Injectable()
 export class HandleResponseInterceptor<T> implements NestInterceptor<T, ResponseDto<T>> {
@@ -16,7 +18,12 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
         }
         return {
           code: HTTP_STATUS_ID.API_OK,
-          data,
+          data:
+            typeof data === 'object'
+              ? snakecaseKeys(data, {
+                  exclude: [/-/],
+                })
+              : data,
           meta: {
             message: message,
           },

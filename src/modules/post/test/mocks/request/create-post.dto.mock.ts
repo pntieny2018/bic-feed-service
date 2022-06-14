@@ -1,26 +1,26 @@
 import { CreatePostDto } from '../../../dto/requests';
 
 export const mockedCreatePostDto: CreatePostDto = {
-  content: 'aaaa',
+  audience: {
+    groupIds: [1],
+    userIds: [],
+  },
+  content: 'bbbbbb',
   media: {
-    files: [
+    images: [
       {
-        id: 1,
+        id: 'd838659a-85ef-47ba-91e6-902aa6174142',
       },
     ],
-    images: [],
     videos: [],
+    files: [],
   },
+  mentions: [],
   setting: {
     canReact: true,
     canComment: true,
     canShare: true,
     isImportant: false,
     importantExpiredAt: null,
-  },
-  mentions: [1, 2],
-  audience: {
-    userIds: [],
-    groupIds: [1],
   },
 };

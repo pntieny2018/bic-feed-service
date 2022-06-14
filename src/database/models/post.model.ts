@@ -1,15 +1,13 @@
 import { MentionModel, IMention } from './mention.model';
-import { MediaType, IMedia } from './media.model';
-import { DataTypes, Optional, BelongsToManyAddAssociationsMixin, QueryTypes } from 'sequelize';
+import { IMedia } from './media.model';
+import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes, DataTypes } from 'sequelize';
 import {
   AllowNull,
-  AutoIncrement,
   BelongsToMany,
   Column,
   CreatedAt,
   Default,
   HasMany,
-  Length,
   Model,
   PrimaryKey,
   Table,
@@ -28,23 +26,41 @@ import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { MentionableType } from '../../common/constants';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
+import { IsUUID } from 'class-validator';
+import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 import { UserDto } from '../../modules/auth';
 import { OrderEnum } from '../../common/dto';
 import { GetTimelineDto } from '../../modules/feed/dto/request';
 import { GetNewsFeedDto } from '../../modules/feed/dto/request/get-newsfeed.dto';
+import { CategoryModel, ICategory } from './category.model';
+import { ISeries, SeriesModel } from './series.model';
+import { HashtagModel, IHashtag } from './hashtag.model';
+import { PostCategoryModel } from './post-category.model';
+import { PostSeriesModel } from './post-series.model';
+import { PostHashtagModel } from './post-hashtag.model';
+import { GetArticleDto, GetListArticlesDto } from '../../modules/article/dto/requests';
+import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 
+export enum PostPrivacy {
+  PUBLIC = 'PUBLIC',
+  OPEN = 'OPEN',
+  PRIVATE = 'PRIVATE',
+  SECRET = 'SECRET',
+}
 export interface IPost {
-  id: number;
+  id: string;
   createdBy: number;
   updatedBy: number;
   content: string;
   commentsCount: number;
+  totalUsersSeen: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
   isDraft: boolean;
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
+  isProcessing?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   comments?: IComment[];
@@ -53,18 +69,34 @@ export interface IPost {
   mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
+  giphyId?: string;
+  markedReadPost?: boolean;
+  isArticle: boolean;
+  title?: string;
+  summary?: string;
+  views: number;
+  categories?: ICategory[];
+  series?: ISeries[];
+  hashtags?: IHashtag[];
+  privacy?: PostPrivacy;
+  hashtagsJson?: HashtagResponseDto[];
 }
+
 @Table({
   tableName: 'posts',
 })
 export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IPost {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
-  public id: number;
+  public id: string;
 
   @Column
   public commentsCount: number;
+
+  @Column
+  public totalUsersSeen: number;
 
   @Default(false)
   @Column
@@ -83,11 +115,40 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public canReact: boolean;
 
   @Column
+  public isProcessing: boolean;
+
+  @Column
   public canShare: boolean;
+
+  @Column
+  public isArticle: boolean;
 
   @AllowNull(true)
   @Column
   public content: string;
+
+  @AllowNull(true)
+  @Column
+  public title: string;
+
+  @AllowNull(true)
+  @Column
+  public summary: string;
+
+  @Column
+  public views: number;
+
+  @AllowNull(true)
+  @Column
+  public giphyId: string;
+
+  @Column
+  public privacy: PostPrivacy;
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public hashtagsJson: HashtagResponseDto[];
 
   @AllowNull(false)
   @Column
@@ -110,6 +171,15 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @BelongsToMany(() => MediaModel, () => PostMediaModel)
   public media?: MediaModel[];
+
+  @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
+  public categories?: CategoryModel[];
+
+  @BelongsToMany(() => HashtagModel, () => PostHashtagModel)
+  public hashtags?: HashtagModel[];
+
+  @BelongsToMany(() => SeriesModel, () => PostSeriesModel)
+  public series?: SeriesModel[];
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',
@@ -150,6 +220,22 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           WHERE r.post_id = "PostModel".id AND r.user_id = ${authUserId}), false)
                )`),
       alias ? alias : 'markedReadPost',
+    ];
+  }
+
+  public static loadLock(groupIds: number[], alias?: string): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+    const postGroupTable = PostGroupModel.tableName;
+    return [
+      Sequelize.literal(`(
+        CASE WHEN "PostModel".privacy = '${
+          PostPrivacy.PRIVATE
+        }' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
+          WHERE spg.post_id = "PostModel".id AND spg.group_id IN(${groupIds.join(
+            ','
+          )}) ), FALSE) = FALSE THEN TRUE ELSE FALSE END
+               )`),
+      alias ? alias : 'isLocked',
     ];
   }
 
@@ -209,19 +295,60 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     return null;
   }
 
-  private static _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
+  public static getIdConstrains(
+    getPostsDto: GetTimelineDto | GetNewsFeedDto | GetListArticlesDto
+  ): string {
+    const { schema } = getDatabaseConfig();
+    const { idGT, idGTE, idLT, idLTE } = getPostsDto;
+    const postCategoryTable = PostCategoryModel.tableName;
+    const postSeriesTable = PostSeriesModel.tableName;
+    const postHastagTable = PostHashtagModel.tableName;
     let constraints = '';
-    if (getTimelineDto.idGT) {
-      constraints += 'AND p.id > :idGT';
+    if (idGT) {
+      constraints += `AND p.id != ${this.sequelize.escape(idGT)}`;
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idGTE) {
-      constraints += 'AND p.id >= :idGTE';
+    if (idGTE) {
+      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idGT
+      )})`;
     }
-    if (getTimelineDto.idLT) {
-      constraints += 'AND p.id < :idLT';
+    if (idLT) {
+      constraints += `AND p.id != ${this.sequelize.escape(idLT)}`;
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idLT
+      )})`;
     }
-    if (getTimelineDto.idLTE) {
-      constraints += 'AND p.id <= :idLTE';
+    if (idLTE) {
+      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
+        idLT
+      )})`;
+    }
+    if ((getPostsDto as GetListArticlesDto).categories?.length > 0) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postCategoryTable} AS pc
+        WHERE pc.post_id = p.id
+        AND pc.category_id IN(:categoryIds)
+      )`;
+    }
+    if ((getPostsDto as GetListArticlesDto).series?.length > 0) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postSeriesTable} AS ps
+        WHERE ps.post_id = p.id
+        AND ps.series_id IN(:seriesIds)
+      )`;
+    }
+    if ((getPostsDto as GetListArticlesDto).hashtags?.length > 0) {
+      constraints += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postHastagTable} AS ph
+        WHERE ph.post_id = p.id
+        AND ph.hashtag_id IN(:hashtagIds)
+      )`;
     }
     return constraints;
   }
@@ -249,7 +376,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     limit?: number;
     order?: OrderEnum;
   }): Promise<any[]> {
-    let condition = this._getIdConstrains({ idGT, idGTE, idLT, idLTE });
+    let condition = this.getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
@@ -275,13 +402,16 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."url",
     "media"."name",
     "media"."type",
+    "media"."size",
     "media"."width",
     "media"."height",
-    "media"."extension"
+    "media"."extension",
+    "media"."thumbnails"
     FROM (
       SELECT 
       "p"."id", 
       "p"."comments_count" AS "commentsCount",
+      "p"."total_users_seen" AS "totalUsersSeen",
       "p"."is_important" AS "isImportant", 
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
       "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
@@ -325,10 +455,125 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     return rows;
   }
 
+  public static async getArticlesData(
+    getArticleListDto: GetListArticlesDto,
+    authUser: UserDto
+  ): Promise<any[]> {
+    const {
+      groupIds,
+      categories,
+      hashtags,
+      series,
+      offset,
+      limit,
+      orderField,
+      order,
+      idGT,
+      idGTE,
+      idLT,
+      idLTE,
+    } = getArticleListDto;
+    const userGroupIds = authUser.profile.groups;
+    let condition = this.getIdConstrains(getArticleListDto);
+    const { schema } = getDatabaseConfig();
+    const postTable = PostModel.tableName;
+    const postGroupTable = PostGroupModel.tableName;
+    const mentionTable = MentionModel.tableName;
+    const postReactionTable = PostReactionModel.tableName;
+    const mediaTable = MediaModel.tableName;
+    const postMediaTable = PostMediaModel.tableName;
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    const authUserId = authUser.id;
+
+    if (groupIds && groupIds.length > 0) {
+      condition += `AND EXISTS(
+        SELECT 1
+        from ${schema}.${postGroupTable} AS g
+        WHERE g.post_id = p.id
+        AND g.group_id IN(:groupIds)
+      )`;
+    }
+    const query = `SELECT 
+    "PostModel".*,
+    "groups"."group_id" as "groupId",
+    "mentions"."user_id" as "userId",
+    "ownerReactions"."reaction_name" as "reactionName",
+    "ownerReactions"."id" as "postReactionId",
+    "ownerReactions"."created_at" as "reactCreatedAt",
+    "media"."id" as "mediaId",
+    "media"."url",
+    "media"."name",
+    "media"."type",
+    "media"."size",
+    "media"."width",
+    "media"."height",
+    "media"."extension",
+    "media"."thumbnails"
+    FROM (
+      SELECT 
+      "p"."id", 
+      "p"."comments_count" AS "commentsCount", 
+      "p"."total_users_seen" AS "totalUsersSeen",
+      "p"."views",
+      "p"."title",
+      "p"."summary",
+      "p"."is_important" AS "isImportant", 
+      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", "p"."is_article" AS "isArticle",
+      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
+      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+      "createdAt", "p"."updated_at" AS "updatedAt",
+      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+      ) AS "markedReadPost",
+      CASE WHEN p.privacy = '${PostPrivacy.PRIVATE}' 
+            AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
+        WHERE spg.post_id = p.id AND spg.group_id IN(:userGroupIds) ), FALSE) = FALSE THEN TRUE ELSE FALSE 
+      END as "isLocked"
+      FROM ${schema}.${postTable} AS "p"
+      WHERE "p"."is_draft" = false 
+          AND "p"."is_article" = true AND (
+          "p"."privacy" != '${PostPrivacy.SECRET}' OR EXISTS(
+        SELECT 1
+        from ${schema}.${postGroupTable} AS g
+        WHERE g.post_id = p.id
+        AND g.group_id IN(:userGroupIds)
+      )) ${condition}
+      ORDER BY ${orderField ? `"${orderField}"` : 'RANDOM()'} ${orderField ? order : ''}
+      OFFSET :offset LIMIT :limit
+    ) AS "PostModel"
+      LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
+      LEFT OUTER JOIN ( 
+        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
+        INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
+      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
+      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      ORDER BY ${orderField ? `"${orderField}"` : 'RANDOM()'} ${orderField ? order : ''}`;
+    const rows: any[] = await this.sequelize.query(query, {
+      replacements: {
+        groupIds,
+        userGroupIds,
+        offset,
+        limit: limit,
+        authUserId,
+        idGT,
+        idGTE,
+        idLT,
+        idLTE,
+        categoryIds: categories,
+        hashtagIds: hashtags,
+        seriesIds: series,
+        orderField,
+      },
+      type: QueryTypes.SELECT,
+    });
+
+    return rows;
+  }
+
   public static async getNewsFeedData({
     authUserId,
     isImportant,
-    isSeen,
     idGT,
     idGTE,
     idLT,
@@ -339,7 +584,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }: {
     authUserId: number;
     isImportant: boolean;
-    isSeen?: boolean;
     idGT?: number;
     idGTE?: any;
     idLT?: any;
@@ -348,7 +592,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     limit?: number;
     order?: OrderEnum;
   }): Promise<any[]> {
-    let condition = this._getIdConstrains({ idGT, idGTE, idLT, idLTE });
+    let condition = this.getIdConstrains({ idGT, idGTE, idLT, idLTE });
     const { schema } = getDatabaseConfig();
     const postTable = PostModel.tableName;
     const userNewsFeedTable = UserNewsFeedModel.tableName;
@@ -360,11 +604,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postGroupTable = PostGroupModel.tableName;
     let subSelect = `SELECT "p"."id", 
     "p"."comments_count" AS "commentsCount",
+    "p"."total_users_seen" AS "totalUsersSeen",
     "p"."is_important" AS "isImportant", 
     "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
     "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
     "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
-    "createdAt", "p"."updated_at" AS "updatedAt"`;
+    "createdAt", "p"."updated_at" AS "updatedAt", "is_seen_post" AS "isSeenPost"`;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
         SELECT 1
@@ -394,15 +639,16 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."name",
     "media"."type",
     "media"."width",
+    "media"."size",
     "media"."height",
-    "media"."extension"
+    "media"."extension",
+    "media"."thumbnails"
     FROM (
       ${subSelect}
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
-      AND is_seen_post = ${isSeen ? true : false}
-      ORDER BY "p"."created_at" ${order}
+      ORDER BY "is_seen_post" ASC, "p"."created_at" ${order} 
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
@@ -412,8 +658,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."createdAt" ${order}
+      ORDER BY "PostModel"."isSeenPost" ASC,"PostModel"."createdAt" ${order}
       `;
+    // ORDER BY "isSeenPost" ASC, "PostModel"."createdAt" ${order}
+
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
         offset,

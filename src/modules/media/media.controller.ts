@@ -24,6 +24,7 @@ import { MediaService } from './media.service';
 import { AuthUser, UserDto } from '../auth';
 import { ResponseMessages } from '../../common/decorators';
 import { MediaHelper } from './media.helper';
+import { MediaStatus } from '../../database/models/media.model';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -60,7 +61,7 @@ export class MediaController {
       width = des.width;
       height = des.height;
     }
-    return this._mediaService.create(user, {
+    const result = await this._mediaService.create(user, {
       url,
       name: url.split('/').pop(),
       uploadType,
@@ -68,7 +69,11 @@ export class MediaController {
       extension: file.mimetype.split('/').pop(),
       width,
       height,
+      size: file.size ?? 0,
+      status: MediaStatus.COMPLETED,
+      mimeType: file.mimetype,
     });
+    return result.toJSON();
   }
 
   @ApiOperation({ summary: 'Delete Media' })

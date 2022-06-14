@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
+import { SentryService } from '@app/sentry';
 import { Sequelize } from 'sequelize-typescript';
+import { ArrayHelper } from '../../common/helpers';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { getDatabaseConfig } from '../../config/database';
@@ -8,7 +10,6 @@ import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class FollowService {
@@ -19,7 +20,8 @@ export class FollowService {
   public constructor(
     @InjectConnection() private _sequelize: Sequelize,
     private _eventEmitter: InternalEventEmitterService,
-    @InjectModel(FollowModel) private _followModel: typeof FollowModel
+    @InjectModel(FollowModel) private _followModel: typeof FollowModel,
+    private readonly _sentryService: SentryService
   ) {}
 
   /**
@@ -52,6 +54,7 @@ export class FollowService {
 
       this._eventEmitter.emit(new UsersHasBeenFollowedEvent(createFollowDto));
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
     }
   }
@@ -66,7 +69,9 @@ export class FollowService {
     try {
       await this._followModel.destroy({
         where: {
-          groupId: unfollowDto.groupId,
+          groupId: {
+            [Op.in]: unfollowDto.groupIds,
+          },
           userId: {
             [Op.in]: unfollowDto.userIds,
           },
@@ -74,6 +79,7 @@ export class FollowService {
       });
       this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
     } catch (ex) {
+      this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
     }
   }
@@ -92,7 +98,7 @@ export class FollowService {
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
-    return ArrayHelper.differenceArrNumber(userIds, targetIds);
+    return ArrayHelper.arrDifferenceElements(userIds, targetIds);
   }
 
   /**
@@ -152,7 +158,7 @@ export class FollowService {
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-
+      this._sentryService.captureException(ex);
       return {
         userIds: [],
         latestFollowId: 0,
@@ -214,7 +220,7 @@ export class FollowService {
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
-
+      this._sentryService.captureException(ex);
       return {
         userIds: [],
         latestFollowId: 0,

@@ -32,6 +32,11 @@ module.exports = {
         schema: schemaName,
       }
     );
+
+    await queryInterface.addIndex(tableName, ['user_id', 'group_id'], {
+      indexName: 'user_group_index',
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

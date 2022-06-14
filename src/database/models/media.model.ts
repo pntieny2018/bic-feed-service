@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Optional } from 'sequelize';
+import { IsUUID } from 'class-validator';
+import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
   AutoIncrement,
@@ -16,6 +17,8 @@ import { CommentMediaModel } from './comment-media.model';
 import { CommentModel } from './comment.model';
 import { PostMediaModel } from './post-media.model';
 import { PostModel } from './post.model';
+import { v4 as uuid_v4 } from 'uuid';
+import { ThumbnailDto } from '../../modules/post/dto/responses/process-video-response.dto';
 
 export enum MediaType {
   VIDEO = 'video',
@@ -23,20 +26,31 @@ export enum MediaType {
   FILE = 'file',
 }
 
+export enum MediaStatus {
+  WAITING_PROCESS = 'waiting_process',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
 export interface IMedia {
-  id: number;
+  id: string;
   createdBy: number;
   url: string;
   type: MediaType;
   isDraft: boolean;
-  posts: PostModel[];
-  comments: CommentModel[];
+  posts?: PostModel[];
+  comments?: CommentModel[];
   createdAt?: Date;
   name: string;
   originName?: string;
   width?: number;
   height?: number;
   extension?: string;
+  status: MediaStatus;
+  size?: number;
+  mimeType?: string;
+  thumbnails?: ThumbnailDto[];
 }
 @Table({
   tableName: 'media',
@@ -45,9 +59,10 @@ export interface IMedia {
 })
 export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements IMedia {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
-  public id: number;
+  public id: string;
 
   @Column
   public url: string;
@@ -88,4 +103,19 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @Column
   public extension?: string;
+
+  @Column
+  public status: MediaStatus;
+
+  @Default(0)
+  @Column
+  public size?: number;
+
+  @Column
+  public mimeType?: string;
+
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public thumbnails: ThumbnailDto[];
 }
