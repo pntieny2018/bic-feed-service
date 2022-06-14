@@ -8,11 +8,20 @@ export class VideoMetadataResponseDto extends VideoMetadataDto {
     required: false,
     description: 'Origin videp name',
     example: 'example.mp4',
-    name: 'origin_name'
+    name: 'origin_name',
   })
   @IsNotEmpty()
   @IsString()
   @IsOptional()
   @Expose()
   public originName?: string;
+
+  @ApiProperty({
+    required: false,
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public mimeType?: string;
 }
