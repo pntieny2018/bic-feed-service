@@ -134,6 +134,7 @@ describe('PostListener', () => {
         canReact: false,
         canShare: false,
         commentsCount: 0,
+        totalUsersSeen: 0,
         content: '',
         createdBy: 0,
         id: '',
@@ -243,6 +244,11 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostVideoSuccess', () => {
     const postVideoSuccessEvent = new PostVideoSuccessEvent(new VideoProcessingEndDto());
+    postVideoSuccessEvent.payload.properties = {}
+    postVideoSuccessEvent.payload.properties.name = '123'
+    postVideoSuccessEvent.payload.properties.size = 12
+    postVideoSuccessEvent.payload.properties.mimeType = '1212'
+    postVideoSuccessEvent.payload.properties.codec = '1212'
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
       postService.getPostsByMedia.mockResolvedValue([
@@ -262,6 +268,11 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostVideoFailed', () => {
     const postVideoFailedEvent = new PostVideoFailedEvent(new VideoProcessingEndDto());
+    postVideoFailedEvent.payload.properties = {}
+    postVideoFailedEvent.payload.properties.name = '123'
+    postVideoFailedEvent.payload.properties.size = 12
+    postVideoFailedEvent.payload.properties.mimeType = '1212'
+    postVideoFailedEvent.payload.properties.codec = '1212'
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
       postService.getPostsByMedia.mockResolvedValue([

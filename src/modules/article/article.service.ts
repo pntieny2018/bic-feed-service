@@ -101,7 +101,7 @@ export class ArticleService {
     await Promise.all([
       this._postService.bindActorToPost(posts),
       this._postService.bindAudienceToPost(posts),
-      this._postService.bindCommentsCount(posts),
+      this._postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {

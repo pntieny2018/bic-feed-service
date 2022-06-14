@@ -398,7 +398,7 @@ describe('ArticleService', () => {
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
-      postService.bindCommentsCount = jest.fn();
+      postService.bindPostData = jest.fn();
 
       const result = await articleService.searchArticle(mockedUserAuth, searchDto);
 
@@ -412,7 +412,7 @@ describe('ArticleService', () => {
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindCommentsCount).toBeCalledTimes(1);
+      expect(postService.bindPostData).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 

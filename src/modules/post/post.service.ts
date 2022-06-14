@@ -126,7 +126,7 @@ export class PostService {
     await Promise.all([
       this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
-      this.bindCommentsCount(posts),
+      this.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
@@ -288,7 +288,17 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'size',
+            'mimeType',
+            'thumbnails',
+          ],
           required: false,
         },
         {
@@ -364,6 +374,7 @@ export class PostService {
             'width',
             'height',
             'status',
+            'mimeType',
             'thumbnails',
           ],
         },
@@ -442,7 +453,18 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'size',
+            'width',
+            'height',
+            'status',
+            'mimeType',
+            'thumbnails',
+          ],
         },
       ],
     });
@@ -539,25 +561,31 @@ export class PostService {
       }
     }
   }
+
   /**
-   * Bind commentsCount info to post
+   * Bind data info to post
    * @param posts Array of post
+   * @param objects {commentsCount: boolean, totalUsersSeen: boolean}
    * @returns Promise resolve void
    * @throws HttpException
    */
-  public async bindCommentsCount(posts: any[]): Promise<void> {
+  public async bindPostData(posts: any[], objects: any): Promise<void> {
     const postIds = [];
     for (const post of posts) {
       postIds.push(post.id);
     }
+    const attributeArr = ['id'];
+    if (objects?.commentsCount) attributeArr.push('commentsCount');
+    if (objects?.totalUsersSeen) attributeArr.push('totalUsersSeen');
     const result = await this.postModel.findAll({
       raw: true,
-      attributes: ['id', 'commentsCount'],
+      attributes: attributeArr,
       where: { id: postIds },
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      post.commentsCount = findPost?.commentsCount || 0;
+      if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
+      if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
     }
   }
 
@@ -673,6 +701,7 @@ export class PostService {
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
   }
+
   /**
    * Update Post except isDraft
    * @param postId string
@@ -802,7 +831,17 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+            attributes: [
+              'id',
+              'url',
+              'type',
+              'name',
+              'width',
+              'height',
+              'status',
+              'mimeType',
+              'thumbnails',
+            ],
             required: false,
           },
           {
@@ -858,6 +897,7 @@ export class PostService {
       throw error;
     }
   }
+
   /**
    * Check post exist and owner
    * @param post PostResponseDto
@@ -1324,7 +1364,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'mimeType', 'thumbnails'],
           required: true,
           where: {
             id,
@@ -1431,6 +1471,7 @@ export class PostService {
       const {
         id,
         commentsCount,
+        totalUsersSeen,
         isImportant,
         importantExpiredAt,
         isDraft,
@@ -1481,6 +1522,7 @@ export class PostService {
         result.push({
           id,
           commentsCount,
+          totalUsersSeen,
           isImportant,
           importantExpiredAt,
           isDraft,
