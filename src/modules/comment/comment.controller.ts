@@ -101,7 +101,6 @@ export class CommentController {
       user,
       {
         ...createReplyCommentDto,
-        postId: NIL_UUID,
       },
       commentId
     );

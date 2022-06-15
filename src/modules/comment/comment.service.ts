@@ -81,21 +81,13 @@ export class CommentService {
       )},replyId: ${replyId} `
     );
 
-    let post;
+    const post = await this._postService.findPost({
+      postId: createCommentDto.postId,
+    });
 
     if (replyId !== NIL_UUID) {
       const parentComment = await this._commentModel.findOne({
         include: [
-          {
-            model: PostModel,
-            as: 'post',
-            include: [
-              {
-                model: PostGroupModel,
-                as: 'groups',
-              },
-            ],
-          },
           {
             model: MentionModel,
             as: 'mentions',
@@ -110,16 +102,6 @@ export class CommentService {
       if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
       }
-
-      if (!parentComment?.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-
-      post = parentComment.toJSON().post;
-    } else {
-      post = await this._postService.findPost({
-        postId: createCommentDto.postId,
-      });
     }
 
     // check user can access
