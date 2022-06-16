@@ -1528,6 +1528,7 @@ export class PostService {
                   height: post.height,
                   extension: post.extension,
                   mimeType: post.mimeType,
+                  thumbnails: post.thumbnails,
                 },
               ];
         result.push({
@@ -1585,6 +1586,7 @@ export class PostService {
           height: post.height,
           extension: post.extension,
           mimeType: post.mimeType,
+          thumbnails: post.thumbnails,
         });
       }
     });
