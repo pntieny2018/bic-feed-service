@@ -434,6 +434,12 @@ export class CommentService {
     );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
 
+    //check post exist
+    if (getCommentLinkDto.postId) {
+      await this._postService.findPost({
+        postId: getCommentLinkDto.postId,
+      });
+    }
     const checkComment = await this._commentModel.findByPk(commentId);
     if (!checkComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
