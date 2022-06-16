@@ -1,8 +1,20 @@
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 
 export class GetCommentLinkDto {
+  @ApiProperty({
+    type: String,
+    example: '40dc4093-1bd0-4105-869f-8504e1986145',
+    name: 'post_id',
+  })
+  @IsOptional()
+  @IsUUID()
+  @Expose({
+    name: 'post_id',
+  })
+  public postId?: string;
+
   @ApiProperty({
     required: false,
     default: 10,
