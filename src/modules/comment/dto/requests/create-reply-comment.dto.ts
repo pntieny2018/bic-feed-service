@@ -10,6 +10,7 @@ export class CreateReplyCommentDto {
     type: String,
     example: '40dc4093-1bd0-4105-869f-8504e1986145',
     name: 'post_id',
+    required: false,
   })
   @IsNotEmpty()
   @IsUUID()
