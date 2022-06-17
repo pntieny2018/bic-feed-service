@@ -355,7 +355,7 @@ export class PostService {
         exclude: ['updatedBy'],
         include: [PostModel.loadMarkReadPost(user.id)],
       },
-      where: { id: postId },
+      where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
       include: [
         {
           model: PostGroupModel,
