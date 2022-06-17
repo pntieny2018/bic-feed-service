@@ -81,21 +81,13 @@ export class CommentService {
       )},replyId: ${replyId} `
     );
 
-    let post;
+    const post = await this._postService.findPost({
+      postId: createCommentDto.postId,
+    });
 
     if (replyId !== NIL_UUID) {
       const parentComment = await this._commentModel.findOne({
         include: [
-          {
-            model: PostModel,
-            as: 'post',
-            include: [
-              {
-                model: PostGroupModel,
-                as: 'groups',
-              },
-            ],
-          },
           {
             model: MentionModel,
             as: 'mentions',
@@ -107,19 +99,9 @@ export class CommentService {
         },
       });
 
-      if (!parentComment?.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-
       if (!parentComment) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
       }
-
-      post = parentComment.toJSON().post;
-    } else {
-      post = await this._postService.findPost({
-        postId: createCommentDto.postId,
-      });
     }
 
     // check user can access
@@ -452,6 +434,12 @@ export class CommentService {
     );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
 
+    //check post exist
+    if (getCommentLinkDto.postId) {
+      await this._postService.findPost({
+        postId: getCommentLinkDto.postId,
+      });
+    }
     const checkComment = await this._commentModel.findByPk(commentId);
     if (!checkComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);

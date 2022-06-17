@@ -1,2 +1,22 @@
 import { PageOptionsDto } from '../../../../common/dto';
-export class GetDraftPostDto extends PageOptionsDto {}
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { Expose, Transform, Type } from 'class-transformer';
+
+export class GetDraftPostDto extends PageOptionsDto {
+  @ApiProperty({
+    name: 'is_failed',
+    default: true,
+    required: false,
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Expose({ name: 'is_failed' })
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
+  })
+  public isFailed?: boolean;
+}
