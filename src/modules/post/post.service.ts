@@ -972,6 +972,7 @@ export class PostService {
         this.reactionService.deleteReactionByPostIds([postId]),
         this.commentService.deleteCommentsByPost(postId, transaction),
         this.feedService.deleteNewsFeedByPost(postId, transaction),
+        this.feedService.deleteUserSeenByPost(postId, transaction),
         this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
       ]);
       await this.postModel.destroy({
