@@ -268,4 +268,8 @@ export class FeedService {
   public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
+
+  public async deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
+    return await this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
+  }
 }
