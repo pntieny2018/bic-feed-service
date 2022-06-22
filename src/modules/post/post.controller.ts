@@ -157,16 +157,17 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<PostResponseDto> {
     const isPublished = await this._postService.publishPost(postId, user);
+    const post = await this._postService.getPost(postId, user, new GetPostDto());
     if (isPublished) {
-      const post = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
         new PostHasBeenPublishedEvent({
           post: post,
           actor: user.profile,
         })
       );
-      return post;
     }
+
+    return post;
   }
 
   @ApiOperation({ summary: 'Delete post' })

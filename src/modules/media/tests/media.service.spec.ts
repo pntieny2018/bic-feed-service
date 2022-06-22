@@ -168,7 +168,7 @@ describe('MediaService', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
       mediaModel.bulkCreate.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, 1)
+      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, 1, transactionMock)
       expect(mediaModel.findAll).toBeCalled()
       expect(mediaModel.bulkCreate).toBeCalled()
       expect(returnValue).toEqual([])

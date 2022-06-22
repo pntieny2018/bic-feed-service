@@ -492,7 +492,7 @@ export class ArticleService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this._mediaService.createIfNotExist(media, authUserId);
+        await this._mediaService.createIfNotExist(media, authUserId, transaction);
         await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
@@ -657,7 +657,7 @@ export class ArticleService {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
         await this._mediaService.checkValidMedia(newMediaIds, authUserId);
-        const mediaList = await this._mediaService.createIfNotExist(media, authUserId);
+        const mediaList = await this._mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(
             (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
