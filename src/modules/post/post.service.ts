@@ -646,7 +646,7 @@ export class PostService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId);
+        await this.mediaService.createIfNotExist(media, authUserId, transaction);
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
@@ -780,7 +780,7 @@ export class PostService {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
         await this.mediaService.checkValidMedia(newMediaIds, authUserId);
-        const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
+        const mediaList = await this.mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(
             (m) =>
