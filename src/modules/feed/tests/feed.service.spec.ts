@@ -58,8 +58,8 @@ describe('FeedService', () => {
         {
           provide: PostService,
           useValue: {
-            groupPosts: jest.fn()
-          }
+            groupPosts: jest.fn(),
+          },
         },
         {
           provide: ReactionService,
@@ -68,8 +68,8 @@ describe('FeedService', () => {
         {
           provide: SentryService,
           useValue: {
-            captureException: jest.fn()
-          }
+            captureException: jest.fn(),
+          },
         },
         {
           provide: Sequelize,
@@ -200,14 +200,7 @@ describe('FeedService', () => {
       userSeenPostModel.bulkCreate = jest.fn().mockResolvedValue(Promise.resolve());
       feedModel.update = jest.fn().mockResolvedValue(Promise.resolve());
 
-      await feedService.markSeenPosts(
-        [
-          '8548c944-91f3-4577-99e2-18a541186c18',
-          '8548c944-91f3-4577-99e2-18a541186c19',
-          '8548c944-91f3-4577-99e2-18a541186e18',
-        ],
-        5
-      );
+      await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', 5);
 
       expect(userSeenPostModel.bulkCreate).toBeCalledTimes(1);
       expect(feedModel.update).toBeCalledTimes(1);
@@ -221,7 +214,7 @@ describe('FeedService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        await feedService.markSeenPosts(['8548c944-91f3-4577-99e2-18a541186c18'], 5);
+        await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', 5);
       } catch (e) {
         expect(e.message).toEqual('Database connection error.');
       }
@@ -260,51 +253,54 @@ describe('FeedService', () => {
 
   describe('FeedServices.getUsersSeenPots', () => {
     it('should success', async () => {
-      postService.findPost = jest.fn().mockResolvedValue(mockIPost)
-      userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels)
-      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(true)
-      userSeenPostModel.count = jest.fn().mockResolvedValue(1)
+      postService.findPost = jest.fn().mockResolvedValue(mockIPost);
+      userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels);
+      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(true);
+      userSeenPostModel.count = jest.fn().mockResolvedValue(1);
       userService.getMany = jest.fn().mockResolvedValue({
         id: 1,
         fullname: 'Bret Josh',
         username: 'bret.josh',
         avatar: 'https://bein.group/josh.png',
-      })
-      const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' })
+      });
+      const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, {
+        limit: 25,
+        offset: 0,
+        postId: '1',
+      });
 
-      expect(postService.findPost).toBeCalled()
-      expect(userSeenPostModel.findAll).toBeCalled()
-      expect(groupService.isMemberOfSomeGroups).toBeCalled()
-      expect(userSeenPostModel.count).toBeCalled()
-      expect(userService.getMany).toBeCalled()
+      expect(postService.findPost).toBeCalled();
+      expect(userSeenPostModel.findAll).toBeCalled();
+      expect(groupService.isMemberOfSomeGroups).toBeCalled();
+      expect(userSeenPostModel.count).toBeCalled();
+      expect(userService.getMany).toBeCalled();
       expect(userInfo).toEqual({
-        "list": {
-          "avatar": "https://bein.group/josh.png",
-          "fullname": "Bret Josh",
-          "id": 1,
-          "username": "bret.josh"
+        list: {
+          avatar: 'https://bein.group/josh.png',
+          fullname: 'Bret Josh',
+          id: 1,
+          username: 'bret.josh',
         },
-        "meta": {
-          "hasNextPage": false,
-          "hasPreviousPage": false,
-          "limit": 25,
-          "total": 1
-        }
-      })
-    })
+        meta: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          limit: 25,
+          total: 1,
+        },
+      });
+    });
     it('should fail if member not in group', async () => {
-      postService.findPost = jest.fn().mockResolvedValue(mockIPost)
-      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(false)
-      sentryService.captureException = jest.fn()
+      postService.findPost = jest.fn().mockResolvedValue(mockIPost);
+      groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(false);
+      sentryService.captureException = jest.fn();
       try {
-        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' })
+        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' });
       } catch (e) {
-        expect(postService.findPost).toBeCalled()
-        expect(groupService.isMemberOfSomeGroups).toBeCalled()
-        expect(sentryService.captureException).toBeCalled()
-        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN)
+        expect(postService.findPost).toBeCalled();
+        expect(groupService.isMemberOfSomeGroups).toBeCalled();
+        expect(sentryService.captureException).toBeCalled();
+        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN);
       }
-
-    })
-  })
+    });
+  });
 });

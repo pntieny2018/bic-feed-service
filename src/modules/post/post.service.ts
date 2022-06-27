@@ -126,7 +126,7 @@ export class PostService {
     await Promise.all([
       this.bindActorToPost(posts),
       this.bindAudienceToPost(posts),
-      this.bindCommentsCount(posts),
+      this.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
@@ -269,7 +269,8 @@ export class PostService {
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order } = getDraftPostDto;
-    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+
+    const rows = await this.postModel.findAll<PostModel>({
       where: {
         createdBy: authUserId,
         isDraft: true,
@@ -288,7 +289,18 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'size', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'size',
+            'thumbnails',
+            'status',
+            'mimeType',
+          ],
           required: false,
         },
         {
@@ -296,22 +308,30 @@ export class PostService {
           required: false,
         },
       ],
-      offset: offset,
-      limit: limit,
       order: [['createdAt', order]],
     });
-    const jsonPosts = rows.map((r) => r.toJSON());
+    const jsonPostsFilterByMediaStatus = rows
+      .map((r) => r.toJSON())
+      .filter((row) => {
+        if (getDraftPostDto.isFailed === null) return true;
+        const failedItem = row.media.find((e) => e.status === MediaStatus.FAILED);
+        return (
+          (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
+        );
+      });
     await Promise.all([
-      this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.bindActorToPost(jsonPosts),
-      this.bindAudienceToPost(jsonPosts),
+      this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
+      this.bindActorToPost(jsonPostsFilterByMediaStatus),
+      this.bindAudienceToPost(jsonPostsFilterByMediaStatus),
     ]);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
-      excludeExtraneousValues: true,
-    });
+    const result = this.classTransformer
+      .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
+        excludeExtraneousValues: true,
+      })
+      .slice(offset * limit, limit * (offset + 1));
 
     return new PageDto<PostResponseDto>(result, {
-      total: count,
+      total: jsonPostsFilterByMediaStatus.length,
       limit,
       offset,
     });
@@ -335,7 +355,7 @@ export class PostService {
         exclude: ['updatedBy'],
         include: [PostModel.loadMarkReadPost(user.id)],
       },
-      where: { id: postId },
+      where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
       include: [
         {
           model: PostGroupModel,
@@ -364,6 +384,7 @@ export class PostService {
             'width',
             'height',
             'status',
+            'mimeType',
             'thumbnails',
           ],
         },
@@ -442,7 +463,18 @@ export class PostService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'size',
+            'width',
+            'height',
+            'status',
+            'mimeType',
+            'thumbnails',
+          ],
         },
       ],
     });
@@ -539,25 +571,31 @@ export class PostService {
       }
     }
   }
+
   /**
-   * Bind commentsCount info to post
+   * Bind data info to post
    * @param posts Array of post
+   * @param objects {commentsCount: boolean, totalUsersSeen: boolean}
    * @returns Promise resolve void
    * @throws HttpException
    */
-  public async bindCommentsCount(posts: any[]): Promise<void> {
+  public async bindPostData(posts: any[], objects: any): Promise<void> {
     const postIds = [];
     for (const post of posts) {
       postIds.push(post.id);
     }
+    const attributeArr = ['id'];
+    if (objects?.commentsCount) attributeArr.push('commentsCount');
+    if (objects?.totalUsersSeen) attributeArr.push('totalUsersSeen');
     const result = await this.postModel.findAll({
       raw: true,
-      attributes: ['id', 'commentsCount'],
+      attributes: attributeArr,
       where: { id: postIds },
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      post.commentsCount = findPost?.commentsCount || 0;
+      if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
+      if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
     }
   }
 
@@ -608,7 +646,7 @@ export class PostService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId);
+        await this.mediaService.createIfNotExist(media, authUserId, transaction);
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
@@ -673,6 +711,7 @@ export class PostService {
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
   }
+
   /**
    * Update Post except isDraft
    * @param postId string
@@ -741,7 +780,7 @@ export class PostService {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
         await this.mediaService.checkValidMedia(newMediaIds, authUserId);
-        const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
+        const mediaList = await this.mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(
             (m) =>
@@ -802,7 +841,17 @@ export class PostService {
             through: {
               attributes: [],
             },
-            attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+            attributes: [
+              'id',
+              'url',
+              'type',
+              'name',
+              'width',
+              'height',
+              'status',
+              'mimeType',
+              'thumbnails',
+            ],
             required: false,
           },
           {
@@ -858,6 +907,7 @@ export class PostService {
       throw error;
     }
   }
+
   /**
    * Check post exist and owner
    * @param post PostResponseDto
@@ -912,7 +962,9 @@ export class PostService {
       });
       await this.checkPostOwner(post, authUser.id);
       const groupIds = post.groups.map((g) => g.groupId);
-      await this.authorityService.checkCanDeletePost(authUser, groupIds);
+      if (post.isDraft === false) {
+        await this.authorityService.checkCanDeletePost(authUser, groupIds);
+      }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
         this.mediaService.sync(postId, EntityType.POST, [], transaction),
@@ -920,6 +972,7 @@ export class PostService {
         this.reactionService.deleteReactionByPostIds([postId]),
         this.commentService.deleteCommentsByPost(postId, transaction),
         this.feedService.deleteNewsFeedByPost(postId, transaction),
+        this.feedService.deleteUserSeenByPost(postId, transaction),
         this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
       ]);
       await this.postModel.destroy({
@@ -1322,7 +1375,7 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'mimeType', 'thumbnails'],
           required: true,
           where: {
             id,
@@ -1475,6 +1528,8 @@ export class PostService {
                   size: post.size,
                   height: post.height,
                   extension: post.extension,
+                  mimeType: post.mimeType,
+                  thumbnails: post.thumbnails,
                 },
               ];
         result.push({
@@ -1531,6 +1586,8 @@ export class PostService {
           size: post.size,
           height: post.height,
           extension: post.extension,
+          mimeType: post.mimeType,
+          thumbnails: post.thumbnails,
         });
       }
     });

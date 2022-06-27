@@ -25,7 +25,7 @@ export class PageMetaDto {
     }
     this.limit = pageOptionsDto.limit;
     this.total = total;
-    this.hasPreviousPage = this.offset > 1 && this.total > 1;
-    this.hasNextPage = this.offset < this.total;
+    this.hasPreviousPage = this.offset > 0 && this.total > 1;
+    this.hasNextPage = Number(this.offset) + Number(this.limit) < this.total;
   }
 }

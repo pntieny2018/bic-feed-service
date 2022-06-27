@@ -406,6 +406,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."width",
     "media"."height",
     "media"."extension",
+    "media"."mime_type" as "mimeType",
     "media"."thumbnails"
     FROM (
       SELECT 
@@ -508,6 +509,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."width",
     "media"."height",
     "media"."extension",
+    "media"."mime_type" as "mimeType",
     "media"."thumbnails"
     FROM (
       SELECT 
@@ -642,6 +644,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."size",
     "media"."height",
     "media"."extension",
+    "media"."mime_type" as "mimeType",
     "media"."thumbnails"
     FROM (
       ${subSelect}

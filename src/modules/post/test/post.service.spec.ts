@@ -5,13 +5,7 @@ import { PageDto } from '../../../common/dto/pagination/page.dto';
 import { PostModel, PostPrivacy } from '../../../database/models/post.model';
 import { PostService } from '../post.service';
 import { GetPostDto } from './../dto/requests/get-post.dto';
-import {
-  mockedGroups,
-  mockIPost,
-  mockMediaModelArray,
-  mockPostEditedHistoryModelArr,
-  mockProcessVideoResponseDto,
-} from './mocks/input.mock';
+import { mockedGroups, mockIPost, mockMediaModelArray, mockPostEditedHistoryModelArr } from './mocks/input.mock';
 import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
 import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedSearchResponse } from './mocks/response/search.response.mock';
@@ -45,8 +39,9 @@ import { mockGetPostEditedHistoryDto } from './mocks/request/get-post-edited-his
 import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { PostResponseDto } from '../dto/responses';
-import { IMedia, MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
+import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUserAuth } from './mocks/user.mock';
+
 describe('PostService', () => {
   let postService: PostService;
   let postModelMock;
@@ -638,7 +633,7 @@ describe('PostService', () => {
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
-      postService.bindCommentsCount = jest.fn();
+      postService.bindPostData = jest.fn();
 
       const result = await postService.searchPosts(mockedUserAuth, searchDto);
 
@@ -649,7 +644,7 @@ describe('PostService', () => {
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindActorToPost).toBeCalledWith(mockPosts);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindCommentsCount).toBeCalledTimes(1);
+      expect(postService.bindPostData).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledWith(mockPosts);
       expect(result).toBeInstanceOf(PageDto);
 
@@ -964,11 +959,11 @@ describe('PostService', () => {
     });
   });
 
-  describe('bindCommentsCount', () => {
+  describe('bindPostData', () => {
     const posts = [{ id: 1, commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
-      await postService.bindCommentsCount(posts);
+      await postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true });
       expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
@@ -1122,7 +1117,6 @@ describe('PostService', () => {
     });
   });
 
-
   describe('checkContent', () => {
     it('Should successfully', async () => {
       const updatePostDto: UpdatePostDto = {
@@ -1141,7 +1135,62 @@ describe('PostService', () => {
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
-      
+
     });
   });
+
+  describe('updatePostStatus', () => {
+    it('should success', async () => {
+      await postService.updatePostStatus('1')
+      expect(sequelize.query).toBeCalled()
+    })
+  })
+
+  describe('updatePostPrivacy', () => {
+    it('should success', async () => {
+      postModelMock.findOne = jest.fn().mockResolvedValueOnce({
+        toJSON: () => ({
+          id: '40dc4093-1bd0-4105-869f-8504e1986141',
+          groups: [
+            {groupId: '1'}
+          ]
+        })
+      });
+      groupService.getMany = jest.fn().mockResolvedValue([{id: '1', privacy: PostPrivacy.SECRET}, {id: '2', privacy: PostPrivacy.PRIVATE}])
+
+      await postService.updatePostPrivacy('40dc4093-1bd0-4105-869f-8504e1986141')
+      expect(postModelMock.findOne).toBeCalled()
+      expect(groupService.getMany).toBeCalled()
+      expect(postModelMock.update).toBeCalled()
+    })
+  })
+
+  describe('groupPosts', () => {
+    it('should success', async () => {
+
+      const groupResult = postService.groupPosts([mockedPostResponse])
+
+    })
+  })
+
+  describe('filterPostIdsNeedToUpdatePrivacy', () => {
+    it('must follow rule privacy order', async () => {
+      postGroupModelMock.findAll.mockResolvedValue([{groupId: '1', postId: '1'}, {groupId: '2', postId: '1'}])
+      groupService.getMany = jest.fn().mockResolvedValue([{id: '1', privacy: PostPrivacy.SECRET}, {id: '2', privacy: PostPrivacy.PRIVATE}])
+
+      const updatedPostIds = await postService.filterPostIdsNeedToUpdatePrivacy(['1','2','3','4'], PostPrivacy.SECRET)
+
+      expect(updatedPostIds).toEqual({
+        [PostPrivacy.PRIVATE.toString()]: ['1']
+      })
+    })
+  })
+
+  describe('bulkUpdatePostPrivacy', () => {
+    it('must follow rule privacy order', async () => {
+      const updatedPostIds = await postService.bulkUpdatePostPrivacy(['1','2','3','4'], PostPrivacy.SECRET)
+
+      expect(postModelMock.update).toBeCalled()
+    })
+  })
 });

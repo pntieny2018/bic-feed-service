@@ -27,6 +27,7 @@ import {
   mockCommentModel,
   mockValidUserIds,
 } from './mocks/input.mock';
+import { CommentService } from '../../modules/comment';
 
 describe('NotificationService', () => {
   let notificationService: NotificationService;
@@ -87,6 +88,10 @@ describe('NotificationService', () => {
         },
         {
           provide: PostService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: CommentService,
           useClass: jest.fn(),
         },
       ],

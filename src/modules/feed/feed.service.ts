@@ -165,17 +165,20 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postIds: string[], userId: number): Promise<void> {
+  public async markSeenPosts(postId: string, userId: number): Promise<void> {
     try {
-      await this._userSeenPostModel.bulkCreate(
-        postIds.map((postId) => ({ postId, userId })),
+      await this._userSeenPostModel.create(
+        {
+          postId: postId,
+          userId: userId,
+        },
         { ignoreDuplicates: true }
       );
 
       await this._newsFeedModel.update(
         { isSeenPost: true },
         {
-          where: { userId, postId: { [Op.in]: postIds } },
+          where: { userId, postId },
         }
       );
     } catch (ex) {
@@ -264,5 +267,9 @@ export class FeedService {
    */
   public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
+  }
+
+  public async deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
+    return await this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
   }
 }
