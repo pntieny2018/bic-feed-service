@@ -268,13 +268,15 @@ export class PostService {
     authUserId: number,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order } = getDraftPostDto;
+    const { limit, offset, order, isProcessing } = getDraftPostDto;
+    const condition = {
+      createdBy: authUserId,
+      isDraft: true,
+    };
 
+    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
     const rows = await this.postModel.findAll<PostModel>({
-      where: {
-        createdBy: authUserId,
-        isDraft: true,
-      },
+      where: condition,
       attributes: {
         exclude: ['commentsCount'],
       },
