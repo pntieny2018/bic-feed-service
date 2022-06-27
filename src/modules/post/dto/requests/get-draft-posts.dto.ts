@@ -6,7 +6,6 @@ import { Expose, Transform, Type } from 'class-transformer';
 export class GetDraftPostDto extends PageOptionsDto {
   @ApiProperty({
     name: 'is_failed',
-    default: true,
     required: false,
     type: Boolean,
   })
@@ -22,7 +21,6 @@ export class GetDraftPostDto extends PageOptionsDto {
 
   @ApiProperty({
     name: 'is_processing',
-    default: true,
     required: false,
     type: Boolean,
   })
