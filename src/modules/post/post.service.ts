@@ -321,6 +321,7 @@ export class PostService {
           (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
         );
       });
+      console.log('jsonPostsFilterByMediaStatus==', jsonPostsFilterByMediaStatus.length);
     await Promise.all([
       this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
       this.bindActorToPost(jsonPostsFilterByMediaStatus),
@@ -330,7 +331,7 @@ export class PostService {
       .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
         excludeExtraneousValues: true,
       })
-      .slice(offset * limit, limit * (offset + 1));
+      .slice(offset, limit);
 
     return new PageDto<PostResponseDto>(result, {
       total: jsonPostsFilterByMediaStatus.length,
