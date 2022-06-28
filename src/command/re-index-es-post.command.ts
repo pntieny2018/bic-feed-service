@@ -1,4 +1,4 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../database/models/post.model';
 import { PostGroupModel } from '../database/models/post-group.model';
@@ -10,7 +10,6 @@ import { UserSharedDto } from '../shared/user/dto';
 import { UserService } from '../shared/user';
 import { GroupService } from '../shared/group';
 import { Logger } from '@nestjs/common';
-
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
   private _logger = new Logger(ReIndexEsPostCommand.name);
@@ -21,7 +20,8 @@ export class ReIndexEsPostCommand implements CommandRunner {
     @InjectModel(PostModel) private _postModel: typeof PostModel
   ) {}
 
-  public async run(): Promise<any> {
+  public async run(passedParam: string[], options: { index: string }): Promise<any> {
+    if (passedParam.length === 0) return;
     const posts = await this._postModel.findAll({
       where: {
         isDraft: false,
@@ -70,12 +70,10 @@ export class ReIndexEsPostCommand implements CommandRunner {
         actor: result.actor,
       };
 
-      const index = 'stg_stream_posts';
-
       this._logger.log('processing post:', dataIndex.id);
 
       await this._elasticsearchService
-        .index({ index, id: `${dataIndex.id}`, body: dataIndex })
+        .index({ index: passedParam[0], id: `${dataIndex.id}`, body: dataIndex })
         .catch((ex) => this._logger.debug(ex));
 
       this._logger.log('deliver post:', dataIndex.id);
