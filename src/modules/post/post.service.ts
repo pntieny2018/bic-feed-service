@@ -330,7 +330,7 @@ export class PostService {
       .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
         excludeExtraneousValues: true,
       })
-      .slice(offset * limit, limit * (offset + 1));
+      .slice(offset, limit);
 
     return new PageDto<PostResponseDto>(result, {
       total: jsonPostsFilterByMediaStatus.length,
