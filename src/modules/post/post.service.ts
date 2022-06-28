@@ -321,7 +321,6 @@ export class PostService {
           (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
         );
       });
-      console.log('jsonPostsFilterByMediaStatus==', jsonPostsFilterByMediaStatus.length);
     await Promise.all([
       this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
       this.bindActorToPost(jsonPostsFilterByMediaStatus),
