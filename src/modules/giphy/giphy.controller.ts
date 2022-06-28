@@ -6,7 +6,7 @@ import { TrendingDto } from './dto/requests';
 import { map, Observable } from 'rxjs';
 import { SearchDto } from './dto/requests/search.dto';
 import { GiphyResponseDto } from './dto/responses/giphy-response.dto';
-import { createUrlFromId } from './giphy.util';
+import { createUrlFromId, GiphyType } from './giphy.util';
 
 @ApiTags('Giphy')
 @Controller({
@@ -17,7 +17,7 @@ export class GiphyController {
   public constructor(private readonly _httpService: HttpService) {}
 
   public transferGiphyResponseApi(response): GiphyResponseDto[] {
-    return response.data.data.map((e) => new GiphyResponseDto(e.id, e.type, createUrlFromId(e.id)));
+    return response.data.data.map((e) => new GiphyResponseDto(e.id, e.type, createUrlFromId(e.id, GiphyType.GIF_PREVIEW)));
   }
 
   @ApiOperation({ summary: 'Get trending Gif.' })

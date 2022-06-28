@@ -2,9 +2,8 @@ import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@ne
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Op, Sequelize, Transaction } from 'sequelize';
-import { SentryService } from '../../../libs/sentry/src';
-import { PageDto } from '../../common/dto';
-import { getDatabaseConfig } from '../../config/database';
+import { SentryService } from '@app/sentry';
+import { PageDto, PageMetaDto } from '../../common/dto';
 import { PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
@@ -16,6 +15,11 @@ import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
+import { UserDataShareDto } from '../../shared/user/dto';
+import { ExceptionHelper } from '../../common/helpers';
+import { HTTP_STATUS_ID } from '../../common/constants';
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { UserService } from '../../shared/user';
 
 @Injectable()
 export class FeedService {
@@ -24,6 +28,7 @@ export class FeedService {
 
   public constructor(
     private readonly _reactionService: ReactionService,
+    private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
@@ -49,7 +54,7 @@ export class FeedService {
     const { limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
-      const constraints = this._getIdConstrains(getNewsFeedDto);
+      const constraints = PostModel.getIdConstrains(getNewsFeedDto);
       const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
@@ -78,9 +83,9 @@ export class FeedService {
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
 
-      const posts = this.groupPosts(rows);
+      const posts = this._postService.groupPosts(rows);
 
-      const hasNextPage = posts.length === limit + 1 ? true : false;
+      const hasNextPage = posts.length === limit + 1;
       if (hasNextPage) posts.pop();
 
       await Promise.all([
@@ -108,17 +113,72 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postIds: number[], userId: number): Promise<void> {
+  public async getUsersSeenPots(
+    user: UserDto,
+    getUserSeenPostDto: GetUserSeenPostDto
+  ): Promise<PageDto<UserDataShareDto>> {
     try {
-      await this._userSeenPostModel.bulkCreate(
-        postIds.map((postId) => ({ postId, userId })),
+      const { postId } = getUserSeenPostDto;
+
+      const post = await this._postService.findPost({
+        postId: postId,
+      });
+
+      const groups = post.groups.map((g) => g.groupId);
+      const groupsOfUser = user.profile.groups;
+
+      if (!this._groupService.isMemberOfSomeGroups(groups, groupsOfUser)) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
+
+      const usersSeenPost = await this._userSeenPostModel.findAll({
+        where: {
+          postId: postId,
+        },
+        order: [['createdAt', 'DESC']],
+        limit: getUserSeenPostDto?.limit || 20,
+        offset: getUserSeenPostDto?.offset || 0,
+      });
+
+      const total = await this._userSeenPostModel.count({
+        where: {
+          postId: postId,
+        },
+      });
+
+      const users = await this._userService.getMany(usersSeenPost.map((usp) => usp.userId));
+
+      return new PageDto<UserDataShareDto>(
+        users,
+        new PageMetaDto({
+          total: total ?? 0,
+          pageOptionsDto: {
+            limit: getUserSeenPostDto?.limit || 20,
+            offset: getUserSeenPostDto?.offset || 0,
+          },
+        })
+      );
+    } catch (ex) {
+      this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
+      throw ex;
+    }
+  }
+
+  public async markSeenPosts(postId: string, userId: number): Promise<void> {
+    try {
+      await this._userSeenPostModel.create(
+        {
+          postId: postId,
+          userId: userId,
+        },
         { ignoreDuplicates: true }
       );
 
       await this._newsFeedModel.update(
         { isSeenPost: true },
         {
-          where: { userId, postId: { [Op.in]: postIds } },
+          where: { userId, postId },
         }
       );
     } catch (ex) {
@@ -149,7 +209,7 @@ export class FeedService {
       });
     }
     const authUserId = authUser.id;
-    const constraints = this._getIdConstrains(getTimelineDto);
+    const constraints = PostModel.getIdConstrains(getTimelineDto);
 
     const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
       authUserId,
@@ -179,8 +239,8 @@ export class FeedService {
     }
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
     const rows = importantPosts.concat(normalPosts);
-    const posts = this.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1 ? true : false;
+    const posts = this._postService.groupPosts(rows);
+    const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     await Promise.all([
       this._reactionService.bindReactionToPosts(posts),
@@ -200,40 +260,6 @@ export class FeedService {
   }
 
   /**
-   * Get id constrains
-   * @param getTimelineDto GetTimelineDto
-   * @returns object
-   */
-  private _getIdConstrains(getTimelineDto: GetTimelineDto | GetNewsFeedDto): string {
-    const { schema } = getDatabaseConfig();
-    const { idGT, idGTE, idLT, idLTE } = getTimelineDto;
-    let constraints = '';
-    if (idGT) {
-      constraints += `AND p.id != ${this._sequelizeConnection.escape(idGT)}`;
-      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idGT
-      )})`;
-    }
-    if (idGTE) {
-      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idGT
-      )})`;
-    }
-    if (idLT) {
-      constraints += `AND p.id != ${this._sequelizeConnection.escape(idLT)}`;
-      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idLT
-      )})`;
-    }
-    if (idLTE) {
-      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this._sequelizeConnection.escape(
-        idLT
-      )})`;
-    }
-    return constraints;
-  }
-
-  /**
    * Delete newsfeed by post
    * @param postId string
    * @param transaction Transaction
@@ -243,107 +269,7 @@ export class FeedService {
     return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 
-  public groupPosts(posts: any[]): any[] {
-    const result = [];
-    posts.forEach((post) => {
-      const {
-        id,
-        commentsCount,
-        isImportant,
-        importantExpiredAt,
-        isDraft,
-        content,
-        markedReadPost,
-        canComment,
-        canReact,
-        canShare,
-        createdBy,
-        updatedBy,
-        createdAt,
-        updatedAt,
-        isNowImportant,
-      } = post;
-      const postAdded = result.find((i) => i.id === post.id);
-      if (!postAdded) {
-        const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
-        const mentions = post.userId === null ? [] : [{ userId: post.userId }];
-        const ownerReactions =
-          post.postReactionId === null
-            ? []
-            : [
-                {
-                  id: post.postReactionId,
-                  reactionName: post.reactionName,
-                  createdAt: post.reactCreatedAt,
-                },
-              ];
-        const media =
-          post.mediaId === null
-            ? []
-            : [
-                {
-                  id: post.mediaId,
-                  url: post.url,
-                  name: post.name,
-                  type: post.type,
-                  width: post.width,
-                  size: post.size,
-                  height: post.height,
-                  extension: post.extension,
-                },
-              ];
-        result.push({
-          id,
-          commentsCount,
-          isImportant,
-          importantExpiredAt,
-          isDraft,
-          content,
-          canComment,
-          markedReadPost,
-          canReact,
-          canShare,
-          createdBy,
-          updatedBy,
-          createdAt,
-          updatedAt,
-          isNowImportant,
-          groups,
-          mentions,
-          media,
-          ownerReactions,
-        });
-        return;
-      }
-      if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
-        postAdded.groups.push({ groupId: post.groupId });
-      }
-      if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
-        postAdded.mentions.push({ userId: post.userId });
-      }
-      if (
-        post.postReactionId !== null &&
-        !postAdded.ownerReactions.find((m) => m.id === post.postReactionId)
-      ) {
-        postAdded.ownerReactions.push({
-          id: post.postReactionId,
-          reactionName: post.reactionName,
-          createdAt: post.reactCreatedAt,
-        });
-      }
-      if (post.mediaId !== null && !postAdded.media.find((m) => m.id === post.mediaId)) {
-        postAdded.media.push({
-          id: post.mediaId,
-          url: post.url,
-          name: post.name,
-          type: post.type,
-          width: post.width,
-          size: post.size,
-          height: post.height,
-          extension: post.extension,
-        });
-      }
-    });
-    return result;
+  public async deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
+    return await this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
   }
 }

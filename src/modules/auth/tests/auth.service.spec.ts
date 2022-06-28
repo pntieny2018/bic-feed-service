@@ -9,6 +9,9 @@ import { Observable } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import jwt from 'jsonwebtoken';
 import { UserService } from '../../../shared/user';
+import { SentryService } from '@app/sentry';
+import { LogicException } from '../../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 
 const httpServiceMock = {
   get: (): Observable<any> => {
@@ -53,6 +56,12 @@ describe('AuthService', () => {
         {
           provide: ConfigService,
           useValue: configServiceMock,
+        },
+        {
+          provide: SentryService,
+          useValue: {
+            captureException: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -103,7 +112,7 @@ describe('AuthService', () => {
           try {
             await authService.login(authInput.tokenInvalid);
           } catch (e) {
-            expect(e).toBeInstanceOf(UnauthorizedException);
+            expect(e).toBeInstanceOf(LogicException);
           }
         });
       });
@@ -116,8 +125,8 @@ describe('AuthService', () => {
           try {
             await authService.login(authInput.expiredToken);
           } catch (e) {
-            expect(e).toBeInstanceOf(UnauthorizedException);
-            expect((e as UnauthorizedException).message).toEqual('Auth token expired');
+            expect(e).toBeInstanceOf(LogicException);
+            expect((e as UnauthorizedException).message).toEqual(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
           }
         });
       });

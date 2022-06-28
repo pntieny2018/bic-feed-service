@@ -21,7 +21,6 @@ export class DeleteReactionDto {
   @ApiProperty({ required: false, name: 'reaction_id' })
   @IsUUID()
   @IsNotEmpty()
-  @Expose()
   @ValidateIf((object) => !object['reaction_name'] && !object['reactionName'])
   @Expose({
     name: 'reaction_id',
@@ -34,7 +33,6 @@ export class DeleteReactionDto {
     name: 'reaction_name',
   })
   @IsNotEmpty()
-  @Expose()
   @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
   @ValidateIf((object) => !object['reactionId'])
   @Expose({

@@ -1,8 +1,10 @@
 import { MentionableType } from '../../../common/constants';
 import { ObjectHelper } from '../../../common/helpers';
+import { PostPrivacy } from '../../../database/models/post.model';
 import { UserDto } from '../../../modules/auth';
 import { PostResponseDto } from '../../../modules/post/dto/responses';
 import { GroupPrivacy } from '../../../shared/group/dto';
+import { NIL } from 'uuid';
 
 export const mockUserSharedDto = {
   id: 20,
@@ -26,6 +28,7 @@ export const mockPostResponseDto: PostResponseDto = {
   id: '40dc4093-1bd0-4105-469f-8504e1986145',
   content: 'hello world',
   highlight: 'nothing',
+  isArticle: false,
   media: {
     files: [],
     videos: [],
@@ -42,6 +45,8 @@ export const mockPostResponseDto: PostResponseDto = {
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,
+  totalUsersSeen: 0,
+  privacy: PostPrivacy.PUBLIC,
   reactionsCount: {
     [1]: {
       haha: 100,
@@ -84,16 +89,16 @@ export const mockReactionResponseDto = {
   actor: {
     ...mockUserSharedDto,
   },
-  id: 100,
+  id: '100',
   reactionName: 'smile',
   createdAt: new Date(0),
 };
 
 export const mockCommentResponseDto = {
-  id: 99,
+  id: '99',
   actor: mockUserSharedDto,
   edited: false,
-  parentId: null,
+  parentId: NIL,
   postId: mockPostResponseDto.id,
   totalReply: 0,
   ownerReactions: [],
@@ -105,7 +110,7 @@ export const mockCommentResponseDto = {
 };
 
 export const mockCommentResponseWithParentDto = {
-  id: 100,
+  id: '100',
   actor: mockUserSharedDto,
   edited: false,
   parentId: mockCommentResponseDto.id,
@@ -123,7 +128,7 @@ export const mockCommentModel = {
   updatedBy: mockUserSharedDto.id,
   mentions: [
     {
-      id: 1000,
+      id: '1000',
       mentionableType: MentionableType.COMMENT,
       entityId: mockCommentResponseDto.id,
       userId: 99,

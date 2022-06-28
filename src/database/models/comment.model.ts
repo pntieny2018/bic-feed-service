@@ -2,7 +2,6 @@ import {
   AfterCreate,
   AfterDestroy,
   AllowNull,
-  AutoIncrement,
   BelongsTo,
   BelongsToMany,
   Column,

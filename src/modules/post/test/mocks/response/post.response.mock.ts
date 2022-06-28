@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { PostResponseDto } from '../../../dto/responses';
 
@@ -7,6 +7,7 @@ export const mockedPostResponse: PostResponseDto = {
   ownerReactions: [],
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
+  isArticle: false,
   media: {
     files: [],
     videos: [],
@@ -14,7 +15,6 @@ export const mockedPostResponse: PostResponseDto = {
       {
         id: 'd838659a-85ef-47ba-91e6-902aa6174142',
         name: 'filename.jpg',
-        uploadId: null,
         status: MediaStatus.COMPLETED,
         url: 'http://google.co',
         width: null,
@@ -32,7 +32,7 @@ export const mockedPostResponse: PostResponseDto = {
   isDraft: true,
   isProcessing: false,
   actor: {
-    id: 15,
+    id: 1,
     username: 'quannhac',
     fullname: 'Lý Quân Nhạc',
     avatar:
@@ -41,11 +41,12 @@ export const mockedPostResponse: PostResponseDto = {
   },
   mentions: {},
   commentsCount: 0,
+  totalUsersSeen: 0,
   reactionsCount: {},
   markedReadPost: false,
   createdAt: new Date('2022-05-19T07:23:55.601Z'),
   updatedAt: new Date('2022-05-19T07:23:55.601Z'),
-  createdBy: 15,
+  createdBy: 1,
   audience: {
     groups: [
       {
@@ -65,10 +66,11 @@ export const mockedPostResponse: PostResponseDto = {
       hasPreviousPage: false,
     },
   },
+  privacy: PostPrivacy.PUBLIC,
 };
 
 export const mockedPostData = {
-  id: 1,
+  id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   commentsCount: 3,
   isImportant: false,
   importantExpiredAt: null,
@@ -87,7 +89,7 @@ export const mockedPostData = {
   groups: [
     {
       groupId: 1,
-      postId: 1,
+      postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
     },
   ],
   mentions: [],
@@ -95,10 +97,11 @@ export const mockedPostData = {
   ownerReactions: [
     {
       id: 2,
-      postId: 3,
+      postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
       reactionName: 'bb',
       createdBy: 15,
       createdAt: '2022-05-18T11:05:31.990Z',
     },
   ],
+  privacy: PostPrivacy.PUBLIC,
 };

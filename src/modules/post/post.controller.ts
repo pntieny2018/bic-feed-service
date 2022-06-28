@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -31,7 +32,10 @@ import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { PostService } from './post.service';
 import { GetPostPipe } from './pipes';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { ProcessVideoResponseDto } from './dto/responses/process-video-response.dto';
+import {
+  ProcessVideoResponseDto,
+  VideoProcessingEndDto,
+} from './dto/responses/process-video-response.dto';
 import { VideoProcessStatus } from '.';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
@@ -67,7 +71,7 @@ export class PostController {
   @Get('/:postId/edited-history')
   public getPostEditedHistory(
     @AuthUser() user: UserDto,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
     return this._postService.getPostEditedHistory(user, postId, getPostEditedHistoryDto);
@@ -91,8 +95,8 @@ export class PostController {
   })
   @Get('/:postId')
   public getPost(
-    @AuthUser() user: UserDto,
-    @Param('postId') postId: string,
+    @AuthUser(false) user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
@@ -123,7 +127,7 @@ export class PostController {
   @Put('/:postId')
   public async updatePost(
     @AuthUser() user: UserDto,
-    @Param('postId') postId: string,
+    @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
@@ -150,19 +154,20 @@ export class PostController {
   @Put('/:postId/publish')
   public async publishPost(
     @AuthUser() user: UserDto,
-    @Param('postId') postId: string
+    @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<PostResponseDto> {
-    const isPublished = await this._postService.publishPost(postId, user.id);
+    const isPublished = await this._postService.publishPost(postId, user);
+    const post = await this._postService.getPost(postId, user, new GetPostDto());
     if (isPublished) {
-      const post = await this._postService.getPost(postId, user, new GetPostDto());
       this._eventEmitter.emit(
         new PostHasBeenPublishedEvent({
           post: post,
           actor: user.profile,
         })
       );
-      return post;
     }
+
+    return post;
   }
 
   @ApiOperation({ summary: 'Delete post' })
@@ -173,7 +178,7 @@ export class PostController {
   @Delete('/:id')
   public async deletePost(
     @AuthUser() user: UserDto,
-    @Param('id') postId: string
+    @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
     const postDeleted = await this._postService.deletePost(postId, user);
     if (postDeleted) {
@@ -195,7 +200,7 @@ export class PostController {
   @Put('/:id/mark-as-read')
   public async markReadPost(
     @AuthUser() user: UserDto,
-    @Param('id') postId: string
+    @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
     await this._postService.markReadPost(postId, user.id);
     return true;
@@ -203,14 +208,14 @@ export class PostController {
 
   @EventPattern(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED)
   public async createVideoPostDone(
-    @Payload('value') processVideoResponseDto: ProcessVideoResponseDto
+    @Payload('value') videoProcessingEndDto: VideoProcessingEndDto
   ): Promise<void> {
-    switch (processVideoResponseDto.status) {
+    switch (videoProcessingEndDto.status) {
       case VideoProcessStatus.DONE:
-        this._eventEmitter.emit(new PostVideoSuccessEvent(processVideoResponseDto));
+        this._eventEmitter.emit(new PostVideoSuccessEvent(videoProcessingEndDto));
         break;
       case VideoProcessStatus.ERROR:
-        this._eventEmitter.emit(new PostVideoFailedEvent(processVideoResponseDto));
+        this._eventEmitter.emit(new PostVideoFailedEvent(videoProcessingEndDto));
         break;
     }
   }

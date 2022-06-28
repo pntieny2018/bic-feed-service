@@ -1,5 +1,5 @@
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { Controller, Get, Param, ParseArrayPipe, Put, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseArrayPipe, ParseUUIDPipe, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
@@ -8,6 +8,8 @@ import { FeedService } from './feed.service';
 import { PostResponseDto } from '../post/dto/responses';
 import { APP_VERSION } from '../../common/constants';
 import { PutMarkSeenPostDto } from './dto/request/put-mark-seen-post.dto';
+import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { UserDataShareDto } from '../../shared/user/dto';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -46,20 +48,28 @@ export class FeedController {
 
   @ApiOperation({ summary: 'Mark seen post' })
   @ApiParam({
-    name: 'ids',
-    description: 'Ids of seen post',
-    example: '400,401,402',
+    name: 'id',
+    description: 'Id of seen post',
     required: true,
   })
   @ApiOkResponse({
     type: Boolean,
   })
-  @Put('/seen/:ids')
+  @Put('/seen/:id')
   public async markSeenPost(
     @AuthUser() user: UserDto,
-    @Param('ids', PutMarkSeenPostDto) postId: number[]
+    @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
     await this._feedService.markSeenPosts(postId, user.id);
     return true;
+  }
+
+  @ApiOperation({ summary: 'Get users seen post' })
+  @Get('/seen/user')
+  public async getUserSeenPost(
+    @AuthUser() user: UserDto,
+    @Query() getUserSeenPostDto: GetUserSeenPostDto
+  ): Promise<PageDto<UserDataShareDto>> {
+    return this._feedService.getUsersSeenPots(user, getUserSeenPostDto);
   }
 }

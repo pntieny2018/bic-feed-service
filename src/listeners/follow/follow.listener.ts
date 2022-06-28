@@ -61,7 +61,7 @@ export class FollowListener {
     const userSharedDto = await this._userService.get(userId);
 
     if (!userSharedDto) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
 
     let filterGroup = (userSharedDto.groups ?? []).filter((gId) => !groupIds.includes(gId));

@@ -5,13 +5,13 @@ import { ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CommentModel } from '../../database/models/comment.model';
+import { CommentModel, IComment } from '../../database/models/comment.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class CommentDissociationService {
@@ -25,8 +25,10 @@ export class CommentDissociationService {
   public async dissociateComment(
     actorId: number,
     commentId: string,
-    postResponse: PostResponseDto
+    postResponse: PostResponseDto,
+    cb?: (prevComments: IComment[]) => void
   ): Promise<CommentRecipientDto | ReplyCommentRecipientDto> {
+    const { schema } = getDatabaseConfig();
     const recipient = CommentRecipientDto.init();
     const groupAudienceIds = postResponse.audience.groups.map((g) => g.id);
     const postMentions = Array.isArray(postResponse.mentions)
@@ -48,12 +50,12 @@ export class CommentDissociationService {
         },
       });
       if (!comment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
       }
 
       comment = comment.toJSON();
 
-      if (comment.parentId !== NIL_UUID) {
+      if (comment.parentId && comment.parentId !== NIL_UUID) {
         return this.dissociateReplyComment(actorId, comment, groupAudienceIds);
       }
 
@@ -73,32 +75,32 @@ export class CommentDissociationService {
        */
       const mentionedUsersInComment = (comment.mentions ?? []).map((m) => m.userId);
 
-      let prevComments = await this._commentModel.findAll({
+      let prevCommentsRes = await this._commentModel.findAll({
         where: {
           postId: comment.postId,
           id: {
-            [Op.lt]: commentId,
+            [Op.not]: comment.id,
           },
-          createdBy: {
-            [Op.notIn]: postOwnerId
-              ? [
-                  ...new Set([
-                    actorId,
-                    postOwnerId,
-                    ...mentionedUsersInComment,
-                    ...mentionedUsersInPost,
-                  ]),
-                ]
-              : [...new Set([actorId, ...mentionedUsersInComment, ...mentionedUsersInPost])],
+          createdAt: {
+            [Op.lte]: Sequelize.literal(
+              `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${comment.id}')`
+            ),
           },
         },
         order: [['createdAt', 'DESC']],
-        limit: 50,
+        limit: 100,
       });
-      if (!prevComments) {
-        prevComments = [];
+
+      if (!prevCommentsRes) {
+        prevCommentsRes = [];
       }
 
+      const resultPrevComments = prevCommentsRes.map((c) => c.toJSON());
+      const ignoreUserIds = postOwnerId
+        ? [...new Set([actorId, postOwnerId, ...mentionedUsersInComment, ...mentionedUsersInPost])]
+        : [...new Set([actorId, ...mentionedUsersInComment, ...mentionedUsersInPost])];
+
+      const prevComments = resultPrevComments.filter((pc) => !ignoreUserIds.includes(pc.createdBy));
       /**
        * users who created prev comments
        */
@@ -156,6 +158,11 @@ export class CommentDissociationService {
           }
         }
       }
+
+      // call back to return prev comments
+      if (cb) {
+        cb(resultPrevComments);
+      }
       return recipient;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
@@ -170,6 +177,7 @@ export class CommentDissociationService {
     groupAudienceIds: number[]
   ): Promise<ReplyCommentRecipientDto> {
     try {
+      const { schema } = getDatabaseConfig();
       const recipient = ReplyCommentRecipientDto.init();
 
       let parentComment = await this._commentModel.findOne({
@@ -194,9 +202,15 @@ export class CommentDissociationService {
             ],
             where: {
               id: {
-                [Op.lt]: comment.id,
+                [Op.not]: comment.id,
+              },
+              createdAt: {
+                [Op.lte]: Sequelize.literal(
+                  `(SELECT created_at FROM ${schema}.${CommentModel.tableName} WHERE id = '${comment.id}')`
+                ),
               },
             },
+
             limit: 100,
             order: [['createdAt', 'DESC']],
           },
@@ -207,7 +221,7 @@ export class CommentDissociationService {
       });
 
       if (!parentComment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
       }
       parentComment = parentComment.toJSON();
 

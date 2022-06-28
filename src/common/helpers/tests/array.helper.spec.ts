@@ -6,7 +6,7 @@ describe('ArrayHelper', function () {
       const firstArrayMock = [1, 2, 3];
       const secondArrayMock = [2, 3, 4];
 
-      const result = ArrayHelper.differenceArrNumber(firstArrayMock, secondArrayMock);
+      const result = ArrayHelper.arrDifferenceElements(firstArrayMock, secondArrayMock);
 
       expect(result).toEqual([1]);
     });
@@ -56,4 +56,15 @@ describe('ArrayHelper', function () {
       expect(flag).toBeFalsy();
     });
   });
+  describe('arrayUnique', function () {
+    it('should return unit array', function () {
+      const result = ArrayHelper.arrayUnique([1, 2, 3, 5, 3, 1, 1]);
+      expect(result).toEqual([1, 2, 3, 5]);
+    });
+    it('should return empty array ', function () {
+      const result = ArrayHelper.arrayUnique([]);
+      expect(result).toEqual([]);
+    });
+  });
+  
 });

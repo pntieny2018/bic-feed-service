@@ -2,7 +2,7 @@ import { ClientKafka } from '@nestjs/microservices';
 import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { KAFKA_PRODUCER } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { PostService } from '../../modules/post/post.service';
@@ -27,6 +27,7 @@ import {
   mockCommentModel,
   mockValidUserIds,
 } from './mocks/input.mock';
+import { CommentService } from '../../modules/comment';
 
 describe('NotificationService', () => {
   let notificationService: NotificationService;
@@ -54,7 +55,12 @@ describe('NotificationService', () => {
         PostDissociationService,
         {
           provide: KAFKA_PRODUCER,
-          useClass: jest.fn(),
+          // useClass: jest.fn(),
+          useValue: {
+            producer: {
+              send: jest.fn()
+            },
+          },
         },
         {
           provide: Sequelize,
@@ -84,6 +90,10 @@ describe('NotificationService', () => {
           provide: PostService,
           useClass: jest.fn(),
         },
+        {
+          provide: CommentService,
+          useClass: jest.fn(),
+        },
       ],
     }).compile();
 
@@ -107,21 +117,18 @@ describe('NotificationService', () => {
 
   describe('NotificationService', () => {
     it('Func: publishPostNotification', async () => {
-      kafkaProducer.emit = jest.fn();
       notificationService.publishPostNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
 
     it('Func: publishCommentNotification', async () => {
-      kafkaProducer.emit = jest.fn();
       notificationService.publishCommentNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
 
     it('Func: publishReactionNotification', async () => {
-      kafkaProducer.emit = jest.fn();
       notificationService.publishReactionNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
   });
 
@@ -230,7 +237,6 @@ describe('NotificationService', () => {
         mockCommentModel as unknown as CommentModel,
         [1, 2, 3]
       );
-
     });
 
     it('Func: getValidUserIds', async () => {
@@ -263,12 +269,11 @@ describe('NotificationService', () => {
     });
 
     it('Func: destroy', async () => {
-      kafkaProducer.emit = jest.fn();
       await commentNotificationService.destroy(
         'event-name',
         mockCommentModel as unknown as IComment
       );
-      expect(kafkaProducer.emit).toBeCalledTimes(1);
+      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
     });
   });
 });

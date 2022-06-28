@@ -65,6 +65,8 @@ export class CommentObject {
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reaction?: ReactionObject;
+  public giphyId?: string;
+  public giphyUrl?: string;
   public reactionsOfActor?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
   public child?: CommentObject;

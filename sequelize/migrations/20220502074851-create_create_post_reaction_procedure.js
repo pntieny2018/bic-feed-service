@@ -1,9 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const schemaName = process.env.DB_SCHEMA;
 const tableName = 'posts_reactions';
 const procedureName = 'create_post_reaction';
+const schemaName = process.env.DB_SCHEMA;
+const dbVersion = parseInt(process.env.DB_VER) ?? 14;
+const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
 
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -38,7 +40,7 @@ module.exports = {
               END IF;
               
               INSERT INTO ${schemaName}.${tableName}(id,created_by,post_id,reaction_name,created_at)
-              VALUES (gen_random_uuid(),cpr_created_by,cpr_post_id,cpr_reaction_name,CURRENT_TIMESTAMP)
+              VALUES (${genRandomUUID},cpr_created_by,cpr_post_id,cpr_reaction_name,CURRENT_TIMESTAMP)
               RETURNING id into cpr_id;
           END;$$
     `);

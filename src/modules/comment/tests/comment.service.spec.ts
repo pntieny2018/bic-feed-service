@@ -33,7 +33,7 @@ import { FollowService } from '../../follow';
 import { CommentEditedHistoryModel } from '../../../database/models/comment-edited-history.model';
 import { IPost } from '../../../database/models/post.model';
 import { GiphyService } from '../../giphy';
-import { SentryService } from '../../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { NIL as NIL_UUID } from 'uuid';
 
 describe('CommentService', () => {
@@ -1192,5 +1192,5 @@ describe('CommentService', () => {
       await commentService.bindChildrenToComment([createdComment], authUserMock.id);
       expect(sequelizeConnection.query).toBeCalled();
     });
-  })
+  });
 });

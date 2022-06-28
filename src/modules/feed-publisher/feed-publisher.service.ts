@@ -7,7 +7,7 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class FeedPublisherService {
@@ -17,11 +17,11 @@ export class FeedPublisherService {
   public constructor(
     private _followService: FollowService,
     @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
-    @InjectModel(UserNewsFeedModel) private _userSeenPostModel: typeof UserSeenPostModel,
+    @InjectModel(UserSeenPostModel) private _userSeenPostModel: typeof UserSeenPostModel,
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: number[]): Promise<void> {
+  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: string[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
     const schema = this._databaseConfig.schema;
     try {
@@ -35,7 +35,7 @@ export class FeedPublisherService {
 
       const data = userIds
         .map((userId) => {
-          return postIds.map((postId) => `(${userId},${postId}, ${!!seenPostDataMap[userId]})`);
+          return postIds.map((postId) => `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`);
         })
         .flat();
 
@@ -71,7 +71,7 @@ export class FeedPublisherService {
       );
       const data = userIds
         .map((userId) => {
-          return `(${userId},${postId}, ${!!seenPostDataMap[userId]})`;
+          return `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`;
         })
         .join(',');
 

@@ -4,7 +4,7 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
 import { ReactionService } from '..';
-import { SentryService } from '../../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { LogicException } from '../../../common/exceptions';
@@ -266,12 +266,12 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         postService.getPost = jest
           .fn()
-          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND));
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
         try {
           await reactionService.createReaction(mockUserDto, mockCreateReactionDto.post);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
         expect(postService.getPost).toBeCalledTimes(1);
@@ -378,7 +378,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
@@ -394,7 +394,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
@@ -448,12 +448,12 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         postService.getPost = jest
           .fn()
-          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_FOUND));
+          .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_FOUND);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
         expect(postService.getPost).toBeCalledTimes(1);
@@ -490,7 +490,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
         }
 
         expect(postService.getPost).toBeCalledTimes(1);
@@ -565,7 +565,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
@@ -580,7 +580,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
@@ -600,7 +600,7 @@ describe('ReactionService', () => {
         try {
           await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
-          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+          expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
@@ -663,7 +663,11 @@ describe('ReactionService', () => {
     describe('Function: deleteReactionByPostIds', () => {
       it('Should successfully', async () => {
         postReactionModel.destroy = jest.fn().mockResolvedValue(3);
-        const result = await reactionService.deleteReactionByPostIds([10, 11, 12]);
+        const result = await reactionService.deleteReactionByPostIds([
+          'b0f2f8fc-2a13-4408-9a7a-564e15e9a895',
+          '6039c8c3-0511-465a-b9a9-a2666c98f946',
+          'edc7ec02-fc29-4e48-96e8-f93d2c593054',
+        ]);
         expect(result).toEqual(3);
       });
     });
@@ -671,7 +675,14 @@ describe('ReactionService', () => {
     describe('Function: deleteReactionByCommentIds', () => {
       it('Should successfully', async () => {
         commentReactionModel.destroy = jest.fn().mockResolvedValue(3);
-        const result = await reactionService.deleteReactionByCommentIds([10, 11, 12], null);
+        const result = await reactionService.deleteReactionByCommentIds(
+          [
+            '158c94a0-3e89-4b2b-9731-f7a5ad313dc7',
+            '70fd7a3f-d200-45b0-8f43-637bd5823055',
+            'd16e555e-006f-4e63-bce7-56760f315a6e',
+          ],
+          null
+        );
         expect(result).toEqual(3);
       });
     });

@@ -1,17 +1,21 @@
 import { UserDto } from '../auth';
+import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { PostAllow } from '../post';
+import { GiphyService } from '../giphy';
 import { MediaService } from '../media';
-import { OrderEnum, PageDto } from '../../common/dto';
-import { MentionService } from '../mention';
 import { FollowService } from '../follow';
+import { SentryService } from '@app/sentry';
+import { NIL, NIL as NIL_UUID } from 'uuid';
+import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
 import { UserService } from '../../shared/user';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
 import { PostService } from '../post/post.service';
+import { createUrlFromId } from '../giphy/giphy.util';
 import { EntityType } from '../media/media.constants';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { ExceptionHelper } from '../../common/helpers';
-import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { LogicException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
@@ -20,22 +24,21 @@ import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { MentionModel } from '../../database/models/mention.model';
-import { GetCommentsDto, UpdateCommentDto } from './dto/requests';
+import {
+  CreateCommentDto,
+  GetCommentEditedHistoryDto,
+  GetCommentsDto,
+  UpdateCommentDto,
+} from './dto/requests';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
-import { CommentEditedHistoryDto, CommentResponseDto, CommentsResponseDto } from './dto/response';
-import { CreateCommentDto, GetCommentEditedHistoryDto } from './dto/requests';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
-import sequelize from 'sequelize';
-import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
-import { GiphyService } from '../giphy';
-import { createUrlFromId } from '../giphy/giphy.util';
 
 @Injectable()
 export class CommentService {
@@ -78,21 +81,13 @@ export class CommentService {
       )},replyId: ${replyId} `
     );
 
-    let post;
+    const post = await this._postService.findPost({
+      postId: createCommentDto.postId,
+    });
 
     if (replyId !== NIL_UUID) {
       const parentComment = await this._commentModel.findOne({
         include: [
-          {
-            model: PostModel,
-            as: 'post',
-            include: [
-              {
-                model: PostGroupModel,
-                as: 'groups',
-              },
-            ],
-          },
           {
             model: MentionModel,
             as: 'mentions',
@@ -105,18 +100,8 @@ export class CommentService {
       });
 
       if (!parentComment) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
       }
-
-      if (!parentComment.post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
-      }
-
-      post = parentComment.toJSON().post;
-    } else {
-      post = await this._postService.findPost({
-        postId: createCommentDto.postId,
-      });
     }
 
     // check user can access
@@ -213,7 +198,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -325,7 +310,7 @@ export class CommentService {
     });
 
     if (!response) {
-      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const rawComment = response.toJSON();
     await Promise.all([
@@ -342,6 +327,51 @@ export class CommentService {
     return result;
   }
 
+  /**
+   * Get multiple comment by ids
+   * @param commentIds String
+   * @returns Promise resolve CommentResponseDto
+   */
+  public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
+    this._logger.debug(`[getComment] commentId: ${commentIds} `);
+
+    const responses = await this._commentModel.findAll({
+      order: [['createdAt', 'DESC']],
+      where: {
+        id: {
+          [Op.in]: commentIds,
+        },
+      },
+      include: [
+        {
+          model: MediaModel,
+          through: {
+            attributes: [],
+          },
+          required: false,
+        },
+        {
+          model: MentionModel,
+          as: 'mentions',
+          required: false,
+        },
+      ],
+    });
+
+    if (!responses) {
+      throw new LogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+    }
+    const rawComment = responses.map((r) => r.toJSON());
+    await Promise.all([
+      this._mentionService.bindMentionsToComment(rawComment),
+      this._giphyService.bindUrlToComment(rawComment),
+      this.bindUserToComment(rawComment),
+    ]);
+
+    return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
+      excludeExtraneousValues: true,
+    });
+  }
   /**
    * Get comment list
    * @param user UserDto
@@ -368,7 +398,7 @@ export class CommentService {
       await this._authorityService.checkCanReadPost(user, post);
     }
     if (checkAccess && !user) {
-      await this._authorityService.checkPublicPost(post);
+      await this._authorityService.checkIsPublicPost(post);
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
@@ -404,9 +434,15 @@ export class CommentService {
     );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
 
+    //check post exist
+    if (getCommentLinkDto.postId) {
+      await this._postService.findPost({
+        postId: getCommentLinkDto.postId,
+      });
+    }
     const checkComment = await this._commentModel.findByPk(commentId);
     if (!checkComment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_FOUND);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const { postId } = checkComment;
     const post = await this._postService.findPost({
@@ -415,7 +451,7 @@ export class CommentService {
     if (user) {
       await this._authorityService.checkCanReadPost(user, post);
     } else {
-      await this._authorityService.checkPublicPost(post);
+      await this._authorityService.checkIsPublicPost(post);
     }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
@@ -460,7 +496,7 @@ export class CommentService {
   private async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
     const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
-    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId)}`;
+    let condition = ` "c".parent_id = ${this._sequelizeConnection.escape(parentId ?? NIL)}`;
     if (postId) {
       condition += ` AND "c".post_id = ${this._sequelizeConnection.escape(postId)}`;
     }
@@ -636,7 +672,7 @@ export class CommentService {
       },
     });
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.findPost({
@@ -878,7 +914,7 @@ export class CommentService {
     const response = await get(commentId);
 
     if (!response) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
     const rawComment = response.toJSON();
 
@@ -1059,7 +1095,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     return comment.postId;

@@ -35,8 +35,11 @@ wallaby.js
 !.vscode/extensions.json
 
 .env
+local.env
 dev.env
 sbx.env
 stg.env
+local.env
 data
 .scannerwork
+yarn.lock

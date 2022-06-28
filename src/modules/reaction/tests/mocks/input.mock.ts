@@ -5,6 +5,8 @@ import { UserDto } from '../../../auth';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionEnum } from '../../reaction.enum';
+import { NIL as NIL_UUID } from 'uuid';
+import { PostPrivacy } from '../../../../database/models/post.model';
 
 export const mockCreateReactionDto = {
   post: {
@@ -54,6 +56,7 @@ export const mockPostResponseDto: PostResponseDto = {
   id: mockCreateReactionDto.post.targetId,
   content: 'hello world',
   highlight: 'nothing',
+  isArticle: false,
   media: {
     files: [],
     videos: [],
@@ -70,6 +73,7 @@ export const mockPostResponseDto: PostResponseDto = {
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,
+  totalUsersSeen: 0,
   reactionsCount: {},
   markedReadPost: false,
   createdAt: new Date('2022-05-19T02:53:48.135Z'),
@@ -87,17 +91,18 @@ export const mockPostResponseDto: PostResponseDto = {
   },
   ownerReactions: [],
   comments: null,
+  privacy: PostPrivacy.PUBLIC,
 };
 
 export const mockCreatePostReactionProcedureReturn = [
   {
-    ['cpr_id']: 99,
+    ['cpr_id']: '90e09413-a33b-4a16-aafc-6987e9a598e2',
   },
 ];
 
 export const mockCreateCommentReactionProcedureReturn = [
   {
-    ['ccr_id']: 100,
+    ['ccr_id']: '552224ee-9892-4de0-87a2-9c8c3f2f83fc',
   },
 ];
 
@@ -160,7 +165,7 @@ export const mockCommentResponseDto: CommentResponseDto = {
   id: mockCreateReactionDto.comment.targetId,
   actor: mockUserSharedDto,
   edited: false,
-  parentId: null,
+  parentId: NIL_UUID,
   postId: mockPostResponseDto.id,
   totalReply: 0,
   ownerReactions: [],
@@ -202,7 +207,7 @@ export const mockGetReactionDto = {
     reactionName: mockCreateReactionDto.post.reactionName,
     targetId: mockPostResponseDto.id,
     target: ReactionEnum.POST,
-    latestId: 0,
+    latestId: NIL_UUID,
     limit: 1,
     order: OrderEnum.ASC,
   },
@@ -210,7 +215,7 @@ export const mockGetReactionDto = {
     reactionName: mockCreateReactionDto.comment.reactionName,
     targetId: mockCommentResponseDto.id,
     target: ReactionEnum.COMMENT,
-    latestId: 0,
+    latestId: NIL_UUID,
     limit: 1,
     order: OrderEnum.ASC,
   },

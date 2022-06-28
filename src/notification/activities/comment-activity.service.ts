@@ -4,11 +4,12 @@ import { ActivityObject, NotificationActivity } from '../dto/requests/notificati
 import { ObjectHelper } from '../../common/helpers';
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { Injectable } from '@nestjs/common';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
 
 @Injectable()
 export class CommentActivityService {
   public createCommentPayload(
-    post: PostResponseDto,
+    post: PostResponseDto | ArticleResponseDto,
     comment: CommentResponseDto
   ): NotificationActivity {
     const activityObject: ActivityObject = {
@@ -24,6 +25,8 @@ export class CommentActivityService {
         actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
         content: comment.content,
         media: comment.media,
+        giphyId: comment.giphyId,
+        giphyUrl: comment.giphyUrl,
         mentions: comment.mentions as any,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
@@ -62,11 +65,15 @@ export class CommentActivityService {
         mentions: parent.mentions as any,
         createdAt: parent.createdAt,
         updatedAt: parent.updatedAt,
+        giphyId: parent.giphyId,
+        giphyUrl: parent.giphyUrl,
         child: {
           id: comment.id,
           actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
           content: comment.content,
           media: comment.media,
+          giphyId: comment.giphyId,
+          giphyUrl: comment.giphyUrl,
           createdAt: comment.createdAt,
           updatedAt: comment.updatedAt,
         },

@@ -1,15 +1,27 @@
 import { IsUUID } from 'class-validator';
-import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  AfterCreate,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
 import { PostModel } from './post.model';
+import { ActionEnum } from './comment.model';
+import { Sequelize } from 'sequelize';
 
 export interface IUserSeenPost {
   postId: string;
   userId: number;
+  createdAt?: Date;
 }
 
 @Table({
   tableName: 'users_seen_posts',
-  timestamps: false,
+  createdAt: true,
+  updatedAt: false,
 })
 export class UserSeenPostModel extends Model implements IUserSeenPost {
   @ForeignKey(() => PostModel)
@@ -21,4 +33,35 @@ export class UserSeenPostModel extends Model implements IUserSeenPost {
   @PrimaryKey
   @Column
   public userId: number;
+
+  @CreatedAt
+  @Column
+  public createdAt?: Date;
+
+  @AfterCreate
+  public static async onUserSeenPostCreated(userSeenPost: UserSeenPostModel): Promise<void> {
+    await UserSeenPostModel._updateTotalUsersSeenForPost(
+      userSeenPost.sequelize,
+      userSeenPost.postId,
+      ActionEnum.INCREMENT
+    );
+  }
+
+  /**
+   * Update Total Users Seen For Post
+   * @param sequelize Sequelize
+   * @param postId String
+   * @param action ActionEnum
+   * @private
+   */
+  private static async _updateTotalUsersSeenForPost(
+    sequelize: Sequelize,
+    postId: string,
+    action: ActionEnum
+  ): Promise<void> {
+    const post = await sequelize.model(PostModel.name).findByPk(postId);
+    if (post) {
+      await post[action]('total_users_seen');
+    }
+  }
 }

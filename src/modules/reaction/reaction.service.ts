@@ -33,7 +33,7 @@ import { IPostReaction, PostReactionModel } from '../../database/models/post-rea
 import { FollowService } from '../follow';
 import sequelize from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -217,18 +217,11 @@ export class ReactionService {
           isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
         },
         (t) => {
-          return this._sequelize.query(
-            `CALL ${schema}.create_post_reaction($postId,$userId,$reactionName,null)`,
-            {
-              bind: {
-                postId: postId,
-                userId: userId,
-                reactionName: reactionName,
-              },
-              transaction: t,
-              type: QueryTypes.SELECT,
-            }
-          );
+          return this._sequelize.query(`CALL ${schema}.create_post_reaction(?,?,?,null)`, {
+            replacements: [postId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          });
         }
       );
       if (rc !== null && rc.length > 0 && rc[0]['cpr_id']) {
@@ -327,7 +320,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(commentId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.getPost(comment.postId, userDto, {
@@ -336,7 +329,7 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -348,18 +341,11 @@ export class ReactionService {
           isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
         },
         (t) => {
-          return this._sequelize.query(
-            `CALL ${schema}.create_comment_reaction($commentId,$userId,$reactionName,null)`,
-            {
-              bind: {
-                commentId: commentId,
-                userId: userId,
-                reactionName: reactionName,
-              },
-              transaction: t,
-              type: QueryTypes.SELECT,
-            }
-          );
+          return this._sequelize.query(`CALL ${schema}.create_comment_reaction(?,?,?,null)`, {
+            replacements: [commentId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          });
         }
       );
       if (rc !== null && rc.length > 0 && rc[0]['ccr_id']) {
@@ -511,7 +497,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
       }
 
       const response = existedReaction.toJSON();
@@ -523,6 +509,7 @@ export class ReactionService {
         },
         transaction: trx,
       });
+
       await trx.commit();
 
       const actor = {
@@ -592,7 +579,7 @@ export class ReactionService {
     const comment = await this._commentService.findComment(targetId);
 
     if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
     const post = await this._postService.getPost(comment.postId, userDto, {
@@ -601,7 +588,7 @@ export class ReactionService {
     });
 
     if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -626,7 +613,7 @@ export class ReactionService {
       });
 
       if (!existedReaction) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
       }
 
       const response = existedReaction.toJSON();
