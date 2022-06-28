@@ -48,6 +48,7 @@ import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
+import { json } from 'stream/consumers';
 
 @Injectable()
 export class PostService {
@@ -321,19 +322,20 @@ export class PostService {
           (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
         );
       });
+    const total = jsonPostsFilterByMediaStatus.length;
+    const rowsSliced = jsonPostsFilterByMediaStatus.slice(offset, limit + offset);
+
     await Promise.all([
-      this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
-      this.bindActorToPost(jsonPostsFilterByMediaStatus),
-      this.bindAudienceToPost(jsonPostsFilterByMediaStatus),
+      this.mentionService.bindMentionsToPosts(rowsSliced),
+      this.bindActorToPost(rowsSliced),
+      this.bindAudienceToPost(rowsSliced),
     ]);
-    const result = this.classTransformer
-      .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
-        excludeExtraneousValues: true,
-      })
-      .slice(offset, limit);
+    const result = this.classTransformer.plainToInstance(PostResponseDto, rowsSliced, {
+      excludeExtraneousValues: true,
+    });
 
     return new PageDto<PostResponseDto>(result, {
-      total: jsonPostsFilterByMediaStatus.length,
+      total,
       limit,
       offset,
     });
