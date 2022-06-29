@@ -9,9 +9,10 @@ import { UserModule } from '../shared/user';
 import { GroupModule } from '../shared/group';
 import { PostModule } from '../modules/post';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
+import { MentionModule } from '../modules/mention';
 
 @Module({
-  imports: [DatabaseModule, LibModule, UserModule, GroupModule, PostModule],
+  imports: [DatabaseModule, LibModule, UserModule, GroupModule, PostModule, MentionModule],
   providers: [
     SequelizeTinkerCommand,
     FixCommentCountCommand,
