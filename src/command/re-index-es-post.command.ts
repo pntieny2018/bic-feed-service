@@ -11,7 +11,6 @@ import { GroupService } from '../shared/group';
 import { Logger } from '@nestjs/common';
 import { MentionModel } from '../database/models/mention.model';
 import { MentionService } from '../modules/mention';
-import { PostService } from '../modules/post/post.service';
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
   private _logger = new Logger(ReIndexEsPostCommand.name);
@@ -20,7 +19,6 @@ export class ReIndexEsPostCommand implements CommandRunner {
     public readonly userService: UserService,
     public readonly groupService: GroupService,
     public readonly mentionService: MentionService,
-    public readonly postService: PostService,
     @InjectModel(PostModel) private _postModel: typeof PostModel
   ) {}
 
@@ -68,11 +66,10 @@ export class ReIndexEsPostCommand implements CommandRunner {
     });
 
     const jsonPosts = posts.map((r) => r.toJSON());
-
     await Promise.all([
       this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.postService.bindActorToPost(jsonPosts),
-      this.postService.bindAudienceToPost(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+      this.bindAudienceToPost(jsonPosts),
     ]);
 
     for (const post of jsonPosts) {
@@ -100,6 +97,61 @@ export class ReIndexEsPostCommand implements CommandRunner {
         .catch((ex) => this._logger.debug(ex));
 
       this._logger.log('deliver post:', dataIndex.id);
+    }
+  }
+
+  public async bindAudienceToPost(posts: any[]): Promise<void> {
+    const groupIds = [];
+    for (const post of posts) {
+      let postGroups = post.groups;
+      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
+
+      if (postGroups && postGroups.length) {
+        groupIds.push(...postGroups.map((m) => m.groupId || m.id));
+      }
+    }
+    const dataGroups = await this.groupService.getMany(groupIds);
+    for (const post of posts) {
+      let groups = [];
+      let postGroups = post.groups;
+      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
+      if (postGroups && postGroups.length) {
+        const mappedGroups = [];
+        postGroups.forEach((group) => {
+          const dataGroup = dataGroups.find((i) => i.id === group.id || i.id === group.groupId);
+          if (dataGroup && dataGroup.child) {
+            delete dataGroup.child;
+          }
+          if (dataGroup) mappedGroups.push(dataGroup);
+        });
+        groups = mappedGroups;
+      }
+      post.audience = { groups };
+    }
+  }
+
+  /**
+   * Bind Actor info to post.createdBy
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindActorToPost(posts: any[]): Promise<void> {
+    const userIds = [];
+    for (const post of posts) {
+      if (post.actor?.id) {
+        userIds.push(post.actor.id);
+      } else {
+        userIds.push(post.createdBy);
+      }
+    }
+    const users = await this.userService.getMany(userIds);
+    for (const post of posts) {
+      if (post.actor?.id) {
+        post.actor = users.find((i) => i.id === post.actor.id);
+      } else {
+        post.actor = users.find((i) => i.id === post.createdBy);
+      }
     }
   }
 }
