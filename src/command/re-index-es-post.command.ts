@@ -6,10 +6,11 @@ import { MediaModel } from '../database/models/media.model';
 import { PostResponseDto } from '../modules/post/dto/responses';
 import { plainToInstance } from 'class-transformer';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { UserSharedDto } from '../shared/user/dto';
 import { UserService } from '../shared/user';
 import { GroupService } from '../shared/group';
 import { Logger } from '@nestjs/common';
+import { MentionModel } from '../database/models/mention.model';
+import { MentionService } from '../modules/mention';
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
   private _logger = new Logger(ReIndexEsPostCommand.name);
@@ -17,10 +18,11 @@ export class ReIndexEsPostCommand implements CommandRunner {
     private readonly _elasticsearchService: ElasticsearchService,
     public readonly userService: UserService,
     public readonly groupService: GroupService,
+    public readonly mentionService: MentionService,
     @InjectModel(PostModel) private _postModel: typeof PostModel
   ) {}
 
-  public async run(passedParam: string[], options: { index: string }): Promise<any> {
+  public async run(passedParam: string[]): Promise<any> {
     if (passedParam.length === 0) return;
     const posts = await this._postModel.findAll({
       where: {
@@ -39,24 +41,41 @@ export class ReIndexEsPostCommand implements CommandRunner {
         },
         {
           model: MediaModel,
-          as: 'media',
+          through: {
+            attributes: [],
+          },
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'size',
+            'thumbnails',
+            'status',
+            'mimeType',
+          ],
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status'],
+        },
+        {
+          model: MentionModel,
+          required: false,
         },
       ],
     });
-    for (const post of posts) {
-      const jsonPost = post.toJSON();
-      await Promise.all([
-        this.bindMentionsToPosts([jsonPost]),
-        this.bindActorToPost([jsonPost]),
-        this.bindAudienceToPost([jsonPost]),
-      ]);
 
-      const result = plainToInstance(PostResponseDto, jsonPost, {
+    const jsonPosts = posts.map((r) => r.toJSON());
+    await Promise.all([
+      this.mentionService.bindMentionsToPosts(jsonPosts),
+      this.bindActorToPost(jsonPosts),
+      this.bindAudienceToPost(jsonPosts),
+    ]);
+
+    for (const post of jsonPosts) {
+      const result = plainToInstance(PostResponseDto, post, {
         excludeExtraneousValues: true,
       });
-
       const dataIndex = {
         id: result.id,
         commentsCount: result.commentsCount,
@@ -68,6 +87,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
         setting: result.setting,
         createdAt: result.createdAt,
         actor: result.actor,
+        isArticle: result.isArticle,
       };
 
       this._logger.log('processing post:', dataIndex.id);
@@ -80,53 +100,6 @@ export class ReIndexEsPostCommand implements CommandRunner {
     }
   }
 
-  public async bindMentionsToPosts(posts: any[]): Promise<void> {
-    const userIds: number[] = [];
-
-    for (const post of posts) {
-      if (post.mentions && post.mentions.length) {
-        userIds.push(...post.mentions.map((m) => m.userId));
-      }
-    }
-
-    const usersInfo = await this.resolveMentions(userIds);
-
-    for (const post of posts) {
-      if (post.mentions && post.mentions.length) {
-        const mentions = [];
-        post.mentions.forEach((mention) => {
-          const user = usersInfo.find((u) => u.id === mention.userId);
-          if (user) mentions.push(user);
-        });
-        post.mentions = mentions.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
-      }
-    }
-  }
-  public async resolveMentions(userIds: number[]): Promise<UserSharedDto[]> {
-    if (!userIds.length) return [];
-    const users = await this.userService.getMany(userIds);
-    return plainToInstance(UserSharedDto, users, {
-      excludeExtraneousValues: true,
-    });
-  }
-  public async bindActorToPost(posts: any[]): Promise<void> {
-    const userIds = [];
-    for (const post of posts) {
-      if (post.actor?.id) {
-        userIds.push(post.actor.id);
-      } else {
-        userIds.push(post.createdBy);
-      }
-    }
-    const users = await this.userService.getMany(userIds);
-    for (const post of posts) {
-      if (post.actor?.id) {
-        post.actor = users.find((i) => i.id === post.actor.id);
-      } else {
-        post.actor = users.find((i) => i.id === post.createdBy);
-      }
-    }
-  }
   public async bindAudienceToPost(posts: any[]): Promise<void> {
     const groupIds = [];
     for (const post of posts) {
@@ -154,6 +127,31 @@ export class ReIndexEsPostCommand implements CommandRunner {
         groups = mappedGroups;
       }
       post.audience = { groups };
+    }
+  }
+
+  /**
+   * Bind Actor info to post.createdBy
+   * @param posts Array of post
+   * @returns Promise resolve void
+   * @throws HttpException
+   */
+  public async bindActorToPost(posts: any[]): Promise<void> {
+    const userIds = [];
+    for (const post of posts) {
+      if (post.actor?.id) {
+        userIds.push(post.actor.id);
+      } else {
+        userIds.push(post.createdBy);
+      }
+    }
+    const users = await this.userService.getMany(userIds);
+    for (const post of posts) {
+      if (post.actor?.id) {
+        post.actor = users.find((i) => i.id === post.actor.id);
+      } else {
+        post.actor = users.find((i) => i.id === post.createdBy);
+      }
     }
   }
 }
