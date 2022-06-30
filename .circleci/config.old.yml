@@ -18,9 +18,6 @@ jobs:
       - image: circleci/buildpack-deps:stretch
     environment:
       IMAGE_NAME: beingroup/bein-stream-backend-api-sbx
-      BASE: bein-base
-      ENVIRONMENT_BASE: bein-sandbox-base
-      LIVE: bein-sandbox-live-stream
     working_directory: ~/app
     steps:
       - checkout
@@ -47,47 +44,13 @@ jobs:
             curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod u+x ./kubectl
       - run:
-          name: Pull Kustomize resources
-          command: |
-            mkdir ~/app/$BASE
-            cd ~/app/$BASE
-            git clone -b $BASE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$ENVIRONMENT_BASE
-            cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$LIVE
-            cd ~/app/$LIVE
-            git clone -b $LIVE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-      - run:
-          name: Run Kustomize
-          command: |
-            cd ~/app/$LIVE
-            ~/app/kubectl kustomize ./ > ~/app/result.yaml
-      - run:
           name: Deploy Code
-          command: |
-            chmod +x ./$BASE/ci-deploy.sh
-            ./$BASE/ci-deploy.sh
-      - run:
-          name: View live configuration
-          command: |
-            cat ~/app/result.yaml
+          command: ./scripts/sbx-ci-deploy.sh
   stg:
     docker:
       - image: circleci/buildpack-deps:stretch
     environment:
       IMAGE_NAME: beingroup/bein-stream-backend-api-stg
-      BASE: bein-base
-      ENVIRONMENT_BASE: bein-staging-base
-      LIVE: bein-staging-live-stream
     working_directory: ~/app
     steps:
       - checkout
@@ -114,47 +77,13 @@ jobs:
             curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod u+x ./kubectl
       - run:
-          name: Pull Kustomize resources
-          command: |
-            mkdir ~/app/$BASE
-            cd ~/app/$BASE
-            git clone -b $BASE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$ENVIRONMENT_BASE
-            cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$LIVE
-            cd ~/app/$LIVE
-            git clone -b $LIVE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-      - run:
-          name: Run Kustomize
-          command: |
-            cd ~/app/$LIVE
-            ~/app/kubectl kustomize ./ > ~/app/result.yaml
-      - run:
           name: Deploy Code
-          command: |
-            chmod +x ./$BASE/ci-deploy.sh
-            ./$BASE/ci-deploy.sh
-      - run:
-          name: View live configuration
-          command: |
-            cat ~/app/result.yaml
+          command: ./scripts/stg-ci-deploy.sh
   pro:
     docker:
       - image: circleci/buildpack-deps:stretch
     environment:
       IMAGE_NAME: beingroup/bein-stream-backend-api-pro
-      BASE: bein-base
-      ENVIRONMENT_BASE: bein-production-base
-      LIVE: bein-production-live-stream
     working_directory: ~/app
     steps:
       - checkout
@@ -181,39 +110,8 @@ jobs:
             curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod u+x ./kubectl
       - run:
-          name: Pull Kustomize resources
-          command: |
-            mkdir ~/app/$BASE
-            cd ~/app/$BASE
-            git clone -b $BASE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$ENVIRONMENT_BASE
-            cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$LIVE
-            cd ~/app/$LIVE
-            git clone -b $LIVE git@bitbucket.org:bein-platform/bic-kube.git
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-      - run:
-          name: Run Kustomize
-          command: |
-            cd ~/app/$LIVE
-            ~/app/kubectl kustomize ./ > ~/app/result.yaml
-      - run:
           name: Deploy Code
-          command: |
-            chmod +x ./$BASE/ci-deploy.sh
-            ./$BASE/ci-deploy.sh
-      - run:
-          name: View live configuration
-          command: |
-            cat ~/app/result.yaml
+          command: ./scripts/pro-ci-deploy.sh
 
 workflows:
   version: 2
@@ -227,7 +125,6 @@ workflows:
           context:
             - bein-backend-general
             - bein-backend-sbx
-
   Staging:
     when: << pipeline.parameters.run_workflow_stg >>
     jobs:
@@ -238,7 +135,6 @@ workflows:
           context:
             - bein-backend-general
             - bein-backend-stg
-
   Production:
     when: << pipeline.parameters.run_workflow_pro >>
     jobs:
