@@ -32,7 +32,12 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { EntityIdDto } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import {
+  ArrayHelper,
+  ElasticsearchHelper,
+  ExceptionHelper,
+  StringHelper,
+} from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { plainToInstance } from 'class-transformer';
 import { Op, QueryTypes, Transaction } from 'sequelize';
@@ -120,7 +125,12 @@ export class PostService {
     const posts = hits.map((item) => {
       const source = item._source;
       source['id'] = item._id;
-      if (content && item.highlight && item.highlight['content.text'].length != 0 && source.content.text) {
+      if (
+        content &&
+        item.highlight &&
+        item.highlight['content.text'].length != 0 &&
+        source.content.text
+      ) {
         source.highlight = item.highlight['content.text'][0];
       }
       return source;
@@ -198,33 +208,55 @@ export class PostService {
     }
 
     if (content) {
-      body.query.bool.should.push({
-        ['dis_max']: {
-          queries: [
-            {
-              multi_match: {
+      const arrKeywords = content.split(' ');
+      const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
+      let queries;
+      if (isASCII) {
+        queries = [
+          {
+            multi_match: {
+              query: content,
+              fields: ['content.text.default', 'content.text.ascii'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            match: {
+              ['content.text.default']: {
                 query: content,
-                fields: ['content.text.default', 'content.text.no_ascii'],
-                type: 'phrase',
-                boost: 2,
               },
             },
-            {
-              match: {
-                ['content.text.default']: {
-                  query: content,
-                },
+          },
+          {
+            match: {
+              ['content.text.ascii']: {
+                query: content,
               },
             },
-            {
-              match: {
-                ['content.text.no_ascii']: {
-                  query: content,
-                },
+          },
+        ];
+      } else {
+        queries = [
+          {
+            multi_match: {
+              query: content,
+              fields: ['content.text.default'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            match: {
+              ['content.text.default']: {
+                query: content,
               },
             },
-          ],
-        },
+          },
+        ];
+      }
+      body.query.bool.should.push({
+        ['dis_max']: { queries },
       });
       body.query.bool['minimum_should_match'] = 1;
       body['highlight'] = {
@@ -232,7 +264,7 @@ export class PostService {
         ['post_tags']: ['=='],
         fields: {
           'content.text': {
-            ['matched_fields']: ['content.text.default', 'content.text.no_ascii'],
+            ['matched_fields']: ['content.text.default', 'content.text.ascii'],
             type: 'fvh',
             ['number_of_fragments']: 0,
           },
