@@ -113,13 +113,15 @@ export class PostService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
+    console.log('payload===', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search(payload);
     const hits = response.body.hits.hits;
+    console.log('hits====', JSON.stringify(hits, null, 4));
     const posts = hits.map((item) => {
       const source = item._source;
       source['id'] = item._id;
-      if (content && item.highlight && item.highlight['content'].length != 0 && source.content) {
-        source.highlight = item.highlight['content'][0];
+      if (content && item.highlight && item.highlight['content.text'].length != 0 && source.content.text) {
+        source.highlight = item.highlight['content.text'][0];
       }
       return source;
     });
@@ -200,21 +202,24 @@ export class PostService {
         ['dis_max']: {
           queries: [
             {
-              match: { content },
+              multi_match: {
+                query: content,
+                fields: ['content.text.default', 'content.text.no_ascii'],
+                type: 'phrase',
+                boost: 2,
+              },
             },
             {
               match: {
-                ['content.ascii']: {
+                ['content.text.default']: {
                   query: content,
-                  boost: 0.6,
                 },
               },
             },
             {
               match: {
-                ['content.ngram']: {
+                ['content.text.no_ascii']: {
                   query: content,
-                  boost: 0.3,
                 },
               },
             },
@@ -226,8 +231,8 @@ export class PostService {
         ['pre_tags']: ['=='],
         ['post_tags']: ['=='],
         fields: {
-          content: {
-            ['matched_fields']: ['content', 'content.ascii', 'content.ngram'],
+          'content.text': {
+            ['matched_fields']: ['content.text.default', 'content.text.no_ascii'],
             type: 'fvh',
             ['number_of_fragments']: 0,
           },
@@ -251,7 +256,7 @@ export class PostService {
       body.query.bool.must.push(filterTime);
     }
     return {
-      index: ElasticsearchHelper.INDEX.POST,
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
       body,
       from: offset,
       size: limit,
@@ -1663,5 +1668,15 @@ export class PostService {
         },
       }
     );
+  }
+
+  public async updatePostData(postIds: string[], data: any): Promise<void> {
+    await this.postModel.update(data, {
+      where: {
+        id: {
+          [Op.in]: postIds,
+        },
+      },
+    });
   }
 }

@@ -225,7 +225,7 @@ export class ArticleService {
     }
     body['sort'] = [{ createdAt: 'desc' }];
     return {
-      index: ElasticsearchHelper.INDEX.POST,
+      index: ElasticsearchHelper.ALIAS.POST.default.name,
       body,
       from: offset,
       size: limit,

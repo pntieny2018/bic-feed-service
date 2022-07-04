@@ -465,6 +465,7 @@ describe('PostService', () => {
       commentService.deleteCommentsByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       feedService.deleteNewsFeedByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      feedService.deleteUserSeenByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       userMarkedImportantPostModelMock.destroy = jest.fn().mockResolvedValue(mockedDataDeletePost);
 
@@ -625,7 +626,7 @@ describe('PostService', () => {
       const mockPosts = mockedSearchResponse.body.hits.hits.map((item) => {
         const source = item._source;
         source['id'] = parseInt(item._id);
-        source['highlight'] = item.highlight['content'][0];
+        source['highlight'] = item.highlight['content.text'][0];
         return source;
       });
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
@@ -673,7 +674,7 @@ describe('PostService', () => {
         limit: 1,
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -704,7 +705,7 @@ describe('PostService', () => {
         actors: [1],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -741,7 +742,7 @@ describe('PostService', () => {
         endTime: '2022-03-25T17:00:00.000Z',
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -781,7 +782,7 @@ describe('PostService', () => {
         content: 'aaaa',
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -798,23 +799,24 @@ describe('PostService', () => {
                   dis_max: {
                     queries: [
                       {
-                        match: {
-                          content: 'aaaa',
+                        multi_match: {
+                          query: 'aaaa',
+                          fields: ['content.text.default', 'content.text.no_ascii'],
+                          type: 'phrase',
+                          boost: 2,
                         },
                       },
                       {
                         match: {
-                          'content.ascii': {
-                            query: 'aaaa',
-                            boost: 0.6,
+                          'content.text.default': {
+                            query: 'aaaa'
                           },
                         },
                       },
                       {
                         match: {
-                          'content.ngram': {
-                            query: 'aaaa',
-                            boost: 0.3,
+                          'content.text.no_ascii': {
+                            query: 'aaaa'
                           },
                         },
                       },
@@ -829,8 +831,8 @@ describe('PostService', () => {
             pre_tags: ['=='],
             post_tags: ['=='],
             fields: {
-              content: {
-                matched_fields: ['content', 'content.ascii', 'content.ngram'],
+              'content.text': {
+                matched_fields: ['content.text.default', 'content.text.no_ascii'],
                 type: 'fvh',
                 number_of_fragments: 0,
               },
@@ -850,6 +852,7 @@ describe('PostService', () => {
     const postData = mockedPostData;
     const getDraftPostsDto: GetDraftPostDto = {
       limit: 1,
+      offset: 0
     };
 
     it('Should get post successfully', async () => {
@@ -859,10 +862,10 @@ describe('PostService', () => {
           toJSON: () => postData,
         },
       ];
-      postModelMock.findAndCountAll.mockResolvedValue({
-        rows: mockPosts,
-        count: 1,
-      });
+
+      const total = [postData].length;
+      const rowsSliced = [postData].slice(getDraftPostsDto.offset, getDraftPostsDto.limit + getDraftPostsDto.offset);
+      postModelMock.findAll.mockResolvedValue(mockPosts);
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
@@ -871,12 +874,13 @@ describe('PostService', () => {
       const result = await postService.getDraftPosts(mockedUserAuth.id, getDraftPostsDto);
 
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-      expect(mentionService.bindMentionsToPosts).toBeCalledWith([postData]);
+      expect(mentionService.bindMentionsToPosts).toBeCalledWith(rowsSliced);
       expect(postService.bindActorToPost).toBeCalledTimes(1);
-      expect(postService.bindActorToPost).toBeCalledWith([postData]);
+      expect(postService.bindActorToPost).toBeCalledWith(rowsSliced);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindAudienceToPost).toBeCalledWith([postData]);
+      expect(postService.bindAudienceToPost).toBeCalledWith(rowsSliced);
       expect(result).toBeInstanceOf(PageDto);
+      expect(result.meta.total).toEqual(total);
       expect(result.list[0]).toBeInstanceOf(PostResponseDto);
     });
   });
