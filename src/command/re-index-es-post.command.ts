@@ -11,6 +11,7 @@ import { GroupService } from '../shared/group';
 import { Logger } from '@nestjs/common';
 import { MentionModel } from '../database/models/mention.model';
 import { MentionService } from '../modules/mention';
+import { ElasticsearchHelper } from '../common/helpers';
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
   private _logger = new Logger(ReIndexEsPostCommand.name);
@@ -93,7 +94,12 @@ export class ReIndexEsPostCommand implements CommandRunner {
       this._logger.log('processing post:', dataIndex.id);
 
       await this._elasticsearchService
-        .index({ index: passedParam[0], id: `${dataIndex.id}`, body: dataIndex })
+        .index({
+          index: passedParam[0],
+          id: `${dataIndex.id}`,
+          body: dataIndex,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        })
         .catch((ex) => this._logger.debug(ex));
 
       this._logger.log('deliver post:', dataIndex.id);

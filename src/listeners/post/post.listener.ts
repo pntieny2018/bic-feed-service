@@ -47,7 +47,7 @@ export class PostListener {
       this._sentryService.captureException(e);
     });
 
-    const index = ElasticsearchHelper.INDEX.POST;
+    const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
     try {
       this._elasticsearchService.delete({ index, id: `${post.id}` }).catch((e) => {
         this._logger.debug(e);
@@ -151,11 +151,22 @@ export class PostListener {
       createdAt,
       actor,
     };
-    const index = ElasticsearchHelper.INDEX.POST;
-    this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
-      this._logger.debug(e);
-      this._sentryService.captureException(e);
-    });
+    const index = ElasticsearchHelper.ALIAS.POST.default.name;
+    this._elasticsearchService
+      .index({
+        index,
+        id: `${id}`,
+        body: dataIndex,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      })
+      .then((res) => {
+        const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
+        this._postService.updatePostData([id], { lang });
+      })
+      .catch((e) => {
+        this._logger.debug(e);
+        this._sentryService.captureException(e);
+      });
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -186,6 +197,7 @@ export class PostListener {
       setting,
       audience,
       isArticle,
+      lang,
     } = newPost;
 
     if (oldPost.isDraft === false) {
@@ -228,7 +240,7 @@ export class PostListener {
       },
     });
 
-    const index = ElasticsearchHelper.INDEX.POST;
+    const index = ElasticsearchHelper.ALIAS.POST.default.name;
     const dataUpdate = {
       commentsCount,
       totalUsersSeen,
@@ -241,7 +253,26 @@ export class PostListener {
       isArticle,
     };
     this._elasticsearchService
-      .update({ index, id: `${id}`, body: { doc: dataUpdate } })
+      .index({
+        index,
+        id: `${id}`,
+        body: dataUpdate,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      })
+      .then((res) => {
+        const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
+        if (lang !== newLang) {
+          this._postService.updatePostData([id], { lang: newLang });
+          const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(lang);
+          this._elasticsearchService
+            .delete({ index: oldIndex, id: `${id}` })
+            .then((res) => console.log(res))
+            .catch((e) => {
+              this._logger.debug(e);
+              this._sentryService.captureException(e);
+            });
+        }
+      })
       .catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
@@ -314,11 +345,23 @@ export class PostListener {
         actor,
         isArticle,
       };
-      const index = ElasticsearchHelper.INDEX.POST;
-      this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      });
+      const index = ElasticsearchHelper.ALIAS.POST.default.name;
+      this._elasticsearchService
+        .index({
+          index,
+          id: `${id}`,
+          body: dataIndex,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        })
+        .then((res) => {
+          console.log(res);
+          const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
+          this._postService.updatePostData([id], { lang });
+        })
+        .catch((e) => {
+          this._logger.debug(e);
+          this._sentryService.captureException(e);
+        });
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,

@@ -296,7 +296,7 @@ describe('ArticleService', () => {
         series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -339,7 +339,7 @@ describe('ArticleService', () => {
         series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
         body: {
           query: {
             bool: {
