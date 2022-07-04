@@ -160,7 +160,6 @@ export class PostListener {
         pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
       })
       .then((res) => {
-        console.log(res);
         const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
         this._postService.updatePostData([id], { lang });
       })
@@ -261,13 +260,10 @@ export class PostListener {
         pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
       })
       .then((res) => {
-        console.log(res);
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
         if (lang !== newLang) {
           this._postService.updatePostData([id], { lang: newLang });
           const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(lang);
-          console.log('oldIndex===', oldIndex);
-          console.log('newLang===', newLang);
           this._elasticsearchService
             .delete({ index: oldIndex, id: `${id}` })
             .then((res) => console.log(res))
