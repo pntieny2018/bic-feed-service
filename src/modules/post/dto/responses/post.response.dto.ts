@@ -29,6 +29,9 @@ export class PostResponseDto {
   @Expose()
   public content: string;
 
+  @Expose()
+  public lang?: string;
+
   @ApiProperty({
     description: 'Highlight',
     type: String,

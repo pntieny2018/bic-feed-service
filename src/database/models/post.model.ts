@@ -52,6 +52,7 @@ export interface IPost {
   createdBy: number;
   updatedBy: number;
   content: string;
+  lang: string;
   commentsCount: number;
   totalUsersSeen: number;
   isImportant: boolean;
@@ -134,6 +135,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public summary: string;
+
+  @AllowNull(true)
+  @Column
+  public lang: string;
 
   @Column
   public views: number;

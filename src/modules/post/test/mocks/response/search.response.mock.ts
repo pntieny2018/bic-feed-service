@@ -58,7 +58,7 @@ export const mockedSearchResponse = {
             createdBy: 1,
           },
           highlight: {
-            content: ['Đây là nó nè, ==hihi=='],
+            'content.text': ['Đây là nó nè, ==hihi=='],
           },
           sort: [1.4085433, 1],
         },
