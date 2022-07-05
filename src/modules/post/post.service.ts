@@ -118,12 +118,11 @@ export class PostService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    console.log('payload===', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search(payload);
     const hits = response.body.hits.hits;
-    console.log('hits====', JSON.stringify(hits, null, 4));
     const posts = hits.map((item) => {
       const source = item._source;
+      source.content = item._source.content.text;
       source['id'] = item._id;
       if (
         content &&
