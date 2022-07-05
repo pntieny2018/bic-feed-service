@@ -128,7 +128,7 @@ export class PostService {
         content &&
         item.highlight &&
         item.highlight['content.text'].length != 0 &&
-        source.content.text
+        source.content
       ) {
         source.highlight = item.highlight['content.text'][0];
       }
