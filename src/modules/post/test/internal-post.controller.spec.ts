@@ -2,10 +2,7 @@ import { PostService } from '../post.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalPostController } from '../internal-post.controller';
 import { PostPrivacy } from '../../../database/models/post.model';
-import { PostController } from '../post.controller';
-import { RedisModule } from '@app/redis';
-import { ClientsModule } from '@nestjs/microservices';
-
+jest.mock('../post.service')
 describe('InternalPostController', () => {
   let postService: PostService;
   let internalPostController: InternalPostController;
@@ -34,6 +31,8 @@ describe('InternalPostController', () => {
     it('should done', async () => {
       const logSpy = jest.spyOn(internalPostController['_logger'], 'debug').mockReturnThis();
       postService.findPostIdsByGroupId = jest.fn().mockResolvedValue([1,2])
+      postService.bulkUpdatePostPrivacy = jest.fn().mockResolvedValue([1,2])
+      
       postService.filterPostIdsNeedToUpdatePrivacy = jest.fn().mockResolvedValue({[PostPrivacy.PRIVATE.toString()]: ['1']})
       await internalPostController.privacyUpdate({privacy: PostPrivacy.SECRET, groupId: 1})
       expect(logSpy).toBeCalled()
