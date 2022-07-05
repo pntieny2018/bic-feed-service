@@ -100,6 +100,17 @@ export class ReIndexEsPostCommand implements CommandRunner {
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         })
+        .then((res) => {
+          const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
+          this._postModel.update(
+            { lang },
+            {
+              where: {
+                id: dataIndex.id,
+              },
+            }
+          );
+        })
         .catch((ex) => this._logger.debug(ex));
 
       this._logger.log('deliver post:', dataIndex.id);
