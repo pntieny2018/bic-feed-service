@@ -817,8 +817,9 @@ export class CommentService {
         AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment')`;
     if (authUserId) {
       query += `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
-      AND "ownerReactions"."created_by" = :authUserId;`;
+      AND "ownerReactions"."created_by" = :authUserId`;
     }
+    query += ` ORDER BY "CommentModel"."createdAt" DESC`;
 
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {
