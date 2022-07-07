@@ -10,7 +10,7 @@ export class ExternalService {
    * @private
    */
   private _logger = new Logger(ExternalService.name);
-  private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT;
+  private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT + '/upload';
   public constructor(
     private _sentryService: SentryService,
     private readonly _httpService: HttpService
