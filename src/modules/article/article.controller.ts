@@ -28,9 +28,9 @@ import {
   ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
-import { ExceptionHelper } from '../../common/helpers';
 import { AuthorityService } from '../authority';
 import { PostService } from '../post/post.service';
+import { MentionService } from '../mention';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -98,6 +98,10 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
+    const { audience } = createArticleDto;
+    const { groupIds } = audience;
+    await this._authorityService.checkCanCreatePost(user, groupIds);
+
     const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
       const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
@@ -141,6 +145,7 @@ export class ArticleController {
       user,
       new GetArticleDto()
     );
+
     if (articleBefore.isDraft === false) {
       await this._postService.checkContent(updateArticleDto);
     }

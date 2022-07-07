@@ -6,6 +6,7 @@ import { PostSettingDto } from '../common/post-setting.dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 import { ValidateMedia } from '../../../media/validators/media.validator';
+import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -104,5 +105,6 @@ export class CreatePostDto {
     }
     return value;
   })
+  @ValidateMention()
   public mentions?: number[] = [];
 }

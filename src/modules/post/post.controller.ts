@@ -121,14 +121,10 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<any> {
-    const { audience, mentions } = createPostDto;
+    const { audience } = createPostDto;
 
     const { groupIds } = audience;
     await this._authorityService.checkCanCreatePost(user, groupIds);
-
-    if (mentions && mentions.length) {
-      await this._mentionService.checkValidMentions(groupIds, mentions);
-    }
 
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
@@ -148,7 +144,7 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience, mentions } = updatePostDto;
+    const { audience } = updatePostDto;
     if (audience) {
       await this._authorityService.checkCanUpdatePost(user, audience.groupIds);
     }
@@ -158,13 +154,6 @@ export class PostController {
       await this._postService.checkContent(updatePostDto);
     }
     await this._postService.checkPostOwner(postBefore, user.id);
-
-    // if (mentions && mentions.length) {
-    //   await this.mentionService.checkValidMentions(
-    //     audience ? audience.groupIds : oldGroupIds,
-    //     mentions
-    //   );
-    // }
 
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
     if (isUpdated) {

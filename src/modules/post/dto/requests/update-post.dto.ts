@@ -6,6 +6,7 @@ import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { UserMentionDto } from '../../../mention/dto';
 import { ValidateMedia } from '../../../media/validators/media.validator';
+import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 
 export class UpdatePostDto {
   @ApiProperty({
@@ -98,6 +99,7 @@ export class UpdatePostDto {
     }
     return value;
   })
+  @ValidateMention()
   public mentions?: number[];
 
   public isDraft?: boolean;

@@ -449,17 +449,9 @@ export class ArticleService {
       const authUserId = authUser.id;
 
       const { groupIds } = audience;
-      await this._authorityService.checkCanCreatePost(authUser, groupIds);
-
-      if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentions);
-      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      //await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      // await this._categoryService.checkValidCategory(categories, authUserId);
-      // await this._seriesService.checkValidSeries(series, authUserId);
       transaction = await this._sequelizeConnection.transaction();
       const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
       let hashtagArr = [];
@@ -605,13 +597,6 @@ export class ArticleService {
       if (audience) {
         const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
-      }
-
-      if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(
-          audience ? audience.groupIds : oldGroupIds,
-          mentions
-        );
       }
 
       if (content !== null) {
