@@ -447,10 +447,6 @@ export class ArticleService {
         series,
       } = createArticleDto;
       const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
 
       const { groupIds } = audience;
       await this._authorityService.checkCanCreatePost(authUser, groupIds);
@@ -461,9 +457,9 @@ export class ArticleService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      await this._categoryService.checkValidCategory(categories, authUserId);
-      await this._seriesService.checkValidSeries(series, authUserId);
+      //await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
+      // await this._categoryService.checkValidCategory(categories, authUserId);
+      // await this._seriesService.checkValidSeries(series, authUserId);
       transaction = await this._sequelizeConnection.transaction();
       const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
       let hashtagArr = [];
@@ -582,10 +578,6 @@ export class ArticleService {
     updateArticleDto: UpdateArticleDto
   ): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
 
     let transaction;
     try {
@@ -605,16 +597,12 @@ export class ArticleService {
         updatedBy: authUserId,
       };
 
-      if (categories && categories.length === 0) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_CATEGORY_REQUIRED);
-      }
       if (post.isDraft === false) {
         await this._postService.checkContent(updateArticleDto);
       }
       await this._postService.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
         const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
       }
@@ -656,7 +644,6 @@ export class ArticleService {
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList = await this._mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(

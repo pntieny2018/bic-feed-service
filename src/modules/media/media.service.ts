@@ -198,10 +198,10 @@ export class MediaService {
         size: i.size ?? 0,
         url: i.url ?? null,
         width: i.width ?? null,
+        height: i.height ?? null,
         type: MediaType.IMAGE,
         createdBy,
         updatedBy: createdBy,
-        height: i.height ?? null,
         status: i.status ?? MediaStatus.COMPLETED,
       });
     });
@@ -236,9 +236,9 @@ export class MediaService {
         createdBy,
         updatedBy: createdBy,
         url: i.url ?? null,
-        width: null,
-        height: null,
-        status: i.status ?? MediaStatus.COMPLETED,
+        width: i.width ?? null,
+        height: i.height ?? null,
+        status: i.status ?? MediaStatus.WAITING_PROCESS,
         thumbnails: i.thumbnails ?? [],
       });
     });

@@ -5,6 +5,7 @@ import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { UserMentionDto } from '../../../mention/dto';
+import { ValidateMedia } from '../../../media/validators/media.validator';
 
 export class UpdatePostDto {
   @ApiProperty({
@@ -48,6 +49,7 @@ export class UpdatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
+  @ValidateMedia()
   public media?: MediaDto;
 
   @ApiProperty({

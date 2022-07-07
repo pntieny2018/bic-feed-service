@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -39,6 +40,10 @@ import {
 import { VideoProcessStatus } from '.';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { MediaService } from '../media';
+import { AuthorityService } from '../authority';
+import { MentionService } from '../mention';
+import { InjectUserToBody, InjectUserToParam } from '../../common/decorators/inject.decorator';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -49,7 +54,9 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 export class PostController {
   public constructor(
     private _postService: PostService,
-    private _eventEmitter: InternalEventEmitterService
+    private _eventEmitter: InternalEventEmitterService,
+    private _authorityService: AuthorityService,
+    private _mentionService: MentionService
   ) {}
 
   @ApiOperation({ summary: 'Search posts' })
@@ -109,10 +116,20 @@ export class PostController {
     description: 'Create post successfully',
   })
   @Post('/')
+  @InjectUserToBody()
   public async createPost(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
-  ): Promise<PostResponseDto> {
+  ): Promise<any> {
+    const { audience, mentions } = createPostDto;
+
+    const { groupIds } = audience;
+    await this._authorityService.checkCanCreatePost(user, groupIds);
+
+    if (mentions && mentions.length) {
+      await this._mentionService.checkValidMentions(groupIds, mentions);
+    }
+
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
       return await this._postService.getPost(created.id, user, new GetPostDto());
@@ -125,12 +142,30 @@ export class PostController {
     description: 'Update post successfully',
   })
   @Put('/:postId')
+  @InjectUserToBody()
   public async updatePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
+    const { audience, mentions } = updatePostDto;
+    if (audience) {
+      await this._authorityService.checkCanUpdatePost(user, audience.groupIds);
+    }
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
+
+    if (postBefore.isDraft === false) {
+      await this._postService.checkContent(updatePostDto);
+    }
+    await this._postService.checkPostOwner(postBefore, user.id);
+
+    // if (mentions && mentions.length) {
+    //   await this.mentionService.checkValidMentions(
+    //     audience ? audience.groupIds : oldGroupIds,
+    //     mentions
+    //   );
+    // }
+
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
