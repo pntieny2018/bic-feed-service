@@ -19,7 +19,7 @@ export class ExternalService {
   public async getFileIds(ids: string[], token: string): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/files/ids`, ids, {
+        this._httpService.post(`${this._uploadServiceEndpoint}/upload/files/ids`, ids, {
           headers: {
             authorization: token,
           },
@@ -43,7 +43,7 @@ export class ExternalService {
   public async getVideoIds(ids: string[], token: string): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/videos/ids`, ids, {
+        this._httpService.post(`${this._uploadServiceEndpoint}/upload/videos/ids`, ids, {
           headers: {
             authorization: token,
           },
