@@ -10,7 +10,7 @@ export class ExternalService {
    * @private
    */
   private _logger = new Logger(ExternalService.name);
-  private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT;
+  private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT + '/upload';
   public constructor(
     private _sentryService: SentryService,
     private readonly _httpService: HttpService
@@ -19,7 +19,7 @@ export class ExternalService {
   public async getFileIds(ids: string[], token: string): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/upload/files/ids`, ids, {
+        this._httpService.post(`${this._uploadServiceEndpoint}/files/ids`, ids, {
           headers: {
             authorization: token,
           },
@@ -43,7 +43,7 @@ export class ExternalService {
   public async getVideoIds(ids: string[], token: string): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/upload/videos/ids`, ids, {
+        this._httpService.post(`${this._uploadServiceEndpoint}/videos/ids`, ids, {
           headers: {
             authorization: token,
           },
