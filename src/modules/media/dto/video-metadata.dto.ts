@@ -12,6 +12,7 @@ import {
 import { MediaStatus } from '../../../database/models/media.model';
 import { IDocumentMetadata } from './interfaces';
 import { ThumbnailDto } from '../../post/dto/responses/process-video-response.dto';
+import { basename } from 'path';
 
 export class VideoMetadataDto implements IDocumentMetadata {
   @ApiProperty()
@@ -32,7 +33,7 @@ export class VideoMetadataDto implements IDocumentMetadata {
     example: 'ba7339bc-5204-4009-9d43-89b6d2787747.mp4',
   })
   @IsString()
-  //@Transform((params) => basename(params.value) ?? params.value)
+  @Transform((params) => (params.value ? basename(`${params.value}`) : null))
   @IsOptional()
   @Expose()
   public name?: string;
@@ -53,6 +54,28 @@ export class VideoMetadataDto implements IDocumentMetadata {
   @IsOptional()
   @Expose()
   public size?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Video width',
+    example: '500',
+  })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  @Expose()
+  public width?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Video height',
+    example: '500',
+  })
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  @Expose()
+  public height?: number;
 
   @ApiProperty({
     required: false,

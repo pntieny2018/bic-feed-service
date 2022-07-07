@@ -198,9 +198,6 @@ describe('PostService', () => {
 
   describe('createPost', () => {
     it('Create post successfully', async () => {
-      authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
@@ -235,25 +232,8 @@ describe('PostService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      userService.get = jest.fn().mockResolvedValue(null);
-      try {
-        const result = await postService.createPost(
-          { ...mockedUserAuth, profile: null },
-          mockedCreatePostDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
     it('Should rollback if have an exception when insert data into DB', async () => {
-      authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
-
+      postService.getPrivacyPost = jest.fn().mockResolvedValue('public');
       postModelMock.create = jest
         .fn()
         .mockRejectedValue(new Error('Any error when insert data to DB'));
@@ -261,7 +241,6 @@ describe('PostService', () => {
       try {
         await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (error) {
-        expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
         expect(transactionMock.rollback).toBeCalledTimes(1);
       }
@@ -270,9 +249,6 @@ describe('PostService', () => {
 
   describe('updatePost', () => {
     it('Update post successfully', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -320,34 +296,7 @@ describe('PostService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      try {
-        await postService.updatePost(
-          mockedPostResponse,
-          { ...mockedUserAuth, profile: null },
-          mockedUpdatePostDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
-    it('Should catch exception if groups is invalid', async () => {
-      authorityService.checkCanUpdatePost = jest
-        .fn()
-        .mockRejectedValue(new Error('Not in the groups'));
-
-      try {
-        await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
-      } catch (e) {
-        expect(e.message).toEqual('Not in the groups');
-      }
-    });
-
     it('Should rollback if have an exception when update data into DB', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -360,7 +309,7 @@ describe('PostService', () => {
         {
           id: mockedUpdatePostDto.media.images[0].id,
           name: 'filename.jpg',
-          origin: 'filename.jpg',
+          originName: 'filename.jpg',
           size: 1000,
           url: 'http://googl.com',
           width: 100,
@@ -801,7 +750,7 @@ describe('PostService', () => {
                       {
                         multi_match: {
                           query: 'aaaa',
-                          fields: ['content.text.default', 'content.text.no_ascii'],
+                          fields: ['content.text.default', 'content.text.ascii'],
                           type: 'phrase',
                           boost: 2,
                         },
@@ -815,7 +764,7 @@ describe('PostService', () => {
                       },
                       {
                         match: {
-                          'content.text.no_ascii': {
+                          'content.text.ascii': {
                             query: 'aaaa'
                           },
                         },
@@ -832,7 +781,7 @@ describe('PostService', () => {
             post_tags: ['=='],
             fields: {
               'content.text': {
-                matched_fields: ['content.text.default', 'content.text.no_ascii'],
+                matched_fields: ['content.text.default', 'content.text.ascii'],
                 type: 'fvh',
                 number_of_fragments: 0,
               },

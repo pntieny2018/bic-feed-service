@@ -15,6 +15,7 @@ import { InternalEventEmitterModule } from './custom/event-emitter';
 import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { IKafkaConfig } from '../config/kafka';
 import { KAFKA_PRODUCER } from '../common/constants';
+import { ExternalService } from './external.service';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -128,6 +129,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     }),
     InternalEventEmitterModule,
   ],
-  exports: [HttpModule, ElasticsearchModule, ClientsModule],
+  providers: [ExternalService],
+  exports: [HttpModule, ElasticsearchModule, ClientsModule, ExternalService],
 })
 export class LibModule {}

@@ -651,22 +651,12 @@ export class PostService {
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
       const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
-      const { groupIds } = audience;
-      await this.authorityService.checkCanCreatePost(authUser, groupIds);
-
-      if (mentions && mentions.length) {
-        await this.mentionService.checkValidMentions(groupIds, mentions);
-      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      transaction = await this.sequelizeConnection.transaction();
+      const { groupIds } = audience;
       const postPrivacy = await this.getPrivacyPost(groupIds);
+      transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
           isDraft: true,
@@ -766,33 +756,17 @@ export class PostService {
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
       const dataUpdate = {
         updatedBy: authUserId,
       };
-      if (post.isDraft === false) {
-        await this.checkContent(updatePostDto);
-      }
-      await this.checkPostOwner(post, authUser.id);
+
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
         const postPrivacy = await this.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
-      }
-
-      if (mentions && mentions.length) {
-        await this.mentionService.checkValidMentions(
-          audience ? audience.groupIds : oldGroupIds,
-          mentions
-        );
       }
 
       if (content !== null) {
@@ -819,7 +793,6 @@ export class PostService {
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList = await this.mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(

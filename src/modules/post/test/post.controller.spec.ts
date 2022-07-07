@@ -1,7 +1,7 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { PostModel } from '../../../database/models/post.model';
+import { AuthorityService } from '../../authority';
+import { MentionService } from '../../mention';
 import { GetPostDto, SearchPostsDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostController } from '../post.controller';
@@ -15,7 +15,8 @@ describe('PostController', () => {
   let postService: PostService;
   let postController: PostController;
   let eventEmitter: InternalEventEmitterService;
-
+  let mentionService: MentionService;
+  let authorityService: AuthorityService;
   const userDto = mockedUserAuth;
 
   beforeEach(async () => {
@@ -24,6 +25,14 @@ describe('PostController', () => {
       providers: [
         {
           provide: PostService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: MentionService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: AuthorityService,
           useClass: jest.fn(),
         },
         {
@@ -36,6 +45,8 @@ describe('PostController', () => {
     }).compile();
 
     postService = moduleRef.get<PostService>(PostService);
+    authorityService = moduleRef.get<AuthorityService>(AuthorityService);
+    mentionService = moduleRef.get<MentionService>(MentionService);
     postController = moduleRef.get<PostController>(PostController);
     eventEmitter = moduleRef.get<InternalEventEmitterService>(InternalEventEmitterService);
   });
@@ -95,9 +106,9 @@ describe('PostController', () => {
     it('Create post successfully', async () => {
       postService.createPost = jest.fn().mockResolvedValue({ id: mockedPostResponse.id });
       postService.getPost = jest.fn().mockResolvedValue(mockedPostResponse);
-
+      authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       const result = await postController.createPost(userDto, mockedCreatePostDto);
-
+      expect(authorityService.checkCanCreatePost).toBeCalledTimes(1);
       expect(postService.createPost).toBeCalledTimes(1);
       expect(postService.createPost).toBeCalledWith(userDto, mockedCreatePostDto);
       expect(postService.getPost).toBeCalledTimes(1);
@@ -108,6 +119,7 @@ describe('PostController', () => {
 
   describe('updatePost', () => {
     it('Update post successfully', async () => {
+      authorityService.checkCanUpdatePost = jest.fn().mockReturnThis();
       postService.updatePost = jest.fn().mockResolvedValue(true);
       postService.getPost = jest.fn().mockResolvedValue(mockedPostResponse);
 
@@ -116,7 +128,7 @@ describe('PostController', () => {
         mockedPostResponse.id,
         mockedUpdatePostDto
       );
-
+      expect(authorityService.checkCanUpdatePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledWith(
         mockedPostResponse,
