@@ -198,9 +198,6 @@ describe('PostService', () => {
 
   describe('createPost', () => {
     it('Create post successfully', async () => {
-      authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
@@ -235,25 +232,8 @@ describe('PostService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      userService.get = jest.fn().mockResolvedValue(null);
-      try {
-        const result = await postService.createPost(
-          { ...mockedUserAuth, profile: null },
-          mockedCreatePostDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
     it('Should rollback if have an exception when insert data into DB', async () => {
-      authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
-
+      postService.getPrivacyPost = jest.fn().mockResolvedValue('public');
       postModelMock.create = jest
         .fn()
         .mockRejectedValue(new Error('Any error when insert data to DB'));
@@ -261,7 +241,6 @@ describe('PostService', () => {
       try {
         await postService.createPost(mockedUserAuth, mockedCreatePostDto);
       } catch (error) {
-        expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
         expect(transactionMock.rollback).toBeCalledTimes(1);
       }
@@ -270,9 +249,6 @@ describe('PostService', () => {
 
   describe('updatePost', () => {
     it('Update post successfully', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -320,34 +296,7 @@ describe('PostService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      try {
-        await postService.updatePost(
-          mockedPostResponse,
-          { ...mockedUserAuth, profile: null },
-          mockedUpdatePostDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
-    it('Should catch exception if groups is invalid', async () => {
-      authorityService.checkCanUpdatePost = jest
-        .fn()
-        .mockRejectedValue(new Error('Not in the groups'));
-
-      try {
-        await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
-      } catch (e) {
-        expect(e.message).toEqual('Not in the groups');
-      }
-    });
-
     it('Should rollback if have an exception when update data into DB', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -360,7 +309,7 @@ describe('PostService', () => {
         {
           id: mockedUpdatePostDto.media.images[0].id,
           name: 'filename.jpg',
-          origin: 'filename.jpg',
+          originName: 'filename.jpg',
           size: 1000,
           url: 'http://googl.com',
           width: 100,
@@ -465,6 +414,7 @@ describe('PostService', () => {
       commentService.deleteCommentsByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       feedService.deleteNewsFeedByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      feedService.deleteUserSeenByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       userMarkedImportantPostModelMock.destroy = jest.fn().mockResolvedValue(mockedDataDeletePost);
 
@@ -625,7 +575,7 @@ describe('PostService', () => {
       const mockPosts = mockedSearchResponse.body.hits.hits.map((item) => {
         const source = item._source;
         source['id'] = parseInt(item._id);
-        source['highlight'] = item.highlight['content'][0];
+        source['highlight'] = item.highlight['content.text'][0];
         return source;
       });
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
@@ -673,7 +623,7 @@ describe('PostService', () => {
         limit: 1,
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -704,7 +654,7 @@ describe('PostService', () => {
         actors: [1],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -741,7 +691,7 @@ describe('PostService', () => {
         endTime: '2022-03-25T17:00:00.000Z',
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -781,7 +731,7 @@ describe('PostService', () => {
         content: 'aaaa',
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.POST.all.name,
         body: {
           query: {
             bool: {
@@ -798,23 +748,24 @@ describe('PostService', () => {
                   dis_max: {
                     queries: [
                       {
-                        match: {
-                          content: 'aaaa',
+                        multi_match: {
+                          query: 'aaaa',
+                          fields: ['content.text.default', 'content.text.ascii'],
+                          type: 'phrase',
+                          boost: 2,
                         },
                       },
                       {
                         match: {
-                          'content.ascii': {
-                            query: 'aaaa',
-                            boost: 0.6,
+                          'content.text.default': {
+                            query: 'aaaa'
                           },
                         },
                       },
                       {
                         match: {
-                          'content.ngram': {
-                            query: 'aaaa',
-                            boost: 0.3,
+                          'content.text.ascii': {
+                            query: 'aaaa'
                           },
                         },
                       },
@@ -829,8 +780,8 @@ describe('PostService', () => {
             pre_tags: ['=='],
             post_tags: ['=='],
             fields: {
-              content: {
-                matched_fields: ['content', 'content.ascii', 'content.ngram'],
+              'content.text': {
+                matched_fields: ['content.text.default', 'content.text.ascii'],
                 type: 'fvh',
                 number_of_fragments: 0,
               },
@@ -850,6 +801,7 @@ describe('PostService', () => {
     const postData = mockedPostData;
     const getDraftPostsDto: GetDraftPostDto = {
       limit: 1,
+      offset: 0
     };
 
     it('Should get post successfully', async () => {
@@ -859,10 +811,10 @@ describe('PostService', () => {
           toJSON: () => postData,
         },
       ];
-      postModelMock.findAndCountAll.mockResolvedValue({
-        rows: mockPosts,
-        count: 1,
-      });
+
+      const total = [postData].length;
+      const rowsSliced = [postData].slice(getDraftPostsDto.offset, getDraftPostsDto.limit + getDraftPostsDto.offset);
+      postModelMock.findAll.mockResolvedValue(mockPosts);
 
       postService.bindActorToPost = jest.fn();
       postService.bindAudienceToPost = jest.fn();
@@ -871,12 +823,13 @@ describe('PostService', () => {
       const result = await postService.getDraftPosts(mockedUserAuth.id, getDraftPostsDto);
 
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-      expect(mentionService.bindMentionsToPosts).toBeCalledWith([postData]);
+      expect(mentionService.bindMentionsToPosts).toBeCalledWith(rowsSliced);
       expect(postService.bindActorToPost).toBeCalledTimes(1);
-      expect(postService.bindActorToPost).toBeCalledWith([postData]);
+      expect(postService.bindActorToPost).toBeCalledWith(rowsSliced);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindAudienceToPost).toBeCalledWith([postData]);
+      expect(postService.bindAudienceToPost).toBeCalledWith(rowsSliced);
       expect(result).toBeInstanceOf(PageDto);
+      expect(result.meta.total).toEqual(total);
       expect(result.list[0]).toBeInstanceOf(PostResponseDto);
     });
   });

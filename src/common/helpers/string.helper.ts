@@ -80,4 +80,8 @@ export class StringHelper {
       .replace(/ /g, '-')
       .replace(/[^\w-]+/g, '');
   }
+
+  public static isASCII(str: string): boolean {
+    return /^[\x00-\x7F]*$/.test(str);
+  }
 }

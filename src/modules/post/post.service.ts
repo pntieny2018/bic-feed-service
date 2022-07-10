@@ -32,7 +32,12 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { EntityIdDto } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import {
+  ArrayHelper,
+  ElasticsearchHelper,
+  ExceptionHelper,
+  StringHelper,
+} from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { plainToInstance } from 'class-transformer';
 import { Op, QueryTypes, Transaction } from 'sequelize';
@@ -48,6 +53,7 @@ import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
+import { json } from 'stream/consumers';
 
 @Injectable()
 export class PostService {
@@ -116,9 +122,15 @@ export class PostService {
     const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
       const source = item._source;
+      source.content = item._source.content.text;
       source['id'] = item._id;
-      if (content && item.highlight && item.highlight['content'].length != 0 && source.content) {
-        source.highlight = item.highlight['content'][0];
+      if (
+        content &&
+        item.highlight &&
+        item.highlight['content.text'].length != 0 &&
+        source.content
+      ) {
+        source.highlight = item.highlight['content.text'][0];
       }
       return source;
     });
@@ -195,38 +207,63 @@ export class PostService {
     }
 
     if (content) {
+      const arrKeywords = content.split(' ');
+      const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
+      let queries;
+      if (isASCII) {
+        queries = [
+          {
+            multi_match: {
+              query: content,
+              fields: ['content.text.default', 'content.text.ascii'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            match: {
+              ['content.text.default']: {
+                query: content,
+              },
+            },
+          },
+          {
+            match: {
+              ['content.text.ascii']: {
+                query: content,
+              },
+            },
+          },
+        ];
+      } else {
+        queries = [
+          {
+            multi_match: {
+              query: content,
+              fields: ['content.text.default'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            match: {
+              ['content.text.default']: {
+                query: content,
+              },
+            },
+          },
+        ];
+      }
       body.query.bool.should.push({
-        ['dis_max']: {
-          queries: [
-            {
-              match: { content },
-            },
-            {
-              match: {
-                ['content.ascii']: {
-                  query: content,
-                  boost: 0.6,
-                },
-              },
-            },
-            {
-              match: {
-                ['content.ngram']: {
-                  query: content,
-                  boost: 0.3,
-                },
-              },
-            },
-          ],
-        },
+        ['dis_max']: { queries },
       });
       body.query.bool['minimum_should_match'] = 1;
       body['highlight'] = {
         ['pre_tags']: ['=='],
         ['post_tags']: ['=='],
         fields: {
-          content: {
-            ['matched_fields']: ['content', 'content.ascii', 'content.ngram'],
+          'content.text': {
+            ['matched_fields']: ['content.text.default', 'content.text.ascii'],
             type: 'fvh',
             ['number_of_fragments']: 0,
           },
@@ -250,7 +287,7 @@ export class PostService {
       body.query.bool.must.push(filterTime);
     }
     return {
-      index: ElasticsearchHelper.INDEX.POST,
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
       body,
       from: offset,
       size: limit,
@@ -321,19 +358,20 @@ export class PostService {
           (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
         );
       });
+    const total = jsonPostsFilterByMediaStatus.length;
+    const rowsSliced = jsonPostsFilterByMediaStatus.slice(offset, limit + offset);
+
     await Promise.all([
-      this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
-      this.bindActorToPost(jsonPostsFilterByMediaStatus),
-      this.bindAudienceToPost(jsonPostsFilterByMediaStatus),
+      this.mentionService.bindMentionsToPosts(rowsSliced),
+      this.bindActorToPost(rowsSliced),
+      this.bindAudienceToPost(rowsSliced),
     ]);
-    const result = this.classTransformer
-      .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
-        excludeExtraneousValues: true,
-      })
-      .slice(offset, limit);
+    const result = this.classTransformer.plainToInstance(PostResponseDto, rowsSliced, {
+      excludeExtraneousValues: true,
+    });
 
     return new PageDto<PostResponseDto>(result, {
-      total: jsonPostsFilterByMediaStatus.length,
+      total,
       limit,
       offset,
     });
@@ -613,22 +651,12 @@ export class PostService {
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
       const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
-      const { groupIds } = audience;
-      await this.authorityService.checkCanCreatePost(authUser, groupIds);
-
-      if (mentions && mentions.length) {
-        await this.mentionService.checkValidMentions(groupIds, mentions);
-      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      transaction = await this.sequelizeConnection.transaction();
+      const { groupIds } = audience;
       const postPrivacy = await this.getPrivacyPost(groupIds);
+      transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
           isDraft: true,
@@ -728,33 +756,17 @@ export class PostService {
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
       const dataUpdate = {
         updatedBy: authUserId,
       };
-      if (post.isDraft === false) {
-        await this.checkContent(updatePostDto);
-      }
-      await this.checkPostOwner(post, authUser.id);
+
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
         const postPrivacy = await this.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
-      }
-
-      if (mentions && mentions.length) {
-        await this.mentionService.checkValidMentions(
-          audience ? audience.groupIds : oldGroupIds,
-          mentions
-        );
       }
 
       if (content !== null) {
@@ -781,7 +793,6 @@ export class PostService {
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList = await this.mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(
@@ -1661,5 +1672,15 @@ export class PostService {
         },
       }
     );
+  }
+
+  public async updatePostData(postIds: string[], data: any): Promise<void> {
+    await this.postModel.update(data, {
+      where: {
+        id: {
+          [Op.in]: postIds,
+        },
+      },
+    });
   }
 }
