@@ -36,7 +36,7 @@ export class GroupSharedDto {
     description: 'Community ID',
   })
   @IsOptional()
-  public communityId: number;
+  public communityId?: number;
 
   public privacy: GroupPrivacy;
 
