@@ -3,6 +3,7 @@ import { AuthorityService } from '../authority.service';
 import { GroupService } from '../../../shared/group';
 import { ForbiddenException } from '@nestjs/common';
 import { GroupPrivacy, GroupSharedDto } from '../../../shared/group/dto';
+import { PostModel, PostPrivacy } from '../../../database/models/post.model';
 
 describe('AuthorityService', () => {
   let service: AuthorityService;
@@ -121,6 +122,7 @@ describe('AuthorityService', () => {
         isImportant: false,
         updatedBy: 0,
         views: 0,
+        privacy: PostPrivacy.PUBLIC,
         groups: [{ postId: '1', groupId: 2 }],
       });
 

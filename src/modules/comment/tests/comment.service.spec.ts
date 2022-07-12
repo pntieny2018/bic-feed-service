@@ -394,7 +394,7 @@ describe('CommentService', () => {
         mediaService.checkValidMedia.mockResolvedValue({});
 
         mediaService.sync.mockReturnThis();
-
+        postService.findPost = jest.fn().mockResolvedValue({id: '10dc4093-1bd0-4105-869f-8504e1986145', groups: [ {groupId: 1}]})
         const getCommentSpy = jest
           .spyOn(commentService, 'getComment')
           .mockResolvedValue(createdComment);
