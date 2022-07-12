@@ -32,6 +32,12 @@ export class GroupSharedDto {
   @IsOptional()
   public icon: string;
 
+  @ApiProperty({
+    description: 'Community ID',
+  })
+  @IsOptional()
+  public communityId: number;
+
   public privacy: GroupPrivacy;
 
   public child?: ChildGroup = {
