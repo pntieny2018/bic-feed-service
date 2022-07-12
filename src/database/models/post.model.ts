@@ -52,7 +52,7 @@ export interface IPost {
   createdBy: number;
   updatedBy: number;
   content: string;
-  lang: string;
+  lang?: string;
   commentsCount: number;
   totalUsersSeen: number;
   isImportant: boolean;
