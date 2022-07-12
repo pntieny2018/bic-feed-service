@@ -136,7 +136,7 @@ describe('AuthService', () => {
         jest.spyOn(jwt, 'verify').mockImplementation(() => payLoad);
         userService.get.mockResolvedValue({
           id: 4,
-          username: 'tronghm',
+          username: 'undefined',
           fullname: 'Hoàng Minh Trọng',
           avatar:
             'https://bein-development-storage.s3.ap-southeast-1.amazonaws.com/public/a/f9/af95058bbbc7ace1630495801f5b8694.JPG',

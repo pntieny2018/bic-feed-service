@@ -225,7 +225,7 @@ export class ArticleService {
     }
     body['sort'] = [{ createdAt: 'desc' }];
     return {
-      index: ElasticsearchHelper.ALIAS.POST.default.name,
+      index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
       body,
       from: offset,
       size: limit,
@@ -589,10 +589,6 @@ export class ArticleService {
         updatedBy: authUserId,
       };
 
-      if (post.isDraft === false) {
-        await this._postService.checkContent(updateArticleDto);
-      }
-      await this._postService.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
         const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);

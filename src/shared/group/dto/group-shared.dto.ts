@@ -38,6 +38,10 @@ export class GroupSharedDto {
   @IsOptional()
   public communityId?: number;
 
+  @ApiProperty()
+  @IsOptional()
+  public isCommunity?: boolean;
+
   public privacy: GroupPrivacy;
 
   public child?: ChildGroup = {
