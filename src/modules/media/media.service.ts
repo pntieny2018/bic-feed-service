@@ -247,7 +247,9 @@ export class MediaService {
       where: {
         id: mediaIds,
       },
+      transaction: transaction,
     });
+
     const existingMediaIds = existingMeidaList.map((m) => m.id);
     await this._mediaModel.bulkCreate(
       insertData.filter((i) => !existingMediaIds.includes(i.id)),
