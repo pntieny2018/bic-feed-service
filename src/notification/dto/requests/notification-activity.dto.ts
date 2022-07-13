@@ -10,7 +10,7 @@ export class ActivityObject {
   public mentions?: MentionObject;
   public reactionsOfActor?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
-  public audience: AudienceObject[];
+  public audience: AudienceObject;
   public comment?: CommentObject;
   public reaction?: ReactionObject;
   public createdAt: Date;
@@ -45,10 +45,16 @@ export class ReactionsCountObject {
   [index: string]: Record<any, unknown>;
 }
 
-export class AudienceObject {
+export class GroupAudienceObject {
   public id: number;
   public name: string;
   public icon: string;
+  public communityId?: number;
+  public isCommunity?: boolean;
+}
+
+export class AudienceObject {
+  public groups: GroupAudienceObject[];
 }
 
 export class ReactionObject {
