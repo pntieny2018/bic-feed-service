@@ -23,7 +23,7 @@ export class AuthMiddleware implements NestMiddleware {
       ) {
         throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
       }
-      //req.user = token ? await this._authService.login(token) : null;
+      req.user = token ? await this._authService.login(token) : null;
     }
 
     // const token = req.headers.authorization;
