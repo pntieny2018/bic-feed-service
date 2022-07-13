@@ -12,7 +12,9 @@ export class PostActivityService {
       id: post.id,
       setting: post.setting as any,
       actor: ObjectHelper.omit(['groups', 'email'], post.actor) as any,
-      audience: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
+      audience: {
+        groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
+      },
       mentions: post.mentions as any,
       content: post.content,
       media: post.media,
