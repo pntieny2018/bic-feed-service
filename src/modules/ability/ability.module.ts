@@ -9,9 +9,9 @@ const CaslAbility = {
   scope: Scope.REQUEST,
   useFactory: async (request, caslAbilityFactory: CaslAbilityFactory) => {
     // because some public endpoints not apply AuthMiddleware
-    // we may not get bein_user_id here
+    // we may not get user.id here
     // so we should return empty Ability, it means the request has no permission.
-    if (isNaN(request.bein_user_id)) {
+    if (isNaN(request.user.id)) {
       return new Ability();
     }
 
@@ -27,7 +27,7 @@ const CaslAbility = {
     } else {
       // if users access normal endpoint, treat them as normal users even if they are staff
       request.user = {
-        id: request.bein_user_id,
+        id: request.user.id,
       };
       return await caslAbilityFactory.createForUser(request.user.id);
     }
