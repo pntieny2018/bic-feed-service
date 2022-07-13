@@ -4,8 +4,6 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
-  private _cacheKeyUserPermissions = 'user_permissions';
-
   public constructor(private _store: RedisService) {}
 
   /**
@@ -29,17 +27,5 @@ export class UserService {
       return users.filter((i) => i !== null);
     }
     return [];
-  }
-
-  public async getCachedPermissionsOfUser(userId: number): Promise<
-    {
-      action: string;
-      subject: string;
-      conditions: {
-        id: number;
-      };
-    }[]
-  > {
-    return await this._store.get(`${this._cacheKeyUserPermissions}:${userId}`);
   }
 }
