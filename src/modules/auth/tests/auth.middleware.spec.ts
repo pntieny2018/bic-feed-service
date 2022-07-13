@@ -32,7 +32,9 @@ describe('AuthMiddleware', () => {
   describe('invalid authorization', () => {
     describe('undefine authorization', () => {
       const req = {
-        headers: {},
+        baseUrl: '/abcd/',
+        headers: {
+        },
       };
 
       it('should throw UnauthorizedException', () => {
