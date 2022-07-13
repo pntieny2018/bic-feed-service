@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Ability, AbilityBuilder } from '@casl/ability';
 import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
+import { CACHE_KEYS } from './actions';
 
 type GroupMemberWithCommRoleDto = {
   userId: number;
@@ -15,14 +16,12 @@ type GroupMemberWithCommRoleDto = {
 
 @Injectable()
 export class CaslAbilityFactory {
-  private _cacheKeyUserPermissions = 'user_permissions';
-
   public constructor(private _store: RedisService, private _sentryService: SentryService) {}
 
   public async createForUser(userId: number) {
     try {
       // get all permission of the user
-      const cacheKey = `${this._cacheKeyUserPermissions}:${userId}`;
+      const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
       const cachedPermissions = await this._store.get(cacheKey);
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -3,14 +3,23 @@ import { AuthorityService } from '../authority.service';
 import { GroupService } from '../../../shared/group';
 import { ForbiddenException } from '@nestjs/common';
 import { GroupPrivacy, GroupSharedDto } from '../../../shared/group/dto';
+import { PostPrivacy } from '../../../database/models/post.model';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 
 describe('AuthorityService', () => {
   let service: AuthorityService;
   let groupService;
+  let caslAbility;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthorityService,
+        {
+          provide: 'CaslAbility',
+          useValue: {
+            can: jest.fn()
+          },
+        },
         {
           provide: GroupService,
           useValue: {
@@ -23,6 +32,7 @@ describe('AuthorityService', () => {
     }).compile();
 
     service = module.get<AuthorityService>(AuthorityService);
+    caslAbility = module.get('CaslAbility');
     groupService = module.get<GroupService>(GroupService);
   });
 
@@ -105,9 +115,9 @@ describe('AuthorityService', () => {
   describe('AuthorityService.checkIsPublicPost', () => {
     it('pass if GroupPrivacy.PUBLIC', async () => {
       mockGroup.privacy = GroupPrivacy.PUBLIC;
-      groupService.getMany.mockReturnValue([mockGroup]);
 
       await service.checkIsPublicPost({
+        lang: '',
         canComment: false,
         canReact: false,
         canShare: false,
@@ -121,17 +131,16 @@ describe('AuthorityService', () => {
         isImportant: false,
         updatedBy: 0,
         views: 0,
-        groups: [{ postId: '1', groupId: 2 }],
+        privacy: PostPrivacy.PUBLIC,
+        groups: [{ postId: '1', groupId: 2 }]
       });
-
-      expect(groupService.getMany).toBeCalled();
     });
 
     it('exception if GroupPrivacy.PRIVATE', async () => {
       mockGroup.privacy = GroupPrivacy.PRIVATE;
-      groupService.getMany.mockReturnValue([mockGroup]);
       try {
         await service.checkIsPublicPost({
+          lang: '',
           canComment: false,
           canReact: false,
           canShare: false,
@@ -145,26 +154,31 @@ describe('AuthorityService', () => {
           isImportant: false,
           updatedBy: 0,
           views: 0,
-          groups: [{ postId: '1', groupId: 2 }],
+          privacy: PostPrivacy.PRIVATE,
+          groups: [{ postId: '1', groupId: 2 }]
         });
       } catch (e) {
-        expect(groupService.getMany).toBeCalled();
+        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN)
       }
     });
   });
 
   describe('AuthorityService.checkCanReadPost', () => {
     it('', async () => {
-      groupService.isMemberOfGroups.mockReturnValue(true);
+      // groupService.isMemberOfGroups.mockReturnValue(true);
+      caslAbility.can.mockReturnValue(true)
       await service.checkCanCreatePost(userDtoMock, [1]);
-      expect(groupService.isMemberOfGroups).toBeCalled();
+      // expect(groupService.isMemberOfGroups).toBeCalled();
+      expect(caslAbility.can).toBeCalled();
     });
   });
 
   describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
+      caslAbility.can.mockReturnValue(true)
       groupService.isMemberOfSomeGroups.mockReturnValue(true);
       await service.checkCanUpdatePost(userDtoMock, [1]);
+      expect(caslAbility.can).toBeCalled();
       expect(groupService.isMemberOfSomeGroups).toBeCalled();
     });
   });

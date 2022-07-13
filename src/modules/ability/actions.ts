@@ -153,3 +153,12 @@ export const SUBJECT = {
   USER: 'user',
   SCHEME: 'scheme',
 };
+
+export const CACHE_KEYS = {
+  USER_PERMISSIONS: 'user_permissions',
+};
+
+export enum BeinStaffRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  STAFF = 'STAFF',
+}

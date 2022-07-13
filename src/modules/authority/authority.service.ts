@@ -12,8 +12,7 @@ import { ACTIONS, SUBJECT } from '../ability/actions';
 export class AuthorityService {
   public constructor(
     @Inject('CaslAbility') private _ability,
-    private _groupService: GroupService,
-    private _userService: UserService
+    private _groupService: GroupService
   ) {}
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
@@ -112,22 +111,6 @@ export class AuthorityService {
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
-  }
-
-  private async _getUserPermission(userId: number): Promise<
-    {
-      action: string;
-      subject: string;
-      conditions: {
-        id: number;
-      };
-    }[]
-  > {
-    const cachedPermission = await this._userService.getCachedPermissionsOfUser(userId);
-    if (cachedPermission) {
-      return cachedPermission;
-    }
-    return [];
   }
 
   private _can(action: string, subject: Subject = null): boolean {

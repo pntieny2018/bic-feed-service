@@ -37,7 +37,7 @@ const CaslAbility = {
 
 @Global()
 @Module({
-  imports: [DatabaseModule],
+  imports: [],
   providers: [CaslAbilityFactory, CaslAbility],
   exports: [CaslAbility, CaslAbilityFactory],
 })
