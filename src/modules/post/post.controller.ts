@@ -124,7 +124,11 @@ export class PostController {
     const { audience } = createPostDto;
 
     const { groupIds } = audience;
-    await this._authorityService.checkCanCreatePost(user, groupIds);
+    await this._authorityService.checkCanCreatePost(
+      user,
+      groupIds,
+      createPostDto.setting.isImportant
+    );
 
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {

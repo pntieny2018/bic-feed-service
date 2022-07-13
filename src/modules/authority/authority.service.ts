@@ -6,6 +6,7 @@ import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UserService } from '../../shared/user';
 import { subject, Subject } from '@casl/ability';
+import { ACTIONS, SUBJECT } from '../ability/actions';
 
 @Injectable()
 export class AuthorityService {
@@ -50,29 +51,50 @@ export class AuthorityService {
     }
   }
 
-  public checkCanCreatePost(user: UserDto, groupAudienceIds: number[]): void {
-    groupAudienceIds.forEach((groupAudienceId) => {
-      this._mustHave('create_post_article', subject('group', { id: groupAudienceId }));
-    });
-
-    const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+  public checkCanCreatePost(user: UserDto, groupAudienceIds: number[], isImportant = false): void {
+    if (isImportant) {
+      groupAudienceIds.forEach((groupAudienceId) => {
+        this._mustHave(
+          ACTIONS.GROUP.CREATE_IMPORTANT_POST,
+          subject(SUBJECT.GROUP, { id: groupAudienceId })
+        );
+      });
+    } else {
+      groupAudienceIds.forEach((groupAudienceId) => {
+        this._mustHave(
+          ACTIONS.GROUP.CREATE_POST_ARTICLE,
+          subject(SUBJECT.GROUP, { id: groupAudienceId })
+        );
+      });
     }
   }
 
   public checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): void {
-    const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    groupAudienceIds.forEach((groupAudienceId) => {
+      this._mustHave(ACTIONS.GROUP.EDIT_OWN_POST, subject(SUBJECT.GROUP, { id: groupAudienceId }));
+    });
 
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
+    this._checkIsOwnPost(user, groupAudienceIds);
   }
 
   public checkCanDeletePost(user: UserDto, groupAudienceIds: number[]): void {
-    return this.checkCanUpdatePost(user, groupAudienceIds);
+    groupAudienceIds.forEach((groupAudienceId) => {
+      this._mustHaveAny([
+        {
+          action: ACTIONS.GROUP.DELETE_POST,
+          subject: subject(SUBJECT.GROUP, { id: groupAudienceId }),
+        },
+        {
+          action: ACTIONS.GROUP.DELETE_OWN_POST,
+          subject: subject(SUBJECT.GROUP, { id: groupAudienceId }),
+        },
+        {
+          action: ACTIONS.GROUP.DELETE_OTHERS_POST,
+          subject: subject(SUBJECT.GROUP, { id: groupAudienceId }),
+        },
+      ]);
+    });
+    this._checkIsOwnPost(user, groupAudienceIds);
   }
 
   public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
@@ -81,6 +103,15 @@ export class AuthorityService {
 
   public async checkIsPublicArticle(post: IPost): Promise<void> {
     return this.checkIsPublicPost(post);
+  }
+
+  private _checkIsOwnPost(user: UserDto, groupAudienceIds: number[]): void {
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
   }
 
   private async _getUserPermission(userId: number): Promise<
@@ -113,6 +144,27 @@ export class AuthorityService {
 
       throw new ForbiddenException({
         code: `${subjectName}.${action}.forbidden`,
+        message: "You don't have this permission",
+      });
+    }
+  }
+
+  private _mustHaveAny(actions: { action: string; subject?: Subject }[]): void {
+    let isAllow = false;
+    for (let i = 0; i < actions.length; i++) {
+      if (this._can(actions[i].action, actions[i].subject)) {
+        isAllow = true;
+      }
+    }
+
+    if (!isAllow) {
+      const subjectNames = actions.map((action) =>
+        AuthorityService._getSubjectName(action.subject)
+      );
+
+      // only show error code of first forbidden action
+      throw new ForbiddenException({
+        code: `${subjectNames[0]}.${actions[0].action}.forbidden`,
         message: "You don't have this permission",
       });
     }

@@ -24,6 +24,7 @@ export class CaslAbilityFactory {
       // get all permission of the user
       const cacheKey = `${this._cacheKeyUserPermissions}:${userId}`;
       const cachedPermissions = await this._store.get(cacheKey);
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       return new Ability(cachedPermissions);
