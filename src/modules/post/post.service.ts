@@ -973,15 +973,29 @@ export class PostService {
         ],
       });
       const isOwner = await this.checkPostOwner(post, authUser.id);
+      const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
-        const notDeletableGroupAudiences =
-          this.authorityService.getNumberOfNotDeletableGroupAudiences(
+        const notDeletableGroupAudienceIds =
+          this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
             authUser,
-            post.groups,
+            groupIds,
             isOwner
           );
-        if (notDeletableGroupAudiences) {
-          await post.update('groups', notDeletableGroupAudiences, { transaction });
+        if (notDeletableGroupAudienceIds.length) {
+          const deletableGroupAudienceIds = groupIds.filter(
+            (e) => !notDeletableGroupAudienceIds.includes(e)
+          );
+          if (deletableGroupAudienceIds.length) {
+            await this.postGroupModel.destroy({
+              where: {
+                postId: post.id,
+                groupId: {
+                  [Op.in]: deletableGroupAudienceIds,
+                },
+              },
+              transaction: transaction,
+            });
+          }
 
           await transaction.commit();
           return post;

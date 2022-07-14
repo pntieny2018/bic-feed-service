@@ -6,7 +6,6 @@ import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { subject, Subject } from '@casl/ability';
 import { PERMISSION_KEY, SUBJECT } from '../ability/actions';
-import { IPostGroup } from '../../database/models/post-group.model';
 
 @Injectable()
 export class AuthorityService {
@@ -78,16 +77,13 @@ export class AuthorityService {
     this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
-  public getNumberOfNotDeletableGroupAudiences(
+  public getNumberOfNotDeletableGroupAudienceIds(
     user: UserDto,
-    postGroups: IPostGroup[],
+    groupAudienceIds: number[],
     isOwner: boolean
-  ): IPostGroup[] {
+  ): number[] {
     const notDeletableGroupAudiences = [];
-    const groupAudienceIds = [];
-    postGroups.forEach((postGroup) => {
-      const groupAudienceId = postGroup.groupId;
-      groupAudienceIds.push(groupAudienceId);
+    groupAudienceIds.forEach((groupAudienceId) => {
       if (isOwner) {
         if (
           !this._can(
@@ -108,7 +104,7 @@ export class AuthorityService {
         }
       }
     });
-    this._checkUserInSomeGroups(user, groupAudienceIds);
+    // this._checkUserInSomeGroups(user, groupAudienceIds);
     return notDeletableGroupAudiences;
   }
 
