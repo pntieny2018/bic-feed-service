@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION, KAFKA_TOPIC } from '../../common/constants';
+import { APP_VERSION, HTTP_STATUS_ID, KAFKA_TOPIC } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import {
   PostHasBeenDeletedEvent,
@@ -44,6 +44,7 @@ import { MediaService } from '../media';
 import { AuthorityService } from '../authority';
 import { MentionService } from '../mention';
 import { InjectUserToBody, InjectUserToParam } from '../../common/decorators/inject.decorator';
+import { LogicException } from '../../common/exceptions';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -157,8 +158,10 @@ export class PostController {
     if (postBefore.isDraft === false) {
       await this._postService.checkContent(updatePostDto);
     }
-    await this._postService.checkPostOwner(postBefore, user.id);
-
+    const isOwner = await this._postService.checkPostOwner(postBefore, user.id);
+    if (!isOwner) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());

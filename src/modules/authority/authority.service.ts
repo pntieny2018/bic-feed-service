@@ -6,7 +6,7 @@ import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UserService } from '../../shared/user';
 import { subject, Subject } from '@casl/ability';
-import { ACTIONS, SUBJECT } from '../ability/actions';
+import { PERMISSION_KEY, SUBJECT } from '../ability/actions';
 
 @Injectable()
 export class AuthorityService {
@@ -54,46 +54,45 @@ export class AuthorityService {
     if (isImportant) {
       groupAudienceIds.forEach((groupAudienceId) => {
         this._mustHave(
-          ACTIONS.GROUP.CREATE_IMPORTANT_POST,
+          PERMISSION_KEY.CREATE_IMPORTANT_POST,
           subject(SUBJECT.GROUP, { id: groupAudienceId })
         );
       });
     } else {
       groupAudienceIds.forEach((groupAudienceId) => {
         this._mustHave(
-          ACTIONS.GROUP.CREATE_POST_ARTICLE,
+          PERMISSION_KEY.CREATE_POST_ARTICLE,
           subject(SUBJECT.GROUP, { id: groupAudienceId })
         );
       });
     }
+
+    this._checkUserInGroups(user, groupAudienceIds);
   }
 
   public checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): void {
     groupAudienceIds.forEach((groupAudienceId) => {
-      this._mustHave(ACTIONS.GROUP.EDIT_OWN_POST, subject(SUBJECT.GROUP, { id: groupAudienceId }));
+      this._mustHave(PERMISSION_KEY.EDIT_OWN_POST, subject(SUBJECT.GROUP, { id: groupAudienceId }));
     });
 
-    this._checkIsOwnPost(user, groupAudienceIds);
+    this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
-  public checkCanDeletePost(user: UserDto, groupAudienceIds: number[]): void {
+  public checkCanDeletePost(user: UserDto, groupAudienceIds: number[], isOwner: boolean): void {
     groupAudienceIds.forEach((groupAudienceId) => {
-      this._mustHaveAny([
-        {
-          action: ACTIONS.GROUP.DELETE_POST,
-          subject: subject(SUBJECT.GROUP, { id: groupAudienceId }),
-        },
-        {
-          action: ACTIONS.GROUP.DELETE_OWN_POST,
-          subject: subject(SUBJECT.GROUP, { id: groupAudienceId }),
-        },
-        {
-          action: ACTIONS.GROUP.DELETE_OTHERS_POST,
-          subject: subject(SUBJECT.GROUP, { id: groupAudienceId }),
-        },
-      ]);
+      if (isOwner) {
+        this._mustHave(
+          PERMISSION_KEY.DELETE_OWN_POST,
+          subject(SUBJECT.GROUP, { id: groupAudienceId })
+        );
+      } else {
+        this._mustHave(
+          PERMISSION_KEY.DELETE_OTHERS_POST,
+          subject(SUBJECT.GROUP, { id: groupAudienceId })
+        );
+      }
     });
-    this._checkIsOwnPost(user, groupAudienceIds);
+    this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
   public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
@@ -104,9 +103,18 @@ export class AuthorityService {
     return this.checkIsPublicPost(post);
   }
 
-  private _checkIsOwnPost(user: UserDto, groupAudienceIds: number[]): void {
+  private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
+  }
+
+  private _checkUserInGroups(user: UserDto, groupAudienceIds: number[]): void {
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);

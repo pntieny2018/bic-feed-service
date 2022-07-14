@@ -15,22 +15,10 @@ const CaslAbility = {
       return new Ability();
     }
 
-    // if the user access admin endpoint, his token must have attribute user.staffRole
-    if (request.originalUrl.indexOf('/admin/') === 0) {
-      if (request.user.staffRole) {
-        return await caslAbilityFactory.createForStaff(request.user.staffRole);
-      } else {
-        // in fact, this exeception never occurs because auth middleware does the check before execute this injection,
-        // but for more secure, it is ok
-        throw new HttpException('Your staff role is incorrect', HttpStatus.UNAUTHORIZED);
-      }
-    } else {
-      // if users access normal endpoint, treat them as normal users even if they are staff
-      request.user = {
-        id: request.user.id,
-      };
-      return await caslAbilityFactory.createForUser(request.user.id);
-    }
+    request.user = {
+      id: request.user.id,
+    };
+    return await caslAbilityFactory.createForUser(request.user.id);
   },
   inject: [REQUEST, CaslAbilityFactory],
 };

@@ -875,8 +875,10 @@ export class PostService {
         ],
       });
       const authUserId = authUser.id;
-      await this.checkPostOwner(post, authUserId);
-
+      const isOwner = await this.checkPostOwner(post, authUserId);
+      if (!isOwner) {
+        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
       const groupIds = post.groups.map((g) => g.groupId);
       await this.authorityService.checkCanCreatePost(authUser, groupIds);
 
@@ -936,10 +938,7 @@ export class PostService {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    if (post.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-    return true;
+    return post.createdBy === authUserId;
   }
 
   /**
@@ -973,10 +972,10 @@ export class PostService {
           },
         ],
       });
-      await this.checkPostOwner(post, authUser.id);
+      const isOwner = await this.checkPostOwner(post, authUser.id);
       const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(authUser, groupIds);
+        await this.authorityService.checkCanDeletePost(authUser, groupIds, isOwner);
       }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
@@ -1276,8 +1275,10 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
-      await this.checkPostOwner(post, user.id);
-
+      const isOwner = await this.checkPostOwner(post, user.id);
+      if (!isOwner) {
+        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
 
       if (post.isDraft === true) {
