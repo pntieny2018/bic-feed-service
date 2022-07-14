@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Ability} from '@casl/ability';
+import { Ability } from '@casl/ability';
 import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
 import { CACHE_KEYS } from './actions';
@@ -7,7 +7,7 @@ import { CACHE_KEYS } from './actions';
 export class CaslAbilityFactory {
   public constructor(private _store: RedisService, private _sentryService: SentryService) {}
 
-  public async createForUser(userId: number) {
+  public async createForUser(userId: number): Promise<Ability> {
     try {
       // get all permission of the user
       const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;

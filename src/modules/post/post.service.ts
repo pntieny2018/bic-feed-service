@@ -973,9 +973,19 @@ export class PostService {
         ],
       });
       const isOwner = await this.checkPostOwner(post, authUser.id);
-      const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(authUser, groupIds, isOwner);
+        const notDeletableGroupAudiences =
+          this.authorityService.getNumberOfNotDeletableGroupAudiences(
+            authUser,
+            post.groups,
+            isOwner
+          );
+        if (notDeletableGroupAudiences) {
+          await post.update('groups', notDeletableGroupAudiences, { transaction });
+
+          await transaction.commit();
+          return post;
+        }
       }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),

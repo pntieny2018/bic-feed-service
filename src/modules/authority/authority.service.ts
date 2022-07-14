@@ -4,9 +4,9 @@ import { GroupService } from '../../shared/group';
 import { IPost, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { UserService } from '../../shared/user';
 import { subject, Subject } from '@casl/ability';
 import { PERMISSION_KEY, SUBJECT } from '../ability/actions';
+import { IPostGroup } from '../../database/models/post-group.model';
 
 @Injectable()
 export class AuthorityService {
@@ -78,21 +78,38 @@ export class AuthorityService {
     this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
-  public checkCanDeletePost(user: UserDto, groupAudienceIds: number[], isOwner: boolean): void {
-    groupAudienceIds.forEach((groupAudienceId) => {
+  public getNumberOfNotDeletableGroupAudiences(
+    user: UserDto,
+    postGroups: IPostGroup[],
+    isOwner: boolean
+  ): IPostGroup[] {
+    const notDeletableGroupAudiences = [];
+    const groupAudienceIds = [];
+    postGroups.forEach((postGroup) => {
+      const groupAudienceId = postGroup.groupId;
+      groupAudienceIds.push(groupAudienceId);
       if (isOwner) {
-        this._mustHave(
-          PERMISSION_KEY.DELETE_OWN_POST,
-          subject(SUBJECT.GROUP, { id: groupAudienceId })
-        );
+        if (
+          !this._can(
+            PERMISSION_KEY.DELETE_OWN_POST,
+            subject(SUBJECT.GROUP, { id: groupAudienceId })
+          )
+        ) {
+          notDeletableGroupAudiences.push(groupAudienceId);
+        }
       } else {
-        this._mustHave(
-          PERMISSION_KEY.DELETE_OTHERS_POST,
-          subject(SUBJECT.GROUP, { id: groupAudienceId })
-        );
+        if (
+          !this._can(
+            PERMISSION_KEY.DELETE_OTHERS_POST,
+            subject(SUBJECT.GROUP, { id: groupAudienceId })
+          )
+        ) {
+          notDeletableGroupAudiences.push(groupAudienceId);
+        }
       }
     });
     this._checkUserInSomeGroups(user, groupAudienceIds);
+    return notDeletableGroupAudiences;
   }
 
   public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
