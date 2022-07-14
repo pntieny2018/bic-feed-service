@@ -781,7 +781,11 @@ export class PostService {
       if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
+      const audienceIds = post.audience.groups.map(e => e.id)
       if (setting && setting.hasOwnProperty('isImportant')) {
+        if (setting.isImportant) {
+          this.authorityService.checkCanCreatePost(authUser, audienceIds, true);
+        }
         dataUpdate['isImportant'] = setting.isImportant;
       }
       if (setting && setting.hasOwnProperty('importantExpiredAt')) {
@@ -790,6 +794,29 @@ export class PostService {
       }
       let newMediaIds = [];
       transaction = await this.sequelizeConnection.transaction();
+
+      const removeGroupIds = audienceIds.filter(
+        (id) => !audience.groupIds.includes(id)
+      );
+      if (removeGroupIds.length) {
+        const removePost = await this.postModel.findOne({
+          where: {
+            id: post.id,
+          },
+          include: [
+            {
+              model: PostGroupModel,
+              as: 'groups',
+              attributes: ['groupId'],
+            },
+          ],
+        });
+        removePost.groups = removePost.groups.filter((e) =>
+          removeGroupIds.includes(Number(e.postId))
+        );
+        await this.tryToRemoveAudience(authUser, removePost, transaction);
+      }
+
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
@@ -972,32 +999,9 @@ export class PostService {
           },
         ],
       });
-      const isOwner = await this.checkPostOwner(post, authUser.id);
       const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
-        const notDeletableGroupAudienceIds =
-          this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
-            authUser,
-            groupIds,
-            isOwner
-          );
-        if (notDeletableGroupAudienceIds.length) {
-          const deletableGroupAudienceIds = groupIds.filter(
-            (e) => !notDeletableGroupAudienceIds.includes(e)
-          );
-          if (deletableGroupAudienceIds.length) {
-            await this.postGroupModel.destroy({
-              where: {
-                postId: post.id,
-                groupId: {
-                  [Op.in]: deletableGroupAudienceIds,
-                },
-              },
-              transaction: transaction,
-            });
-          }
-
-          await transaction.commit();
+        if (await this.tryToRemoveAudience(authUser, post, transaction)) {
           return post;
         }
       }
@@ -1026,6 +1030,40 @@ export class PostService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  public async tryToRemoveAudience(
+    authUser: UserDto,
+    post: IPost,
+    transaction: Transaction
+  ): Promise<boolean> {
+    const groupIds = post.groups.map((g) => g.groupId);
+    const notDeletableGroupAudienceIds =
+      this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
+        authUser,
+        groupIds,
+        post.createdBy
+      );
+    if (notDeletableGroupAudienceIds.length) {
+      const deletableGroupAudienceIds = groupIds.filter(
+        (e) => !notDeletableGroupAudienceIds.includes(e)
+      );
+      if (deletableGroupAudienceIds.length) {
+        await this.postGroupModel.destroy({
+          where: {
+            postId: post.id,
+            groupId: {
+              [Op.in]: deletableGroupAudienceIds,
+            },
+          },
+          transaction: transaction,
+        });
+      }
+
+      await transaction.commit();
+      return true;
+    }
+    return false;
   }
 
   /**

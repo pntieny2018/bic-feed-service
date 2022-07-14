@@ -154,7 +154,6 @@ export class PostController {
       await this._authorityService.checkCanUpdatePost(user, audience.groupIds);
     }
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
-
     if (postBefore.isDraft === false) {
       await this._postService.checkContent(updatePostDto);
     }
@@ -162,6 +161,7 @@ export class PostController {
     if (!isOwner) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
+
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());

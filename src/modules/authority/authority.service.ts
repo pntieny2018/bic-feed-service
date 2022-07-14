@@ -80,8 +80,9 @@ export class AuthorityService {
   public getNumberOfNotDeletableGroupAudienceIds(
     user: UserDto,
     groupAudienceIds: number[],
-    isOwner: boolean
+    createBy: number
   ): number[] {
+    const isOwner = user.id === createBy;
     const notDeletableGroupAudiences = [];
     groupAudienceIds.forEach((groupAudienceId) => {
       if (isOwner) {
@@ -104,7 +105,7 @@ export class AuthorityService {
         }
       }
     });
-    // this._checkUserInSomeGroups(user, groupAudienceIds);
+    this._checkUserInSomeGroups(user, groupAudienceIds);
     return notDeletableGroupAudiences;
   }
 
