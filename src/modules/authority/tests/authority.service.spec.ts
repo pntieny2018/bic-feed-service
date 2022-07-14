@@ -165,10 +165,10 @@ describe('AuthorityService', () => {
 
   describe('AuthorityService.checkCanReadPost', () => {
     it('', async () => {
-      // groupService.isMemberOfGroups.mockReturnValue(true);
+      groupService.isMemberOfGroups.mockReturnValue(true);
       caslAbility.can.mockReturnValue(true)
       await service.checkCanCreatePost(userDtoMock, [1]);
-      // expect(groupService.isMemberOfGroups).toBeCalled();
+      expect(groupService.isMemberOfGroups).toBeCalled();
       expect(caslAbility.can).toBeCalled();
     });
   });

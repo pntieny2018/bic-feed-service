@@ -3,7 +3,7 @@ import { CaslAbilityFactory } from '../casl-ability.factory';
 import { Ability, subject } from '@casl/ability';
 import { RedisService } from '../../../../libs/redis/src';
 import { SentryService } from '../../../../libs/sentry/src';
-import { BeinStaffRole, CACHE_KEYS } from '../actions';
+import { CACHE_KEYS } from '../actions';
 import { InternalServerErrorException } from '@nestjs/common';
 
 const sentryServiceMock = {
@@ -65,19 +65,6 @@ describe('casl-ability.factory', () => {
 
       expect(result).toStrictEqual(new InternalServerErrorException(errorMock));
     });
-  });
-
-  describe('createForStaff', () => {
-    it('should add manage_all ability if the user is SUPER_ADMIN', async () => {
-      const ability = await caslAbilityFactory.createForStaff(
-        BeinStaffRole.SUPER_ADMIN
-      );
-
-      expect(ability.can('manage', subject('all', {}))).toBeTruthy();
-      expect(ability.can('delete', subject('all', {}))).toBeTruthy();
-      expect(ability.can('manage', subject('staff', {}))).toBeTruthy();
-    });
-
   });
 });
 

@@ -64,4 +64,3 @@ export const SUBJECT = {
 export const CACHE_KEYS = {
   USER_PERMISSIONS: 'user_permissions',
 };
-
