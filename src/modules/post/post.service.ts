@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -781,11 +781,9 @@ export class PostService {
       if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
-      const audienceIds = post.audience.groups.map(e => e.id)
+      const audienceIds = post.audience.groups.map((e) => e.id);
       if (setting && setting.hasOwnProperty('isImportant')) {
-        if (setting.isImportant) {
-          this.authorityService.checkCanCreatePost(authUser, audienceIds, true);
-        }
+        await this.authorityService.checkCanCreatePost(authUser, audienceIds, setting.isImportant);
         dataUpdate['isImportant'] = setting.isImportant;
       }
       if (setting && setting.hasOwnProperty('importantExpiredAt')) {
@@ -795,9 +793,7 @@ export class PostService {
       let newMediaIds = [];
       transaction = await this.sequelizeConnection.transaction();
 
-      const removeGroupIds = audienceIds.filter(
-        (id) => !audience.groupIds.includes(id)
-      );
+      const removeGroupIds = audienceIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
         const removePost = await this.postModel.findOne({
           where: {
@@ -808,12 +804,14 @@ export class PostService {
               model: PostGroupModel,
               as: 'groups',
               attributes: ['groupId'],
+              where: {
+                groupId: {
+                  [Op.in]: removeGroupIds,
+                },
+              },
             },
           ],
         });
-        removePost.groups = removePost.groups.filter((e) =>
-          removeGroupIds.includes(Number(e.postId))
-        );
         await this.tryToRemoveAudience(authUser, removePost, transaction);
       }
 
@@ -999,7 +997,6 @@ export class PostService {
           },
         ],
       });
-      const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
         if (await this.tryToRemoveAudience(authUser, post, transaction)) {
           return post;
@@ -1044,6 +1041,13 @@ export class PostService {
         groupIds,
         post.createdBy
       );
+    if (notDeletableGroupAudienceIds.length === groupIds.length) {
+      const groupInfo = await this.groupService.get(groupIds[0]);
+      throw new ForbiddenException({
+        code: `group.delete_post.forbidden`,
+        message: `You don't have delete_post permission at group ${groupInfo.name}`,
+      });
+    }
     if (notDeletableGroupAudienceIds.length) {
       const deletableGroupAudienceIds = groupIds.filter(
         (e) => !notDeletableGroupAudienceIds.includes(e)

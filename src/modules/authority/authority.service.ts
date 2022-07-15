@@ -44,37 +44,44 @@ export class AuthorityService {
     // }
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
+    // if (!canAccess) {
+    //   throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    // }
   }
 
-  public checkCanCreatePost(user: UserDto, groupAudienceIds: number[], isImportant = false): void {
+  public async checkCanCreatePost(
+    user: UserDto,
+    groupAudienceIds: number[],
+    isImportant = false
+  ): Promise<void> {
     if (isImportant) {
-      groupAudienceIds.forEach((groupAudienceId) => {
-        this._mustHave(
+      for (const groupAudienceId of groupAudienceIds) {
+        await this._mustHave(
           PERMISSION_KEY.CREATE_IMPORTANT_POST,
           subject(SUBJECT.GROUP, { id: groupAudienceId })
         );
-      });
+      }
     } else {
-      groupAudienceIds.forEach((groupAudienceId) => {
-        this._mustHave(
+      for (const groupAudienceId of groupAudienceIds) {
+        await this._mustHave(
           PERMISSION_KEY.CREATE_POST_ARTICLE,
           subject(SUBJECT.GROUP, { id: groupAudienceId })
         );
-      });
+      }
     }
 
     this._checkUserInGroups(user, groupAudienceIds);
   }
 
-  public checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): void {
-    groupAudienceIds.forEach((groupAudienceId) => {
-      this._mustHave(PERMISSION_KEY.EDIT_OWN_POST, subject(SUBJECT.GROUP, { id: groupAudienceId }));
-    });
+  public async checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): Promise<void> {
+    for (const groupAudienceId of groupAudienceIds) {
+      await this._mustHave(
+        PERMISSION_KEY.EDIT_OWN_POST,
+        subject(SUBJECT.GROUP, { id: groupAudienceId })
+      );
+    }
 
-    this._checkUserInSomeGroups(user, groupAudienceIds);
+    // this._checkUserInSomeGroups(user, groupAudienceIds); // TODO uncomment it
   }
 
   public getNumberOfNotDeletableGroupAudienceIds(
@@ -105,7 +112,7 @@ export class AuthorityService {
         }
       }
     });
-    this._checkUserInSomeGroups(user, groupAudienceIds);
+    // this._checkUserInSomeGroups(user, groupAudienceIds); // TODO uncomment it
     return notDeletableGroupAudiences;
   }
 
@@ -143,18 +150,20 @@ export class AuthorityService {
     }
   }
 
-  private _mustHave(action: string, subject: Subject = null): void {
+  private async _mustHave(action: string, subject: Subject = null): Promise<void> {
     if (!this._can(action, subject)) {
       const subjectName = AuthorityService._getSubjectName(subject);
-
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const groupInfo = await this._groupService.get(subject.id);
       throw new ForbiddenException({
         code: `${subjectName}.${action}.forbidden`,
-        message: "You don't have this permission",
+        message: `You don't have ${action} permission at group ${groupInfo.name}`,
       });
     }
   }
 
-  private _mustHaveAny(actions: { action: string; subject?: Subject }[]): void {
+  private async _mustHaveAny(actions: { action: string; subject?: Subject }[]): Promise<void> {
     let isAllow = false;
     for (let i = 0; i < actions.length; i++) {
       if (this._can(actions[i].action, actions[i].subject)) {
