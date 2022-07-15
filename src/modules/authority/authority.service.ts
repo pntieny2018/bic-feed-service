@@ -81,7 +81,7 @@ export class AuthorityService {
       );
     }
 
-    // this._checkUserInSomeGroups(user, groupAudienceIds); // TODO uncomment it
+    this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
   public getNumberOfNotDeletableGroupAudienceIds(
@@ -112,7 +112,7 @@ export class AuthorityService {
         }
       }
     });
-    // this._checkUserInSomeGroups(user, groupAudienceIds); // TODO uncomment it
+    this._checkUserInSomeGroups(user, groupAudienceIds);
     return notDeletableGroupAudiences;
   }
 
