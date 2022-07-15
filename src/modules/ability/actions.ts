@@ -64,3 +64,20 @@ export const SUBJECT = {
 export const CACHE_KEYS = {
   USER_PERMISSIONS: 'user_permissions',
 };
+
+export class BasicPermissionDto {
+  public key: string;
+  public name: string;
+  public description: string;
+}
+
+export const BASIC_PERMISSIONS: {
+  [k: string]: BasicPermissionDto;
+} = {
+  [PERMISSION_KEY.EDIT_OWN_POST]: {
+    key: PERMISSION_KEY.EDIT_OWN_POST,
+    name: PERMISSION_KEY.EDIT_OWN_POST,
+    description: PERMISSION_KEY.EDIT_OWN_POST,
+    fixedForRoles: ['CREATOR'],
+  } as BasicPermissionDto,
+};
