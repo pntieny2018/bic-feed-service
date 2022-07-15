@@ -812,7 +812,7 @@ export class PostService {
             },
           ],
         });
-        await this.tryToRemoveAudience(authUser, removePost, transaction);
+        await this.checkIsNotDeletableAudience(authUser, removePost);
       }
 
       if (media) {
@@ -998,9 +998,7 @@ export class PostService {
         ],
       });
       if (post.isDraft === false) {
-        if (await this.tryToRemoveAudience(authUser, post, transaction)) {
-          return post;
-        }
+        await this.checkIsNotDeletableAudience(authUser, post);
       }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
@@ -1068,6 +1066,26 @@ export class PostService {
       return true;
     }
     return false;
+  }
+
+  public async checkIsNotDeletableAudience(authUser: UserDto, post: IPost): Promise<void> {
+    const groupIds = post.groups.map((g) => g.groupId);
+    const notDeletableGroupAudienceIds =
+      this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
+        authUser,
+        groupIds,
+        post.createdBy
+      );
+    if (notDeletableGroupAudienceIds.length) {
+      const groupInfos = [];
+      for (const groupId of groupIds) {
+        groupInfos.push(await this.groupService.get(groupId));
+      }
+      throw new ForbiddenException({
+        code: `group.delete_post.forbidden`,
+        message: `You don't have delete_post permission at groups: ${groupInfos.map((e) => e.name)}`
+      });
+    }
   }
 
   /**

@@ -44,9 +44,9 @@ export class AuthorityService {
     // }
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
-    // if (!canAccess) {
-    //   throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    // }
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
   }
 
   public async checkCanCreatePost(
