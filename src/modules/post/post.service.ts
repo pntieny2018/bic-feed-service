@@ -905,7 +905,7 @@ export class PostService {
         throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
       }
       const groupIds = post.groups.map((g) => g.groupId);
-      await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
+      await this.authorityService.checkCanCreatePost(authUser, groupIds);
 
       if (post.content === null && post.media.length === 0) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
