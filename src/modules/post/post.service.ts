@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -781,7 +781,9 @@ export class PostService {
       if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
+      const audienceIds = post.audience.groups.map((e) => e.id);
       if (setting && setting.hasOwnProperty('isImportant')) {
+        await this.authorityService.checkCanCreatePost(authUser, audienceIds, setting.isImportant);
         dataUpdate['isImportant'] = setting.isImportant;
       }
       if (setting && setting.hasOwnProperty('importantExpiredAt')) {
@@ -790,6 +792,29 @@ export class PostService {
       }
       let newMediaIds = [];
       transaction = await this.sequelizeConnection.transaction();
+
+      const removeGroupIds = audienceIds.filter((id) => !audience.groupIds.includes(id));
+      if (removeGroupIds.length) {
+        const removePost = await this.postModel.findOne({
+          where: {
+            id: post.id,
+          },
+          include: [
+            {
+              model: PostGroupModel,
+              as: 'groups',
+              attributes: ['groupId'],
+              where: {
+                groupId: {
+                  [Op.in]: removeGroupIds,
+                },
+              },
+            },
+          ],
+        });
+        await this.checkIsNotDeletableAudience(authUser, removePost);
+      }
+
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
@@ -875,8 +900,10 @@ export class PostService {
         ],
       });
       const authUserId = authUser.id;
-      await this.checkPostOwner(post, authUserId);
-
+      const isOwner = await this.checkPostOwner(post, authUserId);
+      if (!isOwner) {
+        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
       const groupIds = post.groups.map((g) => g.groupId);
       await this.authorityService.checkCanCreatePost(authUser, groupIds);
 
@@ -936,10 +963,7 @@ export class PostService {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    if (post.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-    return true;
+    return post.createdBy === authUserId;
   }
 
   /**
@@ -973,10 +997,8 @@ export class PostService {
           },
         ],
       });
-      await this.checkPostOwner(post, authUser.id);
-      const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(authUser, groupIds);
+        await this.checkIsNotDeletableAudience(authUser, post);
       }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
@@ -1002,6 +1024,67 @@ export class PostService {
       this.logger.error(error, error?.stack);
       await transaction.rollback();
       throw error;
+    }
+  }
+
+  public async tryToRemoveAudience(
+    authUser: UserDto,
+    post: IPost,
+    transaction: Transaction
+  ): Promise<boolean> {
+    const groupIds = post.groups.map((g) => g.groupId);
+    const notDeletableGroupAudienceIds =
+      this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
+        authUser,
+        groupIds,
+        post.createdBy
+      );
+    if (notDeletableGroupAudienceIds.length === groupIds.length) {
+      const groupInfo = await this.groupService.get(groupIds[0]);
+      throw new ForbiddenException({
+        code: `group.delete_post.forbidden`,
+        message: `You don't have delete_post permission at group ${groupInfo.name}`,
+      });
+    }
+    if (notDeletableGroupAudienceIds.length) {
+      const deletableGroupAudienceIds = groupIds.filter(
+        (e) => !notDeletableGroupAudienceIds.includes(e)
+      );
+      if (deletableGroupAudienceIds.length) {
+        await this.postGroupModel.destroy({
+          where: {
+            postId: post.id,
+            groupId: {
+              [Op.in]: deletableGroupAudienceIds,
+            },
+          },
+          transaction: transaction,
+        });
+      }
+
+      await transaction.commit();
+      return true;
+    }
+    return false;
+  }
+
+  public async checkIsNotDeletableAudience(authUser: UserDto, post: IPost): Promise<void> {
+    const groupIds = post.groups.map((g) => g.groupId);
+    const notDeletableGroupAudienceIds =
+      this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
+        authUser,
+        groupIds,
+        post.createdBy
+      );
+    if (notDeletableGroupAudienceIds.length) {
+      const groupInfos = [];
+      for (const groupId of groupIds) {
+        groupInfos.push(await this.groupService.get(groupId));
+      }
+      throw new ForbiddenException({
+        code: `group.delete_post.forbidden`,
+        message: `You don't have delete_post permission at groups: ${groupInfos.map((e) => e.name)}`
+      });
     }
   }
 
@@ -1276,8 +1359,10 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
-      await this.checkPostOwner(post, user.id);
-
+      const isOwner = await this.checkPostOwner(post, user.id);
+      if (!isOwner) {
+        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
 
       if (post.isDraft === true) {
