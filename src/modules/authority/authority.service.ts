@@ -74,13 +74,6 @@ export class AuthorityService {
   }
 
   public async checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): Promise<void> {
-    for (const groupAudienceId of groupAudienceIds) {
-      await this._mustHave(
-        PERMISSION_KEY.EDIT_OWN_POST,
-        subject(SUBJECT.GROUP, { id: groupAudienceId })
-      );
-    }
-
     this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
