@@ -3,13 +3,14 @@ import { RedisService } from '@app/redis';
 import { ChildGroup, GroupPrivacy, GroupSharedDto } from './dto';
 import { UserDto } from '../../modules/auth';
 import { ArrayHelper } from '../../common/helpers';
+import { AppHelper } from '../../common/helpers/app.helper';
 
 @Injectable()
 export class GroupService {
   public constructor(private _store: RedisService) {}
 
   public async get(groupId: number): Promise<GroupSharedDto> {
-    const group = await this._store.get<GroupSharedDto>(`SG:${groupId}`);
+    const group = await this._store.get<GroupSharedDto>(`${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (group && !group?.child) {
       group.child = {
         open: [],
@@ -22,7 +23,7 @@ export class GroupService {
   }
 
   public async getMany(groupIds: number[]): Promise<GroupSharedDto[]> {
-    const keys = [...new Set(groupIds)].map((groupId) => `SG:${groupId}`);
+    const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (keys.length) {
       const groups = await this._store.mget(keys);
       return groups.filter((g) => g !== null);

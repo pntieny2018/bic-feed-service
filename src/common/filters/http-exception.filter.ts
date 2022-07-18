@@ -4,6 +4,7 @@ import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
 import { LogicException, ValidatorException } from '../exceptions';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import snakecaseKeys from 'snakecase-keys';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -36,11 +37,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (status < HttpStatus.INTERNAL_SERVER_ERROR) {
       code = HTTP_STATUS_ID.API_VALIDATION_ERROR;
     }
+    const res = exception.getResponse();
     return response.status(status).json(
       new ResponseDto({
         code: code,
         meta: {
           message: exception.message,
+          errors: res['errors'] ? snakecaseKeys(res['errors']) : null,
           stack: this._getStack(exception),
         },
       })
