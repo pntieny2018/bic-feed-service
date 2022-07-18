@@ -2,6 +2,7 @@ import { UserSharedDto } from './dto';
 import { RedisService } from '@app/redis';
 import { Injectable } from '@nestjs/common';
 import { AppHelper } from '../../common/helpers/app.helper';
+import { CACHE_KEYS } from '../../common/constants/casl.constant';
 
 @Injectable()
 export class UserService {
@@ -14,6 +15,11 @@ export class UserService {
    */
   public async get(userId: number): Promise<UserSharedDto> {
     return await this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
+  }
+
+  public async getPermissions(userId: number): Promise<any> {
+    const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
+    return await this._store.get(cacheKey);
   }
 
   /**

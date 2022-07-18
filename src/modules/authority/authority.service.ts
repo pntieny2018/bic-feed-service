@@ -11,46 +11,14 @@ import {
   SUBJECT,
 } from '../../common/constants/casl.constant';
 import { GroupSharedDto } from '../../shared/group/dto';
-import { RedisService } from '../../../libs/redis/src';
-import { AppHelper } from '../../common/helpers/app.helper';
 import { AuthorityFactory } from './authority.factory';
 
 @Injectable()
 export class AuthorityService {
   public constructor(
-    private _store: RedisService, //private _groupService: GroupService
+    private _groupService: GroupService,
     private _authorityFactory: AuthorityFactory
   ) {}
-
-  public async getGroup(groupId: number): Promise<GroupSharedDto> {
-    const group = await this._store.get<GroupSharedDto>(`${AppHelper.getRedisEnv()}SG:${groupId}`);
-    if (group && !group?.child) {
-      group.child = {
-        open: [],
-        public: [],
-        private: [],
-        secret: [],
-      };
-    }
-    return group;
-  }
-
-  public async getManyGroup(groupIds: number[]): Promise<GroupSharedDto[]> {
-    const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
-    if (keys.length) {
-      const groups = await this._store.mget(keys);
-      return groups.filter((g) => g !== null);
-    }
-    return [];
-  }
-
-  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
-    return groupIds.every((groupId) => myGroupIds.includes(groupId));
-  }
-
-  public isMemberOfSomeGroups(groupIds: number[], myGroupIds: number[]): boolean {
-    return groupIds.some((groupId) => myGroupIds.includes(groupId));
-  }
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
     if (post.privacy === PostPrivacy.PUBLIC) return;
@@ -72,16 +40,8 @@ export class AuthorityService {
   public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
     if (post.privacy === PostPrivacy.PUBLIC || post.privacy === PostPrivacy.OPEN) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
-    // if (post.privacy === PostPrivacy.PUBLIC || post.privacy === PostPrivacy.OPEN)
-    //   const dataGroups = await this._groupService.getMany(groupAudienceIds);
-    // if (
-    //   dataGroups.filter((g) => g.privacy === GroupPrivacy.PUBLIC || g.privacy === GroupPrivacy.OPEN)
-    //     .length > 0
-    // ) {
-    //   return;
-    // }
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
@@ -93,7 +53,7 @@ export class AuthorityService {
     isImportant = false
   ): Promise<void> {
     const notCreatableGroupInfos: GroupSharedDto[] = [];
-    const groups = await this.getManyGroup(groupAudienceIds);
+    const groups = await this._groupService.getMany(groupAudienceIds);
     if (isImportant) {
       for (const group of groups) {
         const canCreateImportantPost = await this._can(
@@ -149,7 +109,7 @@ export class AuthorityService {
     createBy: number
   ): Promise<void> {
     const isOwner = user.id === createBy;
-    const groups = await this.getManyGroup(groupAudienceIds);
+    const groups = await this._groupService.getMany(groupAudienceIds);
     const notDeletableGroupInfos: GroupSharedDto[] = [];
     if (isOwner) {
       for (const group of groups) {
@@ -205,7 +165,7 @@ export class AuthorityService {
 
   private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
@@ -214,7 +174,7 @@ export class AuthorityService {
 
   private _checkUserInGroups(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
+    const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
@@ -222,7 +182,7 @@ export class AuthorityService {
   }
 
   private async _can(user: UserDto, action: string, subject: Subject = null): Promise<boolean> {
-    const ability = await this._authorityFactory.createForUser(user.id);
+    const ability = await this._authorityFactory.createForUser(user);
     return ability.can(action, subject);
   }
 }
