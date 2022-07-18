@@ -4,6 +4,7 @@ import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
 import { LogicException, ValidatorException } from '../exceptions';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import snakecaseKeys from 'snakecase-keys';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -42,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         code: code,
         meta: {
           message: exception.message,
-          errors: res['errors'] ?? null,
+          errors: snakecaseKeys(res['errors']) ?? null,
           stack: this._getStack(exception),
         },
       })

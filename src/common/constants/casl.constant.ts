@@ -62,7 +62,7 @@ export const SUBJECT = {
 };
 
 export const CACHE_KEYS = {
-  USER_PERMISSIONS: 'user_permissions',
+  USER_PERMISSIONS: 'bg_user_permissions',
 };
 
 export class BasicPermissionDto {
@@ -80,4 +80,19 @@ export const BASIC_PERMISSIONS: {
     description: PERMISSION_KEY.EDIT_OWN_POST,
     fixedForRoles: ['CREATOR'],
   } as BasicPermissionDto,
+};
+
+export const permissionToCommonName = (permission: string): string => {
+  switch (permission) {
+    case PERMISSION_KEY.CREATE_POST_ARTICLE:
+      return 'create post';
+    case PERMISSION_KEY.CREATE_IMPORTANT_POST:
+      return 'create important post';
+    case PERMISSION_KEY.DELETE_OWN_POST:
+      return 'delete own post';
+    case PERMISSION_KEY.DELETE_OTHERS_POST:
+      return 'delete others post';
+    default:
+      return 'undefined';
+  }
 };

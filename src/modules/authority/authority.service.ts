@@ -5,7 +5,12 @@ import { IPost, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { subject, Subject } from '@casl/ability';
-import { PERMISSION_KEY, SUBJECT } from '../ability/actions';
+import {
+  PERMISSION_KEY,
+  permissionToCommonName,
+  SUBJECT,
+} from '../../common/constants/casl.constant';
+import { GroupSharedDto } from '../../shared/group/dto';
 
 @Injectable()
 export class AuthorityService {
@@ -54,19 +59,52 @@ export class AuthorityService {
     groupAudienceIds: number[],
     isImportant = false
   ): Promise<void> {
+    const notCreatableGroupInfos: GroupSharedDto[] = [];
     if (isImportant) {
       for (const groupAudienceId of groupAudienceIds) {
-        await this._mustHave(
-          PERMISSION_KEY.CREATE_IMPORTANT_POST,
-          subject(SUBJECT.GROUP, { id: groupAudienceId })
-        );
+        if (
+          !this._can(
+            PERMISSION_KEY.CREATE_IMPORTANT_POST,
+            subject(SUBJECT.GROUP, { id: groupAudienceId })
+          )
+        ) {
+          const groupInfo = await this._groupService.get(groupAudienceId);
+          if (groupInfo) {
+            notCreatableGroupInfos.push(groupInfo);
+          }
+        }
+      }
+      if (notCreatableGroupInfos.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have ${permissionToCommonName(
+            PERMISSION_KEY.CREATE_IMPORTANT_POST
+          )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
+          errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
+        });
       }
     } else {
       for (const groupAudienceId of groupAudienceIds) {
-        await this._mustHave(
-          PERMISSION_KEY.CREATE_POST_ARTICLE,
-          subject(SUBJECT.GROUP, { id: groupAudienceId })
-        );
+        if (
+          !this._can(
+            PERMISSION_KEY.CREATE_POST_ARTICLE,
+            subject(SUBJECT.GROUP, { id: groupAudienceId })
+          )
+        ) {
+          const groupInfo = await this._groupService.get(groupAudienceId);
+          if (groupInfo) {
+            notCreatableGroupInfos.push(groupInfo);
+          }
+        }
+      }
+      if (notCreatableGroupInfos.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have ${permissionToCommonName(
+            PERMISSION_KEY.CREATE_POST_ARTICLE
+          )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
+          errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
+        });
       }
     }
 
@@ -77,36 +115,61 @@ export class AuthorityService {
     this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
-  public getNumberOfNotDeletableGroupAudienceIds(
+  public async checkCanDeletePost(
     user: UserDto,
     groupAudienceIds: number[],
     createBy: number
-  ): number[] {
+  ): Promise<void> {
     const isOwner = user.id === createBy;
-    const notDeletableGroupAudiences = [];
-    groupAudienceIds.forEach((groupAudienceId) => {
-      if (isOwner) {
+    const notDeletableGroupInfos: GroupSharedDto[] = [];
+    if (isOwner) {
+      for (const groupAudienceId of groupAudienceIds) {
         if (
           !this._can(
             PERMISSION_KEY.DELETE_OWN_POST,
             subject(SUBJECT.GROUP, { id: groupAudienceId })
           )
         ) {
-          notDeletableGroupAudiences.push(groupAudienceId);
+          const groupInfo = await this._groupService.get(groupAudienceId);
+          if (groupInfo) {
+            notDeletableGroupInfos.push(groupInfo);
+          }
         }
-      } else {
+      }
+      if (notDeletableGroupInfos.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have ${permissionToCommonName(
+            PERMISSION_KEY.DELETE_OWN_POST
+          )} permission at group ${notDeletableGroupInfos.map((e) => e.name).join(', ')}`,
+          errors: { groupsDenied: notDeletableGroupInfos.map((e) => e.id) },
+        });
+      }
+    } else {
+      for (const groupAudienceId of groupAudienceIds) {
         if (
           !this._can(
             PERMISSION_KEY.DELETE_OTHERS_POST,
             subject(SUBJECT.GROUP, { id: groupAudienceId })
           )
         ) {
-          notDeletableGroupAudiences.push(groupAudienceId);
+          const groupInfo = await this._groupService.get(groupAudienceId);
+          if (groupInfo) {
+            notDeletableGroupInfos.push(groupInfo);
+          }
         }
       }
-    });
+      if (notDeletableGroupInfos.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have ${permissionToCommonName(
+            PERMISSION_KEY.DELETE_OTHERS_POST
+          )} permission at group ${notDeletableGroupInfos.map((e) => e.name).join(', ')}`,
+          errors: { groupsDenied: notDeletableGroupInfos.map((e) => e.id) },
+        });
+      }
+    }
     this._checkUserInSomeGroups(user, groupAudienceIds);
-    return notDeletableGroupAudiences;
   }
 
   public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
@@ -140,41 +203,6 @@ export class AuthorityService {
       return this._ability.can(action);
     } else {
       return this._ability.can(action, subject);
-    }
-  }
-
-  private async _mustHave(action: string, subject: Subject = null): Promise<void> {
-    if (!this._can(action, subject)) {
-      const subjectName = AuthorityService._getSubjectName(subject);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const groupInfo = await this._groupService.get(subject.id);
-      throw new ForbiddenException({
-        code: `${subjectName}.${action}.forbidden`,
-        message: `You don't have ${action} permission at group ${groupInfo.name}`,
-        //errors: { groupsDenied: [1] },
-      });
-    }
-  }
-
-  private async _mustHaveAny(actions: { action: string; subject?: Subject }[]): Promise<void> {
-    let isAllow = false;
-    for (let i = 0; i < actions.length; i++) {
-      if (this._can(actions[i].action, actions[i].subject)) {
-        isAllow = true;
-      }
-    }
-
-    if (!isAllow) {
-      const subjectNames = actions.map((action) =>
-        AuthorityService._getSubjectName(action.subject)
-      );
-
-      // only show error code of first forbidden action
-      throw new ForbiddenException({
-        code: `${subjectNames[0]}.${actions[0].action}.forbidden`,
-        message: "You don't have this permission",
-      });
     }
   }
 

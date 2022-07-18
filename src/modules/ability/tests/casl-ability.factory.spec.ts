@@ -3,7 +3,7 @@ import { CaslAbilityFactory } from '../casl-ability.factory';
 import { Ability, subject } from '@casl/ability';
 import { RedisService } from '../../../../libs/redis/src';
 import { SentryService } from '../../../../libs/sentry/src';
-import { CACHE_KEYS } from '../actions';
+import { CACHE_KEYS } from '../../../common/constants/casl.constant';
 import { InternalServerErrorException } from '@nestjs/common';
 
 const sentryServiceMock = {

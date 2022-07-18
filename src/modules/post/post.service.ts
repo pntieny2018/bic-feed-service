@@ -795,24 +795,7 @@ export class PostService {
 
       const removeGroupIds = audienceIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
-        const removePost = await this.postModel.findOne({
-          where: {
-            id: post.id,
-          },
-          include: [
-            {
-              model: PostGroupModel,
-              as: 'groups',
-              attributes: ['groupId'],
-              where: {
-                groupId: {
-                  [Op.in]: removeGroupIds,
-                },
-              },
-            },
-          ],
-        });
-        await this.checkIsNotDeletableAudience(authUser, removePost);
+        await this.authorityService.checkCanDeletePost(authUser, removeGroupIds, post.createdBy);
       }
 
       if (media) {
@@ -998,7 +981,11 @@ export class PostService {
         ],
       });
       if (post.isDraft === false) {
-        await this.checkIsNotDeletableAudience(authUser, post);
+        await this.authorityService.checkCanDeletePost(
+          authUser,
+          post.groups.map((g) => g.groupId),
+          post.createdBy
+        );
       }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
@@ -1024,67 +1011,6 @@ export class PostService {
       this.logger.error(error, error?.stack);
       await transaction.rollback();
       throw error;
-    }
-  }
-
-  public async tryToRemoveAudience(
-    authUser: UserDto,
-    post: IPost,
-    transaction: Transaction
-  ): Promise<boolean> {
-    const groupIds = post.groups.map((g) => g.groupId);
-    const notDeletableGroupAudienceIds =
-      this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
-        authUser,
-        groupIds,
-        post.createdBy
-      );
-    if (notDeletableGroupAudienceIds.length === groupIds.length) {
-      const groupInfo = await this.groupService.get(groupIds[0]);
-      throw new ForbiddenException({
-        code: `group.delete_post.forbidden`,
-        message: `You don't have delete_post permission at group ${groupInfo.name}`,
-      });
-    }
-    if (notDeletableGroupAudienceIds.length) {
-      const deletableGroupAudienceIds = groupIds.filter(
-        (e) => !notDeletableGroupAudienceIds.includes(e)
-      );
-      if (deletableGroupAudienceIds.length) {
-        await this.postGroupModel.destroy({
-          where: {
-            postId: post.id,
-            groupId: {
-              [Op.in]: deletableGroupAudienceIds,
-            },
-          },
-          transaction: transaction,
-        });
-      }
-
-      await transaction.commit();
-      return true;
-    }
-    return false;
-  }
-
-  public async checkIsNotDeletableAudience(authUser: UserDto, post: IPost): Promise<void> {
-    const groupIds = post.groups.map((g) => g.groupId);
-    const notDeletableGroupAudienceIds =
-      this.authorityService.getNumberOfNotDeletableGroupAudienceIds(
-        authUser,
-        groupIds,
-        post.createdBy
-      );
-    if (notDeletableGroupAudienceIds.length) {
-      const groupInfos = [];
-      for (const groupId of groupIds) {
-        groupInfos.push(await this.groupService.get(groupId));
-      }
-      throw new ForbiddenException({
-        code: `group.delete_post.forbidden`,
-        message: `You don't have delete_post permission at groups: ${groupInfos.map((e) => e.name)}`
-      });
     }
   }
 
