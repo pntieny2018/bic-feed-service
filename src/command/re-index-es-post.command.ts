@@ -93,28 +93,25 @@ export class ReIndexEsPostCommand implements CommandRunner {
 
       this._logger.log('processing post:', dataIndex.id);
 
-      await this._elasticsearchService
-        .index({
-          index: passedParam[0],
-          id: `${dataIndex.id}`,
-          body: dataIndex,
-          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        })
-        .then((res) => {
-          const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-          this._postModel.update(
-            { lang },
-            {
-              where: {
-                id: dataIndex.id,
-              },
-            }
-          );
-        })
-        .catch((ex) => this._logger.debug(ex));
-
+      const res = await this._elasticsearchService.index({
+        index: passedParam[0],
+        id: `${dataIndex.id}`,
+        body: dataIndex,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      });
+      let lang = res.body._index.slice(passedParam[0].length + 1, passedParam[0].length + 3);
+      lang = ElasticsearchHelper.LANGUAGES_SUPPORTED.includes(lang) ? lang : null;
+      await this._postModel.update(
+        { lang },
+        {
+          where: {
+            id: dataIndex.id,
+          },
+        }
+      );
       this._logger.log('deliver post:', dataIndex.id);
     }
+    this._logger.log('DONE - total:', posts.length);
   }
 
   public async bindAudienceToPost(posts: any[]): Promise<void> {
