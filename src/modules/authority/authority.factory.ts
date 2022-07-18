@@ -1,23 +1,20 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Ability } from '@casl/ability';
-import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
 import { BASIC_PERMISSIONS, CACHE_KEYS, SUBJECT } from '../../common/constants/casl.constant';
 import { UserPermissionDto } from '../../shared/user/dto/user-permission.dto';
+import { UserDto } from '../auth';
 @Injectable()
-export class CaslAbilityFactory {
-  public constructor(private _store: RedisService, private _sentryService: SentryService) {}
+export class AuthorityFactory {
+  public constructor(private _sentryService: SentryService) {}
 
-  public async createForUser(userId: number): Promise<Ability> {
+  public async createForUser(user: UserDto): Promise<Ability> {
     try {
-      // get all permission of the user
-      const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
-      const cachedPermissions = (await this._store.get(cacheKey)) as UserPermissionDto;
-
+      const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {
         return new Ability();
       }
-      const abilities = CaslAbilityFactory.extractAbilitiesFromPermission(cachedPermissions);
+      const abilities = AuthorityFactory.extractAbilitiesFromPermission(cachedPermissions);
 
       return new Ability(abilities);
     } catch (ex) {

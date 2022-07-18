@@ -7,7 +7,7 @@ export class ReactionsResponseDto {
   public list: ReactionResponseDto[];
 
   @ApiProperty({
-    name: 'latest_id'
+    name: 'latest_id',
   })
   @IsUUID()
   public latestId: string;

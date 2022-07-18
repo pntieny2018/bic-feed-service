@@ -17,7 +17,9 @@ export class GiphyController {
   public constructor(private readonly _httpService: HttpService) {}
 
   public transferGiphyResponseApi(response): GiphyResponseDto[] {
-    return response.data.data.map((e) => new GiphyResponseDto(e.id, e.type, createUrlFromId(e.id, GiphyType.GIF_PREVIEW)));
+    return response.data.data.map(
+      (e) => new GiphyResponseDto(e.id, e.type, createUrlFromId(e.id, GiphyType.GIF_PREVIEW))
+    );
   }
 
   @ApiOperation({ summary: 'Get trending Gif.' })

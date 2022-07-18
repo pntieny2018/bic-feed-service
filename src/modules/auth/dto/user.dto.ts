@@ -18,6 +18,8 @@ export class UserDto {
 
   public profile?: UserSharedDto;
 
+  public permissions?: any;
+
   public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);
   }
