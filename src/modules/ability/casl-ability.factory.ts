@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Ability } from '@casl/ability';
 import { RedisService } from '@app/redis';
 import { SentryService } from '@app/sentry';
-import { BASIC_PERMISSIONS, CACHE_KEYS, SUBJECT } from './actions';
+import { BASIC_PERMISSIONS, CACHE_KEYS, SUBJECT } from '../../common/constants/casl.constant';
 import { UserPermissionDto } from '../../shared/user/dto/user-permission.dto';
 @Injectable()
 export class CaslAbilityFactory {

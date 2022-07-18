@@ -81,3 +81,18 @@ export const BASIC_PERMISSIONS: {
     fixedForRoles: ['CREATOR'],
   } as BasicPermissionDto,
 };
+
+export const permissionToCommonName = (permission: string): string => {
+  switch (permission) {
+    case PERMISSION_KEY.CREATE_POST_ARTICLE:
+      return 'create post';
+    case PERMISSION_KEY.CREATE_IMPORTANT_POST:
+      return 'create important post';
+    case PERMISSION_KEY.DELETE_OWN_POST:
+      return 'delete own post';
+    case PERMISSION_KEY.DELETE_OTHERS_POST:
+      return 'delete others post';
+    default:
+      return 'undefined';
+  }
+};
