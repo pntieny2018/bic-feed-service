@@ -14,6 +14,7 @@ const CaslAbility = {
     if (isNaN(request.user.id)) {
       return new Ability();
     }
+
     request.user = {
       id: request.user.id,
     };
