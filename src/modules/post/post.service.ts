@@ -981,10 +981,10 @@ export class PostService {
         ],
       });
       if (post.isDraft === false) {
-        await this.authorityService.checkCanCreatePost(
+        await this.authorityService.checkCanDeletePost(
           authUser,
           post.groups.map((g) => g.groupId),
-          post.isImportant
+          post.createdBy
         );
       }
       await Promise.all([
