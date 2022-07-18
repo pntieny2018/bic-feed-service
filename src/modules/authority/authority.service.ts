@@ -152,6 +152,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: `${subjectName}.${action}.forbidden`,
         message: `You don't have ${action} permission at group ${groupInfo.name}`,
+        //errors: { groupsDenied: [1] },
       });
     }
   }
