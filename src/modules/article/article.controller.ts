@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION, HTTP_STATUS_ID } from '../../common/constants';
+import { APP_VERSION } from '../../common/constants';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
@@ -31,7 +31,6 @@ import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { AuthorityService } from '../authority';
 import { PostService } from '../post/post.service';
 import { MentionService } from '../mention';
-import { LogicException } from '../../common/exceptions';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -150,10 +149,8 @@ export class ArticleController {
     if (articleBefore.isDraft === false) {
       await this._postService.checkContent(updateArticleDto);
     }
-    const isOwner = await this._postService.checkPostOwner(articleBefore, user.id);
-    if (!isOwner) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
+    await this._postService.checkPostOwner(articleBefore, user.id);
+
     const isUpdated = await this._articleService.updateArticle(
       articleBefore,
       user,
