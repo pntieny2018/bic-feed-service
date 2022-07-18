@@ -13,7 +13,6 @@ export class UserService {
    * @returns Promise resolve user info
    */
   public async get(userId: number): Promise<UserSharedDto> {
-    console.log('xxxxxxxxxxx', `${AppHelper.getRedisEnv()}SU:${userId}`);
     return await this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
   }
 
