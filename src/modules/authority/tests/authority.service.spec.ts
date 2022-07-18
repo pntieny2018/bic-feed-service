@@ -175,10 +175,8 @@ describe('AuthorityService', () => {
 
   describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
-      caslAbility.can.mockReturnValue(true)
       groupService.isMemberOfSomeGroups.mockReturnValue(true);
       await service.checkCanUpdatePost(userDtoMock, [1]);
-      expect(caslAbility.can).toBeCalled();
       expect(groupService.isMemberOfSomeGroups).toBeCalled();
     });
   });

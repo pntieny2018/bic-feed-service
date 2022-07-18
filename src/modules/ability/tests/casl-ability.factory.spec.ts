@@ -37,6 +37,7 @@ describe('casl-ability.factory', () => {
   });
 
   describe('Function - createForUser', () => {
+
     it('should get abilities from cache if exist', async () => {
       const userId = 1;
       const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
@@ -44,9 +45,12 @@ describe('casl-ability.factory', () => {
 
       redisCacheService.get.mockResolvedValue(cachedAbilities);
 
+      CaslAbilityFactory.extractAbilitiesFromPermission = jest
+        .fn()
+        .mockReturnValue([]);
       const result = await caslAbilityFactory.createForUser(userId);
 
-      expect(result).toStrictEqual(new Ability(cachedAbilities));
+      expect(result).toStrictEqual(new Ability([]));
       expect(redisCacheService.get).toBeCalledWith(cacheKey);
       expect(redisCacheService.set).not.toBeCalled();
     });

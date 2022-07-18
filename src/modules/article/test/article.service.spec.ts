@@ -68,6 +68,12 @@ describe('ArticleService', () => {
         ArticleService,
         AuthorityService,
         {
+          provide: 'CaslAbility',
+          useValue: {
+            can: jest.fn()
+          },
+        },
+        {
           provide: CategoryService,
           useClass: jest.fn(),
         },

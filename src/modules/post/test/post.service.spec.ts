@@ -74,6 +74,12 @@ describe('PostService', () => {
           useClass: jest.fn(),
         },
         {
+          provide: 'CaslAbility',
+          useValue: {
+            can: jest.fn()
+          },
+        },
+        {
           provide: CommentService,
           useClass: jest.fn(),
         },

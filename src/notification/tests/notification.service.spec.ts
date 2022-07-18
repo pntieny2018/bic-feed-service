@@ -12,7 +12,6 @@ import {
   ReactionActivityService,
 } from '../activities';
 import { CommentDissociationService } from '../dissociations';
-import { PostDissociationService } from '../dissociations/post-dissociation.service';
 import { NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { TypeActivity } from '../notification.constants';
 import { NotificationService } from '../notification.service';
@@ -41,7 +40,6 @@ describe('NotificationService', () => {
   let commentModel: typeof CommentModel;
   let sentryService: SentryService;
   let postService: PostService;
-  let postDissociationService: PostDissociationService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -52,7 +50,6 @@ describe('NotificationService', () => {
         CommentActivityService,
         CommentDissociationService,
         CommentNotificationService,
-        PostDissociationService,
         {
           provide: KAFKA_PRODUCER,
           // useClass: jest.fn(),
@@ -108,7 +105,6 @@ describe('NotificationService', () => {
     commentModel = module.get<typeof CommentModel>(getModelToken(CommentModel));
     sentryService = module.get<SentryService>(SentryService);
     postService = module.get<PostService>(PostService);
-    postDissociationService = module.get<PostDissociationService>(PostDissociationService);
   });
 
   afterEach(() => {
