@@ -113,7 +113,7 @@ export class AuthorityService {
     const notDeletableGroupInfos: GroupSharedDto[] = [];
     if (isOwner) {
       for (const group of groups) {
-        const canDeletOwnPost = this._can(
+        const canDeletOwnPost = await this._can(
           user,
           PERMISSION_KEY.DELETE_OWN_POST,
           subject(SUBJECT.GROUP, { id: group.id })
@@ -133,7 +133,7 @@ export class AuthorityService {
       }
     } else {
       for (const group of groups) {
-        const canDeleteOtherPost = this._can(
+        const canDeleteOtherPost = await this._can(
           user,
           PERMISSION_KEY.DELETE_OTHERS_POST,
           subject(SUBJECT.GROUP, { id: group.id })
