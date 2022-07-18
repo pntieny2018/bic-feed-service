@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -781,7 +781,9 @@ export class PostService {
       if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
+      const audienceIds = post.audience.groups.map((e) => e.id);
       if (setting && setting.hasOwnProperty('isImportant')) {
+        await this.authorityService.checkCanCreatePost(authUser, audienceIds, setting.isImportant);
         dataUpdate['isImportant'] = setting.isImportant;
       }
       if (setting && setting.hasOwnProperty('importantExpiredAt')) {
@@ -790,6 +792,12 @@ export class PostService {
       }
       let newMediaIds = [];
       transaction = await this.sequelizeConnection.transaction();
+
+      const removeGroupIds = audienceIds.filter((id) => !audience.groupIds.includes(id));
+      if (removeGroupIds.length) {
+        await this.authorityService.checkCanDeletePost(authUser, removeGroupIds, post.createdBy);
+      }
+
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
@@ -875,10 +883,12 @@ export class PostService {
         ],
       });
       const authUserId = authUser.id;
-      await this.checkPostOwner(post, authUserId);
-
+      const isOwner = await this.checkPostOwner(post, authUserId);
+      if (!isOwner) {
+        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
       const groupIds = post.groups.map((g) => g.groupId);
-      await this.authorityService.checkCanCreatePost(authUser, groupIds);
+      await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
 
       if (post.content === null && post.media.length === 0) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
@@ -936,10 +946,7 @@ export class PostService {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    if (post.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-    return true;
+    return post.createdBy === authUserId;
   }
 
   /**
@@ -973,10 +980,12 @@ export class PostService {
           },
         ],
       });
-      await this.checkPostOwner(post, authUser.id);
-      const groupIds = post.groups.map((g) => g.groupId);
       if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(authUser, groupIds);
+        await this.authorityService.checkCanDeletePost(
+          authUser,
+          post.groups.map((g) => g.groupId),
+          post.createdBy
+        );
       }
       await Promise.all([
         this.mentionService.setMention([], MentionableType.POST, postId, transaction),
@@ -1276,8 +1285,10 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
-      await this.checkPostOwner(post, user.id);
-
+      const isOwner = await this.checkPostOwner(post, user.id);
+      if (!isOwner) {
+        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
 
       if (post.isDraft === true) {
