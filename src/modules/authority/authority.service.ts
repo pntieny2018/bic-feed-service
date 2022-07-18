@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { ForbiddenException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GroupService } from '../../shared/group';
-import { IPost, PostPrivacy } from '../../database/models/post.model';
+import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { subject, Subject } from '@casl/ability';
@@ -12,6 +12,7 @@ import {
 } from '../../common/constants/casl.constant';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { AuthorityFactory } from './authority.factory';
+import { PostResponseDto } from '../post/dto/responses';
 
 @Injectable()
 export class AuthorityService {
@@ -99,8 +100,27 @@ export class AuthorityService {
     this._checkUserInGroups(user, groupAudienceIds);
   }
 
-  public async checkCanUpdatePost(user: UserDto, groupAudienceIds: number[]): Promise<void> {
+  public async checkCanUpdatePost(
+    user: UserDto,
+    post: PostResponseDto | PostModel | IPost,
+    groupAudienceIds: number[]
+  ): Promise<void> {
+    await this.checkPostOwner(post, user.id);
     this._checkUserInSomeGroups(user, groupAudienceIds);
+  }
+
+  public async checkPostOwner(
+    post: PostResponseDto | PostModel | IPost,
+    authUserId: number
+  ): Promise<void> {
+    if (!post) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+
+    if (post.createdBy !== authUserId) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
+    return;
   }
 
   public async checkCanDeletePost(
