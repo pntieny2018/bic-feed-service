@@ -5,7 +5,11 @@ import { IPost, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { subject, Subject } from '@casl/ability';
-import { PERMISSION_KEY, permissionToCommonName, SUBJECT } from '../../common/constants/casl.constant';
+import {
+  PERMISSION_KEY,
+  permissionToCommonName,
+  SUBJECT,
+} from '../../common/constants/casl.constant';
 import { GroupSharedDto } from '../../shared/group/dto';
 
 @Injectable()
@@ -117,61 +121,55 @@ export class AuthorityService {
     createBy: number
   ): Promise<void> {
     const isOwner = user.id === createBy;
-    const notDeletableGroupAudiences = [];
-    groupAudienceIds.forEach((groupAudienceId) => {
-      if (isOwner) {
+    const notDeletableGroupInfos: GroupSharedDto[] = [];
+    if (isOwner) {
+      for (const groupAudienceId of groupAudienceIds) {
         if (
           !this._can(
             PERMISSION_KEY.DELETE_OWN_POST,
             subject(SUBJECT.GROUP, { id: groupAudienceId })
           )
         ) {
-          notDeletableGroupAudiences.push(groupAudienceId);
+          const groupInfo = await this._groupService.get(groupAudienceId);
+          if (groupInfo) {
+            notDeletableGroupInfos.push(groupInfo);
+          }
         }
-      } else {
+      }
+      if (notDeletableGroupInfos.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have ${permissionToCommonName(
+            PERMISSION_KEY.DELETE_OWN_POST
+          )} permission at group ${notDeletableGroupInfos.map((e) => e.name).join(', ')}`,
+          errors: { groupsDenied: notDeletableGroupInfos.map((e) => e.id) },
+        });
+      }
+    } else {
+      for (const groupAudienceId of groupAudienceIds) {
         if (
           !this._can(
             PERMISSION_KEY.DELETE_OTHERS_POST,
             subject(SUBJECT.GROUP, { id: groupAudienceId })
           )
         ) {
-          notDeletableGroupAudiences.push(groupAudienceId);
+          const groupInfo = await this._groupService.get(groupAudienceId);
+          if (groupInfo) {
+            notDeletableGroupInfos.push(groupInfo);
+          }
         }
       }
-    });
-    this._checkUserInSomeGroups(user, groupAudienceIds);
-  }
-
-  public getNumberOfNotDeletableGroupAudienceIds(
-    user: UserDto,
-    groupAudienceIds: number[],
-    createBy: number
-  ): number[] {
-    const isOwner = user.id === createBy;
-    const notDeletableGroupAudiences = [];
-    groupAudienceIds.forEach((groupAudienceId) => {
-      if (isOwner) {
-        if (
-          !this._can(
-            PERMISSION_KEY.DELETE_OWN_POST,
-            subject(SUBJECT.GROUP, { id: groupAudienceId })
-          )
-        ) {
-          notDeletableGroupAudiences.push(groupAudienceId);
-        }
-      } else {
-        if (
-          !this._can(
-            PERMISSION_KEY.DELETE_OTHERS_POST,
-            subject(SUBJECT.GROUP, { id: groupAudienceId })
-          )
-        ) {
-          notDeletableGroupAudiences.push(groupAudienceId);
-        }
+      if (notDeletableGroupInfos.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have ${permissionToCommonName(
+            PERMISSION_KEY.DELETE_OTHERS_POST
+          )} permission at group ${notDeletableGroupInfos.map((e) => e.name).join(', ')}`,
+          errors: { groupsDenied: notDeletableGroupInfos.map((e) => e.id) },
+        });
       }
-    });
+    }
     this._checkUserInSomeGroups(user, groupAudienceIds);
-    return notDeletableGroupAudiences;
   }
 
   public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
