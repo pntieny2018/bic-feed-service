@@ -33,11 +33,11 @@ export class ValidateMentionConstraint implements ValidatorConstraintInterface {
 
     const users: UserSharedDto[] = await this._userService.getMany(mentions);
 
-    // for (const user of users) {
-    //   if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
-    //     return false;
-    //   }
-    // }
+    for (const user of users) {
+      if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
+        return false;
+      }
+    }
     return true;
   }
 
