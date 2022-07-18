@@ -55,7 +55,7 @@ export class FeedService {
     try {
       const authUserId = authUser.id;
       const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-      const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
+      const totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
         authUserId,
         constraints
       );
