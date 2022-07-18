@@ -15,9 +15,6 @@ const CaslAbility = {
       return new Ability();
     }
 
-    request.user = {
-      id: request.user.id,
-    };
     return await caslAbilityFactory.createForUser(request.user.id);
   },
   inject: [REQUEST, CaslAbilityFactory],
