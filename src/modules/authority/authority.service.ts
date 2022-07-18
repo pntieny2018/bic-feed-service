@@ -11,14 +11,46 @@ import {
   SUBJECT,
 } from '../../common/constants/casl.constant';
 import { GroupSharedDto } from '../../shared/group/dto';
+import { RedisService } from '../../../libs/redis/src';
+import { AppHelper } from '../../common/helpers/app.helper';
+import { AuthorityFactory } from './authority.factory';
 
 @Injectable()
 export class AuthorityService {
   public constructor(
-    @Inject(forwardRef(() => 'CaslAbility'))
-    private _ability,
-    private _groupService: GroupService
+    private _store: RedisService, //private _groupService: GroupService
+    private _authorityFactory: AuthorityFactory
   ) {}
+
+  public async getGroup(groupId: number): Promise<GroupSharedDto> {
+    const group = await this._store.get<GroupSharedDto>(`${AppHelper.getRedisEnv()}SG:${groupId}`);
+    if (group && !group?.child) {
+      group.child = {
+        open: [],
+        public: [],
+        private: [],
+        secret: [],
+      };
+    }
+    return group;
+  }
+
+  public async getManyGroup(groupIds: number[]): Promise<GroupSharedDto[]> {
+    const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
+    if (keys.length) {
+      const groups = await this._store.mget(keys);
+      return groups.filter((g) => g !== null);
+    }
+    return [];
+  }
+
+  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
+    return groupIds.every((groupId) => myGroupIds.includes(groupId));
+  }
+
+  public isMemberOfSomeGroups(groupIds: number[], myGroupIds: number[]): boolean {
+    return groupIds.some((groupId) => myGroupIds.includes(groupId));
+  }
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
     if (post.privacy === PostPrivacy.PUBLIC) return;
@@ -49,7 +81,7 @@ export class AuthorityService {
     //   return;
     // }
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    const canAccess = this.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
@@ -61,18 +93,16 @@ export class AuthorityService {
     isImportant = false
   ): Promise<void> {
     const notCreatableGroupInfos: GroupSharedDto[] = [];
+    const groups = await this.getManyGroup(groupAudienceIds);
     if (isImportant) {
-      for (const groupAudienceId of groupAudienceIds) {
-        if (
-          !this._can(
-            PERMISSION_KEY.CREATE_IMPORTANT_POST,
-            subject(SUBJECT.GROUP, { id: groupAudienceId })
-          )
-        ) {
-          const groupInfo = await this._groupService.get(groupAudienceId);
-          if (groupInfo) {
-            notCreatableGroupInfos.push(groupInfo);
-          }
+      for (const group of groups) {
+        const canCreateImportantPost = await this._can(
+          user,
+          PERMISSION_KEY.CREATE_IMPORTANT_POST,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canCreateImportantPost) {
+          notCreatableGroupInfos.push(group);
         }
       }
       if (notCreatableGroupInfos.length) {
@@ -85,17 +115,14 @@ export class AuthorityService {
         });
       }
     } else {
-      for (const groupAudienceId of groupAudienceIds) {
-        if (
-          !this._can(
-            PERMISSION_KEY.CREATE_POST_ARTICLE,
-            subject(SUBJECT.GROUP, { id: groupAudienceId })
-          )
-        ) {
-          const groupInfo = await this._groupService.get(groupAudienceId);
-          if (groupInfo) {
-            notCreatableGroupInfos.push(groupInfo);
-          }
+      for (const group of groups) {
+        const canCreatePost = await this._can(
+          user,
+          PERMISSION_KEY.CREATE_POST_ARTICLE,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canCreatePost) {
+          notCreatableGroupInfos.push(group);
         }
       }
       if (notCreatableGroupInfos.length) {
@@ -122,19 +149,17 @@ export class AuthorityService {
     createBy: number
   ): Promise<void> {
     const isOwner = user.id === createBy;
+    const groups = await this.getManyGroup(groupAudienceIds);
     const notDeletableGroupInfos: GroupSharedDto[] = [];
     if (isOwner) {
-      for (const groupAudienceId of groupAudienceIds) {
-        if (
-          !this._can(
-            PERMISSION_KEY.DELETE_OWN_POST,
-            subject(SUBJECT.GROUP, { id: groupAudienceId })
-          )
-        ) {
-          const groupInfo = await this._groupService.get(groupAudienceId);
-          if (groupInfo) {
-            notDeletableGroupInfos.push(groupInfo);
-          }
+      for (const group of groups) {
+        const canDeletOwnPost = this._can(
+          user,
+          PERMISSION_KEY.DELETE_OWN_POST,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canDeletOwnPost) {
+          notDeletableGroupInfos.push(group);
         }
       }
       if (notDeletableGroupInfos.length) {
@@ -147,17 +172,14 @@ export class AuthorityService {
         });
       }
     } else {
-      for (const groupAudienceId of groupAudienceIds) {
-        if (
-          !this._can(
-            PERMISSION_KEY.DELETE_OTHERS_POST,
-            subject(SUBJECT.GROUP, { id: groupAudienceId })
-          )
-        ) {
-          const groupInfo = await this._groupService.get(groupAudienceId);
-          if (groupInfo) {
-            notDeletableGroupInfos.push(groupInfo);
-          }
+      for (const group of groups) {
+        const canDeleteOtherPost = this._can(
+          user,
+          PERMISSION_KEY.DELETE_OTHERS_POST,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canDeleteOtherPost) {
+          notDeletableGroupInfos.push(group);
         }
       }
       if (notDeletableGroupInfos.length) {
@@ -183,7 +205,7 @@ export class AuthorityService {
 
   private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    const canAccess = this.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
@@ -192,27 +214,15 @@ export class AuthorityService {
 
   private _checkUserInGroups(user: UserDto, groupAudienceIds: number[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
+    const canAccess = this.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
 
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
   }
 
-  private _can(action: string, subject: Subject = null): boolean {
-    if (subject === null) {
-      return this._ability.can(action);
-    } else {
-      return this._ability.can(action, subject);
-    }
-  }
-
-  private static _getSubjectName(subject: Subject): string {
-    return (
-      subject?.['constructor']?.['modelName'] ||
-      subject?.['__caslSubjectType__'] ||
-      subject?.['constructor']?.['name'] ||
-      'object'
-    );
+  private async _can(user: UserDto, action: string, subject: Subject = null): Promise<boolean> {
+    const ability = await this._authorityFactory.createForUser(user.id);
+    return ability.can(action, subject);
   }
 }

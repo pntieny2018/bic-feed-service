@@ -5,7 +5,7 @@ import { SentryService } from '@app/sentry';
 import { BASIC_PERMISSIONS, CACHE_KEYS, SUBJECT } from '../../common/constants/casl.constant';
 import { UserPermissionDto } from '../../shared/user/dto/user-permission.dto';
 @Injectable()
-export class CaslAbilityFactory {
+export class AuthorityFactory {
   public constructor(private _store: RedisService, private _sentryService: SentryService) {}
 
   public async createForUser(userId: number): Promise<Ability> {
@@ -13,11 +13,10 @@ export class CaslAbilityFactory {
       // get all permission of the user
       const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
       const cachedPermissions = (await this._store.get(cacheKey)) as UserPermissionDto;
-
       if (!cachedPermissions) {
         return new Ability();
       }
-      const abilities = CaslAbilityFactory.extractAbilitiesFromPermission(cachedPermissions);
+      const abilities = AuthorityFactory.extractAbilitiesFromPermission(cachedPermissions);
 
       return new Ability(abilities);
     } catch (ex) {

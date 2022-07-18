@@ -1,5 +1,14 @@
 import { IsUUID } from 'class-validator';
-import {BelongsTo, Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table, UpdatedAt} from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 import { SeriesModel } from './series.model';
 import { PostModel } from './post.model';
 
