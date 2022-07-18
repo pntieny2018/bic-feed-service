@@ -62,7 +62,7 @@ export const SUBJECT = {
 };
 
 export const CACHE_KEYS = {
-  USER_PERMISSIONS: 'user_permissions',
+  USER_PERMISSIONS: 'bg_user_permissions',
 };
 
 export class BasicPermissionDto {
