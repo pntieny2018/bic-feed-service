@@ -249,6 +249,7 @@ export class MediaService {
       },
       transaction,
     });
+
     const existingMediaIds = existingMeidaList.map((m) => m.id);
     await this._mediaModel.bulkCreate(
       insertData.filter((i) => !existingMediaIds.includes(i.id)),
@@ -320,8 +321,8 @@ export class MediaService {
           };
 
     const currentMedia = await (entityType === EntityType.POST
-      ? this._postMediaModel.findAll(condition)
-      : this._commentMediaModel.findAll(condition));
+      ? this._postMediaModel.findAll({ ...condition, transaction })
+      : this._commentMediaModel.findAll({ ...condition, transaction }));
 
     const currentMediaIds = currentMedia.map((m) => m.mediaId);
 
@@ -362,7 +363,8 @@ export class MediaService {
             { transaction }
           )
         : this._commentMediaModel.bulkCreate(
-            getAttachedData(changes.attached, 'commentId', entityId, 'mediaId')
+            getAttachedData(changes.attached, 'commentId', entityId, 'mediaId'),
+            { transaction }
           ));
     }
 
