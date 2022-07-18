@@ -43,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         code: code,
         meta: {
           message: exception.message,
-          errors: snakecaseKeys(res['errors']) ?? null,
+          errors: res['errors'] ? snakecaseKeys(res['errors']) : null,
           stack: this._getStack(exception),
         },
       })
