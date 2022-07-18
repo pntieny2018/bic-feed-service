@@ -149,17 +149,22 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience } = updatePostDto;
-    if (audience) {
-      await this._authorityService.checkCanUpdatePost(user, audience.groupIds);
-    }
+    const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
+    await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
     if (postBefore.isDraft === false) {
-      await this._postService.checkContent(updatePostDto);
+      await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
     }
-    const isOwner = await this._postService.checkPostOwner(postBefore, user.id);
-    if (!isOwner) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+
+    const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
+    const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+    if (newAudienceIds.length) {
+      await this._authorityService.checkCanCreatePost(user, newAudienceIds, setting.isImportant);
+    }
+
+    const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+    if (removeGroupIds.length) {
+      await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);
     }
 
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);

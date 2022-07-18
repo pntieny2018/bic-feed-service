@@ -781,9 +781,8 @@ export class PostService {
       if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
-      const audienceIds = post.audience.groups.map((e) => e.id);
+
       if (setting && setting.hasOwnProperty('isImportant')) {
-        await this.authorityService.checkCanCreatePost(authUser, audienceIds, setting.isImportant);
         dataUpdate['isImportant'] = setting.isImportant;
       }
       if (setting && setting.hasOwnProperty('importantExpiredAt')) {
@@ -792,11 +791,6 @@ export class PostService {
       }
       let newMediaIds = [];
       transaction = await this.sequelizeConnection.transaction();
-
-      const removeGroupIds = audienceIds.filter((id) => !audience.groupIds.includes(id));
-      if (removeGroupIds.length) {
-        await this.authorityService.checkCanDeletePost(authUser, removeGroupIds, post.createdBy);
-      }
 
       if (media) {
         const { files, images, videos } = media;
@@ -883,16 +877,11 @@ export class PostService {
         ],
       });
       const authUserId = authUser.id;
-      const isOwner = await this.checkPostOwner(post, authUserId);
-      if (!isOwner) {
-        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      await this.authorityService.checkPostOwner(post, authUserId);
       const groupIds = post.groups.map((g) => g.groupId);
       await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
 
-      if (post.content === null && post.media.length === 0) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
-      }
+      await this.checkContent(post.content, post.media);
 
       if (post.isDraft === false) return false;
 
@@ -932,24 +921,6 @@ export class PostService {
   }
 
   /**
-   * Check post exist and owner
-   * @param post PostResponseDto
-   * @param authUserId Auth userID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async checkPostOwner(
-    post: PostResponseDto | PostModel | IPost,
-    authUserId: number
-  ): Promise<boolean> {
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
-
-    return post.createdBy === authUserId;
-  }
-
-  /**
    * Delete post by id
    * @param postId string
    * @param authUserId auth user ID
@@ -980,6 +951,9 @@ export class PostService {
           },
         ],
       });
+      if (!post) {
+        throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      }
       if (post.isDraft === false) {
         await this.authorityService.checkCanDeletePost(
           authUser,
@@ -1285,10 +1259,7 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
-      const isOwner = await this.checkPostOwner(post, user.id);
-      if (!isOwner) {
-        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
+      await this.authorityService.checkPostOwner(post, user.id);
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
 
       if (post.isDraft === true) {
@@ -1474,8 +1445,7 @@ export class PostService {
     }
   }
 
-  public checkContent(updatePostDto: UpdatePostDto): void {
-    const { content, media } = updatePostDto;
+  public checkContent(content: string, media: any): void {
     if (
       content === '' &&
       media?.files.length === 0 &&
