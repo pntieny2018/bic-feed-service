@@ -1,5 +1,5 @@
 import { UserDto } from '../auth';
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { GroupService } from '../../shared/group';
 import { IPost, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
@@ -15,7 +15,8 @@ import { GroupSharedDto } from '../../shared/group/dto';
 @Injectable()
 export class AuthorityService {
   public constructor(
-    @Inject('CaslAbility') private _ability,
+    @Inject(forwardRef(() => 'CaslAbility'))
+    private _ability,
     private _groupService: GroupService
   ) {}
 
