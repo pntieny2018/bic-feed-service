@@ -128,7 +128,9 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostDeleted', () => {
     const postHasBeenDeletedEvent = new PostHasBeenDeletedEvent({
-      actor: undefined,
+      actor: {
+        id: 1,
+      },
       post: {
         canComment: false,
         canReact: false,
@@ -191,7 +193,7 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostPublished', () => {
     const postHasBeenPublishedEvent = new PostHasBeenPublishedEvent({
-      actor: undefined,
+      actor: {id: 1},
       post: mockPostResponseDto,
     });
     it('should success', async () => {
@@ -223,7 +225,7 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostUpdated', () => {
     const postHasBeenUpdatedEvent = new PostHasBeenUpdatedEvent({
-      actor: undefined,
+      actor: { id: 1},
       oldPost: mockPostResponseDto,
       newPost: mockPostResponseDto,
     });

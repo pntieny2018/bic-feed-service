@@ -2,6 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { UpdatePostDto } from '../../../post/dto/requests';
 import { Transform } from 'class-transformer';
+import { CanUseSeries } from '../../validators/can-use-series.validator';
+import { CanUseCategory } from '../../validators/can-use-category.validator';
 export class UpdateArticleDto extends UpdatePostDto {
   @ApiProperty({
     type: String,
@@ -27,6 +29,7 @@ export class UpdateArticleDto extends UpdatePostDto {
     return value;
   })
   @IsUUID('4', { each: true })
+  @CanUseCategory()
   public categories?: string[];
 
   @ApiProperty({
@@ -41,6 +44,7 @@ export class UpdateArticleDto extends UpdatePostDto {
     }
     return value;
   })
+  @CanUseSeries()
   public series?: string[];
 
   @ApiProperty({

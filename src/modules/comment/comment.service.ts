@@ -112,18 +112,21 @@ export class CommentService {
 
     await this._giphyService.saveGiphyData(createCommentDto.giphy);
 
-    //HOTFIX: hot fix create comment with image
-    const comment = await this._commentModel.create({
-      createdBy: user.id,
-      updatedBy: user.id,
-      parentId: replyId,
-      content: createCommentDto.content,
-      postId: post.id,
-      giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
-    });
-
     const transaction = await this._sequelizeConnection.transaction();
     try {
+      //HOTFIX: hot fix create comment with image
+      const comment = await this._commentModel.create(
+        {
+          createdBy: user.id,
+          updatedBy: user.id,
+          parentId: replyId,
+          content: createCommentDto.content,
+          postId: post.id,
+          giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
+        },
+        { transaction }
+      );
+
       const userMentionIds = createCommentDto.mentions;
 
       if (userMentionIds.length) {
@@ -158,7 +161,7 @@ export class CommentService {
       return comment;
     } catch (ex) {
       await transaction.rollback();
-      await comment.destroy();
+      //await comment.destroy();
       throw ex;
     }
   }

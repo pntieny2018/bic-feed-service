@@ -296,7 +296,7 @@ describe('ArticleService', () => {
         series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.ALIAS.POST.all.name,
+        index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
         body: {
           query: {
             bool: {
@@ -390,7 +390,7 @@ describe('ArticleService', () => {
       const mockPosts = mockedSearchResponse.body.hits.hits.map((item) => {
         const source = item._source;
         source['id'] = parseInt(item._id);
-        source['highlight'] = item.highlight['content'][0];
+       // source['highlight'] = item.highlight['content'][0];
         return source;
       });
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
@@ -486,18 +486,6 @@ describe('ArticleService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      userService.get = jest.fn().mockResolvedValue(null);
-      try {
-        const result = await articleService.createArticle(
-          { ...mockedUserAuth, profile: null },
-          mockedCreateArticleDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
     it('Should rollback if have an exception when insert data into DB', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -526,18 +514,13 @@ describe('ArticleService', () => {
 
   describe('updateArticle', () => {
     it('Update article successfully', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.checkValidMentions = jest.fn();
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       categoryService.setCategoriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -592,47 +575,12 @@ describe('ArticleService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      try {
-        await articleService.updateArticle(
-          mockedArticleResponse,
-          { ...mockedUserAuth, profile: null },
-          mockedUpdateArticleDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
-    it('Should catch exception if groups is invalid', async () => {
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
-      authorityService.checkCanUpdatePost = jest
-        .fn()
-        .mockRejectedValue(new Error('Not in the groups'));
-
-      try {
-        await articleService.updateArticle(
-          mockedArticleResponse,
-          mockedUserAuth,
-          mockedUpdateArticleDto
-        );
-      } catch (e) {
-        expect(e.message).toEqual('Not in the groups');
-      }
-    });
-
     it('Should rollback if have an exception when update data into DB', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
-
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.checkValidMentions = jest.fn();
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);

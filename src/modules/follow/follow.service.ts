@@ -67,7 +67,7 @@ export class FollowService {
    */
   public async unfollow(unfollowDto: UnfollowDto): Promise<void> {
     try {
-      await this._followModel.destroy({
+      const response = await this._followModel.destroy({
         where: {
           groupId: {
             [Op.in]: unfollowDto.groupIds,
@@ -77,6 +77,7 @@ export class FollowService {
           },
         },
       });
+      this._logger.debug(`[unfollow] ${response}`);
       this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
     } catch (ex) {
       this._sentryService.captureException(ex);

@@ -90,12 +90,12 @@ export class CommentDissociationService {
         order: [['createdAt', 'DESC']],
         limit: 100,
       });
-
       if (!prevCommentsRes) {
         prevCommentsRes = [];
       }
 
       const resultPrevComments = prevCommentsRes.map((c) => c.toJSON());
+
       const ignoreUserIds = postOwnerId
         ? [...new Set([actorId, postOwnerId, ...mentionedUsersInComment, ...mentionedUsersInPost])]
         : [...new Set([actorId, ...mentionedUsersInComment, ...mentionedUsersInPost])];
@@ -119,7 +119,6 @@ export class CommentDissociationService {
       if (!checkUserIds.length) {
         return recipient;
       }
-
       const validUserIds = await this.getValidUserIds(
         [...new Set(checkUserIds)].filter((id) => id),
         groupAudienceIds
@@ -321,7 +320,6 @@ export class CommentDissociationService {
     if (!rows) {
       return [];
     }
-
     return rows[0].map((r) => r['user_id']);
   }
 }
