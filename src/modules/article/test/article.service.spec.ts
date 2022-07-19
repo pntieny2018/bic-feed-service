@@ -41,6 +41,7 @@ import { mockMediaModelArray } from '../../post/test/mocks/input.mock';
 import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
+import { AuthorityFactory } from '../../authority/authority.factory';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -68,9 +69,9 @@ describe('ArticleService', () => {
         ArticleService,
         AuthorityService,
         {
-          provide: 'CaslAbility',
+          provide: AuthorityFactory,
           useValue: {
-            can: jest.fn()
+            createForUser: jest.fn()
           },
         },
         {
