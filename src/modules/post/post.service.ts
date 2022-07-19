@@ -880,8 +880,9 @@ export class PostService {
       await this.authorityService.checkPostOwner(post, authUserId);
       const groupIds = post.groups.map((g) => g.groupId);
       await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
-
-      await this.checkContent(post.content, post.media);
+      if (post.content === '' && post.media.length === 0) {
+        throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
+      }
 
       if (post.isDraft === false) return false;
 
