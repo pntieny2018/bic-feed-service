@@ -5,19 +5,20 @@ import { ForbiddenException } from '@nestjs/common';
 import { GroupPrivacy, GroupSharedDto } from '../../../shared/group/dto';
 import { PostPrivacy } from '../../../database/models/post.model';
 import { HTTP_STATUS_ID } from '../../../common/constants';
+import { AuthorityFactory } from '../authority.factory';
 
 describe('AuthorityService', () => {
   let service: AuthorityService;
   let groupService;
-  let caslAbility;
+  let authorityFactory;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthorityService,
         {
-          provide: 'CaslAbility',
+          provide: AuthorityFactory,
           useValue: {
-            can: jest.fn()
+            createForUser: jest.fn()
           },
         },
         {
@@ -32,8 +33,8 @@ describe('AuthorityService', () => {
     }).compile();
 
     service = module.get<AuthorityService>(AuthorityService);
-    caslAbility = module.get('CaslAbility');
     groupService = module.get<GroupService>(GroupService);
+    authorityFactory = module.get<AuthorityFactory>(AuthorityFactory);
   });
 
   it('should be defined', () => {
@@ -54,6 +55,7 @@ describe('AuthorityService', () => {
   };
 
   const userDtoMock = {
+    id: 1,
     groups: [
       {
         postId: 1,
@@ -163,20 +165,41 @@ describe('AuthorityService', () => {
     });
   });
 
+  const ability = {
+    can: jest.fn()
+  }
   describe('AuthorityService.checkCanReadPost', () => {
     it('', async () => {
       groupService.isMemberOfGroups.mockReturnValue(true);
-      caslAbility.can.mockReturnValue(true)
+      groupService.getMany.mockResolvedValue([{id: 1, name: 'BIC to the moon'}])
+      authorityFactory.createForUser.mockResolvedValue(ability)
+      ability.can.mockResolvedValue(true)
       await service.checkCanCreatePost(userDtoMock, [1]);
       expect(groupService.isMemberOfGroups).toBeCalled();
-      expect(caslAbility.can).toBeCalled();
+      expect(groupService.getMany).toBeCalled();
+      expect(authorityFactory.createForUser).toBeCalled();
+      expect(ability.can).toBeCalled();
     });
   });
 
   describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
       groupService.isMemberOfSomeGroups.mockReturnValue(true);
-      await service.checkCanUpdatePost(userDtoMock, [1]);
+      await service.checkCanUpdatePost(userDtoMock, {
+        canComment: false,
+        canReact: false,
+        canShare: false,
+        commentsCount: 0,
+        content: '',
+        createdBy: 1,
+        id: '',
+        isArticle: false,
+        isDraft: false,
+        isImportant: false,
+        totalUsersSeen: 0,
+        updatedBy: 0,
+        views: 0
+      }, [1]);
       expect(groupService.isMemberOfSomeGroups).toBeCalled();
     });
   });
