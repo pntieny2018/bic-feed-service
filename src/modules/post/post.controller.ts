@@ -159,7 +159,8 @@ export class PostController {
     const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
     const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     if (newAudienceIds.length) {
-      await this._authorityService.checkCanCreatePost(user, newAudienceIds, setting.isImportant);
+      const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
+      await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
     }
 
     const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
