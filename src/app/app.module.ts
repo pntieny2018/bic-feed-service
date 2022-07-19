@@ -24,11 +24,9 @@ import { GiphyModule } from '../modules/giphy';
 import { ArticleModule } from '../modules/article';
 import { CategoryModule } from '../modules/category';
 import { HashtagModule } from '../modules/hashtag';
-import { AbilityModule } from '../modules/ability/ability.module';
 
 @Module({
   imports: [
-    AbilityModule,
     DatabaseModule,
     LibModule,
     AuthModule,

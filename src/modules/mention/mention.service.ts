@@ -160,6 +160,7 @@ export class MentionService {
   ): Promise<boolean> {
     const currentMentions = await this._mentionModel.findAll({
       where: { mentionableType, entityId },
+      transaction,
     });
     const currentMentionUserIds = currentMentions.map((i) => i.userId);
 

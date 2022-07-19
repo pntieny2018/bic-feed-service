@@ -11,7 +11,12 @@ export class UpdateCommentDto {
   @IsNotEmpty()
   @ValidateIf(
     (o) =>
-      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0 || o.giphy?.id)
+      !(
+        o.media?.images?.length > 0 ||
+        o.media?.videos?.length > 0 ||
+        o.media?.files?.length > 0 ||
+        o.giphy?.id
+      )
   )
   public content: string;
 
@@ -73,11 +78,17 @@ export class UpdateCommentDto {
     example: {
       id: '3pZipqyo1sqHDfJGtz',
       type: 'gif',
-    }
+    },
   })
   @IsNotEmpty()
   @ValidateIf(
-    (o) => !(o.content || o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+    (o) =>
+      !(
+        o.content ||
+        o.media?.images?.length > 0 ||
+        o.media?.videos?.length > 0 ||
+        o.media?.files?.length > 0
+      )
   )
   @Type(() => GiphyDto)
   public giphy?: GiphyDto = null;

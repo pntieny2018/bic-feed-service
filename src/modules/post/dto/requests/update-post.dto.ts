@@ -17,7 +17,7 @@ export class UpdatePostDto {
       ['group_ids']: [1],
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
   public audience: AudienceRequestDto;

@@ -167,20 +167,28 @@ export class FeedService {
 
   public async markSeenPosts(postId: string, userId: number): Promise<void> {
     try {
-      await this._userSeenPostModel.create(
-        {
+      const exist = await this._userSeenPostModel.findOne({
+        where: {
           postId: postId,
           userId: userId,
         },
-        { ignoreDuplicates: true }
-      );
+      });
+      if (!exist) {
+        await this._userSeenPostModel.create(
+          {
+            postId: postId,
+            userId: userId,
+          },
+          { ignoreDuplicates: true }
+        );
 
-      await this._newsFeedModel.update(
-        { isSeenPost: true },
-        {
-          where: { userId, postId },
-        }
-      );
+        await this._newsFeedModel.update(
+          { isSeenPost: true },
+          {
+            where: { userId, postId },
+          }
+        );
+      }
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);

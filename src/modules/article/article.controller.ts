@@ -99,9 +99,9 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience } = createArticleDto;
+    const { audience, setting } = createArticleDto;
     const { groupIds } = audience;
-    await this._authorityService.checkCanCreatePost(user, groupIds);
+    await this._authorityService.checkCanCreatePost(user, groupIds, setting.isImportant);
 
     const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
@@ -137,23 +137,17 @@ export class ArticleController {
   ): Promise<ArticleResponseDto> {
     const { audience } = updateArticleDto;
 
-    if (audience) {
-      await this._authorityService.checkCanUpdatePost(user, audience.groupIds);
-    }
-
     const articleBefore = await this._articleService.getArticle(
       articleId,
       user,
       new GetArticleDto()
     );
-
+    await this._authorityService.checkCanUpdatePost(user, articleBefore, audience.groupIds);
     if (articleBefore.isDraft === false) {
-      await this._postService.checkContent(updateArticleDto);
+      await this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
     }
-    const isOwner = await this._postService.checkPostOwner(articleBefore, user.id);
-    if (!isOwner) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
+    await this._authorityService.checkPostOwner(articleBefore, user.id);
+
     const isUpdated = await this._articleService.updateArticle(
       articleBefore,
       user,
