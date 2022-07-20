@@ -174,10 +174,10 @@ module.exports = {
     try {
       await groupSequelize.authenticate(); //connect group database
 
-      const users = await getGroupsFromGroupService();
-      const groups = await getUsersFromGroupService();
+      const groups = await getGroupsFromGroupService();
+      const users = await getUsersFromGroupService();
       await removeIndex(queryInterface, transaction);
-      await migrateTables(queryInterface, transaction, users, groups);
+      await migrateTables(queryInterface, transaction, groups, users);
       await reCreateIndex(queryInterface, transaction);
 
       await transaction.commit();
