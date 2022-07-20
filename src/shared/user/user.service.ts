@@ -3,10 +3,11 @@ import { RedisService } from '@app/redis';
 import { Injectable } from '@nestjs/common';
 import { AppHelper } from '../../common/helpers/app.helper';
 import { CACHE_KEYS } from '../../common/constants/casl.constant';
+import { ExternalService } from '../../app/external.service';
 
 @Injectable()
 export class UserService {
-  public constructor(private _store: RedisService) {}
+  public constructor(private _store: RedisService, private _externalService: ExternalService) {}
 
   /**
    *  Get user info by id
@@ -17,9 +18,11 @@ export class UserService {
     return await this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
   }
 
-  public async getPermissions(userId: number): Promise<any> {
+  public async getPermissions(userId: number, payload: string): Promise<any> {
     const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
-    return await this._store.get(cacheKey);
+    const permissionCached = await this._store.get(cacheKey);
+    if (permissionCached) return permissionCached;
+    return this._externalService.getPermission(payload);
   }
 
   /**
