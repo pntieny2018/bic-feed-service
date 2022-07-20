@@ -11,6 +11,7 @@ export class ExternalService {
    */
   private _logger = new Logger(ExternalService.name);
   private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT + '/upload';
+  private _groupServiceEndpoint = process.env.GATEWAY_ENDPOINT + '/group';
   public constructor(
     private _sentryService: SentryService,
     private readonly _httpService: HttpService
@@ -64,6 +65,21 @@ export class ExternalService {
         : [];
     } catch (e) {
       return [];
+    }
+  }
+
+  public async getPermission(token: string): Promise<any> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(`${this._groupServiceEndpoint}/me/permissions`, {
+          headers: {
+            user: token,
+          },
+        })
+      );
+      return response.data.data;
+    } catch (e) {
+      return {};
     }
   }
 }
