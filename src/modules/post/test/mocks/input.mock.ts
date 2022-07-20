@@ -4,7 +4,7 @@ import { UserDto } from '../../../auth';
 import { VideoProcessStatus } from '../../post.constants';
 
 export const mockUserDto: UserDto = {
-  id: 33,
+  id: '7251dac7-5088-4a33-b900-d1b058edaf98',
 };
 
 export const mockIPost = {
@@ -14,15 +14,15 @@ export const mockIPost = {
   groups: [
     {
       postId: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
-      groupId: 1,
+      groupId: '7251dac7-5088-4a33-b900-d1b058edaf98',
     },
     {
       postId: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
-      groupId: 2,
+      groupId: '7251dac7-5088-4a33-b900-d1b058edaf99',
     },
     {
       postId: 'b9c3ca9c-e893-4f7c-b483-1c95c5c4ec47',
-      groupId: 3,
+      groupId: '7251dac7-5088-4a33-b900-d1b058edaf90',
     },
   ],
 };

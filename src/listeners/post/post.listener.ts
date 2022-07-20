@@ -174,7 +174,7 @@ export class PostListener {
         actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [0]
+        ['00000000-0000-0000-0000-000000000000']
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
@@ -367,7 +367,7 @@ export class PostListener {
           actor.id,
           id,
           audience.groups.map((g) => g.id),
-          [0]
+          ['00000000-0000-0000-0000-000000000000']
         );
       } catch (error) {
         this._logger.error(error, error?.stack);

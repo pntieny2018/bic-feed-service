@@ -21,7 +21,7 @@ export class FeedPublisherService {
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUsersNewsFeed(userIds: number[], postIds: string[]): Promise<void> {
+  public async attachPostsForUsersNewsFeed(userIds: string[], postIds: string[]): Promise<void> {
     this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
     const schema = this._databaseConfig.schema;
     try {
@@ -109,7 +109,7 @@ export class FeedPublisherService {
   }
 
   protected async processFanout(
-    userId: number,
+    userId: string,
     postId: string,
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
@@ -127,7 +127,7 @@ export class FeedPublisherService {
           // if attached new group
           // I will only get users who are in the new group but not in the old groups
           followers = await this._followService.getUniqueUserFollows(
-            [0],
+            ['00000000-0000-0000-0000-000000000000'],
             attached,
             old,
             latestFollowId
@@ -145,7 +145,7 @@ export class FeedPublisherService {
            */
           // I will only get users who are in the attached group but not in the old groups
           followers = await this._followService.getUniqueUserFollows(
-            [0],
+            ['00000000-0000-0000-0000-000000000000'],
             detached,
             current,
             latestFollowId
@@ -167,10 +167,10 @@ export class FeedPublisherService {
   }
 
   public fanoutOnWrite(
-    createdBy: number,
+    createdBy: string,
     postId: string,
-    currentGroupIds: number[],
-    oldGroupIds: number[]
+    currentGroupIds: string[],
+    oldGroupIds: string[]
   ): void {
     this._logger.debug(
       `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
