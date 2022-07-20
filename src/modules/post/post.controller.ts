@@ -3,17 +3,16 @@ import {
   Controller,
   Delete,
   Get,
-  Headers,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION, HTTP_STATUS_ID, KAFKA_TOPIC } from '../../common/constants';
+import { APP_VERSION, KAFKA_TOPIC } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import {
   PostHasBeenDeletedEvent,
@@ -22,6 +21,7 @@ import {
 } from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import {
+  CreateFastlaneDto,
   CreatePostDto,
   GetPostDto,
   GetPostEditedHistoryDto,
@@ -45,6 +45,7 @@ import { AuthorityService } from '../authority';
 import { MentionService } from '../mention';
 import { InjectUserToBody, InjectUserToParam } from '../../common/decorators/inject.decorator';
 import { LogicException } from '../../common/exceptions';
+import { WebhookGuard } from '../auth/webhook.guard';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -255,5 +256,26 @@ export class PostController {
         this._eventEmitter.emit(new PostVideoFailedEvent(videoProcessingEndDto));
         break;
     }
+  }
+
+  @UseGuards(WebhookGuard)
+  @Post('/bot')
+  public async deployNewVersionApp(
+    @AuthUser() user: UserDto,
+    @Body() createFastlaneDto: CreateFastlaneDto
+  ): Promise<boolean> {
+    const input = new CreatePostDto();
+    input.content = createFastlaneDto.content;
+    input.audience = {
+      userIds: [],
+      groupIds: createFastlaneDto.groupIds,
+    };
+    input.mentions = createFastlaneDto.mentionUserIds;
+
+    const post = await this.createPost(user, input);
+
+    await this.publishPost(user, post['id']);
+
+    return true;
   }
 }
