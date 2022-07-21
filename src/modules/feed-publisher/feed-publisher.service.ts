@@ -8,6 +8,7 @@ import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { SentryService } from '@app/sentry';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FeedPublisherService {
@@ -127,7 +128,7 @@ export class FeedPublisherService {
           // if attached new group
           // I will only get users who are in the new group but not in the old groups
           followers = await this._followService.getUniqueUserFollows(
-            ['00000000-0000-0000-0000-000000000000'],
+            [NIL_UUID],
             attached,
             old,
             latestFollowId
@@ -145,7 +146,7 @@ export class FeedPublisherService {
            */
           // I will only get users who are in the attached group but not in the old groups
           followers = await this._followService.getUniqueUserFollows(
-            ['00000000-0000-0000-0000-000000000000'],
+            [NIL_UUID],
             detached,
             current,
             latestFollowId

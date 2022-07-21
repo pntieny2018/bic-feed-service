@@ -11,6 +11,7 @@ import { ExceptionHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FollowListener {
@@ -67,7 +68,7 @@ export class FollowListener {
     let filterGroup = (userSharedDto.groups ?? []).filter((gId) => !groupIds.includes(gId));
 
     if (!filterGroup.length) {
-      filterGroup = ['00000000-0000-0000-0000-000000000000'];
+      filterGroup = [NIL_UUID];
     }
     const { schema } = getDatabaseConfig();
 

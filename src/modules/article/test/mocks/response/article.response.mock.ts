@@ -35,7 +35,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
   isDraft: true,
   isProcessing: false,
   actor: {
-    id: 1,
+    id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
     username: 'quannhac',
     fullname: 'Lý Quân Nhạc',
     avatar:
@@ -49,11 +49,11 @@ export const mockedArticleResponse: ArticleResponseDto = {
   markedReadPost: false,
   createdAt: new Date('2022-05-19T07:23:55.601Z'),
   updatedAt: new Date('2022-05-19T07:23:55.601Z'),
-  createdBy: 1,
+  createdBy: '855bedeb-b708-4e13-8c68-131d92cd79b2',
   audience: {
     groups: [
       {
-        id: 1,
+        id: '855bedeb-b708-4e13-8c68-131d92cd79b3',
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
         privacy: GroupPrivacy.PUBLIC,
