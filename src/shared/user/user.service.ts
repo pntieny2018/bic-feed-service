@@ -22,7 +22,7 @@ export class UserService {
     const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
     const permissionCached = await this._store.get(cacheKey);
     if (permissionCached) return permissionCached;
-    return this._externalService.getPermission(payload);
+    return await this._externalService.getPermission(payload);
   }
 
   /**
