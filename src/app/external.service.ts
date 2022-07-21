@@ -68,20 +68,19 @@ export class ExternalService {
   }
 
   public async getPermission(payload: string): Promise<any> {
-    return {};
-    // try {
-    //   const response = await lastValueFrom(
-    //     this._httpService.get(`${this._groupServiceEndpoint}/me/permissions`, {
-    //       headers: {
-    //         user: payload,
-    //       },
-    //     })
-    //   );
-    //   console.log('response==', response);
-    //   return response.data.data;
-    // } catch (e) {
-    //   console.log(e);
-    //   return {};
-    // }
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(`${this._groupServiceEndpoint}/me/permissions`, {
+          headers: {
+            user: payload,
+          },
+        })
+      );
+      console.log('response==', response);
+      return response.data.data;
+    } catch (e) {
+      console.log(e);
+      return {};
+    }
   }
 }
