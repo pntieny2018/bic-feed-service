@@ -79,6 +79,7 @@ export class ExternalService {
       console.log('response==', response);
       return response.data.data;
     } catch (e) {
+      console.log(e);
       return {};
     }
   }
