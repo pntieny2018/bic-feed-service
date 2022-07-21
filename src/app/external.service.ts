@@ -9,7 +9,7 @@ export class ExternalService {
    * @private
    */
   private _logger = new Logger(ExternalService.name);
-  private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT;
+  private _uploadServiceEndpoint = process.env.UPLOAD_ENDPOINT;
   private _groupServiceEndpoint = process.env.GROUP_ENDPOINT;
   public constructor(
     private _sentryService: SentryService,
