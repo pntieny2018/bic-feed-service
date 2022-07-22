@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SentryService } from '@app/sentry';
 import { HttpService } from '@nestjs/axios';
-import { AxiosHelper } from '../common/helpers';
-import { lastValueFrom, Observable } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 @Injectable()
 export class ExternalService {
   /**
@@ -10,8 +9,8 @@ export class ExternalService {
    * @private
    */
   private _logger = new Logger(ExternalService.name);
-  private _uploadServiceEndpoint = process.env.GATEWAY_ENDPOINT + '/upload';
-  private _groupServiceEndpoint = process.env.GATEWAY_ENDPOINT + '/group';
+  private _uploadServiceEndpoint = process.env.UPLOAD_ENDPOINT;
+  private _groupServiceEndpoint = process.env.GROUP_ENDPOINT;
   public constructor(
     private _sentryService: SentryService,
     private readonly _httpService: HttpService
@@ -68,17 +67,18 @@ export class ExternalService {
     }
   }
 
-  public async getPermission(token: string): Promise<any> {
+  public async getPermission(payload: string): Promise<any> {
     try {
       const response = await lastValueFrom(
         this._httpService.get(`${this._groupServiceEndpoint}/me/permissions`, {
           headers: {
-            user: token,
+            user: payload,
           },
         })
       );
       return response.data.data;
     } catch (e) {
+      console.log(e);
       return {};
     }
   }
