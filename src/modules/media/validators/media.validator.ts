@@ -18,6 +18,7 @@ export interface IExtendedValidationArguments extends ValidationArguments {
     [REQUEST_CONTEXT]: {
       user: UserDto;
       token: string;
+      userPayload: string;
     };
   };
 }
@@ -34,8 +35,9 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
     const fileIds = media.files.map((i) => i.id);
     const token = args?.object[REQUEST_CONTEXT].token;
     const user = args?.object[REQUEST_CONTEXT].user;
+    const userPayload = args?.object[REQUEST_CONTEXT].userPayload;
     if (fileIds.length > 0) {
-      const files = await this._externalService.getFileIds(fileIds, token);
+      const files = await this._externalService.getFileIds(fileIds, token, userPayload);
       if (files.length < fileIds.length) {
         return false;
       }
@@ -44,7 +46,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
 
     const videoIds = media.videos.map((i) => i.id);
     if (videoIds.length > 0) {
-      const videos = await this._externalService.getVideoIds(videoIds, token);
+      const videos = await this._externalService.getVideoIds(videoIds, token, userPayload);
       if (videos.length < videoIds.length) {
         return false;
       }
