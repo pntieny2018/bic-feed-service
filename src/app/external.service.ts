@@ -16,13 +16,18 @@ export class ExternalService {
     private readonly _httpService: HttpService
   ) {}
 
-  public async getFileIds(ids: string[], token: string): Promise<any> {
+  public async getFileIds(
+    ids: string[],
+    token: string = null,
+    userPayload: string = null
+  ): Promise<any> {
     try {
+      const headers = {};
+      if (token) headers['authorization'] = token;
+      if (userPayload) headers['user'] = userPayload;
       const response = await lastValueFrom(
         this._httpService.post(`${this._uploadServiceEndpoint}/files/ids`, ids, {
-          headers: {
-            authorization: token,
-          },
+          headers,
         })
       );
       return response.data.data
@@ -40,13 +45,18 @@ export class ExternalService {
     }
   }
 
-  public async getVideoIds(ids: string[], token: string): Promise<any> {
+  public async getVideoIds(
+    ids: string[],
+    token: string = null,
+    userPayload: string = null
+  ): Promise<any> {
     try {
+      const headers = {};
+      if (token) headers['authorization'] = token;
+      if (userPayload) headers['user'] = userPayload;
       const response = await lastValueFrom(
         this._httpService.post(`${this._uploadServiceEndpoint}/videos/ids`, ids, {
-          headers: {
-            authorization: token,
-          },
+          headers,
         })
       );
       return response.data.data
@@ -78,7 +88,6 @@ export class ExternalService {
       );
       return response.data.data;
     } catch (e) {
-      console.log(e);
       return {};
     }
   }
