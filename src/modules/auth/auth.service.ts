@@ -30,7 +30,6 @@ export class AuthService {
       id: parseInt(payload['custom:bein_user_id']),
       staffRole: payload['custom:bein_staff_role'],
     });
-
     user.profile = await this._userService.get(user.id);
     user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
     if (!user.profile) {
