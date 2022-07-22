@@ -11,8 +11,8 @@ import { Optional } from 'sequelize/types';
 
 export interface IRecentSearchAttribute {
   id: number;
-  createdBy: number;
-  updatedBy: number;
+  createdBy: string;
+  updatedBy: string;
   target: string;
   keyword: string;
   totalSearched: number;
@@ -33,10 +33,10 @@ export class RecentSearchModel extends Model<
   public id: number;
 
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @Column
-  public updatedBy: number;
+  public updatedBy: string;
 
   @Column
   public totalSearched: number;

@@ -33,22 +33,22 @@ export class SeriesResponseDto {
   public isActive: boolean;
 
   @ApiProperty({
-    type: Number,
+    type: String,
     name: 'created_by',
   })
   @Expose({
     name: 'created_by',
   })
-  public createdBy: number;
+  public createdBy: string;
 
   @ApiProperty({
-    type: Number,
+    type: String,
     name: 'updated_by',
   })
   @Expose({
     name: 'updated_by',
   })
-  public updatedBy: number;
+  public updatedBy: string;
 
   @ApiProperty({
     type: Number,

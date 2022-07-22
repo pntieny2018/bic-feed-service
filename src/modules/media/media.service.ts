@@ -165,7 +165,7 @@ export class MediaService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkValidMedia(mediaIds: string[], createdBy: number): Promise<boolean> {
+  public async checkValidMedia(mediaIds: string[], createdBy: string): Promise<boolean> {
     if (mediaIds.length === 0) return true;
 
     const getMediaList = await this._mediaModel.findAll({
@@ -183,7 +183,7 @@ export class MediaService {
 
   public async createIfNotExist(
     data: MediaDto,
-    createdBy: number,
+    createdBy: string,
     transaction: Transaction
   ): Promise<IMedia[]> {
     const { images, files, videos } = data;

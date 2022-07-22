@@ -23,6 +23,7 @@ import { PostPrivacy } from '../../database/models/post.model';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleService } from '../../modules/article/article.service';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class ArticleListener {
@@ -133,7 +134,7 @@ export class ArticleListener {
         actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [0]
+        [NIL_UUID]
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
@@ -288,7 +289,7 @@ export class ArticleListener {
           actor.id,
           id,
           audience.groups.map((g) => g.id),
-          [0]
+          [NIL_UUID]
         );
       } catch (error) {
         this._logger.error(error, error?.stack);

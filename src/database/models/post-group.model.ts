@@ -13,7 +13,7 @@ import { PostModel } from './post.model';
 
 export interface IPostGroup {
   postId: string;
-  groupId: number;
+  groupId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -29,7 +29,7 @@ export class PostGroupModel extends Model implements IPostGroup {
 
   @PrimaryKey
   @Column
-  public groupId: number;
+  public groupId: string;
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;

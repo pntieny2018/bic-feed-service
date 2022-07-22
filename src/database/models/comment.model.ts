@@ -44,8 +44,8 @@ export interface IComment {
   parent?: IComment;
   content?: string;
   giphyId?: string;
-  createdBy: number;
-  updatedBy: number;
+  createdBy: string;
+  updatedBy: string;
   createdAt?: Date;
   updatedAt?: Date;
   post: IPost;
@@ -88,7 +88,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   public totalReply?: number;
 
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @Column
   public edited?: boolean;
@@ -98,7 +98,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   public giphyId: string;
 
   @Column
-  public updatedBy: number;
+  public updatedBy: string;
 
   @CreatedAt
   @Column

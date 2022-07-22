@@ -7,7 +7,7 @@ export const mockedUpdateArticleDto: UpdateArticleDto = {
   series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
   hashtags: ['hashtag1'],
   audience: {
-    groupIds: [2],
+    groupIds: ['855bedeb-b708-4e13-8c68-131d92cd79b3'],
     userIds: [],
   },
   content: 'bbb',
@@ -20,7 +20,7 @@ export const mockedUpdateArticleDto: UpdateArticleDto = {
     videos: [],
     files: [],
   },
-  mentions: [2],
+  mentions: ['855bedeb-b708-4e13-8c68-131d92cd79b2'],
   setting: {
     canReact: true,
     canComment: true,

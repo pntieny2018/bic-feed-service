@@ -36,7 +36,7 @@ export class CategoryResponseDto {
     name: 'created_by',
   })
   @Expose()
-  public createdBy: number;
+  public createdBy: string;
 
   @ApiProperty({
     name: 'created_at',

@@ -49,8 +49,8 @@ export enum PostPrivacy {
 }
 export interface IPost {
   id: string;
-  createdBy: number;
-  updatedBy: number;
+  createdBy: string;
+  updatedBy: string;
   content: string;
   lang?: string;
   commentsCount: number;
@@ -157,11 +157,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @AllowNull(false)
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @AllowNull(false)
   @Column
-  public updatedBy: number;
+  public updatedBy: string;
 
   @CreatedAt
   @Column
@@ -216,7 +216,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   public reactionsCount: string;
 
-  public static loadMarkReadPost(authUserId: number, alias?: string): [Literal, string] {
+  public static loadMarkReadPost(authUserId: string, alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     return [
@@ -228,7 +228,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
-  public static loadLock(groupIds: number[], alias?: string): [Literal, string] {
+  public static loadLock(groupIds: string[], alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
     const postGroupTable = PostGroupModel.tableName;
     return [
@@ -371,7 +371,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     order,
   }: {
     authUser: UserDto;
-    groupIds: number[];
+    groupIds: string[];
     isImportant: boolean;
     idGT?: number;
     idGTE?: any;
@@ -589,7 +589,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     limit,
     order,
   }: {
-    authUserId: number;
+    authUserId: string;
     isImportant: boolean;
     idGT?: number;
     idGTE?: any;
@@ -687,8 +687,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }
 
   public static async getTotalImportantPostInGroups(
-    userId: number,
-    groupIds: number[],
+    userId: string,
+    groupIds: string[],
     constraints: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();
@@ -713,7 +713,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }
 
   public static async getTotalImportantPostInNewsFeed(
-    userId: number,
+    userId: string,
     constraints: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();

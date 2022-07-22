@@ -2,7 +2,7 @@ import { UpdatePostDto } from '../../../dto/requests';
 
 export const mockedUpdatePostDto: UpdatePostDto = {
   audience: {
-    groupIds: [2],
+    groupIds: ['7251dac7-5088-4a33-b900-d1b058edaf98'],
     userIds: [],
   },
   content: 'bbb',

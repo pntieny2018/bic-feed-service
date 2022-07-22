@@ -11,5 +11,5 @@ export class GetTimelineDto extends PageOptionsDto {
   @Expose({
     name: 'group_id',
   })
-  public groupId: number;
+  public groupId: string;
 }
