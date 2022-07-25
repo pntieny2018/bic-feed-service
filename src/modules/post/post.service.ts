@@ -264,31 +264,28 @@ export class PostService {
    * @returns Promise resolve PageDto<PostResponseDto>
    * @throws HttpException
    */
-  public async getDraftPosts(
+   public async getDraftPosts(
     authUserId: number,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order, isProcessing } = getDraftPostDto;
-
     const condition = {
       createdBy: authUserId,
       isDraft: true,
     };
-    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
 
+    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes: {
         exclude: ['commentsCount'],
       },
-
       include: [
         {
           model: PostGroupModel,
           attributes: ['groupId'],
           required: false,
         },
-
         {
           model: MediaModel,
           through: {
@@ -306,7 +303,6 @@ export class PostService {
             'status',
             'mimeType',
           ],
-
           required: false,
         },
         {
@@ -314,10 +310,8 @@ export class PostService {
           required: false,
         },
       ],
-
       order: [['createdAt', order]],
     });
-
     const jsonPostsFilterByMediaStatus = rows
       .map((r) => r.toJSON())
       .filter((row) => {
@@ -327,7 +321,6 @@ export class PostService {
           (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
         );
       });
-
     const total = jsonPostsFilterByMediaStatus.length;
     const rowsSliced = jsonPostsFilterByMediaStatus.slice(offset, limit + offset);
 

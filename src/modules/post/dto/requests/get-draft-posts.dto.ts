@@ -32,9 +32,7 @@ export class GetDraftPostDto extends PageOptionsDto {
   @Expose({ name: 'is_processing' })
   @Transform(({ value }) => {
     if (value === 'true') return true;
-
     if (value === 'false') return false;
-
     return null;
   })
   public isProcessing?: boolean;
