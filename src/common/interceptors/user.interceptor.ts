@@ -13,6 +13,7 @@ export class InjectUserInterceptor implements NestInterceptor {
       request[this._type][REQUEST_CONTEXT] = {
         user: request.user,
         token: request.headers.authorization,
+        userPayload: request.headers.user,
       };
     }
 
