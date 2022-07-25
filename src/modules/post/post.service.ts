@@ -268,71 +268,130 @@ export class PostService {
     authUserId: number,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order } = getDraftPostDto;
+    const { limit, offset, order, isProcessing } = getDraftPostDto;
+
+    const condition = {
+      createdBy: authUserId,
+
+      isDraft: true,
+    };
+    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
 
     const rows = await this.postModel.findAll<PostModel>({
       where: {
         createdBy: authUserId,
+
         isDraft: true,
       },
+
+      where: condition,
+
       attributes: {
         exclude: ['commentsCount'],
       },
+
       include: [
         {
           model: PostGroupModel,
+
           attributes: ['groupId'],
+
           required: false,
         },
+
         {
           model: MediaModel,
+
           through: {
             attributes: [],
           },
+
           attributes: [
             'id',
+
             'url',
+
             'type',
+
             'name',
+
             'width',
+
             'height',
+
             'size',
+
             'thumbnails',
+
             'status',
+
             'mimeType',
           ],
+
           required: false,
         },
+
         {
           model: MentionModel,
+
           required: false,
         },
       ],
+
       order: [['createdAt', order]],
     });
+
     const jsonPostsFilterByMediaStatus = rows
+
       .map((r) => r.toJSON())
+
       .filter((row) => {
         if (getDraftPostDto.isFailed === null) return true;
+
         const failedItem = row.media.find((e) => e.status === MediaStatus.FAILED);
+
         return (
           (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
         );
       });
+
+    const total = jsonPostsFilterByMediaStatus.length;
+
+    const rowsSliced = jsonPostsFilterByMediaStatus.slice(offset, limit + offset);
+
     await Promise.all([
       this.mentionService.bindMentionsToPosts(jsonPostsFilterByMediaStatus),
+
       this.bindActorToPost(jsonPostsFilterByMediaStatus),
+
       this.bindAudienceToPost(jsonPostsFilterByMediaStatus),
+
+      this.mentionService.bindMentionsToPosts(rowsSliced),
+
+      this.bindActorToPost(rowsSliced),
+
+      this.bindAudienceToPost(rowsSliced),
     ]);
+
     const result = this.classTransformer
+
       .plainToInstance(PostResponseDto, jsonPostsFilterByMediaStatus, {
         excludeExtraneousValues: true,
       })
+
       .slice(offset * limit, limit * (offset + 1));
+
+    const result = this.classTransformer.plainToInstance(PostResponseDto, rowsSliced, {
+      excludeExtraneousValues: true,
+    });
 
     return new PageDto<PostResponseDto>(result, {
       total: jsonPostsFilterByMediaStatus.length,
+
+      total,
+
       limit,
+
       offset,
     });
   }
