@@ -525,7 +525,7 @@ export class CommentService {
 
   private async _getComments(
     getCommentsDto: GetCommentsDto,
-    authUserId?: number,
+    authUserId?: string,
     aroundId = NIL_UUID
   ): Promise<PageDto<CommentResponseDto>> {
     const { limit } = getCommentsDto;
@@ -726,7 +726,7 @@ export class CommentService {
    * @returns Promise resolve void
    */
   public async bindUserToComment(commentsResponse: any[]): Promise<void> {
-    const actorIds: number[] = [];
+    const actorIds: string[] = [];
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
@@ -768,7 +768,7 @@ export class CommentService {
    */
   public async bindChildrenToComment(
     comments: any[],
-    authUserId?: number,
+    authUserId?: string,
     limit = 10
   ): Promise<void> {
     const subQuery = [];

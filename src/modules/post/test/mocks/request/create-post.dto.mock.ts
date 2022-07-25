@@ -2,7 +2,7 @@ import { CreatePostDto } from '../../../dto/requests';
 
 export const mockedCreatePostDto: CreatePostDto = {
   audience: {
-    groupIds: [1],
+    groupIds: ['7251dac7-5088-4a33-b900-d1b058edaf98'],
     userIds: [],
   },
   content: 'bbbbbb',

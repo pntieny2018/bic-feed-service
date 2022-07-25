@@ -34,7 +34,7 @@ export class RecentSearchService {
    * @returns Promise resolve RecentSearchDto[] or []
    */
   public async get(
-    createdBy: number,
+    createdBy: string,
     getRecentSearchPostDto: GetRecentSearchPostDto
   ): Promise<RecentSearchesDto> {
     const { limit, offset, target } = getRecentSearchPostDto;
@@ -71,7 +71,7 @@ export class RecentSearchService {
    * @throws HttpException
    */
   public async create(
-    createdBy: number,
+    createdBy: string,
     createRecentSearchDto: CreateRecentSearchDto
   ): Promise<RecentSearchDto> {
     try {
@@ -116,7 +116,7 @@ export class RecentSearchService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async delete(createdBy: number, id: number): Promise<boolean> {
+  public async delete(createdBy: string, id: number): Promise<boolean> {
     try {
       await this._recentSearchModel.destroy({
         where: {
@@ -140,7 +140,7 @@ export class RecentSearchService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async clean(createdBy: number, target: RecentSearchType): Promise<boolean> {
+  public async clean(createdBy: string, target: RecentSearchType): Promise<boolean> {
     try {
       const filter = target === RecentSearchType.ALL ? {} : { target: target };
       await this._recentSearchModel.destroy({
@@ -162,10 +162,10 @@ export class RecentSearchService {
    * Need delete recent search item
    * If total stored recent search item are elder total accept (default: 1000000).
    * I will delete oldest stored recent search item
-   * @param createdBy Number
+   * @param createdBy String
    * @public
    */
-  public async needDeleteRecentSearchOverLimit(createdBy: number): Promise<boolean> {
+  public async needDeleteRecentSearchOverLimit(createdBy: string): Promise<boolean> {
     const total = await this._recentSearchModel.count({
       col: 'id',
       where: {

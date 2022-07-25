@@ -6,7 +6,7 @@ export class AppHelper {
    * @param userId Number
    * @returns App processors key header
    */
-  public static getAppServiceKey(userId: number): Record<string, any> {
+  public static getAppServiceKey(userId: string): Record<string, any> {
     return {
       [APP_SERVICE_KEY]: `${userId}.${StringHelper.randomStr(6)}`,
     };

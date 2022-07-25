@@ -174,7 +174,7 @@ export class ArticleService {
    */
   public async getPayloadSearch(
     { categories, series, actors, limit, offset }: SearchArticlesDto,
-    groupIds: number[]
+    groupIds: string[]
   ): Promise<{
     index: string;
     body: any;

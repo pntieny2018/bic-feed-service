@@ -233,7 +233,7 @@ export class SeriesService {
    */
   public async checkSeriesOwner(
     series: SeriesResponseDto | SeriesModel | ISeries,
-    authUserId: number
+    authUserId: string
   ): Promise<boolean> {
     if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
@@ -305,7 +305,7 @@ export class SeriesService {
     }
   }
 
-  public async checkValidSeries(seriesIds: string[], userId: number): Promise<void> {
+  public async checkValidSeries(seriesIds: string[], userId: string): Promise<void> {
     const seriesCount = await this._seriesModel.count({
       where: {
         id: seriesIds,

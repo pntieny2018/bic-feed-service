@@ -24,8 +24,8 @@ export interface ICategory {
   slug?: string;
   level: number;
   isActive: boolean;
-  createdBy: number;
-  updatedBy: number;
+  createdBy: string;
+  updatedBy: string;
   createdAt?: Date;
   updatedAt?: Date;
   posts?: IPost[];
@@ -66,10 +66,10 @@ export class CategoryModel
   public slug: string;
 
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @Column
-  public updatedBy: number;
+  public updatedBy: string;
 
   @CreatedAt
   @Column

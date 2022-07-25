@@ -16,7 +16,7 @@ export class AudienceRequestDto {
   @Expose({
     name: 'user_ids',
   })
-  public userIds?: number[] = [];
+  public userIds?: string[] = [];
 
   @ApiProperty({
     type: Number,
@@ -29,5 +29,5 @@ export class AudienceRequestDto {
   @Expose({
     name: 'group_ids',
   })
-  public groupIds: number[];
+  public groupIds: string[];
 }

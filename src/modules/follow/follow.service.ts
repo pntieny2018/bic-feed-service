@@ -111,9 +111,9 @@ export class FollowService {
    * @param limit Number
    */
   public async getUniqueUserFollows(
-    ignoreUserIds: number[],
-    targetGroupIds: number[],
-    groupIds: number[],
+    ignoreUserIds: string[],
+    targetGroupIds: string[],
+    groupIds: string[],
     followId = 0,
     limit = 1000
   ): Promise<{
@@ -229,7 +229,7 @@ export class FollowService {
     }
   }
 
-  public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
+  public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
     const { schema } = getDatabaseConfig();
 
     const rows = await this._sequelize.query(

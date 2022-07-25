@@ -23,7 +23,7 @@ export class CommentDissociationService {
   ) {}
 
   public async dissociateComment(
-    actorId: number,
+    actorId: string,
     commentId: string,
     postResponse: PostResponseDto,
     cb?: (prevComments: IComment[]) => void
@@ -171,9 +171,9 @@ export class CommentDissociationService {
   }
 
   public async dissociateReplyComment(
-    actorId: number,
+    actorId: string,
     comment: CommentModel,
-    groupAudienceIds: number[]
+    groupAudienceIds: string[]
   ): Promise<ReplyCommentRecipientDto> {
     try {
       const { schema } = getDatabaseConfig();
@@ -301,7 +301,7 @@ export class CommentDissociationService {
     }
   }
 
-  public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
+  public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
     const { schema } = getDatabaseConfig();
     if (!userIds.length) {
       return [];

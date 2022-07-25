@@ -1,4 +1,4 @@
 export class CreateFollowDto {
-  public userIds: number[];
-  public groupIds: number[];
+  public userIds: string[];
+  public groupIds: string[];
 }

@@ -14,7 +14,7 @@ export class UpdatePostDto {
     type: AudienceRequestDto,
     example: {
       ['user_ids']: [],
-      ['group_ids']: [1],
+      ['group_ids']: ['26799d29-189b-435d-b618-30fb70e9b09e'],
     },
   })
   @IsNotEmpty()
@@ -38,7 +38,7 @@ export class UpdatePostDto {
     example: {
       images: [
         {
-          id: 1,
+          id: '26799d29-189b-435d-b618-30fb70e9b09e',
           url: 'https://google.com',
           name: 'FIle name 1',
         },
@@ -74,13 +74,13 @@ export class UpdatePostDto {
     type: UserMentionDto,
     example: {
       dangdiep: {
-        id: 1,
+        id: '26799d29-189b-435d-b618-30fb70e9b09e',
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
       tuine: {
-        id: 2,
+        id: '26799d29-189b-435d-b618-30fb70e9b09f',
         username: 'tuine',
         avatar: 'https://google.com',
         fullname: 'Tui Day Ne',
@@ -100,7 +100,7 @@ export class UpdatePostDto {
     return value;
   })
   @ValidateMention()
-  public mentions?: number[];
+  public mentions?: string[];
 
   public isDraft?: boolean;
 }

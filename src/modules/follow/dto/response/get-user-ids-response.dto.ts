@@ -2,7 +2,7 @@ import { Expose } from 'class-transformer';
 
 export class GetUserIdsResponseData {
   @Expose()
-  public userIds: number[];
+  public userIds: string[];
 }
 export class GetUserIdsResponseDto {
   @Expose()

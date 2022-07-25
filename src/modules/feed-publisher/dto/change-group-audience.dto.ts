@@ -1,6 +1,6 @@
 export class ChangeGroupAudienceDto {
-  public attached?: number[] = [];
-  public current?: number[] = [];
-  public old?: number[] = [];
-  public detached?: number[] = [];
+  public attached?: string[] = [];
+  public current?: string[] = [];
+  public old?: string[] = [];
+  public detached?: string[] = [];
 }

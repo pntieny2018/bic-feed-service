@@ -1,17 +1,17 @@
 export class CommentRecipientDto {
-  public postOwnerId: number;
-  public mentionedUsersInComment: number[];
-  public mentionedUsersInPost: number[];
-  public actorIdsOfPrevComments: number[];
+  public postOwnerId: string;
+  public mentionedUsersInComment: string[];
+  public mentionedUsersInPost: string[];
+  public actorIdsOfPrevComments: string[];
 
   public static init(): CommentRecipientDto {
     return new CommentRecipientDto(null, [], [], []);
   }
   public constructor(
-    postOwnerId: number,
-    mentionedUsersInComment: number[],
-    mentionedUsersInPost: number[],
-    actorIdsOfPrevComments: number[]
+    postOwnerId: string,
+    mentionedUsersInComment: string[],
+    mentionedUsersInPost: string[],
+    actorIdsOfPrevComments: string[]
   ) {
     this.postOwnerId = postOwnerId;
     this.mentionedUsersInComment = mentionedUsersInComment;
