@@ -221,8 +221,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     return [
       Sequelize.literal(`(
-        COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
-          WHERE r.post_id = "PostModel".id AND r.user_id = ${authUserId}), false)
+        COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
+          WHERE r.post_id = "PostModel".id AND r.user_id = ${this.sequelize.escape(
+            authUserId
+          )}), false)
                )`),
       alias ? alias : 'markedReadPost',
     ];
@@ -235,10 +237,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       Sequelize.literal(`(
         CASE WHEN "PostModel".privacy = '${
           PostPrivacy.PRIVATE
-        }' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
-          WHERE spg.post_id = "PostModel".id AND spg.group_id IN(${groupIds.join(
-            ','
-          )}) ), FALSE) = FALSE THEN TRUE ELSE FALSE END
+        }' AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg
+          WHERE spg.post_id = "PostModel".id AND spg.group_id IN(${groupIds
+            .map((id) => this.sequelize.escape(id))
+            .join(',')}) ), FALSE) = FALSE THEN TRUE ELSE FALSE END
                )`),
       alias ? alias : 'isLocked',
     ];
@@ -249,12 +251,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     return [
       Sequelize.literal(`(
                   SELECT concat(1,reaction_name_list,'=',total_list) FROM (
-                         SELECT  
+                         SELECT
                                1,
                                string_agg(RN,',') AS reaction_name_list,
-                               string_agg(cast(TT as varchar),',') AS total_list 
+                               string_agg(cast(TT as varchar),',') AS total_list
                                FROM (
-                                       SELECT 
+                                       SELECT
                                            COUNT(${schema}.posts_reactions.id ) as TT,
                                            ${schema}.posts_reactions.reaction_name as RN,
                                            MIN(${schema}.posts_reactions.created_at) as minDate
@@ -396,7 +398,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     } else {
       condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
     }
-    const query = `SELECT 
+    const query = `SELECT
     "PostModel".*,
     "groups"."group_id" as "groupId",
     "mentions"."user_id" as "userId",
@@ -414,16 +416,16 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."mime_type" as "mimeType",
     "media"."thumbnails"
     FROM (
-      SELECT 
-      "p"."id", 
+      SELECT
+      "p"."id",
       "p"."comments_count" AS "commentsCount",
       "p"."total_users_seen" AS "totalUsersSeen",
-      "p"."is_important" AS "isImportant", 
-      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+      "p"."is_important" AS "isImportant",
+      "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft",
+      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare",
+      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS
       "createdAt", "p"."updated_at" AS "updatedAt",
-      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"
       FROM ${schema}.${postTable} AS "p"
@@ -437,11 +439,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
+      LEFT OUTER JOIN (
+        ${schema}.${postMediaTable} AS "media->PostMediaModel"
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
+      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
       ORDER BY "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this.sequelize.query(query, {
@@ -499,7 +501,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         AND g.group_id IN(:groupIds)
       )`;
     }
-    const query = `SELECT 
+    const query = `SELECT
     "PostModel".*,
     "groups"."group_id" as "groupId",
     "mentions"."user_id" as "userId",
@@ -517,27 +519,27 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."mime_type" as "mimeType",
     "media"."thumbnails"
     FROM (
-      SELECT 
-      "p"."id", 
-      "p"."comments_count" AS "commentsCount", 
+      SELECT
+      "p"."id",
+      "p"."comments_count" AS "commentsCount",
       "p"."total_users_seen" AS "totalUsersSeen",
       "p"."views",
       "p"."title",
       "p"."summary",
-      "p"."is_important" AS "isImportant", 
+      "p"."is_important" AS "isImportant",
       "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", "p"."is_article" AS "isArticle",
-      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+      "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare",
+      "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS
       "createdAt", "p"."updated_at" AS "updatedAt",
-      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+      COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost",
-      CASE WHEN p.privacy = '${PostPrivacy.PRIVATE}' 
-            AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg 
-        WHERE spg.post_id = p.id AND spg.group_id IN(:userGroupIds) ), FALSE) = FALSE THEN TRUE ELSE FALSE 
+      CASE WHEN p.privacy = '${PostPrivacy.PRIVATE}'
+            AND COALESCE((SELECT true FROM ${schema}.${postGroupTable} as spg
+        WHERE spg.post_id = p.id AND spg.group_id IN(:userGroupIds) ), FALSE) = FALSE THEN TRUE ELSE FALSE
       END as "isLocked"
       FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false 
+      WHERE "p"."is_draft" = false
           AND "p"."is_article" = true AND (
           "p"."privacy" != '${PostPrivacy.SECRET}' OR EXISTS(
         SELECT 1
@@ -549,11 +551,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
+      LEFT OUTER JOIN (
+        ${schema}.${postMediaTable} AS "media->PostMediaModel"
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
+      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
       ORDER BY ${orderField ? `"${orderField}"` : 'RANDOM()'} ${orderField ? order : ''}`;
     const rows: any[] = await this.sequelize.query(query, {
@@ -609,13 +611,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
-    let subSelect = `SELECT "p"."id", 
+    let subSelect = `SELECT "p"."id",
     "p"."comments_count" AS "commentsCount",
     "p"."total_users_seen" AS "totalUsersSeen",
-    "p"."is_important" AS "isImportant", 
-    "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft", 
-    "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare", 
-    "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS 
+    "p"."is_important" AS "isImportant",
+    "p"."important_expired_at" AS "importantExpiredAt", "p"."is_draft" AS "isDraft",
+    "p"."can_comment" AS "canComment", "p"."can_react" AS "canReact", "p"."can_share" AS "canShare",
+    "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS
     "createdAt", "p"."updated_at" AS "updatedAt", "is_seen_post" AS "isSeenPost"`;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
@@ -630,11 +632,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 				FROM ${schema}.${userMarkReadPostTable} as u
 				WHERE u.user_id = :authUserId AND u.post_id = p.id
 		  ))`;
-      subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r 
+      subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
                                   WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
                       ) AS "markedReadPost"`;
     }
-    const query = `SELECT 
+    const query = `SELECT
     "PostModel".*,
     "groups"."group_id" as "groupId",
     "mentions"."user_id" as "userId",
@@ -656,15 +658,15 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
       WHERE "p"."is_draft" = false ${condition}
-      ORDER BY "is_seen_post" ASC, "p"."created_at" ${order} 
+      ORDER BY "is_seen_post" ASC, "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
       LEFT JOIN ${schema}.${postGroupTable} AS "groups" ON "PostModel"."id" = "groups"."post_id"
-      LEFT OUTER JOIN ( 
-        ${schema}.${postMediaTable} AS "media->PostMediaModel" 
+      LEFT OUTER JOIN (
+        ${schema}.${postMediaTable} AS "media->PostMediaModel"
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id" 
-      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post' 
+      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+      LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
       ORDER BY "PostModel"."isSeenPost" ASC,"PostModel"."createdAt" ${order}
       `;
