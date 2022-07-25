@@ -6,7 +6,7 @@ export class ReactionDto extends CreateReactionDto {
   @IsNotEmpty()
   @IsNumber()
   @Expose()
-  public userId: number;
+  public userId: string;
 
   @IsNotEmpty()
   @IsDate()
@@ -19,7 +19,7 @@ export class ReactionDto extends CreateReactionDto {
 
   public constructor(
     createReactionDto: CreateReactionDto,
-    { userId, createdAt, reactionId }: { userId: number; createdAt: Date; reactionId: number }
+    { userId, createdAt, reactionId }: { userId: string; createdAt: Date; reactionId: number }
   ) {
     super(createReactionDto);
     this.userId = userId;
