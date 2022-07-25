@@ -151,14 +151,14 @@ describe('ArticleListener', () => {
         canShare: false,
         commentsCount: 0,
         content: '',
-        createdBy: 0,
+        createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
         isArticle: false,
         isDraft: false,
         isImportant: false,
-        updatedBy: 0,
+        updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
-        groups: [{ postId: '1', groupId: 2 }],
+        groups: [{ postId: 'b0d0287a-3ec9-4b9b-8032-2c491d954945', groupId: 'f39fe072-69d5-48f4-96a9-da54f00e73e0' }],
         series: []
       },
     });
@@ -206,7 +206,7 @@ describe('ArticleListener', () => {
     it('should success even processVideo and savePostEditedHistory and updateTotalArticle error', async () => {
       articleHasBeenPublishedEvent.payload.article.isDraft = false
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockRejectedValue(new Error('1'))
+      postService.processVideo.mockRejectedValue(new Error('b0d0287a-3ec9-4b9b-8032-2c491d954945'))
       postService.savePostEditedHistory.mockRejectedValue(new Error('2'))
       seriesService.updateTotalArticle.mockRejectedValue(new Error('3'))
       elasticsearchService.index.mockResolvedValue()
@@ -233,13 +233,13 @@ describe('ArticleListener', () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
       postService.processVideo.mockResolvedValue()
       postService.savePostEditedHistory.mockResolvedValue()
-      elasticsearchService.update.mockResolvedValue()
+      elasticsearchService.index.mockResolvedValue()
       feedPublisherService.fanoutOnWrite.mockResolvedValue()
 
       await articleListener.onArticleUpdated(articleHasBeenUpdatedEvent);
       expect(postService.processVideo).toBeCalled();
       expect(postService.savePostEditedHistory).toBeCalled();
-      expect(elasticsearchService.update).toBeCalled();
+      expect(elasticsearchService.index).toBeCalled();
     });
   });
 

@@ -111,7 +111,7 @@ export const mockedArticleData = {
   markedReadPost: false,
   groups: [
     {
-      groupId: 1,
+      groupId: '838ca621-e37d-414b-babf-4efc6ac2b5aa',
       postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
     },
   ],

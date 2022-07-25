@@ -231,13 +231,13 @@ describe('NotificationService', () => {
       const rsp = await commentDissociationService.dissociateReplyComment(
         mockUserDto.id,
         mockCommentModel as unknown as CommentModel,
-        [1, 2, 3]
+        ['8e4d4988-0897-4854-8bbc-aef21dac7618', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e7', '0f253efd-4272-48c1-ab9e-9663c172a96e']
       );
     });
 
     it('Func: getValidUserIds', async () => {
       sequelizeConnection.query = jest.fn();
-      await commentDissociationService.getValidUserIds([1, 2, 3], [4, 5, 6]);
+      await commentDissociationService.getValidUserIds(['8e4d4988-0897-4854-8bbc-aef21dac7618', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e7', '0f253efd-4272-48c1-ab9e-9663c172a96e'], ['8e4d4988-0897-4854-8bbc-aef21dac7619', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e8', '0f253efd-4272-48c1-ab9e-9663c172a96f']);
       expect(sequelizeConnection.query).toBeCalledTimes(1);
     });
   });
