@@ -22,9 +22,7 @@ export class GetDraftPostDto extends PageOptionsDto {
 
   @ApiProperty({
     name: 'is_processing',
-
     required: false,
-
     type: Boolean,
   })
   @IsOptional()
