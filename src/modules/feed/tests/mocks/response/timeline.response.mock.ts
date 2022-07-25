@@ -26,7 +26,7 @@ export const mockTimelineResponse = {
       },
       isDraft: false,
       actor: {
-        id: 15,
+        id: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
         username: 'trangha',
         fullname: 'Hà Phạm Diễm Trang',
         avatar:
@@ -45,7 +45,7 @@ export const mockTimelineResponse = {
       markedReadPost: false,
       createdAt: '2022-04-20T06:47:16.975Z',
       updatedAt: '2022-04-20T06:47:16.975Z',
-      createdBy: 15,
+      createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
       audience: {
         groups: [
           {
@@ -81,7 +81,7 @@ export const mockTimelineResponse = {
       },
       isDraft: false,
       actor: {
-        id: 15,
+        id: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
         username: 'trangha',
         fullname: 'Hà Phạm Diễm Trang',
         avatar:
@@ -101,7 +101,7 @@ export const mockTimelineResponse = {
       markedReadPost: false,
       createdAt: '2022-04-20T06:45:11.553Z',
       updatedAt: '2022-04-20T06:45:35.898Z',
-      createdBy: 15,
+      createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
       audience: {
         groups: [
           {

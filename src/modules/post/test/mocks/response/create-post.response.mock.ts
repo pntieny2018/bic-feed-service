@@ -26,7 +26,7 @@ export const mockedCreatePostResponse = {
   isDraft: true,
   isProcessing: false,
   actor: {
-    id: 15,
+    id: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
     username: 'quannhac',
     fullname: 'Lý Quân Nhạc',
     avatar:
@@ -39,7 +39,7 @@ export const mockedCreatePostResponse = {
   markedReadPost: false,
   createdAt: '2022-05-19T07:23:55.601Z',
   updatedAt: '2022-05-19T07:23:55.601Z',
-  createdBy: 15,
+  createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
   audience: {
     groups: [
       {
@@ -65,8 +65,8 @@ export const mockedPostCreated = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   isDraft: true,
   content: 'bbbbbb',
-  createdBy: 15,
-  updatedBy: 15,
+  createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
+  updatedBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
   isImportant: false,
   importantExpiredAt: null,
   canShare: true,

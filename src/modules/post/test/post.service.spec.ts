@@ -41,6 +41,7 @@ import { mockedPostData, mockedPostResponse } from './mocks/response/post.respon
 import { PostResponseDto } from '../dto/responses';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUserAuth } from './mocks/user.mock';
+import { AuthorityFactory } from '../../authority/authority.factory';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -69,6 +70,12 @@ describe('PostService', () => {
         PostService,
         PostPolicyService,
         AuthorityService,
+        {
+          provide: AuthorityFactory,
+          useValue: {
+            createForUser: jest.fn()
+          },
+        },
         {
           provide: ElasticsearchService,
           useClass: jest.fn(),
@@ -407,7 +414,7 @@ describe('PostService', () => {
     const mockedDataDeletePost = createMock<PostModel>(mockedPostData);
 
     it('Delete post successfully', async () => {
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      // postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       authorityService.checkCanDeletePost = jest.fn().mockReturnThis();
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -647,7 +654,7 @@ describe('PostService', () => {
           sort: [{ createdAt: 'desc' }],
         },
         from: 0,
-        size: '09c88080-a975-44e1-ae67-89f3d37e114f',
+        size: 1,
       };
       const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
@@ -683,7 +690,7 @@ describe('PostService', () => {
           sort: [{ createdAt: 'desc' }],
         },
         from: 0,
-        size: '09c88080-a975-44e1-ae67-89f3d37e114f',
+        size: 1,
       };
       const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
@@ -724,7 +731,7 @@ describe('PostService', () => {
           sort: [{ createdAt: 'desc' }],
         },
         from: 0,
-        size: '09c88080-a975-44e1-ae67-89f3d37e114f',
+        size: 1,
       };
       const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
@@ -758,7 +765,7 @@ describe('PostService', () => {
                           query: 'aaaa',
                           fields: ['content.text.default', 'content.text.ascii'],
                           type: 'phrase',
-                          boost: '69fa2be3-5d43-4edf-84d9-650ce6799b41',
+                          boost: 2,
                         },
                       },
                       {
@@ -779,7 +786,7 @@ describe('PostService', () => {
                   },
                 },
               ],
-              minimum_should_match: '09c88080-a975-44e1-ae67-89f3d37e114f',
+              minimum_should_match: 1,
             },
           },
           highlight: {
@@ -796,7 +803,7 @@ describe('PostService', () => {
           sort: [{ _score: 'desc' }, { createdAt: 'desc' }],
         },
         from: 0,
-        size: '09c88080-a975-44e1-ae67-89f3d37e114f',
+        size: 1,
       };
       const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
@@ -1033,7 +1040,7 @@ describe('PostService', () => {
     it('Should successfully', async () => {
       postService.findPost = jest.fn().mockResolvedValue(mockIPost);
 
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      authorityService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
 
       postEditedHistoryModelMock.findAndCountAll = jest.fn().mockResolvedValue({
         rows: mockPostEditedHistoryModelArr,
@@ -1046,16 +1053,16 @@ describe('PostService', () => {
         mockGetPostEditedHistoryDto
       );
 
-      expect(postService.checkPostOwner).toBeCalledTimes(1);
+      expect(authorityService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.findPost).toBeCalledTimes(1);
     });
 
     it('User not in post groups', async () => {
       postService.findPost = jest.fn().mockResolvedValue(mockIPost);
 
-      postService.checkPostOwner = jest
-        .fn()
-        .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
+      // postService.checkPostOwner = jest
+      //   .fn()
+      //   .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
 
       postEditedHistoryModelMock.findAndCountAll = jest
         .fn()
@@ -1071,7 +1078,7 @@ describe('PostService', () => {
         expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN);
       }
 
-      expect(postService.checkPostOwner).toBeCalledTimes(1);
+      // expect(postService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.findPost).toBeCalledTimes(1);
     });
   });
@@ -1090,7 +1097,7 @@ describe('PostService', () => {
         }
       }
       try{
-      const result = postService.checkContent(updatePostDto);
+      const result = postService.checkContent(updatePostDto.content, updatePostDto.media);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
