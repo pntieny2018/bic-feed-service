@@ -27,7 +27,7 @@ export class AuthService {
     const user = this._classTransformer.plainToInstance(UserDto, {
       email: payload['email'],
       username: payload['cognito:username'],
-      id: parseInt(payload['custom:bein_user_id']),
+      id: payload['custom:bein_user_id'],
       staffRole: payload['custom:bein_staff_role'],
     });
     user.profile = await this._userService.get(user.id);
