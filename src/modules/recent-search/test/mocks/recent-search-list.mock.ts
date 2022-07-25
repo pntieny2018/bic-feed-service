@@ -13,16 +13,16 @@ export const createRecentSearchDto: CreateRecentSearchDto = {
 export const mockedRecentSearchList = [
   {
     id: 1,
-    createdBy: 1,
-    updatedBy: 1,
+    createdBy: '85dfe22e-866d-49a5-bbef-3fbc72e4febf',
+    updatedBy: '85dfe22e-866d-49a5-bbef-3fbc72e4febf',
     totalSearched: 1,
     target: 'post',
     keyword: 'aaaaa',
   },
   {
     id: 2,
-    createdBy: 1,
-    updatedBy: 1,
+    createdBy: '85dfe22e-866d-49a5-bbef-3fbc72e4febf',
+    updatedBy: '85dfe22e-866d-49a5-bbef-3fbc72e4febf',
     totalSearched: 1,
     target: 'post',
     keyword: 'bbbb',
