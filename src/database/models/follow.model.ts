@@ -2,8 +2,8 @@ import { AutoIncrement, Column, CreatedAt, Model, PrimaryKey, Table } from 'sequ
 
 export interface IFollow {
   id: number;
-  userId: number;
-  groupId: number;
+  userId: string;
+  groupId: string;
   createdAt?: Date;
 }
 
@@ -18,10 +18,10 @@ export class FollowModel extends Model<IFollow, Omit<IFollow, 'id'>> {
   public id: number;
 
   @Column
-  public userId: number;
+  public userId: string;
 
   @Column
-  public groupId: number;
+  public groupId: string;
 
   @CreatedAt
   @Column
