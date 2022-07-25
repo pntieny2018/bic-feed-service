@@ -120,7 +120,8 @@ describe('PostController', () => {
   describe('updatePost', () => {
     it('Update post successfully', async () => {
       authorityService.checkCanUpdatePost = jest.fn().mockReturnThis();
-      postService.checkPostOwner = jest.fn().mockReturnThis();
+      authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
+      authorityService.checkCanDeletePost = jest.fn().mockReturnThis();
       postService.updatePost = jest.fn().mockResolvedValue(true);
       postService.getPost = jest.fn().mockResolvedValue(mockedPostResponse);
 
@@ -130,13 +131,14 @@ describe('PostController', () => {
         mockedUpdatePostDto
       );
       expect(authorityService.checkCanUpdatePost).toBeCalledTimes(1);
+      expect(authorityService.checkCanCreatePost).toBeCalledTimes(1);
+      expect(authorityService.checkCanDeletePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledWith(
         mockedPostResponse,
         userDto,
         mockedUpdatePostDto
       );
-      expect(postService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.getPost).toBeCalledTimes(2);
       expect(postService.getPost).toBeCalledWith(mockedPostResponse.id, userDto, new GetPostDto());
       expect(result).toBe(mockedPostResponse);

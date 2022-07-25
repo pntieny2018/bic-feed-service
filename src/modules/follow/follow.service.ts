@@ -10,6 +10,7 @@ import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FollowService {
@@ -114,11 +115,11 @@ export class FollowService {
     ignoreUserIds: string[],
     targetGroupIds: string[],
     groupIds: string[],
-    followId = 0,
+    followId = NIL_UUID,
     limit = 1000
   ): Promise<{
-    userIds: number[];
-    latestFollowId: number;
+    userIds: string[];
+    latestFollowId: string;
   }> {
     try {
       const schema = this._databaseConfig.schema;
@@ -155,14 +156,14 @@ export class FollowService {
 
       return {
         userIds: [],
-        latestFollowId: 0,
+        latestFollowId: NIL_UUID,
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
       return {
         userIds: [],
-        latestFollowId: 0,
+        latestFollowId: NIL_UUID,
       };
     }
   }
@@ -175,13 +176,13 @@ export class FollowService {
    * @param limit Number
    */
   public async filterUserFollows(
-    ignoreUserIds: number[],
-    groupIds: number[],
-    followId = 0,
+    ignoreUserIds: string[],
+    groupIds: string[],
+    followId = NIL_UUID,
     limit = 1000
   ): Promise<{
-    userIds: number[];
-    latestFollowId: number;
+    userIds: string[];
+    latestFollowId: string;
   }> {
     this._logger.debug(
       `[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}. groupIds: ${groupIds}`
@@ -217,14 +218,14 @@ export class FollowService {
 
       return {
         userIds: [],
-        latestFollowId: 0,
+        latestFollowId: NIL_UUID,
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
       return {
         userIds: [],
-        latestFollowId: 0,
+        latestFollowId: NIL_UUID,
       };
     }
   }
