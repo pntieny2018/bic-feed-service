@@ -5,7 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class GetUserFollowsDto {
   @ApiProperty({
     description: 'user will be ignore to collection',
-    type: [Number],
+    type: [String],
     required: false,
     name: 'ignore_user_ids',
   })
@@ -23,7 +23,7 @@ export class GetUserFollowsDto {
   public ignoreUserIds: string[] = ['00000000-0000-0000-0000-000000000000'];
 
   @ApiProperty({
-    type: [Number],
+    type: [String],
     name: 'group_ids',
   })
   @Type(() => Array)
@@ -43,13 +43,13 @@ export class GetUserFollowsDto {
     name: 'follow_id',
     default: 0,
     required: false,
-    type: Number,
+    type: String,
   })
-  @Type(() => Number)
+  @Type(() => String)
   @Expose({
     name: 'follow_id',
   })
-  public followId = 0;
+  public followId = '00000000-0000-0000-0000-000000000000';
 
   @ApiProperty({
     name: 'limit',

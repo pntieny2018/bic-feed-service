@@ -1,4 +1,3 @@
-import { CategoryController } from '../category.controller';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoryService } from '../category.service';
 import { authUserMock } from '../../comment/tests/mocks/user.mock';

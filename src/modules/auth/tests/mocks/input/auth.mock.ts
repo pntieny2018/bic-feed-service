@@ -32,7 +32,7 @@ export const cognitoKeys = [
 export const payLoad = {
   sub: '62436e56-9a91-49e8-951b-03b1299212cb',
   email_verified: true,
-  'custom:bein_user_id': '4',
+  'custom:bein_user_id': '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
   'custom:bein_staff_role': 'ADMINISTRATOR',
   iss: 'https://cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_wCKCkEdVr',
   'custom:username': 'tronghm',

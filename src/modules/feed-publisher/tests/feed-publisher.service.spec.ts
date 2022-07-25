@@ -63,7 +63,7 @@ describe('FeedPublisherService', () => {
       sentryService.captureException = jest.fn();
 
       await feedPublisherService.attachPostsForUsersNewsFeed(
-        [1, 2, 3],
+        ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
         ['a7850c03-c07d-4258-9712-c08cfd5c674d']
       );
 
@@ -80,7 +80,7 @@ describe('FeedPublisherService', () => {
 
       try {
         await feedPublisherService.attachPostsForUsersNewsFeed(
-          [1, 2, 3],
+          ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
           ['a7850c03-c07d-4258-9712-c08cfd5c674d']
         );
       } catch (e) {
@@ -99,7 +99,7 @@ describe('FeedPublisherService', () => {
       sentryService.captureException = jest.fn();
 
       await feedPublisherService.attachPostForAnyNewsFeed(
-        [1, 2, 3],
+        ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
         'a7850c03-c07d-4258-9712-c08cfd5c674d'
       );
 
@@ -116,7 +116,7 @@ describe('FeedPublisherService', () => {
 
       try {
         await feedPublisherService.attachPostForAnyNewsFeed(
-          [1, 2, 3],
+          ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
           'a7850c03-c07d-4258-9712-c08cfd5c674d'
         );
       } catch (e) {
@@ -134,7 +134,7 @@ describe('FeedPublisherService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       await feedPublisherService.detachPostForAnyNewsFeed(
-        [1, 2, 3],
+        ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
         'a7850c03-c07d-4258-9712-c08cfd5c674d'
       );
 
@@ -151,7 +151,7 @@ describe('FeedPublisherService', () => {
 
       try {
         await feedPublisherService.detachPostForAnyNewsFeed(
-          [1, 2, 3],
+          ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
           'a7850c03-c07d-4258-9712-c08cfd5c674d'
         );
       } catch (e) {
@@ -173,8 +173,8 @@ describe('FeedPublisherService', () => {
 
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
-      await feedPublisherService['processFanout'](1, 'a7850c03-c07d-4258-9712-c08cfd5c674d', {
-        attached: [2],
+      await feedPublisherService['processFanout']('ccd73dd4-66ca-44a8-b0f6-1461a2465f83', 'a7850c03-c07d-4258-9712-c08cfd5c674d', {
+        attached: ['31c2e99b-88dd-40c8-9d1a-5ad7d54572c1'],
       });
 
       expect(followService.getUniqueUserFollows).toBeCalled();
@@ -188,8 +188,8 @@ describe('FeedPublisherService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        await feedPublisherService['processFanout'](1, 'a7850c03-c07d-4258-9712-c08cfd5c674d', {
-          attached: [1, 2],
+        await feedPublisherService['processFanout']('ccd73dd4-66ca-44a8-b0f6-1461a2465f83', 'a7850c03-c07d-4258-9712-c08cfd5c674d', {
+          attached: ['f845532e-abc9-451b-95d2-e37ae3ca74d0', '31c2e99b-88dd-40c8-9d1a-5ad7d54572c1'],
         });
       } catch (e) {
         expect(e.message).toEqual('Database connection error.');
@@ -204,7 +204,12 @@ describe('FeedPublisherService', () => {
     it('Should successfully', async () => {
       feedPublisherService['processFanout'] = jest.fn().mockResolvedValue(Promise.resolve());
 
-      feedPublisherService.fanoutOnWrite(1, 'a7850c03-c07d-4258-9712-c08cfd5c674d', [2, 3, 4], [5]);
+      feedPublisherService.fanoutOnWrite(
+        'f845532e-abc9-451b-95d2-e37ae3ca74d0',
+        'a7850c03-c07d-4258-9712-c08cfd5c674d',
+        ['1d2daa8a-a59f-4d0f-9a3d-024848a5690e', 'b735600e-f77e-4100-84d2-e5eaa4aa3dfb', '89c5fafa-b3b6-4535-9f8a-b3dd5e4c8143'],
+        ['c7bbf920-c3f1-4faf-8d56-bdbf2fa76f26']
+      );
 
       expect(feedPublisherService['processFanout']).toBeCalled();
     });
