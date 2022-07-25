@@ -301,7 +301,7 @@ export class PostService {
    * @returns Promise resolve PageDto<PostResponseDto>
    * @throws HttpException
    */
-  public async getDraftPosts(
+   public async getDraftPosts(
     authUserId: number,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
