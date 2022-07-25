@@ -42,12 +42,12 @@ describe('AuthorityService', () => {
   });
 
   const mockGroup: GroupSharedDto = {
-    id: 1,
+    id: 'a0ceb67b-1cf9-4f10-aa60-3ee6473017a3',
     name: 'group 1',
     icon: 'icon 1',
     privacy: GroupPrivacy.PRIVATE,
     child: {
-      public: [2, 3],
+      public: ['54366eb1-b428-4265-a71b-1b923a311506', '55a19f0a-4209-4fbd-8c44-f1c2fd350b10'],
       open: [],
       private: [],
       secret: [],
@@ -55,11 +55,11 @@ describe('AuthorityService', () => {
   };
 
   const userDtoMock = {
-    id: 1,
+    id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
     groups: [
       {
-        postId: 1,
-        groupId: 1,
+        postId: '79455b8f-0aad-4745-83db-9fe2ee4e1a09',
+        groupId: 'a0ceb67b-1cf9-4f10-aa60-3ee6473017a3',
       },
     ],
   } as any;
@@ -70,17 +70,17 @@ describe('AuthorityService', () => {
         groupService.isMemberOfSomeGroups.mockReturnValue(true);
         await service.checkCanReadPost(
           {
-            id: 1,
+            id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
             username: 'martine.baumbach',
             avatar: 'https://bein.group/baumbach.png',
             email: 'baumbach@tgm.vn',
             staffRole: 'normal',
             profile: {
-              id: 1,
+              id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
               fullname: 'Martine Baumbach',
               username: 'martine.baumbach',
               avatar: 'https://bein.group/baumbach.png',
-              groups: [1, 2],
+              groups: ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3', '54366eb1-b428-4265-a71b-1b923a311506'],
             },
           },
           userDtoMock
@@ -94,7 +94,7 @@ describe('AuthorityService', () => {
           groupService.isMemberOfSomeGroups.mockReturnValue(false);
           service.checkCanReadPost(
             {
-              id: 1,
+              id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
               username: 'martine.baumbach',
               avatar: 'https://bein.group/baumbach.png',
               email: 'baumbach@tgm.vn',
@@ -126,15 +126,15 @@ describe('AuthorityService', () => {
         commentsCount: 0,
         totalUsersSeen: 0,
         content: '',
-        createdBy: 0,
+        createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
         isArticle: false,
         isDraft: false,
         isImportant: false,
-        updatedBy: 0,
+        updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
         privacy: PostPrivacy.PUBLIC,
-        groups: [{ postId: '1', groupId: 2 }]
+        groups: [{ postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712', groupId: '54366eb1-b428-4265-a71b-1b923a311506' }]
       });
     });
 
@@ -149,15 +149,15 @@ describe('AuthorityService', () => {
           commentsCount: 0,
           totalUsersSeen: 0,
           content: '',
-          createdBy: 0,
+          createdBy: '00000000-0000-0000-0000-000000000000',
           id: '',
           isArticle: false,
           isDraft: false,
           isImportant: false,
-          updatedBy: 0,
+          updatedBy: '00000000-0000-0000-0000-000000000000',
           views: 0,
           privacy: PostPrivacy.PRIVATE,
-          groups: [{ postId: '1', groupId: 2 }]
+          groups: [{ postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712', groupId: '54366eb1-b428-4265-a71b-1b923a311506' }]
         });
       } catch (e) {
         expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN)
@@ -174,7 +174,7 @@ describe('AuthorityService', () => {
       groupService.getMany.mockResolvedValue([{id: 1, name: 'BIC to the moon'}])
       authorityFactory.createForUser.mockResolvedValue(ability)
       ability.can.mockResolvedValue(true)
-      await service.checkCanCreatePost(userDtoMock, [1]);
+      await service.checkCanCreatePost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3']);
       expect(groupService.isMemberOfGroups).toBeCalled();
       expect(groupService.getMany).toBeCalled();
       expect(authorityFactory.createForUser).toBeCalled();
@@ -191,15 +191,15 @@ describe('AuthorityService', () => {
         canShare: false,
         commentsCount: 0,
         content: '',
-        createdBy: 1,
+        createdBy: '853ab699-ee44-42ab-b98d-d190c4af66ee',
         id: '',
         isArticle: false,
         isDraft: false,
         isImportant: false,
         totalUsersSeen: 0,
-        updatedBy: 0,
+        updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0
-      }, [1]);
+      }, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3']);
       expect(groupService.isMemberOfSomeGroups).toBeCalled();
     });
   });

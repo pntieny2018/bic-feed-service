@@ -20,7 +20,7 @@ export class GetUserFollowsDto {
   @Expose({
     name: 'ignore_user_ids',
   })
-  public ignoreUserIds: number[] = [0];
+  public ignoreUserIds: string[] = ['00000000-0000-0000-0000-000000000000'];
 
   @ApiProperty({
     type: [Number],
@@ -37,7 +37,7 @@ export class GetUserFollowsDto {
   @Expose({
     name: 'group_ids',
   })
-  public groupIds: number[];
+  public groupIds: string[];
 
   @ApiProperty({
     name: 'follow_id',

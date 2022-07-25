@@ -175,8 +175,8 @@ export class FollowService {
    * @param limit Number
    */
   public async filterUserFollows(
-    ignoreUserIds: number[],
-    groupIds: number[],
+    ignoreUserIds: string[],
+    groupIds: string[],
     followId = 0,
     limit = 1000
   ): Promise<{

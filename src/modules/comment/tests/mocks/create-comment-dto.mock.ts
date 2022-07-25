@@ -77,7 +77,7 @@ const createCommentDto = {
     ],
     videos: [],
   },
-  mentions: [3],
+  mentions: ['fcaa3c4b-d4d8-4082-bda3-858dda6d42c7'],
 };
 
 const createTextCommentWithMentionNotInGroupDto = {
@@ -96,7 +96,7 @@ export const createdComment = {
   totalReply: 0,
   edited: false,
   actor: {
-    id: 1,
+    id: 'ca74387a-db80-448b-82a1-ed8507c90e4b',
     fullname: 'Martine Baumbach',
     username: 'martine.baumbach',
     avatar: 'https://bein.group/baumbach.png',
@@ -123,7 +123,7 @@ export const createdComment = {
   reactionsCount: {},
   mentions: {
     ['caitlyn.back']: {
-      id: 3,
+      id: 'fcaa3c4b-d4d8-4082-bda3-858dda6d42c7',
       fullname: 'Caitlyn Back',
       username: 'caitlyn.back',
       avatar: 'https://bein.group/back.png',
