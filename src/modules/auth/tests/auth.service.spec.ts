@@ -47,6 +47,7 @@ describe('AuthService', () => {
           provide: UserService,
           useValue: {
             get: jest.fn(),
+            getPermissions: jest.fn()
           },
         },
         {
@@ -135,12 +136,12 @@ describe('AuthService', () => {
       it('should return the user data', async () => {
         jest.spyOn(jwt, 'verify').mockImplementation(() => payLoad);
         userService.get.mockResolvedValue({
-          id: 4,
-          username: 'undefined',
+          id: '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
+          username: 'tronghm',
           fullname: 'Hoàng Minh Trọng',
           avatar:
             'https://bein-development-storage.s3.ap-southeast-1.amazonaws.com/public/a/f9/af95058bbbc7ace1630495801f5b8694.JPG',
-          groups: [1, 2],
+          groups: ['72cf4230-d641-4479-93e6-2b58828a07a6', '8c846fe3-a615-42ae-958a-33a43d24a033'],
         });
 
         const user = await authService.login(authInput.tokenValid);

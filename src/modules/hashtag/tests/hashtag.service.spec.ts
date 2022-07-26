@@ -166,7 +166,17 @@ describe('HashtagService', () => {
 
       expect(hashtagModel.findAll).toBeCalled();
       expect(hashtagModel.bulkCreate).toBeCalled();
-      expect(hashtagId).toEqual(['1', '1']);
+      expect(hashtagId).toEqual([
+        {
+          "id": "1",
+          "name": "Haha"
+        },
+        {
+          "id": "1",
+          "name": "haha",
+          "slug": "haha"
+        }
+      ]);
     });
   })
 })

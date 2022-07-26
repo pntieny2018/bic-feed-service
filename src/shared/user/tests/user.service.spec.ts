@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from '../user.service';
 import { RedisService } from '@app/redis';
 import { sharedUsersMock } from './mocks/user.mock';
+import { ExternalService } from '../../../app/external.service';
 
 jest.mock('class-transformer');
 
@@ -19,6 +20,10 @@ describe('UserService', () => {
             mget: jest.fn(),
             get: jest.fn(),
           },
+        },
+        {
+          provide: ExternalService,
+          useValue: {},
         },
       ],
     }).compile();
@@ -46,7 +51,7 @@ describe('UserService', () => {
 
     it('param is 1', async () => {
       redisService.get.mockResolvedValue(sharedUsersMock[0]);
-      const data = await service.get(1);
+      const data = await service.get('c37d7553-f00f-422f-ac8a-f2daed9bb80f');
       expect(data).toEqual(sharedUsersMock[0]);
     });
   });
@@ -69,7 +74,7 @@ describe('UserService', () => {
     });
     it('param is array with no duplicate item', async () => {
       redisService.mget.mockResolvedValue(sharedUsersMock);
-      const userIds = [1, 2];
+      const userIds = ['c37d7553-f00f-422f-ac8a-f2daed9bb80f', '5544319b-6e95-4445-a099-825dd23cea89'];
       const data = await service.getMany(userIds);
       expect(redisService.mget).toBeCalled();
       const keys = redisService.mget.mock.calls[0][0];
@@ -80,7 +85,7 @@ describe('UserService', () => {
 
     it('param is array with duplicate item', async () => {
       redisService.mget.mockResolvedValue(sharedUsersMock);
-      const userIds = [1, 2, 1];
+      const userIds = ['c37d7553-f00f-422f-ac8a-f2daed9bb80f', '5544319b-6e95-4445-a099-825dd23cea89', 'c37d7553-f00f-422f-ac8a-f2daed9bb80f'];
       const data = await service.getMany(userIds);
       expect(redisService.mget).toBeCalled();
       const keys = redisService.mget.mock.calls[0][0];

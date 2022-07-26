@@ -1,0 +1,34 @@
+image: node:16.14.2
+
+definitions:
+  caches:
+    sonar: ~/.sonar/cache  # Caching SonarCloud artifacts will speed up your build
+  services:
+    docker:
+      memory: 4096
+  step:
+    - step: &unit-test
+        name: Unit test by Jest
+        caches:
+          - node
+        script:
+          - yarn
+          - yarn test:cov
+        artifacts:
+          - coverage/lcov.info
+    - step: &analyze-on-sonarcloud
+        size: 2x
+        name: Build, test and analyze on SonarCloud
+        caches:
+          - node
+          - sonar
+        script:
+          - pipe: sonarsource/sonarcloud-scan:1.4.0
+            variables:
+              SONAR_SCANNER_OPTS: -Xmx2048m
+              SONAR_TOKEN: ${SONAR_TOKEN}
+pipelines:
+  pull-requests:
+    '**':
+      - step: *unit-test
+      - step: *analyze-on-sonarcloud

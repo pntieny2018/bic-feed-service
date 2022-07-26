@@ -104,7 +104,7 @@ describe('CommentListener', () => {
 
   describe('CommentListener.onCommentHasBeenDeleted', () => {
     const commentHasBeenDeletedEvent = new CommentHasBeenDeletedEvent({
-      comment: {id: '1', actor: authUserMock, postId: '1', createdBy: 1, updatedBy: 1, post: null},
+      comment: {id: '1', actor: authUserMock, postId: 'e86f12d4-0880-4085-add1-00dd8642d577', createdBy: 'e86f12d4-0880-4085-add1-00dd8642d578', updatedBy: 'e86f12d4-0880-4085-add1-00dd8642d579', post: null},
       actor: authUserMock
     })
     it('should success', async () => {
