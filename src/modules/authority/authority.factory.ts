@@ -23,7 +23,7 @@ export class AuthorityFactory {
     }
   }
 
-  public static extractAbilitiesFromPermission(userPermission: UserPermissionDto) {
+  public static extractAbilitiesFromPermission(userPermission: UserPermissionDto): any[] {
     const abilities = [];
     const noSubjectAbilities = [];
     for (const communityId in userPermission.communities) {
@@ -32,7 +32,7 @@ export class AuthorityFactory {
         abilities.push({
           action: permission,
           subject: SUBJECT.COMMUNITY,
-          conditions: { id: parseInt(communityId) },
+          conditions: { id: communityId },
         });
       });
     }
@@ -43,7 +43,7 @@ export class AuthorityFactory {
         abilities.push({
           action: permission,
           subject: SUBJECT.GROUP,
-          conditions: { id: parseInt(groupid) },
+          conditions: { id: groupid },
         });
       });
     }
@@ -53,7 +53,7 @@ export class AuthorityFactory {
     return abilities.concat(noSubjectAbilities);
   }
 
-  public static bindBasicAbilitiesForBeinUser(noSubjectAbilities: any[]) {
+  public static bindBasicAbilitiesForBeinUser(noSubjectAbilities: any[]): void {
     Object.keys(BASIC_PERMISSIONS).forEach((permission) =>
       noSubjectAbilities.push({
         action: permission,
