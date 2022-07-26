@@ -269,12 +269,12 @@ async function reCreateIndex(queryInterface, transaction) {
 async function migrateTables(queryInterface, transaction, groups, users) {
   const groupsDictionary = {};
   groups.forEach(group => {
-    groupsDictionary[group.id] = group;
+    groupsDictionary[group.old_id] = group.id;
   });
 
   const usersDictionary = {};
   users.forEach(user => {
-    usersDictionary[user.id] = user;
+    usersDictionary[user.old_id] = user.id;
   });
 
   for (let i = 0; i < shouldUpdatedTables.length; i++) {
@@ -318,7 +318,7 @@ async function migrateColumnData(table, groupsDictionary, usersDictionary, query
       throw new Error('hasInvalidData');
     }
     distinctValues.forEach(value => {
-      queries.push(getUpdateColumnQuery(table, column[j], value, groupsDictionary, usersDictionary))
+      queries.push(getUpdateColumnQuery(table, table.columns[i], value, groupsDictionary, usersDictionary))
     })
   }
   for (let i = 0; i < queries.length; i++) {
@@ -329,14 +329,14 @@ async function migrateColumnData(table, groupsDictionary, usersDictionary, query
 
 async function getColumnData(table, column, queryInterface, transaction) {
   const result = await queryInterface.sequelize.query(
-    `SELECT ${column} FROM ${schema}.${table.name}`,
+    `SELECT DISTINCT old_${column} as ${column} FROM ${schema}.${table.name}`,
     {
       raw: true,
       type: Sequelize.QueryTypes.SELECT,
       transaction,
     }
   );
-  console.info('[Get current data query]', `SELECT ${column} FROM ${schema}.${table.name}`)
+  console.info('[Get current data query]', `SELECT DISTINCT old_${column} as ${column} FROM ${schema}.${table.name}`)
   return result.map((row) => row[column]);
 }
 
@@ -349,16 +349,16 @@ function checkInvalidData(column, values, groupsDictionary, usersDictionary) {
   } else {
     throw new Error(`The column ${column} is invalid`)
   }
-  const invalidValues = values.filter((value) => !validValues.includes(value));
+  const invalidValues = values.filter((value) => !validValues.includes(String(value)));
   console.log(`[Invalid data in ${column} column]`, invalidValues);
   return invalidValues.length > 0;
 }
 
-async function getUpdateColumnQuery(table, column, oldValue, groupsDictionary, usersDictionary) {
+function getUpdateColumnQuery(table, column, oldValue, groupsDictionary, usersDictionary) {
   if (MAP_TO_USER_ID_COLLUMNS.includes(column)) {
-    return `UPDATE ${schema}.${table.name} SET ${column} = ${usersDictionary[oldValue]} WHERE ${'old_' + column} = ${oldValue}`;
+    return `UPDATE ${schema}.${table.name} SET ${column} = '${usersDictionary[String(oldValue)]}' WHERE ${'old_' + column} = ${oldValue}`;
   } else if (MAP_TO_GROUP_ID_COLLUMNS.includes(column)) {
-    return `UPDATE ${schema}.${table.name} SET ${column} = ${groupsDictionary[oldValue]} WHERE ${'old_' + column} = ${oldValue}`;
+    return `UPDATE ${schema}.${table.name} SET ${column} = '${groupsDictionary[String(oldValue)]}' WHERE ${'old_' + column} = ${oldValue}`;
   }
   throw new Error(`The column ${table.name}.${column} is invalid`)
 }
