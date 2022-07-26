@@ -5,11 +5,11 @@ import { IsNotEmpty, IsOptional } from 'class-validator';
 export class UserDataShareDto {
   @ApiProperty({
     description: 'User ID',
-    type: Number,
+    type: String,
   })
   @Expose()
   @IsNotEmpty()
-  public id: number;
+  public id: string;
 
   @ApiProperty({
     description: 'Username',
@@ -45,5 +45,5 @@ export class UserDataShareDto {
 }
 
 export class UserSharedDto extends UserDataShareDto {
-  public groups?: number[];
+  public groups?: string[];
 }

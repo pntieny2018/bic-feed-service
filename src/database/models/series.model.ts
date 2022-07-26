@@ -21,8 +21,8 @@ export interface ISeries {
   name: string;
   slug: string;
   isActive: boolean;
-  createdBy: number;
-  updatedBy: number;
+  createdBy: string;
+  updatedBy: string;
   totalArticle: number;
   totalView: number;
   createdAt: Date;
@@ -50,10 +50,10 @@ export class SeriesModel extends Model<ISeries, Omit<ISeries, 'id'>> implements 
   public isActive: boolean;
 
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @Column
-  public updatedBy: number;
+  public updatedBy: string;
 
   @Column
   public totalArticle: number;

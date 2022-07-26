@@ -32,7 +32,7 @@ export const mockedPostResponse: PostResponseDto = {
   isDraft: true,
   isProcessing: false,
   actor: {
-    id: 1,
+    id: '7251dac7-5088-4a33-b900-d1b058edaf98',
     username: 'quannhac',
     fullname: 'Lý Quân Nhạc',
     avatar:
@@ -46,11 +46,11 @@ export const mockedPostResponse: PostResponseDto = {
   markedReadPost: false,
   createdAt: new Date('2022-05-19T07:23:55.601Z'),
   updatedAt: new Date('2022-05-19T07:23:55.601Z'),
-  createdBy: 1,
+  createdBy: '7251dac7-5088-4a33-b900-d1b058edaf98',
   audience: {
     groups: [
       {
-        id: 1,
+        id: '7251dac7-5088-4a33-b900-d1b058edaf99',
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
         privacy: GroupPrivacy.PUBLIC,
@@ -81,14 +81,14 @@ export const mockedPostData = {
   canShare: true,
   content: 'bbbbbb',
   giphyId: null,
-  createdBy: 15,
-  updatedBy: 15,
+  createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
+  updatedBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
   createdAt: new Date('2022-05-18T11:05:11.998Z'),
   updatedAt: new Date('2022-05-19T07:19:14.130Z'),
   markedReadPost: false,
   groups: [
     {
-      groupId: 1,
+      groupId: '09c88080-a975-44e1-ae67-89f3d37e114f',
       postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
     },
   ],
@@ -96,10 +96,10 @@ export const mockedPostData = {
   media: [],
   ownerReactions: [
     {
-      id: 2,
+      id: '69fa2be3-5d43-4edf-84d9-650ce6799b41',
       postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
       reactionName: 'bb',
-      createdBy: 15,
+      createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
       createdAt: '2022-05-18T11:05:31.990Z',
     },
   ],

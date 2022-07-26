@@ -20,7 +20,7 @@ export class SearchPostsDto extends PageOptionsDto {
     }),
     each: true,
   })
-  public actors?: number[];
+  public actors?: string[];
 
   @ApiProperty({ description: 'filter content', required: false })
   @IsOptional()

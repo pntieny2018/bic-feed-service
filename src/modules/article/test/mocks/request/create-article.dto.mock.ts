@@ -7,7 +7,7 @@ export const mockedCreateArticleDto: CreateArticleDto = {
   title: 'aaa',
   summary: 'bbbb',
   audience: {
-    groupIds: [1],
+    groupIds: ['855bedeb-b708-4e13-8c68-131d92cd79b3'],
     userIds: [],
   },
   content: 'bbbbbb',
@@ -20,7 +20,7 @@ export const mockedCreateArticleDto: CreateArticleDto = {
     videos: [],
     files: [],
   },
-  mentions: [1],
+  mentions: ['855bedeb-b708-4e13-8c68-131d92cd79b2'],
   setting: {
     canReact: true,
     canComment: true,

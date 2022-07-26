@@ -165,7 +165,7 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postId: string, userId: number): Promise<void> {
+  public async markSeenPosts(postId: string, userId: string): Promise<void> {
     try {
       const exist = await this._userSeenPostModel.findOne({
         where: {

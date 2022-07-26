@@ -26,7 +26,7 @@ export interface IExtendedValidationArguments extends ValidationArguments {
 export class ValidateMentionConstraint implements ValidatorConstraintInterface {
   public constructor(private _userService: UserService, private _groupService: GroupService) {}
 
-  public async validate(mentions: number[], args?: ValidationArguments): Promise<boolean> {
+  public async validate(mentions: string[], args?: ValidationArguments): Promise<boolean> {
     if (mentions.length === 0) return true;
 
     const { groupIds } = args.object['audience'];

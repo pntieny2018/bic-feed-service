@@ -42,6 +42,7 @@ import {
   mockReactionsResponseDto,
   mockUserDto,
 } from './mocks/input.mock';
+import { ExternalService } from '../../../app/external.service';
 
 const SERIALIZE_TRANSACTION_MAX_ATTEMPT = 3;
 
@@ -72,6 +73,10 @@ describe('ReactionService', () => {
         ReactionService,
         {
           provide: FollowService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: ExternalService,
           useClass: jest.fn(),
         },
         ReactionActivityService,

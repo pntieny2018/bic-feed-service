@@ -130,10 +130,15 @@ describe('FeedService', () => {
   describe('getTimeline', () => {
     it('Should get successfully with predefined timeline', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest.fn().mockResolvedValue([1, 2, 3]);
+      groupService.getGroupIdsCanAccess = jest.fn().mockResolvedValue([
+        '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
+        '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
+        '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0'
+      ]);
       PostModel.getTotalImportantPostInGroups = jest.fn().mockResolvedValue(0);
       PostModel.getTimelineData = jest.fn().mockResolvedValue([]);
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.groupPosts = jest.fn().mockReturnValue([]);
       reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -158,7 +163,7 @@ describe('FeedService', () => {
 
   describe('getNewsFeed', () => {
     it('Should get newsfeed successfully', async () => {
-      postService.getTotalImportantPostInNewsFeed = jest.fn().mockResolvedValue(0);
+      PostModel.getTotalImportantPostInNewsFeed = jest.fn().mockResolvedValue(0);
       PostModel.getNewsFeedData = jest.fn().mockResolvedValue([]);
       reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
@@ -167,7 +172,7 @@ describe('FeedService', () => {
 
       const result = await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
 
-      expect(postService.getTotalImportantPostInNewsFeed).toBeCalledTimes(1);
+      expect(PostModel.getTotalImportantPostInNewsFeed).toBeCalledTimes(1);
       expect(PostModel.getNewsFeedData).toBeCalledTimes(1);
       // expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
       // expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
@@ -197,10 +202,11 @@ describe('FeedService', () => {
 
   describe('markSeenPosts', () => {
     it('Should successfully', async () => {
+      userSeenPostModel.findOne = jest.fn().mockResolvedValue(null);
       userSeenPostModel.create = jest.fn().mockResolvedValue(Promise.resolve());
       feedModel.update = jest.fn().mockResolvedValue(Promise.resolve());
 
-      await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', 5);
+      await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', '6d075299-77fd-4b8f-8f2d-e317cd5f60ff');
 
       expect(userSeenPostModel.create).toBeCalledTimes(1);
       expect(feedModel.update).toBeCalledTimes(1);
@@ -214,7 +220,7 @@ describe('FeedService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', 5);
+        await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', '6d075299-77fd-4b8f-8f2d-e317cd5f60ff');
       } catch (e) {
         expect(e.message).toEqual('Database connection error.');
       }
@@ -266,7 +272,7 @@ describe('FeedService', () => {
       const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, {
         limit: 25,
         offset: 0,
-        postId: '1',
+        postId: '8548c944-91f3-4577-99e2-18a541186c18',
       });
 
       expect(postService.findPost).toBeCalled();
@@ -294,7 +300,7 @@ describe('FeedService', () => {
       groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(false);
       sentryService.captureException = jest.fn();
       try {
-        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '1' });
+        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '8548c944-91f3-4577-99e2-18a541186c18' });
       } catch (e) {
         expect(postService.findPost).toBeCalled();
         expect(groupService.isMemberOfSomeGroups).toBeCalled();

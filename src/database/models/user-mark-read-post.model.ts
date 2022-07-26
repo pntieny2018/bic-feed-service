@@ -4,7 +4,7 @@ import { PostModel } from './post.model';
 
 export interface IUserMarkedImportantPost {
   postId: string;
-  userId: number;
+  userId: string;
 }
 @Table({
   tableName: 'users_mark_read_posts',
@@ -19,5 +19,5 @@ export class UserMarkReadPostModel extends Model implements IUserMarkedImportant
 
   @PrimaryKey
   @Column
-  public userId: number;
+  public userId: string;
 }

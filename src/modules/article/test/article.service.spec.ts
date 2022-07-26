@@ -41,6 +41,7 @@ import { mockMediaModelArray } from '../../post/test/mocks/input.mock';
 import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
+import { AuthorityFactory } from '../../authority/authority.factory';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -67,6 +68,12 @@ describe('ArticleService', () => {
       providers: [
         ArticleService,
         AuthorityService,
+        {
+          provide: AuthorityFactory,
+          useValue: {
+            createForUser: jest.fn()
+          },
+        },
         {
           provide: CategoryService,
           useClass: jest.fn(),
@@ -313,7 +320,7 @@ describe('ArticleService', () => {
                 },
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
                   },
                 },
               ],
@@ -326,7 +333,7 @@ describe('ArticleService', () => {
         from: 0,
         size: 1,
       };
-      const result = await articleService.getPayloadSearch(searchDto, [1]);
+      const result = await articleService.getPayloadSearch(searchDto, ['838ca621-e37d-414b-babf-4efc6ac2b5aa']);
       expect(result).toStrictEqual(expectedResult);
     });
 
@@ -334,7 +341,7 @@ describe('ArticleService', () => {
       const searchDto: SearchArticlesDto = {
         offset: 0,
         limit: 1,
-        actors: [1],
+        actors: ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
         categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
         series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
       };
@@ -356,12 +363,12 @@ describe('ArticleService', () => {
                 },
                 {
                   terms: {
-                    'actor.id': [1],
+                    'actor.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
                   },
                 },
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
                   },
                 },
               ],
@@ -374,7 +381,7 @@ describe('ArticleService', () => {
         from: 0,
         size: 1,
       };
-      const result = await articleService.getPayloadSearch(searchDto, [1]);
+      const result = await articleService.getPayloadSearch(searchDto, ['838ca621-e37d-414b-babf-4efc6ac2b5aa']);
       expect(result).toStrictEqual(expectedResult);
     });
   });
@@ -520,7 +527,6 @@ describe('ArticleService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
-      postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       categoryService.setCategoriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -559,7 +565,6 @@ describe('ArticleService', () => {
       expect(transactionMock.rollback).not.toBeCalled();
       expect(mediaService.sync).toBeCalledTimes(1);
       expect(mentionService.create).not.toBeCalled();
-      expect(postService.setGroupByPost).toBeCalledTimes(1);
       expect(postModelMock.update.mock.calls[0][0]).toStrictEqual({
         content: mockedUpdateArticleDto.content,
         updatedBy: mockedUserAuth.id,

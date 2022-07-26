@@ -159,7 +159,7 @@ export class PostService {
    */
   public async getPayloadSearch(
     { startTime, endTime, content, actors, important, limit, offset }: SearchPostsDto,
-    groupIds: number[]
+    groupIds: string[]
   ): Promise<{
     index: string;
     body: any;
@@ -302,7 +302,7 @@ export class PostService {
    * @throws HttpException
    */
   public async getDraftPosts(
-    authUserId: number,
+    authUserId: string,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order, isProcessing } = getDraftPostDto;
@@ -722,7 +722,7 @@ export class PostService {
     });
   }
 
-  public async getPrivacyPost(groupIds: number[]): Promise<PostPrivacy> {
+  public async getPrivacyPost(groupIds: string[]): Promise<PostPrivacy> {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
     }
@@ -1010,7 +1010,7 @@ export class PostService {
    * @throws HttpException
    */
   public async addPostGroup(
-    groupIds: number[],
+    groupIds: string[],
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
@@ -1032,7 +1032,7 @@ export class PostService {
    * @throws HttpException
    */
   public async setGroupByPost(
-    groupIds: number[],
+    groupIds: string[],
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
@@ -1150,7 +1150,7 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupIds: number[], take = 1000): Promise<string[]> {
+  public async findPostIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
         where: {
@@ -1167,7 +1167,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: string, userId: number): Promise<void> {
+  public async markReadPost(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
@@ -1191,8 +1191,8 @@ export class PostService {
   }
 
   public async getTotalImportantPostInGroups(
-    userId: number,
-    groupIds: number[],
+    userId: string,
+    groupIds: string[],
     constraints?: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();
@@ -1217,7 +1217,7 @@ export class PostService {
   }
 
   public async getTotalImportantPostInNewsFeed(
-    userId: number,
+    userId: string,
     constraints: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();

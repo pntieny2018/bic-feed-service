@@ -80,13 +80,13 @@ export class CreatePostDto {
     type: UserMentionDto,
     example: {
       dangdiep: {
-        id: 1,
+        id: '7251dac7-5088-4a33-b900-d1b058edaf98',
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
       tuine: {
-        id: 2,
+        id: '7251dac7-5088-4a33-b900-d1b058edaf99',
         username: 'tuine',
         avatar: 'https://google.com',
         fullname: 'Tui Day Ne',
@@ -106,5 +106,5 @@ export class CreatePostDto {
     return value;
   })
   @ValidateMention()
-  public mentions?: number[] = [];
+  public mentions?: string[] = [];
 }

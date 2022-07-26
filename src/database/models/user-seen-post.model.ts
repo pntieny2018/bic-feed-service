@@ -14,7 +14,7 @@ import { Sequelize } from 'sequelize';
 
 export interface IUserSeenPost {
   postId: string;
-  userId: number;
+  userId: string;
   createdAt?: Date;
 }
 
@@ -32,7 +32,7 @@ export class UserSeenPostModel extends Model implements IUserSeenPost {
 
   @PrimaryKey
   @Column
-  public userId: number;
+  public userId: string;
 
   @CreatedAt
   @Column

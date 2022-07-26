@@ -2,9 +2,10 @@ import { AuthUser } from '../decorators';
 import { userInfoExpect } from './mocks';
 import { UnauthorizedException } from '@nestjs/common';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
+import { LogicException } from '../../../common/exceptions';
 
 describe('AuthDecorator', () => {
-  const data = null; //AuthUser didn't use param data
+  const data = true; //AuthUser didn't use param data
   let factory;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function getParamDecoratorFactory(decorator: () => object): any {
@@ -37,7 +38,7 @@ describe('AuthDecorator', () => {
       it('should throw UnauthorizedException', () => {
         expect(() => {
           factory(data, executionContextMock);
-        }).toThrowError(UnauthorizedException);
+        }).toThrowError(LogicException);
       });
     });
 
@@ -48,7 +49,7 @@ describe('AuthDecorator', () => {
       it('should throw UnauthorizedException', () => {
         expect(() => {
           factory(data, executionContextMock);
-        }).toThrowError(UnauthorizedException);
+        }).toThrowError(LogicException);
       });
     });
   });

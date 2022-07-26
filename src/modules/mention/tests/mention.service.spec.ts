@@ -66,18 +66,18 @@ describe('MentionService', () => {
 
   describe('MentionService.checkValidMentions', () => {
     it('should success', async () => {
-      userService.getMany.mockResolvedValue(Promise.resolve([1]))
+      userService.getMany.mockResolvedValue(Promise.resolve(['61547513-521f-4dec-9c93-f4e4973d3008']))
       groupService.isMemberOfSomeGroups.mockResolvedValue(true)
-      await service.checkValidMentions([1], [1])
+      await service.checkValidMentions(['c233a814-1fe9-437d-9b7b-1babee5ccad5'], ['61547513-521f-4dec-9c93-f4e4973d3008'])
       expect(userService.getMany).toBeCalled()
       expect(groupService.isMemberOfSomeGroups).toBeCalled()
     })
 
     it('should fail if not has authority', async () => {
-      userService.getMany.mockResolvedValue(Promise.resolve([1]))
+      userService.getMany.mockResolvedValue(Promise.resolve(['61547513-521f-4dec-9c93-f4e4973d3008']))
       groupService.isMemberOfSomeGroups.mockResolvedValue(false)
       try {
-        await service.checkValidMentions([1], [1])
+        await service.checkValidMentions(['c233a814-1fe9-437d-9b7b-1babee5ccad5'], ['61547513-521f-4dec-9c93-f4e4973d3008'])
 
       } catch (e) {
         expect(userService.getMany).toBeCalled()
@@ -90,7 +90,7 @@ describe('MentionService', () => {
   describe('MentionService.create', () => {
     it('should success', async () => {
       model.bulkCreate.mockResolvedValue(Promise.resolve())
-      await service.create([{mentionableType: MentionableType.POST, entityId: '1', userId: 1}])
+      await service.create([{mentionableType: MentionableType.POST, entityId: '1', userId: '61547513-521f-4dec-9c93-f4e4973d3008'}])
       expect(model.bulkCreate).toBeCalled()
     })
   })
@@ -101,10 +101,10 @@ describe('MentionService', () => {
       expect(result).toEqual([]);
     })
     it('should success', async () => {
-      userService.getMany.mockResolvedValue(Promise.resolve([{id: 1}]))
-      const result = await service.resolveMentions([1])
+      userService.getMany.mockResolvedValue(Promise.resolve([{id: '61547513-521f-4dec-9c93-f4e4973d3008'}]))
+      const result = await service.resolveMentions(['61547513-521f-4dec-9c93-f4e4973d3008'])
       expect(userService.getMany).toBeCalled()
-      expect(result).toEqual([{id: 1}])
+      expect(result).toEqual([{id: '61547513-521f-4dec-9c93-f4e4973d3008'}])
     })
   })
 
@@ -113,16 +113,16 @@ describe('MentionService', () => {
       const comments = [{
         parent: {
           mentions: [{
-            userId: 1
+            userId: '61547513-521f-4dec-9c93-f4e4973d3008'
           }]
         },
         mentions: [{
-          userId: 1
+          userId: '61547513-521f-4dec-9c93-f4e4973d3008'
         }],
         child: {
           list: [{
             mentions: [{
-              userId: 1
+              userId: '61547513-521f-4dec-9c93-f4e4973d3008'
             }]
           }]
         }
@@ -139,16 +139,16 @@ describe('MentionService', () => {
       const posts = [{
         parent: {
           mentions: [{
-            userId: 1
+            userId: '61547513-521f-4dec-9c93-f4e4973d3008'
           }]
         },
         mentions: [{
-          userId: 1
+          userId: '61547513-521f-4dec-9c93-f4e4973d3008'
         }],
         child: {
           list: [{
             mentions: [{
-              userId: 1
+              userId: '61547513-521f-4dec-9c93-f4e4973d3008'
             }]
           }]
         }
@@ -161,20 +161,19 @@ describe('MentionService', () => {
 
   describe('MentionService.setMention', () => {
     it('return success', async () => {
-      model.findAll.mockResolvedValue(Promise.resolve([{userId: 1}]))
+      model.findAll.mockResolvedValue(Promise.resolve([{userId: '61547513-521f-4dec-9c93-f4e4973d3008'}]))
       model.bulkCreate.mockResolvedValue(Promise.resolve())
-      const result = await service.setMention([1,2], MentionableType.POST, '123213', null);
+      const result = await service.setMention(['c7bbf920-c3f1-4faf-8d56-bdbf2fa76f26', 'd8b5b8f8-000c-4182-b53d-a013e2e9ba20'], MentionableType.POST, '123213', null);
       expect(model.findAll).toBeCalled()
-      expect(model.destroy).not.toBeCalled()
       expect(model.bulkCreate).toBeCalled()
       expect(result).toEqual(true)
     })
 
     it('return destroy', async () => {
-      model.findAll.mockResolvedValue(Promise.resolve([{userId: 3}]))
+      model.findAll.mockResolvedValue(Promise.resolve([{userId: '61547513-521f-4dec-9c93-f4e4973d3000'}]))
       model.destroy.mockResolvedValue(Promise.resolve())
       model.bulkCreate.mockResolvedValue(Promise.resolve())
-      const result = await service.setMention([1,2], MentionableType.POST, '123213', null);
+      const result = await service.setMention(['c7bbf920-c3f1-4faf-8d56-bdbf2fa76f26', 'd8b5b8f8-000c-4182-b53d-a013e2e9ba20'], MentionableType.POST, '123213', null);
       expect(model.findAll).toBeCalled()
       expect(model.destroy).toBeCalled()
       expect(model.bulkCreate).toBeCalled()

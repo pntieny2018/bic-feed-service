@@ -144,7 +144,7 @@ describe('RecentSearchService', () => {
     it('Can catch exception.', async () => {
       recentSearchModelMock.findOrCreate.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchService.create(1, mockedRecentSearchList[0]);
+        await recentSearchService.create('85dfe22e-866d-49a5-bbef-3fbc72e4febf', mockedRecentSearchList[0]);
       } catch (e) {
         //expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -235,7 +235,7 @@ describe('RecentSearchService', () => {
   });
 
   describe('Get recent search', () => {
-    const createdBy = 1;
+    const createdBy = '85dfe22e-866d-49a5-bbef-3fbc72e4febf';
     const defaultColumnSort = 'updatedAt';
     const sort = OrderEnum.DESC;
     it('Should be return empty list', async () => {
