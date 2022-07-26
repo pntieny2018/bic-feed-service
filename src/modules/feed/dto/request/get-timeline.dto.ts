@@ -5,7 +5,6 @@ import { PageOptionsDto } from '../../../../common/dto';
 
 export class GetTimelineDto extends PageOptionsDto {
   @ApiProperty({ name: 'group_id', example: 9 })
-  @Type(() => Number)
   @IsUUID()
   @IsNotEmpty()
   @Expose({
