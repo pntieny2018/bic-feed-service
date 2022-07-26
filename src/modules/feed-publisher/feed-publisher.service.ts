@@ -30,13 +30,14 @@ export class FeedPublisherService {
         where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
       });
       const seenPostDataMap = seenPostData.reduce(
-        (dataMap, seenPostRecord) => ({ userId: true }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_dataMap, _seenPostRecord) => ({ userId: true }),
         {}
       );
 
       const data = userIds
         .map((userId) => {
-          return postIds.map((postId) => `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`);
+          return postIds.map((postId) => `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`);
         })
         .flat();
 
@@ -67,12 +68,13 @@ export class FeedPublisherService {
         where: { postId, userId: { [Op.in]: userIds } },
       });
       const seenPostDataMap = seenPostData.reduce(
-        (dataMap, seenPostRecord) => ({ userId: true }),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (_dataMap, _seenPostRecord) => ({ userId: true }),
         {}
       );
       const data = userIds
         .map((userId) => {
-          return `(${userId},'${postId}', ${!!seenPostDataMap[userId]})`;
+          return `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`;
         })
         .join(',');
 
@@ -123,7 +125,7 @@ export class FeedPublisherService {
       try {
         if (attached.length) {
           // if attached new group
-          // I will only get users who are in the new group but not in the old groups
+          // I will get only users who are in the new group but not in the old groups
           followers = await this._followService.getUniqueUserFollows(
             [NIL_UUID],
             attached,
@@ -141,7 +143,7 @@ export class FeedPublisherService {
            ** detach group and attach new group
            ** replace group
            */
-          // I will only get users who are in the attached group but not in the old groups
+          // I will get only users who are in the attached group but not in the old groups
           followers = await this._followService.getUniqueUserFollows(
             [NIL_UUID],
             detached,
@@ -174,8 +176,8 @@ export class FeedPublisherService {
       `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
     );
     const differenceGroupIds = [
-      ...ArrayHelper.arrDifferenceElements(currentGroupIds, oldGroupIds),
-      ...ArrayHelper.arrDifferenceElements(oldGroupIds, currentGroupIds),
+      ...ArrayHelper.arrDifferenceElements<string>(currentGroupIds, oldGroupIds),
+      ...ArrayHelper.arrDifferenceElements<string>(oldGroupIds, currentGroupIds),
     ];
     this._logger.debug(`[fanoutOnWrite]: differenceGroupIds: ${differenceGroupIds}`);
     if (differenceGroupIds.length) {
@@ -212,7 +214,7 @@ export class FeedPublisherService {
             this._sentryService.captureException(ex);
           });
         }
-        if (detachedGroupIds[0] != 0)
+        if (detachedGroupIds[0] !== NIL_UUID)
           this.processFanout(createdBy, postId, {
             attached: [],
             detached: detachedGroupIds,
