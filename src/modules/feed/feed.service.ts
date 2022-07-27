@@ -1,7 +1,7 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { Op, Sequelize, Transaction } from 'sequelize';
+import { Sequelize, Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
 import { PostModel } from '../../database/models/post.model';
@@ -20,6 +20,7 @@ import { ExceptionHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserService } from '../../shared/user';
+import { GroupPrivacy } from '../../shared/group/dto';
 
 @Injectable()
 export class FeedService {
@@ -208,6 +209,15 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
+    if (!authUser) {
+      if (group.privacy !== GroupPrivacy.PUBLIC) {
+        return new PageDto<PostResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+    }
     const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
@@ -216,11 +226,9 @@ export class FeedService {
         hasNextPage: false,
       });
     }
-    const authUserId = authUser.id;
     const constraints = PostModel.getIdConstrains(getTimelineDto);
 
     const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      authUserId,
       groupIds,
       constraints
     );

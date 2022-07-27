@@ -1190,32 +1190,6 @@ export class PostService {
     return;
   }
 
-  public async getTotalImportantPostInGroups(
-    userId: string,
-    groupIds: string[],
-    constraints?: string
-  ): Promise<number> {
-    const { schema } = getDatabaseConfig();
-    const query = `SELECT COUNT(*) as total
-    FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND EXISTS(
-        SELECT 1
-        from ${schema}.posts_groups AS g
-        WHERE g.post_id = p.id
-        AND g.group_id IN(:groupIds)
-      )
-    ${constraints ?? ''}`;
-    const result: any = await this.sequelizeConnection.query(query, {
-      replacements: {
-        groupIds,
-        userId,
-      },
-      type: QueryTypes.SELECT,
-    });
-    return result[0].total;
-  }
-
   public async getTotalImportantPostInNewsFeed(
     userId: string,
     constraints: string
