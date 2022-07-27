@@ -9,7 +9,6 @@ export class GetUserFollowsDto {
     required: false,
     name: 'ignore_user_ids',
   })
-  @IsUUID(4, { each: true })
   @Type(() => Array)
   @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
