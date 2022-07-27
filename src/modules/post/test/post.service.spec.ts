@@ -41,6 +41,7 @@ import { mockedPostData, mockedPostResponse } from './mocks/response/post.respon
 import { PostResponseDto } from '../dto/responses';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUserAuth } from './mocks/user.mock';
+import { AuthorityFactory } from '../../authority/authority.factory';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -70,8 +71,20 @@ describe('PostService', () => {
         PostPolicyService,
         AuthorityService,
         {
+          provide: AuthorityFactory,
+          useValue: {
+            createForUser: jest.fn()
+          },
+        },
+        {
           provide: ElasticsearchService,
           useClass: jest.fn(),
+        },
+        {
+          provide: 'CaslAbility',
+          useValue: {
+            can: jest.fn()
+          },
         },
         {
           provide: CommentService,
@@ -341,7 +354,7 @@ describe('PostService', () => {
     it('Should return result successfully', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataUpdatePost);
 
-      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
       authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
@@ -367,7 +380,7 @@ describe('PostService', () => {
         .fn()
         .mockResolvedValue({ ...mockedDataUpdatePost, content: null });
 
-      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
 
       try {
         await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
@@ -388,7 +401,7 @@ describe('PostService', () => {
 
     it('Should catch ForbiddenException if user is not owner', async () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce(1);
+      mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
       try {
         await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
@@ -401,7 +414,7 @@ describe('PostService', () => {
     const mockedDataDeletePost = createMock<PostModel>(mockedPostData);
 
     it('Delete post successfully', async () => {
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      // postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       authorityService.checkCanDeletePost = jest.fn().mockReturnThis();
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -453,7 +466,7 @@ describe('PostService', () => {
 
     it('Should throw exception if user is not owner', async () => {
       postModelMock.findByPk = jest.fn().mockResolvedValueOnce(mockedDataDeletePost);
-      mockedUserAuth.id = mockedDataDeletePost.createdBy + 1;
+      mockedUserAuth.id = mockedDataDeletePost.createdBy + '09c88080-a975-44e1-ae67-89f3d37e114f';
       try {
         await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
       } catch (e) {
@@ -483,7 +496,7 @@ describe('PostService', () => {
 
     it('Return if parameter is empty', async () => {
       const result = await postService.addPostGroup(
-        [1, 2],
+        ['09c88080-a975-44e1-ae67-89f3d37e114f', '69fa2be3-5d43-4edf-84d9-650ce6799b41'],
         'ad70928e-cffd-44a9-9b27-19faa7210530',
         transactionMock
       );
@@ -497,16 +510,16 @@ describe('PostService', () => {
       const currentGroupPost = [
         {
           postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
-          groupId: 1,
+          groupId: '09c88080-a975-44e1-ae67-89f3d37e114f',
         },
         {
           postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
-          groupId: 2,
+          groupId: '69fa2be3-5d43-4edf-84d9-650ce6799b41',
         },
       ];
 
       const mockData = {
-        groupIds: [1, 3],
+        groupIds: ['09c88080-a975-44e1-ae67-89f3d37e114f', '2f43bde9-261e-4538-9a0b-bf5b29b025de'],
         postId: 'ad70928e-cffd-44a9-9b27-19faa7210530',
       };
 
@@ -524,7 +537,7 @@ describe('PostService', () => {
 
       const [condition] = postGroupModelMock.destroy.mock.calls[0];
       expect(condition.where).toStrictEqual({
-        groupId: [2],
+        groupId: ['69fa2be3-5d43-4edf-84d9-650ce6799b41'],
         postId: mockData.postId,
       });
 
@@ -532,7 +545,7 @@ describe('PostService', () => {
 
       expect(createPostQuery).toStrictEqual([
         {
-          groupId: 3,
+          groupId: '2f43bde9-261e-4538-9a0b-bf5b29b025de',
           postId: mockData.postId,
         },
       ]);
@@ -630,7 +643,7 @@ describe('PostService', () => {
               filter: [
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['09c88080-a975-44e1-ae67-89f3d37e114f'],
                   },
                 },
               ],
@@ -643,7 +656,7 @@ describe('PostService', () => {
         from: 0,
         size: 1,
       };
-      const result = await postService.getPayloadSearch(searchDto, [1]);
+      const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
     });
 
@@ -651,7 +664,7 @@ describe('PostService', () => {
       const searchDto: SearchPostsDto = {
         offset: 0,
         limit: 1,
-        actors: [1],
+        actors: ['09c88080-a975-44e1-ae67-89f3d37e114f'],
       };
       const expectedResult = {
         index: ElasticsearchHelper.ALIAS.POST.all.name,
@@ -661,12 +674,12 @@ describe('PostService', () => {
               filter: [
                 {
                   terms: {
-                    'actor.id': [1],
+                    'actor.id': ['09c88080-a975-44e1-ae67-89f3d37e114f'],
                   },
                 },
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['09c88080-a975-44e1-ae67-89f3d37e114f'],
                   },
                 },
               ],
@@ -679,7 +692,7 @@ describe('PostService', () => {
         from: 0,
         size: 1,
       };
-      const result = await postService.getPayloadSearch(searchDto, [1]);
+      const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
     });
 
@@ -708,7 +721,7 @@ describe('PostService', () => {
               filter: [
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['09c88080-a975-44e1-ae67-89f3d37e114f'],
                   },
                 },
               ],
@@ -720,7 +733,7 @@ describe('PostService', () => {
         from: 0,
         size: 1,
       };
-      const result = await postService.getPayloadSearch(searchDto, [1]);
+      const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
     });
 
@@ -739,7 +752,7 @@ describe('PostService', () => {
               filter: [
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['09c88080-a975-44e1-ae67-89f3d37e114f'],
                   },
                 },
               ],
@@ -792,7 +805,7 @@ describe('PostService', () => {
         from: 0,
         size: 1,
       };
-      const result = await postService.getPayloadSearch(searchDto, [1]);
+      const result = await postService.getPayloadSearch(searchDto, ['09c88080-a975-44e1-ae67-89f3d37e114f']);
       expect(result).toStrictEqual(expectedResult);
     });
   });
@@ -900,20 +913,20 @@ describe('PostService', () => {
   });
 
   describe('bindActorToPost', () => {
-    const posts = [{ createdBy: 1, actor: null }];
+    const posts = [{ createdBy: '09c88080-a975-44e1-ae67-89f3d37e114f', actor: null }];
     it('Should bind actor successfully', async () => {
       userService.getMany = jest.fn().mockResolvedValueOnce([
         {
-          id: 1,
+          id: '09c88080-a975-44e1-ae67-89f3d37e114f',
         },
       ]);
       await postService.bindActorToPost(posts);
-      expect(posts[0].actor).toStrictEqual({ id: 1 });
+      expect(posts[0].actor).toStrictEqual({ id: '09c88080-a975-44e1-ae67-89f3d37e114f' });
     });
   });
 
   describe('bindPostData', () => {
-    const posts = [{ id: 1, commentsCount: 0 }];
+    const posts = [{ id: '09c88080-a975-44e1-ae67-89f3d37e114f', commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
       await postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true });
@@ -997,7 +1010,7 @@ describe('PostService', () => {
     it('Should successfully', async () => {
       sequelize.query = jest.fn().mockResolvedValue([{ total: 20 }]);
 
-      const result = await postService.getTotalImportantPostInNewsFeed(1, '');
+      const result = await postService.getTotalImportantPostInNewsFeed('09c88080-a975-44e1-ae67-89f3d37e114f', '');
 
       expect(sequelize.query).toBeCalledTimes(1);
       expect(result).toEqual(20);
@@ -1008,7 +1021,7 @@ describe('PostService', () => {
     it('Should successfully', async () => {
       sequelize.query = jest.fn().mockResolvedValue([{ total: 20 }]);
 
-      const result = await postService.getTotalImportantPostInGroups(1, [2, 3]);
+      const result = await postService.getTotalImportantPostInGroups('09c88080-a975-44e1-ae67-89f3d37e114f', ['69fa2be3-5d43-4edf-84d9-650ce6799b41', '2f43bde9-261e-4538-9a0b-bf5b29b025de']);
 
       expect(sequelize.query).toBeCalledTimes(1);
       expect(result).toEqual(20);
@@ -1027,7 +1040,7 @@ describe('PostService', () => {
     it('Should successfully', async () => {
       postService.findPost = jest.fn().mockResolvedValue(mockIPost);
 
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
+      authorityService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
 
       postEditedHistoryModelMock.findAndCountAll = jest.fn().mockResolvedValue({
         rows: mockPostEditedHistoryModelArr,
@@ -1040,16 +1053,16 @@ describe('PostService', () => {
         mockGetPostEditedHistoryDto
       );
 
-      expect(postService.checkPostOwner).toBeCalledTimes(1);
+      expect(authorityService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.findPost).toBeCalledTimes(1);
     });
 
     it('User not in post groups', async () => {
       postService.findPost = jest.fn().mockResolvedValue(mockIPost);
 
-      postService.checkPostOwner = jest
-        .fn()
-        .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
+      // postService.checkPostOwner = jest
+      //   .fn()
+      //   .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
 
       postEditedHistoryModelMock.findAndCountAll = jest
         .fn()
@@ -1065,7 +1078,7 @@ describe('PostService', () => {
         expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN);
       }
 
-      expect(postService.checkPostOwner).toBeCalledTimes(1);
+      // expect(postService.checkPostOwner).toBeCalledTimes(1);
       expect(postService.findPost).toBeCalledTimes(1);
     });
   });
@@ -1075,7 +1088,7 @@ describe('PostService', () => {
       const updatePostDto: UpdatePostDto = {
         content: '',
         audience: {
-          groupIds: [1],
+          groupIds: ['09c88080-a975-44e1-ae67-89f3d37e114f'],
         },
         media: {
           images: [],
@@ -1084,7 +1097,7 @@ describe('PostService', () => {
         }
       }
       try{
-      const result = postService.checkContent(updatePostDto);
+      const result = postService.checkContent(updatePostDto.content, updatePostDto.media);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -1094,7 +1107,7 @@ describe('PostService', () => {
 
   describe('updatePostStatus', () => {
     it('should success', async () => {
-      await postService.updatePostStatus('1')
+      await postService.updatePostStatus('09c88080-a975-44e1-ae67-89f3d37e114f')
       expect(sequelize.query).toBeCalled()
     })
   })
@@ -1105,11 +1118,11 @@ describe('PostService', () => {
         toJSON: () => ({
           id: '40dc4093-1bd0-4105-869f-8504e1986141',
           groups: [
-            {groupId: '1'}
+            {groupId: '09c88080-a975-44e1-ae67-89f3d37e114f'}
           ]
         })
       });
-      groupService.getMany = jest.fn().mockResolvedValue([{id: '1', privacy: PostPrivacy.SECRET}, {id: '2', privacy: PostPrivacy.PRIVATE}])
+      groupService.getMany = jest.fn().mockResolvedValue([{id: '09c88080-a975-44e1-ae67-89f3d37e114f', privacy: PostPrivacy.SECRET}, {id: '69fa2be3-5d43-4edf-84d9-650ce6799b41', privacy: PostPrivacy.PRIVATE}])
 
       await postService.updatePostPrivacy('40dc4093-1bd0-4105-869f-8504e1986141')
       expect(postModelMock.findOne).toBeCalled()
@@ -1128,20 +1141,20 @@ describe('PostService', () => {
 
   describe('filterPostIdsNeedToUpdatePrivacy', () => {
     it('must follow rule privacy order', async () => {
-      postGroupModelMock.findAll.mockResolvedValue([{groupId: '1', postId: '1'}, {groupId: '2', postId: '1'}])
-      groupService.getMany = jest.fn().mockResolvedValue([{id: '1', privacy: PostPrivacy.SECRET}, {id: '2', privacy: PostPrivacy.PRIVATE}])
+      postGroupModelMock.findAll.mockResolvedValue([{groupId: '09c88080-a975-44e1-ae67-89f3d37e114f', postId: '09c88080-a975-44e1-ae67-89f3d37e114f'}, {groupId: '69fa2be3-5d43-4edf-84d9-650ce6799b41', postId: '09c88080-a975-44e1-ae67-89f3d37e114f'}])
+      groupService.getMany = jest.fn().mockResolvedValue([{id: '09c88080-a975-44e1-ae67-89f3d37e114f', privacy: PostPrivacy.SECRET}, {id: '69fa2be3-5d43-4edf-84d9-650ce6799b41', privacy: PostPrivacy.PRIVATE}])
 
-      const updatedPostIds = await postService.filterPostIdsNeedToUpdatePrivacy(['1','2','3','4'], PostPrivacy.SECRET)
+      const updatedPostIds = await postService.filterPostIdsNeedToUpdatePrivacy(['09c88080-a975-44e1-ae67-89f3d37e114f','69fa2be3-5d43-4edf-84d9-650ce6799b41','2f43bde9-261e-4538-9a0b-bf5b29b025de','b25a9ed3-5515-4958-85c1-7fbeda3928c5'], PostPrivacy.SECRET)
 
       expect(updatedPostIds).toEqual({
-        [PostPrivacy.PRIVATE.toString()]: ['1']
+        [PostPrivacy.PRIVATE.toString()]: ['09c88080-a975-44e1-ae67-89f3d37e114f']
       })
     })
   })
 
   describe('bulkUpdatePostPrivacy', () => {
     it('must follow rule privacy order', async () => {
-      const updatedPostIds = await postService.bulkUpdatePostPrivacy(['1','2','3','4'], PostPrivacy.SECRET)
+      const updatedPostIds = await postService.bulkUpdatePostPrivacy(['09c88080-a975-44e1-ae67-89f3d37e114f','69fa2be3-5d43-4edf-84d9-650ce6799b41','2f43bde9-261e-4538-9a0b-bf5b29b025de','b25a9ed3-5515-4958-85c1-7fbeda3928c5'], PostPrivacy.SECRET)
 
       expect(postModelMock.update).toBeCalled()
     })

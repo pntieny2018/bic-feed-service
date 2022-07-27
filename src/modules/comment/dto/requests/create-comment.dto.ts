@@ -58,13 +58,13 @@ export class CreateCommentDto {
     type: UserMentionDto,
     example: {
       dangdiep: {
-        id: 1,
+        id: '26799d29-189b-435d-b618-30fb70e9b09e',
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
       tuine: {
-        id: 2,
+        id: '26799d29-189b-435d-b618-30fb70e9b09f',
         username: 'tuine',
         avatar: 'https://google.com',
         fullname: 'Tui Day Ne',
@@ -83,7 +83,7 @@ export class CreateCommentDto {
     }
     return value;
   })
-  public mentions?: number[] = [];
+  public mentions?: string[] = [];
 
   @ApiProperty({
     type: GiphyDto,

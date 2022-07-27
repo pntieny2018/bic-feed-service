@@ -202,7 +202,7 @@ export class PostResponseDto {
     name: 'created_by',
   })
   @Expose()
-  public createdBy: number;
+  public createdBy: string;
 
   @ApiProperty({
     type: AudienceResponseDto,

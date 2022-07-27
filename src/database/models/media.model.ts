@@ -35,7 +35,7 @@ export enum MediaStatus {
 
 export interface IMedia {
   id: string;
-  createdBy: number;
+  createdBy: string;
   url: string;
   type: MediaType;
   isDraft: boolean;
@@ -76,7 +76,7 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @AllowNull(false)
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @CreatedAt
   public createdAt: Date;

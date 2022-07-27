@@ -12,7 +12,7 @@ export class UserDto {
   public avatar?: string;
 
   @Expose()
-  public id: number;
+  public id: string;
 
   public staffRole?: any;
 

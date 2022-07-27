@@ -9,7 +9,7 @@ import { AppHelper } from '../../common/helpers/app.helper';
 export class GroupService {
   public constructor(private _store: RedisService) {}
 
-  public async get(groupId: number): Promise<GroupSharedDto> {
+  public async get(groupId: string): Promise<GroupSharedDto> {
     const group = await this._store.get<GroupSharedDto>(`${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (group && !group?.child) {
       group.child = {
@@ -22,7 +22,7 @@ export class GroupService {
     return group;
   }
 
-  public async getMany(groupIds: number[]): Promise<GroupSharedDto[]> {
+  public async getMany(groupIds: string[]): Promise<GroupSharedDto[]> {
     const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (keys.length) {
       const groups = await this._store.mget(keys);
@@ -36,7 +36,7 @@ export class GroupService {
    * @param groupIds Number[]
    * @param myGroupIds Number[]
    */
-  public isMemberOfSomeGroups(groupIds: number[], myGroupIds: number[]): boolean {
+  public isMemberOfSomeGroups(groupIds: string[], myGroupIds: string[]): boolean {
     return groupIds.some((groupId) => myGroupIds.includes(groupId));
   }
 
@@ -45,7 +45,7 @@ export class GroupService {
    * @param groupIds Number[]
    * @param myGroupIds Number[]
    */
-  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
+  public isMemberOfGroups(groupIds: string[], myGroupIds: string[]): boolean {
     return groupIds.every((groupId) => myGroupIds.includes(groupId));
   }
 
@@ -56,7 +56,7 @@ export class GroupService {
    * @param authUser
    * @returns
    */
-  public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): number[] {
+  public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): string[] {
     let groupIds = [];
     if (group.privacy === GroupPrivacy.OPEN || group.privacy === GroupPrivacy.PUBLIC) {
       groupIds = [...group.child.public, ...group.child.open];
@@ -82,7 +82,7 @@ export class GroupService {
    * @param authUser
    * @returns
    */
-  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): number[] {
+  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): string[] {
     let groupIds = [];
     if (
       group.privacy === GroupPrivacy.OPEN ||

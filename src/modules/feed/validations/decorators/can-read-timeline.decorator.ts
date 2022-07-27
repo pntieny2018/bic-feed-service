@@ -26,7 +26,7 @@ export class CanReadTimelineConstraint implements ValidatorConstraintInterface {
     return "Group's timeline not found";
   }
 
-  public async validate(groupId: number, args?: ValidationArguments): Promise<boolean> {
+  public async validate(groupId: string, args?: ValidationArguments): Promise<boolean> {
     const userDto: UserDto = args.object['user'];
     try {
       const userSharedDto = await this._userService.get(userDto.id);

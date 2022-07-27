@@ -19,7 +19,7 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { PostPrivacy } from '../../database/models/post.model';
-import { Severity } from '@sentry/node';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class PostListener {
@@ -174,7 +174,7 @@ export class PostListener {
         actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [0]
+        [NIL_UUID]
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
@@ -354,7 +354,6 @@ export class PostListener {
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         })
         .then((res) => {
-          console.log(res);
           const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
           this._postService.updatePostData([id], { lang });
         })
@@ -367,7 +366,7 @@ export class PostListener {
           actor.id,
           id,
           audience.groups.map((g) => g.id),
-          [0]
+          [NIL_UUID]
         );
       } catch (error) {
         this._logger.error(error, error?.stack);

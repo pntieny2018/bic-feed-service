@@ -39,7 +39,7 @@ export class MediaResponseDto {
   public id: number;
 
   @ApiProperty()
-  public createdBy: number;
+  public createdBy: string;
 
   @ApiProperty()
   public url: string;

@@ -13,14 +13,7 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsOptional()
   @Transform(({ value }) => value.split(','))
   @Transform(({ value }) => value.map((i) => Number(i)))
-  @IsInt({
-    message: JSON.stringify({
-      title: 'actors',
-      message: "Property 'actors' must be an array integer",
-    }),
-    each: true,
-  })
-  public actors?: number[];
+  public actors?: string[];
 
   @ApiProperty({ description: 'filter content', required: false })
   @IsOptional()

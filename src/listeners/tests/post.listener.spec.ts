@@ -129,7 +129,7 @@ describe('PostListener', () => {
   describe('PostListener.onPostDeleted', () => {
     const postHasBeenDeletedEvent = new PostHasBeenDeletedEvent({
       actor: {
-        id: 1,
+        id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d',
       },
       post: {
         canComment: false,
@@ -138,14 +138,14 @@ describe('PostListener', () => {
         commentsCount: 0,
         totalUsersSeen: 0,
         content: '',
-        createdBy: 0,
+        createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
         isArticle: false,
         isDraft: false,
         isImportant: false,
-        updatedBy: 0,
+        updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
-        groups: [{ postId: '1', groupId: 2 }],
+        groups: [{ postId: 'fcaa3c4b-d4d8-4082-bda3-858dda6d42c7', groupId: 'b113788a-c7fa-45f1-98a8-5e2c135dc1da' }],
       },
     });
     it('should success', async () => {
@@ -193,7 +193,7 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostPublished', () => {
     const postHasBeenPublishedEvent = new PostHasBeenPublishedEvent({
-      actor: {id: 1},
+      actor: {id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d'},
       post: mockPostResponseDto,
     });
     it('should success', async () => {
@@ -225,7 +225,7 @@ describe('PostListener', () => {
 
   describe('PostListener.onPostUpdated', () => {
     const postHasBeenUpdatedEvent = new PostHasBeenUpdatedEvent({
-      actor: { id: 1},
+      actor: { id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d'},
       oldPost: mockPostResponseDto,
       newPost: mockPostResponseDto,
     });
@@ -234,13 +234,13 @@ describe('PostListener', () => {
       postService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.savePostEditedHistory.mockResolvedValue();
-      elasticsearchService.update.mockResolvedValue();
+      elasticsearchService.index.mockResolvedValue();
       await postListener.onPostUpdated(postHasBeenUpdatedEvent);
       expect(loggerSpy).toBeCalled();
       expect(postService.processVideo).toBeCalled();
       expect(postActivityService.createPayload).toBeCalled();
       expect(postService.savePostEditedHistory).toBeCalled();
-      expect(elasticsearchService.update).toBeCalled();
+      expect(elasticsearchService.index).toBeCalled();
     });
   });
 

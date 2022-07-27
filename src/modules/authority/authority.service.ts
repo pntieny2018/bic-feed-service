@@ -50,7 +50,7 @@ export class AuthorityService {
 
   public async checkCanCreatePost(
     user: UserDto,
-    groupAudienceIds: number[],
+    groupAudienceIds: string[],
     isImportant = false
   ): Promise<void> {
     const notCreatableGroupInfos: GroupSharedDto[] = [];
@@ -103,7 +103,7 @@ export class AuthorityService {
   public async checkCanUpdatePost(
     user: UserDto,
     post: PostResponseDto | PostModel | IPost,
-    groupAudienceIds: number[]
+    groupAudienceIds: string[]
   ): Promise<void> {
     await this.checkPostOwner(post, user.id);
     this._checkUserInSomeGroups(user, groupAudienceIds);
@@ -111,7 +111,7 @@ export class AuthorityService {
 
   public async checkPostOwner(
     post: PostResponseDto | PostModel | IPost,
-    authUserId: number
+    authUserId: string
   ): Promise<void> {
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
@@ -125,8 +125,8 @@ export class AuthorityService {
 
   public async checkCanDeletePost(
     user: UserDto,
-    groupAudienceIds: number[],
-    createBy: number
+    groupAudienceIds: string[],
+    createBy: string
   ): Promise<void> {
     const isOwner = user.id === createBy;
     const groups = await this._groupService.getMany(groupAudienceIds);
@@ -183,7 +183,7 @@ export class AuthorityService {
     return this.checkIsPublicPost(post);
   }
 
-  private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: number[]): void {
+  private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
 
@@ -192,7 +192,7 @@ export class AuthorityService {
     }
   }
 
-  private _checkUserInGroups(user: UserDto, groupAudienceIds: number[]): void {
+  private _checkUserInGroups(user: UserDto, groupAudienceIds: string[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
 

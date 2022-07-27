@@ -145,7 +145,7 @@ export class CategoryService {
     }
   }
 
-  public async checkValidCategory(categoryIds: string[], userId: number): Promise<void> {
+  public async checkValidCategory(categoryIds: string[], userId: string): Promise<void> {
     const categoryCount = await this._categoryModel.count({
       where: {
         id: categoryIds,

@@ -10,7 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { PostModel } from './post.model';
 export interface IUserNewsFeed {
-  userId: number;
+  userId: string;
   postId: string;
 }
 @Table({
@@ -20,7 +20,7 @@ export interface IUserNewsFeed {
 export class UserNewsFeedModel extends Model implements IUserNewsFeed {
   @PrimaryKey
   @Column
-  public userId: number;
+  public userId: string;
 
   @ForeignKey(() => PostModel)
   @PrimaryKey

@@ -11,6 +11,7 @@ import { ExceptionHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FollowListener {
@@ -47,7 +48,7 @@ export class FollowListener {
       payload: { userIds, groupIds },
     } = event;
 
-    userIds.forEach((userId: number) => {
+    userIds.forEach((userId: string) => {
       this.detachPosts(userId, groupIds).catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
@@ -55,7 +56,7 @@ export class FollowListener {
     });
   }
 
-  public async detachPosts(userId: number, groupIds: number[]): Promise<any> {
+  public async detachPosts(userId: string, groupIds: string[]): Promise<any> {
     this._logger.debug(`[userUnfollowGroup] userId: ${userId}. groupId: ${groupIds}`);
 
     const userSharedDto = await this._userService.get(userId);
@@ -67,7 +68,7 @@ export class FollowListener {
     let filterGroup = (userSharedDto.groups ?? []).filter((gId) => !groupIds.includes(gId));
 
     if (!filterGroup.length) {
-      filterGroup = [0];
+      filterGroup = [NIL_UUID];
     }
     const { schema } = getDatabaseConfig();
 

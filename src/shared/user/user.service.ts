@@ -14,11 +14,11 @@ export class UserService {
    * @param userId ID of user
    * @returns Promise resolve user info
    */
-  public async get(userId: number): Promise<UserSharedDto> {
+  public async get(userId: string): Promise<UserSharedDto> {
     return await this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
   }
 
-  public async getPermissions(userId: number, payload: string): Promise<any> {
+  public async getPermissions(userId: string, payload: string): Promise<any> {
     const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
     const permissionCached = await this._store.get(cacheKey);
     if (permissionCached) return permissionCached;
@@ -30,7 +30,7 @@ export class UserService {
    * @param userIds IDs of user
    * @returns Promise resolve users info
    */
-  public async getMany(userIds: number[]): Promise<UserSharedDto[]> {
+  public async getMany(userIds: string[]): Promise<UserSharedDto[]> {
     const keys = [...new Set(userIds)].map((userId) => `${AppHelper.getRedisEnv()}SU:${userId}`);
     if (keys.length) {
       const users = await this._store.mget(keys);

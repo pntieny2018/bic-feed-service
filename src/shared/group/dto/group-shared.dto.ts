@@ -7,10 +7,10 @@ export enum GroupPrivacy {
   SECRET = 'SECRET',
 }
 export class ChildGroup {
-  public public: number[] = [];
-  public open: number[] = [];
-  public private: number[] = [];
-  public secret: number[] = [];
+  public public: string[] = [];
+  public open: string[] = [];
+  public private: string[] = [];
+  public secret: string[] = [];
 }
 export class GroupSharedDto {
   @ApiProperty({
@@ -18,7 +18,7 @@ export class GroupSharedDto {
   })
   @IsNotEmpty()
   @IsNumber()
-  public id: number;
+  public id: string;
 
   @ApiProperty({
     description: 'Group Name',
@@ -36,7 +36,7 @@ export class GroupSharedDto {
     description: 'Community ID',
   })
   @IsOptional()
-  public communityId?: number;
+  public communityId?: string;
 
   @ApiProperty()
   @IsOptional()
