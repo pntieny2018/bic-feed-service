@@ -58,6 +58,7 @@ export class GroupService {
    */
   public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): string[] {
     let groupIds = [];
+    if (!authUser) return ArrayHelper.arrayUnique(group.child.public);
     if (group.privacy === GroupPrivacy.OPEN || group.privacy === GroupPrivacy.PUBLIC) {
       groupIds = [...group.child.public, ...group.child.open];
 
