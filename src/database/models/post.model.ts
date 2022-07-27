@@ -392,7 +392,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const authUserId = authUser.id;
+    const authUserId = authUser ? authUser.id : null;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
     } else {
@@ -426,7 +426,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS
       "createdAt", "p"."updated_at" AS "updatedAt",
       COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
-        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+        WHERE r.post_id = p.id ${authUserId ? 'AND r.user_id = :authUserId' : ''} ), false
       ) AS "markedReadPost"
       FROM ${schema}.${postTable} AS "p"
       WHERE "p"."is_draft" = false AND EXISTS(
@@ -444,7 +444,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
-      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
+      LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" 
+       ${authUserId ? 'AND "ownerReactions"."created_by" = :authUserId' : ''}
       ORDER BY "PostModel"."createdAt" ${order}`;
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
@@ -689,7 +690,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }
 
   public static async getTotalImportantPostInGroups(
-    userId: string,
     groupIds: string[],
     constraints: string
   ): Promise<number> {
@@ -707,7 +707,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const result: any = await this.sequelize.query(query, {
       replacements: {
         groupIds,
-        userId,
       },
       type: QueryTypes.SELECT,
     });

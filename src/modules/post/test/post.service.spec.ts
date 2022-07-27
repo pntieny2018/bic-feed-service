@@ -1017,17 +1017,6 @@ describe('PostService', () => {
     });
   });
 
-  describe('getTotalImportantPostInGroups', () => {
-    it('Should successfully', async () => {
-      sequelize.query = jest.fn().mockResolvedValue([{ total: 20 }]);
-
-      const result = await postService.getTotalImportantPostInGroups('09c88080-a975-44e1-ae67-89f3d37e114f', ['69fa2be3-5d43-4edf-84d9-650ce6799b41', '2f43bde9-261e-4538-9a0b-bf5b29b025de']);
-
-      expect(sequelize.query).toBeCalledTimes(1);
-      expect(result).toEqual(20);
-    });
-  });
-
   // describe('markReadPost', () => {
   //   it('Should successfully', async () => {
 
