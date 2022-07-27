@@ -153,9 +153,6 @@ export class PostController {
     const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
     await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
-    if (postBefore.isDraft === false) {
-      await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
-    }
 
     const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
     const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
@@ -164,9 +161,12 @@ export class PostController {
       await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
     }
 
-    const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
-    if (removeGroupIds.length) {
-      await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);
+    if (postBefore.isDraft === false) {
+      await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+      const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+      if (removeGroupIds.length) {
+        await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);
+      }
     }
 
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
