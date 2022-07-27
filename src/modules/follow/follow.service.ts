@@ -119,11 +119,11 @@ export class FollowService {
     ignoreUserIds: string[],
     targetGroupIds: string[],
     groupIds: string[],
-    followId = NIL_UUID,
+    followId = 0,
     limit = 1000
   ): Promise<{
     userIds: string[];
-    latestFollowId: string;
+    latestFollowId: number;
   }> {
     try {
       const schema = this._databaseConfig.schema;
@@ -162,14 +162,14 @@ export class FollowService {
 
       return {
         userIds: [],
-        latestFollowId: NIL_UUID,
+        latestFollowId: 0,
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
       return {
         userIds: [],
-        latestFollowId: NIL_UUID,
+        latestFollowId: 0,
       };
     }
   }

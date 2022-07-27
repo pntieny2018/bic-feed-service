@@ -117,9 +117,9 @@ export class FeedPublisherService {
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
     this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
-    let latestFollowId: string = NIL_UUID;
+    let latestFollowId = 0;
     const { old, attached, detached, current } = changeGroupAudienceDto;
-    let followers: { userIds: string[]; latestFollowId: string };
+    let followers: { userIds: string[]; latestFollowId: number };
 
     while (true) {
       try {
@@ -154,7 +154,7 @@ export class FeedPublisherService {
             await this.detachPostForAnyNewsFeed(followers.userIds, postId);
           }
         }
-        latestFollowId = followers?.latestFollowId ?? NIL_UUID;
+        latestFollowId = followers?.latestFollowId ?? 0;
         if (!followers?.userIds?.length) {
           break;
         }
