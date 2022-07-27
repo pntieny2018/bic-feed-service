@@ -27,7 +27,7 @@ export class FeedController {
   })
   @Get('/timeline')
   public async getTimeline(
-    @AuthUser() authUser: UserDto,
+    @AuthUser(false) authUser: UserDto,
     @Query() getTimelineDto: GetTimelineDto
   ): Promise<any> {
     return this._feedService.getTimeline(authUser, getTimelineDto);

@@ -151,6 +151,29 @@ describe('FeedService', () => {
       expect(PostModel.getTotalImportantPostInGroups).toBeCalledTimes(1);
     });
 
+    it('Should get successfully with predefined timeline and null user', async () => {
+      groupService.get = jest.fn().mockResolvedValue(mockGroup);
+      groupService.getGroupIdsCanAccess = jest.fn().mockResolvedValue([
+        '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
+        '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
+        '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0'
+      ]);
+      PostModel.getTotalImportantPostInGroups = jest.fn().mockResolvedValue(0);
+      PostModel.getTimelineData = jest.fn().mockResolvedValue([]);
+      sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.groupPosts = jest.fn().mockReturnValue([]);
+      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
+
+      const result = await feedService.getTimeline(null, mockedGetTimeLineDto);
+
+      expect(groupService.get).toBeCalledTimes(1);
+      expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
+      expect(PostModel.getTotalImportantPostInGroups).toBeCalledTimes(1);
+    });
+
     it('Should return BadRequestException if group found post', async () => {
       groupService.get = jest.fn().mockResolvedValue(null);
       try {

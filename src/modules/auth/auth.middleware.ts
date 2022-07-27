@@ -27,7 +27,8 @@ export class AuthMiddleware implements NestMiddleware {
       if (
         !token &&
         req.baseUrl.indexOf('comments/') !== -1 &&
-        req.baseUrl.indexOf('posts/') !== -1
+        req.baseUrl.indexOf('posts/') !== -1 &&
+        req.baseUrl.indexOf('feeds/timeline') !== -1
       ) {
         throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
       }
