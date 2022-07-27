@@ -211,7 +211,11 @@ export class FeedService {
     }
     if (!authUser) {
       if (group.privacy !== GroupPrivacy.PUBLIC) {
-        return [];
+        return new PageDto<PostResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
       }
     }
     const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
