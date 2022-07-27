@@ -184,7 +184,7 @@ export class FollowService {
   public async filterUserFollows(
     ignoreUserIds: string[],
     groupIds: string[],
-    followId = NIL_UUID,
+    followId = 0,
     limit = 1000
   ): Promise<{
     userIds: string[];
