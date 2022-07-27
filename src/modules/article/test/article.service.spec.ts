@@ -219,6 +219,8 @@ describe('ArticleService', () => {
         ...mockedArticleResponse,
         toJSON: () => mockedArticleResponse,
       });
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
+      PostModel.loadLock = jest.fn().mockResolvedValue([])
 
       authorityService.checkCanReadArticle = jest.fn().mockResolvedValue(Promise.resolve());
       commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
@@ -242,6 +244,9 @@ describe('ArticleService', () => {
 
     it('Should catch exception if post not found', async () => {
       postModelMock.findOne = jest.fn();
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
+      PostModel.loadLock = jest.fn().mockResolvedValue([])
+
       try {
         const result = await articleService.getArticle(
           mockedArticleData.id,
