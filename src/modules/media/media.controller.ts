@@ -90,7 +90,7 @@ export class MediaController {
       fails: 'Delete media fails',
     },
   })
-  public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: number): Promise<any> {
+  public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: string): Promise<any> {
     return this._mediaService.destroy(user, {
       mediaIds: [mediaId],
     });

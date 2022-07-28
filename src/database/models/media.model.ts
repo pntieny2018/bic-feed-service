@@ -63,7 +63,7 @@ export interface IMedia {
 }
 @Table({
   tableName: 'media',
-  createdAt: false,
+  createdAt: true,
   updatedAt: false,
 })
 export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements IMedia {

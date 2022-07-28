@@ -33,6 +33,8 @@ import { FileMetadataResponseDto } from './dto/response/file-metadata-response.d
 import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
 import { VideoMetadataResponseDto } from './dto/response/video-metadata-response.dto';
 import { ClientKafka } from '@nestjs/microservices';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import moment from 'moment';
 
 @Injectable()
 export class MediaService {
@@ -564,5 +566,23 @@ export class MediaService {
     Object.entries(mediaIdsByType).forEach(([mediaType, ids]) =>
       this.emitMediaToUploadService(mediaType as MediaType, mediaMarkAction, ids, userId)
     );
+  }
+
+  // @Cron(CronExpression.EVERY_4_HOURS)
+  @Cron(CronExpression.EVERY_MINUTE)
+  async deleteUnusedMedia(): Promise<void> {
+    const postMedia = await this._postMediaModel.findAll();
+    const commentMedia = await this._commentMediaModel.findAll();
+    const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
+    const willDeleteMedia = await this._mediaModel.findAll({
+      where: {
+        id: { [Op.notIn]: mediaIdList },
+        createdAt: {
+          [Op.gte]: moment().subtract(4, 'hours').toDate(),
+        },
+      },
+    });
+    this._emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
+    await willDeleteMedia.forEach((e) => e.destroy());
   }
 }
