@@ -1,6 +1,7 @@
 import {
   HttpException,
-  HttpStatus, Inject,
+  HttpStatus,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -24,7 +25,6 @@ import {
   MediaModel,
   MediaStatus,
   MediaType,
-  MediaTypeInUploadService,
 } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID, KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
@@ -92,20 +92,22 @@ export class MediaService {
       })}`
     );
     try {
-      const typeArr = uploadType.split('_');
-      return await this._mediaModel.create({
+      const mediaType = uploadType.split('_')[1] as MediaType;
+      const media = await this._mediaModel.create({
         name,
         originName,
         createdBy: user.id,
         url,
         extension,
-        type: typeArr[1] as MediaType,
+        type: mediaType,
         width: width,
         height: height,
         status,
         size: size ?? null,
         mimeType: mimeType ?? null,
       });
+      this.emitMediaToUploadService(mediaType, MediaMarkAction.USED, [media.id], user.id);
+      return media;
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new InternalServerErrorException("Can't create media");
@@ -138,6 +140,10 @@ export class MediaService {
         });
       }
 
+      const mediaList = await this._mediaModel.findAll({
+        where: { id: { [Op.in]: removeMediaDto.mediaIds } },
+      });
+
       await this._mediaModel.destroy({
         where: {
           id: removeMediaDto.mediaIds,
@@ -145,6 +151,8 @@ export class MediaService {
       });
 
       await trx.commit();
+      this._emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE, user.id);
+
       return true;
     } catch (ex) {
       this._logger.error(ex, ex.stack);
@@ -247,17 +255,30 @@ export class MediaService {
       });
     });
 
-    const existingMeidaList = await this._mediaModel.findAll({
+    const existingMediaList = await this._mediaModel.findAll({
       where: {
         id: mediaIds,
       },
       transaction,
     });
 
-    const existingMediaIds = existingMeidaList.map((m) => m.id);
+    const existingMediaIds = existingMediaList.map((m) => m.id);
     await this._mediaModel.bulkCreate(
       insertData.filter((i) => !existingMediaIds.includes(i.id)),
       { transaction }
+    );
+
+    this.emitMediaToUploadService(
+      MediaType.VIDEO,
+      MediaMarkAction.USED,
+      videos.map((e) => e.id),
+      createdBy
+    );
+    this.emitMediaToUploadService(
+      MediaType.FILE,
+      MediaMarkAction.USED,
+      files.map((e) => e.id),
+      createdBy
     );
 
     return insertData;
@@ -485,13 +506,13 @@ export class MediaService {
   }
 
   public emitMediaToUploadService(
-    mediaType: MediaTypeInUploadService,
+    mediaType: MediaType,
     mediaMarkAction: MediaMarkAction,
-    mediaIds: string,
+    mediaIds: string[],
     userId?: string
   ): void {
     const [kafkaTopic, keyIds] =
-      mediaType === MediaTypeInUploadService.FILE
+      mediaType === MediaType.FILE
         ? [
             mediaMarkAction === MediaMarkAction.USED
               ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED
@@ -500,7 +521,7 @@ export class MediaService {
               : null,
             'mediaIds',
           ]
-        : mediaType === MediaTypeInUploadService.VIDEO
+        : mediaType === MediaType.VIDEO
         ? [
             mediaMarkAction === MediaMarkAction.USED
               ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED
@@ -519,5 +540,29 @@ export class MediaService {
       key: null,
       value: JSON.stringify({ [keyIds]: mediaIds, userId }),
     });
+  }
+
+  private _emitMediaToUploadServiceFromMediaList(
+    mediaList: IMedia[],
+    mediaMarkAction: MediaMarkAction,
+    userId?: string
+  ): void {
+    const mediaIdsByType: {
+      [MediaType.FILE]: string[];
+      [MediaType.VIDEO]: string[];
+    } = mediaList.reduce(
+      (object, current) => {
+        if (current.type === MediaType.FILE) object[MediaType.FILE].push(current.id);
+        if (current.type === MediaType.VIDEO) object[MediaType.VIDEO].push(current.id);
+        return object;
+      },
+      {
+        [MediaType.FILE]: [],
+        [MediaType.VIDEO]: [],
+      }
+    );
+    Object.entries(mediaIdsByType).forEach(([mediaType, ids]) =>
+      this.emitMediaToUploadService(mediaType as MediaType, mediaMarkAction, ids, userId)
+    );
   }
 }
