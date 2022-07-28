@@ -143,6 +143,7 @@ describe('PostService', () => {
             destroy: jest.fn(),
             findAll: jest.fn(),
             findAndCountAll: jest.fn(),
+            loadMarkReadPost: jest.fn(),
           },
         },
         {
@@ -859,6 +860,7 @@ describe('PostService', () => {
         ...mockedPostResponse,
         toJSON: () => mockedPostResponse,
       });
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
 
       authorityService.checkCanReadPost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -886,6 +888,7 @@ describe('PostService', () => {
 
     it('Post not found', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValueOnce(null);
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
       try {
         await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
       } catch (e) {
@@ -897,6 +900,7 @@ describe('PostService', () => {
       postModelMock.findOne = jest.fn().mockResolvedValueOnce({
         ...mockedPostResponse,
       });
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
 
       authorityService.checkCanReadPost = jest
         .fn()
