@@ -568,8 +568,8 @@ export class MediaService {
     );
   }
 
-  // @Cron(CronExpression.EVERY_4_HOURS)
-  @Cron(CronExpression.EVERY_MINUTE)
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  @Cron(CronExpression.EVERY_4_HOURS)
   async deleteUnusedMedia(): Promise<void> {
     const postMedia = await this._postMediaModel.findAll();
     const commentMedia = await this._commentMediaModel.findAll();
