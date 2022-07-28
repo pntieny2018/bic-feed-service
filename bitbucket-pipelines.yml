@@ -13,7 +13,7 @@ definitions:
           - node
         script:
           - yarn
-          - yarn test:cov
+          - yarn test:cov --maxWorkers=1
         artifacts:
           - coverage/lcov.info
     - step: &analyze-on-sonarcloud
