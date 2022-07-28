@@ -25,6 +25,15 @@ export enum MediaType {
   IMAGE = 'image',
   FILE = 'file',
 }
+export enum MediaTypeInUploadService {
+  VIDEO = 'video',
+  FILE = 'file',
+}
+
+export enum MediaMarkAction {
+  USED,
+  DELETE,
+}
 
 export enum MediaStatus {
   WAITING_PROCESS = 'waiting_process',

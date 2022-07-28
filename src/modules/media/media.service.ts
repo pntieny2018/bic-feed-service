@@ -1,36 +1,38 @@
 import {
   HttpException,
-  HttpStatus,
+  HttpStatus, Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { UserDto } from '../auth';
-import {
-  FileMetadataDto,
-  ImageMetadataDto,
-  MediaDto,
-  RemoveMediaDto,
-  VideoMetadataDto,
-} from './dto';
+import { MediaDto, RemoveMediaDto } from './dto';
 import { EntityType } from './media.constants';
-import { ModelStatic, Sequelize } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { Attributes, FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
+import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommentMediaModel } from '../../database/models/comment-media.model';
-import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/models/media.model';
+import {
+  IMedia,
+  MediaMarkAction,
+  MediaModel,
+  MediaStatus,
+  MediaType,
+  MediaTypeInUploadService,
+} from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
+import { HTTP_STATUS_ID, KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
 import { SentryService } from '@app/sentry';
 import { FileMetadataResponseDto } from './dto/response/file-metadata-response.dto';
 import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
 import { VideoMetadataResponseDto } from './dto/response/video-metadata-response.dto';
+import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 export class MediaService {
@@ -40,7 +42,9 @@ export class MediaService {
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
     @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    @Inject(KAFKA_PRODUCER)
+    private readonly _clientKafka: ClientKafka
   ) {}
 
   /**
@@ -255,6 +259,7 @@ export class MediaService {
       insertData.filter((i) => !existingMediaIds.includes(i.id)),
       { transaction }
     );
+
     return insertData;
   }
 
@@ -476,6 +481,43 @@ export class MediaService {
       where: {
         id: ids,
       },
+    });
+  }
+
+  public emitMediaToUploadService(
+    mediaType: MediaTypeInUploadService,
+    mediaMarkAction: MediaMarkAction,
+    mediaIds: string,
+    userId?: string
+  ): void {
+    const [kafkaTopic, keyIds] =
+      mediaType === MediaTypeInUploadService.FILE
+        ? [
+            mediaMarkAction === MediaMarkAction.USED
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED
+              : mediaMarkAction === MediaMarkAction.DELETE
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES
+              : null,
+            'mediaIds',
+          ]
+        : mediaType === MediaTypeInUploadService.VIDEO
+        ? [
+            mediaMarkAction === MediaMarkAction.USED
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED
+              : mediaMarkAction === MediaMarkAction.DELETE
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS
+              : null,
+            'videoIds',
+          ]
+        : [null, null];
+    console.log('kafkaTopic: ', kafkaTopic);
+    console.log('keyIds: ', keyIds);
+
+    if (!kafkaTopic) return;
+
+    this._clientKafka.emit(kafkaTopic, {
+      key: null,
+      value: JSON.stringify({ [keyIds]: mediaIds, userId }),
     });
   }
 }
