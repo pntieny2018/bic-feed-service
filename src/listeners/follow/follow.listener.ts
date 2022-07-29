@@ -65,10 +65,12 @@ export class FollowListener {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }
 
-    let filterGroup = (userSharedDto.groups ?? []).filter((gId) => !groupIds.includes(gId));
+    let filterGroup = (userSharedDto.groups ?? [])
+      .filter((gId) => !groupIds.includes(gId))
+      .map((gId) => `'${gId}'`);
 
     if (!filterGroup.length) {
-      filterGroup = [NIL_UUID];
+      filterGroup = [`'${NIL_UUID}'`];
     }
     const { schema } = getDatabaseConfig();
 
