@@ -12,7 +12,6 @@ export class SearchPostsDto extends PageOptionsDto {
   })
   @IsOptional()
   @Transform(({ value }) => value.split(','))
-  @Transform(({ value }) => value.map((i) => Number(i)))
   public actors?: string[];
 
   @ApiProperty({ description: 'filter content', required: false })
