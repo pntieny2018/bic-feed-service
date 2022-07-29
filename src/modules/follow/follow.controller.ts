@@ -15,7 +15,7 @@ export class FollowController {
   @Get('/')
   public getUserFollows(@Query() getUserFollowsDto: GetUserFollowsDto): Promise<{
     userIds: string[];
-    latestFollowId: string;
+    latestFollowId: number;
   }> {
     return this._followService.filterUserFollows(
       getUserFollowsDto.ignoreUserIds,

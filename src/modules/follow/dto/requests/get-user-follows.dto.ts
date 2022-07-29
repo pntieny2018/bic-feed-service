@@ -42,13 +42,13 @@ export class GetUserFollowsDto {
     name: 'follow_id',
     default: 0,
     required: false,
-    type: String,
+    type: Number,
   })
-  @Type(() => String)
+  @Type(() => Number)
   @Expose({
     name: 'follow_id',
   })
-  public followId = '00000000-0000-0000-0000-000000000000';
+  public followId = 0;
 
   @ApiProperty({
     name: 'limit',
