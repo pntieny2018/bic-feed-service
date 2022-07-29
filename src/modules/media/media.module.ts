@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
 import { UploadModule } from '../upload';
-import { ValidateMedia, ValidateMediaConstraint } from './validators/media.validator';
-import { ScheduleModule } from '@nestjs/schedule';
+import { ValidateMediaConstraint } from './validators/media.validator';
 
 @Module({
-  imports: [UploadModule, ScheduleModule.forRoot()],
+  imports: [UploadModule],
   controllers: [MediaController],
   providers: [MediaService, ValidateMediaConstraint],
   exports: [MediaService],

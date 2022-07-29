@@ -24,7 +24,7 @@ import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { MediaModel, MediaStatus } from '../../database/models/media.model';
+import { MediaMarkAction, MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -54,6 +54,8 @@ import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
 import { json } from 'stream/consumers';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import moment from 'moment';
 
 @Injectable()
 export class PostService {
@@ -1638,5 +1640,25 @@ export class PostService {
         },
       },
     });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanDeletedPost(): Promise<void> {
+    const willDeletePost = await this.postModel.findAll({
+      where: {
+        deletedAt: {
+          [Op.gte]: moment().subtract(30, 'days').toDate(),
+        },
+      },
+    });
+    const mediaIds = ArrayHelper.arrayUnique(
+      willDeletePost.filter((e) => e.media).map((e) => e.media)
+    );
+    if (!(await this.mediaService.isExistOnPostOrComment(mediaIds))) {
+      this.mediaService.emitMediaToUploadServiceFromMediaList(mediaIds, MediaMarkAction.DELETE);
+    }
+
+    await willDeletePost.forEach((e) => e.destroy({ force: true }));
   }
 }

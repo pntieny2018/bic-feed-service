@@ -13,6 +13,7 @@ import {
   Table,
   UpdatedAt,
   Sequelize,
+  DeletedAt,
 } from 'sequelize-typescript';
 import { CommentModel, IComment } from './comment.model';
 import { MediaModel } from './media.model';
@@ -64,6 +65,7 @@ export interface IPost {
   isProcessing?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  deletedAt?: Date;
   comments?: IComment[];
   media?: IMedia[];
   groups?: IPostGroup[];
@@ -85,6 +87,7 @@ export interface IPost {
 
 @Table({
   tableName: 'posts',
+  paranoid: true,
 })
 export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IPost {
   @PrimaryKey
@@ -170,6 +173,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  @DeletedAt
+  @Column
+  deletedAt?: Date;
 
   @HasMany(() => CommentModel)
   public comments?: CommentModel[];

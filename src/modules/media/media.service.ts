@@ -153,7 +153,7 @@ export class MediaService {
       });
 
       await trx.commit();
-      this._emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE, user.id);
+      this.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE, user.id);
 
       return true;
     } catch (ex) {
@@ -511,7 +511,7 @@ export class MediaService {
     mediaType: MediaType,
     mediaMarkAction: MediaMarkAction,
     mediaIds: string[],
-    userId?: string
+    userId: string = null
   ): void {
     const [kafkaTopic, keyIds] =
       mediaType === MediaType.FILE
@@ -533,18 +533,17 @@ export class MediaService {
             'videoIds',
           ]
         : [null, null];
-    console.log('kafkaTopic: ', kafkaTopic);
-    console.log('keyIds: ', keyIds);
 
     if (!kafkaTopic) return;
-
-    this._clientKafka.emit(kafkaTopic, {
-      key: null,
-      value: JSON.stringify({ [keyIds]: mediaIds, userId }),
-    });
+    if (mediaIds.length) {
+      this._clientKafka.emit(kafkaTopic, {
+        key: null,
+        value: JSON.stringify({ [keyIds]: mediaIds, userId }),
+      });
+    }
   }
 
-  private _emitMediaToUploadServiceFromMediaList(
+  public emitMediaToUploadServiceFromMediaList(
     mediaList: IMedia[],
     mediaMarkAction: MediaMarkAction,
     userId?: string
@@ -582,7 +581,17 @@ export class MediaService {
         },
       },
     });
-    this._emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
+    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
     await willDeleteMedia.forEach((e) => e.destroy());
+  }
+
+  public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {
+    if (await this._postMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
+      return true;
+    }
+    if (await this._commentMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
+      return true;
+    }
+    return false;
   }
 }
