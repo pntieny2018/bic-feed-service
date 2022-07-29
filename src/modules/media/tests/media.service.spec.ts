@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MediaService } from '../media.service';
 import { getModelToken } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { MediaModel, MediaStatus } from '../../../database/models/media.model';
+import { MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostMediaModel } from '../../../database/models/post-media.model';
 import { CommentMediaModel } from '../../../database/models/comment-media.model';
 import { SentryService } from '@app/sentry';
@@ -11,6 +11,8 @@ import { createMediaDtoMock } from './mocks/create-media-dto.mock';
 import { createMock } from '@golevelup/ts-jest';
 import { Transaction } from 'sequelize';
 import { EntityType } from '../media.constants';
+import { KAFKA_PRODUCER } from '../../../common/constants';
+import { ClientKafka } from '@nestjs/microservices';
 
 describe('MediaService', () => {
   let service: MediaService;
@@ -20,6 +22,7 @@ describe('MediaService', () => {
   let sentryService;
   let transactionMock;
   let sequelize;
+  let kafkaProducer: ClientKafka;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +32,12 @@ describe('MediaService', () => {
           provide: SentryService,
           useValue: {
             captureException: jest.fn(),
+          },
+        },
+        {
+          provide: KAFKA_PRODUCER,
+          useValue: {
+            emit: jest.fn()
           },
         },
         { provide: Sequelize, useValue: { query: jest.fn(), transaction: jest.fn() } },
@@ -78,6 +87,7 @@ describe('MediaService', () => {
     postMediaModel = module.get<typeof PostMediaModel>(getModelToken(PostMediaModel));
     commentMediaModel = module.get<typeof CommentMediaModel>(getModelToken(CommentMediaModel));
     sentryService = module.get<SentryService>(SentryService);
+    kafkaProducer = module.get<ClientKafka>(KAFKA_PRODUCER);
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),
       commit: jest.fn(),
@@ -118,9 +128,14 @@ describe('MediaService', () => {
       mediaModel.create.mockResolvedValue(createMediaDtoMock)
       postMediaModel.destroy.mockResolvedValue(1)
       commentMediaModel.destroy.mockResolvedValue(1)
+      mediaModel.findAll.mockResolvedValue([
+        {id: '1a619366-08b8-4217-8c03-6a7fd8c6725a', type: MediaType.FILE},
+        {id: 'd9c0e7bf-304a-4d81-99f8-c16ad367e796', type: MediaType.VIDEO}
+      ])
       mediaModel.destroy.mockResolvedValue(1)
+      kafkaProducer.emit = jest.fn().mockResolvedValue(true)
       // transactionMock.commit.mockResolvedValue(true)
-      const returnValue = await service.destroy(mockUserDto, {postId: 1, commentId: 1, mediaIds: [1,2]})
+      const returnValue = await service.destroy(mockUserDto, {postId: '44a2671e-0b20-4ce3-bb8a-5fb006080d4f', commentId: '6346fa2c-2cbf-4d0f-b3cb-2e14913cf0f5', mediaIds: ['1a619366-08b8-4217-8c03-6a7fd8c6725a', 'd9c0e7bf-304a-4d81-99f8-c16ad367e796']})
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
       expect(postMediaModel.destroy).toBeCalled()
@@ -135,7 +150,7 @@ describe('MediaService', () => {
       const logSpy = jest.spyOn(service['_logger'], 'error').mockReturnThis();
 
       try {
-        await service.destroy(mockUserDto, {postId: 1, commentId: 1, mediaIds: [1,2]})
+        await service.destroy(mockUserDto, {postId: '44a2671e-0b20-4ce3-bb8a-5fb006080d4f', commentId: '6346fa2c-2cbf-4d0f-b3cb-2e14913cf0f5', mediaIds: ['1a619366-08b8-4217-8c03-6a7fd8c6725a', 'd9c0e7bf-304a-4d81-99f8-c16ad367e796']})
       } catch (e) {
         expect(transactionMock.rollback).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
