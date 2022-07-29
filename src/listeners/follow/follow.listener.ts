@@ -88,7 +88,7 @@ export class FollowListener {
           FROM ${schema}.user_newsfeed AS "un_sq"
           WHERE "un_sq".user_id = :userId
         ) AS "un_need_to_delete"
-          WHERE "un_need_to_delete".groups_of_post &&  ANY(array_remove(ARRAY[${filterGroup}], '')::uuid[]) = false
+          WHERE ( "un_need_to_delete".groups_of_post::text[] &&  ARRAY[${filterGroup}] )= false
       )
     
     `;
