@@ -132,7 +132,6 @@ describe('PostController', () => {
       );
       expect(authorityService.checkCanUpdatePost).toBeCalledTimes(1);
       expect(authorityService.checkCanCreatePost).toBeCalledTimes(1);
-      expect(authorityService.checkCanDeletePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledTimes(1);
       expect(postService.updatePost).toBeCalledWith(
         mockedPostResponse,
