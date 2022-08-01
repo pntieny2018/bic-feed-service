@@ -123,44 +123,6 @@ describe('MediaService', () => {
     });
   })
 
-  describe('MediaService.destroy', () => {
-    it('should return if success', async () => {
-      mediaModel.create.mockResolvedValue(createMediaDtoMock)
-      postMediaModel.destroy.mockResolvedValue(1)
-      commentMediaModel.destroy.mockResolvedValue(1)
-      mediaModel.findAll.mockResolvedValue([
-        {id: '1a619366-08b8-4217-8c03-6a7fd8c6725a', type: MediaType.FILE},
-        {id: 'd9c0e7bf-304a-4d81-99f8-c16ad367e796', type: MediaType.VIDEO}
-      ])
-      mediaModel.destroy.mockResolvedValue(1)
-      kafkaProducer.emit = jest.fn().mockResolvedValue(true)
-      // transactionMock.commit.mockResolvedValue(true)
-      const returnValue = await service.destroy(mockUserDto, {postId: '44a2671e-0b20-4ce3-bb8a-5fb006080d4f', commentId: '6346fa2c-2cbf-4d0f-b3cb-2e14913cf0f5', mediaIds: ['1a619366-08b8-4217-8c03-6a7fd8c6725a', 'd9c0e7bf-304a-4d81-99f8-c16ad367e796']})
-      expect(transactionMock.commit).toBeCalledTimes(1);
-      expect(transactionMock.rollback).not.toBeCalled();
-      expect(postMediaModel.destroy).toBeCalled()
-      expect(commentMediaModel.destroy).toBeCalled()
-      expect(mediaModel.destroy).toBeCalled()
-      expect(returnValue).toEqual(true)
-    });
-
-    it('should sentry call if fail', async () => {
-      const errorMessage = 'Something went wrong'
-      mediaModel.destroy.mockRejectedValue(new Error(errorMessage))
-      const logSpy = jest.spyOn(service['_logger'], 'error').mockReturnThis();
-
-      try {
-        await service.destroy(mockUserDto, {postId: '44a2671e-0b20-4ce3-bb8a-5fb006080d4f', commentId: '6346fa2c-2cbf-4d0f-b3cb-2e14913cf0f5', mediaIds: ['1a619366-08b8-4217-8c03-6a7fd8c6725a', 'd9c0e7bf-304a-4d81-99f8-c16ad367e796']})
-      } catch (e) {
-        expect(transactionMock.rollback).toBeCalledTimes(1);
-        expect(transactionMock.commit).not.toBeCalled();
-        expect(logSpy).toBeCalled()
-        expect(sentryService.captureException).toBeCalled()
-        expect(e.message).toEqual('api.media.delete.app_error')
-      }
-    });
-  })
-
   describe('MediaService.getMediaList', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))

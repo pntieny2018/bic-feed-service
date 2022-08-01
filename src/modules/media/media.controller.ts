@@ -75,24 +75,4 @@ export class MediaController {
     });
     return result.toJSON();
   }
-
-  @ApiOperation({ summary: 'Delete Media' })
-  @ApiBadRequestResponse({
-    description: 'Delete media fails',
-  })
-  @ApiOkResponse({
-    description: 'Delete media successfully',
-  })
-  @Delete('/:mediaId')
-  @ResponseMessages({
-    success: 'Delete media successfully',
-    validator: {
-      fails: 'Delete media fails',
-    },
-  })
-  public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: string): Promise<any> {
-    return this._mediaService.destroy(user, {
-      mediaIds: [mediaId],
-    });
-  }
 }

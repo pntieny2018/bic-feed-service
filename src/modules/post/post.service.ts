@@ -56,6 +56,7 @@ import { Severity } from '@sentry/node';
 import { json } from 'stream/consumers';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
+import { transport } from 'winston';
 
 @Injectable()
 export class PostService {
@@ -964,23 +965,26 @@ export class PostService {
           post.createdBy
         );
       }
-      await Promise.all([
-        this.mentionService.setMention([], MentionableType.POST, postId, transaction),
-        this.mediaService.sync(postId, EntityType.POST, [], transaction),
-        this.setGroupByPost([], postId, transaction),
-        this.reactionService.deleteReactionByPostIds([postId]),
-        this.commentService.deleteCommentsByPost(postId, transaction),
-        this.feedService.deleteNewsFeedByPost(postId, transaction),
-        this.feedService.deleteUserSeenByPost(postId, transaction),
-        this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
-      ]);
-      await this.postModel.destroy({
-        where: {
-          id: postId,
-          createdBy: authUser.id,
-        },
-        transaction: transaction,
-      });
+
+      if (post.isDraft) {
+        await this.postModel.destroy({
+          where: {
+            id: postId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+          force: true,
+        });
+        await this._cleanPostElement(postId, transaction);
+      } else {
+        await this.postModel.destroy({
+          where: {
+            id: postId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+        });
+      }
       await transaction.commit();
 
       return post;
@@ -989,6 +993,25 @@ export class PostService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  private async _cleanPostElement(
+    postId: string,
+    transaction: Transaction,
+    isCleanMedia = false
+  ): Promise<void> {
+    await Promise.all([
+      this.mentionService.setMention([], MentionableType.POST, postId, transaction),
+      isCleanMedia
+        ? this.mediaService.sync(postId, EntityType.POST, [], transaction)
+        : Promise.resolve(),
+      this.setGroupByPost([], postId, transaction),
+      this.reactionService.deleteReactionByPostIds([postId]),
+      this.commentService.deleteCommentsByPost(postId, transaction),
+      this.feedService.deleteNewsFeedByPost(postId, transaction),
+      this.feedService.deleteUserSeenByPost(postId, transaction),
+      this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+    ]);
   }
 
   /**
@@ -1645,20 +1668,41 @@ export class PostService {
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanDeletedPost(): Promise<void> {
-    const willDeletePost = await this.postModel.findAll({
+    const willDeletePosts = await this.postModel.findAll({
       where: {
         deletedAt: {
-          [Op.gte]: moment().subtract(30, 'days').toDate(),
+          [Op.lte]: moment().subtract(30, 'days').toDate(),
         },
       },
+      paranoid: false,
+      include: {
+        model: MediaModel,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'type'],
+        required: false,
+      },
     });
-    const mediaIds = ArrayHelper.arrayUnique(
-      willDeletePost.filter((e) => e.media).map((e) => e.media)
-    );
-    if (!(await this.mediaService.isExistOnPostOrComment(mediaIds))) {
-      this.mediaService.emitMediaToUploadServiceFromMediaList(mediaIds, MediaMarkAction.DELETE);
-    }
+    if (willDeletePosts.length) {
+      const mediaList = ArrayHelper.arrayUnique(
+        willDeletePosts.filter((e) => e.media.length).map((e) => e.media)
+      );
+      if (!(await this.mediaService.isExistOnPostOrComment(mediaList.map((e) => e.id)))) {
+        this.mediaService.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE);
+      }
+      const transaction = await this.sequelizeConnection.transaction();
 
-    await willDeletePost.forEach((e) => e.destroy({ force: true }));
+      try {
+        for (const post of willDeletePosts) {
+          await this._cleanPostElement(post.id, transaction, true);
+          await post.destroy({ force: true, transaction });
+        }
+        await transaction.commit();
+      } catch (e) {
+        this.logger.error(e.message);
+        await transaction.rollback();
+      }
+    }
   }
 }

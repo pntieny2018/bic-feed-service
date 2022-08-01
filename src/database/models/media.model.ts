@@ -25,11 +25,6 @@ export enum MediaType {
   IMAGE = 'image',
   FILE = 'file',
 }
-export enum MediaTypeInUploadService {
-  VIDEO = 'video',
-  FILE = 'file',
-}
-
 export enum MediaMarkAction {
   USED,
   DELETE,

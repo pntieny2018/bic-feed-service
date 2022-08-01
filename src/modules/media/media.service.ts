@@ -7,7 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { UserDto } from '../auth';
-import { MediaDto, RemoveMediaDto } from './dto';
+import { MediaDto } from './dto';
 import { EntityType } from './media.constants';
 import { Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
@@ -113,54 +113,6 @@ export class MediaService {
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new InternalServerErrorException("Can't create media");
-    }
-  }
-
-  /**
-   *  Delete media
-   * @param user UserDto UserDto
-   * @param removeMediaDto RemoveMediaDto
-   */
-  public async destroy(user: UserDto, removeMediaDto: RemoveMediaDto): Promise<any> {
-    const trx = await this._sequelizeConnection.transaction();
-    try {
-      if (removeMediaDto.postId) {
-        await this._postMediaModel.destroy({
-          where: {
-            mediaId: removeMediaDto.mediaIds,
-            postId: removeMediaDto.postId,
-          },
-        });
-      }
-
-      if (removeMediaDto.commentId) {
-        await this._commentMediaModel.destroy({
-          where: {
-            mediaId: removeMediaDto.mediaIds,
-            commentId: removeMediaDto.commentId,
-          },
-        });
-      }
-
-      const mediaList = await this._mediaModel.findAll({
-        where: { id: { [Op.in]: removeMediaDto.mediaIds } },
-      });
-
-      await this._mediaModel.destroy({
-        where: {
-          id: removeMediaDto.mediaIds,
-        },
-      });
-
-      await trx.commit();
-      this.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE, user.id);
-
-      return true;
-    } catch (ex) {
-      this._logger.error(ex, ex.stack);
-      this._sentryService.captureException(ex);
-      await trx.rollback();
-      throw new LogicException(HTTP_STATUS_ID.API_MEDIA_DELETE_ERROR);
     }
   }
 
@@ -577,7 +529,7 @@ export class MediaService {
       where: {
         id: { [Op.notIn]: mediaIdList },
         createdAt: {
-          [Op.gte]: moment().subtract(4, 'hours').toDate(),
+          [Op.lte]: moment().subtract(4, 'hours').toDate(),
         },
       },
     });
