@@ -311,10 +311,10 @@ export class CommentDissociationService {
                    SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
                    AS duplicate_count
                    FROM ${schema}.${FollowModel.tableName} 
-                   WHERE group_id IN  (${groupIds.join(',')})  
+                   WHERE group_id IN  (${groupIds.map((g) => `'${g}'`).join(',')})  
               ) SELECT user_id FROM REMOVE_DUPLICATE tb1 
                 WHERE duplicate_count = 1 
-                AND user_id IN  (${userIds.join(',')})  
+                AND user_id IN  (${userIds.map((u) => `'${u}'`).join(',')})  
              `
     );
     if (!rows) {

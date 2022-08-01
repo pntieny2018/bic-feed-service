@@ -3,11 +3,9 @@ parameters:
   run_workflow_sbx:
     default: true
     type: boolean
-
   run_workflow_stg:
     default: true
     type: boolean
-
   run_workflow_pro:
     default: true
     type: boolean
@@ -21,11 +19,14 @@ jobs:
       BASE: bein-base
       ENVIRONMENT_BASE: bein-sandbox-base
       LIVE: bein-sandbox-live-stream
+      ENVIRONMENT: "sbx"
+      SERVICE: "stream"
     working_directory: ~/app
     steps:
       - checkout
       - setup_remote_docker:
-          version: 19.03.13
+          version: 20.10.12
+          docker_layer_caching: true
       - run:
           name: Build Docker image
           command: |
@@ -51,21 +52,36 @@ jobs:
           command: |
             mkdir ~/app/$BASE
             cd ~/app/$BASE
-            git clone -b $BASE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$ENVIRONMENT_BASE
             cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$LIVE
             cd ~/app/$LIVE
-            git clone -b $LIVE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
+      - run:
+          name: Update image version
+          command: |
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            cd bic-kube
+            set -e
+            COMMIT_SHA1=$CIRCLE_SHA1
+            export COMMIT_SHA1=$COMMIT_SHA1
+            envsubst <apps/$SERVICE/$ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$ENVIRONMENT/version.yaml.out
+            mv apps/$SERVICE/$ENVIRONMENT/version.yaml.out apps/$SERVICE/$ENVIRONMENT/version.yaml
+            git config --global user.email "cicd@evol.vn"
+            git config --global user.name "CICD"
+            git add -A
+            git commit -m "Updated version to $IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git push
       - run:
           name: Run Kustomize
           command: |
@@ -88,11 +104,14 @@ jobs:
       BASE: bein-base
       ENVIRONMENT_BASE: bein-staging-base
       LIVE: bein-staging-live-stream
+      ENVIRONMENT: "stg"
+      SERVICE: "stream"
     working_directory: ~/app
     steps:
       - checkout
       - setup_remote_docker:
-          version: 19.03.13
+          version: 20.10.12
+          docker_layer_caching: true
       - run:
           name: Build Docker image
           command: |
@@ -118,21 +137,36 @@ jobs:
           command: |
             mkdir ~/app/$BASE
             cd ~/app/$BASE
-            git clone -b $BASE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$ENVIRONMENT_BASE
             cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$LIVE
             cd ~/app/$LIVE
-            git clone -b $LIVE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
+      - run:
+          name: Update image version
+          command: |
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            cd bic-kube
+            set -e
+            COMMIT_SHA1=$CIRCLE_SHA1
+            export COMMIT_SHA1=$COMMIT_SHA1
+            envsubst <apps/$SERVICE/$ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$ENVIRONMENT/version.yaml.out
+            mv apps/$SERVICE/$ENVIRONMENT/version.yaml.out apps/$SERVICE/$ENVIRONMENT/version.yaml
+            git config --global user.email "cicd@evol.vn"
+            git config --global user.name "CICD"
+            git add -A
+            git commit -m "Updated version to $IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git push
       - run:
           name: Run Kustomize
           command: |
@@ -155,11 +189,14 @@ jobs:
       BASE: bein-base
       ENVIRONMENT_BASE: bein-production-base
       LIVE: bein-production-live-stream
+      ENVIRONMENT: "pro"
+      SERVICE: "stream"
     working_directory: ~/app
     steps:
       - checkout
       - setup_remote_docker:
-          version: 19.03.13
+          version: 20.10.12
+          docker_layer_caching: true
       - run:
           name: Build Docker image
           command: |
@@ -185,21 +222,36 @@ jobs:
           command: |
             mkdir ~/app/$BASE
             cd ~/app/$BASE
-            git clone -b $BASE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$ENVIRONMENT_BASE
             cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$LIVE
             cd ~/app/$LIVE
-            git clone -b $LIVE git@bitbucket.org:bein-platform/bic-kube.git
+            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
+      - run:
+          name: Update image version
+          command: |
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            cd bic-kube
+            set -e
+            COMMIT_SHA1=$CIRCLE_SHA1
+            export COMMIT_SHA1=$COMMIT_SHA1
+            envsubst <apps/$SERVICE/$ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$ENVIRONMENT/version.yaml.out
+            mv apps/$SERVICE/$ENVIRONMENT/version.yaml.out apps/$SERVICE/$ENVIRONMENT/version.yaml
+            git config --global user.email "cicd@evol.vn"
+            git config --global user.name "CICD"
+            git add -A
+            git commit -m "Updated version to $IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git push
       - run:
           name: Run Kustomize
           command: |
@@ -225,9 +277,9 @@ workflows:
             branches:
               only: sandbox
           context:
+            - bic-cicd
             - bein-backend-general
             - bein-backend-sbx
-
   Staging:
     when: << pipeline.parameters.run_workflow_stg >>
     jobs:
@@ -236,9 +288,9 @@ workflows:
             branches:
               only: staging
           context:
+            - bic-cicd
             - bein-backend-general
             - bein-backend-stg
-
   Production:
     when: << pipeline.parameters.run_workflow_pro >>
     jobs:
@@ -247,5 +299,6 @@ workflows:
             branches:
               only: master
           context:
+            - bic-cicd
             - bein-backend-general
             - bein-backend-pro
