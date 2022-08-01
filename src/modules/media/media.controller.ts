@@ -50,7 +50,7 @@ export class MediaController {
   public async create(
     @AuthUser() user: UserDto,
     @UploadedFile() file: Express.Multer.File,
-    @Body('uploadType') uploadType: UploadType
+    @Body('upload_type') uploadType: UploadType
   ): Promise<any> {
     const url = await this._uploadService.upload(file, uploadType);
 
