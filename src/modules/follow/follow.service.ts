@@ -188,7 +188,7 @@ export class FollowService {
     limit = 1000
   ): Promise<{
     userIds: string[];
-    latestFollowId: string;
+    latestFollowId: number;
   }> {
     this._logger.debug(
       `[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}. groupIds: ${groupIds}`
@@ -228,14 +228,14 @@ export class FollowService {
 
       return {
         userIds: [],
-        latestFollowId: NIL_UUID,
+        latestFollowId: 0,
       };
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
       return {
         userIds: [],
-        latestFollowId: NIL_UUID,
+        latestFollowId: 0,
       };
     }
   }
