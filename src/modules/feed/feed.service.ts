@@ -124,12 +124,16 @@ export class FeedService {
       const post = await this._postService.findPost({
         postId: postId,
       });
-
-      const groups = post.groups.map((g) => g.groupId);
       const groupsOfUser = user.profile.groups;
+      const groupIds = post.groups.map((g) => g.groupId);
+      const groupInfos = await this._groupService.getMany(groupIds);
 
-      if (!this._groupService.isMemberOfSomeGroups(groups, groupsOfUser)) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      const privacy = groupInfos.map((g) => g.privacy);
+
+      if (privacy.every((p) => p !== GroupPrivacy.OPEN && p !== GroupPrivacy.PUBLIC)) {
+        if (!this._groupService.isMemberOfSomeGroups(groupIds, groupsOfUser)) {
+          ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+        }
       }
 
       const usersSeenPost = await this._userSeenPostModel.findAll({
