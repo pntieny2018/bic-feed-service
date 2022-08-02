@@ -1,36 +1,40 @@
 import {
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { UserDto } from '../auth';
-import {
-  FileMetadataDto,
-  ImageMetadataDto,
-  MediaDto,
-  RemoveMediaDto,
-  VideoMetadataDto,
-} from './dto';
+import { MediaDto } from './dto';
 import { EntityType } from './media.constants';
-import { ModelStatic, Sequelize } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { Attributes, FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
+import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { CommentMediaModel } from '../../database/models/comment-media.model';
-import { IMedia, MediaModel, MediaStatus, MediaType } from '../../database/models/media.model';
+import {
+  IMedia,
+  MediaMarkAction,
+  MediaModel,
+  MediaStatus,
+  MediaType,
+} from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
+import { HTTP_STATUS_ID, KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
 import { SentryService } from '@app/sentry';
 import { FileMetadataResponseDto } from './dto/response/file-metadata-response.dto';
 import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
 import { VideoMetadataResponseDto } from './dto/response/video-metadata-response.dto';
+import { ClientKafka } from '@nestjs/microservices';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import moment from 'moment';
 
 @Injectable()
 export class MediaService {
@@ -40,7 +44,9 @@ export class MediaService {
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
     @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    @Inject(KAFKA_PRODUCER)
+    private readonly _clientKafka: ClientKafka
   ) {}
 
   /**
@@ -88,65 +94,25 @@ export class MediaService {
       })}`
     );
     try {
-      const typeArr = uploadType.split('_');
-      return await this._mediaModel.create({
+      const mediaType = uploadType.split('_')[1] as MediaType;
+      const media = await this._mediaModel.create({
         name,
         originName,
         createdBy: user.id,
         url,
         extension,
-        type: typeArr[1] as MediaType,
+        type: mediaType,
         width: width,
         height: height,
         status,
         size: size ?? null,
         mimeType: mimeType ?? null,
       });
+      this.emitMediaToUploadService(mediaType, MediaMarkAction.USED, [media.id], user.id);
+      return media;
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new InternalServerErrorException("Can't create media");
-    }
-  }
-
-  /**
-   *  Delete media
-   * @param user UserDto UserDto
-   * @param removeMediaDto RemoveMediaDto
-   */
-  public async destroy(user: UserDto, removeMediaDto: RemoveMediaDto): Promise<any> {
-    const trx = await this._sequelizeConnection.transaction();
-    try {
-      if (removeMediaDto.postId) {
-        await this._postMediaModel.destroy({
-          where: {
-            mediaId: removeMediaDto.mediaIds,
-            postId: removeMediaDto.postId,
-          },
-        });
-      }
-
-      if (removeMediaDto.commentId) {
-        await this._commentMediaModel.destroy({
-          where: {
-            mediaId: removeMediaDto.mediaIds,
-            commentId: removeMediaDto.commentId,
-          },
-        });
-      }
-
-      await this._mediaModel.destroy({
-        where: {
-          id: removeMediaDto.mediaIds,
-        },
-      });
-
-      await trx.commit();
-      return true;
-    } catch (ex) {
-      this._logger.error(ex, ex.stack);
-      this._sentryService.captureException(ex);
-      await trx.rollback();
-      throw new LogicException(HTTP_STATUS_ID.API_MEDIA_DELETE_ERROR);
     }
   }
 
@@ -243,18 +209,32 @@ export class MediaService {
       });
     });
 
-    const existingMeidaList = await this._mediaModel.findAll({
+    const existingMediaList = await this._mediaModel.findAll({
       where: {
         id: mediaIds,
       },
       transaction,
     });
 
-    const existingMediaIds = existingMeidaList.map((m) => m.id);
+    const existingMediaIds = existingMediaList.map((m) => m.id);
     await this._mediaModel.bulkCreate(
       insertData.filter((i) => !existingMediaIds.includes(i.id)),
       { transaction }
     );
+
+    this.emitMediaToUploadService(
+      MediaType.VIDEO,
+      MediaMarkAction.USED,
+      videos.map((e) => e.id),
+      createdBy
+    );
+    this.emitMediaToUploadService(
+      MediaType.FILE,
+      MediaMarkAction.USED,
+      files.map((e) => e.id),
+      createdBy
+    );
+
     return insertData;
   }
 
@@ -477,5 +457,93 @@ export class MediaService {
         id: ids,
       },
     });
+  }
+
+  public emitMediaToUploadService(
+    mediaType: MediaType,
+    mediaMarkAction: MediaMarkAction,
+    mediaIds: string[],
+    userId: string = null
+  ): void {
+    const [kafkaTopic, keyIds] =
+      mediaType === MediaType.FILE
+        ? [
+            mediaMarkAction === MediaMarkAction.USED
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_FILE_HAS_BEEN_USED
+              : mediaMarkAction === MediaMarkAction.DELETE
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES
+              : null,
+            'mediaIds',
+          ]
+        : mediaType === MediaType.VIDEO
+        ? [
+            mediaMarkAction === MediaMarkAction.USED
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.MARK_VIDEO_HAS_BEEN_USED
+              : mediaMarkAction === MediaMarkAction.DELETE
+              ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_VIDEOS
+              : null,
+            'videoIds',
+          ]
+        : [null, null];
+
+    if (!kafkaTopic) return;
+    if (mediaIds.length) {
+      this._clientKafka.emit(kafkaTopic, {
+        key: null,
+        value: JSON.stringify({ [keyIds]: mediaIds, userId }),
+      });
+    }
+  }
+
+  public emitMediaToUploadServiceFromMediaList(
+    mediaList: IMedia[],
+    mediaMarkAction: MediaMarkAction,
+    userId?: string
+  ): void {
+    const mediaIdsByType: {
+      [MediaType.FILE]: string[];
+      [MediaType.VIDEO]: string[];
+    } = mediaList.reduce(
+      (object, current) => {
+        if (current.type === MediaType.FILE) object[MediaType.FILE].push(current.id);
+        if (current.type === MediaType.VIDEO) object[MediaType.VIDEO].push(current.id);
+        return object;
+      },
+      {
+        [MediaType.FILE]: [],
+        [MediaType.VIDEO]: [],
+      }
+    );
+    Object.entries(mediaIdsByType).forEach(([mediaType, ids]) =>
+      this.emitMediaToUploadService(mediaType as MediaType, mediaMarkAction, ids, userId)
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  @Cron(CronExpression.EVERY_4_HOURS)
+  async deleteUnusedMedia(): Promise<void> {
+    const postMedia = await this._postMediaModel.findAll();
+    const commentMedia = await this._commentMediaModel.findAll();
+    const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
+    const willDeleteMedia = await this._mediaModel.findAll({
+      where: {
+        id: { [Op.notIn]: mediaIdList },
+        createdAt: {
+          [Op.lte]: moment().subtract(4, 'hours').toDate(),
+        },
+      },
+    });
+    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
+    await willDeleteMedia.forEach((e) => e.destroy());
+  }
+
+  public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {
+    if (await this._postMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
+      return true;
+    }
+    if (await this._commentMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
+      return true;
+    }
+    return false;
   }
 }

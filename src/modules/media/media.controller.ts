@@ -50,7 +50,7 @@ export class MediaController {
   public async create(
     @AuthUser() user: UserDto,
     @UploadedFile() file: Express.Multer.File,
-    @Body('uploadType') uploadType: UploadType
+    @Body('upload_type') uploadType: UploadType
   ): Promise<any> {
     const url = await this._uploadService.upload(file, uploadType);
 
@@ -74,25 +74,5 @@ export class MediaController {
       mimeType: file.mimetype,
     });
     return result.toJSON();
-  }
-
-  @ApiOperation({ summary: 'Delete Media' })
-  @ApiBadRequestResponse({
-    description: 'Delete media fails',
-  })
-  @ApiOkResponse({
-    description: 'Delete media successfully',
-  })
-  @Delete('/:mediaId')
-  @ResponseMessages({
-    success: 'Delete media successfully',
-    validator: {
-      fails: 'Delete media fails',
-    },
-  })
-  public async destroy(@AuthUser() user: UserDto, @Param('mediaId') mediaId: number): Promise<any> {
-    return this._mediaService.destroy(user, {
-      mediaIds: [mediaId],
-    });
   }
 }
