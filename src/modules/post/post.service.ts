@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { ForbiddenException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -967,6 +967,7 @@ export class PostService {
       }
 
       if (post.isDraft) {
+        await this._cleanPostElement(postId, transaction);
         await this.postModel.destroy({
           where: {
             id: postId,
@@ -975,7 +976,6 @@ export class PostService {
           transaction: transaction,
           force: true,
         });
-        await this._cleanPostElement(postId, transaction);
       } else {
         await this.postModel.destroy({
           where: {
