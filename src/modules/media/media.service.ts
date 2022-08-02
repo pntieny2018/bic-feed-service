@@ -169,6 +169,7 @@ export class MediaService {
         createdBy,
         updatedBy: createdBy,
         status: i.status ?? MediaStatus.COMPLETED,
+        createdAt: i.createdAt ? i.createdAt : new Date(),
       });
     });
 
@@ -188,6 +189,7 @@ export class MediaService {
         width: null,
         height: null,
         status: i.status ?? MediaStatus.COMPLETED,
+        createdAt: i.createdAt ? i.createdAt : new Date(),
       });
     });
 
@@ -206,6 +208,7 @@ export class MediaService {
         height: i.height ?? null,
         status: i.status ?? MediaStatus.WAITING_PROCESS,
         thumbnails: i.thumbnails ?? [],
+        createdAt: i.createdAt ? i.createdAt : new Date(),
       });
     });
 

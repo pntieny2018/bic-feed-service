@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  IsDate,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -118,4 +119,12 @@ export class VideoMetadataDto implements IDocumentMetadata {
   @Expose()
   @Transform(({ value }) => value ?? [])
   public thumbnails?: ThumbnailDto[] = [];
+
+  @ApiProperty({ required: false, type: Date })
+  @IsDate()
+  @IsOptional()
+  @Expose({
+    name: 'created_at',
+  })
+  public createdAt?: Date;
 }
