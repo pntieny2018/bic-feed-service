@@ -390,16 +390,20 @@ export class MediaService {
       videos: [],
       images: [],
     };
-    media.forEach((media: IMedia) => {
-      const TypeMediaDto =
-        media.type === 'file'
-          ? FileMetadataResponseDto
-          : media.type === 'image'
-          ? ImageMetadataResponseDto
-          : VideoMetadataResponseDto;
-      const typeMediaDto = plainToInstance(TypeMediaDto, media, { excludeExtraneousValues: true });
-      if (mediaTypes[`${media.type}s`]) mediaTypes[`${media.type}s`].push(typeMediaDto);
-    });
+    media
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .forEach((media: IMedia) => {
+        const TypeMediaDto =
+          media.type === 'file'
+            ? FileMetadataResponseDto
+            : media.type === 'image'
+            ? ImageMetadataResponseDto
+            : VideoMetadataResponseDto;
+        const typeMediaDto = plainToInstance(TypeMediaDto, media, {
+          excludeExtraneousValues: true,
+        });
+        if (mediaTypes[`${media.type}s`]) mediaTypes[`${media.type}s`].push(typeMediaDto);
+      });
     return mediaTypes;
   }
 
