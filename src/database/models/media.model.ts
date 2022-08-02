@@ -25,6 +25,10 @@ export enum MediaType {
   IMAGE = 'image',
   FILE = 'file',
 }
+export enum MediaMarkAction {
+  USED,
+  DELETE,
+}
 
 export enum MediaStatus {
   WAITING_PROCESS = 'waiting_process',
@@ -54,7 +58,7 @@ export interface IMedia {
 }
 @Table({
   tableName: 'media',
-  createdAt: false,
+  createdAt: true,
   updatedAt: false,
 })
 export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements IMedia {
