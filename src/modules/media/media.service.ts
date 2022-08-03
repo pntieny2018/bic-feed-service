@@ -391,7 +391,9 @@ export class MediaService {
       images: [],
     };
     media
-      //.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a, b) => {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
       .forEach((media: IMedia) => {
         const TypeMediaDto =
           media.type === 'file'
