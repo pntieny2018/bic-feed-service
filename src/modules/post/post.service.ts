@@ -1525,6 +1525,7 @@ export class PostService {
                   extension: post.extension,
                   mimeType: post.mimeType,
                   thumbnails: post.thumbnails,
+                  createdAt: post.mediaCreatedAt,
                 },
               ];
         result.push({
@@ -1583,6 +1584,7 @@ export class PostService {
           extension: post.extension,
           mimeType: post.mimeType,
           thumbnails: post.thumbnails,
+          createdAt: post.mediaCreatedAt,
         });
       }
     });
