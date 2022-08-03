@@ -11,7 +11,6 @@ import { UserService } from '../../../shared/user/user.service';
 import { MentionService } from '../../mention';
 import { PostService } from '../../post/post.service';
 import { ReactionService } from '../../reaction';
-import { GetTimelineDto } from '../dto/request';
 import { FeedService } from '../feed.service';
 import { mockedUserAuth, mockGroup } from './mocks/input.mock';
 import { mockedGetNewsFeedDto } from './mocks/request/get-newsfeed.dto.mock';
@@ -19,14 +18,8 @@ import { mockedGetTimeLineDto } from './mocks/request/get-timeline.dto.mock';
 import { mockIPost } from '../../post/test/mocks/input.mock';
 import { mockUserSeenPostModels } from '../../feed-publisher/tests/mocks/input.mock';
 import { HTTP_STATUS_ID } from '../../../common/constants';
-
-class EPostModel extends PostModel {
-  public reactionsCount: string;
-
-  public commentsCount: number;
-
-  public isNowImportant: number;
-}
+import { createMock } from '@golevelup/ts-jest';
+import { GroupPrivacy } from '../../../shared/group/dto';
 
 describe('FeedService', () => {
   let feedService: FeedService;
@@ -49,7 +42,7 @@ describe('FeedService', () => {
         },
         {
           provide: GroupService,
-          useClass: jest.fn(),
+          useValue: createMock<GroupService>(),
         },
         {
           provide: MentionService,
@@ -130,11 +123,13 @@ describe('FeedService', () => {
   describe('getTimeline', () => {
     it('Should get successfully with predefined timeline', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest.fn().mockResolvedValue([
-        '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
-        '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
-        '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0'
-      ]);
+      groupService.getGroupIdsCanAccess = jest
+        .fn()
+        .mockResolvedValue([
+          '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
+          '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
+          '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
+        ]);
       PostModel.getTotalImportantPostInGroups = jest.fn().mockResolvedValue(0);
       PostModel.getTimelineData = jest.fn().mockResolvedValue([]);
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
@@ -144,7 +139,7 @@ describe('FeedService', () => {
       postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      const result = await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
+      await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
 
       expect(groupService.get).toBeCalledTimes(1);
       expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
@@ -153,11 +148,13 @@ describe('FeedService', () => {
 
     it('Should get successfully with predefined timeline and null user', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest.fn().mockResolvedValue([
-        '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
-        '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
-        '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0'
-      ]);
+      groupService.getGroupIdsCanAccess = jest
+        .fn()
+        .mockResolvedValue([
+          '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
+          '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
+          '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
+        ]);
       PostModel.getTotalImportantPostInGroups = jest.fn().mockResolvedValue(0);
       PostModel.getTimelineData = jest.fn().mockResolvedValue([]);
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
@@ -167,7 +164,7 @@ describe('FeedService', () => {
       postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      const result = await feedService.getTimeline(null, mockedGetTimeLineDto);
+      await feedService.getTimeline(null, mockedGetTimeLineDto);
 
       expect(groupService.get).toBeCalledTimes(1);
       expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
@@ -193,14 +190,10 @@ describe('FeedService', () => {
       postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      const result = await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
+      await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
 
       expect(PostModel.getTotalImportantPostInNewsFeed).toBeCalledTimes(1);
       expect(PostModel.getNewsFeedData).toBeCalledTimes(1);
-      // expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
-      // expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-      // expect(postService.bindActorToPost).toBeCalledTimes(1);
-      // expect(postService.bindAudienceToPost).toBeCalledTimes(1);
     });
 
     it('Should failed', async () => {
@@ -215,7 +208,7 @@ describe('FeedService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        const result = await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
+        await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
       } catch (e) {
         expect(e.message).toEqual('Database connection error.');
       }
@@ -229,7 +222,10 @@ describe('FeedService', () => {
       userSeenPostModel.create = jest.fn().mockResolvedValue(Promise.resolve());
       feedModel.update = jest.fn().mockResolvedValue(Promise.resolve());
 
-      await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', '6d075299-77fd-4b8f-8f2d-e317cd5f60ff');
+      await feedService.markSeenPosts(
+        '8548c944-91f3-4577-99e2-18a541186c18',
+        '6d075299-77fd-4b8f-8f2d-e317cd5f60ff'
+      );
 
       expect(userSeenPostModel.create).toBeCalledTimes(1);
       expect(feedModel.update).toBeCalledTimes(1);
@@ -243,7 +239,10 @@ describe('FeedService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        await feedService.markSeenPosts('8548c944-91f3-4577-99e2-18a541186c18', '6d075299-77fd-4b8f-8f2d-e317cd5f60ff');
+        await feedService.markSeenPosts(
+          '8548c944-91f3-4577-99e2-18a541186c18',
+          '6d075299-77fd-4b8f-8f2d-e317cd5f60ff'
+        );
       } catch (e) {
         expect(e.message).toEqual('Database connection error.');
       }
@@ -262,23 +261,6 @@ describe('FeedService', () => {
       expect(feedModel.destroy).toBeCalledTimes(1);
     });
   });
-
-  // describe('_getIdConstrains', () => {
-  //   it('Should successfully', async () => {
-  //     sequelize.escape = jest.fn();
-
-  //     const getTimeLineDto = {
-  //       idGT: 'c8efbda1-4333-430c-871a-07481c640b60',
-  //       idGTE: '57adfbdd-7993-49c1-8c21-136d9b2e3dc9',
-  //       idLT: '80f01461-af26-4fa9-97e8-787bf94f0013',
-  //       idLTE: '097f9763-12be-4e02-bf8e-8ddd7f8375ee',
-  //     };
-
-  //     feedService['_getIdConstrains'](getTimeLineDto as any as GetTimelineDto);
-
-  //     expect(sequelize.escape).toBeCalledTimes(6);
-  //   });
-  // });
 
   describe('FeedServices.getUsersSeenPots', () => {
     it('should success', async () => {
@@ -323,7 +305,11 @@ describe('FeedService', () => {
       groupService.isMemberOfSomeGroups = jest.fn().mockReturnValue(false);
       sentryService.captureException = jest.fn();
       try {
-        await feedService.getUsersSeenPots(mockedUserAuth, { limit: 25, offset: 0, postId: '8548c944-91f3-4577-99e2-18a541186c18' });
+        await feedService.getUsersSeenPots(mockedUserAuth, {
+          limit: 25,
+          offset: 0,
+          postId: '8548c944-91f3-4577-99e2-18a541186c18',
+        });
       } catch (e) {
         expect(postService.findPost).toBeCalled();
         expect(groupService.isMemberOfSomeGroups).toBeCalled();

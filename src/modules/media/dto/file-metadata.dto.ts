@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { basename } from 'path';
 import { MediaStatus } from '../../../database/models/media.model';
 import { IDocumentMetadata } from './interfaces';
@@ -80,4 +80,12 @@ export class FileMetadataDto implements IDocumentMetadata {
     name: 'mime_type',
   })
   public mimeType?: string;
+
+  @ApiProperty({ required: false, type: Date })
+  @IsDate()
+  @IsOptional()
+  @Expose({
+    name: 'created_at',
+  })
+  public createdAt?: Date;
 }

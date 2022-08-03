@@ -52,25 +52,25 @@ jobs:
           command: |
             mkdir ~/app/$BASE
             cd ~/app/$BASE
-            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$ENVIRONMENT_BASE
             cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$LIVE
             cd ~/app/$LIVE
-            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
       - run:
           name: Update image version
           command: |
-            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
@@ -137,25 +137,25 @@ jobs:
           command: |
             mkdir ~/app/$BASE
             cd ~/app/$BASE
-            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$ENVIRONMENT_BASE
             cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$LIVE
             cd ~/app/$LIVE
-            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
       - run:
           name: Update image version
           command: |
-            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
@@ -222,25 +222,25 @@ jobs:
           command: |
             mkdir ~/app/$BASE
             cd ~/app/$BASE
-            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$ENVIRONMENT_BASE
             cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
 
             mkdir ~/app/$LIVE
             cd ~/app/$LIVE
-            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cp -r bic-kube/* .
             rm -rf bic-kube
       - run:
           name: Update image version
           command: |
-            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/bein-platform/bic-kube.git 
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1

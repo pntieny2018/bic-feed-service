@@ -13,6 +13,7 @@ import {
   Table,
   UpdatedAt,
   Sequelize,
+  DeletedAt,
 } from 'sequelize-typescript';
 import { CommentModel, IComment } from './comment.model';
 import { MediaModel } from './media.model';
@@ -27,7 +28,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { MentionableType } from '../../common/constants';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IsUUID } from 'class-validator';
-import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
+import { v4 as uuid_v4 } from 'uuid';
 import { UserDto } from '../../modules/auth';
 import { OrderEnum } from '../../common/dto';
 import { GetTimelineDto } from '../../modules/feed/dto/request';
@@ -38,7 +39,7 @@ import { HashtagModel, IHashtag } from './hashtag.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
-import { GetArticleDto, GetListArticlesDto } from '../../modules/article/dto/requests';
+import { GetListArticlesDto } from '../../modules/article/dto/requests';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 
 export enum PostPrivacy {
@@ -64,6 +65,7 @@ export interface IPost {
   isProcessing?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  deletedAt?: Date;
   comments?: IComment[];
   media?: IMedia[];
   groups?: IPostGroup[];
@@ -85,6 +87,7 @@ export interface IPost {
 
 @Table({
   tableName: 'posts',
+  paranoid: true,
 })
 export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IPost {
   @PrimaryKey
@@ -170,6 +173,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  @DeletedAt
+  @Column
+  deletedAt?: Date;
 
   @HasMany(() => CommentModel)
   public comments?: CommentModel[];
@@ -414,7 +421,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."height",
     "media"."extension",
     "media"."mime_type" as "mimeType",
-    "media"."thumbnails"
+    "media"."thumbnails",
+    "media"."created_at" as "mediaCreatedAt"
     FROM (
       SELECT
       "p"."id",
@@ -429,7 +437,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         WHERE r.post_id = p.id ${authUserId ? 'AND r.user_id = :authUserId' : ''} ), false
       ) AS "markedReadPost"
       FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false AND EXISTS(
+      WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND EXISTS(
         SELECT 1
         from ${schema}.${postGroupTable} AS g
         WHERE g.post_id = p.id
@@ -518,7 +526,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."height",
     "media"."extension",
     "media"."mime_type" as "mimeType",
-    "media"."thumbnails"
+    "media"."thumbnails",
+    "media"."created_at" as "mediaCreatedAt"
     FROM (
       SELECT
       "p"."id",
@@ -540,7 +549,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         WHERE spg.post_id = p.id AND spg.group_id IN(:userGroupIds) ), FALSE) = FALSE THEN TRUE ELSE FALSE
       END as "isLocked"
       FROM ${schema}.${postTable} AS "p"
-      WHERE "p"."is_draft" = false
+      WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false
           AND "p"."is_article" = true AND (
           "p"."privacy" != '${PostPrivacy.SECRET}' OR EXISTS(
         SELECT 1
@@ -653,12 +662,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."height",
     "media"."extension",
     "media"."mime_type" as "mimeType",
-    "media"."thumbnails"
+    "media"."thumbnails",
+    "media"."created_at" as "mediaCreatedAt"
     FROM (
       ${subSelect}
       FROM ${schema}.${postTable} AS "p"
       INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
-      WHERE "p"."is_draft" = false ${condition}
+      WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false ${condition}
       ORDER BY "is_seen_post" ASC, "p"."created_at" ${order}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"
@@ -696,7 +706,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND EXISTS(
         SELECT 1
         from ${schema}.posts_groups AS g
@@ -720,7 +730,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    WHERE "p"."deleted_at" IS NULL AND  "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
         FROM ${schema}.users_mark_read_posts as u

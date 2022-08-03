@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { ForbiddenException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -24,7 +24,7 @@ import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { MediaModel, MediaStatus } from '../../database/models/media.model';
+import { MediaMarkAction, MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -54,6 +54,9 @@ import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
 import { json } from 'stream/consumers';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import moment from 'moment';
+import { transport } from 'winston';
 
 @Injectable()
 export class PostService {
@@ -924,7 +927,7 @@ export class PostService {
   /**
    * Delete post by id
    * @param postId string
-   * @param authUserId auth user ID
+   * @param authUser UserDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
@@ -952,8 +955,9 @@ export class PostService {
           },
         ],
       });
+
       if (!post) {
-        throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
       if (post.isDraft === false) {
         await this.authorityService.checkCanDeletePost(
@@ -962,23 +966,26 @@ export class PostService {
           post.createdBy
         );
       }
-      await Promise.all([
-        this.mentionService.setMention([], MentionableType.POST, postId, transaction),
-        this.mediaService.sync(postId, EntityType.POST, [], transaction),
-        this.setGroupByPost([], postId, transaction),
-        this.reactionService.deleteReactionByPostIds([postId]),
-        this.commentService.deleteCommentsByPost(postId, transaction),
-        this.feedService.deleteNewsFeedByPost(postId, transaction),
-        this.feedService.deleteUserSeenByPost(postId, transaction),
-        this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
-      ]);
-      await this.postModel.destroy({
-        where: {
-          id: postId,
-          createdBy: authUser.id,
-        },
-        transaction: transaction,
-      });
+
+      if (post.isDraft) {
+        await this._cleanPostElement(postId, transaction, true);
+        await this.postModel.destroy({
+          where: {
+            id: postId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+          force: true,
+        });
+      } else {
+        await this.postModel.destroy({
+          where: {
+            id: postId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+        });
+      }
       await transaction.commit();
 
       return post;
@@ -987,6 +994,25 @@ export class PostService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  private async _cleanPostElement(
+    postId: string,
+    transaction: Transaction,
+    isCleanMedia = false
+  ): Promise<void> {
+    await Promise.all([
+      this.mentionService.setMention([], MentionableType.POST, postId, transaction),
+      isCleanMedia
+        ? this.mediaService.sync(postId, EntityType.POST, [], transaction)
+        : Promise.resolve(),
+      this.setGroupByPost([], postId, transaction),
+      this.reactionService.deleteReactionByPostIds([postId]),
+      this.commentService.deleteCommentsByPost(postId, transaction),
+      this.feedService.deleteNewsFeedByPost(postId, transaction),
+      this.feedService.deleteUserSeenByPost(postId, transaction),
+      this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+    ]);
   }
 
   /**
@@ -1197,7 +1223,7 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
         FROM ${schema}.users_mark_read_posts as u
@@ -1499,6 +1525,7 @@ export class PostService {
                   extension: post.extension,
                   mimeType: post.mimeType,
                   thumbnails: post.thumbnails,
+                  createdAt: post.mediaCreatedAt,
                 },
               ];
         result.push({
@@ -1557,6 +1584,7 @@ export class PostService {
           extension: post.extension,
           mimeType: post.mimeType,
           thumbnails: post.thumbnails,
+          createdAt: post.mediaCreatedAt,
         });
       }
     });
@@ -1638,5 +1666,46 @@ export class PostService {
         },
       },
     });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanDeletedPost(): Promise<void> {
+    const willDeletePosts = await this.postModel.findAll({
+      where: {
+        deletedAt: {
+          [Op.lte]: moment().subtract(30, 'days').toDate(),
+        },
+      },
+      paranoid: false,
+      include: {
+        model: MediaModel,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'type'],
+        required: false,
+      },
+    });
+    if (willDeletePosts.length) {
+      const mediaList = ArrayHelper.arrayUnique(
+        willDeletePosts.filter((e) => e.media.length).map((e) => e.media)
+      );
+      if (!(await this.mediaService.isExistOnPostOrComment(mediaList.map((e) => e.id)))) {
+        this.mediaService.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE);
+      }
+      const transaction = await this.sequelizeConnection.transaction();
+
+      try {
+        for (const post of willDeletePosts) {
+          await this._cleanPostElement(post.id, transaction, true);
+          await post.destroy({ force: true, transaction });
+        }
+        await transaction.commit();
+      } catch (e) {
+        this.logger.error(e.message);
+        await transaction.rollback();
+      }
+    }
   }
 }
