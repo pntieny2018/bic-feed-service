@@ -52,11 +52,4 @@ describe('MediaController', () => {
     });
   })
 
-  describe('MediaController.destroy', () => {
-    it('should _mediaService.destroy called', async () => {
-      mediaServices.destroy.mockReturnValue({})
-      await controller.destroy(mockedUserAuth,1)
-      expect(mediaServices.destroy).toBeCalled()
-    });
-  })
 });
