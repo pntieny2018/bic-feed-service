@@ -967,7 +967,7 @@ export class PostService {
       }
 
       if (post.isDraft) {
-        await this._cleanPostElement(postId, transaction);
+        await this._cleanPostElement(postId, transaction, true);
         await this.postModel.destroy({
           where: {
             id: postId,
