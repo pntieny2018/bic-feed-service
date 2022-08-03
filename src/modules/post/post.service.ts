@@ -927,7 +927,7 @@ export class PostService {
   /**
    * Delete post by id
    * @param postId string
-   * @param authUserId auth user ID
+   * @param authUser UserDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
@@ -955,8 +955,9 @@ export class PostService {
           },
         ],
       });
+
       if (!post) {
-        throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
       if (post.isDraft === false) {
         await this.authorityService.checkCanDeletePost(
@@ -1222,7 +1223,7 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
         FROM ${schema}.users_mark_read_posts as u
