@@ -38,6 +38,7 @@ export class ExternalService {
             originName: i.properties.name,
             mimeType: i.properties.mimeType,
             size: i.properties.size,
+            createdAt: i.createdAt ? new Date(i.createdAt) : new Date(),
           }))
         : [];
     } catch (e) {
@@ -70,6 +71,7 @@ export class ExternalService {
             height: i.properties.height,
             size: i.properties.size,
             thumbnails: i.thumbnails,
+            createdAt: i.createdAt ? new Date(i.createdAt) : new Date(),
           }))
         : [];
     } catch (e) {
