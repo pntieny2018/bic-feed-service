@@ -1,5 +1,5 @@
 import { IPost } from '../../database/models/post.model';
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { PostAllow } from './post.constants';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
@@ -21,9 +21,21 @@ export class PostPolicyService {
    */
   public async allow(post: IPost | PostResponseDto, action: PostAllow): Promise<void> {
     if (post instanceof PostResponseDto && !post.setting[action]) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message:
+          action === PostAllow.REACT
+            ? `React of this post are not available`
+            : `Comment of this post are not available`,
+      });
     } else if (!(post instanceof PostResponseDto) && !post[action]) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message:
+          action === PostAllow.REACT
+            ? `React of this post are not available`
+            : `Comment of this post are not available`,
+      });
     }
   }
 }
