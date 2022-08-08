@@ -73,15 +73,17 @@ export class FeedService {
           });
         }
       }
+
       let normalPostsExc = Promise.resolve([]);
       if (
         (offset + limit >= totalImportantPosts && isImportant === false) ||
         isImportant === null
       ) {
+        const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
         normalPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
-          limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
+          limit: normalLimit < 0 ? 0 : normalLimit,
           authUserId,
           isImportant: false,
         });
