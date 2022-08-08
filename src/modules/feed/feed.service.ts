@@ -52,26 +52,32 @@ export class FeedService {
    * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { limit, offset } = getNewsFeedDto;
+    const { isImportant, limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
       const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-      const totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
-        authUserId,
-        constraints
-      );
+      let totalImportantPosts = 0;
       let importantPostsExc = Promise.resolve([]);
-      if (offset < totalImportantPosts) {
-        importantPostsExc = PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          limit: limit + 1,
+      if (isImportant || isImportant === null) {
+        totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
           authUserId,
-          isImportant: true,
-        });
-      }
+          constraints
+        );
 
+        if (offset < totalImportantPosts) {
+          importantPostsExc = PostModel.getNewsFeedData({
+            ...getNewsFeedDto,
+            limit: limit + 1,
+            authUserId,
+            isImportant: true,
+          });
+        }
+      }
       let normalPostsExc = Promise.resolve([]);
-      if (offset + limit >= totalImportantPosts) {
+      if (
+        (offset + limit >= totalImportantPosts && isImportant === false) ||
+        isImportant === null
+      ) {
         normalPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
@@ -80,7 +86,6 @@ export class FeedService {
           isImportant: false,
         });
       }
-
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
 
