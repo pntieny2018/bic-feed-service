@@ -448,7 +448,7 @@ export class PostService {
     }
     await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
-    if (getPostDto.withComment) {
+    if (getPostDto.withComment && post.canComment) {
       comments = await this.commentService.getComments(
         {
           postId,
