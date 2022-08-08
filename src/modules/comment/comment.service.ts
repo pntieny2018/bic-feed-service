@@ -392,7 +392,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { childLimit, postId, parentId } = getCommentsDto;
+    const { childLimit, postId, parentId, limit } = getCommentsDto;
     const post = await this._postService.findPost({
       postId,
     });
@@ -402,6 +402,14 @@ export class CommentService {
     }
     if (checkAccess && !user) {
       await this._authorityService.checkIsPublicPost(post);
+    }
+    if (!post.canComment) {
+      return new PageDto<CommentResponseDto>([], {
+        limit,
+        offset: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
@@ -455,6 +463,14 @@ export class CommentService {
       await this._authorityService.checkCanReadPost(user, post);
     } else {
       await this._authorityService.checkIsPublicPost(post);
+    }
+    if (!post.canComment) {
+      return new PageDto<CommentResponseDto>([], {
+        limit,
+        offset: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
     }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
