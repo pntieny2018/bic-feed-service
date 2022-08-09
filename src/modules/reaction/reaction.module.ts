@@ -9,6 +9,7 @@ import { NotificationModule } from '../../notification';
 import { ReactionController } from './reaction.controller';
 import { ReactionCountModule } from '../../shared/reaction-count';
 import { ReactionActivityService } from '../../notification/activities';
+import { FeedModule } from '../feed';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReactionActivityService } from '../../notification/activities';
     ReactionCountModule,
     forwardRef(() => PostModule),
     forwardRef(() => CommentModule),
+    forwardRef(() => FeedModule),
   ],
 
   controllers: [ReactionController],
