@@ -9,7 +9,13 @@ import { UserModule } from '../../shared/user';
 import { ReactionModule } from '../reaction';
 
 @Module({
-  imports: [UserModule, forwardRef(() => PostModule), GroupModule, MentionModule, ReactionModule],
+  imports: [
+    UserModule,
+    forwardRef(() => PostModule),
+    GroupModule,
+    MentionModule,
+    forwardRef(() => ReactionModule),
+  ],
   providers: [FeedService, CanReadTimelineConstraint],
   controllers: [FeedController],
   exports: [FeedService],

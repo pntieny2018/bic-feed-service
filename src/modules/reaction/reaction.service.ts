@@ -34,6 +34,7 @@ import { FollowService } from '../follow';
 import { NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '@app/sentry';
 import { OrderEnum } from '../../common/dto';
+import { FeedService } from '../feed/feed.service';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -62,7 +63,9 @@ export class ReactionService {
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     private readonly _reactionNotificationService: ReactionActivityService,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    @Inject(forwardRef(() => FeedService))
+    private readonly _feedService: FeedService
   ) {}
 
   /**
@@ -275,7 +278,10 @@ export class ReactionService {
             this._logger.error(ex, ex.stack);
             this._sentryService.captureException(ex);
           });
-
+        this._feedService.markSeenPosts(postId, userId).catch((ex) => {
+          this._logger.error(ex, ex.stack);
+          this._sentryService.captureException(ex);
+        });
         return reaction;
       }
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
