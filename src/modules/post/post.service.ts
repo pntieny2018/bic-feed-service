@@ -473,6 +473,10 @@ export class PostService {
     const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
+    this.feedService.markSeenPosts(postId, user.id).catch((ex) => {
+      this.logger.error(ex, ex.stack);
+      this.sentryService.captureException(ex);
+    });
     result['comments'] = comments;
     return result;
   }

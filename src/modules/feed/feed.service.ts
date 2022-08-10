@@ -28,6 +28,7 @@ export class FeedService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
+    @Inject(forwardRef(() => ReactionService))
     private readonly _reactionService: ReactionService,
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
