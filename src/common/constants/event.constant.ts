@@ -29,9 +29,6 @@ export const UsersHasBeenUnFollowed = 'users.has.been.unfollowed';
 export const UserHasJoinedCommunity = 'user.has.joined.community';
 export const UserHasLeftCommunity = 'user.has.left.community';
 
-// file
-export const FileHasBeenUploaded = 'file.has.been.uploaded';
-
 // reaction
 export const ReactionHasBeenCreated = 'reaction.has.been.created';
 export const ReactionHasBeenRemoved = 'reaction.has.been.removed';

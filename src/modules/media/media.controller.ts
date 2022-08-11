@@ -25,6 +25,7 @@ import { AuthUser, UserDto } from '../auth';
 import { ResponseMessages } from '../../common/decorators';
 import { MediaHelper } from './media.helper';
 import { MediaStatus } from '../../database/models/media.model';
+import { ValidatorException } from '../../common/exceptions';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -39,6 +40,12 @@ export class MediaController {
     FileInterceptor('file', {
       limits: {
         fileSize: 10 * 1024 * 1024,
+      },
+      fileFilter: (req: any, file: any, cb: any) => {
+        if (!file.mimetype.includes('image')) {
+          return cb(new ValidatorException(`Unsupported mimetype ${file.mimetype}`), false);
+        }
+        cb(null, true);
       },
     })
   )
