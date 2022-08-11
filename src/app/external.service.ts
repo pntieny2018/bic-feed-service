@@ -33,12 +33,12 @@ export class ExternalService {
       return response.data.data
         ? response.data.data.map((i) => ({
             id: i.id,
-            url: i.originUrl,
+            url: i.origin_url,
             name: i.properties.name,
             originName: i.properties.name,
-            mimeType: i.properties.mimeType,
+            mimeType: i.properties.mime_type,
             size: i.properties.size,
-            createdAt: i.createdAt ? new Date(i.createdAt) : new Date(),
+            createdAt: i.created_at ? new Date(i.created_at) : new Date(),
           }))
         : [];
     } catch (e) {
@@ -63,15 +63,15 @@ export class ExternalService {
       return response.data.data
         ? response.data.data.map((i) => ({
             id: i.id,
-            url: i.originUrl,
+            url: i.origin_url,
             name: i.properties.name,
             originName: i.properties.name,
-            mimeType: i.properties.mimeType,
+            mimeType: i.properties.mime_type,
             width: i.properties.width,
             height: i.properties.height,
             size: i.properties.size,
             thumbnails: i.thumbnails,
-            createdAt: i.createdAt ? new Date(i.createdAt) : new Date(),
+            createdAt: i.created_at ? new Date(i.created_at) : new Date(),
           }))
         : [];
     } catch (e) {
