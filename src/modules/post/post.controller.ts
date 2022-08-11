@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   ParseUUIDPipe,
   Post,
@@ -46,6 +47,7 @@ import { MentionService } from '../mention';
 import { InjectUserToBody, InjectUserToParam } from '../../common/decorators/inject.decorator';
 import { LogicException } from '../../common/exceptions';
 import { WebhookGuard } from '../auth/webhook.guard';
+import { FeedService } from '../feed/feed.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -54,11 +56,12 @@ import { WebhookGuard } from '../auth/webhook.guard';
   path: 'posts',
 })
 export class PostController {
+  private _logger = new Logger(PostController.name);
   public constructor(
     private _postService: PostService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _mentionService: MentionService
+    private _feedService: FeedService
   ) {}
 
   @ApiOperation({ summary: 'Search posts' })
@@ -109,7 +112,12 @@ export class PostController {
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
-    else return this._postService.getPost(postId, user, getPostDto);
+    else {
+      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+        this._logger.error(ex, ex.stack);
+      });
+      return this._postService.getPost(postId, user, getPostDto);
+    }
   }
 
   @ApiOperation({ summary: 'Create post' })
