@@ -12,6 +12,7 @@ import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { MentionModule } from '../modules/mention';
 import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { MediaModule } from '../modules/media';
+import { DeletePostIsProgressCommand } from './delete-post-is-progress.command';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MediaModule } from '../modules/media';
     ReIndexEsPostCommand,
     UpdatePrivacyPostCommand,
     UpdateMediaDomainCommand,
+    DeletePostIsProgressCommand,
   ],
 })
 export class CommandModule {}
