@@ -5,10 +5,6 @@ import { Expose } from 'class-transformer';
 export enum UploadType {
   POST_IMAGE = 'post_image',
   COMMENT_IMAGE = 'comment_image',
-  POST_VIDEO = 'post_video',
-  COMMENT_VIDEO = 'comment_video',
-  POST_FILE = 'post_file',
-  COMMENT_FILE = 'comment_file',
 }
 
 export class UploadDto {
@@ -31,10 +27,6 @@ export enum UploadFileType {
 export const UploadPrefix = {
   [UploadType.POST_IMAGE]: 'post/images/original',
   [UploadType.COMMENT_IMAGE]: 'comment/images/original',
-  [UploadType.POST_VIDEO]: 'post/videos/original',
-  [UploadType.COMMENT_VIDEO]: 'comment/videos/original',
-  [UploadType.POST_FILE]: 'post/files/original',
-  [UploadType.COMMENT_FILE]: 'comment/files/original',
 };
 
 export class UploadQueryDto {
