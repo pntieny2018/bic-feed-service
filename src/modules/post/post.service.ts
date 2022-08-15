@@ -1682,6 +1682,28 @@ export class PostService {
     });
   }
 
+  public async deleteAPostModel(post: PostModel): Promise<any> {
+    const transaction = await this.sequelizeConnection.transaction();
+    try {
+      if (post.isDraft) {
+        await this._cleanPostElement(post.id, transaction, true);
+        await post.destroy({
+          force: true,
+          transaction,
+        });
+      } else {
+        await post.destroy({ transaction });
+      }
+      await transaction.commit();
+
+      return post;
+    } catch (error) {
+      this.logger.error(error, error?.stack);
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanDeletedPost(): Promise<void> {
