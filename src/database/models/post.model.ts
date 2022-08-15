@@ -548,13 +548,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       END as "isLocked"
       FROM ${schema}.${postTable} AS "p"
       WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false
-          AND "p"."is_article" = true AND (
-          "p"."privacy" != '${PostPrivacy.SECRET}' OR EXISTS(
+          AND "p"."is_article" = true AND EXISTS(
         SELECT 1
         from ${schema}.${postGroupTable} AS g
         WHERE g.post_id = p.id
         AND g.group_id IN(:userGroupIds)
-      )) ${condition}
+      ) ${condition}
       ORDER BY ${orderField ? `"${orderField}"` : 'RANDOM()'} ${orderField ? order : ''}
       OFFSET :offset LIMIT :limit
     ) AS "PostModel"

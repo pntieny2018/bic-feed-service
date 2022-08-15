@@ -8,10 +8,10 @@ export const KAFKA_TOPIC = {
   BEIN_UPLOAD: {
     VIDEO_HAS_BEEN_PROCESSED: `${process.env.KAFKA_ENV}.bein_upload.video_processing_end`,
     JOB: {
-      MARK_VIDEO_HAS_BEEN_USED: `${process.env.KAFKA_ENV}.bein_upload.job.mark_video_has_been_used`,
+      MARK_VIDEO_HAS_BEEN_USED: `${process.env.KAFKA_ENV}.bein_upload.job.mark_videos_has_been_used`,
       DELETE_VIDEOS: `${process.env.KAFKA_ENV}.bein_upload.job.delete_videos`,
-      MARK_FILE_HAS_BEEN_USED: `${process.env.KAFKA_ENV}.bein_upload.job.mark_file_has_been_used`,
-      DELETE_FILES: `${process.env.KAFKA_ENV}.bein_upload.job.`,
+      MARK_FILE_HAS_BEEN_USED: `${process.env.KAFKA_ENV}.bein_upload.job.mark_files_has_been_used`,
+      DELETE_FILES: `${process.env.KAFKA_ENV}.bein_upload.job.delete_files`,
     },
   },
   STREAM: {
