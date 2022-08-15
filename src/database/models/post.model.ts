@@ -421,7 +421,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."height",
     "media"."extension",
     "media"."mime_type" as "mimeType",
-    "media"."thumbnails"
+    "media"."thumbnails",
+    "media"."created_at" as "mediaCreatedAt"
     FROM (
       SELECT
       "p"."id",
@@ -525,7 +526,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."height",
     "media"."extension",
     "media"."mime_type" as "mimeType",
-    "media"."thumbnails"
+    "media"."thumbnails",
+    "media"."created_at" as "mediaCreatedAt"
     FROM (
       SELECT
       "p"."id",
@@ -627,21 +629,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "p"."content", "p"."created_by" AS "createdBy", "p"."updated_by" AS "updatedBy", "p"."created_at" AS
     "createdAt", "p"."updated_at" AS "updatedAt", "is_seen_post" AS "isSeenPost"`;
     if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW() AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.${userMarkReadPostTable} as u
-        WHERE u.user_id = :authUserId AND u.post_id = p.id
-      )`;
-      subSelect += `, false AS "markedReadPost"`;
-    } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW() OR EXISTS(
-				SELECT 1
-				FROM ${schema}.${userMarkReadPostTable} as u
-				WHERE u.user_id = :authUserId AND u.post_id = p.id
-		  ))`;
+      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
       subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
-                                  WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
-                      ) AS "markedReadPost"`;
+        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+) AS "markedReadPost"`;
+    } else {
+      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
+      subSelect += `, false "markedReadPost"`;
     }
     const query = `SELECT
     "PostModel".*,
@@ -659,7 +653,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "media"."height",
     "media"."extension",
     "media"."mime_type" as "mimeType",
-    "media"."thumbnails"
+    "media"."thumbnails",
+    "media"."created_at" as "mediaCreatedAt"
     FROM (
       ${subSelect}
       FROM ${schema}.${postTable} AS "p"
@@ -675,7 +670,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY "PostModel"."isSeenPost" ASC,"PostModel"."createdAt" ${order}
+      ORDER BY ${
+        isImportant ? `"markedReadPost" ASC,` : ''
+      }"PostModel"."isSeenPost" ASC,"PostModel"."createdAt" ${order}
       `;
     // ORDER BY "isSeenPost" ASC, "PostModel"."createdAt" ${order}
 

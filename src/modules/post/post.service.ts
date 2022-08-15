@@ -340,6 +340,7 @@ export class PostService {
             'height',
             'size',
             'thumbnails',
+            'createdAt',
             'status',
             'mimeType',
           ],
@@ -429,6 +430,7 @@ export class PostService {
             'status',
             'mimeType',
             'thumbnails',
+            'createdAt',
           ],
         },
         {
@@ -446,7 +448,7 @@ export class PostService {
     }
     await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
-    if (getPostDto.withComment) {
+    if (getPostDto.withComment && post.canComment) {
       comments = await this.commentService.getComments(
         {
           postId,
@@ -517,6 +519,7 @@ export class PostService {
             'status',
             'mimeType',
             'thumbnails',
+            'createdAt',
           ],
         },
       ],
@@ -869,6 +872,7 @@ export class PostService {
               'status',
               'mimeType',
               'thumbnails',
+              'createdAt',
             ],
             required: false,
           },
@@ -1371,7 +1375,17 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'mimeType', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'mimeType',
+            'thumbnails',
+            'createdAt',
+          ],
           required: true,
           where: {
             id,
@@ -1525,6 +1539,7 @@ export class PostService {
                   extension: post.extension,
                   mimeType: post.mimeType,
                   thumbnails: post.thumbnails,
+                  createdAt: post.mediaCreatedAt,
                 },
               ];
         result.push({
@@ -1583,6 +1598,7 @@ export class PostService {
           extension: post.extension,
           mimeType: post.mimeType,
           thumbnails: post.thumbnails,
+          createdAt: post.mediaCreatedAt,
         });
       }
     });
@@ -1664,6 +1680,28 @@ export class PostService {
         },
       },
     });
+  }
+
+  public async deleteAPostModel(post: PostModel): Promise<any> {
+    const transaction = await this.sequelizeConnection.transaction();
+    try {
+      if (post.isDraft) {
+        await this._cleanPostElement(post.id, transaction, true);
+        await post.destroy({
+          force: true,
+          transaction,
+        });
+      } else {
+        await post.destroy({ transaction });
+      }
+      await transaction.commit();
+
+      return post;
+    } catch (error) {
+      this.logger.error(error, error?.stack);
+      await transaction.rollback();
+      throw error;
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility

@@ -291,7 +291,17 @@ export class ArticleService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'status',
+            'thumbnails',
+            'createdAt',
+          ],
         },
         {
           model: PostReactionModel,
@@ -390,7 +400,17 @@ export class ArticleService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'status',
+            'thumbnails',
+            'createdAt',
+          ],
         },
       ],
     });
@@ -702,7 +722,7 @@ export class ArticleService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails', 'createdAt'],
           required: true,
           where: {
             id,

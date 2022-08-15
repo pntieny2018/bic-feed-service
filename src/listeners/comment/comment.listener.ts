@@ -9,6 +9,7 @@ import { CommentService } from '../../modules/comment';
 import { CommentNotificationService } from '../../notification/services';
 import { NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '@app/sentry';
+import { FeedService } from '../../modules/feed/feed.service';
 
 @Injectable()
 export class CommentListener {
@@ -16,7 +17,8 @@ export class CommentListener {
   public constructor(
     private _commentService: CommentService,
     private _commentNotificationService: CommentNotificationService,
-    private _sentryService: SentryService
+    private _sentryService: SentryService,
+    private _feedService: FeedService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
@@ -38,6 +40,10 @@ export class CommentListener {
         this._logger.error(ex, ex.stack);
         this._sentryService.captureException(ex);
       });
+    this._feedService.markSeenPosts(commentResponse.postId, actor.id).catch((ex) => {
+      this._logger.error(ex, ex.stack);
+      this._sentryService.captureException(ex);
+    });
   }
 
   @On(CommentHasBeenUpdatedEvent)
