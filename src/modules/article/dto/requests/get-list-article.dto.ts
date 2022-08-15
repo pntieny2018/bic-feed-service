@@ -39,7 +39,8 @@ export class GetListArticlesDto extends PageOptionsDto {
     required: false,
     example: 1,
   })
-  @IsOptional()
+  @IsNotEmpty()
+  @IsUUID()
   @Expose({
     name: 'group_id',
   })
