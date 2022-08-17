@@ -128,7 +128,6 @@ export class ArticleService {
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, groupId } = getArticleListDto;
     const group = await this._groupService.get(groupId);
-    
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
@@ -140,7 +139,6 @@ export class ArticleService {
         hasNextPage: false,
       });
     }
-    console.log('groupIds=', groupIds);
     getArticleListDto.groupIds = groupIds;
     const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.groupArticles(rows);
