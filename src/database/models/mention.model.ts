@@ -9,7 +9,7 @@ export interface IMention {
   id?: string;
   mentionableType: MentionableType;
   entityId: string;
-  userId: number;
+  userId: string;
   post?: PostModel;
   comment?: CommentModel;
 }
@@ -32,7 +32,7 @@ export class MentionModel extends Model<IMention, Omit<IMention, 'id'>> implemen
   public entityId: string;
 
   @Column
-  public userId: number;
+  public userId: string;
 
   @BelongsTo(() => PostModel, 'entityId')
   public post?: PostModel;

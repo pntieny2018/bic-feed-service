@@ -39,13 +39,14 @@ export class GetListArticlesDto extends PageOptionsDto {
     required: false,
     example: 1,
   })
-  @IsOptional()
+  @IsNotEmpty()
+  @IsUUID()
   @Expose({
     name: 'group_id',
   })
-  public groupId?: number;
+  public groupId?: string;
 
-  public groupIds?: number[];
+  public groupIds?: string[];
 
   @ApiProperty({ enum: OrderField, required: true })
   @IsEnum(OrderField)

@@ -10,6 +10,7 @@ import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FollowService {
@@ -43,12 +44,14 @@ export class FollowService {
 
       const insertData = bulkCreateData
         .map((record) => {
-          return `(${record.userId},${record.groupId})`;
+          const escapedUserId = this._sequelize.escape(record.userId);
+          const escapedGroupId = this._sequelize.escape(record.groupId);
+          return `(${escapedUserId}, ${escapedGroupId})`;
         })
         .join(',');
 
       await this._followModel.sequelize.query(
-        `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id) 
+        `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id)
              VALUES ${insertData} ON CONFLICT (user_id,group_id) DO NOTHING;`
       );
 
@@ -67,7 +70,7 @@ export class FollowService {
    */
   public async unfollow(unfollowDto: UnfollowDto): Promise<void> {
     try {
-      await this._followModel.destroy({
+      const response = await this._followModel.destroy({
         where: {
           groupId: {
             [Op.in]: unfollowDto.groupIds,
@@ -77,6 +80,7 @@ export class FollowService {
           },
         },
       });
+      this._logger.debug(`[unfollow] ${response}`);
       this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
     } catch (ex) {
       this._sentryService.captureException(ex);
@@ -88,13 +92,15 @@ export class FollowService {
     const schema = this._databaseConfig.schema;
 
     const rows = await this._sequelize.query(
-      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
+      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
+                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
                    AS duplicate_count
-                   FROM ${schema}.${this._followModel.tableName} 
-                   WHERE group_id IN  (${groupIds.join(',')})  
-                   AND user_id IN (${userIds.join(',')})  
-              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1 
+                   FROM ${schema}.${this._followModel.tableName}
+                   WHERE group_id IN  (${groupIds
+                     .map((id) => this._sequelize.escape(id))
+                     .join(',')})
+                   AND user_id IN (${userIds.map((id) => this._sequelize.escape(id)).join(',')})
+              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
                 WHERE duplicate_count = 1 ; `
     );
     const targetIds = rows[0].map((r) => r['user_id']);
@@ -110,30 +116,32 @@ export class FollowService {
    * @param limit Number
    */
   public async getUniqueUserFollows(
-    ignoreUserIds: number[],
-    targetGroupIds: number[],
-    groupIds: number[],
+    ignoreUserIds: string[],
+    targetGroupIds: string[],
+    groupIds: string[],
     followId = 0,
     limit = 1000
   ): Promise<{
-    userIds: number[];
+    userIds: string[];
     latestFollowId: number;
   }> {
     try {
       const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
-        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
+        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
+                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
                    AS duplicate_count
-                   FROM ${schema}.${this._followModel.tableName} 
-                   WHERE group_id IN  (${targetGroupIds.join(',')})  
-              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1 
-                WHERE duplicate_count = 1 
+                   FROM ${schema}.${this._followModel.tableName}
+                   WHERE group_id IN  (${targetGroupIds
+                     .map((id) => this._sequelize.escape(id))
+                     .join(',')})
+              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
+                WHERE duplicate_count = 1
                 AND NOT EXISTS (
-                  SELECT user_id FROM  ${schema}.${this._followModel.tableName} tb2 
-                  WHERE group_id IN (${groupIds.join(',')})
-                  AND tb1.user_id = tb2.user_id 
+                  SELECT user_id FROM  ${schema}.${this._followModel.tableName} tb2
+                  WHERE group_id IN (${groupIds.map((id) => this._sequelize.escape(id)).join(',')})
+                  AND tb1.user_id = tb2.user_id
                 )
                 AND id > $followId  limit $limit ;
              `,
@@ -174,12 +182,12 @@ export class FollowService {
    * @param limit Number
    */
   public async filterUserFollows(
-    ignoreUserIds: number[],
-    groupIds: number[],
+    ignoreUserIds: string[],
+    groupIds: string[],
     followId = 0,
     limit = 1000
   ): Promise<{
-    userIds: number[];
+    userIds: string[];
     latestFollowId: number;
   }> {
     this._logger.debug(
@@ -189,14 +197,18 @@ export class FollowService {
       const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
-        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
+        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
+                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
                    AS duplicate_count
-                   FROM ${schema}.${this._followModel.tableName} 
-                   WHERE group_id IN  (${groupIds.join(',')})  
-                   AND user_id NOT IN (${ignoreUserIds.join(',')})
-              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1 
-                WHERE duplicate_count = 1 
+                   FROM ${schema}.${this._followModel.tableName}
+                   WHERE group_id IN  (${groupIds
+                     .map((id) => this._sequelize.escape(id))
+                     .join(',')})
+                   AND user_id NOT IN (${ignoreUserIds
+                     .map((id) => this._sequelize.escape(id))
+                     .join(',')})
+              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
+                WHERE duplicate_count = 1
                 AND id > $followId  limit $limit ;
              `,
         {
@@ -228,18 +240,20 @@ export class FollowService {
     }
   }
 
-  public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
+  public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
     const { schema } = getDatabaseConfig();
 
     const rows = await this._sequelize.query(
-      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
+      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
+                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
                    AS duplicate_count
-                   FROM ${schema}.${FollowModel.tableName} 
-                   WHERE group_id IN  (${groupIds.join(',')})  
-              ) SELECT user_id FROM REMOVE_DUPLICATE tb1 
-                WHERE duplicate_count = 1 
-                AND user_id IN  (${userIds.join(',')})  
+                   FROM ${schema}.${FollowModel.tableName}
+                   WHERE group_id IN  (${groupIds
+                     .map((id) => this._sequelize.escape(id))
+                     .join(',')})
+              ) SELECT user_id FROM REMOVE_DUPLICATE tb1
+                WHERE duplicate_count = 1
+                AND user_id IN  (${userIds.map((id) => this._sequelize.escape(id)).join(',')})
              `
     );
     if (!rows) {

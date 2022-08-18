@@ -5,6 +5,8 @@ import { UserMentionDto } from '../../../mention/dto';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
+import { ValidateMedia } from '../../../media/validators/media.validator';
+import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -48,6 +50,7 @@ export class CreatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
+  @ValidateMedia()
   public media: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
@@ -77,13 +80,13 @@ export class CreatePostDto {
     type: UserMentionDto,
     example: {
       dangdiep: {
-        id: 1,
+        id: '7251dac7-5088-4a33-b900-d1b058edaf98',
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
       tuine: {
-        id: 2,
+        id: '7251dac7-5088-4a33-b900-d1b058edaf99',
         username: 'tuine',
         avatar: 'https://google.com',
         fullname: 'Tui Day Ne',
@@ -102,5 +105,6 @@ export class CreatePostDto {
     }
     return value;
   })
-  public mentions?: number[] = [];
+  @ValidateMention()
+  public mentions?: string[] = [];
 }

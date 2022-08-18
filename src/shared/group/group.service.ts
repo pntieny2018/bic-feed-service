@@ -3,13 +3,14 @@ import { RedisService } from '@app/redis';
 import { ChildGroup, GroupPrivacy, GroupSharedDto } from './dto';
 import { UserDto } from '../../modules/auth';
 import { ArrayHelper } from '../../common/helpers';
+import { AppHelper } from '../../common/helpers/app.helper';
 
 @Injectable()
 export class GroupService {
   public constructor(private _store: RedisService) {}
 
-  public async get(groupId: number): Promise<GroupSharedDto> {
-    const group = await this._store.get<GroupSharedDto>(`SG:${groupId}`);
+  public async get(groupId: string): Promise<GroupSharedDto> {
+    const group = await this._store.get<GroupSharedDto>(`${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (group && !group?.child) {
       group.child = {
         open: [],
@@ -21,8 +22,8 @@ export class GroupService {
     return group;
   }
 
-  public async getMany(groupIds: number[]): Promise<GroupSharedDto[]> {
-    const keys = [...new Set(groupIds)].map((groupId) => `SG:${groupId}`);
+  public async getMany(groupIds: string[]): Promise<GroupSharedDto[]> {
+    const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (keys.length) {
       const groups = await this._store.mget(keys);
       return groups.filter((g) => g !== null);
@@ -35,7 +36,7 @@ export class GroupService {
    * @param groupIds Number[]
    * @param myGroupIds Number[]
    */
-  public isMemberOfSomeGroups(groupIds: number[], myGroupIds: number[]): boolean {
+  public isMemberOfSomeGroups(groupIds: string[], myGroupIds: string[]): boolean {
     return groupIds.some((groupId) => myGroupIds.includes(groupId));
   }
 
@@ -44,7 +45,7 @@ export class GroupService {
    * @param groupIds Number[]
    * @param myGroupIds Number[]
    */
-  public isMemberOfGroups(groupIds: number[], myGroupIds: number[]): boolean {
+  public isMemberOfGroups(groupIds: string[], myGroupIds: string[]): boolean {
     return groupIds.every((groupId) => myGroupIds.includes(groupId));
   }
 
@@ -55,8 +56,9 @@ export class GroupService {
    * @param authUser
    * @returns
    */
-  public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): number[] {
+  public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): string[] {
     let groupIds = [];
+    if (!authUser) return ArrayHelper.arrayUnique([...group.child.public, group.id]);
     if (group.privacy === GroupPrivacy.OPEN || group.privacy === GroupPrivacy.PUBLIC) {
       groupIds = [...group.child.public, ...group.child.open];
 
@@ -81,7 +83,7 @@ export class GroupService {
    * @param authUser
    * @returns
    */
-  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): number[] {
+  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): string[] {
     let groupIds = [];
     if (
       group.privacy === GroupPrivacy.OPEN ||

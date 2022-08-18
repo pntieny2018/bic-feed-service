@@ -25,6 +25,10 @@ export enum MediaType {
   IMAGE = 'image',
   FILE = 'file',
 }
+export enum MediaMarkAction {
+  USED,
+  DELETE,
+}
 
 export enum MediaStatus {
   WAITING_PROCESS = 'waiting_process',
@@ -35,7 +39,7 @@ export enum MediaStatus {
 
 export interface IMedia {
   id: string;
-  createdBy: number;
+  createdBy: string;
   url: string;
   type: MediaType;
   isDraft: boolean;
@@ -54,7 +58,7 @@ export interface IMedia {
 }
 @Table({
   tableName: 'media',
-  createdAt: false,
+  createdAt: true,
   updatedAt: false,
 })
 export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements IMedia {
@@ -76,7 +80,7 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @AllowNull(false)
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @CreatedAt
   public createdAt: Date;

@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION } from '../../common/constants';
+import { APP_VERSION, HTTP_STATUS_ID } from '../../common/constants';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
@@ -27,6 +27,11 @@ import {
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
+import { AuthorityService } from '../authority';
+import { PostService } from '../post/post.service';
+import { MentionService } from '../mention';
+import { LogicException } from '../../common/exceptions';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -37,7 +42,9 @@ import {
 export class ArticleController {
   public constructor(
     private _articleService: ArticleService,
-    private _eventEmitter: InternalEventEmitterService
+    private _eventEmitter: InternalEventEmitterService,
+    private _authorityService: AuthorityService,
+    private _postService: PostService
   ) {}
 
   @ApiOperation({ summary: 'Search article' })
@@ -87,10 +94,15 @@ export class ArticleController {
     description: 'Create article successfully',
   })
   @Post('/')
+  @InjectUserToBody()
   public async createArticle(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
+    const { audience, setting } = createArticleDto;
+    const { groupIds } = audience;
+    await this._authorityService.checkCanCreatePost(user, groupIds, setting.isImportant);
+
     const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
       const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
@@ -117,16 +129,25 @@ export class ArticleController {
     description: 'Update article successfully',
   })
   @Put('/:id')
+  @InjectUserToBody()
   public async updateArticle(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
+    const { audience } = updateArticleDto;
+
     const articleBefore = await this._articleService.getArticle(
       articleId,
       user,
       new GetArticleDto()
     );
+    await this._authorityService.checkCanUpdatePost(user, articleBefore, audience.groupIds);
+    if (articleBefore.isDraft === false) {
+      await this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
+    }
+    await this._authorityService.checkPostOwner(articleBefore, user.id);
+
     const isUpdated = await this._articleService.updateArticle(
       articleBefore,
       user,

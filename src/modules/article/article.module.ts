@@ -12,6 +12,8 @@ import { ArticleController } from './article.controller';
 import { CategoryModule } from '../category';
 import { HashtagModule } from '../hashtag';
 import { SeriesModule } from '../series';
+import { CanUseCategoryConstraint } from './validators/can-use-category.validator';
+import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
 @Module({
   imports: [
     PostModule,
@@ -27,7 +29,7 @@ import { SeriesModule } from '../series';
     forwardRef(() => CommentModule),
   ],
   controllers: [ArticleController],
-  providers: [ArticleService],
+  providers: [ArticleService, CanUseCategoryConstraint, CanUseSeriesConstraint],
   exports: [ArticleService],
 })
 export class ArticleModule {}

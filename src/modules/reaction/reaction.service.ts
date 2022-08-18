@@ -14,7 +14,7 @@ import {
 } from '../../database/models/comment-reaction.model';
 import { LogicException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
-import { Op, QueryTypes, Transaction } from 'sequelize';
+import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ReactionCountService } from '../../shared/reaction-count';
@@ -31,9 +31,10 @@ import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/requ
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { FollowService } from '../follow';
-import sequelize from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '@app/sentry';
+import { OrderEnum } from '../../common/dto';
+import { FeedService } from '../feed/feed.service';
 
 const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
 const SERIALIZE_TRANSACTION_ERROR =
@@ -62,7 +63,9 @@ export class ReactionService {
     @InjectModel(CommentReactionModel)
     private readonly _commentReactionModel: typeof CommentReactionModel,
     private readonly _reactionNotificationService: ReactionActivityService,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    @Inject(forwardRef(() => FeedService))
+    private readonly _feedService: FeedService
   ) {}
 
   /**
@@ -76,6 +79,8 @@ export class ReactionService {
     const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
 
     const conditions = {};
+    const symbol = order === OrderEnum.DESC ? Op.lte : Op.gte;
+
     if (latestId !== NIL_UUID) {
       conditions['id'] = {
         [Op.not]: latestId,
@@ -86,7 +91,7 @@ export class ReactionService {
       case ReactionEnum.POST:
         if (latestId !== NIL_UUID) {
           conditions['createdAt'] = {
-            [Op.gte]: sequelize.literal(
+            [symbol]: sequelize.literal(
               `(SELECT pr.created_at FROM ${schema}.posts_reactions AS pr WHERE id=${this._sequelize.escape(
                 latestId
               )})`
@@ -100,7 +105,7 @@ export class ReactionService {
             ...conditions,
           },
           limit: limit,
-          order: [['createdAt', 'DESC']],
+          order: [['createdAt', order]],
         });
         const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
         return {
@@ -112,7 +117,7 @@ export class ReactionService {
       case ReactionEnum.COMMENT:
         if (latestId !== NIL_UUID) {
           conditions['createdAt'] = {
-            [Op.gte]: sequelize.literal(
+            [symbol]: sequelize.literal(
               `(SELECT cr.created_at FROM ${schema}.comments_reactions AS cr WHERE id=${this._sequelize.escape(
                 latestId
               )})`
@@ -273,7 +278,10 @@ export class ReactionService {
             this._logger.error(ex, ex.stack);
             this._sentryService.captureException(ex);
           });
-
+        this._feedService.markSeenPosts(postId, userId).catch((ex) => {
+          this._logger.error(ex, ex.stack);
+          this._sentryService.captureException(ex);
+        });
         return reaction;
       }
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);

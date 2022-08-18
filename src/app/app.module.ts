@@ -24,6 +24,7 @@ import { GiphyModule } from '../modules/giphy';
 import { ArticleModule } from '../modules/article';
 import { CategoryModule } from '../modules/category';
 import { HashtagModule } from '../modules/hashtag';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { HashtagModule } from '../modules/hashtag';
     SeriesModule,
     CategoryModule,
     HashtagModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [],

@@ -23,7 +23,7 @@ export class CommentDissociationService {
   ) {}
 
   public async dissociateComment(
-    actorId: number,
+    actorId: string,
     commentId: string,
     postResponse: PostResponseDto,
     cb?: (prevComments: IComment[]) => void
@@ -90,12 +90,12 @@ export class CommentDissociationService {
         order: [['createdAt', 'DESC']],
         limit: 100,
       });
-
       if (!prevCommentsRes) {
         prevCommentsRes = [];
       }
 
       const resultPrevComments = prevCommentsRes.map((c) => c.toJSON());
+
       const ignoreUserIds = postOwnerId
         ? [...new Set([actorId, postOwnerId, ...mentionedUsersInComment, ...mentionedUsersInPost])]
         : [...new Set([actorId, ...mentionedUsersInComment, ...mentionedUsersInPost])];
@@ -119,7 +119,6 @@ export class CommentDissociationService {
       if (!checkUserIds.length) {
         return recipient;
       }
-
       const validUserIds = await this.getValidUserIds(
         [...new Set(checkUserIds)].filter((id) => id),
         groupAudienceIds
@@ -172,9 +171,9 @@ export class CommentDissociationService {
   }
 
   public async dissociateReplyComment(
-    actorId: number,
+    actorId: string,
     comment: CommentModel,
-    groupAudienceIds: number[]
+    groupAudienceIds: string[]
   ): Promise<ReplyCommentRecipientDto> {
     try {
       const { schema } = getDatabaseConfig();
@@ -302,7 +301,7 @@ export class CommentDissociationService {
     }
   }
 
-  public async getValidUserIds(userIds: number[], groupIds: number[]): Promise<number[]> {
+  public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
     const { schema } = getDatabaseConfig();
     if (!userIds.length) {
       return [];
@@ -312,16 +311,15 @@ export class CommentDissociationService {
                    SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
                    AS duplicate_count
                    FROM ${schema}.${FollowModel.tableName} 
-                   WHERE group_id IN  (${groupIds.join(',')})  
+                   WHERE group_id IN  (${groupIds.map((g) => `'${g}'`).join(',')})  
               ) SELECT user_id FROM REMOVE_DUPLICATE tb1 
                 WHERE duplicate_count = 1 
-                AND user_id IN  (${userIds.join(',')})  
+                AND user_id IN  (${userIds.map((u) => `'${u}'`).join(',')})  
              `
     );
     if (!rows) {
       return [];
     }
-
     return rows[0].map((r) => r['user_id']);
   }
 }

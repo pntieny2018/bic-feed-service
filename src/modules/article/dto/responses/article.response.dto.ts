@@ -55,6 +55,9 @@ export class ArticleResponseDto extends PostResponseDto {
   @Expose()
   public summary: string;
 
+  @Expose()
+  public lang?: string;
+
   @ApiProperty({
     description: 'Categories',
     type: [CategoryResponseDto],

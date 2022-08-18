@@ -112,18 +112,21 @@ export class CommentService {
 
     await this._giphyService.saveGiphyData(createCommentDto.giphy);
 
-    //HOTFIX: hot fix create comment with image
-    const comment = await this._commentModel.create({
-      createdBy: user.id,
-      updatedBy: user.id,
-      parentId: replyId,
-      content: createCommentDto.content,
-      postId: post.id,
-      giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
-    });
-
     const transaction = await this._sequelizeConnection.transaction();
     try {
+      //HOTFIX: hot fix create comment with image
+      const comment = await this._commentModel.create(
+        {
+          createdBy: user.id,
+          updatedBy: user.id,
+          parentId: replyId,
+          content: createCommentDto.content,
+          postId: post.id,
+          giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
+        },
+        { transaction }
+      );
+
       const userMentionIds = createCommentDto.mentions;
 
       if (userMentionIds.length) {
@@ -158,7 +161,7 @@ export class CommentService {
       return comment;
     } catch (ex) {
       await transaction.rollback();
-      await comment.destroy();
+      //await comment.destroy();
       throw ex;
     }
   }
@@ -389,7 +392,7 @@ export class CommentService {
         getCommentsDto
       )}`
     );
-    const { childLimit, postId, parentId } = getCommentsDto;
+    const { childLimit, postId, parentId, limit } = getCommentsDto;
     const post = await this._postService.findPost({
       postId,
     });
@@ -399,6 +402,14 @@ export class CommentService {
     }
     if (checkAccess && !user) {
       await this._authorityService.checkIsPublicPost(post);
+    }
+    if (!post.canComment) {
+      return new PageDto<CommentResponseDto>([], {
+        limit,
+        offset: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
@@ -452,6 +463,14 @@ export class CommentService {
       await this._authorityService.checkCanReadPost(user, post);
     } else {
       await this._authorityService.checkIsPublicPost(post);
+    }
+    if (!post.canComment) {
+      return new PageDto<CommentResponseDto>([], {
+        limit,
+        offset: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
     }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
@@ -522,7 +541,7 @@ export class CommentService {
 
   private async _getComments(
     getCommentsDto: GetCommentsDto,
-    authUserId?: number,
+    authUserId?: string,
     aroundId = NIL_UUID
   ): Promise<PageDto<CommentResponseDto>> {
     const { limit } = getCommentsDto;
@@ -723,7 +742,7 @@ export class CommentService {
    * @returns Promise resolve void
    */
   public async bindUserToComment(commentsResponse: any[]): Promise<void> {
-    const actorIds: number[] = [];
+    const actorIds: string[] = [];
 
     for (const comment of commentsResponse) {
       actorIds.push(comment.createdBy);
@@ -765,7 +784,7 @@ export class CommentService {
    */
   public async bindChildrenToComment(
     comments: any[],
-    authUserId?: number,
+    authUserId?: string,
     limit = 10
   ): Promise<void> {
     const subQuery = [];
@@ -817,8 +836,9 @@ export class CommentService {
         AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment')`;
     if (authUserId) {
       query += `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
-      AND "ownerReactions"."created_by" = :authUserId;`;
+      AND "ownerReactions"."created_by" = :authUserId`;
     }
+    query += ` ORDER BY "CommentModel"."createdAt" DESC`;
 
     const rows: any[] = await this._sequelizeConnection.query(query, {
       replacements: {

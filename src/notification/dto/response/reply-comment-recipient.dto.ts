@@ -1,24 +1,24 @@
 export class ReplyCommentRecipientDto {
-  public parentCommentCreatorId: number;
+  public parentCommentCreatorId: string;
 
-  public mentionedUserIdsInComment: number[];
+  public mentionedUserIdsInComment: string[];
 
-  public mentionedUserIdsInParentComment: number[];
+  public mentionedUserIdsInParentComment: string[];
 
-  public mentionedUserIdsInPrevChildComment: number[];
+  public mentionedUserIdsInPrevChildComment: string[];
 
-  public prevChildCommentCreatorIds: number[];
+  public prevChildCommentCreatorIds: string[];
 
   public static init(): ReplyCommentRecipientDto {
     return new ReplyCommentRecipientDto(null, [], [], [], []);
   }
 
   public constructor(
-    parentCommentCreatorId: number,
-    mentionedUserIdsInComment: number[],
-    mentionedUserIdsInParentComment: number[],
-    prevChildCommentCreatorIds: number[],
-    mentionedUserIdsInPrevChildComment: number[]
+    parentCommentCreatorId: string,
+    mentionedUserIdsInComment: string[],
+    mentionedUserIdsInParentComment: string[],
+    prevChildCommentCreatorIds: string[],
+    mentionedUserIdsInPrevChildComment: string[]
   ) {
     this.parentCommentCreatorId = parentCommentCreatorId;
     this.mentionedUserIdsInComment = mentionedUserIdsInComment;

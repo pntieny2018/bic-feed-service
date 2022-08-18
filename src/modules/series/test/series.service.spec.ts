@@ -186,7 +186,7 @@ describe('SeriesService', () => {
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
       seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
-      authUserMock.id = 2;
+      authUserMock.id = '2a47c42d-f41d-457d-8359-707f4d0ab242';
       try {
         await seriesService.updateSeries(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
       } catch (e) {
@@ -225,7 +225,7 @@ describe('SeriesService', () => {
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
       seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
-      authUserMock.id = 2;
+      authUserMock.id = '2a47c42d-f41d-457d-8359-707f4d0ab242';
       try {
         await seriesService.deleteSeries(authUserMock, mockedSeriesDeleted.id);
       } catch (e) {
@@ -245,13 +245,13 @@ describe('SeriesService', () => {
 
   describe('checkSeriesOwner', () => {
     it('check series owner true', async () => {
-      const result = await seriesService.checkSeriesOwner(mockedSeriesResponse, 1);
+      const result = await seriesService.checkSeriesOwner(mockedSeriesResponse, '43f306ba-a89f-4d43-8ee8-4d51fdcd4b13');
       expect(result).toEqual(true);
     });
 
     it('Should catch exception if series not found', async () => {
       try {
-        await seriesService.checkSeriesOwner(null, 1);
+        await seriesService.checkSeriesOwner(null, '43f306ba-a89f-4d43-8ee8-4d51fdcd4b13');
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -259,7 +259,7 @@ describe('SeriesService', () => {
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
       try {
-        await seriesService.checkSeriesOwner(mockedSeriesResponse, 2);
+        await seriesService.checkSeriesOwner(mockedSeriesResponse, '2a47c42d-f41d-457d-8359-707f4d0ab242');
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }

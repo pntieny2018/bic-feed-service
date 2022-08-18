@@ -29,6 +29,9 @@ export class PostResponseDto {
   @Expose()
   public content: string;
 
+  @Expose()
+  public lang?: string;
+
   @ApiProperty({
     description: 'Highlight',
     type: String,
@@ -199,7 +202,7 @@ export class PostResponseDto {
     name: 'created_by',
   })
   @Expose()
-  public createdBy: number;
+  public createdBy: string;
 
   @ApiProperty({
     type: AudienceResponseDto,

@@ -6,7 +6,6 @@ import { Expose, Transform, Type } from 'class-transformer';
 export class GetDraftPostDto extends PageOptionsDto {
   @ApiProperty({
     name: 'is_failed',
-    default: true,
     required: false,
     type: Boolean,
   })

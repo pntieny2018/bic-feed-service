@@ -24,7 +24,7 @@ import { LogicException } from '../../common/exceptions';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { MediaModel, MediaStatus } from '../../database/models/media.model';
+import { MediaMarkAction, MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -32,7 +32,12 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { EntityIdDto } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import {
+  ArrayHelper,
+  ElasticsearchHelper,
+  ExceptionHelper,
+  StringHelper,
+} from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { plainToInstance } from 'class-transformer';
 import { Op, QueryTypes, Transaction } from 'sequelize';
@@ -48,6 +53,10 @@ import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
+import { json } from 'stream/consumers';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import moment from 'moment';
+import { transport } from 'winston';
 
 @Injectable()
 export class PostService {
@@ -116,9 +125,15 @@ export class PostService {
     const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
       const source = item._source;
+      source.content = item._source.content.text;
       source['id'] = item._id;
-      if (content && item.highlight && item.highlight['content'].length != 0 && source.content) {
-        source.highlight = item.highlight['content'][0];
+      if (
+        content &&
+        item.highlight &&
+        item.highlight['content.text'].length != 0 &&
+        source.content
+      ) {
+        source.highlight = item.highlight['content.text'][0];
       }
       return source;
     });
@@ -147,7 +162,7 @@ export class PostService {
    */
   public async getPayloadSearch(
     { startTime, endTime, content, actors, important, limit, offset }: SearchPostsDto,
-    groupIds: number[]
+    groupIds: string[]
   ): Promise<{
     index: string;
     body: any;
@@ -195,38 +210,63 @@ export class PostService {
     }
 
     if (content) {
+      const arrKeywords = content.split(' ');
+      const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
+      let queries;
+      if (isASCII) {
+        queries = [
+          {
+            multi_match: {
+              query: content,
+              fields: ['content.text.default', 'content.text.ascii'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            match: {
+              ['content.text.default']: {
+                query: content,
+              },
+            },
+          },
+          {
+            match: {
+              ['content.text.ascii']: {
+                query: content,
+              },
+            },
+          },
+        ];
+      } else {
+        queries = [
+          {
+            multi_match: {
+              query: content,
+              fields: ['content.text.default'],
+              type: 'phrase',
+              boost: 2,
+            },
+          },
+          {
+            match: {
+              ['content.text.default']: {
+                query: content,
+              },
+            },
+          },
+        ];
+      }
       body.query.bool.should.push({
-        ['dis_max']: {
-          queries: [
-            {
-              match: { content },
-            },
-            {
-              match: {
-                ['content.ascii']: {
-                  query: content,
-                  boost: 0.6,
-                },
-              },
-            },
-            {
-              match: {
-                ['content.ngram']: {
-                  query: content,
-                  boost: 0.3,
-                },
-              },
-            },
-          ],
-        },
+        ['dis_max']: { queries },
       });
       body.query.bool['minimum_should_match'] = 1;
       body['highlight'] = {
         ['pre_tags']: ['=='],
         ['post_tags']: ['=='],
         fields: {
-          content: {
-            ['matched_fields']: ['content', 'content.ascii', 'content.ngram'],
+          'content.text': {
+            ['matched_fields']: ['content.text.default', 'content.text.ascii'],
             type: 'fvh',
             ['number_of_fragments']: 0,
           },
@@ -250,7 +290,7 @@ export class PostService {
       body.query.bool.must.push(filterTime);
     }
     return {
-      index: ElasticsearchHelper.INDEX.POST,
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
       body,
       from: offset,
       size: limit,
@@ -264,8 +304,8 @@ export class PostService {
    * @returns Promise resolve PageDto<PostResponseDto>
    * @throws HttpException
    */
-   public async getDraftPosts(
-    authUserId: number,
+  public async getDraftPosts(
+    authUserId: string,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order, isProcessing } = getDraftPostDto;
@@ -300,6 +340,7 @@ export class PostService {
             'height',
             'size',
             'thumbnails',
+            'createdAt',
             'status',
             'mimeType',
           ],
@@ -389,6 +430,7 @@ export class PostService {
             'status',
             'mimeType',
             'thumbnails',
+            'createdAt',
           ],
         },
         {
@@ -406,7 +448,7 @@ export class PostService {
     }
     await this.authorityService.checkCanReadPost(user, post);
     let comments = null;
-    if (getPostDto.withComment) {
+    if (getPostDto.withComment && post.canComment) {
       comments = await this.commentService.getComments(
         {
           postId,
@@ -477,6 +519,7 @@ export class PostService {
             'status',
             'mimeType',
             'thumbnails',
+            'createdAt',
           ],
         },
       ],
@@ -614,22 +657,12 @@ export class PostService {
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
       const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
-      const { groupIds } = audience;
-      await this.authorityService.checkCanCreatePost(authUser, groupIds);
-
-      if (mentions && mentions.length) {
-        await this.mentionService.checkValidMentions(groupIds, mentions);
-      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this.mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      transaction = await this.sequelizeConnection.transaction();
+      const { groupIds } = audience;
       const postPrivacy = await this.getPrivacyPost(groupIds);
+      transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
           isDraft: true,
@@ -695,7 +728,7 @@ export class PostService {
     });
   }
 
-  public async getPrivacyPost(groupIds: number[]): Promise<PostPrivacy> {
+  public async getPrivacyPost(groupIds: string[]): Promise<PostPrivacy> {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
     }
@@ -729,33 +762,17 @@ export class PostService {
     updatePostDto: UpdatePostDto
   ): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = updatePostDto;
       const dataUpdate = {
         updatedBy: authUserId,
       };
-      if (post.isDraft === false) {
-        await this.checkContent(updatePostDto);
-      }
-      await this.checkPostOwner(post, authUser.id);
+
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this.authorityService.checkCanUpdatePost(authUser, audience.groupIds);
         const postPrivacy = await this.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
-      }
-
-      if (mentions && mentions.length) {
-        await this.mentionService.checkValidMentions(
-          audience ? audience.groupIds : oldGroupIds,
-          mentions
-        );
       }
 
       if (content !== null) {
@@ -770,6 +787,7 @@ export class PostService {
       if (setting && setting.hasOwnProperty('canReact')) {
         dataUpdate['canReact'] = setting.canReact;
       }
+
       if (setting && setting.hasOwnProperty('isImportant')) {
         dataUpdate['isImportant'] = setting.isImportant;
       }
@@ -779,10 +797,10 @@ export class PostService {
       }
       let newMediaIds = [];
       transaction = await this.sequelizeConnection.transaction();
+
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList = await this.mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(
@@ -854,6 +872,7 @@ export class PostService {
               'status',
               'mimeType',
               'thumbnails',
+              'createdAt',
             ],
             required: false,
           },
@@ -865,13 +884,11 @@ export class PostService {
         ],
       });
       const authUserId = authUser.id;
-      await this.checkPostOwner(post, authUserId);
-
+      await this.authorityService.checkPostOwner(post, authUserId);
       const groupIds = post.groups.map((g) => g.groupId);
-      await this.authorityService.checkCanCreatePost(authUser, groupIds);
-
-      if (post.content === null && post.media.length === 0) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
+      await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
+      if (post.content === '' && post.media.length === 0) {
+        throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
       }
 
       if (post.isDraft === false) return false;
@@ -912,30 +929,9 @@ export class PostService {
   }
 
   /**
-   * Check post exist and owner
-   * @param post PostResponseDto
-   * @param authUserId Auth userID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async checkPostOwner(
-    post: PostResponseDto | PostModel | IPost,
-    authUserId: number
-  ): Promise<boolean> {
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
-
-    if (post.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-    return true;
-  }
-
-  /**
    * Delete post by id
    * @param postId string
-   * @param authUserId auth user ID
+   * @param authUser UserDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
@@ -963,28 +959,37 @@ export class PostService {
           },
         ],
       });
-      await this.checkPostOwner(post, authUser.id);
-      const groupIds = post.groups.map((g) => g.groupId);
-      if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(authUser, groupIds);
+
+      if (!post) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
-      await Promise.all([
-        this.mentionService.setMention([], MentionableType.POST, postId, transaction),
-        this.mediaService.sync(postId, EntityType.POST, [], transaction),
-        this.setGroupByPost([], postId, transaction),
-        this.reactionService.deleteReactionByPostIds([postId]),
-        this.commentService.deleteCommentsByPost(postId, transaction),
-        this.feedService.deleteNewsFeedByPost(postId, transaction),
-        this.feedService.deleteUserSeenByPost(postId, transaction),
-        this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
-      ]);
-      await this.postModel.destroy({
-        where: {
-          id: postId,
-          createdBy: authUser.id,
-        },
-        transaction: transaction,
-      });
+      if (post.isDraft === false) {
+        await this.authorityService.checkCanDeletePost(
+          authUser,
+          post.groups.map((g) => g.groupId),
+          post.createdBy
+        );
+      }
+
+      if (post.isDraft) {
+        await this._cleanPostElement(postId, transaction, true);
+        await this.postModel.destroy({
+          where: {
+            id: postId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+          force: true,
+        });
+      } else {
+        await this.postModel.destroy({
+          where: {
+            id: postId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+        });
+      }
       await transaction.commit();
 
       return post;
@@ -993,6 +998,25 @@ export class PostService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  private async _cleanPostElement(
+    postId: string,
+    transaction: Transaction,
+    isCleanMedia = false
+  ): Promise<void> {
+    await Promise.all([
+      this.mentionService.setMention([], MentionableType.POST, postId, transaction),
+      isCleanMedia
+        ? this.mediaService.sync(postId, EntityType.POST, [], transaction)
+        : Promise.resolve(),
+      this.setGroupByPost([], postId, transaction),
+      this.reactionService.deleteReactionByPostIds([postId]),
+      this.commentService.deleteCommentsByPost(postId, transaction),
+      this.feedService.deleteNewsFeedByPost(postId, transaction),
+      this.feedService.deleteUserSeenByPost(postId, transaction),
+      this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+    ]);
   }
 
   /**
@@ -1016,7 +1040,7 @@ export class PostService {
    * @throws HttpException
    */
   public async addPostGroup(
-    groupIds: number[],
+    groupIds: string[],
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
@@ -1038,7 +1062,7 @@ export class PostService {
    * @throws HttpException
    */
   public async setGroupByPost(
-    groupIds: number[],
+    groupIds: string[],
     postId: string,
     transaction: Transaction
   ): Promise<boolean> {
@@ -1156,7 +1180,7 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupIds: number[], take = 1000): Promise<string[]> {
+  public async findPostIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
         where: {
@@ -1173,7 +1197,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: string, userId: number): Promise<void> {
+  public async markReadPost(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
@@ -1196,40 +1220,14 @@ export class PostService {
     return;
   }
 
-  public async getTotalImportantPostInGroups(
-    userId: number,
-    groupIds: number[],
-    constraints?: string
-  ): Promise<number> {
-    const { schema } = getDatabaseConfig();
-    const query = `SELECT COUNT(*) as total
-    FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND EXISTS(
-        SELECT 1
-        from ${schema}.posts_groups AS g
-        WHERE g.post_id = p.id
-        AND g.group_id IN(:groupIds)
-      )
-    ${constraints ?? ''}`;
-    const result: any = await this.sequelizeConnection.query(query, {
-      replacements: {
-        groupIds,
-        userId,
-      },
-      type: QueryTypes.SELECT,
-    });
-    return result[0].total;
-  }
-
   public async getTotalImportantPostInNewsFeed(
-    userId: number,
+    userId: string,
     constraints: string
   ): Promise<number> {
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
-    WHERE "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
     AND NOT EXISTS (
         SELECT 1
         FROM ${schema}.users_mark_read_posts as u
@@ -1266,8 +1264,7 @@ export class PostService {
     const { schema } = getDatabaseConfig();
     try {
       const post = await this.findPost({ postId: postId });
-      await this.checkPostOwner(post, user.id);
-
+      await this.authorityService.checkPostOwner(post, user.id);
       const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
 
       if (post.isDraft === true) {
@@ -1378,7 +1375,17 @@ export class PostService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'mimeType', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'mimeType',
+            'thumbnails',
+            'createdAt',
+          ],
           required: true,
           where: {
             id,
@@ -1453,8 +1460,7 @@ export class PostService {
     }
   }
 
-  public checkContent(updatePostDto: UpdatePostDto): void {
-    const { content, media } = updatePostDto;
+  public checkContent(content: string, media: any): void {
     if (
       content === '' &&
       media?.files.length === 0 &&
@@ -1533,6 +1539,7 @@ export class PostService {
                   extension: post.extension,
                   mimeType: post.mimeType,
                   thumbnails: post.thumbnails,
+                  createdAt: post.mediaCreatedAt,
                 },
               ];
         result.push({
@@ -1591,6 +1598,7 @@ export class PostService {
           extension: post.extension,
           mimeType: post.mimeType,
           thumbnails: post.thumbnails,
+          createdAt: post.mediaCreatedAt,
         });
       }
     });
@@ -1662,5 +1670,78 @@ export class PostService {
         },
       }
     );
+  }
+
+  public async updatePostData(postIds: string[], data: any): Promise<void> {
+    await this.postModel.update(data, {
+      where: {
+        id: {
+          [Op.in]: postIds,
+        },
+      },
+    });
+  }
+
+  public async deleteAPostModel(post: PostModel): Promise<any> {
+    const transaction = await this.sequelizeConnection.transaction();
+    try {
+      if (post.isDraft) {
+        await this._cleanPostElement(post.id, transaction, true);
+        await post.destroy({
+          force: true,
+          transaction,
+        });
+      } else {
+        await post.destroy({ transaction });
+      }
+      await transaction.commit();
+
+      return post;
+    } catch (error) {
+      this.logger.error(error, error?.stack);
+      await transaction.rollback();
+      throw error;
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanDeletedPost(): Promise<void> {
+    const willDeletePosts = await this.postModel.findAll({
+      where: {
+        deletedAt: {
+          [Op.lte]: moment().subtract(30, 'days').toDate(),
+        },
+      },
+      paranoid: false,
+      include: {
+        model: MediaModel,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'type'],
+        required: false,
+      },
+    });
+    if (willDeletePosts.length) {
+      const mediaList = ArrayHelper.arrayUnique(
+        willDeletePosts.filter((e) => e.media.length).map((e) => e.media)
+      );
+      if (!(await this.mediaService.isExistOnPostOrComment(mediaList.map((e) => e.id)))) {
+        this.mediaService.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE);
+      }
+      const transaction = await this.sequelizeConnection.transaction();
+
+      try {
+        for (const post of willDeletePosts) {
+          await this._cleanPostElement(post.id, transaction, true);
+          await post.destroy({ force: true, transaction });
+        }
+        await transaction.commit();
+      } catch (e) {
+        this.logger.error(e.message);
+        await transaction.rollback();
+      }
+    }
   }
 }

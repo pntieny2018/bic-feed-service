@@ -21,6 +21,7 @@ import {
   mockReactionResponseDto,
   mockReactionsResponseDto,
 } from './mocks/input.mock';
+import { ExternalService } from '../../../app/external.service';
 
 describe('ReactionController', () => {
   let reactionController: ReactionController;
@@ -35,6 +36,10 @@ describe('ReactionController', () => {
         GroupService,
         {
           provide: ReactionService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: ExternalService,
           useClass: jest.fn(),
         },
         {

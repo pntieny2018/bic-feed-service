@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MediaService } from '../media.service';
 import { getModelToken } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { MediaModel, MediaStatus } from '../../../database/models/media.model';
+import { MediaModel, MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostMediaModel } from '../../../database/models/post-media.model';
 import { CommentMediaModel } from '../../../database/models/comment-media.model';
 import { SentryService } from '@app/sentry';
@@ -11,6 +11,8 @@ import { createMediaDtoMock } from './mocks/create-media-dto.mock';
 import { createMock } from '@golevelup/ts-jest';
 import { Transaction } from 'sequelize';
 import { EntityType } from '../media.constants';
+import { KAFKA_PRODUCER } from '../../../common/constants';
+import { ClientKafka } from '@nestjs/microservices';
 
 describe('MediaService', () => {
   let service: MediaService;
@@ -20,6 +22,7 @@ describe('MediaService', () => {
   let sentryService;
   let transactionMock;
   let sequelize;
+  let kafkaProducer: ClientKafka;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +32,12 @@ describe('MediaService', () => {
           provide: SentryService,
           useValue: {
             captureException: jest.fn(),
+          },
+        },
+        {
+          provide: KAFKA_PRODUCER,
+          useValue: {
+            emit: jest.fn()
           },
         },
         { provide: Sequelize, useValue: { query: jest.fn(), transaction: jest.fn() } },
@@ -78,6 +87,7 @@ describe('MediaService', () => {
     postMediaModel = module.get<typeof PostMediaModel>(getModelToken(PostMediaModel));
     commentMediaModel = module.get<typeof CommentMediaModel>(getModelToken(CommentMediaModel));
     sentryService = module.get<SentryService>(SentryService);
+    kafkaProducer = module.get<ClientKafka>(KAFKA_PRODUCER);
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),
       commit: jest.fn(),
@@ -113,39 +123,6 @@ describe('MediaService', () => {
     });
   })
 
-  describe('MediaService.destroy', () => {
-    it('should return if success', async () => {
-      mediaModel.create.mockResolvedValue(createMediaDtoMock)
-      postMediaModel.destroy.mockResolvedValue(1)
-      commentMediaModel.destroy.mockResolvedValue(1)
-      mediaModel.destroy.mockResolvedValue(1)
-      // transactionMock.commit.mockResolvedValue(true)
-      const returnValue = await service.destroy(mockUserDto, {postId: 1, commentId: 1, mediaIds: [1,2]})
-      expect(transactionMock.commit).toBeCalledTimes(1);
-      expect(transactionMock.rollback).not.toBeCalled();
-      expect(postMediaModel.destroy).toBeCalled()
-      expect(commentMediaModel.destroy).toBeCalled()
-      expect(mediaModel.destroy).toBeCalled()
-      expect(returnValue).toEqual(true)
-    });
-
-    it('should sentry call if fail', async () => {
-      const errorMessage = 'Something went wrong'
-      mediaModel.destroy.mockRejectedValue(new Error(errorMessage))
-      const logSpy = jest.spyOn(service['_logger'], 'error').mockReturnThis();
-
-      try {
-        await service.destroy(mockUserDto, {postId: 1, commentId: 1, mediaIds: [1,2]})
-      } catch (e) {
-        expect(transactionMock.rollback).toBeCalledTimes(1);
-        expect(transactionMock.commit).not.toBeCalled();
-        expect(logSpy).toBeCalled()
-        expect(sentryService.captureException).toBeCalled()
-        expect(e.message).toEqual('api.media.delete.app_error')
-      }
-    });
-  })
-
   describe('MediaService.getMediaList', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
@@ -158,7 +135,7 @@ describe('MediaService', () => {
   describe('MediaService.checkValidMedia', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.checkValidMedia(['1','2'], 1)
+      const returnValue = await service.checkValidMedia(['1','2'], '8c846fe3-a615-42ae-958a-33a43d24a033')
       expect(mediaModel.findAll).toBeCalled()
       expect(returnValue).toEqual(true)
     });
@@ -168,7 +145,7 @@ describe('MediaService', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
       mediaModel.bulkCreate.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, 1, transactionMock)
+      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, '8c846fe3-a615-42ae-958a-33a43d24a033', transactionMock)
       expect(mediaModel.findAll).toBeCalled()
       expect(mediaModel.bulkCreate).toBeCalled()
       expect(returnValue).toEqual([])

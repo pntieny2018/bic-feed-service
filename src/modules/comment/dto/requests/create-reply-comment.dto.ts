@@ -24,7 +24,12 @@ export class CreateReplyCommentDto {
   @IsNotEmpty()
   @ValidateIf(
     (o) =>
-      !(o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0 || o.giphy?.id)
+      !(
+        o.media?.images?.length > 0 ||
+        o.media?.videos?.length > 0 ||
+        o.media?.files?.length > 0 ||
+        o.giphy?.id
+      )
   )
   public content: string;
 
@@ -54,13 +59,13 @@ export class CreateReplyCommentDto {
     type: UserMentionDto,
     example: {
       dangdiep: {
-        id: 1,
+        id: '26799d29-189b-435d-b618-30fb70e9b09e',
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
       tuine: {
-        id: 2,
+        id: '26799d29-189b-435d-b618-30fb70e9b09f',
         username: 'tuine',
         avatar: 'https://google.com',
         fullname: 'Tui Day Ne',
@@ -79,18 +84,24 @@ export class CreateReplyCommentDto {
     }
     return value;
   })
-  public mentions?: number[] = [];
+  public mentions?: string[] = [];
 
   @ApiProperty({
     type: GiphyDto,
     example: {
       id: '3pZipqyo1sqHDfJGtz',
       type: 'gif',
-    }
+    },
   })
   @IsNotEmpty()
   @ValidateIf(
-    (o) => !(o.content || o.media?.images?.length > 0 || o.media?.videos?.length > 0 || o.media?.files?.length > 0)
+    (o) =>
+      !(
+        o.content ||
+        o.media?.images?.length > 0 ||
+        o.media?.videos?.length > 0 ||
+        o.media?.files?.length > 0
+      )
   )
   @Type(() => GiphyDto)
   public giphy?: GiphyDto = null;

@@ -40,12 +40,22 @@ describe('FeedController', () => {
   describe('getTimeline', () => {
     it('Should get timeline successfully', async () => {
       const getTimelineDto: GetTimelineDto = {
-        groupId: 1,
+        groupId: 'c233a814-1fe9-437d-9b7b-1babee5ccad5',
       };
       feedService.getTimeline = jest.fn().mockResolvedValue(Promise.resolve());
       const result = await feedController.getTimeline(mockedUserAuth, getTimelineDto);
       expect(feedService.getTimeline).toBeCalledTimes(1);
       expect(feedService.getTimeline).toBeCalledWith(mockedUserAuth, getTimelineDto);
+    });
+
+    it('Should get timeline successfully even null user', async () => {
+      const getTimelineDto: GetTimelineDto = {
+        groupId: 'c233a814-1fe9-437d-9b7b-1babee5ccad5',
+      };
+      feedService.getTimeline = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await feedController.getTimeline(null, getTimelineDto);
+      expect(feedService.getTimeline).toBeCalledTimes(1);
+      expect(feedService.getTimeline).toBeCalledWith(null, getTimelineDto);
     });
   });
 

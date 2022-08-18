@@ -33,23 +33,38 @@ export const mockUserDto: UserDto = {
   username: 'vuquang23',
   email: 'vuquang@tgm.vn',
   avatar: 'https://google.com/vuquang.png',
-  id: 33,
+  id: '89eee543-5ad2-415d-adf4-7a89188f92bc',
   profile: {
-    id: 33,
+    id: '89eee543-5ad2-415d-adf4-7a89188f92bc',
     username: 'vuquang23',
     fullname: 'Vu Quang Le',
     avatar: 'https://google.com/vuquang.png',
     email: 'vuquang@tgm.vn',
-    groups: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    groups: [
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5638',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5637',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5636',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5635',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5634',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5633',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5632',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5631',
+      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5630',
+    ],
   },
 };
 
 export const mockUserSharedDto = {
-  id: 20,
+  id: '5772aaa2-a143-44b9-8898-6f670a678ecf',
   username: 'vantt',
   fullname: 'Than The Van',
   avatar: 'http://google.com/vantt.png',
-  groups: [1, 2, 3],
+  groups: [
+    '5772aaa2-a143-44b9-8898-6f670a678ece',
+    '5772aaa2-a143-44b9-8898-6f670a678ecd',
+    '5772aaa2-a143-44b9-8898-6f670a678ecc',
+  ],
 };
 
 export const mockPostResponseDto: PostResponseDto = {
@@ -82,7 +97,7 @@ export const mockPostResponseDto: PostResponseDto = {
   audience: {
     groups: [
       {
-        id: 1,
+        id: 'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
         privacy: GroupPrivacy.OPEN,

@@ -65,11 +65,11 @@ describe('FollowListener', () => {
 
   describe('FollowListener.onUsersFollowGroups', () => {
     const usersHasBeenFollowedEvent = new UsersHasBeenFollowedEvent(
-      new UsersHasBeenFollowedEventPayload([1],[1])
+      new UsersHasBeenFollowedEventPayload(['be4c6274-31a3-4c5f-84fa-6222ca6a185d'],['a368bb27-1b92-4fdf-a885-89e30b393e9f'])
     )
     it('should success', async () => {
       const loggerSpy = jest.spyOn(followListener['_logger'], 'debug').mockReturnThis();
-      postService.findPostIdsByGroupId.mockResolvedValue([1]);
+      postService.findPostIdsByGroupId.mockResolvedValue(['655a4c00-c245-4399-b64c-5ffa674a7c26']);
       feedPublisherService.attachPostsForUsersNewsFeed.mockResolvedValue()
       await followListener.onUsersFollowGroups(usersHasBeenFollowedEvent)
       expect(loggerSpy).toBeCalled()
@@ -91,7 +91,7 @@ describe('FollowListener', () => {
 
   describe('FollowListener.onUsersUnFollowGroup', () => {
     const usersHasBeenUnfollowedEvent = new UsersHasBeenUnfollowedEvent(
-      new UsersHasBeenUnfollowedEventPayload([1],[1])
+      new UsersHasBeenUnfollowedEventPayload(['be4c6274-31a3-4c5f-84fa-6222ca6a185d'],['a368bb27-1b92-4fdf-a885-89e30b393e9f'])
     )
     it('should success', async () => {
       const loggerSpy = jest.spyOn(followListener['_logger'], 'debug').mockReturnThis();

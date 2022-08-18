@@ -12,11 +12,13 @@ export class UserDto {
   public avatar?: string;
 
   @Expose()
-  public id: number;
+  public id: string;
 
   public staffRole?: any;
 
   public profile?: UserSharedDto;
+
+  public permissions?: any;
 
   public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);

@@ -3,12 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
-  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
@@ -21,6 +22,7 @@ import {
 } from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
 import {
+  CreateFastlaneDto,
   CreatePostDto,
   GetPostDto,
   GetPostEditedHistoryDto,
@@ -31,14 +33,10 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { PostService } from './post.service';
 import { GetPostPipe } from './pipes';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import {
-  ProcessVideoResponseDto,
-  VideoProcessingEndDto,
-} from './dto/responses/process-video-response.dto';
-import { VideoProcessStatus } from '.';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { AuthorityService } from '../authority';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
+import { WebhookGuard } from '../auth/webhook.guard';
+import { FeedService } from '../feed/feed.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -47,9 +45,12 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
   path: 'posts',
 })
 export class PostController {
+  private _logger = new Logger(PostController.name);
   public constructor(
     private _postService: PostService,
-    private _eventEmitter: InternalEventEmitterService
+    private _eventEmitter: InternalEventEmitterService,
+    private _authorityService: AuthorityService,
+    private _feedService: FeedService
   ) {}
 
   @ApiOperation({ summary: 'Search posts' })
@@ -100,7 +101,12 @@ export class PostController {
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
-    else return this._postService.getPost(postId, user, getPostDto);
+    else {
+      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+        this._logger.error(ex, ex.stack);
+      });
+      return this._postService.getPost(postId, user, getPostDto);
+    }
   }
 
   @ApiOperation({ summary: 'Create post' })
@@ -109,10 +115,20 @@ export class PostController {
     description: 'Create post successfully',
   })
   @Post('/')
+  @InjectUserToBody()
   public async createPost(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
-  ): Promise<PostResponseDto> {
+  ): Promise<any> {
+    const { audience } = createPostDto;
+
+    const { groupIds } = audience;
+    await this._authorityService.checkCanCreatePost(
+      user,
+      groupIds,
+      createPostDto.setting.isImportant
+    );
+
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
       return await this._postService.getPost(created.id, user, new GetPostDto());
@@ -125,12 +141,31 @@ export class PostController {
     description: 'Update post successfully',
   })
   @Put('/:postId')
+  @InjectUserToBody()
   public async updatePost(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
+    const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
+    await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
+
+    const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
+    const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+    if (newAudienceIds.length) {
+      const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
+      await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
+    }
+
+    if (postBefore.isDraft === false) {
+      await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+      const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+      if (removeGroupIds.length) {
+        await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);
+      }
+    }
+
     const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
     if (isUpdated) {
       const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
@@ -206,17 +241,24 @@ export class PostController {
     return true;
   }
 
-  @EventPattern(KAFKA_TOPIC.BEIN_UPLOAD.VIDEO_HAS_BEEN_PROCESSED)
-  public async createVideoPostDone(
-    @Payload('value') videoProcessingEndDto: VideoProcessingEndDto
-  ): Promise<void> {
-    switch (videoProcessingEndDto.status) {
-      case VideoProcessStatus.DONE:
-        this._eventEmitter.emit(new PostVideoSuccessEvent(videoProcessingEndDto));
-        break;
-      case VideoProcessStatus.ERROR:
-        this._eventEmitter.emit(new PostVideoFailedEvent(videoProcessingEndDto));
-        break;
-    }
+  @UseGuards(WebhookGuard)
+  @Post('/bot')
+  public async deployNewVersionApp(
+    @AuthUser() user: UserDto,
+    @Body() createFastlaneDto: CreateFastlaneDto
+  ): Promise<boolean> {
+    const input = new CreatePostDto();
+    input.content = createFastlaneDto.content;
+    input.audience = {
+      userIds: [],
+      groupIds: createFastlaneDto.groupIds,
+    };
+    input.mentions = createFastlaneDto.mentionUserIds;
+
+    const post = await this.createPost(user, input);
+
+    await this.publishPost(user, post['id']);
+
+    return true;
   }
 }

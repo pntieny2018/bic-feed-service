@@ -5,7 +5,7 @@ export class ArrayHelper {
    * @param a2 any[]
    * @returns any[] Difference member of a1 vs a2
    */
-  public static arrDifferenceElements(a1: any[], a2: any[]): any[] {
+  public static arrDifferenceElements<T>(a1: T[], a2: T[]): T[] {
     const a2Set = new Set(a2);
     return a1.filter(function (x) {
       return !a2Set.has(x);

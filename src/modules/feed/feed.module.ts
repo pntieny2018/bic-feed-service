@@ -14,7 +14,7 @@ import { ReactionModule } from '../reaction';
     forwardRef(() => PostModule),
     GroupModule,
     MentionModule,
-    ReactionModule,
+    forwardRef(() => ReactionModule),
   ],
   providers: [FeedService, CanReadTimelineConstraint],
   controllers: [FeedController],

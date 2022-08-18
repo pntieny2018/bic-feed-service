@@ -127,21 +127,19 @@ export class ArticleService {
     getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, groupId } = getArticleListDto;
-    if (groupId) {
-      const group = await this._groupService.get(groupId);
-      if (!group) {
-        throw new BadRequestException(`Group ${groupId} not found`);
-      }
-      const groupIds = this._groupService.getGroupIdsCanAccessArticle(group, authUser);
-      if (groupIds.length === 0) {
-        return new PageDto<ArticleResponseDto>([], {
-          limit,
-          offset,
-          hasNextPage: false,
-        });
-      }
-      getArticleListDto.groupIds = groupIds;
+    const group = await this._groupService.get(groupId);
+    if (!group) {
+      throw new BadRequestException(`Group ${groupId} not found`);
     }
+    const groupIds = this._groupService.getGroupIdsCanAccessArticle(group, authUser);
+    if (groupIds.length === 0) {
+      return new PageDto<ArticleResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
+    getArticleListDto.groupIds = groupIds;
     const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.groupArticles(rows);
     const hasNextPage = articles.length === limit + 1 ? true : false;
@@ -174,7 +172,7 @@ export class ArticleService {
    */
   public async getPayloadSearch(
     { categories, series, actors, limit, offset }: SearchArticlesDto,
-    groupIds: number[]
+    groupIds: string[]
   ): Promise<{
     index: string;
     body: any;
@@ -225,7 +223,7 @@ export class ArticleService {
     }
     body['sort'] = [{ createdAt: 'desc' }];
     return {
-      index: ElasticsearchHelper.INDEX.POST,
+      index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
       body,
       from: offset,
       size: limit,
@@ -291,7 +289,17 @@ export class ArticleService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'status',
+            'thumbnails',
+            'createdAt',
+          ],
         },
         {
           model: PostReactionModel,
@@ -390,7 +398,17 @@ export class ArticleService {
           model: MediaModel,
           as: 'media',
           required: false,
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'status', 'thumbnails'],
+          attributes: [
+            'id',
+            'url',
+            'type',
+            'name',
+            'width',
+            'height',
+            'status',
+            'thumbnails',
+            'createdAt',
+          ],
         },
       ],
     });
@@ -447,23 +465,11 @@ export class ArticleService {
         series,
       } = createArticleDto;
       const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
 
       const { groupIds } = audience;
-      await this._authorityService.checkCanCreatePost(authUser, groupIds);
-
-      if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(groupIds, mentions);
-      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      await this._mediaService.checkValidMedia(uniqueMediaIds, authUserId);
-      await this._categoryService.checkValidCategory(categories, authUserId);
-      await this._seriesService.checkValidSeries(series, authUserId);
       transaction = await this._sequelizeConnection.transaction();
       const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
       let hashtagArr = [];
@@ -582,10 +588,6 @@ export class ArticleService {
     updateArticleDto: UpdateArticleDto
   ): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
 
     let transaction;
     try {
@@ -605,25 +607,10 @@ export class ArticleService {
         updatedBy: authUserId,
       };
 
-      if (categories && categories.length === 0) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_CATEGORY_REQUIRED);
-      }
-      if (post.isDraft === false) {
-        await this._postService.checkContent(updateArticleDto);
-      }
-      await this._postService.checkPostOwner(post, authUser.id);
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience) {
-        await this._authorityService.checkCanUpdatePost(authUser, audience.groupIds);
         const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
-      }
-
-      if (mentions && mentions.length) {
-        await this._mentionService.checkValidMentions(
-          audience ? audience.groupIds : oldGroupIds,
-          mentions
-        );
       }
 
       if (content !== null) {
@@ -656,7 +643,6 @@ export class ArticleService {
       if (media) {
         const { files, images, videos } = media;
         newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this._mediaService.checkValidMedia(newMediaIds, authUserId);
         const mediaList = await this._mediaService.createIfNotExist(media, authUserId, transaction);
         if (
           mediaList.filter(
@@ -734,7 +720,7 @@ export class ArticleService {
           through: {
             attributes: [],
           },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails'],
+          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails', 'createdAt'],
           required: true,
           where: {
             id,

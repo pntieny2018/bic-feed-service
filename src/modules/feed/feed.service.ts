@@ -1,7 +1,7 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { Op, Sequelize, Transaction } from 'sequelize';
+import { Sequelize, Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
 import { PostModel } from '../../database/models/post.model';
@@ -20,6 +20,7 @@ import { ExceptionHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserService } from '../../shared/user';
+import { GroupPrivacy } from '../../shared/group/dto';
 
 @Injectable()
 export class FeedService {
@@ -27,6 +28,7 @@ export class FeedService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
+    @Inject(forwardRef(() => ReactionService))
     private readonly _reactionService: ReactionService,
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
@@ -51,35 +53,42 @@ export class FeedService {
    * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { limit, offset } = getNewsFeedDto;
+    const { isImportant, limit, offset } = getNewsFeedDto;
     try {
       const authUserId = authUser.id;
       const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-      const totalImportantPosts = await this._postService.getTotalImportantPostInNewsFeed(
-        authUserId,
-        constraints
-      );
+      let totalImportantPosts = 0;
       let importantPostsExc = Promise.resolve([]);
-      if (offset < totalImportantPosts) {
-        importantPostsExc = PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          limit: limit + 1,
+      if (isImportant || isImportant === null) {
+        totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
           authUserId,
-          isImportant: true,
-        });
+          constraints
+        );
+
+        if (offset < totalImportantPosts) {
+          importantPostsExc = PostModel.getNewsFeedData({
+            ...getNewsFeedDto,
+            limit: limit + 1,
+            authUserId,
+            isImportant: true,
+          });
+        }
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (offset + limit >= totalImportantPosts) {
+      if (
+        (offset + limit >= totalImportantPosts && isImportant === false) ||
+        isImportant === null
+      ) {
+        const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
         normalPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
-          limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
+          limit: normalLimit < 0 ? 0 : normalLimit,
           authUserId,
           isImportant: false,
         });
       }
-
       const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
       const rows = importantPosts.concat(normalPosts);
 
@@ -123,12 +132,16 @@ export class FeedService {
       const post = await this._postService.findPost({
         postId: postId,
       });
-
-      const groups = post.groups.map((g) => g.groupId);
       const groupsOfUser = user.profile.groups;
+      const groupIds = post.groups.map((g) => g.groupId);
+      const groupInfos = await this._groupService.getMany(groupIds);
 
-      if (!this._groupService.isMemberOfSomeGroups(groups, groupsOfUser)) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      const privacy = groupInfos.map((g) => g.privacy);
+
+      if (privacy.every((p) => p !== GroupPrivacy.OPEN && p !== GroupPrivacy.PUBLIC)) {
+        if (!this._groupService.isMemberOfSomeGroups(groupIds, groupsOfUser)) {
+          ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+        }
       }
 
       const usersSeenPost = await this._userSeenPostModel.findAll({
@@ -165,22 +178,30 @@ export class FeedService {
     }
   }
 
-  public async markSeenPosts(postId: string, userId: number): Promise<void> {
+  public async markSeenPosts(postId: string, userId: string): Promise<void> {
     try {
-      await this._userSeenPostModel.create(
-        {
+      const exist = await this._userSeenPostModel.findOne({
+        where: {
           postId: postId,
           userId: userId,
         },
-        { ignoreDuplicates: true }
-      );
+      });
+      if (!exist) {
+        await this._userSeenPostModel.create(
+          {
+            postId: postId,
+            userId: userId,
+          },
+          { ignoreDuplicates: true }
+        );
 
-      await this._newsFeedModel.update(
-        { isSeenPost: true },
-        {
-          where: { userId, postId },
-        }
-      );
+        await this._newsFeedModel.update(
+          { isSeenPost: true },
+          {
+            where: { userId, postId },
+          }
+        );
+      }
     } catch (ex) {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
@@ -200,6 +221,15 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
+    if (!authUser) {
+      if (group.privacy !== GroupPrivacy.PUBLIC) {
+        return new PageDto<PostResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+    }
     const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
@@ -208,11 +238,9 @@ export class FeedService {
         hasNextPage: false,
       });
     }
-    const authUserId = authUser.id;
     const constraints = PostModel.getIdConstrains(getTimelineDto);
 
     const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      authUserId,
       groupIds,
       constraints
     );

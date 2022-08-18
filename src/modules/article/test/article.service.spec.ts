@@ -41,6 +41,7 @@ import { mockMediaModelArray } from '../../post/test/mocks/input.mock';
 import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
+import { AuthorityFactory } from '../../authority/authority.factory';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -67,6 +68,12 @@ describe('ArticleService', () => {
       providers: [
         ArticleService,
         AuthorityService,
+        {
+          provide: AuthorityFactory,
+          useValue: {
+            createForUser: jest.fn()
+          },
+        },
         {
           provide: CategoryService,
           useClass: jest.fn(),
@@ -212,6 +219,8 @@ describe('ArticleService', () => {
         ...mockedArticleResponse,
         toJSON: () => mockedArticleResponse,
       });
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
+      PostModel.loadLock = jest.fn().mockResolvedValue([])
 
       authorityService.checkCanReadArticle = jest.fn().mockResolvedValue(Promise.resolve());
       commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
@@ -235,6 +244,9 @@ describe('ArticleService', () => {
 
     it('Should catch exception if post not found', async () => {
       postModelMock.findOne = jest.fn();
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
+      PostModel.loadLock = jest.fn().mockResolvedValue([])
+
       try {
         const result = await articleService.getArticle(
           mockedArticleData.id,
@@ -296,7 +308,7 @@ describe('ArticleService', () => {
         series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
         body: {
           query: {
             bool: {
@@ -313,7 +325,7 @@ describe('ArticleService', () => {
                 },
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
                   },
                 },
               ],
@@ -326,7 +338,7 @@ describe('ArticleService', () => {
         from: 0,
         size: 1,
       };
-      const result = await articleService.getPayloadSearch(searchDto, [1]);
+      const result = await articleService.getPayloadSearch(searchDto, ['838ca621-e37d-414b-babf-4efc6ac2b5aa']);
       expect(result).toStrictEqual(expectedResult);
     });
 
@@ -334,12 +346,12 @@ describe('ArticleService', () => {
       const searchDto: SearchArticlesDto = {
         offset: 0,
         limit: 1,
-        actors: [1],
+        actors: ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
         categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
         series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
       };
       const expectedResult = {
-        index: ElasticsearchHelper.INDEX.POST,
+        index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
         body: {
           query: {
             bool: {
@@ -356,12 +368,12 @@ describe('ArticleService', () => {
                 },
                 {
                   terms: {
-                    'actor.id': [1],
+                    'actor.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
                   },
                 },
                 {
                   terms: {
-                    'audience.groups.id': [1],
+                    'audience.groups.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
                   },
                 },
               ],
@@ -374,7 +386,7 @@ describe('ArticleService', () => {
         from: 0,
         size: 1,
       };
-      const result = await articleService.getPayloadSearch(searchDto, [1]);
+      const result = await articleService.getPayloadSearch(searchDto, ['838ca621-e37d-414b-babf-4efc6ac2b5aa']);
       expect(result).toStrictEqual(expectedResult);
     });
   });
@@ -390,7 +402,7 @@ describe('ArticleService', () => {
       const mockPosts = mockedSearchResponse.body.hits.hits.map((item) => {
         const source = item._source;
         source['id'] = parseInt(item._id);
-        source['highlight'] = item.highlight['content'][0];
+       // source['highlight'] = item.highlight['content'][0];
         return source;
       });
       userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
@@ -486,18 +498,6 @@ describe('ArticleService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      userService.get = jest.fn().mockResolvedValue(null);
-      try {
-        const result = await articleService.createArticle(
-          { ...mockedUserAuth, profile: null },
-          mockedCreateArticleDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
     it('Should rollback if have an exception when insert data into DB', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -526,18 +526,12 @@ describe('ArticleService', () => {
 
   describe('updateArticle', () => {
     it('Update article successfully', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.checkValidMentions = jest.fn();
 
-      postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       categoryService.setCategoriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -576,7 +570,6 @@ describe('ArticleService', () => {
       expect(transactionMock.rollback).not.toBeCalled();
       expect(mediaService.sync).toBeCalledTimes(1);
       expect(mentionService.create).not.toBeCalled();
-      expect(postService.setGroupByPost).toBeCalledTimes(1);
       expect(postModelMock.update.mock.calls[0][0]).toStrictEqual({
         content: mockedUpdateArticleDto.content,
         updatedBy: mockedUserAuth.id,
@@ -592,47 +585,12 @@ describe('ArticleService', () => {
       });
     });
 
-    it('Should catch exception if creator not found in cache', async () => {
-      try {
-        await articleService.updateArticle(
-          mockedArticleResponse,
-          { ...mockedUserAuth, profile: null },
-          mockedUpdateArticleDto
-        );
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-
-    it('Should catch exception if groups is invalid', async () => {
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
-      authorityService.checkCanUpdatePost = jest
-        .fn()
-        .mockRejectedValue(new Error('Not in the groups'));
-
-      try {
-        await articleService.updateArticle(
-          mockedArticleResponse,
-          mockedUserAuth,
-          mockedUpdateArticleDto
-        );
-      } catch (e) {
-        expect(e.message).toEqual('Not in the groups');
-      }
-    });
-
     it('Should rollback if have an exception when update data into DB', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
-
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.checkValidMentions = jest.fn();
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);

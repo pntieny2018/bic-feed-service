@@ -5,9 +5,13 @@ import { ArticleController } from '../article.controller';
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { SearchArticlesDto } from '../dto/requests/search-article.dto';
 import { GetArticleDto } from '../dto/requests';
+import { PostService } from '../../post/post.service';
+import { AuthorityService } from '../../authority';
 
 describe('ArticleController', () => {
   let articleService: ArticleService;
+  let postService: PostService;
+  let authorityService: AuthorityService;
   let articleController: ArticleController;
   let eventEmitter: InternalEventEmitterService;
 
@@ -19,6 +23,14 @@ describe('ArticleController', () => {
       providers: [
         {
           provide: ArticleService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: PostService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: AuthorityService,
           useClass: jest.fn(),
         },
         {

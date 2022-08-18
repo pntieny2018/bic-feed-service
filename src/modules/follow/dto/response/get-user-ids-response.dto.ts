@@ -2,14 +2,14 @@ import { Expose } from 'class-transformer';
 
 export class GetUserIdsResponseData {
   @Expose()
-  public userIds: number[];
+  public userIds: string[];
 }
 export class GetUserIdsResponseDto {
   @Expose()
   public limit: number;
 
   @Expose({
-    name: 'followed_at'
+    name: 'followed_at',
   })
   public followedAt: string;
 

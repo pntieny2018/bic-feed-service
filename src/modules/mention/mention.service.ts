@@ -29,7 +29,7 @@ export class MentionService {
    * @param userIds number[]
    * @throws LogicException
    */
-  public async checkValidMentions(groupIds: number[], userIds: number[]): Promise<void> {
+  public async checkValidMentions(groupIds: string[], userIds: string[]): Promise<void> {
     const users: UserSharedDto[] = await this._userService.getMany(userIds);
     for (const user of users) {
       if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
@@ -58,7 +58,7 @@ export class MentionService {
    * @param userIds number[]
    * @returns Promise resolve UserSharedDto[]
    */
-  public async resolveMentions(userIds: number[]): Promise<UserSharedDto[]> {
+  public async resolveMentions(userIds: string[]): Promise<UserSharedDto[]> {
     if (!userIds.length) return [];
     const users = await this._userService.getMany(userIds);
     return plainToInstance(UserSharedDto, users, {
@@ -71,7 +71,7 @@ export class MentionService {
    * @param commentsResponse any[]
    */
   public async bindMentionsToComment(commentsResponse: any[]): Promise<void> {
-    const userIds: number[] = [];
+    const userIds: string[] = [];
 
     for (const comment of commentsResponse) {
       if (comment?.parent?.mentions.length) {
@@ -122,7 +122,7 @@ export class MentionService {
    * @param posts any[]
    */
   public async bindMentionsToPosts(posts: any[]): Promise<void> {
-    const userIds: number[] = [];
+    const userIds: string[] = [];
 
     for (const post of posts) {
       if (post.mentions && post.mentions.length) {
@@ -153,13 +153,14 @@ export class MentionService {
    * @throws HttpException
    */
   public async setMention(
-    userIds: number[],
+    userIds: string[],
     mentionableType: MentionableType,
     entityId: string,
     transaction: Transaction
   ): Promise<boolean> {
     const currentMentions = await this._mentionModel.findAll({
       where: { mentionableType, entityId },
+      transaction,
     });
     const currentMentionUserIds = currentMentions.map((i) => i.userId);
 

@@ -1,15 +1,14 @@
-import { IsNumberString } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetUserFollowsDto {
   @ApiProperty({
     description: 'user will be ignore to collection',
-    type: [Number],
+    type: [String],
     required: false,
     name: 'ignore_user_ids',
   })
-  @IsNumberString({}, { each: true })
   @Type(() => Array)
   @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
@@ -20,14 +19,14 @@ export class GetUserFollowsDto {
   @Expose({
     name: 'ignore_user_ids',
   })
-  public ignoreUserIds: number[] = [0];
+  public ignoreUserIds: string[] = ['00000000-0000-0000-0000-000000000000'];
 
   @ApiProperty({
-    type: [Number],
+    type: [String],
     name: 'group_ids',
   })
   @Type(() => Array)
-  @IsNumberString({}, { each: true })
+  @IsUUID(4, { each: true })
   @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
       return [value];
@@ -37,7 +36,7 @@ export class GetUserFollowsDto {
   @Expose({
     name: 'group_ids',
   })
-  public groupIds: number[];
+  public groupIds: string[];
 
   @ApiProperty({
     name: 'follow_id',

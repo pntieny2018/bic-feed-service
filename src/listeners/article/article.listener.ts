@@ -23,6 +23,7 @@ import { PostPrivacy } from '../../database/models/post.model';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleService } from '../../modules/article/article.service';
+import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class ArticleListener {
@@ -54,18 +55,12 @@ export class ArticleListener {
       this._sentryService.captureException(e);
     });
 
-    const index = ElasticsearchHelper.INDEX.ARTICLE;
-    this._elasticsearchService
-      .delete({ index, id: `${article.id}` })
-      .catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      })
-      .catch((e) => {
-        this._logger.error(e, e?.stack);
-        this._sentryService.captureException(e);
-        return;
-      });
+    const index = ElasticsearchHelper.ALIAS.ARTICLE[article.lang]?.name || 'default';
+    this._elasticsearchService.delete({ index, id: `${article.id}` }).catch((e) => {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
+      return;
+    });
     //TODO:: send noti
   }
 
@@ -89,7 +84,7 @@ export class ArticleListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    await this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    this._postService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
 
     if (isDraft) return;
 
@@ -126,7 +121,7 @@ export class ArticleListener {
         this._sentryService.captureException(e);
       });
 
-    const index = ElasticsearchHelper.INDEX.ARTICLE;
+    const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
       this._logger.debug(e);
       this._sentryService.captureException(e);
@@ -139,7 +134,7 @@ export class ArticleListener {
         actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [0]
+        [NIL_UUID]
       );
     } catch (error) {
       this._logger.error(error, error?.stack);
@@ -192,7 +187,7 @@ export class ArticleListener {
       });
     //TODO:: send noti
 
-    const index = ElasticsearchHelper.INDEX.ARTICLE;
+    const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
     const dataUpdate = {
       commentsCount,
       totalUsersSeen,
@@ -210,7 +205,8 @@ export class ArticleListener {
       summary: newArticle.summary ?? null,
     };
     this._elasticsearchService
-      .update({ index, id: `${id}`, body: { doc: dataUpdate } })
+      .index({ index, id: `${id}`, body: dataUpdate })
+      .then()
       .catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
@@ -280,7 +276,7 @@ export class ArticleListener {
         title: article.title ?? null,
         summary: article.summary ?? null,
       };
-      const index = ElasticsearchHelper.INDEX.ARTICLE;
+      const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
       this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
         this._logger.debug(e);
         this._sentryService.captureException(e);
@@ -293,7 +289,7 @@ export class ArticleListener {
           actor.id,
           id,
           audience.groups.map((g) => g.id),
-          [0]
+          [NIL_UUID]
         );
       } catch (error) {
         this._logger.error(error, error?.stack);

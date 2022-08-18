@@ -5,6 +5,8 @@ import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { UserMentionDto } from '../../../mention/dto';
+import { ValidateMedia } from '../../../media/validators/media.validator';
+import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 
 export class UpdatePostDto {
   @ApiProperty({
@@ -12,10 +14,10 @@ export class UpdatePostDto {
     type: AudienceRequestDto,
     example: {
       ['user_ids']: [],
-      ['group_ids']: [1],
+      ['group_ids']: ['26799d29-189b-435d-b618-30fb70e9b09e'],
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
   public audience: AudienceRequestDto;
@@ -36,7 +38,7 @@ export class UpdatePostDto {
     example: {
       images: [
         {
-          id: 1,
+          id: '26799d29-189b-435d-b618-30fb70e9b09e',
           url: 'https://google.com',
           name: 'FIle name 1',
         },
@@ -48,6 +50,7 @@ export class UpdatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
+  @ValidateMedia()
   public media?: MediaDto;
 
   @ApiProperty({
@@ -71,13 +74,13 @@ export class UpdatePostDto {
     type: UserMentionDto,
     example: {
       dangdiep: {
-        id: 1,
+        id: '26799d29-189b-435d-b618-30fb70e9b09e',
         username: 'dangdiep',
         avatar: 'https://google.com',
         fullname: 'Diep Dang',
       },
       tuine: {
-        id: 2,
+        id: '26799d29-189b-435d-b618-30fb70e9b09f',
         username: 'tuine',
         avatar: 'https://google.com',
         fullname: 'Tui Day Ne',
@@ -96,7 +99,8 @@ export class UpdatePostDto {
     }
     return value;
   })
-  public mentions?: number[];
+  @ValidateMention()
+  public mentions?: string[];
 
   public isDraft?: boolean;
 }
