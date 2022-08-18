@@ -59,7 +59,9 @@ export class FeedService {
       const constraints = PostModel.getIdConstrains(getNewsFeedDto);
       let totalImportantPosts = 0;
       let importantPostsExc = Promise.resolve([]);
-      if (isImportant || isImportant === null) {
+
+      const hasGetImportantPost = isImportant || isImportant === null;
+      if (hasGetImportantPost) {
         totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
           authUserId,
           constraints
@@ -76,15 +78,14 @@ export class FeedService {
       }
 
       let normalPostsExc = Promise.resolve([]);
-      if (
-        (offset + limit >= totalImportantPosts && isImportant === false) ||
-        isImportant === null
-      ) {
+      const isNeedMorePost = offset + limit >= totalImportantPosts;
+      const hasGetNormalPost = isImportant === false || isImportant === null;
+      if (isNeedMorePost && hasGetNormalPost) {
         const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
         normalPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
           offset: Math.max(0, offset - totalImportantPosts),
-          limit: normalLimit < 0 ? 0 : normalLimit,
+          limit: Math.max(0, normalLimit),
           authUserId,
           isImportant: false,
         });
@@ -221,14 +222,12 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    if (!authUser) {
-      if (group.privacy !== GroupPrivacy.PUBLIC) {
-        return new PageDto<PostResponseDto>([], {
-          limit,
-          offset,
-          hasNextPage: false,
-        });
-      }
+    if (!authUser && group.privacy !== GroupPrivacy.PUBLIC) {
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
     }
     const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
