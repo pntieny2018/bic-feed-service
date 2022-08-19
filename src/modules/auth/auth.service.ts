@@ -24,6 +24,7 @@ export class AuthService {
   ) {}
 
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
+    console.log('cognito payload', payload);
     const user = this._classTransformer.plainToInstance(UserDto, {
       email: payload['email'],
       username: payload['cognito:username'],
@@ -31,7 +32,9 @@ export class AuthService {
       staffRole: payload['custom:bein_staff_role'],
     });
     user.profile = await this._userService.get(user.id);
+    console.log('profile', user.profile);
     user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
+    console.log('profile', user.permissions);
     if (!user.profile) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
