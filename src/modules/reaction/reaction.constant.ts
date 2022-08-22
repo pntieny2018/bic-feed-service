@@ -22,7 +22,7 @@ export const BIC_EMOJI = [
   'bic_heart',
   'bic_hugging_face',
   'bic_light_bulb',
-  'bic_money_mounth_face',
+  'bic_money_mouth_face',
   'bic_money_with_wings',
   'bic_muscle_diamond',
   'bic_partying_face',
