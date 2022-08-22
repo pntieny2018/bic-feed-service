@@ -35,11 +35,11 @@ import { NIL as NIL_UUID } from 'uuid';
 import { SentryService } from '@app/sentry';
 import { OrderEnum } from '../../common/dto';
 import { FeedService } from '../feed/feed.service';
-
-const UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
-const SERIALIZE_TRANSACTION_ERROR =
-  'could not serialize access due to read/write dependencies among transactions';
-const SERIALIZE_TRANSACTION_MAX_ATTEMPT = 3;
+import {
+  SERIALIZE_TRANSACTION_ERROR,
+  SERIALIZE_TRANSACTION_MAX_ATTEMPT,
+  UNIQUE_CONSTRAINT_ERROR,
+} from './reaction.constant';
 
 @Injectable()
 export class ReactionService {

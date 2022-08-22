@@ -3,6 +3,7 @@ import { Expose } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsUUID } from 'class-validator';
 import { ReactionEnum } from '../../reaction.enum';
 import { emoji } from 'node-emoji';
+import { BIC_EMOJI } from '../../reaction.constant';
 
 export class CreateReactionDto {
   @ApiProperty({
@@ -11,7 +12,7 @@ export class CreateReactionDto {
     name: 'reaction_name',
   })
   @IsNotEmpty()
-  @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
+  @IsIn([...BIC_EMOJI, ...Object.keys(emoji)], { message: 'Reaction not found' })
   @Expose({
     name: 'reaction_name',
   })
