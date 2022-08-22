@@ -6,7 +6,7 @@ import { TrendingDto } from './dto/requests';
 import { map, Observable } from 'rxjs';
 import { SearchDto } from './dto/requests/search.dto';
 import { GiphyResponseDto } from './dto/responses/giphy-response.dto';
-import { createUrlFromId, GiphyType } from './giphy.util';
+import { createUrlFromId, getGiphyDetailInfo, GiphyType } from './giphy.util';
 
 @ApiTags('Giphy')
 @Controller({
@@ -18,7 +18,10 @@ export class GiphyController {
 
   public transferGiphyResponseApi(response): GiphyResponseDto[] {
     return response.data.data.map(
-      (e) => new GiphyResponseDto(e.id, e.type, createUrlFromId(e.id, GiphyType.GIF_PREVIEW))
+      (e) => {
+        const details = getGiphyDetailInfo(e.id, GiphyType.GIF_PREVIEW, e.images);
+        return new GiphyResponseDto(e.id, e.type, details.url, details.height, details.width, details.size);
+      }
     );
   }
 
