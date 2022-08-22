@@ -3,6 +3,7 @@ import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { ReactionEnum } from '../../reaction.enum';
 import { IsIn, IsNotEmpty, IsUUID, ValidateIf } from 'class-validator';
+import { BIC_EMOJI } from '../../reaction.constant';
 
 export class DeleteReactionDto {
   @ApiProperty({ example: 'POST' })
@@ -33,7 +34,7 @@ export class DeleteReactionDto {
     name: 'reaction_name',
   })
   @IsNotEmpty()
-  @IsIn(Object.keys(emoji), { message: 'Reaction not found' })
+  @IsIn([...BIC_EMOJI, ...Object.keys(emoji)], { message: 'Reaction not found' })
   @ValidateIf((object) => !object['reactionId'])
   @Expose({
     name: 'reaction_name',
