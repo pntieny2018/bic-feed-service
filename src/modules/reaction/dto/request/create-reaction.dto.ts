@@ -8,7 +8,7 @@ import { BIC_EMOJI } from '../../reaction.constant';
 export class CreateReactionDto {
   @ApiProperty({
     example: 'smile',
-    description: Object.keys(emoji).join(','),
+    description: [...BIC_EMOJI, ...Object.keys(emoji)].join(','),
     name: 'reaction_name',
   })
   @IsNotEmpty()

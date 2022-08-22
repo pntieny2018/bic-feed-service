@@ -30,7 +30,7 @@ export class DeleteReactionDto {
 
   @ApiProperty({
     example: 'smile',
-    description: Object.keys(emoji).join(','),
+    description: [...BIC_EMOJI, ...Object.keys(emoji)].join(','),
     name: 'reaction_name',
   })
   @IsNotEmpty()
