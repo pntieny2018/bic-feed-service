@@ -238,7 +238,12 @@ export class MediaService {
       createdBy
     );
 
-    return insertData;
+    return await this._mediaModel.findAll({
+      where: {
+        id: mediaIds,
+      },
+      transaction,
+    });
   }
 
   /**
