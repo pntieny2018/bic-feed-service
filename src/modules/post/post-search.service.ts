@@ -76,8 +76,7 @@ export class PostSearchService {
       this.postService.bindPostData(posts, {
         commentsCount: true,
         totalUsersSeen: true,
-        importantExpiredAt: true,
-        isImportant: true,
+        setting: true,
       }),
     ]);
 
