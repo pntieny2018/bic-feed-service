@@ -1706,7 +1706,7 @@ export class PostService {
 
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async cleanDeletedPost(): Promise<void> {
+  private async _cleanDeletedPost(): Promise<void> {
     const willDeletePosts = await this.postModel.findAll({
       where: {
         deletedAt: {
@@ -1740,8 +1740,32 @@ export class PostService {
         await transaction.commit();
       } catch (e) {
         this.logger.error(e.message);
+        this.sentryService.captureException(e);
         await transaction.rollback();
       }
+    }
+  }
+  @Cron(CronExpression.EVERY_MINUTE)
+  private async _jobUpdateImportantPost(): Promise<void> {
+    try {
+      this.postModel.update(
+        {
+          isImportant: false,
+          importantExpiredAt: null,
+        },
+        {
+          where: {
+            isImportant: true,
+            importantExpiredAt: {
+              [Op.lt]: Sequelize.literal('NOW()'),
+            },
+          },
+          paranoid: false,
+        }
+      );
+    } catch (e) {
+      this.logger.error(e.message);
+      this.sentryService.captureException(e);
     }
   }
 }

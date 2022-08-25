@@ -403,7 +403,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
     } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
+      condition += `AND "p"."is_important" = false`;
     }
     const subQueryGetPosts = `
     SELECT
@@ -661,22 +661,24 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "p"."created_at" AS "createdAt", 
           "p"."updated_at" AS "updatedAt", 
           "is_seen_post" AS "isSeenPost"`;
-    if (isImportant) {
+    if (isImportant === true) {
       condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
       subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"`;
     } else {
-      condition += `AND ("p"."important_expired_at" IS NULL OR "p"."important_expired_at" <= NOW())`;
+      condition += `AND "p"."is_important" = false`;
       subSelect += `, false "markedReadPost"`;
     }
+
     const subQueryGetPosts = `      
-    ${subSelect}
-    FROM ${schema}.${postTable} AS "p"
-    INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
-    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false ${condition}
-    ORDER BY "is_seen_post" ASC, "p"."created_at" ${order}
-    OFFSET :offset LIMIT :limit`;
+                ${subSelect}
+                FROM ${schema}.${postTable} AS "p"
+                INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
+                WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false ${condition}
+                ORDER BY "markedReadPost" ASC, "is_seen_post" ASC, "p"."created_at" ${order}
+                OFFSET :offset LIMIT :limit`;
+
     const query = `
       SELECT
           "PostModel".*,
