@@ -42,7 +42,7 @@ export class PostSearchService {
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { textSearch, limit, offset } = searchPostsDto;
+    const { contentSearch, limit, offset } = searchPostsDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<PostResponseDto>([], {
@@ -51,8 +51,10 @@ export class PostSearchService {
         offset,
       });
     }
+    console.log('searchPostsDto=', searchPostsDto);
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
+    console.log('payload=', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search(payload);
     const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
@@ -60,7 +62,7 @@ export class PostSearchService {
       source.content = item._source.content.text;
       source['id'] = item._id;
       if (
-        textSearch &&
+        contentSearch &&
         item.highlight &&
         item.highlight['content.text'].length != 0 &&
         source.content
@@ -98,7 +100,7 @@ export class PostSearchService {
    * @returns
    */
   public async getPayloadSearch(
-    { startTime, endTime, textSearch, actors, important, limit, offset }: SearchPostsDto,
+    { startTime, endTime, contentSearch, actors, important, limit, offset }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
     index: string;
@@ -121,8 +123,8 @@ export class PostSearchService {
     this._applyAudienceFilter(groupIds, body);
     this._applyImportantFilter(important, body);
 
-    this._applyFilterContent(textSearch, body);
-    this._applySort(textSearch, body);
+    this._applyFilterContent(contentSearch, body);
+    this._applySort(contentSearch, body);
     this._applyFilterTime(startTime, endTime, body);
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
