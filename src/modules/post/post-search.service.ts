@@ -51,10 +51,8 @@ export class PostSearchService {
         offset,
       });
     }
-    console.log('searchPostsDto=', searchPostsDto);
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    console.log('payload=', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search(payload);
     const hits = response.body.hits.hits;
     const posts = hits.map((item) => {
@@ -121,7 +119,7 @@ export class PostSearchService {
     this._applyActorFilter(actors, body);
 
     this._applyAudienceFilter(groupIds, body);
-    this._applyImportantFilter(important, body);
+    //this._applyImportantFilter(important, body);
 
     this._applyFilterContent(contentSearch, body);
     this._applySort(contentSearch, body);
@@ -182,11 +180,11 @@ export class PostSearchService {
       });
     }
   }
-  private _applyFilterContent(textSearch: string, body: BodyES): void {
-    if (textSearch) {
-      const arrKeywords = textSearch.split(' ');
+  private _applyFilterContent(contentSearch: string, body: BodyES): void {
+    if (contentSearch) {
+      const arrKeywords = contentSearch.split(' ');
       const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
-      const queries = this._getQueryMatchContent(isASCII);
+      const queries = this._getQueryMatchContent(isASCII, contentSearch);
       body.query.bool.should.push({
         ['dis_max']: { queries },
       });
@@ -217,7 +215,7 @@ export class PostSearchService {
       },
     };
   }
-  private _getQueryMatchContent(isASCII: boolean): any[] {
+  private _getQueryMatchContent(isASCII: boolean, contentSearch: string): any[] {
     const { content } = ELASTIC_POST_MAPPING_PATH;
     let queries;
     if (isASCII) {
@@ -225,7 +223,7 @@ export class PostSearchService {
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
-            query: content,
+            query: contentSearch,
             fields: [content.text.default, content.text.ascii],
             type: 'phrase',
             boost: 2,
@@ -234,14 +232,14 @@ export class PostSearchService {
         {
           match: {
             ['content.text.default']: {
-              query: content,
+              query: contentSearch,
             },
           },
         },
         {
           match: {
             ['content.text.ascii']: {
-              query: content,
+              query: contentSearch,
             },
           },
         },
@@ -251,7 +249,7 @@ export class PostSearchService {
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
-            query: content,
+            query: contentSearch,
             fields: [content.text.default],
             type: 'phrase',
             boost: 2,
@@ -260,7 +258,7 @@ export class PostSearchService {
         {
           match: {
             [content.text.default]: {
-              query: content,
+              query: contentSearch,
             },
           },
         },
