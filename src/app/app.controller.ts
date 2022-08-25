@@ -9,8 +9,8 @@ import { FeedPublisherService } from '../modules/feed-publisher';
 export class AppController {
   public constructor(private _publisher: FeedPublisherService) {}
 
-  @Get()
-  public async test(): Promise<void> {
-    // if user in group not need attach or detach post
+  @Get('health-check')
+  public getHealthBeat(): string {
+    return 'OK';
   }
 }
