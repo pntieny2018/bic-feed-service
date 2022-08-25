@@ -56,6 +56,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
             'thumbnails',
             'status',
             'mimeType',
+            'createdAt',
           ],
           required: false,
         },

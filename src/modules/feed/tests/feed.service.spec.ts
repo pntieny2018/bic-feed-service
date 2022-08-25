@@ -197,7 +197,7 @@ describe('FeedService', () => {
     });
 
     it('Should failed', async () => {
-      postService.getTotalImportantPostInNewsFeed = jest.fn().mockResolvedValue(0);
+      PostModel.getTotalImportantPostInNewsFeed = jest.fn().mockResolvedValue(0);
       PostModel.getNewsFeedData = jest
         .fn()
         .mockRejectedValue(new Error('Database connection error.'));
