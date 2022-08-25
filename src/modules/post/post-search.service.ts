@@ -1,5 +1,4 @@
 import { PageDto } from '../../common/dto';
-import { InjectConnection } from '@nestjs/sequelize';
 import { SearchPostsDto } from './dto/requests';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
@@ -10,7 +9,6 @@ import { SentryService } from '@app/sentry';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PostService } from './post.service';
 import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
-import { text } from 'stream/consumers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 
 @Injectable()
@@ -28,7 +26,6 @@ export class PostSearchService {
   protected classTransformer = new ClassTransformer();
 
   public constructor(
-    @InjectConnection()
     protected searchService: ElasticsearchService,
     protected readonly postService: PostService,
     protected readonly sentryService: SentryService
