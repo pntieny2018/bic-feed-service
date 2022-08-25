@@ -73,7 +73,12 @@ export class PostSearchService {
     await Promise.all([
       this.postService.bindActorToPost(posts),
       this.postService.bindAudienceToPost(posts),
-      this.postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
+      this.postService.bindPostData(posts, {
+        commentsCount: true,
+        totalUsersSeen: true,
+        importantExpiredAt: true,
+        isImportant: true,
+      }),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {

@@ -229,7 +229,7 @@ export class PostService {
             'thumbnails',
             'createdAt',
           ],
-      },
+        },
         {
           model: PostReactionModel,
           as: 'ownerReactions',
@@ -430,6 +430,8 @@ export class PostService {
     const attributeArr = ['id'];
     if (objects?.commentsCount) attributeArr.push('commentsCount');
     if (objects?.totalUsersSeen) attributeArr.push('totalUsersSeen');
+    if (objects?.isImportant) attributeArr.push('isImportant');
+    if (objects?.importantExpiredAt) attributeArr.push('importantExpiredAt');
     const result = await this.postModel.findAll({
       raw: true,
       attributes: attributeArr,
@@ -439,6 +441,9 @@ export class PostService {
       const findPost = result.find((i) => i.id == post.id);
       if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
       if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+      if (objects?.isImportant) post.isImportant = findPost?.isImportant || false;
+      if (objects?.importantExpiredAt)
+        post.importantExpiredAt = findPost?.importantExpiredAt || null;
     }
   }
 
