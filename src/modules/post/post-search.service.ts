@@ -42,7 +42,7 @@ export class PostSearchService {
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { textSearch, limit, offset } = searchPostsDto;
+    const { contentSearch, limit, offset } = searchPostsDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<PostResponseDto>([], {
@@ -60,7 +60,7 @@ export class PostSearchService {
       source.content = item._source.content.text;
       source['id'] = item._id;
       if (
-        textSearch &&
+        contentSearch &&
         item.highlight &&
         item.highlight['content.text'].length != 0 &&
         source.content
@@ -98,7 +98,7 @@ export class PostSearchService {
    * @returns
    */
   public async getPayloadSearch(
-    { startTime, endTime, textSearch, actors, important, limit, offset }: SearchPostsDto,
+    { startTime, endTime, contentSearch, actors, important, limit, offset }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
     index: string;
@@ -119,10 +119,10 @@ export class PostSearchService {
     this._applyActorFilter(actors, body);
 
     this._applyAudienceFilter(groupIds, body);
-    this._applyImportantFilter(important, body);
+    //this._applyImportantFilter(important, body);
 
-    this._applyFilterContent(textSearch, body);
-    this._applySort(textSearch, body);
+    this._applyFilterContent(contentSearch, body);
+    this._applySort(contentSearch, body);
     this._applyFilterTime(startTime, endTime, body);
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
@@ -180,11 +180,11 @@ export class PostSearchService {
       });
     }
   }
-  private _applyFilterContent(textSearch: string, body: BodyES): void {
-    if (textSearch) {
-      const arrKeywords = textSearch.split(' ');
+  private _applyFilterContent(contentSearch: string, body: BodyES): void {
+    if (contentSearch) {
+      const arrKeywords = contentSearch.split(' ');
       const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
-      const queries = this._getQueryMatchContent(isASCII);
+      const queries = this._getQueryMatchContent(isASCII, contentSearch);
       body.query.bool.should.push({
         ['dis_max']: { queries },
       });
@@ -215,7 +215,7 @@ export class PostSearchService {
       },
     };
   }
-  private _getQueryMatchContent(isASCII: boolean): any[] {
+  private _getQueryMatchContent(isASCII: boolean, contentSearch: string): any[] {
     const { content } = ELASTIC_POST_MAPPING_PATH;
     let queries;
     if (isASCII) {
@@ -223,7 +223,7 @@ export class PostSearchService {
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
-            query: content,
+            query: contentSearch,
             fields: [content.text.default, content.text.ascii],
             type: 'phrase',
             boost: 2,
@@ -232,14 +232,14 @@ export class PostSearchService {
         {
           match: {
             ['content.text.default']: {
-              query: content,
+              query: contentSearch,
             },
           },
         },
         {
           match: {
             ['content.text.ascii']: {
-              query: content,
+              query: contentSearch,
             },
           },
         },
@@ -249,7 +249,7 @@ export class PostSearchService {
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
-            query: content,
+            query: contentSearch,
             fields: [content.text.default],
             type: 'phrase',
             boost: 2,
@@ -258,7 +258,7 @@ export class PostSearchService {
         {
           match: {
             [content.text.default]: {
-              query: content,
+              query: contentSearch,
             },
           },
         },

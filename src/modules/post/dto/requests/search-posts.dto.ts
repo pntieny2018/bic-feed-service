@@ -14,10 +14,13 @@ export class SearchPostsDto extends PageOptionsDto {
   @Transform(({ value }) => value.split(','))
   public actors?: string[];
 
-  @ApiProperty({ description: 'filter content', required: false })
+  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
   @IsOptional()
   @IsString()
-  public textSearch?: string;
+  @Expose({
+    name: 'content_search',
+  })
+  public contentSearch?: string;
 
   @ApiProperty({
     type: Boolean,

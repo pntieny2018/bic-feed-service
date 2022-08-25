@@ -11,15 +11,15 @@ export class NotificationService implements OnModuleInit {
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
     this._logger.debug(`[publishPostNotification]: ${payload.key}`);
-    return this._kafkaProducer['producer'].send({
-      topic: KAFKA_TOPIC.STREAM.POST,
-      messages: [
-        {
-          key: payload.key,
-          value: JSON.stringify(payload.value),
-        },
-      ],
-    });
+    // return this._kafkaProducer['producer'].send({
+    //   topic: KAFKA_TOPIC.STREAM.POST,
+    //   messages: [
+    //     {
+    //       key: payload.key,
+    //       value: JSON.stringify(payload.value),
+    //     },
+    //   ],
+    // });
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
@@ -44,6 +44,6 @@ export class NotificationService implements OnModuleInit {
   }
 
   public async onModuleInit(): Promise<void> {
-    await this._kafkaProducer.connect();
+   // await this._kafkaProducer.connect();
   }
 }
