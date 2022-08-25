@@ -17,7 +17,7 @@ export class SearchPostsDto extends PageOptionsDto {
   @ApiProperty({ description: 'filter content', required: false })
   @IsOptional()
   @IsString()
-  public content?: string;
+  public textSearch?: string;
 
   @ApiProperty({
     type: Boolean,
