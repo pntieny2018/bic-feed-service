@@ -21,7 +21,6 @@ import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { MediaMarkAction, MediaModel, MediaStatus } from '../../database/models/media.model';
@@ -85,7 +84,6 @@ export class PostService {
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
     protected authorityService: AuthorityService,
-    protected searchService: ElasticsearchService,
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
