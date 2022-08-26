@@ -487,7 +487,7 @@ export class MediaService {
               : mediaMarkAction === MediaMarkAction.DELETE
               ? KAFKA_TOPIC.BEIN_UPLOAD.JOB.DELETE_FILES
               : null,
-            'mediaIds',
+            'fileIds',
           ]
         : mediaType === MediaType.VIDEO
         ? [
