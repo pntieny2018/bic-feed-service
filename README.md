@@ -71,14 +71,3 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
-
-
-Báo cáo công viêc ngày **30/03/2022**
-- [BEIN-5052](https://app.clickup.com/t/3649385/BEIN-5052) [BE][New Feed Service] Get draft post + unit test
-  - Progress: 100%
-  - Status: Done
-- [BEIN-5053](https://app.clickup.com/t/3649385/BEIN-5053) [BE][New Feed Service] Search, filter post + unit test
-  - Progress: 0 - 20%
-  - Status: Doing
-Dự định ngày tiếp theo:
-- [BEIN-5053](https://app.clickup.com/t/3649385/BEIN-5053) [BE][New Feed Service] Search, filter post + unit test
