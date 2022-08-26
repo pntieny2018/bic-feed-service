@@ -242,6 +242,7 @@ export class PostListener {
 
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     const dataUpdate = {
+      id,
       commentsCount,
       totalUsersSeen,
       content,

@@ -21,7 +21,6 @@ import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { MediaMarkAction, MediaModel, MediaStatus } from '../../database/models/media.model';
@@ -53,11 +52,8 @@ import { NIL } from 'uuid';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
-import { json } from 'stream/consumers';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
-import { transport } from 'winston';
-
 @Injectable()
 export class PostService {
   /**
@@ -88,7 +84,6 @@ export class PostService {
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
     protected authorityService: AuthorityService,
-    protected searchService: ElasticsearchService,
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
@@ -98,204 +93,6 @@ export class PostService {
     protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService
   ) {}
-
-  /**
-   * Get Draft Posts
-   * @throws HttpException
-   * @param authUser UserDto
-   * @param searchPostsDto SearchPostsDto
-   * @returns Promise resolve PageDto<PostResponseDto>
-   */
-  public async searchPosts(
-    authUser: UserDto,
-    searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<PostResponseDto>> {
-    const { content, limit, offset } = searchPostsDto;
-    const user = authUser.profile;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<PostResponseDto>([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-    const groupIds = user.groups;
-    const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    const response = await this.searchService.search(payload);
-    const hits = response.body.hits.hits;
-    const posts = hits.map((item) => {
-      const source = item._source;
-      source.content = item._source.content.text;
-      source['id'] = item._id;
-      if (
-        content &&
-        item.highlight &&
-        item.highlight['content.text'].length != 0 &&
-        source.content
-      ) {
-        source.highlight = item.highlight['content.text'][0];
-      }
-      return source;
-    });
-
-    await Promise.all([
-      this.bindActorToPost(posts),
-      this.bindAudienceToPost(posts),
-      this.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
-    ]);
-
-    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      total: response.body.hits.total.value,
-      limit,
-      offset,
-    });
-  }
-  /**
-   *
-   * @param SearchPostsDto
-   * @param groupIds
-   * @returns
-   */
-  public async getPayloadSearch(
-    { startTime, endTime, content, actors, important, limit, offset }: SearchPostsDto,
-    groupIds: string[]
-  ): Promise<{
-    index: string;
-    body: any;
-    from: number;
-    size: number;
-  }> {
-    // search post
-    const body = {
-      query: {
-        bool: {
-          must: [],
-          filter: [],
-          should: [],
-        },
-      },
-    };
-
-    if (actors && actors.length) {
-      body.query.bool.filter.push({
-        terms: {
-          ['actor.id']: actors,
-        },
-      });
-    }
-
-    if (groupIds.length) {
-      body.query.bool.filter.push({
-        terms: {
-          ['audience.groups.id']: groupIds,
-        },
-      });
-    }
-
-    if (important) {
-      body.query.bool.must.push({
-        term: {
-          ['setting.isImportant']: true,
-        },
-      });
-      body.query.bool.must.push({
-        range: {
-          ['setting.importantExpiredAt']: { gt: new Date().toISOString() },
-        },
-      });
-    }
-
-    if (content) {
-      const arrKeywords = content.split(' ');
-      const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
-      let queries;
-      if (isASCII) {
-        queries = [
-          {
-            multi_match: {
-              query: content,
-              fields: ['content.text.default', 'content.text.ascii'],
-              type: 'phrase',
-              boost: 2,
-            },
-          },
-          {
-            match: {
-              ['content.text.default']: {
-                query: content,
-              },
-            },
-          },
-          {
-            match: {
-              ['content.text.ascii']: {
-                query: content,
-              },
-            },
-          },
-        ];
-      } else {
-        queries = [
-          {
-            multi_match: {
-              query: content,
-              fields: ['content.text.default'],
-              type: 'phrase',
-              boost: 2,
-            },
-          },
-          {
-            match: {
-              ['content.text.default']: {
-                query: content,
-              },
-            },
-          },
-        ];
-      }
-      body.query.bool.should.push({
-        ['dis_max']: { queries },
-      });
-      body.query.bool['minimum_should_match'] = 1;
-      body['highlight'] = {
-        ['pre_tags']: ['=='],
-        ['post_tags']: ['=='],
-        fields: {
-          'content.text': {
-            ['matched_fields']: ['content.text.default', 'content.text.ascii'],
-            type: 'fvh',
-            ['number_of_fragments']: 0,
-          },
-        },
-      };
-
-      body['sort'] = [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
-    } else {
-      body['sort'] = [{ createdAt: 'desc' }];
-    }
-
-    if (startTime || endTime) {
-      const filterTime = {
-        range: {
-          createdAt: {},
-        },
-      };
-
-      if (startTime) filterTime.range.createdAt['gte'] = startTime;
-      if (endTime) filterTime.range.createdAt['lte'] = endTime;
-      body.query.bool.must.push(filterTime);
-    }
-    return {
-      index: ElasticsearchHelper.ALIAS.POST.all.name,
-      body,
-      from: offset,
-      size: limit,
-    };
-  }
 
   /**
    * Get Draft Posts
@@ -630,18 +427,23 @@ export class PostService {
     for (const post of posts) {
       postIds.push(post.id);
     }
-    const attributeArr = ['id'];
-    if (objects?.commentsCount) attributeArr.push('commentsCount');
-    if (objects?.totalUsersSeen) attributeArr.push('totalUsersSeen');
     const result = await this.postModel.findAll({
       raw: true,
-      attributes: attributeArr,
       where: { id: postIds },
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
       if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
       if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+      if (objects?.setting) {
+        post.setting = {
+          importantExpiredAt: findPost.importantExpiredAt,
+          isImportant: findPost.isImportant,
+          canReact: findPost.canReact,
+          canShare: findPost.canShare,
+          canComment: findPost.canComment,
+        };
+      }
     }
   }
 
@@ -1706,7 +1508,7 @@ export class PostService {
 
   // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async cleanDeletedPost(): Promise<void> {
+  private async _cleanDeletedPost(): Promise<void> {
     const willDeletePosts = await this.postModel.findAll({
       where: {
         deletedAt: {
@@ -1740,8 +1542,32 @@ export class PostService {
         await transaction.commit();
       } catch (e) {
         this.logger.error(e.message);
+        this.sentryService.captureException(e);
         await transaction.rollback();
       }
+    }
+  }
+  @Cron(CronExpression.EVERY_MINUTE)
+  private async _jobUpdateImportantPost(): Promise<void> {
+    try {
+      this.postModel.update(
+        {
+          isImportant: false,
+          importantExpiredAt: null,
+        },
+        {
+          where: {
+            isImportant: true,
+            importantExpiredAt: {
+              [Op.lt]: Sequelize.literal('NOW()'),
+            },
+          },
+          paranoid: false,
+        }
+      );
+    } catch (e) {
+      this.logger.error(e.message);
+      this.sentryService.captureException(e);
     }
   }
 }

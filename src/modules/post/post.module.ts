@@ -14,6 +14,7 @@ import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { IKafkaConfig } from '../../config/kafka';
 import { InternalPostController } from './internal-post.controller';
+import { PostSearchService } from './post-search.service';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -33,7 +34,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     forwardRef(() => FeedModule),
   ],
   controllers: [PostController, InternalPostController],
-  providers: [PostService, PostPolicyService],
+  providers: [PostService, PostSearchService, PostPolicyService],
   exports: [PostService, PostPolicyService],
 })
 export class PostModule {}
