@@ -10,6 +10,7 @@ import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.
 import { PostService } from './post.service';
 import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
+import { ReactionService } from '../reaction';
 
 @Injectable()
 export class PostSearchService {
@@ -28,7 +29,8 @@ export class PostSearchService {
   public constructor(
     protected searchService: ElasticsearchService,
     protected readonly postService: PostService,
-    protected readonly sentryService: SentryService
+    protected readonly sentryService: SentryService,
+    protected readonly reactionService: ReactionService
   ) {}
 
   /**
@@ -71,6 +73,7 @@ export class PostSearchService {
     });
 
     await Promise.all([
+      this.reactionService.bindReactionToPosts(posts),
       this.postService.bindActorToPost(posts),
       this.postService.bindAudienceToPost(posts),
       this.postService.bindPostData(posts, {
