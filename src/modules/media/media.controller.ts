@@ -26,6 +26,7 @@ import { ResponseMessages } from '../../common/decorators';
 import { MediaHelper } from './media.helper';
 import { MediaStatus } from '../../database/models/media.model';
 import { ValidatorException } from '../../common/exceptions';
+import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -39,10 +40,10 @@ export class MediaController {
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
-        fileSize: 10 * 1024 * 1024,
+        fileSize: 25 * 1024 * 1024,
       },
       fileFilter: (req: any, file: any, cb: any) => {
-        if (!file.mimetype.includes('image')) {
+        if (!WHITE_LIST_MIME_TYPE_IMAGE.includes(file.mimetype)) {
           return cb(new ValidatorException(`Unsupported mimetype ${file.mimetype}`), false);
         }
         cb(null, true);
