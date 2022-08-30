@@ -12,12 +12,15 @@ export class KafkaConsumerBootstrap {
    * @param configService Reference instance of ConfigService.
    * @return void
    */
-  public static async init(app: INestApplication, configService: ConfigService): Promise<void> {
+  public static async init(
+    app: INestApplication,
+    configService: ConfigService
+  ): Promise<INestApplication> {
     const defaultConfig = configService.get<IKafkaConfig>('kafka');
     app.connectMicroservice<KafkaOptions>({
       transport: Transport.KAFKA,
       options: defaultConfig,
     });
-    app.startAllMicroservices().catch((ex) => Logger.error(ex));
+    return app.startAllMicroservices();
   }
 }
