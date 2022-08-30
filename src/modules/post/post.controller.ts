@@ -97,17 +97,19 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/:postId')
-  public getPost(
+  public async getPost(
     @AuthUser(false) user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
     else {
+      const post = await this._postService.getPost(postId, user, getPostDto);
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
         this._logger.error(ex, ex.stack);
       });
-      return this._postService.getPost(postId, user, getPostDto);
+
+      return post;
     }
   }
 

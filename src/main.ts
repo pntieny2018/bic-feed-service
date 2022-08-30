@@ -8,6 +8,7 @@ import { SwaggerBootstrap } from './bootstrap/swagger.bootstrap';
 import { ClassValidatorBootstrap } from './bootstrap/class-validator.bootstrap';
 import { KafkaConsumerBootstrap } from './bootstrap/kafka-consumer.bootstrap';
 import { Logger } from '@nestjs/common';
+import { KafkaHealthBootstrap } from './modules/health/kafka-health.bootstrap';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
@@ -18,7 +19,11 @@ async function bootstrap(): Promise<void> {
 
   ClassValidatorBootstrap.init(app, AppModule);
   SwaggerBootstrap.init(app, configService);
-  KafkaConsumerBootstrap.init(app, configService).catch((ex) => Logger.debug(ex));
+  KafkaConsumerBootstrap.init(app, configService)
+    .then((app) => {
+      KafkaHealthBootstrap.init(app);
+    })
+    .catch((ex) => Logger.debug(ex));
   await AppBootstrap.init(app, configService);
 }
 
