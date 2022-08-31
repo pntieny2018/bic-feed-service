@@ -198,6 +198,7 @@ export class PostListener {
       audience,
       isArticle,
       lang,
+      createdAt,
     } = newPost;
 
     if (oldPost.isDraft === false) {
@@ -243,6 +244,7 @@ export class PostListener {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     const dataUpdate = {
       id,
+      isArticle,
       commentsCount,
       totalUsersSeen,
       content,
@@ -250,8 +252,8 @@ export class PostListener {
       mentions,
       audience,
       setting,
+      createdAt,
       actor,
-      isArticle,
     };
     this._elasticsearchService
       .index({
