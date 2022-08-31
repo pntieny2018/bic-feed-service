@@ -21,7 +21,7 @@ export class UpdateMediaDomainCommand implements CommandRunner {
         oldDomain = 'sbx.bein.group';
         newDomain = 'beincomm.io';
       } else if (env === 'staging') {
-        oldDomain = 'stg.bein.group';
+        oldDomain = 'stg.beincomm.com';
         newDomain = 'beincomm.app';
       } else {
         process.exit();

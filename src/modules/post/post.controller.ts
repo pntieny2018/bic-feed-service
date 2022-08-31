@@ -37,6 +37,7 @@ import { AuthorityService } from '../authority';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { WebhookGuard } from '../auth/webhook.guard';
 import { FeedService } from '../feed/feed.service';
+import { PostSearchService } from './post-search.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -48,6 +49,7 @@ export class PostController {
   private _logger = new Logger(PostController.name);
   public constructor(
     private _postService: PostService,
+    private _postSearchService: PostSearchService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService
@@ -62,7 +64,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Query() searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.searchPosts(user, searchPostsDto);
+    return this._postSearchService.searchPosts(user, searchPostsDto);
   }
 
   @ApiOperation({ summary: 'Get post edited history' })
@@ -95,17 +97,19 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/:postId')
-  public getPost(
+  public async getPost(
     @AuthUser(false) user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
     else {
+      const post = await this._postService.getPost(postId, user, getPostDto);
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
         this._logger.error(ex, ex.stack);
       });
-      return this._postService.getPost(postId, user, getPostDto);
+
+      return post;
     }
   }
 

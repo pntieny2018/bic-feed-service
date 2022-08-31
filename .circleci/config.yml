@@ -20,7 +20,7 @@ jobs:
       ENVIRONMENT_BASE: bein-sandbox-base
       LIVE: bein-sandbox-live-stream
       ENVIRONMENT: "sbx"
-      SERVICE: "stream"
+      SERVICE: "feed"
     working_directory: ~/app
     steps:
       - checkout
@@ -105,7 +105,7 @@ jobs:
       ENVIRONMENT_BASE: bein-staging-base
       LIVE: bein-staging-live-stream
       ENVIRONMENT: "stg"
-      SERVICE: "stream"
+      SERVICE: "feed"
     working_directory: ~/app
     steps:
       - checkout
@@ -190,7 +190,7 @@ jobs:
       ENVIRONMENT_BASE: bein-production-base
       LIVE: bein-production-live-stream
       ENVIRONMENT: "pro"
-      SERVICE: "stream"
+      SERVICE: "feed"
     working_directory: ~/app
     steps:
       - checkout
