@@ -21,7 +21,7 @@ export class HandleResponseInterceptor<T> implements NestInterceptor<T, Response
           data:
             typeof data === 'object'
               ? snakecaseKeys(data, {
-                  exclude: [/-/],
+                  exclude: [/-/, /./],
                 })
               : data,
           meta: {
