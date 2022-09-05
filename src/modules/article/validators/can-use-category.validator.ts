@@ -32,7 +32,7 @@ export class CanUseCategoryConstraint implements ValidatorConstraintInterface {
   ): Promise<boolean> {
     if (categoryIds.length === 0) return true;
     const user = args?.object[REQUEST_CONTEXT].user;
-    const categoryCount = await this._categoryModel.count({
+    const totalCatesCanAccessFromCateIds = await this._categoryModel.count({
       where: {
         id: categoryIds,
         [Op.or]: {
@@ -41,7 +41,7 @@ export class CanUseCategoryConstraint implements ValidatorConstraintInterface {
         },
       },
     });
-    if (categoryCount < categoryIds.length) {
+    if (totalCatesCanAccessFromCateIds < categoryIds.length) {
       return false;
     }
     return true;

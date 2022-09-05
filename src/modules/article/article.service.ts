@@ -466,12 +466,14 @@ export class ArticleService {
       } = createArticleDto;
       const authUserId = authUser.id;
 
-      const { groupIds } = audience;
+      let groupIds = [];
+      if (audience.groupIds) {
+        groupIds = audience.groupIds;
+      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       transaction = await this._sequelizeConnection.transaction();
-      const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
       let hashtagArr = [];
       if (hashtags) {
         hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
@@ -491,7 +493,7 @@ export class ArticleService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
-          privacy: postPrivacy,
+          privacy: null,
           hashtagsJson: hashtagArr,
           views: 0,
         },
@@ -543,6 +545,24 @@ export class ArticleService {
    * @throws HttpException
    */
   public async publishArticle(articleId: string, authUser: UserDto): Promise<boolean> {
+    const article = await this._postModel.findOne({
+      where: {
+        id: articleId,
+      },
+      include: [
+        {
+          model: CategoryModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+          required: false,
+        },
+      ],
+    });
+    if (article.categories.length === 0) {
+      throw new BadRequestException('Category is required');
+    }
     return this._postService.publishPost(articleId, authUser);
   }
 
@@ -608,7 +628,7 @@ export class ArticleService {
       };
 
       const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience) {
+      if (audience.groupIds) {
         const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
       }
@@ -661,7 +681,7 @@ export class ArticleService {
       if (mentions) {
         await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
-      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this._postService.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 

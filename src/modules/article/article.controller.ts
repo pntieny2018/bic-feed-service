@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -99,10 +100,6 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting } = createArticleDto;
-    const { groupIds } = audience;
-    await this._authorityService.checkCanCreatePost(user, groupIds, setting.isImportant);
-
     const created = await this._articleService.createArticle(user, createArticleDto);
     if (created) {
       const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
@@ -136,12 +133,15 @@ export class ArticleController {
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
     const { audience } = updateArticleDto;
-
     const articleBefore = await this._articleService.getArticle(
       articleId,
       user,
       new GetArticleDto()
     );
+    if (articleBefore.isDraft === false && audience.groupIds.length === 0) {
+      throw new BadRequestException('Audience is required');
+    }
+
     await this._authorityService.checkCanUpdatePost(user, articleBefore, audience.groupIds);
     if (articleBefore.isDraft === false) {
       await this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
@@ -177,7 +177,7 @@ export class ArticleController {
     description: 'Publish article successfully',
   })
   @Put('/:id/publish')
-  public async publishPost(
+  public async publishArticle(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
