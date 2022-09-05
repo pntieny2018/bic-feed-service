@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -124,15 +125,6 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<any> {
-    const { audience } = createPostDto;
-
-    const { groupIds } = audience;
-    await this._authorityService.checkCanCreatePost(
-      user,
-      groupIds,
-      createPostDto.setting.isImportant
-    );
-
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
       return await this._postService.getPost(created.id, user, new GetPostDto());
@@ -153,6 +145,9 @@ export class PostController {
   ): Promise<PostResponseDto> {
     const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
+    if (postBefore.isDraft === false && audience.groupIds.length === 0) {
+      throw new BadRequestException('Audience is required');
+    }
     await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
 
     const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
@@ -161,7 +156,6 @@ export class PostController {
       const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
       await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
     }
-
     if (postBefore.isDraft === false) {
       await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));

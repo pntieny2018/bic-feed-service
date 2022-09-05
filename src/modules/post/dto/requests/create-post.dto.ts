@@ -17,10 +17,12 @@ export class CreatePostDto {
       ['group_ids']: [1],
     },
   })
-  @IsNotEmpty()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience: AudienceRequestDto;
+  public audience?: AudienceRequestDto = {
+    groupIds: [],
+  };
 
   @ApiProperty({
     description: 'Content of post',
