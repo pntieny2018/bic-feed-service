@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -462,8 +462,6 @@ export class PostService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      const { groupIds } = audience;
-      const postPrivacy = await this.getPrivacyPost(groupIds);
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
@@ -478,7 +476,6 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
-          privacy: postPrivacy,
           hashtagsJson: [],
         },
         { transaction }
@@ -488,7 +485,9 @@ export class PostService {
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      await this.addPostGroup(groupIds, post.id, transaction);
+      if (audience.groupIds.length > 0) {
+        await this.addPostGroup(audience.groupIds, post.id, transaction);
+      }
 
       if (mentions.length) {
         await this.mentionService.create(
@@ -572,7 +571,7 @@ export class PostService {
       };
 
       const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience) {
+      if (audience.groupIds.length) {
         const postPrivacy = await this.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
       }
@@ -632,7 +631,7 @@ export class PostService {
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
-      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
       await transaction.commit();
@@ -688,6 +687,9 @@ export class PostService {
       const authUserId = authUser.id;
       await this.authorityService.checkPostOwner(post, authUserId);
       const groupIds = post.groups.map((g) => g.groupId);
+      if (groupIds.length === 0) {
+        throw new BadRequestException('Audience is required.');
+      }
       await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
       if (post.content === '' && post.media.length === 0) {
         throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
