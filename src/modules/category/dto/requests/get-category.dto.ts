@@ -4,12 +4,12 @@ import { Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 
 export class GetCategoryDto extends PageOptionsDto {
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   @Type(() => String)
   @IsOptional()
   public name?: string;
 
-  @ApiProperty({ type: Number })
+  @ApiProperty({ type: Number, required: false })
   @Type(() => Number)
   @IsOptional()
   public level?: number;
@@ -17,6 +17,7 @@ export class GetCategoryDto extends PageOptionsDto {
   @ApiProperty({
     name: 'is_created_by_me',
     type: Boolean,
+    required: false,
   })
   @Type(() => Boolean)
   @IsOptional()
