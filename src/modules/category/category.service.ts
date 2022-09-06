@@ -36,7 +36,7 @@ export class CategoryService {
       conditions['createBy'] = user.id;
     }
     if (name) {
-      conditions['name'] = { [Op.like]: '%' + name + '%' };
+      conditions['name'] = { [Op.iLike]: '%' + name + '%' };
     }
     if (level) {
       conditions['level'] = level;
