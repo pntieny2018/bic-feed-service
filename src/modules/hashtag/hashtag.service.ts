@@ -26,7 +26,7 @@ export class HashtagService {
     const { offset, limit } = getHashtagDto;
     const conditions = {};
     if (getHashtagDto.name) {
-      conditions['name'] = { [Op.like]: '%' + getHashtagDto.name + '%' };
+      conditions['name'] = { [Op.iLike]: '%' + getHashtagDto.name + '%' };
     }
     const { rows, count } = await this._hashtagModel.findAndCountAll({
       where: conditions,
