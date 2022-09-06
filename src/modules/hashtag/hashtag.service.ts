@@ -59,7 +59,9 @@ export class HashtagService {
       },
     });
 
-    return new HashtagResponseDto(findOrCreateResult[0]);
+    return this._classTransformer.plainToInstance(HashtagResponseDto, findOrCreateResult[0], {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**

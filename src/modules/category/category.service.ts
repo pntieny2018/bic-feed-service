@@ -88,7 +88,9 @@ export class CategoryService {
       updatedBy: user.id,
     });
 
-    return new CategoryResponseDto(createResult);
+    return this._classTransformer.plainToInstance(CategoryResponseDto, createResult, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
