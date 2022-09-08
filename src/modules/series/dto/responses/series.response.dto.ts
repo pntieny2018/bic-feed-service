@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { IsUUID } from 'class-validator';
-import { Column, CreatedAt, UpdatedAt } from 'sequelize-typescript';
 
 export class SeriesResponseDto {
   @ApiProperty()

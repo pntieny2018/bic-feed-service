@@ -1,5 +1,3 @@
-import { SeriesResponseDto } from '../../../dto/responses';
-
 export const mockedSeriesResponse = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   name: 'crypto mock',

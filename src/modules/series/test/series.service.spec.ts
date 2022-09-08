@@ -106,7 +106,7 @@ describe('SeriesService', () => {
         rows: mockSeries,
         count: 1,
       });
-      const result = await seriesService.getSeries(getSeriesDto);
+      const result = await seriesService.get(getSeriesDto);
       expect(result.list[0].name).toStrictEqual(mockedSeriesCreated.name);
     });
 
@@ -115,7 +115,7 @@ describe('SeriesService', () => {
         new Error('Any error when findAndCountAll data in DB')
       );
       try {
-        await seriesService.getSeries(getSeriesDto);
+        await seriesService.get(getSeriesDto);
       } catch (error) {
         expect(sentryService.captureException).toBeCalledTimes(1);
       }
@@ -125,7 +125,7 @@ describe('SeriesService', () => {
   describe('createSeries', () => {
     it('Create series successfully', async () => {
       seriesModelMock.create = jest.fn().mockResolvedValue(mockedSeriesCreated);
-      await seriesService.createSeries(mockedUserAuth, mockedCreateSeriesDto);
+      await seriesService.create(mockedUserAuth, mockedCreateSeriesDto);
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
@@ -141,7 +141,7 @@ describe('SeriesService', () => {
     it('Should catch exception if creator not found in cache', async () => {
       authUserMock.profile = null;
       try {
-        await seriesService.createSeries(authUserMock, mockedCreateSeriesDto);
+        await seriesService.create(authUserMock, mockedCreateSeriesDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -150,7 +150,7 @@ describe('SeriesService', () => {
     it('Should rollback if have an exception when insert data into DB', async () => {
       seriesModelMock.create.mockRejectedValue(new Error('Any error when insert data to DB'));
       try {
-        await seriesService.createSeries(mockedUserAuth, mockedCreateSeriesDto);
+        await seriesService.create(mockedUserAuth, mockedCreateSeriesDto);
       } catch (error) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
@@ -162,9 +162,9 @@ describe('SeriesService', () => {
   describe('updateSeries', () => {
     const mockedDataUpdateSeries = createMock<SeriesModel>(mockedSeriesUpdated);
     it('Update series successfully', async () => {
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
+      seriesService.getById = jest.fn().mockResolvedValue(mockedSeriesResponse);
       seriesModelMock.update = jest.fn().mockResolvedValue(mockedSeriesUpdated);
-      await seriesService.updateSeries(mockedUserAuth, mockedSeriesUpdated.id, mockedSeriesUpdated);
+      await seriesService.update(mockedUserAuth, mockedSeriesUpdated.id, mockedSeriesUpdated);
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
@@ -176,19 +176,19 @@ describe('SeriesService', () => {
     });
 
     it('Should catch exception if series not found', async () => {
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(null);
+      seriesService.getById = jest.fn().mockResolvedValue(null);
       try {
-        await seriesService.updateSeries(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
+        await seriesService.update(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
     });
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
+      seriesService.getById = jest.fn().mockResolvedValue(mockedSeriesResponse);
       authUserMock.id = '2a47c42d-f41d-457d-8359-707f4d0ab242';
       try {
-        await seriesService.updateSeries(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
+        await seriesService.update(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -197,7 +197,7 @@ describe('SeriesService', () => {
     it('Should catch exception if creator not found in cache', async () => {
       authUserMock.profile = null;
       try {
-        await seriesService.updateSeries(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
+        await seriesService.update(authUserMock, mockedSeriesUpdated.id, mockedSeriesUpdated);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -206,28 +206,28 @@ describe('SeriesService', () => {
 
   describe('deleteSeries', () => {
     it('Delete series successfully', async () => {
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
+      seriesService.getById = jest.fn().mockResolvedValue(mockedSeriesResponse);
       seriesModelMock.destroy = jest.fn().mockResolvedValue(mockedSeriesDeleted);
-      await seriesService.deleteSeries(mockedUserAuth, mockedSeriesDeleted.id);
+      await seriesService.delete(mockedUserAuth, mockedSeriesDeleted.id);
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
     });
 
     it('Should catch exception if series not found', async () => {
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(null);
+      seriesService.getById = jest.fn().mockResolvedValue(null);
       try {
-        await seriesService.deleteSeries(authUserMock, mockedSeriesDeleted.id);
+        await seriesService.delete(authUserMock, mockedSeriesDeleted.id);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
     });
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
+      seriesService.getById = jest.fn().mockResolvedValue(mockedSeriesResponse);
       authUserMock.id = '2a47c42d-f41d-457d-8359-707f4d0ab242';
       try {
-        await seriesService.deleteSeries(authUserMock, mockedSeriesDeleted.id);
+        await seriesService.delete(authUserMock, mockedSeriesDeleted.id);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -236,7 +236,7 @@ describe('SeriesService', () => {
     it('Should catch exception if creator not found in cache', async () => {
       authUserMock.profile = null;
       try {
-        await seriesService.deleteSeries(authUserMock, mockedSeriesDeleted.id);
+        await seriesService.delete(authUserMock, mockedSeriesDeleted.id);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -245,13 +245,13 @@ describe('SeriesService', () => {
 
   describe('checkSeriesOwner', () => {
     it('check series owner true', async () => {
-      const result = await seriesService.checkSeriesOwner(mockedSeriesResponse, '43f306ba-a89f-4d43-8ee8-4d51fdcd4b13');
+      const result = await seriesService.checkOwner(mockedSeriesResponse, '43f306ba-a89f-4d43-8ee8-4d51fdcd4b13');
       expect(result).toEqual(true);
     });
 
     it('Should catch exception if series not found', async () => {
       try {
-        await seriesService.checkSeriesOwner(null, '43f306ba-a89f-4d43-8ee8-4d51fdcd4b13');
+        await seriesService.checkOwner(null, '43f306ba-a89f-4d43-8ee8-4d51fdcd4b13');
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -259,7 +259,7 @@ describe('SeriesService', () => {
 
     it('Should catch ForbiddenException if user is not owner series', async () => {
       try {
-        await seriesService.checkSeriesOwner(mockedSeriesResponse, '2a47c42d-f41d-457d-8359-707f4d0ab242');
+        await seriesService.checkOwner(mockedSeriesResponse, '2a47c42d-f41d-457d-8359-707f4d0ab242');
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -274,14 +274,14 @@ describe('SeriesService', () => {
         toJSON: () => seriesData,
       };
       seriesModelMock.findOne.mockResolvedValue(mockSeries);
-      const result = await seriesService.getSeriesById(mockedSeriesCreated.id);
+      const result = await seriesService.getById(mockedSeriesCreated.id);
       expect(result.name).toEqual(mockedSeriesCreated.name);
     });
 
     it('Should catch exception if series not found', async () => {
       seriesModelMock.findOne.mockRejectedValue(new Error('Any error when findOne data in DB'));
       try {
-        await seriesService.getSeriesById('');
+        await seriesService.getById('');
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
       }

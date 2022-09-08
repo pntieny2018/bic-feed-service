@@ -505,7 +505,7 @@ export class ArticleService {
       }
 
       await Promise.all([
-        this._seriesService.addPostToSeries(series, post.id, transaction),
+        this._seriesService.addToPost(series, post.id, transaction),
         this._hashtagService.addToPost(
           hashtagArr.map((h) => h.id),
           post.id,
@@ -689,7 +689,7 @@ export class ArticleService {
         await this._categoryService.updateToPost(categories, post.id, transaction);
       }
       if (series) {
-        await this._seriesService.setSeriesByPost(series, post.id, transaction);
+        await this._seriesService.updateToPost(series, post.id, transaction);
       }
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
