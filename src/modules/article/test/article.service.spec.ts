@@ -458,7 +458,7 @@ describe('ArticleService', () => {
       seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.addPostToSeries = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue(['hashtag1']);
-      hashtagService.addPostToHashtags = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.addToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
@@ -537,7 +537,7 @@ describe('ArticleService', () => {
       categoryService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.setSeriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
-      hashtagService.setHashtagsByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([

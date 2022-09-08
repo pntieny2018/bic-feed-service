@@ -28,11 +28,11 @@ export class HashtagController {
   })
   @Get('/')
   public async get(
-    @AuthUser() user: UserDto,
+    @AuthUser() _user: UserDto,
     @Query() getHashtagDto: GetHashtagDto
   ): Promise<PageDto<HashtagResponseDto>> {
     this._logger.debug('get hashtag');
-    return this._hashtagService.getHashtag(user, getHashtagDto);
+    return this._hashtagService.get(getHashtagDto);
   }
 
   @ApiOperation({ summary: 'Create new hashtag' })
@@ -45,10 +45,10 @@ export class HashtagController {
   })
   @Post('/')
   public async create(
-    @AuthUser() user: UserDto,
+    @AuthUser() _user: UserDto,
     @Body() createHashtagDto: CreateHashtagDto
   ): Promise<HashtagResponseDto> {
     this._logger.debug('create hashtag');
-    return this._hashtagService.createHashtag(createHashtagDto.name);
+    return this._hashtagService.create(createHashtagDto.name);
   }
 }
