@@ -1,28 +1,11 @@
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiBadRequestResponse,
-  ApiBody,
-  ApiConsumes,
-  ApiOkResponse,
-  ApiOperation,
-  ApiSecurity,
-  ApiTags,
-} from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Param,
-  Post,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { ApiBody, ApiConsumes, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UploadService } from '../upload';
 import { UploadDto, UploadType } from '../upload/dto/requests/upload.dto';
 import { APP_VERSION } from '../../common/constants';
 import { MediaService } from './media.service';
 import { AuthUser, UserDto } from '../auth';
-import { ResponseMessages } from '../../common/decorators';
 import { MediaHelper } from './media.helper';
 import { MediaStatus } from '../../database/models/media.model';
 import { ValidatorException } from '../../common/exceptions';
@@ -42,7 +25,7 @@ export class MediaController {
       limits: {
         fileSize: 25 * 1024 * 1024,
       },
-      fileFilter: (req: any, file: any, cb: any) => {
+      fileFilter: (_req: any, file: any, cb: any) => {
         if (!WHITE_LIST_MIME_TYPE_IMAGE.includes(file.mimetype)) {
           return cb(new ValidatorException(`Unsupported mimetype ${file.mimetype}`), false);
         }
