@@ -21,6 +21,7 @@ import { HTTP_STATUS_ID } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserService } from '../../shared/user';
 import { GroupPrivacy } from '../../shared/group/dto';
+import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
 export class FeedService {
@@ -42,7 +43,8 @@ export class FeedService {
     @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
-    private _sentryService: SentryService
+    private _sentryService: SentryService,
+    private _postBindingService: PostBindingService
   ) {}
 
   /**
@@ -101,8 +103,8 @@ export class FeedService {
       await Promise.all([
         this._reactionService.bindReactionToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
-        this._postService.bindActorToPost(posts),
-        this._postService.bindAudienceToPost(posts),
+        this._postBindingService.bindActorToPost(posts),
+        this._postBindingService.bindAudienceToPost(posts),
       ]);
       const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
         excludeExtraneousValues: true,
@@ -272,8 +274,8 @@ export class FeedService {
     await Promise.all([
       this._reactionService.bindReactionToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
-      this._postService.bindActorToPost(posts),
-      this._postService.bindAudienceToPost(posts),
+      this._postBindingService.bindActorToPost(posts),
+      this._postBindingService.bindAudienceToPost(posts),
     ]);
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,

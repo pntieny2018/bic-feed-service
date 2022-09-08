@@ -15,6 +15,7 @@ import { MediaFilterResponseDto } from '../media/dto/response';
 import { UserMentionDto } from '../mention/dto';
 import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
+import { PostBindingService } from './post-binding.service';
 
 export type DataPostToAdd = {
   id: string;
@@ -51,7 +52,8 @@ export class PostSearchService {
     protected readonly postService: PostService,
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
-    protected readonly elasticsearchService: ElasticsearchService
+    protected readonly elasticsearchService: ElasticsearchService,
+    protected readonly postBindingService: PostBindingService
   ) {}
 
   public async addPostsToSearch(posts: DataPostToAdd[]): Promise<void> {
@@ -150,9 +152,9 @@ export class PostSearchService {
 
     await Promise.all([
       this.reactionService.bindReactionToPosts(posts),
-      this.postService.bindActorToPost(posts),
-      this.postService.bindAudienceToPost(posts),
-      this.postService.bindPostData(posts, {
+      this.postBindingService.bindActorToPost(posts),
+      this.postBindingService.bindAudienceToPost(posts),
+      this.postBindingService.bindPostData(posts, {
         commentsCount: true,
         totalUsersSeen: true,
         setting: true,

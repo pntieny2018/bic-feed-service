@@ -7,8 +7,6 @@ import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationService } from '../../notification';
-import { ElasticsearchHelper } from '../../common/helpers';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
@@ -19,13 +17,11 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 import { FeedService } from '../../modules/feed/feed.service';
 import { PostPrivacy } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
-import { StringHelper } from '../../common/helpers';
 import { PostSearchService } from '../../modules/post/post-search.service';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
   public constructor(
-    private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
