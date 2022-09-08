@@ -155,6 +155,7 @@ export class PostSearchService {
       this.postBindingService.bindActorToPost(posts),
       this.postBindingService.bindAudienceToPost(posts),
       this.postBindingService.bindPostData(posts, {
+        content: true,
         commentsCount: true,
         totalUsersSeen: true,
         setting: true,
