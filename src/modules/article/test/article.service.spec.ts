@@ -454,7 +454,7 @@ describe('ArticleService', () => {
 
       mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
-      categoryService.addPostToCategories = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.addToPost = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.addPostToSeries = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue(['hashtag1']);
@@ -534,7 +534,7 @@ describe('ArticleService', () => {
 
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
-      categoryService.setCategoriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.setSeriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
       hashtagService.setHashtagsByPost = jest.fn().mockResolvedValue(Promise.resolve());

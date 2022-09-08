@@ -511,7 +511,7 @@ export class ArticleService {
           post.id,
           transaction
         ),
-        this._categoryService.addPostToCategories(categories, post.id, transaction),
+        this._categoryService.addToPost(categories, post.id, transaction),
         this._postService.addPostGroup(groupIds, post.id, transaction),
       ]);
 
@@ -686,7 +686,7 @@ export class ArticleService {
       }
 
       if (categories) {
-        await this._categoryService.setCategoriesByPost(categories, post.id, transaction);
+        await this._categoryService.updateToPost(categories, post.id, transaction);
       }
       if (series) {
         await this._seriesService.setSeriesByPost(series, post.id, transaction);
