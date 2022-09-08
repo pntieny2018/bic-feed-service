@@ -35,6 +35,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
   ],
   controllers: [PostController, InternalPostController],
   providers: [PostService, PostSearchService, PostPolicyService],
-  exports: [PostService, PostPolicyService],
+  exports: [PostService, PostSearchService, PostPolicyService],
 })
 export class PostModule {}
