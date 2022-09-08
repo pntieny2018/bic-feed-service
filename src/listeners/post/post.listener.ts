@@ -17,10 +17,9 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
-import { SeriesService } from '../../modules/series/series.service';
 import { PostPrivacy } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
-
+import { StringHelper } from '../../common/helpers';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -32,8 +31,7 @@ export class PostListener {
     private readonly _postService: PostService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService,
-    private readonly _seriesService: SeriesService
+    private readonly _feedService: FeedService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -143,7 +141,7 @@ export class PostListener {
       isArticle,
       commentsCount,
       totalUsersSeen,
-      content,
+      content: StringHelper.removeMarkdownCharacter(content),
       media,
       mentions,
       audience,
@@ -247,7 +245,7 @@ export class PostListener {
       isArticle,
       commentsCount,
       totalUsersSeen,
-      content,
+      content: StringHelper.removeMarkdownCharacter(content),
       media,
       mentions,
       audience,
@@ -267,13 +265,10 @@ export class PostListener {
         if (lang !== newLang) {
           this._postService.updatePostData([id], { lang: newLang });
           const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(lang);
-          this._elasticsearchService
-            .delete({ index: oldIndex, id: `${id}` })
-            .then((res) => console.log(res))
-            .catch((e) => {
-              this._logger.debug(e);
-              this._sentryService.captureException(e);
-            });
+          this._elasticsearchService.delete({ index: oldIndex, id: `${id}` }).catch((e) => {
+            this._logger.debug(e);
+            this._sentryService.captureException(e);
+          });
         }
       })
       .catch((e) => {

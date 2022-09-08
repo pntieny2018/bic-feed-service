@@ -11,7 +11,7 @@ import { GroupService } from '../shared/group';
 import { Logger } from '@nestjs/common';
 import { MentionModel } from '../database/models/mention.model';
 import { MentionService } from '../modules/mention';
-import { ElasticsearchHelper } from '../common/helpers';
+import { ElasticsearchHelper, StringHelper } from '../common/helpers';
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
   private _logger = new Logger(ReIndexEsPostCommand.name);
@@ -82,7 +82,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
         id: result.id,
         commentsCount: result.commentsCount,
         totalUsersSeen: result.totalUsersSeen,
-        content: result.content,
+        content: StringHelper.removeMarkdownCharacter(result.content),
         media: result.media,
         mentions: result.mentions,
         audience: result.audience,
