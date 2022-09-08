@@ -452,7 +452,7 @@ describe('ArticleService', () => {
     it('Create article successfully', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+      mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.addPostToCategories = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
@@ -501,7 +501,7 @@ describe('ArticleService', () => {
     it('Should rollback if have an exception when insert data into DB', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+      mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());

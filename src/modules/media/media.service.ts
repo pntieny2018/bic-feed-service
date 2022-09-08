@@ -116,21 +116,13 @@ export class MediaService {
   }
 
   /**
-   *  Get media list
-   * @param options FindOptions
-   */
-  public async getMediaList(options?: FindOptions<IMedia>): Promise<MediaModel[]> {
-    return this._mediaModel.findAll(options);
-  }
-
-  /**
    * Validate Mention
    * @param mediaIds Array of media ID
    * @param createdBy created_by of post
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkValidMedia(mediaIds: string[], createdBy: string): Promise<boolean> {
+  public async isValid(mediaIds: string[], createdBy: string): Promise<boolean> {
     if (mediaIds.length === 0) return true;
 
     const getMediaList = await this._mediaModel.findAll({
