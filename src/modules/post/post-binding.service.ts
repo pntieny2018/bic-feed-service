@@ -8,6 +8,7 @@ import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
 import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
+import { UserDto } from '../auth';
 @Injectable()
 export class PostBindingService {
   /**
@@ -41,13 +42,23 @@ export class PostBindingService {
    * @throws HttpException
    */
 
-  public async bindAudienceToPost(posts: any[]): Promise<void> {
+  public async bindAudienceToPost(posts: any[], hideSecretGroupForUser?: UserDto): Promise<void> {
     //get all groups in onetime
     const dataGroups = await this._getGroupsByPosts(posts);
     for (const post of posts) {
       const postGroupIds = this._getGroupIdsByPost(post);
       const mappedGroups = dataGroups
-        .filter((dataGroup) => postGroupIds.includes(dataGroup.id))
+        .filter((dataGroup) => {
+          if (!postGroupIds.includes(dataGroup.id)) return false;
+          if (
+            hideSecretGroupForUser &&
+            dataGroup.privacy === GroupPrivacy.SECRET &&
+            !hideSecretGroupForUser.profile.groups.includes(dataGroup.id)
+          ) {
+            return false;
+          }
+          return true;
+        })
         //remote child
         .map((dataGroup) => {
           delete dataGroup.child;

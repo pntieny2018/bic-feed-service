@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION, KAFKA_TOPIC } from '../../common/constants';
+import { APP_VERSION } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import {
   PostHasBeenDeletedEvent,
@@ -103,6 +103,7 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
+    getPostDto.hideSecretAudienceCanNotAccess = true;
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
     else {
       const post = await this._postService.getPost(postId, user, getPostDto);
@@ -125,9 +126,13 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<any> {
+    const { audience, setting } = createPostDto;
+    if (audience.groupIds?.length > 0) {
+      await this._authorityService.checkCanCreatePost(user, audience.groupIds, setting.isImportant);
+    }
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
-      return await this._postService.getPost(created.id, user, new GetPostDto());
+      return this._postService.getPost(created.id, user, new GetPostDto());
     }
   }
 
@@ -157,7 +162,7 @@ export class PostController {
       await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
     }
     if (postBefore.isDraft === false) {
-      await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+      this._postService.checkContent(updatePostDto.content, updatePostDto.media);
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);
