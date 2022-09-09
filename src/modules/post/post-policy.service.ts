@@ -1,7 +1,6 @@
 import { IPost } from '../../database/models/post.model';
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { PostAllow } from './post.constants';
-import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { PostResponseDto } from './dto/responses';
 

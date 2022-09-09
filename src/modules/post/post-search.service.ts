@@ -154,12 +154,12 @@ export class PostSearchService {
       this.reactionService.bindReactionToPosts(posts),
       this.postBindingService.bindActorToPost(posts),
       this.postBindingService.bindAudienceToPost(posts),
-      this.postBindingService.bindPostData(posts, {
-        content: true,
-        commentsCount: true,
-        totalUsersSeen: true,
-        setting: true,
-      }),
+      this.postBindingService.bindPostData(posts, [
+        'content',
+        'commentsCount',
+        'totalUsersSeen',
+        'setting',
+      ]),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
@@ -174,7 +174,7 @@ export class PostSearchService {
   }
 
   public async getPayloadSearch(
-    { startTime, endTime, contentSearch, actors, important, limit, offset }: SearchPostsDto,
+    { startTime, endTime, contentSearch, actors, limit, offset }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
     index: string;
@@ -195,7 +195,6 @@ export class PostSearchService {
     this._applyActorFilter(actors, body);
 
     this._applyAudienceFilter(groupIds, body);
-    //this._applyImportantFilter(important, body);
 
     this._applyFilterContent(contentSearch, body);
     this._applySort(contentSearch, body);
