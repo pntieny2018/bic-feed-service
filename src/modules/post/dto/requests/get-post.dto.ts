@@ -71,6 +71,8 @@ export class GetPostDto {
   })
   public withComment?: boolean = false;
 
+  public hideSecretAudienceCanNotAccess?: boolean = false;
+
   public constructor(data: Partial<GetPostDto> = {}) {
     Object.assign(this, data);
   }
