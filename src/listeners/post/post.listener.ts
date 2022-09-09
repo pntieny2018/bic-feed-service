@@ -7,8 +7,6 @@ import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationService } from '../../notification';
-import { ElasticsearchHelper } from '../../common/helpers';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
@@ -17,23 +15,21 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
-import { SeriesService } from '../../modules/series/series.service';
 import { PostPrivacy } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
-
+import { PostSearchService } from '../../modules/post/post-search.service';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
   public constructor(
-    private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _postService: PostService,
+    private readonly _postSearchService: PostSearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService,
-    private readonly _seriesService: SeriesService
+    private readonly _feedService: FeedService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -47,12 +43,8 @@ export class PostListener {
       this._sentryService.captureException(e);
     });
 
-    const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
     try {
-      this._elasticsearchService.delete({ index, id: `${post.id}` }).catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      });
+      this._postSearchService.deletePostsToSearch([post.id]);
 
       const activity = this._postActivityService.createPayload({
         actor: actor,
@@ -138,35 +130,22 @@ export class PostListener {
         data: activity,
       },
     });
-    const dataIndex = {
-      id,
-      isArticle,
-      commentsCount,
-      totalUsersSeen,
-      content,
-      media,
-      mentions,
-      audience,
-      setting,
-      createdAt,
-      actor,
-    };
-    const index = ElasticsearchHelper.ALIAS.POST.default.name;
-    this._elasticsearchService
-      .index({
-        index,
-        id: `${id}`,
-        body: dataIndex,
-        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-      })
-      .then((res) => {
-        const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-        this._postService.updatePostData([id], { lang });
-      })
-      .catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      });
+
+    this._postSearchService.addPostsToSearch([
+      {
+        id,
+        isArticle,
+        commentsCount,
+        totalUsersSeen,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+      },
+    ]);
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -241,46 +220,22 @@ export class PostListener {
       },
     });
 
-    const index = ElasticsearchHelper.ALIAS.POST.default.name;
-    const dataUpdate = {
-      id,
-      isArticle,
-      commentsCount,
-      totalUsersSeen,
-      content,
-      media,
-      mentions,
-      audience,
-      setting,
-      createdAt,
-      actor,
-    };
-    this._elasticsearchService
-      .index({
-        index,
-        id: `${id}`,
-        body: dataUpdate,
-        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-      })
-      .then((res) => {
-        const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-        if (lang !== newLang) {
-          this._postService.updatePostData([id], { lang: newLang });
-          const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(lang);
-          this._elasticsearchService
-            .delete({ index: oldIndex, id: `${id}` })
-            .then((res) => console.log(res))
-            .catch((e) => {
-              this._logger.debug(e);
-              this._sentryService.captureException(e);
-            });
-        }
-      })
-      .catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      });
-
+    this._postSearchService.updatePostsToSearch([
+      {
+        id,
+        isArticle,
+        commentsCount,
+        totalUsersSeen,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+        lang,
+      },
+    ]);
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -335,35 +290,21 @@ export class PostListener {
         isArticle,
       } = post;
 
-      const dataIndex = {
-        id,
-        commentsCount,
-        totalUsersSeen,
-        content,
-        media,
-        mentions,
-        audience,
-        setting,
-        createdAt,
-        actor,
-        isArticle,
-      };
-      const index = ElasticsearchHelper.ALIAS.POST.default.name;
-      this._elasticsearchService
-        .index({
-          index,
-          id: `${id}`,
-          body: dataIndex,
-          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        })
-        .then((res) => {
-          const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-          this._postService.updatePostData([id], { lang });
-        })
-        .catch((e) => {
-          this._logger.debug(e);
-          this._sentryService.captureException(e);
-        });
+      this._postSearchService.addPostsToSearch([
+        {
+          id,
+          isArticle,
+          commentsCount,
+          totalUsersSeen,
+          content,
+          media,
+          mentions,
+          audience,
+          setting,
+          createdAt,
+          actor,
+        },
+      ]);
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,

@@ -1,6 +1,6 @@
 import { PostService } from '../post.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import { InternalPostController } from '../internal-post.controller';
+import { InternalPostController } from '../post-consummer.controller';
 import { PostPrivacy } from '../../../database/models/post.model';
 jest.mock('../post.service')
 describe('InternalPostController', () => {

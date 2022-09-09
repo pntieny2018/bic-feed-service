@@ -2,7 +2,7 @@ import { PageDto } from '../../common/dto';
 import { SearchPostsDto } from './dto/requests';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
-import { PostResponseDto } from './dto/responses';
+import { AudienceResponseDto, PostResponseDto } from './dto/responses';
 import { ClassTransformer } from 'class-transformer';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SentryService } from '@app/sentry';
@@ -11,7 +11,28 @@ import { PostService } from './post.service';
 import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { ReactionService } from '../reaction';
+import { MediaFilterResponseDto } from '../media/dto/response';
+import { UserMentionDto } from '../mention/dto';
+import { PostSettingDto } from './dto/common/post-setting.dto';
+import { UserSharedDto } from '../../shared/user/dto';
+import { PostBindingService } from './post-binding.service';
 
+export type DataPostToAdd = {
+  id: string;
+  commentsCount: number;
+  totalUsersSeen: number;
+  content: string;
+  media: MediaFilterResponseDto;
+  mentions: UserMentionDto;
+  audience: AudienceResponseDto;
+  setting: PostSettingDto;
+  createdAt: Date;
+  actor: UserSharedDto;
+  isArticle: boolean;
+};
+type DataPostToUpdate = DataPostToAdd & {
+  lang: string;
+};
 @Injectable()
 export class PostSearchService {
   /**
@@ -30,16 +51,73 @@ export class PostSearchService {
     protected searchService: ElasticsearchService,
     protected readonly postService: PostService,
     protected readonly sentryService: SentryService,
-    protected readonly reactionService: ReactionService
+    protected readonly reactionService: ReactionService,
+    protected readonly elasticsearchService: ElasticsearchService,
+    protected readonly postBindingService: PostBindingService
   ) {}
 
-  /**
-   * Get Draft Posts
-   * @throws HttpException
-   * @param authUser UserDto
-   * @param searchPostsDto SearchPostsDto
-   * @returns Promise resolve PageDto<PostResponseDto>
-   */
+  public async addPostsToSearch(posts: DataPostToAdd[]): Promise<void> {
+    const index = ElasticsearchHelper.ALIAS.POST.default.name;
+    for (const dataIndex of posts) {
+      dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      this.elasticsearchService
+        .index({
+          index,
+          id: dataIndex.id,
+          body: dataIndex,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        })
+        .then((res) => {
+          const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
+          this.postService.updatePostData([dataIndex.id], { lang });
+        })
+        .catch((e) => {
+          this.logger.debug(e);
+          this.sentryService.captureException(e);
+        });
+    }
+  }
+
+  public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
+    const index = ElasticsearchHelper.ALIAS.POST.default.name;
+    for (const dataIndex of posts) {
+      dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      this.elasticsearchService
+        .index({
+          index,
+          id: dataIndex.id,
+          body: dataIndex,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        })
+        .then((res) => {
+          const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
+          if (dataIndex.lang !== newLang) {
+            this.postService.updatePostData([dataIndex.id], { lang: newLang });
+            const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(dataIndex.lang);
+            this.elasticsearchService
+              .delete({ index: oldIndex, id: `${dataIndex.id}` })
+              .catch((e) => {
+                this.logger.debug(e);
+                this.sentryService.captureException(e);
+              });
+          }
+        })
+        .catch((e) => {
+          this.logger.debug(e);
+          this.sentryService.captureException(e);
+        });
+    }
+  }
+  public async deletePostsToSearch(ids: string[]): Promise<void> {
+    const index = ElasticsearchHelper.ALIAS.POST.all.name;
+    for (const id of ids) {
+      this.elasticsearchService.delete({ index, id }).catch((e) => {
+        this.logger.debug(e);
+        this.sentryService.captureException(e);
+      });
+    }
+  }
+
   public async searchPosts(
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
@@ -74,9 +152,10 @@ export class PostSearchService {
 
     await Promise.all([
       this.reactionService.bindReactionToPosts(posts),
-      this.postService.bindActorToPost(posts),
-      this.postService.bindAudienceToPost(posts),
-      this.postService.bindPostData(posts, {
+      this.postBindingService.bindActorToPost(posts),
+      this.postBindingService.bindAudienceToPost(posts),
+      this.postBindingService.bindPostData(posts, {
+        content: true,
         commentsCount: true,
         totalUsersSeen: true,
         setting: true,
@@ -93,12 +172,7 @@ export class PostSearchService {
       offset,
     });
   }
-  /**
-   *
-   * @param SearchPostsDto
-   * @param groupIds
-   * @returns
-   */
+
   public async getPayloadSearch(
     { startTime, endTime, contentSearch, actors, important, limit, offset }: SearchPostsDto,
     groupIds: string[]
@@ -133,6 +207,7 @@ export class PostSearchService {
       size: limit,
     };
   }
+
   private _applyFilterTime(startTime: string, endTime: string, body: BodyES): void {
     if (startTime || endTime) {
       const filterTime = {
@@ -146,6 +221,7 @@ export class PostSearchService {
       body.query.bool.must.push(filterTime);
     }
   }
+
   private _applyActorFilter(actors: string[], body: BodyES): void {
     const { actor } = ELASTIC_POST_MAPPING_PATH;
     if (actors && actors.length) {
@@ -184,9 +260,7 @@ export class PostSearchService {
   }
   private _applyFilterContent(contentSearch: string, body: BodyES): void {
     if (contentSearch) {
-      const arrKeywords = contentSearch.split(' ');
-      const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
-      const queries = this._getQueryMatchContent(isASCII, contentSearch);
+      const queries = this._getQueryMatchContent(contentSearch);
       body.query.bool.should.push({
         ['dis_max']: { queries },
       });
@@ -204,22 +278,24 @@ export class PostSearchService {
   }
 
   private _bindHighlight(body: BodyES): void {
+    const { content } = ELASTIC_POST_MAPPING_PATH;
     body['highlight'] = {
       ['pre_tags']: ['=='],
       ['post_tags']: ['=='],
       fields: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         'content.text': {
-          ['matched_fields']: ['content.text.default', 'content.text.ascii'],
+          ['matched_fields']: [content.text.default, content.text.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
       },
     };
   }
-  private _getQueryMatchContent(isASCII: boolean, contentSearch: string): any[] {
+  private _getQueryMatchContent(contentSearch: string): any[] {
     const { content } = ELASTIC_POST_MAPPING_PATH;
     let queries;
+    const isASCII = this._isASCIIKeyword(contentSearch);
     if (isASCII) {
       queries = [
         {
@@ -227,20 +303,20 @@ export class PostSearchService {
           multi_match: {
             query: contentSearch,
             fields: [content.text.default, content.text.ascii],
-            type: 'phrase',
+            type: 'phrase', //Match pharse with heigh priority
             boost: 2,
           },
         },
         {
           match: {
-            ['content.text.default']: {
+            [content.text.default]: {
               query: contentSearch,
             },
           },
         },
         {
           match: {
-            ['content.text.ascii']: {
+            [content.text.ascii]: {
               query: contentSearch,
             },
           },
@@ -268,5 +344,11 @@ export class PostSearchService {
     }
 
     return queries;
+  }
+
+  private _isASCIIKeyword(keyword: string): boolean {
+    const arrKeywords = keyword.split(' ');
+    const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
+    return isASCII;
   }
 }

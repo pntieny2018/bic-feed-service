@@ -1,3 +1,4 @@
+import removeMd from 'remove-markdown';
 export class StringHelper {
   /**
    * Convert camel case string to snake case string
@@ -83,5 +84,15 @@ export class StringHelper {
 
   public static isASCII(str: string): boolean {
     return /^[\x00-\x7F]*$/.test(str);
+  }
+
+  public static removeMarkdownCharacter(str: string): string {
+    const stringConverted = str
+      //.replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')// Remove reference-style links?
+      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3')// Remove **
+      .replace(/([\+]+)(\S)(.*?\S)??\1/g, '$2$3')// Remove ++
+      .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5') //remove _
+      .replace(/~(.*?)~/g, '$1'); //remove ~~
+    return stringConverted;
   }
 }

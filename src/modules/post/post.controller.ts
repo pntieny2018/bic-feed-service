@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION, KAFKA_TOPIC } from '../../common/constants';
+import { APP_VERSION } from '../../common/constants';
 import { PageDto } from '../../common/dto';
 import {
   PostHasBeenDeletedEvent,
@@ -102,6 +103,7 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
+    getPostDto.hideSecretAudienceCanNotAccess = true;
     if (user === null) return this._postService.getPublicPost(postId, getPostDto);
     else {
       const post = await this._postService.getPost(postId, user, getPostDto);
@@ -124,18 +126,13 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<any> {
-    const { audience } = createPostDto;
-
-    const { groupIds } = audience;
-    await this._authorityService.checkCanCreatePost(
-      user,
-      groupIds,
-      createPostDto.setting.isImportant
-    );
-
+    const { audience, setting } = createPostDto;
+    if (audience.groupIds?.length > 0) {
+      await this._authorityService.checkCanCreatePost(user, audience.groupIds, setting.isImportant);
+    }
     const created = await this._postService.createPost(user, createPostDto);
     if (created) {
-      return await this._postService.getPost(created.id, user, new GetPostDto());
+      return this._postService.getPost(created.id, user, new GetPostDto());
     }
   }
 
@@ -153,6 +150,9 @@ export class PostController {
   ): Promise<PostResponseDto> {
     const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
+    if (postBefore.isDraft === false && audience.groupIds.length === 0) {
+      throw new BadRequestException('Audience is required');
+    }
     await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
 
     const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
@@ -161,9 +161,8 @@ export class PostController {
       const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
       await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
     }
-
     if (postBefore.isDraft === false) {
-      await this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+      this._postService.checkContent(updatePostDto.content, updatePostDto.media);
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);

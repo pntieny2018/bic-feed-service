@@ -1,30 +1,53 @@
-import { Command, CommandRunner, Option } from 'nest-commander';
+import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../database/models/post.model';
 import { PostGroupModel } from '../database/models/post-group.model';
 import { MediaModel } from '../database/models/media.model';
 import { PostResponseDto } from '../modules/post/dto/responses';
 import { plainToInstance } from 'class-transformer';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { UserService } from '../shared/user';
 import { GroupService } from '../shared/group';
-import { Logger } from '@nestjs/common';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
 import { MentionModel } from '../database/models/mention.model';
 import { MentionService } from '../modules/mention';
-import { ElasticsearchHelper } from '../common/helpers';
+import { DataPostToAdd, PostSearchService } from '../modules/post/post-search.service';
+import { ConfigService } from '@nestjs/config';
+import { IElasticsearchConfig } from '../config/elasticsearch';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { ElasticsearchHelper, StringHelper } from '../common/helpers';
 @Command({ name: 'reindex:es:post', description: 'Reindex es post' })
 export class ReIndexEsPostCommand implements CommandRunner {
   private _logger = new Logger(ReIndexEsPostCommand.name);
   public constructor(
-    private readonly _elasticsearchService: ElasticsearchService,
     public readonly userService: UserService,
     public readonly groupService: GroupService,
     public readonly mentionService: MentionService,
-    @InjectModel(PostModel) private _postModel: typeof PostModel
+    @InjectModel(PostModel) private _postModel: typeof PostModel,
+    private _configService: ConfigService,
+    protected readonly elasticsearchService: ElasticsearchService
   ) {}
 
-  public async run(passedParam: string[]): Promise<any> {
-    if (passedParam.length === 0) return;
+  public async run(): Promise<any> {
+    const limitEach = 200;
+    let offset = 0;
+    let hasMore = true;
+    let total = 0;
+
+    while (hasMore) {
+      const posts = await this._getPostsToSync(offset, limitEach);
+      if (posts.length === 0) {
+        hasMore = false;
+      } else {
+        await this._addPostsToSearch(posts);
+        offset = offset + limitEach;
+        total += posts.length;
+      }
+    }
+
+    console.log('DONE - total:', total);
+  }
+
+  private async _getPostsToSync(offset: number, limit: number): Promise<any> {
     const posts = await this._postModel.findAll({
       where: {
         isDraft: false,
@@ -65,57 +88,22 @@ export class ReIndexEsPostCommand implements CommandRunner {
           required: false,
         },
       ],
+      limit,
+      offset,
     });
 
     const jsonPosts = posts.map((r) => r.toJSON());
     await Promise.all([
       this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.bindActorToPost(jsonPosts),
-      this.bindAudienceToPost(jsonPosts),
+      this._bindActorToPost(jsonPosts),
+      this._bindAudienceToPost(jsonPosts),
     ]);
-
-    for (const post of jsonPosts) {
-      const result = plainToInstance(PostResponseDto, post, {
-        excludeExtraneousValues: true,
-      });
-      const dataIndex = {
-        id: result.id,
-        commentsCount: result.commentsCount,
-        totalUsersSeen: result.totalUsersSeen,
-        content: result.content,
-        media: result.media,
-        mentions: result.mentions,
-        audience: result.audience,
-        setting: result.setting,
-        createdAt: result.createdAt,
-        actor: result.actor,
-        isArticle: result.isArticle,
-      };
-
-      this._logger.log('processing post:', dataIndex.id);
-
-      const res = await this._elasticsearchService.index({
-        index: passedParam[0],
-        id: `${dataIndex.id}`,
-        body: dataIndex,
-        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-      });
-      let lang = res.body._index.slice(passedParam[0].length + 1, passedParam[0].length + 3);
-      lang = ElasticsearchHelper.LANGUAGES_SUPPORTED.includes(lang) ? lang : null;
-      await this._postModel.update(
-        { lang },
-        {
-          where: {
-            id: dataIndex.id,
-          },
-        }
-      );
-      this._logger.log('deliver post:', dataIndex.id);
-    }
-    this._logger.log('DONE - total:', posts.length);
+    return plainToInstance(PostResponseDto, jsonPosts, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  public async bindAudienceToPost(posts: any[]): Promise<void> {
+  private async _bindAudienceToPost(posts: any[]): Promise<void> {
     const groupIds = [];
     for (const post of posts) {
       let postGroups = post.groups;
@@ -145,13 +133,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
     }
   }
 
-  /**
-   * Bind Actor info to post.createdBy
-   * @param posts Array of post
-   * @returns Promise resolve void
-   * @throws HttpException
-   */
-  public async bindActorToPost(posts: any[]): Promise<void> {
+  private async _bindActorToPost(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
       if (post.actor?.id) {
@@ -167,6 +149,46 @@ export class ReIndexEsPostCommand implements CommandRunner {
       } else {
         post.actor = users.find((i) => i.id === post.createdBy);
       }
+    }
+  }
+
+  private async _addPostsToSearch(posts: any[]): Promise<void> {
+    const index =
+      this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
+    for (const post of posts) {
+      const dataIndex = {
+        id: post.id,
+        isArticle: post.isArticle,
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
+        content: StringHelper.removeMarkdownCharacter(post.content),
+        media: post.media,
+        mentions: post.mentions,
+        audience: post.audience,
+        setting: post.setting,
+        createdAt: post.createdAt,
+        actor: post.actor,
+        lang: post.lang,
+      };
+
+      const syncResult = await this.elasticsearchService.index({
+        index,
+        id: dataIndex.id,
+        body: dataIndex,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      });
+      const langEs = syncResult.body._index.slice(index.length + 1, index.length + 3);
+      const lang = ElasticsearchHelper.LANGUAGES_SUPPORTED.includes(langEs) ? langEs : null;
+
+      await this._postModel.update(
+        { lang },
+        {
+          where: {
+            id: dataIndex.id,
+          },
+        }
+      );
+      console.log(`Indexed post ${dataIndex.id}`);
     }
   }
 }

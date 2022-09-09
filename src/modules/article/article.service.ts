@@ -34,6 +34,7 @@ import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
 import { HashtagModel } from '../../database/models/hashtag.model';
+import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
 export class ArticleService {
@@ -65,7 +66,8 @@ export class ArticleService {
     private readonly _hashtagService: HashtagService,
     private readonly _authorityService: AuthorityService,
     private readonly _searchService: ElasticsearchService,
-    private readonly _sentryService: SentryService
+    private readonly _sentryService: SentryService,
+    private readonly _postBindingService: PostBindingService
   ) {}
 
   /**
@@ -99,9 +101,9 @@ export class ArticleService {
     });
 
     await Promise.all([
-      this._postService.bindActorToPost(posts),
-      this._postService.bindAudienceToPost(posts),
-      this._postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
+      this._postBindingService.bindActorToPost(posts),
+      this._postBindingService.bindAudienceToPost(posts),
+      this._postBindingService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
@@ -148,8 +150,8 @@ export class ArticleService {
     await Promise.all([
       this._reactionService.bindReactionToPosts(articles),
       this._mentionService.bindMentionsToPosts(articles),
-      this._postService.bindActorToPost(articles),
-      this._postService.bindAudienceToPost(articles),
+      this._postBindingService.bindActorToPost(articles),
+      this._postBindingService.bindAudienceToPost(articles),
       this.maskArticleContent(articles),
     ]);
 
@@ -334,8 +336,8 @@ export class ArticleService {
     await Promise.all([
       this._reactionService.bindReactionToPosts([jsonPost]),
       this._mentionService.bindMentionsToPosts([jsonPost]),
-      this._postService.bindActorToPost([jsonPost]),
-      this._postService.bindAudienceToPost([jsonPost]),
+      this._postBindingService.bindActorToPost([jsonPost]),
+      this._postBindingService.bindAudienceToPost([jsonPost]),
       this.maskArticleContent([jsonPost]),
     ]);
 
@@ -431,8 +433,8 @@ export class ArticleService {
     await Promise.all([
       this._reactionService.bindReactionToPosts([jsonPost]),
       this._mentionService.bindMentionsToPosts([jsonPost]),
-      this._postService.bindActorToPost([jsonPost]),
-      this._postService.bindAudienceToPost([jsonPost]),
+      this._postBindingService.bindActorToPost([jsonPost]),
+      this._postBindingService.bindAudienceToPost([jsonPost]),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
@@ -466,12 +468,14 @@ export class ArticleService {
       } = createArticleDto;
       const authUserId = authUser.id;
 
-      const { groupIds } = audience;
+      let groupIds = [];
+      if (audience.groupIds) {
+        groupIds = audience.groupIds;
+      }
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       transaction = await this._sequelizeConnection.transaction();
-      const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
       let hashtagArr = [];
       if (hashtags) {
         hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
@@ -491,7 +495,7 @@ export class ArticleService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
-          privacy: postPrivacy,
+          privacy: null,
           hashtagsJson: hashtagArr,
           views: 0,
         },
@@ -543,6 +547,24 @@ export class ArticleService {
    * @throws HttpException
    */
   public async publishArticle(articleId: string, authUser: UserDto): Promise<boolean> {
+    const article = await this._postModel.findOne({
+      where: {
+        id: articleId,
+      },
+      include: [
+        {
+          model: CategoryModel,
+          through: {
+            attributes: [],
+          },
+          attributes: ['id', 'name'],
+          required: false,
+        },
+      ],
+    });
+    if (article.categories.length === 0) {
+      throw new BadRequestException('Category is required');
+    }
     return this._postService.publishPost(articleId, authUser);
   }
 
@@ -608,7 +630,7 @@ export class ArticleService {
       };
 
       const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience) {
+      if (audience.groupIds) {
         const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
       }
@@ -661,7 +683,7 @@ export class ArticleService {
       if (mentions) {
         await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
-      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this._postService.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
@@ -756,9 +778,9 @@ export class ArticleService {
 
     const jsonPosts = posts.map((p) => p.toJSON());
     await Promise.all([
-      this._postService.bindAudienceToPost(jsonPosts),
+      this._postBindingService.bindAudienceToPost(jsonPosts),
       this._mentionService.bindMentionsToPosts(jsonPosts),
-      this._postService.bindActorToPost(jsonPosts),
+      this._postBindingService.bindActorToPost(jsonPosts),
     ]);
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPosts, {
       excludeExtraneousValues: true,

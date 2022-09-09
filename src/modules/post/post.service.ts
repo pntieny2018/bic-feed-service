@@ -1,4 +1,4 @@
-import { PageDto } from '../../common/dto';
+import { PageDto, EntityIdDto } from '../../common/dto';
 import {
   HTTP_STATUS_ID,
   KAFKA_PRODUCER,
@@ -8,7 +8,7 @@ import {
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -18,7 +18,7 @@ import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { PostResponseDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
-import { ClassTransformer } from 'class-transformer';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
 import { FeedService } from '../feed/feed.service';
@@ -28,7 +28,6 @@ import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { EntityIdDto } from '../../common/dto';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import {
@@ -38,7 +37,6 @@ import {
   StringHelper,
 } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import { plainToInstance } from 'class-transformer';
 import { Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
@@ -49,11 +47,12 @@ import { ClientKafka } from '@nestjs/microservices';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
-import { GroupPrivacy } from '../../shared/group/dto';
+import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
+import { PostBindingService } from './post-binding.service';
 @Injectable()
 export class PostService {
   /**
@@ -91,7 +90,8 @@ export class PostService {
     protected readonly postEditedHistoryModel: typeof PostEditedHistoryModel,
     @Inject(KAFKA_PRODUCER)
     protected readonly client: ClientKafka,
-    protected readonly sentryService: SentryService
+    protected readonly sentryService: SentryService,
+    protected readonly postBinding: PostBindingService
   ) {}
 
   /**
@@ -164,8 +164,8 @@ export class PostService {
 
     await Promise.all([
       this.mentionService.bindMentionsToPosts(rowsSliced),
-      this.bindActorToPost(rowsSliced),
-      this.bindAudienceToPost(rowsSliced),
+      this.postBinding.bindActorToPost(rowsSliced),
+      this.postBinding.bindAudienceToPost(rowsSliced),
     ]);
     const result = this.classTransformer.plainToInstance(PostResponseDto, rowsSliced, {
       excludeExtraneousValues: true,
@@ -263,10 +263,12 @@ export class PostService {
     await Promise.all([
       this.reactionService.bindReactionToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.bindActorToPost([jsonPost]),
-      this.bindAudienceToPost([jsonPost]),
+      this.postBinding.bindActorToPost([jsonPost]),
+      this.postBinding.bindAudienceToPost(
+        [jsonPost],
+        getPostDto.hideSecretAudienceCanNotAccess ? user : undefined
+      ),
     ]);
-
     const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });
@@ -341,8 +343,8 @@ export class PostService {
     await Promise.all([
       this.reactionService.bindReactionToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.bindActorToPost([jsonPost]),
-      this.bindAudienceToPost([jsonPost]),
+      this.postBinding.bindActorToPost([jsonPost]),
+      this.postBinding.bindAudienceToPost([jsonPost]),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
@@ -351,100 +353,6 @@ export class PostService {
 
     result['comments'] = comments;
     return result;
-  }
-
-  /**
-   * Bind Audience To Post.Groups
-   * @param posts Array of post
-   * @returns Promise resolve void
-   * @throws HttpException
-   */
-
-  public async bindAudienceToPost(posts: any[]): Promise<void> {
-    const groupIds = [];
-    for (const post of posts) {
-      let postGroups = post.groups;
-      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
-
-      if (postGroups && postGroups.length) {
-        groupIds.push(...postGroups.map((m) => m.groupId || m.id));
-      }
-    }
-    const dataGroups = await this.groupService.getMany(groupIds);
-    for (const post of posts) {
-      let groups = [];
-      let postGroups = post.groups;
-      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
-      if (postGroups && postGroups.length) {
-        const mappedGroups = [];
-        postGroups.forEach((group) => {
-          const dataGroup = dataGroups.find((i) => i.id === group.id || i.id === group.groupId);
-          if (dataGroup && dataGroup.child) {
-            delete dataGroup.child;
-          }
-          if (dataGroup) mappedGroups.push(dataGroup);
-        });
-        groups = mappedGroups;
-      }
-      post.audience = { groups };
-    }
-  }
-
-  /**
-   * Bind Actor info to post.createdBy
-   * @param posts Array of post
-   * @returns Promise resolve void
-   * @throws HttpException
-   */
-  public async bindActorToPost(posts: any[]): Promise<void> {
-    const userIds = [];
-    for (const post of posts) {
-      if (post.actor?.id) {
-        userIds.push(post.actor.id);
-      } else {
-        userIds.push(post.createdBy);
-      }
-    }
-    const users = await this.userService.getMany(userIds);
-    for (const post of posts) {
-      if (post.actor?.id) {
-        post.actor = users.find((i) => i.id === post.actor.id);
-      } else {
-        post.actor = users.find((i) => i.id === post.createdBy);
-      }
-    }
-  }
-
-  /**
-   * Bind data info to post
-   * @param posts Array of post
-   * @param objects {commentsCount: boolean, totalUsersSeen: boolean}
-   * @returns Promise resolve void
-   * @throws HttpException
-   */
-  public async bindPostData(posts: any[], objects: any): Promise<void> {
-    const postIds = [];
-    for (const post of posts) {
-      postIds.push(post.id);
-    }
-    const result = await this.postModel.findAll({
-      raw: true,
-      where: { id: postIds },
-    });
-    for (const post of posts) {
-      const findPost = result.find((i) => i.id == post.id);
-      if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
-      if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (objects?.setting) {
-        post.setting = {
-          importantExpiredAt: findPost.importantExpiredAt,
-          isImportant: findPost.isImportant,
-          canReact: findPost.canReact,
-          canShare: findPost.canShare,
-          canComment: findPost.canComment,
-        };
-      }
-    }
   }
 
   /**
@@ -462,8 +370,6 @@ export class PostService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      const { groupIds } = audience;
-      const postPrivacy = await this.getPrivacyPost(groupIds);
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
@@ -478,7 +384,6 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
-          privacy: postPrivacy,
           hashtagsJson: [],
         },
         { transaction }
@@ -488,7 +393,9 @@ export class PostService {
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
-      await this.addPostGroup(groupIds, post.id, transaction);
+      if (audience.groupIds.length > 0) {
+        await this.addPostGroup(audience.groupIds, post.id, transaction);
+      }
 
       if (mentions.length) {
         await this.mentionService.create(
@@ -572,7 +479,7 @@ export class PostService {
       };
 
       const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience) {
+      if (audience.groupIds.length) {
         const postPrivacy = await this.getPrivacyPost(audience.groupIds);
         dataUpdate['privacy'] = postPrivacy;
       }
@@ -632,7 +539,7 @@ export class PostService {
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
-      if (audience && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
       await transaction.commit();
@@ -688,6 +595,9 @@ export class PostService {
       const authUserId = authUser.id;
       await this.authorityService.checkPostOwner(post, authUserId);
       const groupIds = post.groups.map((g) => g.groupId);
+      if (groupIds.length === 0) {
+        throw new BadRequestException('Audience is required.');
+      }
       await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
       if (post.content === '' && post.media.length === 0) {
         throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
@@ -1207,9 +1117,9 @@ export class PostService {
 
     const jsonPosts = posts.map((p) => p.toJSON());
     await Promise.all([
-      this.bindAudienceToPost(jsonPosts),
+      this.postBinding.bindAudienceToPost(jsonPosts),
       this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.bindActorToPost(jsonPosts),
+      this.postBinding.bindActorToPost(jsonPosts),
     ]);
     const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,

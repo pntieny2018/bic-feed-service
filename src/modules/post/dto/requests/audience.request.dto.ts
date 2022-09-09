@@ -20,14 +20,14 @@ export class AudienceRequestDto {
 
   @ApiProperty({
     type: Number,
-    isArray: true,
+    required: false,
     description: 'Array of group',
     name: 'group_ids',
   })
-  @IsNotEmpty()
-  @ArrayNotEmpty()
+  @IsOptional()
+  @IsArray()
   @Expose({
     name: 'group_ids',
   })
-  public groupIds: string[];
+  public groupIds?: string[] = [];
 }
