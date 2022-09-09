@@ -4,7 +4,7 @@ import { Transform, Type } from 'class-transformer';
 import { UserMentionDto } from '../../../mention/dto';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { AudienceRequestDto } from './audience.request.dto';
-import { IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 
@@ -17,10 +17,12 @@ export class CreatePostDto {
       ['group_ids']: [1],
     },
   })
-  @IsNotEmpty()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience: AudienceRequestDto;
+  public audience?: AudienceRequestDto = {
+    groupIds: [],
+  };
 
   @ApiProperty({
     description: 'Content of post',

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
-import { ICategory } from '../../../../database/models/category.model';
 
 export class CategoryResponseDto {
   @ApiProperty()
@@ -50,15 +49,7 @@ export class CategoryResponseDto {
   @Expose()
   public updatedAt?: Date;
 
-  public constructor(iCategory: ICategory) {
-    this.id = iCategory.id;
-    this.parentId = iCategory.parentId;
-    this.active = iCategory.isActive;
-    this.name = iCategory.name;
-    this.slug = iCategory.slug;
-    this.level = iCategory.level;
-    this.createdBy = iCategory.createdBy;
-    this.createdAt = iCategory.createdAt;
-    this.updatedAt = iCategory.updatedAt;
+  public constructor(data: Partial<CategoryResponseDto>) {
+    Object.assign(this, data);
   }
 }

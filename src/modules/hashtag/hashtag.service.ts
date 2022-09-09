@@ -3,7 +3,6 @@ import { HashtagResponseDto } from './dto/responses/hashtag-response.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { HashtagModel } from '../../database/models/hashtag.model';
 import { ArrayHelper, StringHelper } from '../../common/helpers';
-import { UserDto } from '../auth';
 import { PageDto } from '../../common/dto';
 import { GetHashtagDto } from './dto/requests/get-hashtag.dto';
 import { Op, Transaction } from 'sequelize';
@@ -18,35 +17,33 @@ export class HashtagService {
   ) {}
   private _logger = new Logger(HashtagService.name);
   private _classTransformer = new ClassTransformer();
-  public async getHashtag(
-    user: UserDto,
-    getHashtagDto: GetHashtagDto
-  ): Promise<PageDto<HashtagResponseDto>> {
+  public async get(getHashtagDto: GetHashtagDto): Promise<PageDto<HashtagResponseDto>> {
     this._logger.debug('getHashtag');
+    const { offset, limit } = getHashtagDto;
     const conditions = {};
     if (getHashtagDto.name) {
-      conditions['name'] = { [Op.like]: '%' + getHashtagDto.name + '%' };
+      conditions['name'] = { [Op.iLike]: '%' + getHashtagDto.name + '%' };
     }
-    const getResult = await this._hashtagModel.findAll({
+    const { rows, count } = await this._hashtagModel.findAndCountAll({
       where: conditions,
+      offset,
+      limit,
       order: [['name', 'ASC']],
     });
 
-    const pagingResult = getResult
-      .slice(
-        getHashtagDto.offset * getHashtagDto.limit,
-        getHashtagDto.limit * (getHashtagDto.offset + 1)
-      )
-      .map((e) => new HashtagResponseDto(e));
+    const jsonSeries = rows.map((r) => r.toJSON());
+    const result = this._classTransformer.plainToInstance(HashtagResponseDto, jsonSeries, {
+      excludeExtraneousValues: true,
+    });
 
-    return new PageDto<HashtagResponseDto>(pagingResult, {
-      total: getResult.length,
+    return new PageDto<HashtagResponseDto>(result, {
+      total: count,
       limit: getHashtagDto.limit,
       offset: getHashtagDto.offset,
     });
   }
 
-  public async createHashtag(hashtagName: string): Promise<HashtagResponseDto> {
+  public async create(hashtagName: string): Promise<HashtagResponseDto> {
     this._logger.debug('createHashtag');
     const name = hashtagName.trim();
     const slug = StringHelper.convertToSlug(hashtagName);
@@ -58,18 +55,20 @@ export class HashtagService {
       },
     });
 
-    return new HashtagResponseDto(findOrCreateResult[0]);
+    return this._classTransformer.plainToInstance(HashtagResponseDto, findOrCreateResult[0], {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
    * Add post to hashtags
-   * @param hashTagIds Array of Hashtag ID
+   * @param hashtagIds
    * @param postId string
    * @param transaction Transaction
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostToHashtags(
+  public async addToPost(
     hashtagIds: string[],
     postId: string,
     transaction: Transaction
@@ -90,7 +89,7 @@ export class HashtagService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setHashtagsByPost(
+  public async updateToPost(
     hashtagIds: string[],
     postId: string,
     transaction: Transaction
@@ -128,14 +127,14 @@ export class HashtagService {
         name: hashtagsName,
       },
     });
-    hashtagsName.forEach(async (name) => {
+    for (const name of hashtagsName) {
       if (!hashtags.find((h) => h.name === name)) {
         dataInsert.push({
           name,
           slug: StringHelper.convertToSlug(name),
         });
       }
-    });
+    }
 
     const newHashtag = await this._hashtagModel.bulkCreate(dataInsert);
     return this._classTransformer.plainToInstance(

@@ -12,9 +12,11 @@ import { GetCategoryDto } from './dto/requests/get-category.dto';
 import { Op, Transaction } from 'sequelize';
 import { LogicException } from '../../common/exceptions';
 import { PostCategoryModel } from '../../database/models/post-category.model';
+import { ClassTransformer } from 'class-transformer';
 
 @Injectable()
 export class CategoryService {
+  private _classTransformer = new ClassTransformer();
   public constructor(
     @InjectModel(CategoryModel)
     private _categoryModel: typeof CategoryModel,
@@ -23,38 +25,42 @@ export class CategoryService {
   ) {}
   private _logger = new Logger(CategoryService.name);
 
-  public async getCategory(
+  public async get(
     user: UserDto,
     getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
     this._logger.debug('getCategory');
     const conditions = {};
-    if (getCategoryDto.isCreatedByMe) {
+    const { offset, limit, isCreatedByMe, name, level } = getCategoryDto;
+    if (isCreatedByMe) {
       conditions['createBy'] = user.id;
     }
-    if (getCategoryDto.name) {
-      conditions['name'] = { [Op.like]: '%' + getCategoryDto.name + '%' };
+    if (name) {
+      conditions['name'] = { [Op.iLike]: '%' + name + '%' };
     }
-    if (getCategoryDto.level) {
-      conditions['level'] = getCategoryDto.level;
+    if (level) {
+      conditions['level'] = level;
     }
-    const getResult = await this._categoryModel.findAll({ where: conditions });
 
-    const pagingResult = getResult
-      .slice(
-        getCategoryDto.offset * getCategoryDto.limit,
-        getCategoryDto.limit * (getCategoryDto.offset + 1)
-      )
-      .map((e) => new CategoryResponseDto(e));
+    const { rows, count } = await this._categoryModel.findAndCountAll({
+      where: conditions,
+      offset,
+      limit,
+      order: [['name', 'ASC']],
+    });
 
-    return new PageDto<CategoryResponseDto>(pagingResult, {
-      total: getResult.length,
+    const jsonSeries = rows.map((r) => r.toJSON());
+    const result = this._classTransformer.plainToInstance(CategoryResponseDto, jsonSeries, {
+      excludeExtraneousValues: true,
+    });
+    return new PageDto<CategoryResponseDto>(result, {
+      total: count,
       limit: getCategoryDto.limit,
       offset: getCategoryDto.offset,
     });
   }
 
-  public async createCategory(
+  public async create(
     user: UserDto,
     createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
@@ -82,7 +88,9 @@ export class CategoryService {
       updatedBy: user.id,
     });
 
-    return new CategoryResponseDto(createResult);
+    return this._classTransformer.plainToInstance(CategoryResponseDto, createResult, {
+      excludeExtraneousValues: true,
+    });
   }
 
   /**
@@ -93,7 +101,7 @@ export class CategoryService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostToCategories(
+  public async addToPost(
     categoryIds: string[],
     postId: string,
     transaction: Transaction
@@ -104,7 +112,6 @@ export class CategoryService {
       categoryId,
     }));
     await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
-    return;
   }
 
   /**
@@ -115,7 +122,7 @@ export class CategoryService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setCategoriesByPost(
+  public async updateToPost(
     categoryIds: string[],
     postId: string,
     transaction: Transaction

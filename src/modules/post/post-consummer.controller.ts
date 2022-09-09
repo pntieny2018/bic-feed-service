@@ -11,8 +11,8 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 
 @Controller()
-export class InternalPostController {
-  private _logger = new Logger(InternalPostController.name);
+export class PostConsumerController {
+  private _logger = new Logger(PostConsumerController.name);
   public constructor(
     private _postService: PostService,
     private _eventEmitter: InternalEventEmitterService

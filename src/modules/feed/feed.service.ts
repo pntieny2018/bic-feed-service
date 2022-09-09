@@ -1,7 +1,7 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { Sequelize, Transaction } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
 import { PostModel } from '../../database/models/post.model';
@@ -21,6 +21,7 @@ import { HTTP_STATUS_ID } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserService } from '../../shared/user';
 import { GroupPrivacy } from '../../shared/group/dto';
+import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
 export class FeedService {
@@ -39,10 +40,8 @@ export class FeedService {
     private _newsFeedModel: typeof UserNewsFeedModel,
     @InjectModel(UserSeenPostModel)
     private _userSeenPostModel: typeof UserSeenPostModel,
-    @InjectModel(PostModel) private readonly _postModel: typeof PostModel,
-    @InjectConnection()
-    private _sequelizeConnection: Sequelize,
-    private _sentryService: SentryService
+    private _sentryService: SentryService,
+    private _postBindingService: PostBindingService
   ) {}
 
   /**
@@ -101,8 +100,8 @@ export class FeedService {
       await Promise.all([
         this._reactionService.bindReactionToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
-        this._postService.bindActorToPost(posts),
-        this._postService.bindAudienceToPost(posts),
+        this._postBindingService.bindActorToPost(posts),
+        this._postBindingService.bindAudienceToPost(posts, authUser),
       ]);
       const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
         excludeExtraneousValues: true,
@@ -272,8 +271,8 @@ export class FeedService {
     await Promise.all([
       this._reactionService.bindReactionToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
-      this._postService.bindActorToPost(posts),
-      this._postService.bindAudienceToPost(posts),
+      this._postBindingService.bindActorToPost(posts),
+      this._postBindingService.bindAudienceToPost(posts, authUser),
     ]);
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
@@ -292,11 +291,11 @@ export class FeedService {
    * @param transaction Transaction
    * @returns object
    */
-  public async deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
-    return await this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
+  public deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
+    return this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });
   }
 
-  public async deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
-    return await this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
+  public deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
+    return this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
   }
 }
