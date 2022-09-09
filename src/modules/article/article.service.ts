@@ -33,7 +33,6 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
-import { HashtagModel } from '../../database/models/hashtag.model';
 import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
@@ -103,7 +102,7 @@ export class ArticleService {
     await Promise.all([
       this._postBindingService.bindActorToPost(posts),
       this._postBindingService.bindAudienceToPost(posts),
-      this._postBindingService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
+      this._postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
@@ -507,13 +506,13 @@ export class ArticleService {
       }
 
       await Promise.all([
-        this._seriesService.addPostToSeries(series, post.id, transaction),
-        this._hashtagService.addPostToHashtags(
+        this._seriesService.addToPost(series, post.id, transaction),
+        this._hashtagService.addToPost(
           hashtagArr.map((h) => h.id),
           post.id,
           transaction
         ),
-        this._categoryService.addPostToCategories(categories, post.id, transaction),
+        this._categoryService.addToPost(categories, post.id, transaction),
         this._postService.addPostGroup(groupIds, post.id, transaction),
       ]);
 
@@ -688,14 +687,14 @@ export class ArticleService {
       }
 
       if (categories) {
-        await this._categoryService.setCategoriesByPost(categories, post.id, transaction);
+        await this._categoryService.updateToPost(categories, post.id, transaction);
       }
       if (series) {
-        await this._seriesService.setSeriesByPost(series, post.id, transaction);
+        await this._seriesService.updateToPost(series, post.id, transaction);
       }
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
-        await this._hashtagService.setHashtagsByPost(
+        await this._hashtagService.updateToPost(
           hashtagArr.map((i) => i.id),
           post.id,
           transaction

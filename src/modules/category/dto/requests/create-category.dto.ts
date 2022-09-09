@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsUUID, ValidateIf } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 
 export class CreateCategoryDto {

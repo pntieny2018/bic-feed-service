@@ -32,7 +32,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
     let offset = 0;
     let hasMore = true;
     let total = 0;
-
+    await this._deleteAllDocuments();
     while (hasMore) {
       const posts = await this._getPostsToSync(offset, limitEach);
       if (posts.length === 0) {
@@ -190,5 +190,14 @@ export class ReIndexEsPostCommand implements CommandRunner {
       );
       console.log(`Indexed post ${dataIndex.id}`);
     }
+  }
+
+  private async _deleteAllDocuments(): Promise<void> {
+    const index =
+      this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts*';
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    await this.elasticsearchService.deleteByQuery({ index, body: { query: { match_all: {} } } });
+    console.log(`Deleted all documents`);
   }
 }

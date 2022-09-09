@@ -32,7 +32,7 @@ export class CategoryController {
     @Query() getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
     this._logger.debug('get category');
-    return this._categoryService.getCategory(user, getCategoryDto);
+    return this._categoryService.get(user, getCategoryDto);
   }
 
   @ApiOperation({ summary: 'Create new category' })
@@ -49,6 +49,6 @@ export class CategoryController {
     @Body() createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
     this._logger.debug('create category');
-    return this._categoryService.createCategory(user, createCategoryDto);
+    return this._categoryService.create(user, createCategoryDto);
   }
 }

@@ -7,7 +7,7 @@ import {
 } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto, SearchPostsDto, UpdatePostDto } from './dto/requests';
+import { CreatePostDto, GetPostDto, UpdatePostDto, GetPostEditedHistoryDto } from './dto/requests';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
@@ -16,7 +16,7 @@ import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
-import { PostResponseDto } from './dto/responses';
+import { PostResponseDto, PostEditedHistoryDto } from './dto/responses';
 import { GroupService } from '../../shared/group';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { EntityType } from '../media/media.constants';
@@ -30,29 +30,22 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
-import {
-  ArrayHelper,
-  ElasticsearchHelper,
-  ExceptionHelper,
-  StringHelper,
-} from '../../common/helpers';
+import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import { Op, QueryTypes, Transaction } from 'sequelize';
+import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
-import { GetPostEditedHistoryDto } from './dto/requests';
-import { PostEditedHistoryDto } from './dto/responses';
-import sequelize from 'sequelize';
 import { ClientKafka } from '@nestjs/microservices';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { SentryService } from '@app/sentry';
 import { NIL } from 'uuid';
-import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
+import { GroupPrivacy } from '../../shared/group/dto';
 import { SeriesModel } from '../../database/models/series.model';
 import { Severity } from '@sentry/node';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
 import { PostBindingService } from './post-binding.service';
+import { MediaDto } from '../media/dto';
 @Injectable()
 export class PostService {
   /**
@@ -929,7 +922,6 @@ export class PostService {
         userId,
       });
     }
-    return;
   }
 
   public async getTotalImportantPostInNewsFeed(
@@ -1172,7 +1164,7 @@ export class PostService {
     }
   }
 
-  public checkContent(content: string, media: any): void {
+  public checkContent(content: string, media: MediaDto): void {
     if (
       content === '' &&
       media?.files.length === 0 &&
@@ -1384,7 +1376,7 @@ export class PostService {
     );
   }
 
-  public async updatePostData(postIds: string[], data: any): Promise<void> {
+  public async updatePostData(postIds: string[], data: Partial<IPost>): Promise<void> {
     await this.postModel.update(data, {
       where: {
         id: {

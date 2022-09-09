@@ -127,7 +127,10 @@ export class PostBindingService {
    * @returns Promise resolve void
    * @throws HttpException
    */
-  public async bindPostData(posts: any[], objects: any): Promise<void> {
+  public async bindPostData(
+    posts: any[],
+    attributes: Array<'content' | 'commentsCount' | 'totalUsersSeen' | 'setting'>
+  ): Promise<void> {
     const postIds = [];
     for (const post of posts) {
       postIds.push(post.id);
@@ -138,10 +141,10 @@ export class PostBindingService {
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      if (objects?.content) post.content = findPost?.content || '';
-      if (objects?.commentsCount) post.commentsCount = findPost?.commentsCount || 0;
-      if (objects?.totalUsersSeen) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (objects?.setting) {
+      if (attributes['content']) post.content = findPost?.content || '';
+      if (attributes['commentsCount']) post.commentsCount = findPost?.commentsCount || 0;
+      if (attributes['totalUsersSeen']) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+      if (attributes['setting']) {
         post.setting = {
           importantExpiredAt: findPost.importantExpiredAt,
           isImportant: findPost.isImportant,
