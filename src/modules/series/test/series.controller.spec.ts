@@ -43,62 +43,62 @@ describe('SeriesController', () => {
 
   describe('getSeries', () => {
     it('Get series successfully', async () => {
-      seriesService.getSeries = jest.fn().mockResolvedValue(true);
+      seriesService.get = jest.fn().mockResolvedValue(true);
       const getSeriesDto: GetSeriesDto = {};
-      await seriesController.getSeries(getSeriesDto);
-      expect(seriesService.getSeries).toBeCalledTimes(1);
-      expect(seriesService.getSeries).toBeCalledWith({});
+      await seriesController.get(getSeriesDto);
+      expect(seriesService.get).toBeCalledTimes(1);
+      expect(seriesService.get).toBeCalledWith({});
     });
   });
 
   describe('createSeries', () => {
     it('Create series successfully', async () => {
-      seriesService.createSeries = jest.fn().mockResolvedValue({ id: mockedSeriesResponse.id });
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
-      const result = await seriesController.createSeries(userDto, mockedCreateSeriesDto);
-      expect(seriesService.createSeries).toBeCalledTimes(1);
-      expect(seriesService.createSeries).toBeCalledWith(userDto, mockedCreateSeriesDto);
-      expect(seriesService.getSeriesById).toBeCalledTimes(1);
-      expect(seriesService.getSeriesById).toBeCalledWith(mockedSeriesResponse.id);
+      seriesService.create = jest.fn().mockResolvedValue({ id: mockedSeriesResponse.id });
+      seriesService.getById = jest.fn().mockResolvedValue(mockedSeriesResponse);
+      const result = await seriesController.create(userDto, mockedCreateSeriesDto);
+      expect(seriesService.create).toBeCalledTimes(1);
+      expect(seriesService.create).toBeCalledWith(userDto, mockedCreateSeriesDto);
+      expect(seriesService.getById).toBeCalledTimes(1);
+      expect(seriesService.getById).toBeCalledWith(mockedSeriesResponse.id);
       expect(result).toBe(mockedSeriesResponse);
     });
   });
 
   describe('updateSeries', () => {
     it('Update series successfully', async () => {
-      seriesService.updateSeries = jest.fn().mockResolvedValue(true);
-      seriesService.getSeriesById = jest.fn().mockResolvedValue(mockedSeriesResponse);
-      const result = await seriesController.updateSeries(
+      seriesService.update = jest.fn().mockResolvedValue(true);
+      seriesService.getById = jest.fn().mockResolvedValue(mockedSeriesResponse);
+      const result = await seriesController.update(
         userDto,
         mockedSeriesResponse.id,
         mockedUpdateSeriesDto
       );
-      expect(seriesService.updateSeries).toBeCalledTimes(1);
-      expect(seriesService.updateSeries).toBeCalledWith(
+      expect(seriesService.update).toBeCalledTimes(1);
+      expect(seriesService.update).toBeCalledWith(
         userDto,
         mockedSeriesResponse.id,
         mockedUpdateSeriesDto
       );
-      expect(seriesService.getSeriesById).toBeCalledTimes(1);
-      expect(seriesService.getSeriesById).toBeCalledWith(mockedSeriesResponse.id);
+      expect(seriesService.getById).toBeCalledTimes(1);
+      expect(seriesService.getById).toBeCalledWith(mockedSeriesResponse.id);
       expect(result).toBe(mockedSeriesResponse);
     });
   });
 
   describe('deleteSeries', () => {
     it('Delete series successfully', async () => {
-      seriesService.deleteSeries = jest.fn().mockResolvedValue(true);
-      const result = await seriesController.deleteSeries(userDto, mockedSeriesResponse.id);
-      expect(seriesService.deleteSeries).toBeCalledTimes(1);
-      expect(seriesService.deleteSeries).toBeCalledWith(userDto, mockedSeriesResponse.id);
+      seriesService.delete = jest.fn().mockResolvedValue(true);
+      const result = await seriesController.delete(userDto, mockedSeriesResponse.id);
+      expect(seriesService.delete).toBeCalledTimes(1);
+      expect(seriesService.delete).toBeCalledWith(userDto, mockedSeriesResponse.id);
       expect(result).toBe(true);
     });
 
     it('Delete series failed', async () => {
-      seriesService.deleteSeries = jest.fn().mockResolvedValue(false);
-      const result = await seriesController.deleteSeries(userDto, mockedSeriesResponse.id);
-      expect(seriesService.deleteSeries).toBeCalledTimes(1);
-      expect(seriesService.deleteSeries).toBeCalledWith(userDto, mockedSeriesResponse.id);
+      seriesService.delete = jest.fn().mockResolvedValue(false);
+      const result = await seriesController.delete(userDto, mockedSeriesResponse.id);
+      expect(seriesService.delete).toBeCalledTimes(1);
+      expect(seriesService.delete).toBeCalledWith(userDto, mockedSeriesResponse.id);
       expect(result).toBe(false);
     });
   });

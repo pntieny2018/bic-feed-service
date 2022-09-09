@@ -452,13 +452,13 @@ describe('ArticleService', () => {
     it('Create article successfully', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+      mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
-      categoryService.addPostToCategories = jest.fn().mockResolvedValue(Promise.resolve());
-      seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
-      seriesService.addPostToSeries = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.addToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.checkValid = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.addToPost = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue(['hashtag1']);
-      hashtagService.addPostToHashtags = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.addToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
@@ -501,10 +501,10 @@ describe('ArticleService', () => {
     it('Should rollback if have an exception when insert data into DB', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      mediaService.checkValidMedia = jest.fn().mockResolvedValue(Promise.resolve());
+      mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValue(Promise.resolve());
-      seriesService.checkValidSeries = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.checkValid = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
 
       mentionService.create = jest.fn().mockResolvedValue(mockedCreateArticleDto.mentions);
@@ -534,10 +534,10 @@ describe('ArticleService', () => {
 
       postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
-      categoryService.setCategoriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      seriesService.setSeriesByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      categoryService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      seriesService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
-      hashtagService.setHashtagsByPost = jest.fn().mockResolvedValue(Promise.resolve());
+      hashtagService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([

@@ -70,7 +70,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
     return true;
   }
 
-  public defaultMessage(args: ValidationArguments): string {
+  public defaultMessage(_args: ValidationArguments): string {
     return `Invalid media id`;
   }
 }
