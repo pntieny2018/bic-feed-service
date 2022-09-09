@@ -6,7 +6,7 @@ import { TrendingDto } from './dto/requests';
 import { map, Observable } from 'rxjs';
 import { SearchDto } from './dto/requests/search.dto';
 import { GiphyResponseDto } from './dto/responses/giphy-response.dto';
-import { createUrlFromId, getGiphyDetailInfo, GiphyType } from './giphy.util';
+import { getGiphyDetailInfo, GiphyType } from './giphy.util';
 
 @ApiTags('Giphy')
 @Controller({

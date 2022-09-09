@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
-import { ICategory } from '../../../../database/models/category.model';
 
 export class CategoryResponseDto {
   @ApiProperty()

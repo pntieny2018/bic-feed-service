@@ -6,7 +6,7 @@ export class MediaHelper {
     height: number;
   }> {
     try {
-      return await sizeOf(buffer);
+      return sizeOf(buffer);
     } catch (e) {
       return {
         width: 0,

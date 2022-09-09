@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { PageDto } from '../../common/dto';
-import { GetSeriesDto, CreateSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
 import { SeriesService } from './series.service';
 import { GetSeriesPipe } from './pipes';
@@ -18,18 +18,18 @@ import { AuthUser, UserDto } from '../auth';
 export class SeriesController {
   private _logger = new Logger(SeriesController.name);
 
-  public constructor(private seriesService: SeriesService) {}
+  public constructor(private _seriesService: SeriesService) {}
 
   @ApiOperation({ summary: 'Get series' })
   @ResponseMessages({
     success: 'Get series successfully',
   })
   @Get('/')
-  public getSeries(
+  public get(
     @Query(GetSeriesPipe) getSeriesDto: GetSeriesDto
   ): Promise<PageDto<SeriesResponseDto>> {
     this._logger.debug('get series');
-    return this.seriesService.getSeries(getSeriesDto);
+    return this._seriesService.get(getSeriesDto);
   }
 
   @ApiOperation({ summary: 'Create series' })
@@ -38,13 +38,13 @@ export class SeriesController {
     description: 'Create series successfully',
   })
   @Post('/')
-  public async createSeries(
+  public async create(
     @AuthUser() user: UserDto,
     @Body() createSeriesDto: CreateSeriesDto
   ): Promise<SeriesResponseDto> {
-    const created = await this.seriesService.createSeries(user, createSeriesDto);
+    const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
-      const result = await this.seriesService.getSeriesById(created.id);
+      const result = await this._seriesService.getById(created.id);
       if (result) {
         return result;
       }
@@ -57,15 +57,14 @@ export class SeriesController {
     description: 'Update series successfully',
   })
   @Put('/:id')
-  public async updateSeries(
+  public async update(
     @AuthUser() user: UserDto,
     @Param('id') seriesId: string,
     @Body() updateSeriesDto: UpdateSeriesDto
   ): Promise<SeriesResponseDto> {
-    const isUpdated = await this.seriesService.updateSeries(user, seriesId, updateSeriesDto);
+    const isUpdated = await this._seriesService.update(user, seriesId, updateSeriesDto);
     if (isUpdated) {
-      const seriesUpdate = await this.seriesService.getSeriesById(seriesId);
-      return seriesUpdate;
+      return this._seriesService.getById(seriesId);
     }
   }
 
@@ -75,11 +74,8 @@ export class SeriesController {
     description: 'Delete series successfully',
   })
   @Delete('/:id')
-  public async deleteSeries(
-    @AuthUser() user: UserDto,
-    @Param('id') seriesId: string
-  ): Promise<boolean> {
-    const isDeleted = await this.seriesService.deleteSeries(user, seriesId);
+  public async delete(@AuthUser() user: UserDto, @Param('id') seriesId: string): Promise<boolean> {
+    const isDeleted = await this._seriesService.delete(user, seriesId);
     if (isDeleted) {
       return isDeleted;
     }

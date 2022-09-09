@@ -26,8 +26,7 @@ import {
   MediaStatus,
   MediaType,
 } from '../../database/models/media.model';
-import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID, KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
+import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
 import { SentryService } from '@app/sentry';
 import { FileMetadataResponseDto } from './dto/response/file-metadata-response.dto';
 import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
@@ -117,21 +116,13 @@ export class MediaService {
   }
 
   /**
-   *  Get media list
-   * @param options FindOptions
-   */
-  public async getMediaList(options?: FindOptions<IMedia>): Promise<MediaModel[]> {
-    return await this._mediaModel.findAll(options);
-  }
-
-  /**
    * Validate Mention
    * @param mediaIds Array of media ID
    * @param createdBy created_by of post
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkValidMedia(mediaIds: string[], createdBy: string): Promise<boolean> {
+  public async isValid(mediaIds: string[], createdBy: string): Promise<boolean> {
     if (mediaIds.length === 0) return true;
 
     const getMediaList = await this._mediaModel.findAll({
@@ -238,7 +229,7 @@ export class MediaService {
       createdBy
     );
 
-    return await this._mediaModel.findAll({
+    return this._mediaModel.findAll({
       where: {
         id: mediaIds,
       },
@@ -254,11 +245,12 @@ export class MediaService {
    * @throws HttpException
    */
   public async updateMediaDraft(mediaIds: number[], transaction: Transaction): Promise<boolean> {
-    const { schema } = getDatabaseConfig();
-    const postMedia = PostMediaModel.tableName;
-    const commentMedia = CommentMediaModel.tableName;
-    if (mediaIds.length === 0) return true;
-    const query = ` UPDATE ${schema}.media
+    try {
+      const { schema } = getDatabaseConfig();
+      const postMedia = PostMediaModel.tableName;
+      const commentMedia = CommentMediaModel.tableName;
+      if (mediaIds.length === 0) return true;
+      const query = ` UPDATE ${schema}.media
                 SET is_draft = tmp.not_has_post
                 FROM (
                   SELECT media.id, 
@@ -271,15 +263,18 @@ export class MediaService {
                   GROUP BY media.id
                 ) as tmp 
                 WHERE tmp.id = ${schema}.media.id`;
-    await this._sequelizeConnection.query(query, {
-      replacements: {
-        mediaIds,
-      },
-      type: QueryTypes.UPDATE,
-      raw: true,
-      transaction: transaction,
-    });
-    return true;
+      await this._sequelizeConnection.query(query, {
+        replacements: {
+          mediaIds,
+        },
+        type: QueryTypes.UPDATE,
+        raw: true,
+        transaction: transaction,
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   public async sync(
@@ -368,34 +363,18 @@ export class MediaService {
 
     await this.updateMediaDraft([...changes.attached, ...changes.detached], transaction);
   }
-
-  public destroyCommentMedia(user: UserDto, commentId: number): Promise<void> {
-    const databaseConfig = getDatabaseConfig();
-    return this._sequelizeConnection.query(
-      `DELETE FROM ${databaseConfig.schema}.${CommentMediaModel.tableName} 
-               WHERE 
-             ${databaseConfig.schema}.${CommentMediaModel.tableName}.comment_id = $commentId`,
-      {
-        type: QueryTypes.DELETE,
-        bind: {
-          commentId: commentId,
-        },
-      }
-    );
-  }
-
   /**
    * Filter media type
-   * @param media IMedia[]
    * @returns object
+   * @param mediaList
    */
-  public static filterMediaType(media: IMedia[]): MediaFilterResponseDto {
+  public static filterMediaType(mediaList: IMedia[]): MediaFilterResponseDto {
     const mediaTypes = {
       files: [],
       videos: [],
       images: [],
     };
-    media
+    mediaList
       .sort((a, b) => {
         return b.createdAt.getTime() - a.createdAt.getTime();
       })
@@ -451,7 +430,7 @@ export class MediaService {
   }
 
   public async countMediaByPost(postId: string): Promise<number> {
-    return await this._postMediaModel.count({
+    return this._postMediaModel.count({
       where: { postId },
     });
   }
@@ -548,7 +527,7 @@ export class MediaService {
       },
     });
     this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
-    await willDeleteMedia.forEach((e) => e.destroy());
+    willDeleteMedia.forEach((e) => e.destroy());
   }
 
   public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {

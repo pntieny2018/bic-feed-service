@@ -10,7 +10,7 @@ import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { Op, Transaction } from 'sequelize';
-import { SentryService } from '../../../libs/sentry/src';
+import { SentryService } from '@app/sentry';
 import { ISeries, SeriesModel } from '../../database/models/series.model';
 import slugify from 'slugify';
 import { PostSeriesModel } from '../../database/models/post-series.model';
@@ -45,7 +45,7 @@ export class SeriesService {
    * @param getSeriesDto GetSeriesDto
    * @returns Promise resolve PageDto<SeriesResponseDto>
    */
-  public async getSeries(getSeriesDto: GetSeriesDto): Promise<PageDto<SeriesResponseDto>> {
+  public async get(getSeriesDto: GetSeriesDto): Promise<PageDto<SeriesResponseDto>> {
     const { orderField, name, limit, offset } = getSeriesDto;
 
     try {
@@ -83,16 +83,15 @@ export class SeriesService {
    * @param id string
    * @returns Promise resolve SeriesResponseDto
    */
-  public async getSeriesById(id: string): Promise<SeriesResponseDto> {
+  public async getById(id: string): Promise<SeriesResponseDto> {
     try {
       const series = await this._seriesModel.findOne<SeriesModel>({
         where: { id: id },
       });
       const jsonSeries = series.toJSON();
-      const result = this._classTransformer.plainToInstance(SeriesResponseDto, jsonSeries, {
+      return this._classTransformer.plainToInstance(SeriesResponseDto, jsonSeries, {
         excludeExtraneousValues: true,
       });
-      return result;
     } catch (error) {
       this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
@@ -107,7 +106,7 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createSeries(
+  public async create(
     authUser: UserDto,
     createSeriesDto: CreateSeriesDto
   ): Promise<SeriesResponseDto> {
@@ -150,7 +149,7 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async updateSeries(
+  public async update(
     authUser: UserDto,
     seriesId: string,
     updateSeriesDto: UpdateSeriesDto
@@ -162,8 +161,8 @@ export class SeriesService {
       if (!creator) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
-      const seriesBefore = await this.getSeriesById(seriesId);
-      await this.checkSeriesOwner(seriesBefore, authUserId);
+      const seriesBefore = await this.getById(seriesId);
+      await this.checkOwner(seriesBefore, authUserId);
       const { name, isActive } = updateSeriesDto;
       const slug = slugify(name);
       transaction = await this._sequelizeConnection.transaction();
@@ -196,7 +195,7 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteSeries(authUser: UserDto, seriesId: string): Promise<boolean> {
+  public async delete(authUser: UserDto, seriesId: string): Promise<boolean> {
     let transaction;
     try {
       const authUserId = authUser.id;
@@ -204,8 +203,8 @@ export class SeriesService {
       if (!creator) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
-      const series = await this.getSeriesById(seriesId);
-      await this.checkSeriesOwner(series, authUserId);
+      const series = await this.getById(seriesId);
+      await this.checkOwner(series, authUserId);
       transaction = await this._sequelizeConnection.transaction();
       await this._seriesModel.destroy({
         where: {
@@ -231,7 +230,7 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async checkSeriesOwner(
+  public async checkOwner(
     series: SeriesResponseDto | SeriesModel | ISeries,
     authUserId: string
   ): Promise<boolean> {
@@ -253,7 +252,7 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostToSeries(
+  public async addToPost(
     seriesIds: string[],
     postId: string,
     transaction: Transaction
@@ -264,7 +263,6 @@ export class SeriesService {
       seriesId,
     }));
     await this._postSeriesModel.bulkCreate(dataCreate, { transaction });
-    return;
   }
 
   /**
@@ -275,7 +273,7 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setSeriesByPost(
+  public async updateToPost(
     seriesIds: string[],
     postId: string,
     transaction: Transaction
@@ -305,7 +303,7 @@ export class SeriesService {
     }
   }
 
-  public async checkValidSeries(seriesIds: string[], userId: string): Promise<void> {
+  public async checkValid(seriesIds: string[], userId: string): Promise<void> {
     const seriesCount = await this._seriesModel.count({
       where: {
         id: seriesIds,
