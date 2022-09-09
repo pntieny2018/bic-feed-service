@@ -264,9 +264,11 @@ export class PostService {
       this.reactionService.bindReactionToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
       this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost([jsonPost]),
+      this.postBinding.bindAudienceToPost(
+        [jsonPost],
+        getPostDto.hideSecretAudienceCanNotAccess ? user : undefined
+      ),
     ]);
-
     const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
       excludeExtraneousValues: true,
     });

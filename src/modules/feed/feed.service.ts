@@ -104,7 +104,7 @@ export class FeedService {
         this._reactionService.bindReactionToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
         this._postBindingService.bindActorToPost(posts),
-        this._postBindingService.bindAudienceToPost(posts),
+        this._postBindingService.bindAudienceToPost(posts, authUser),
       ]);
       const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
         excludeExtraneousValues: true,
@@ -275,7 +275,7 @@ export class FeedService {
       this._reactionService.bindReactionToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
       this._postBindingService.bindActorToPost(posts),
-      this._postBindingService.bindAudienceToPost(posts),
+      this._postBindingService.bindAudienceToPost(posts, authUser),
     ]);
     const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
