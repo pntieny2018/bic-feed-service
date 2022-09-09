@@ -33,7 +33,6 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
-import { HashtagModel } from '../../database/models/hashtag.model';
 import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
@@ -103,7 +102,7 @@ export class ArticleService {
     await Promise.all([
       this._postBindingService.bindActorToPost(posts),
       this._postBindingService.bindAudienceToPost(posts),
-      this._postBindingService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true }),
+      this._postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']),
     ]);
 
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
