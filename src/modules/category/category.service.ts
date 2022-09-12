@@ -46,7 +46,7 @@ export class CategoryService {
       where: conditions,
       offset,
       limit,
-      order: [['name', 'ASC']],
+      order: [['zindex', 'DESC']],
     });
 
     const jsonSeries = rows.map((r) => r.toJSON());
