@@ -23,6 +23,7 @@ export interface ICategory {
   name: string;
   slug?: string;
   level: number;
+  zindex: number;
   isActive: boolean;
   createdBy: string;
   updatedBy: string;
@@ -60,6 +61,9 @@ export class CategoryModel
 
   @Column
   public level: number;
+
+  @Column
+  public zindex: number;
 
   @Length({ max: 255 })
   @Column
