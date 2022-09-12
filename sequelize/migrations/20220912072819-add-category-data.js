@@ -54,7 +54,6 @@ module.exports = {
           return `('${row.name}','${row.slug}', ${row.level})`;
         })
         .join(',');
-
         await queryInterface.sequelize.query(
           `INSERT INTO ${schemaName}.${tableName}(name, slug, level) VALUES ${dataInsert}`,
         );
@@ -62,6 +61,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-      await queryInterface.Sequelize.query(`DELETE FROM ${schemaName}.${tableName}`)
+      await queryInterface.sequelize.query(`DELETE FROM ${schemaName}.${tableName}`)
     },
 };
