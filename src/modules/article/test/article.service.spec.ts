@@ -224,7 +224,7 @@ describe('ArticleService', () => {
 
       authorityService.checkCanReadArticle = jest.fn().mockResolvedValue(Promise.resolve());
       commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
-      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -238,7 +238,7 @@ describe('ArticleService', () => {
       expect(result.comments).toStrictEqual(mockedArticleResponse.comments);
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
+      expect(reactionService.bindToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
     });
 
@@ -275,7 +275,7 @@ describe('ArticleService', () => {
 
       authorityService.checkIsPublicArticle = jest.fn().mockResolvedValue(Promise.resolve());
       commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
-      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -285,7 +285,7 @@ describe('ArticleService', () => {
       expect(result.comments).toStrictEqual(mockedArticleResponse.comments);
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
+      expect(reactionService.bindToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
     });
 
@@ -667,7 +667,7 @@ describe('ArticleService', () => {
       postService.bindAudienceToPost = jest.fn();
       postService.groupPosts = jest.fn().mockResolvedValue([]);
       articleService.maskArticleContent = jest.fn();
-      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
       const result = await articleService.getList(mockedUserAuth, getArticleListDto);

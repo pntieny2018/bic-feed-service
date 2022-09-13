@@ -26,12 +26,12 @@ export class ReactionController {
     description: 'Get reaction successfully',
     type: ReactionsResponseDto,
   })
-  public get(
+  public gets(
     @AuthUser() userDto: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionDto
   ): Promise<ReactionsResponseDto> {
     this._logger.debug(`[Get reaction]`);
-    return this._reactionService.getReactions(getReactionDto);
+    return this._reactionService.gets(getReactionDto);
   }
 
   @ApiOperation({ summary: 'Create reaction.' })
@@ -44,7 +44,7 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
-    return this._reactionService.createReaction(userDto, createReactionDto);
+    return this._reactionService.create(userDto, createReactionDto);
   }
 
   @ApiOperation({ summary: 'Delete reaction.' })
@@ -57,6 +57,6 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
   ): Promise<IPostReaction | ICommentReaction> {
-    return this._reactionService.deleteReaction(userDto, deleteReactionDto);
+    return this._reactionService.delete(userDto, deleteReactionDto);
   }
 }

@@ -227,7 +227,7 @@ describe('ReactionService', () => {
 
         sentryService.captureException = jest.fn();
 
-        const response = await reactionService.createReaction(
+        const response = await reactionService.create(
           mockUserDto,
           mockCreateReactionDto.post
         );
@@ -256,7 +256,7 @@ describe('ReactionService', () => {
         sentryService.captureException = jest.fn();
 
         try {
-          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.post);
+          await reactionService.create(mockUserDto, mockCreateReactionDto.post);
         } catch (e) {
           expect(e.message).toEqual('Error in database layer');
         }
@@ -274,7 +274,7 @@ describe('ReactionService', () => {
           .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
         try {
-          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.post);
+          await reactionService.create(mockUserDto, mockCreateReactionDto.post);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
@@ -300,7 +300,7 @@ describe('ReactionService', () => {
     describe('Reaction type is not match', () => {
       it('Should failed', async () => {
         try {
-          await reactionService.createReaction(mockUserDto, {
+          await reactionService.create(mockUserDto, {
             ...mockCreateReactionDto.post,
             target: 'POSTT' as ReactionEnum,
           });
@@ -334,7 +334,7 @@ describe('ReactionService', () => {
 
         sentryService.captureException = jest.fn();
 
-        const response = await reactionService.createReaction(
+        const response = await reactionService.create(
           mockUserDto,
           mockCreateReactionDto.comment
         );
@@ -364,7 +364,7 @@ describe('ReactionService', () => {
           .mockRejectedValue(new Error('Error in database layer'));
 
         try {
-          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
+          await reactionService.create(mockUserDto, mockCreateReactionDto.comment);
         } catch (e) {
           expect(e.message).toEqual('Error in database layer');
         }
@@ -381,7 +381,7 @@ describe('ReactionService', () => {
         commentService.findComment = jest.fn().mockResolvedValue(null);
 
         try {
-          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
+          await reactionService.create(mockUserDto, mockCreateReactionDto.comment);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
         }
@@ -397,7 +397,7 @@ describe('ReactionService', () => {
         postService.getPost = jest.fn().mockResolvedValue(null);
 
         try {
-          await reactionService.createReaction(mockUserDto, mockCreateReactionDto.comment);
+          await reactionService.create(mockUserDto, mockCreateReactionDto.comment);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
@@ -435,7 +435,7 @@ describe('ReactionService', () => {
 
         notificationService.publishReactionNotification = jest.fn();
 
-        const response = await reactionService.deleteReaction(
+        const response = await reactionService.delete(
           mockUserDto,
           mockDeleteReactionDto.post
         );
@@ -456,7 +456,7 @@ describe('ReactionService', () => {
           .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
         try {
-          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
+          await reactionService.delete(mockUserDto, mockDeleteReactionDto.post);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
@@ -474,7 +474,7 @@ describe('ReactionService', () => {
           .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE));
 
         try {
-          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
+          await reactionService.delete(mockUserDto, mockDeleteReactionDto.post);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
         }
@@ -493,7 +493,7 @@ describe('ReactionService', () => {
         postReactionModel.findOne = jest.fn().mockResolvedValue(null);
 
         try {
-          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.post);
+          await reactionService.delete(mockUserDto, mockDeleteReactionDto.post);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
         }
@@ -507,7 +507,7 @@ describe('ReactionService', () => {
     describe('Reaction type is not match', () => {
       it('Should failed', async () => {
         try {
-          await reactionService.deleteReaction(mockUserDto, {
+          await reactionService.delete(mockUserDto, {
             ...mockCreateReactionDto.post,
             target: 'POSTT' as ReactionEnum,
           });
@@ -547,7 +547,7 @@ describe('ReactionService', () => {
 
         notificationService.publishReactionNotification = jest.fn();
 
-        const response = await reactionService.deleteReaction(
+        const response = await reactionService.delete(
           mockUserDto,
           mockDeleteReactionDto.comment
         );
@@ -568,7 +568,7 @@ describe('ReactionService', () => {
         postService.getPost = jest.fn().mockResolvedValue(null);
 
         try {
-          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
+          await reactionService.delete(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
@@ -583,7 +583,7 @@ describe('ReactionService', () => {
         commentService.findComment = jest.fn().mockResolvedValue(null);
 
         try {
-          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
+          await reactionService.delete(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
         }
@@ -603,7 +603,7 @@ describe('ReactionService', () => {
         commentReactionModel.findOne = jest.fn().mockResolvedValue(null);
 
         try {
-          await reactionService.deleteReaction(mockUserDto, mockDeleteReactionDto.comment);
+          await reactionService.delete(mockUserDto, mockDeleteReactionDto.comment);
         } catch (e) {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
         }
@@ -639,7 +639,7 @@ describe('ReactionService', () => {
           .fn()
           .mockResolvedValue(mockReactionResponseDtos.post);
 
-        const rsp = await reactionService.getReactions(mockGetReactionDto.post);
+        const rsp = await reactionService.gets(mockGetReactionDto.post);
 
         expect(rsp).toEqual(mockReactionsResponseDto.post);
         expect(postReactionModel.findAll).toBeCalledTimes(1);
@@ -655,7 +655,7 @@ describe('ReactionService', () => {
           .fn()
           .mockResolvedValue(mockReactionResponseDtos.comment);
 
-        const rsp = await reactionService.getReactions(mockGetReactionDto.comment);
+        const rsp = await reactionService.gets(mockGetReactionDto.comment);
 
         expect(rsp).toEqual(mockReactionsResponseDto.comment);
         expect(commentReactionModel.findAll).toBeCalledTimes(1);
@@ -668,7 +668,7 @@ describe('ReactionService', () => {
     describe('Function: deleteReactionByPostIds', () => {
       it('Should successfully', async () => {
         postReactionModel.destroy = jest.fn().mockResolvedValue(3);
-        const result = await reactionService.deleteReactionByPostIds([
+        const result = await reactionService.deleteByPostIds([
           'b0f2f8fc-2a13-4408-9a7a-564e15e9a895',
           '6039c8c3-0511-465a-b9a9-a2666c98f946',
           'edc7ec02-fc29-4e48-96e8-f93d2c593054',
@@ -680,7 +680,7 @@ describe('ReactionService', () => {
     describe('Function: deleteReactionByCommentIds', () => {
       it('Should successfully', async () => {
         commentReactionModel.destroy = jest.fn().mockResolvedValue(3);
-        const result = await reactionService.deleteReactionByCommentIds(
+        const result = await reactionService.deleteByCommentIds(
           [
             '158c94a0-3e89-4b2b-9731-f7a5ad313dc7',
             '70fd7a3f-d200-45b0-8f43-637bd5823055',
@@ -696,7 +696,7 @@ describe('ReactionService', () => {
       it('Should successfully', async () => {
         sequelizeConnection.query = jest.fn().mockResolvedValue([]);
 
-        await reactionService.bindReactionToPosts([mockPostResponseDto]);
+        await reactionService.bindToPosts([mockPostResponseDto]);
 
         expect(sequelizeConnection.query).toBeCalledTimes(1);
       });
@@ -706,7 +706,7 @@ describe('ReactionService', () => {
       it('Should successfully', async () => {
         sequelizeConnection.query = jest.fn().mockResolvedValue([]);
 
-        await reactionService.bindReactionToComments([mockCommentResponseDto]);
+        await reactionService.bindToComments([mockCommentResponseDto]);
 
         expect(sequelizeConnection.query).toBeCalledTimes(1);
       });

@@ -98,7 +98,7 @@ export class FeedService {
       if (hasNextPage) posts.pop();
 
       await Promise.all([
-        this._reactionService.bindReactionToPosts(posts),
+        this._reactionService.bindToPosts(posts),
         this._mentionService.bindMentionsToPosts(posts),
         this._postBindingService.bindActorToPost(posts),
         this._postBindingService.bindAudienceToPost(posts, authUser),
@@ -269,7 +269,7 @@ export class FeedService {
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     await Promise.all([
-      this._reactionService.bindReactionToPosts(posts),
+      this._reactionService.bindToPosts(posts),
       this._mentionService.bindMentionsToPosts(posts),
       this._postBindingService.bindActorToPost(posts),
       this._postBindingService.bindAudienceToPost(posts, authUser),

@@ -423,7 +423,7 @@ describe('PostService', () => {
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
-      reactionService.deleteReactionByPostIds = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.deleteByPostIds = jest.fn().mockResolvedValue(Promise.resolve());
 
       commentService.deleteCommentsByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -441,7 +441,7 @@ describe('PostService', () => {
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
-      expect(reactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      expect(reactionService.deleteByPostIds).toHaveBeenCalledTimes(1);
       expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
@@ -637,7 +637,7 @@ describe('PostService', () => {
 
       postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -649,7 +649,7 @@ describe('PostService', () => {
       expect(result.comments).toStrictEqual(mockedPostResponse.comments);
       expect(postService.bindActorToPost).toBeCalledTimes(1);
       expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
+      expect(reactionService.bindToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
     });
 
