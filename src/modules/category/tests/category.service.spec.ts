@@ -60,73 +60,73 @@ describe('CategoryService', () => {
     postCategoryModel = module.get<typeof PostCategoryModel>(getModelToken(PostCategoryModel));
   })
 
-  describe('CategoryService.getCategory', () => {
-    it('should return category', async () => {
-      const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
+  // describe('CategoryService.get', () => {
+  //   it('should return category', async () => {
+  //     const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
+  //
+  //     categoryModel.findAll.mockResolvedValue(modelGetResult);
+  //
+  //     const categories = await categoryService.get(authUserMock, {offset: 0, limit: 10})
+  //
+  //     expect(logSpy).toBeCalled();
+  //     expect(categoryModel.findAll).toBeCalled();
+  //     expect(categories).toEqual({
+  //       "list": modelGetResult.map((e) => new CategoryResponseDto(e)),
+  //       "meta": {
+  //         "limit": 10,
+  //         "offset": 0,
+  //         "total": 5
+  //       }
+  //     });
+  //   });
+  //
+  //   it('return index 2,3 if offset to 1 and limit to 2', async () => {
+  //     const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
+  //
+  //     categoryModel.findAll.mockResolvedValue(modelGetResult);
+  //
+  //     const categories = await categoryService.get(authUserMock, {offset: 1, limit: 2})
+  //
+  //     expect(logSpy).toBeCalled();
+  //     expect(categoryModel.findAll).toBeCalled();
+  //     expect(categories).toEqual({
+  //       "list": modelGetResult.slice(2,4).map((e) => new CategoryResponseDto(e)),
+  //       "meta": {
+  //         "limit": 2,
+  //         "offset": 1,
+  //         "total": 5
+  //       }
+  //     });
+  //   });
+  //
+  //   it('return index 4 if level set to 3', async () => {
+  //     const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
+  //
+  //     categoryModel.findAll.mockResolvedValue([modelGetResult[4]]);
+  //
+  //     const categories = await categoryService.get(authUserMock, {offset: 0, limit: 10, level: 3})
+  //
+  //     expect(logSpy).toBeCalled();
+  //     expect(categoryModel.findAll).toBeCalled();
+  //     expect(categories).toEqual({
+  //       "list": [new CategoryResponseDto(modelGetResult[4])],
+  //       "meta": {
+  //         "limit": 10,
+  //         "offset": 0,
+  //         "total": 1
+  //       }
+  //     });
+  //   });
+  // })
 
-      categoryModel.findAll.mockResolvedValue(modelGetResult);
-
-      const categories = await categoryService.getCategory(authUserMock, {offset: 0, limit: 10})
-
-      expect(logSpy).toBeCalled();
-      expect(categoryModel.findAll).toBeCalled();
-      expect(categories).toEqual({
-        "list": modelGetResult.map((e) => new CategoryResponseDto(e)),
-        "meta": {
-          "limit": 10,
-          "offset": 0,
-          "total": 5
-        }
-      });
-    });
-
-    it('return index 2,3 if offset to 1 and limit to 2', async () => {
-      const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
-
-      categoryModel.findAll.mockResolvedValue(modelGetResult);
-
-      const categories = await categoryService.getCategory(authUserMock, {offset: 1, limit: 2})
-
-      expect(logSpy).toBeCalled();
-      expect(categoryModel.findAll).toBeCalled();
-      expect(categories).toEqual({
-        "list": modelGetResult.slice(2,4).map((e) => new CategoryResponseDto(e)),
-        "meta": {
-          "limit": 2,
-          "offset": 1,
-          "total": 5
-        }
-      });
-    });
-
-    it('return index 4 if level set to 3', async () => {
-      const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
-
-      categoryModel.findAll.mockResolvedValue([modelGetResult[4]]);
-
-      const categories = await categoryService.getCategory(authUserMock, {offset: 0, limit: 10, level: 3})
-
-      expect(logSpy).toBeCalled();
-      expect(categoryModel.findAll).toBeCalled();
-      expect(categories).toEqual({
-        "list": [new CategoryResponseDto(modelGetResult[4])],
-        "meta": {
-          "limit": 10,
-          "offset": 0,
-          "total": 1
-        }
-      });
-    });
-  })
-
-  describe('CategoryService.createCategory', () => {
+  describe('CategoryService.create', () => {
     it('should return category', async () => {
       const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
 
       categoryModel.findOne.mockResolvedValue(modelGetResult[0]);
       categoryModel.create.mockResolvedValue(createCategoryDto);
 
-      const categories = await categoryService.createCategory(authUserMock, createCategoryDto)
+      const categories = await categoryService.create(authUserMock, createCategoryDto)
 
       expect(logSpy).toBeCalled();
       expect(categoryModel.findOne).toBeCalled();
@@ -139,7 +139,7 @@ describe('CategoryService', () => {
       const createCategoryDto2 = createCategoryDto
       createCategoryDto2.parentId = '00000000-0000-0000-0000-000000000000'
       try {
-        await categoryService.createCategory(authUserMock, createCategoryDto2)
+        await categoryService.create(authUserMock, createCategoryDto2)
       } catch (e) {
         expect(logSpy).toBeCalled();
         expect(e).toBeInstanceOf(LogicException);
@@ -148,11 +148,11 @@ describe('CategoryService', () => {
     });
   })
 
-  describe('CategoryService.setCategoriesByPost', () => {
+  describe('CategoryService.updateToPost', () => {
     it('should success', async () => {
       postCategoryModel.findAll.mockResolvedValue([{postId: '1', categoryId: '1'}]);
 
-      const categories = await categoryService.setCategoriesByPost(['2'], '1', null)
+      const categories = await categoryService.updateToPost(['2'], '1', null)
 
       expect(postCategoryModel.findAll).toBeCalled();
       expect(postCategoryModel.destroy).toBeCalled();

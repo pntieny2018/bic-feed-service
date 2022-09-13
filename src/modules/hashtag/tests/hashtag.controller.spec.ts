@@ -14,8 +14,8 @@ describe('HashtagController', () => {
       providers: [{
         provide: HashtagService,
         useValue: {
-          createHashtag: jest.fn(),
-          getHashtag: jest.fn(),
+          create: jest.fn(),
+          get: jest.fn(),
         },
       }],
     }).compile();
@@ -38,11 +38,11 @@ describe('HashtagController', () => {
     });
 
     it('CommentService.getComments should be called', async () => {
-      hashtagService.getHashtag.mockResolvedValue([]);
+      hashtagService.get.mockResolvedValue([]);
       await controller.get(authUserMock, {
         limit: 10,
       });
-      expect(hashtagService.getHashtag).toBeCalled();
+      expect(hashtagService.get).toBeCalled();
     });
   })
 
@@ -54,9 +54,9 @@ describe('HashtagController', () => {
     });
 
     it('CommentService.create should be called', async () => {
-      hashtagService.createHashtag.mockResolvedValue({});
+      hashtagService.create.mockResolvedValue({});
       await controller.create(authUserMock, createHashtagDto);
-      expect(hashtagService.createHashtag).toBeCalled();
+      expect(hashtagService.create).toBeCalled();
     });
   })
 })

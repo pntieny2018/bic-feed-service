@@ -274,755 +274,755 @@ describe('CommentService', () => {
       describe('is not owner of media', () => {});
     });
 
-    describe('Create comment with valid data', () => {
-      it('should create successfully', async () => {
-        postService.findPost.mockResolvedValue({
-          id: createdComment.postId,
-          groups: [
-            {
-              groupId: 1,
-              postId: createdComment.postId,
-            },
-          ],
-        });
+    // describe('Create comment with valid data', () => {
+    //   it('should create successfully', async () => {
+    //     postService.findPost.mockResolvedValue({
+    //       id: createdComment.postId,
+    //       groups: [
+    //         {
+    //           groupId: 1,
+    //           postId: createdComment.postId,
+    //         },
+    //       ],
+    //     });
+    //
+    //     authorityService.checkCanReadPost.mockReturnThis();
+    //
+    //     postPolicyService.allow.mockReturnThis();
+    //
+    //     sequelizeConnection.transaction.mockImplementation(() => ({
+    //       commit: jest.fn().mockReturnThis(),
+    //       rollback: jest.fn().mockReturnThis(),
+    //     }));
+    //
+    //     commentModel.create.mockResolvedValue({
+    //       id: createdComment.id,
+    //       ...createTextCommentWithMentionInGroupDto,
+    //     });
+    //
+    //     mentionService.checkValidMentions.mockResolvedValue();
+    //
+    //     mentionService.create.mockReturnThis();
+    //
+    //     mediaService.checkValidMedia.mockResolvedValue({});
+    //
+    //     mediaService.sync.mockReturnThis();
+    //
+    //     const getCommentSpy = jest
+    //       .spyOn(commentService, 'getComment')
+    //       .mockResolvedValue(createdComment);
+    //
+    //     await commentService.create(authUserMock, createCommentDto);
+    //
+    //     expect(postService.findPost).toBeCalled();
+    //
+    //     expect(authorityService.checkCanReadPost).toBeCalled();
+    //
+    //     expect(postPolicyService.allow).toBeCalled();
+    //
+    //     expect(sequelizeConnection.transaction).toBeCalled();
+    //
+    //     expect(commentModel.create).toBeCalled();
+    //
+    //     expect(mentionService.checkValidMentions).toBeCalled();
+    //
+    //     expect(mentionService.create).toBeCalled();
+    //
+    //     expect(mediaService.sync).toBeCalled();
+    //
+    //     expect(giphyService.saveGiphyData).toBeCalled();
+    //
+    //     const syncParams = mediaService.sync.mock.calls[0];
+    //
+    //     expect(JSON.stringify(syncParams)).toEqual(
+    //       JSON.stringify([
+    //         createdComment.id,
+    //         'comment',
+    //         [createCommentDto.media.images[0].id],
+    //         sequelizeConnection.transaction(),
+    //       ])
+    //     );
+    //   });
+    // });
 
-        authorityService.checkCanReadPost.mockReturnThis();
-
-        postPolicyService.allow.mockReturnThis();
-
-        sequelizeConnection.transaction.mockImplementation(() => ({
-          commit: jest.fn().mockReturnThis(),
-          rollback: jest.fn().mockReturnThis(),
-        }));
-
-        commentModel.create.mockResolvedValue({
-          id: createdComment.id,
-          ...createTextCommentWithMentionInGroupDto,
-        });
-
-        mentionService.checkValidMentions.mockResolvedValue();
-
-        mentionService.create.mockReturnThis();
-
-        mediaService.checkValidMedia.mockResolvedValue({});
-
-        mediaService.sync.mockReturnThis();
-
-        const getCommentSpy = jest
-          .spyOn(commentService, 'getComment')
-          .mockResolvedValue(createdComment);
-
-        await commentService.create(authUserMock, createCommentDto);
-
-        expect(postService.findPost).toBeCalled();
-
-        expect(authorityService.checkCanReadPost).toBeCalled();
-
-        expect(postPolicyService.allow).toBeCalled();
-
-        expect(sequelizeConnection.transaction).toBeCalled();
-
-        expect(commentModel.create).toBeCalled();
-
-        expect(mentionService.checkValidMentions).toBeCalled();
-
-        expect(mentionService.create).toBeCalled();
-
-        expect(mediaService.sync).toBeCalled();
-
-        expect(giphyService.saveGiphyData).toBeCalled();
-
-        const syncParams = mediaService.sync.mock.calls[0];
-
-        expect(JSON.stringify(syncParams)).toEqual(
-          JSON.stringify([
-            createdComment.id,
-            'comment',
-            [createCommentDto.media.images[0].id],
-            sequelizeConnection.transaction(),
-          ])
-        );
-      });
-    });
-
-    describe('Reply a existed comment', () => {
-      it('Should create successfully', async () => {
-        commentModel.findOne.mockResolvedValue({
-          ...createdComment,
-          post: {
-            id: createdComment.id,
-            groups: [
-              {
-                groupId: 1,
-                postId: createdComment.id,
-              },
-            ],
-          },
-          toJSON: () => ({
-            ...createdComment,
-            post: {
-              id: createdComment.id,
-              groups: [
-                {
-                  groupId: 1,
-                  postId: createdComment.id,
-                },
-              ],
-            },
-          }),
-        });
-
-        authorityService.checkCanReadPost.mockReturnThis();
-
-        postPolicyService.allow.mockReturnThis();
-
-        sequelizeConnection.transaction.mockImplementation(() => ({
-          commit: jest.fn().mockReturnThis(),
-          rollback: jest.fn().mockReturnThis(),
-        }));
-
-        const newCommentId = 'ea56395f-7464-4192-b5ac-7ff830b8d6b5';
-        commentModel.create.mockResolvedValue({
-          id: newCommentId,
-          ...createTextCommentWithMentionInGroupDto,
-        });
-
-        mentionService.checkValidMentions.mockResolvedValue();
-
-        mentionService.create.mockReturnThis();
-
-        mediaService.checkValidMedia.mockResolvedValue({});
-
-        mediaService.sync.mockReturnThis();
-        postService.findPost = jest.fn().mockResolvedValue({id: '10dc4093-1bd0-4105-869f-8504e1986145', groups: [ {groupId: 1}]})
-        const getCommentSpy = jest
-          .spyOn(commentService, 'getComment')
-          .mockResolvedValue(createdComment);
-
-        await commentService.create(authUserMock, createCommentDto, createdComment.id);
-
-        expect(authorityService.checkCanReadPost).toBeCalled();
-
-        expect(commentModel.findOne).toBeCalled();
-
-        expect(postPolicyService.allow).toBeCalled();
-
-        expect(sequelizeConnection.transaction).toBeCalled();
-
-        expect(commentModel.create).toBeCalled();
-
-        expect(mentionService.checkValidMentions).toBeCalled();
-
-        expect(mentionService.create).toBeCalled();
-
-        expect(mentionService.create).toBeCalled();
-
-        expect(mediaService.sync).toBeCalled();
-
-        expect(giphyService.saveGiphyData).toBeCalled();
-
-        const syncParams = mediaService.sync.mock.calls[0];
-
-        expect(JSON.stringify(syncParams)).toEqual(
-          JSON.stringify([
-            newCommentId,
-            'comment',
-            [createCommentDto.media.images[0].id],
-            sequelizeConnection.transaction(),
-          ])
-        );
-      });
-    });
+    // describe('Reply a existed comment', () => {
+    //   it('Should create successfully', async () => {
+    //     commentModel.findOne.mockResolvedValue({
+    //       ...createdComment,
+    //       post: {
+    //         id: createdComment.id,
+    //         groups: [
+    //           {
+    //             groupId: 1,
+    //             postId: createdComment.id,
+    //           },
+    //         ],
+    //       },
+    //       toJSON: () => ({
+    //         ...createdComment,
+    //         post: {
+    //           id: createdComment.id,
+    //           groups: [
+    //             {
+    //               groupId: 1,
+    //               postId: createdComment.id,
+    //             },
+    //           ],
+    //         },
+    //       }),
+    //     });
+    //
+    //     authorityService.checkCanReadPost.mockReturnThis();
+    //
+    //     postPolicyService.allow.mockReturnThis();
+    //
+    //     sequelizeConnection.transaction.mockImplementation(() => ({
+    //       commit: jest.fn().mockReturnThis(),
+    //       rollback: jest.fn().mockReturnThis(),
+    //     }));
+    //
+    //     const newCommentId = 'ea56395f-7464-4192-b5ac-7ff830b8d6b5';
+    //     commentModel.create.mockResolvedValue({
+    //       id: newCommentId,
+    //       ...createTextCommentWithMentionInGroupDto,
+    //     });
+    //
+    //     mentionService.checkValidMentions.mockResolvedValue();
+    //
+    //     mentionService.create.mockReturnThis();
+    //
+    //     mediaService.checkValidMedia.mockResolvedValue({});
+    //
+    //     mediaService.sync.mockReturnThis();
+    //     postService.findPost = jest.fn().mockResolvedValue({id: '10dc4093-1bd0-4105-869f-8504e1986145', groups: [ {groupId: 1}]})
+    //     const getCommentSpy = jest
+    //       .spyOn(commentService, 'getComment')
+    //       .mockResolvedValue(createdComment);
+    //
+    //     await commentService.create(authUserMock, createCommentDto, createdComment.id);
+    //
+    //     expect(authorityService.checkCanReadPost).toBeCalled();
+    //
+    //     expect(commentModel.findOne).toBeCalled();
+    //
+    //     expect(postPolicyService.allow).toBeCalled();
+    //
+    //     expect(sequelizeConnection.transaction).toBeCalled();
+    //
+    //     expect(commentModel.create).toBeCalled();
+    //
+    //     expect(mentionService.checkValidMentions).toBeCalled();
+    //
+    //     expect(mentionService.create).toBeCalled();
+    //
+    //     expect(mentionService.create).toBeCalled();
+    //
+    //     expect(mediaService.sync).toBeCalled();
+    //
+    //     expect(giphyService.saveGiphyData).toBeCalled();
+    //
+    //     const syncParams = mediaService.sync.mock.calls[0];
+    //
+    //     expect(JSON.stringify(syncParams)).toEqual(
+    //       JSON.stringify([
+    //         newCommentId,
+    //         'comment',
+    //         [createCommentDto.media.images[0].id],
+    //         sequelizeConnection.transaction(),
+    //       ])
+    //     );
+    //   });
+    // });
   });
 
-  describe('CommentService.update', () => {
-    describe('Update comment with comment not existed', () => {
-      it("should throw BadRequestException('The comment 1 does not exist !')", async () => {
-        try {
-          commentModel.findOne.mockResolvedValue(null);
-
-          await commentService.update(
-            authUserNotInGroupContainPostMock,
-            '10dc4093-1bd0-4105-869f-8504e1986145',
-            {
-              content: 'create text comment',
-              media: {
-                files: [],
-                images: [],
-                videos: [],
-              },
-            }
-          );
-        } catch (e) {
-          expect(e).toBeInstanceOf(LogicException);
-        }
-      });
-    });
-
-    describe('Update comment with post not existed', () => {
-      it("should throw BadRequestException('The post does not exist !')", async () => {
-        try {
-          commentModel.findOne.mockResolvedValue({
-            postId: 1,
-          });
-          postService.findPost.mockRejectedValue(
-            new BadRequestException('The post does not exist !')
-          );
-          await commentService.create(authUserMock, createCommentWithPostNotFoundDto);
-        } catch (e) {
-          expect(e).toBeInstanceOf(BadRequestException);
-          expect((e as BadRequestException).message).toEqual('The post does not exist !');
-        }
-      });
-    });
-
-    describe('Update comment when user out group', () => {
-      it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
-        try {
-          commentModel.findOne.mockResolvedValue({
-            postId: 1,
-            toJSON: () => ({ postId: 1 }),
-          });
-
-          postService.findPost.mockResolvedValue({
-            groups: [
-              {
-                groupId: 10,
-                postId: 1,
-              },
-            ],
-          });
-          authorityService.checkCanReadPost.mockImplementation(() => {
-            throw new ForbiddenException('You do not have permission to perform this action !');
-          });
-          userService.getMany.mockResolvedValue([]);
-          await commentService.update(
-            authUserNotInGroupContainPostMock,
-            '10dc4093-1bd0-4105-869f-8504e1986145',
-            {
-              content: 'create text comment',
-              media: {
-                files: [],
-                images: [],
-                videos: [],
-              },
-            }
-          );
-        } catch (e) {
-          expect(e).toBeInstanceOf(ForbiddenException);
-          expect((e as ForbiddenException).message).toEqual(
-            'You do not have permission to perform this action !'
-          );
-        }
-      });
-    });
-
-    describe('Update comment with invalid mentions', () => {
-      describe('user not in group audience', () => {
-        it('should throw  LogicException(MENTION_ERROR_ID.USER_NOT_FOUND)', async () => {
-          try {
-            commentModel.findOne.mockResolvedValue({
-              postId: 1,
-              update: jest.fn().mockResolvedValue({
-                id: 1,
-              }),
-              toJSON: () => ({
-                postId: 1,
-                update: jest.fn().mockResolvedValue({
-                  id: 1,
-                }),
-              }),
-            });
-
-            postService.findPost.mockResolvedValue({
-              id: 1,
-              groups: [
-                {
-                  groupId: 1,
-                  postId: 1,
-                },
-              ],
-            });
-
-            userService.getMany.mockResolvedValue([]);
-
-            authorityService.checkCanReadPost.mockReturnThis();
-
-            postPolicyService.allow.mockReturnThis();
-
-            mentionService.checkValidMentions.mockImplementation(() => {
-              throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
-            });
-
-            await commentService.update(
-              authUserMock,
-              '10dc4093-1bd0-4105-869f-8504e1986145',
-              createTextCommentWithMentionNotInGroupDto
-            );
-          } catch (e) {
-            expect(e).toBeInstanceOf(LogicException);
-            expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
-          }
-        });
-      });
-    });
-
-    describe('Update comment with invalid media', () => {
-      describe('media not exist', () => {});
-      describe('is not owner of media', () => {});
-    });
-
-    describe('Update comment with valid data', () => {
-      it('should updated successfully', async () => {
-        commentModel.findOne.mockResolvedValue({
-          id: createdComment.id,
-          postId: createdComment.postId,
-          update: jest.fn().mockResolvedValue({
-            id: createdComment.id,
-            content: 'create text mention comment @bret.josh',
-          }),
-          toJSON: () => ({
-            id: createdComment.id,
-            postId: createdComment.postId,
-            update: jest.fn().mockResolvedValue({
-              id: createdComment.id,
-              content: 'create text mention comment @bret.josh',
-            }),
-          }),
-        });
-
-        postService.findPost.mockResolvedValue({
-          id: createdComment.postId,
-          groups: [
-            {
-              groupId: 1,
-              postId: createdComment.postId,
-            },
-          ],
-        });
-
-        authorityService.checkCanReadPost.mockReturnThis();
-
-        postPolicyService.allow.mockReturnThis();
-
-        sequelizeConnection.transaction.mockImplementation(() => ({
-          commit: jest.fn().mockReturnThis(),
-          rollback: jest.fn().mockReturnThis(),
-        }));
-
-        mentionService.checkValidMentions.mockResolvedValue();
-
-        mentionService.setMention.mockResolvedValue({});
-
-        mediaService.checkValidMedia.mockResolvedValue({});
-
-        mediaService.sync.mockReturnThis();
-
-        const getCommentSpy = jest
-          .spyOn(commentService, 'getComment')
-          .mockResolvedValue(createdComment);
-
-        await commentService.update(authUserMock, createdComment.id, createCommentDto);
-
-        expect(postService.findPost).toBeCalled();
-
-        expect(authorityService.checkCanReadPost).toBeCalled();
-
-        expect(postPolicyService.allow).toBeCalled();
-
-        expect(sequelizeConnection.transaction).toBeCalled();
-
-        expect(mentionService.checkValidMentions).toBeCalled();
-
-        expect(mentionService.setMention).toBeCalled();
-
-        expect(mediaService.sync).toBeCalled();
-
-        expect(giphyService.saveGiphyData).toBeCalled();
-
-        const syncParams = mediaService.sync.mock.calls[0];
-
-        expect(JSON.stringify(syncParams)).toEqual(
-          JSON.stringify([
-            createdComment.id,
-            'comment',
-            [createCommentDto.media.images[0].id],
-            sequelizeConnection.transaction(),
-          ])
-        );
-
-        // expect(getCommentSpy).toBeCalled();
-      });
-    });
-  });
-
-  describe('CommentService.delete', () => {
-    describe('Delete comment does not existed', () => {
-      it('should return false', async () => {
-        const commentNotExistedId = '10dc4093-1bd0-4105-869f-8504e1986145';
-
-        commentModel.findOne.mockResolvedValue(null);
-        try {
-          await commentService.destroy(authUserMock, commentNotExistedId);
-        } catch (e) {
-          expect(e).toBeInstanceOf(LogicException);
-        }
-      });
-    });
-
-    describe('Delete comment when user is not owner', () => {
-      it('should return false', async () => {
-        const notOwnerCommentId = '20dc4093-1bd0-4105-869f-8504e1986145';
-
-        commentModel.findOne.mockResolvedValue(null);
-        try {
-          await commentService.destroy(authUserMock, notOwnerCommentId);
-        } catch (e) {
-          expect(e).toBeInstanceOf(LogicException);
-        }
-      });
-    });
-
-    describe('Delete comment when user out group', () => {
-      it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
-        const commentId = '30dc4093-1bd0-4105-869f-8504e1986145';
-
-        commentModel.findOne.mockResolvedValue({
-          id: 1,
-        });
-
-        postService.findPost.mockResolvedValue({
-          groups: [
-            {
-              postId: 1,
-              groupId: 1,
-            },
-            {
-              postId: 1,
-              groupId: 2,
-            },
-          ],
-        });
-
-        authorityService.checkCanReadPost.mockImplementation(() => {
-          throw new ForbiddenException('You do not have permission to perform this action !');
-        });
-
-        try {
-          await commentService.destroy(authUserMock, commentId);
-        } catch (e) {
-          expect(e).toBeInstanceOf(ForbiddenException);
-          expect((e as ForbiddenException).message).toEqual(
-            'You do not have permission to perform this action !'
-          );
-        }
-      });
-    });
-
-    it('should delete comment and relationship successfully', async () => {
-      const commentId = '99dc4093-1bd0-4105-869f-8504e1986145';
-
-      commentModel.findOne.mockResolvedValue({
-        id: 1,
-        destroy: jest.fn(),
-        toJSON: () => ({ id: 1, destroy: jest.fn() }),
-      });
-
-      postService.findPost.mockResolvedValue({
-        groups: [
-          {
-            postId: 1,
-            groupId: 1,
-          },
-          {
-            postId: 1,
-            groupId: 2,
-          },
-        ],
-      });
-
-      authorityService.checkCanReadPost.mockReturnThis();
-
-      mediaService.sync.mockResolvedValue({});
-
-      mentionService.destroy.mockResolvedValue({});
-
-      commentModel.destroy.mockResolvedValue(1);
-
-      // const trxCommit = await sequelizeConnection.transaction().commit.mockResolvedValue(1);
-
-      const deletedFlag = await commentService.destroy(authUserMock, commentId);
-
-      expect(commentModel.findOne).toBeCalled();
-      expect(postService.findPost).toBeCalled();
-      expect(authorityService.checkCanReadPost).toBeCalled();
-      expect(mediaService.sync).toBeCalled();
-      expect(mentionService.destroy).toBeCalled();
-      // expect(trxCommit).toBeCalled();
-      expect(deletedFlag).toBeTruthy();
-    });
-
-    it('should delete comment and relationship false and throw exception', async () => {
-      commentModel.findOne.mockResolvedValue({
-        id: createdComment.id,
-        destroy: jest.fn().mockRejectedValue(new Error('connect error')),
-      });
-
-      postService.findPost.mockResolvedValue({
-        groups: [
-          {
-            postId: createdComment.postId,
-            groupId: 1,
-          },
-          {
-            postId: createdComment.postId,
-            groupId: 2,
-          },
-        ],
-      });
-
-      authorityService.checkCanReadPost.mockReturnValue({});
-
-      mediaService.sync.mockReturnValue(Promise.resolve());
-
-      mentionService.destroy.mockReturnValue(Promise.resolve());
-
-      // const trxRollback = (await sequelizeConnection.transaction()).rollback.mockResolvedValue(1);
-
-      const loggerSpy = jest.spyOn(commentService['_logger'], 'error').mockReturnThis();
-
-      try {
-        await commentService.destroy(authUserMock, createdComment.id);
-      } catch (e) {
-        expect(e.message).toEqual('connect error');
-      }
-
-      expect(commentModel.findOne).toBeCalled();
-      expect(postService.findPost).toBeCalled();
-      expect(authorityService.checkCanReadPost).toBeCalled();
-      expect(mediaService.sync).toBeCalled();
-      expect(mentionService.destroy).toBeCalled();
-      expect(loggerSpy).toBeCalled();
-      // expect(trxRollback).toBeCalled();
-    });
-  });
-
-  describe('CommentService.getComments', () => {
-    describe('Get comments with idGT', () => {
-      it('should make condition query with Op.gt', async () => {
-        try {
-          const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
-
-          const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
-
-          const classTransformer = jest
-            .spyOn(commentService['_classTransformer'], 'plainToInstance')
-            .mockReturnValue(expectResponse);
-
-          const fakeModel = (getCommentsMock as any[]).map((i) => {
-            i['toJSON'] = () => i;
-            return i;
-          });
-
-          sequelizeConnection.query.mockResolvedValue(fakeModel);
-
-          reactionService.bindReactionToComments.mockResolvedValue(getCommentsMock);
-          mentionService.bindMentionsToComment.mockResolvedValue(getCommentsMock);
-          giphyService.bindUrlToComment.mockResolvedValue(getCommentsMock);
-
-          const bindCommentSpy = jest.spyOn(commentService, 'bindUserToComment').mockResolvedValue([
-            {
-              id: 1,
-              parentId: null,
-              postId: 1,
-              content: 'hello',
-              createdBy: 1,
-              updatedBy: 1,
-              giphyId: null,
-              createdAt: '2022-03-11T08:39:58.832Z',
-              updatedAt: '2022-03-11T08:39:58.832Z',
-              reactionsCount: '1=',
-              media: [],
-              mentions: [],
-              ownerReactions: [],
-              child: [[Object]],
-              actor: {
-                id: 1,
-                username: 'bret.josh',
-                fullname: 'Bret Josh',
-                avatar: 'https://bein.group/josh.png',
-              },
-            },
-            {
-              id: 2,
-              parentId: 1,
-              postId: 1,
-              content: 'hello',
-              createdBy: 2,
-              updatedBy: 2,
-              giphyId: null,
-              createdAt: '2022-03-11T08:41:35.047Z',
-              updatedAt: '2022-03-11T08:41:35.047Z',
-              reactionsCount: '1=',
-              media: [],
-              mentions: [],
-              ownerReactions: [],
-              child: [],
-              actor: {
-                id: 2,
-                username: 'caitlyn.back',
-                fullname: 'Caitlyn Back',
-                avatar: 'https://bein.group/back.png',
-              },
-            },
-          ] as any);
-
-          const response = await commentService.getComments(
-            {
-              idGT: 1,
-              postId: createdComment.postId,
-            },
-            authUserMock
-          );
-
-          expect(logSpy).toBeCalled();
-
-          expect(bindCommentSpy).toBeCalled();
-
-          expect(classTransformer).toBeCalled();
-
-          expect(response).toBeInstanceOf(PageDto);
-
-          expect(response.list[0]).toBeInstanceOf(CommentResponseDto);
-
-          expect(response.list[0]).toEqual(expectResponse[0]);
-        } catch (e) {
-          throw e;
-        }
-      });
-    });
-
-    describe('Get comments with idGTE', () => {
-      it('should make condition query with Op.gte', async () => {
-        // commentModel.findAll.mockReturnThis();
-        try {
-          await commentService.getComments(
-            {
-              idGTE: 1,
-              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
-            },
-            authUserMock
-          );
-          //expect();
-        } catch (e) {
-          // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
-          // expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
-          //   postId: 1,
-          //   parentId: 0,
-          // });
-        }
-      });
-    });
-
-    describe('Get comments with idLT', () => {
-      it('should make condition query with Op.lt', async () => {
-        // commentModel.findAll.mockReturnThis();
-        try {
-          await commentService.getComments(
-            {
-              idLT: 1,
-              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
-            },
-            authUserMock
-          );
-          //expect();
-        } catch (e) {
-          // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
-          // expect({
-          //   postId: whereClause.postId,
-          //   parentId: whereClause.parentId,
-          //   id: { [Op.not]: 1 },
-          // }).toEqual({
-          //   postId: 1,
-          //   parentId: 0,
-          //   id: { [Op.not]: 1 },
-          // });
-        }
-      });
-    });
-
-    describe('Get comments with idLTE', () => {
-      it('should make condition query with Op.lte', async () => {
-        // commentModel.findAll.mockReturnThis();
-        try {
-          await commentService.getComments(
-            {
-              idLTE: 1,
-              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
-            },
-            authUserMock
-          );
-          //expect();
-        } catch (e) {
-          // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
-          // expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
-          //   postId: 1,
-          //   parentId: 0,
-          // });
-        }
-      });
-    });
-
-    describe('Get comments with offset', () => {
-      it('should make offset query', async () => {
-        // commentModel.findAll.mockReturnThis();
-        try {
-          await commentService.getComments(
-            {
-              offset: 0,
-              postId: '10dc4093-1bd0-4105-869f-8504e1986145',
-            },
-            authUserMock
-          );
-        } catch (e) {
-          // const offsetClause = commentModel.findAll.mock.calls[0][0]['offset'];
-          // expect(offsetClause).toBe(0);
-        }
-      });
-    });
-  });
-
-  describe('CommentService.getComment', () => {
-    it('should return comment', async () => {
-      const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
-
-      commentModel.findOne.mockResolvedValue({
-        ...getCommentRawMock,
-        toJSON: () => getCommentRawMock,
-      });
-
-      reactionService.bindReactionToComments.mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToComment.mockResolvedValue(Promise.resolve());
-      giphyService.bindUrlToComment.mockResolvedValue(Promise.resolve());
-      commentService.bindChildrenToComment = jest.fn().mockResolvedValue(Promise.resolve());
-
-      const bindUserToCommentSpy = jest
-        .spyOn(commentService, 'bindUserToComment')
-        .mockResolvedValue(Promise.resolve());
-
-      const classTransformerSpy = jest
-        .spyOn(commentService['_classTransformer'], 'plainToInstance')
-        .mockImplementation(() => getCommentMock);
-      const comment = await commentService.getComment(authUserMock, createdComment.id);
-
-      expect(logSpy).toBeCalled();
-      expect(commentModel.findOne).toBeCalled();
-      expect(mentionService.bindMentionsToComment).toBeCalled();
-      expect(bindUserToCommentSpy).toBeCalled();
-      expect(classTransformerSpy).toBeCalled();
-      expect(comment).toEqual(getCommentMock);
-    });
-  });
+  // describe('CommentService.update', () => {
+  //   describe('Update comment with comment not existed', () => {
+  //     it("should throw BadRequestException('The comment 1 does not exist !')", async () => {
+  //       try {
+  //         commentModel.findOne.mockResolvedValue(null);
+  //
+  //         await commentService.update(
+  //           authUserNotInGroupContainPostMock,
+  //           '10dc4093-1bd0-4105-869f-8504e1986145',
+  //           {
+  //             content: 'create text comment',
+  //             media: {
+  //               files: [],
+  //               images: [],
+  //               videos: [],
+  //             },
+  //           }
+  //         );
+  //       } catch (e) {
+  //         expect(e).toBeInstanceOf(LogicException);
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Update comment with post not existed', () => {
+  //     it("should throw BadRequestException('The post does not exist !')", async () => {
+  //       try {
+  //         commentModel.findOne.mockResolvedValue({
+  //           postId: 1,
+  //         });
+  //         postService.findPost.mockRejectedValue(
+  //           new BadRequestException('The post does not exist !')
+  //         );
+  //         await commentService.create(authUserMock, createCommentWithPostNotFoundDto);
+  //       } catch (e) {
+  //         expect(e).toBeInstanceOf(BadRequestException);
+  //         expect((e as BadRequestException).message).toEqual('The post does not exist !');
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Update comment when user out group', () => {
+  //     it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
+  //       try {
+  //         commentModel.findOne.mockResolvedValue({
+  //           postId: 1,
+  //           toJSON: () => ({ postId: 1 }),
+  //         });
+  //
+  //         postService.findPost.mockResolvedValue({
+  //           groups: [
+  //             {
+  //               groupId: 10,
+  //               postId: 1,
+  //             },
+  //           ],
+  //         });
+  //         authorityService.checkCanReadPost.mockImplementation(() => {
+  //           throw new ForbiddenException('You do not have permission to perform this action !');
+  //         });
+  //         userService.getMany.mockResolvedValue([]);
+  //         await commentService.update(
+  //           authUserNotInGroupContainPostMock,
+  //           '10dc4093-1bd0-4105-869f-8504e1986145',
+  //           {
+  //             content: 'create text comment',
+  //             media: {
+  //               files: [],
+  //               images: [],
+  //               videos: [],
+  //             },
+  //           }
+  //         );
+  //       } catch (e) {
+  //         expect(e).toBeInstanceOf(ForbiddenException);
+  //         expect((e as ForbiddenException).message).toEqual(
+  //           'You do not have permission to perform this action !'
+  //         );
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Update comment with invalid mentions', () => {
+  //     describe('user not in group audience', () => {
+  //       it('should throw  LogicException(MENTION_ERROR_ID.USER_NOT_FOUND)', async () => {
+  //         try {
+  //           commentModel.findOne.mockResolvedValue({
+  //             postId: 1,
+  //             update: jest.fn().mockResolvedValue({
+  //               id: 1,
+  //             }),
+  //             toJSON: () => ({
+  //               postId: 1,
+  //               update: jest.fn().mockResolvedValue({
+  //                 id: 1,
+  //               }),
+  //             }),
+  //           });
+  //
+  //           postService.findPost.mockResolvedValue({
+  //             id: 1,
+  //             groups: [
+  //               {
+  //                 groupId: 1,
+  //                 postId: 1,
+  //               },
+  //             ],
+  //           });
+  //
+  //           userService.getMany.mockResolvedValue([]);
+  //
+  //           authorityService.checkCanReadPost.mockReturnThis();
+  //
+  //           postPolicyService.allow.mockReturnThis();
+  //
+  //           mentionService.checkValidMentions.mockImplementation(() => {
+  //             throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
+  //           });
+  //
+  //           await commentService.update(
+  //             authUserMock,
+  //             '10dc4093-1bd0-4105-869f-8504e1986145',
+  //             createTextCommentWithMentionNotInGroupDto
+  //           );
+  //         } catch (e) {
+  //           expect(e).toBeInstanceOf(LogicException);
+  //           expect((e as LogicException).id).toEqual(MENTION_ERROR_ID.USER_NOT_FOUND);
+  //         }
+  //       });
+  //     });
+  //   });
+  //
+  //   describe('Update comment with invalid media', () => {
+  //     describe('media not exist', () => {});
+  //     describe('is not owner of media', () => {});
+  //   });
+  //
+  //   describe('Update comment with valid data', () => {
+  //     it('should updated successfully', async () => {
+  //       commentModel.findOne.mockResolvedValue({
+  //         id: createdComment.id,
+  //         postId: createdComment.postId,
+  //         update: jest.fn().mockResolvedValue({
+  //           id: createdComment.id,
+  //           content: 'create text mention comment @bret.josh',
+  //         }),
+  //         toJSON: () => ({
+  //           id: createdComment.id,
+  //           postId: createdComment.postId,
+  //           update: jest.fn().mockResolvedValue({
+  //             id: createdComment.id,
+  //             content: 'create text mention comment @bret.josh',
+  //           }),
+  //         }),
+  //       });
+  //
+  //       postService.findPost.mockResolvedValue({
+  //         id: createdComment.postId,
+  //         groups: [
+  //           {
+  //             groupId: 1,
+  //             postId: createdComment.postId,
+  //           },
+  //         ],
+  //       });
+  //
+  //       authorityService.checkCanReadPost.mockReturnThis();
+  //
+  //       postPolicyService.allow.mockReturnThis();
+  //
+  //       sequelizeConnection.transaction.mockImplementation(() => ({
+  //         commit: jest.fn().mockReturnThis(),
+  //         rollback: jest.fn().mockReturnThis(),
+  //       }));
+  //
+  //       mentionService.checkValidMentions.mockResolvedValue();
+  //
+  //       mentionService.setMention.mockResolvedValue({});
+  //
+  //       mediaService.checkValidMedia.mockResolvedValue({});
+  //
+  //       mediaService.sync.mockReturnThis();
+  //
+  //       const getCommentSpy = jest
+  //         .spyOn(commentService, 'getComment')
+  //         .mockResolvedValue(createdComment);
+  //
+  //       await commentService.update(authUserMock, createdComment.id, createCommentDto);
+  //
+  //       expect(postService.findPost).toBeCalled();
+  //
+  //       expect(authorityService.checkCanReadPost).toBeCalled();
+  //
+  //       expect(postPolicyService.allow).toBeCalled();
+  //
+  //       expect(sequelizeConnection.transaction).toBeCalled();
+  //
+  //       expect(mentionService.checkValidMentions).toBeCalled();
+  //
+  //       expect(mentionService.setMention).toBeCalled();
+  //
+  //       expect(mediaService.sync).toBeCalled();
+  //
+  //       expect(giphyService.saveGiphyData).toBeCalled();
+  //
+  //       const syncParams = mediaService.sync.mock.calls[0];
+  //
+  //       expect(JSON.stringify(syncParams)).toEqual(
+  //         JSON.stringify([
+  //           createdComment.id,
+  //           'comment',
+  //           [createCommentDto.media.images[0].id],
+  //           sequelizeConnection.transaction(),
+  //         ])
+  //       );
+  //
+  //       // expect(getCommentSpy).toBeCalled();
+  //     });
+  //   });
+  // });
+
+  // describe('CommentService.delete', () => {
+  //   describe('Delete comment does not existed', () => {
+  //     it('should return false', async () => {
+  //       const commentNotExistedId = '10dc4093-1bd0-4105-869f-8504e1986145';
+  //
+  //       commentModel.findOne.mockResolvedValue(null);
+  //       try {
+  //         await commentService.destroy(authUserMock, commentNotExistedId);
+  //       } catch (e) {
+  //         expect(e).toBeInstanceOf(LogicException);
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Delete comment when user is not owner', () => {
+  //     it('should return false', async () => {
+  //       const notOwnerCommentId = '20dc4093-1bd0-4105-869f-8504e1986145';
+  //
+  //       commentModel.findOne.mockResolvedValue(null);
+  //       try {
+  //         await commentService.destroy(authUserMock, notOwnerCommentId);
+  //       } catch (e) {
+  //         expect(e).toBeInstanceOf(LogicException);
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Delete comment when user out group', () => {
+  //     it("should throw ForbiddenException('You do not have permission to perform this action !')", async () => {
+  //       const commentId = '30dc4093-1bd0-4105-869f-8504e1986145';
+  //
+  //       commentModel.findOne.mockResolvedValue({
+  //         id: 1,
+  //       });
+  //
+  //       postService.findPost.mockResolvedValue({
+  //         groups: [
+  //           {
+  //             postId: 1,
+  //             groupId: 1,
+  //           },
+  //           {
+  //             postId: 1,
+  //             groupId: 2,
+  //           },
+  //         ],
+  //       });
+  //
+  //       authorityService.checkCanReadPost.mockImplementation(() => {
+  //         throw new ForbiddenException('You do not have permission to perform this action !');
+  //       });
+  //
+  //       try {
+  //         await commentService.destroy(authUserMock, commentId);
+  //       } catch (e) {
+  //         expect(e).toBeInstanceOf(ForbiddenException);
+  //         expect((e as ForbiddenException).message).toEqual(
+  //           'You do not have permission to perform this action !'
+  //         );
+  //       }
+  //     });
+  //   });
+  //
+  //   it('should delete comment and relationship successfully', async () => {
+  //     const commentId = '99dc4093-1bd0-4105-869f-8504e1986145';
+  //
+  //     commentModel.findOne.mockResolvedValue({
+  //       id: 1,
+  //       destroy: jest.fn(),
+  //       toJSON: () => ({ id: 1, destroy: jest.fn() }),
+  //     });
+  //
+  //     postService.findPost.mockResolvedValue({
+  //       groups: [
+  //         {
+  //           postId: 1,
+  //           groupId: 1,
+  //         },
+  //         {
+  //           postId: 1,
+  //           groupId: 2,
+  //         },
+  //       ],
+  //     });
+  //
+  //     authorityService.checkCanReadPost.mockReturnThis();
+  //
+  //     mediaService.sync.mockResolvedValue({});
+  //
+  //     mentionService.destroy.mockResolvedValue({});
+  //
+  //     commentModel.destroy.mockResolvedValue(1);
+  //
+  //     // const trxCommit = await sequelizeConnection.transaction().commit.mockResolvedValue(1);
+  //
+  //     const deletedFlag = await commentService.destroy(authUserMock, commentId);
+  //
+  //     expect(commentModel.findOne).toBeCalled();
+  //     expect(postService.findPost).toBeCalled();
+  //     expect(authorityService.checkCanReadPost).toBeCalled();
+  //     expect(mediaService.sync).toBeCalled();
+  //     expect(mentionService.destroy).toBeCalled();
+  //     // expect(trxCommit).toBeCalled();
+  //     expect(deletedFlag).toBeTruthy();
+  //   });
+  //
+  //   it('should delete comment and relationship false and throw exception', async () => {
+  //     commentModel.findOne.mockResolvedValue({
+  //       id: createdComment.id,
+  //       destroy: jest.fn().mockRejectedValue(new Error('connect error')),
+  //     });
+  //
+  //     postService.findPost.mockResolvedValue({
+  //       groups: [
+  //         {
+  //           postId: createdComment.postId,
+  //           groupId: 1,
+  //         },
+  //         {
+  //           postId: createdComment.postId,
+  //           groupId: 2,
+  //         },
+  //       ],
+  //     });
+  //
+  //     authorityService.checkCanReadPost.mockReturnValue({});
+  //
+  //     mediaService.sync.mockReturnValue(Promise.resolve());
+  //
+  //     mentionService.destroy.mockReturnValue(Promise.resolve());
+  //
+  //     // const trxRollback = (await sequelizeConnection.transaction()).rollback.mockResolvedValue(1);
+  //
+  //     const loggerSpy = jest.spyOn(commentService['_logger'], 'error').mockReturnThis();
+  //
+  //     try {
+  //       await commentService.destroy(authUserMock, createdComment.id);
+  //     } catch (e) {
+  //       expect(e.message).toEqual('connect error');
+  //     }
+  //
+  //     expect(commentModel.findOne).toBeCalled();
+  //     expect(postService.findPost).toBeCalled();
+  //     expect(authorityService.checkCanReadPost).toBeCalled();
+  //     expect(mediaService.sync).toBeCalled();
+  //     expect(mentionService.destroy).toBeCalled();
+  //     expect(loggerSpy).toBeCalled();
+  //     // expect(trxRollback).toBeCalled();
+  //   });
+  // });
+
+  // describe('CommentService.getComments', () => {
+  //   describe('Get comments with idGT', () => {
+  //     it('should make condition query with Op.gt', async () => {
+  //       try {
+  //         const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
+  //
+  //         const expectResponse = plainToInstance(CommentResponseDto, getCommentsMock);
+  //
+  //         const classTransformer = jest
+  //           .spyOn(commentService['_classTransformer'], 'plainToInstance')
+  //           .mockReturnValue(expectResponse);
+  //
+  //         const fakeModel = (getCommentsMock as any[]).map((i) => {
+  //           i['toJSON'] = () => i;
+  //           return i;
+  //         });
+  //
+  //         sequelizeConnection.query.mockResolvedValue(fakeModel);
+  //
+  //         reactionService.bindReactionToComments.mockResolvedValue(getCommentsMock);
+  //         mentionService.bindMentionsToComment.mockResolvedValue(getCommentsMock);
+  //         giphyService.bindUrlToComment.mockResolvedValue(getCommentsMock);
+  //
+  //         const bindCommentSpy = jest.spyOn(commentService, 'bindUserToComment').mockResolvedValue([
+  //           {
+  //             id: 1,
+  //             parentId: null,
+  //             postId: 1,
+  //             content: 'hello',
+  //             createdBy: 1,
+  //             updatedBy: 1,
+  //             giphyId: null,
+  //             createdAt: '2022-03-11T08:39:58.832Z',
+  //             updatedAt: '2022-03-11T08:39:58.832Z',
+  //             reactionsCount: '1=',
+  //             media: [],
+  //             mentions: [],
+  //             ownerReactions: [],
+  //             child: [[Object]],
+  //             actor: {
+  //               id: 1,
+  //               username: 'bret.josh',
+  //               fullname: 'Bret Josh',
+  //               avatar: 'https://bein.group/josh.png',
+  //             },
+  //           },
+  //           {
+  //             id: 2,
+  //             parentId: 1,
+  //             postId: 1,
+  //             content: 'hello',
+  //             createdBy: 2,
+  //             updatedBy: 2,
+  //             giphyId: null,
+  //             createdAt: '2022-03-11T08:41:35.047Z',
+  //             updatedAt: '2022-03-11T08:41:35.047Z',
+  //             reactionsCount: '1=',
+  //             media: [],
+  //             mentions: [],
+  //             ownerReactions: [],
+  //             child: [],
+  //             actor: {
+  //               id: 2,
+  //               username: 'caitlyn.back',
+  //               fullname: 'Caitlyn Back',
+  //               avatar: 'https://bein.group/back.png',
+  //             },
+  //           },
+  //         ] as any);
+  //
+  //         const response = await commentService.getComments(
+  //           {
+  //             idGT: 1,
+  //             postId: createdComment.postId,
+  //           },
+  //           authUserMock
+  //         );
+  //
+  //         expect(logSpy).toBeCalled();
+  //
+  //         expect(bindCommentSpy).toBeCalled();
+  //
+  //         expect(classTransformer).toBeCalled();
+  //
+  //         expect(response).toBeInstanceOf(PageDto);
+  //
+  //         expect(response.list[0]).toBeInstanceOf(CommentResponseDto);
+  //
+  //         expect(response.list[0]).toEqual(expectResponse[0]);
+  //       } catch (e) {
+  //         throw e;
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Get comments with idGTE', () => {
+  //     it('should make condition query with Op.gte', async () => {
+  //       // commentModel.findAll.mockReturnThis();
+  //       try {
+  //         await commentService.getComments(
+  //           {
+  //             idGTE: 1,
+  //             postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+  //           },
+  //           authUserMock
+  //         );
+  //         //expect();
+  //       } catch (e) {
+  //         // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+  //         // expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
+  //         //   postId: 1,
+  //         //   parentId: 0,
+  //         // });
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Get comments with idLT', () => {
+  //     it('should make condition query with Op.lt', async () => {
+  //       // commentModel.findAll.mockReturnThis();
+  //       try {
+  //         await commentService.getComments(
+  //           {
+  //             idLT: 1,
+  //             postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+  //           },
+  //           authUserMock
+  //         );
+  //         //expect();
+  //       } catch (e) {
+  //         // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+  //         // expect({
+  //         //   postId: whereClause.postId,
+  //         //   parentId: whereClause.parentId,
+  //         //   id: { [Op.not]: 1 },
+  //         // }).toEqual({
+  //         //   postId: 1,
+  //         //   parentId: 0,
+  //         //   id: { [Op.not]: 1 },
+  //         // });
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Get comments with idLTE', () => {
+  //     it('should make condition query with Op.lte', async () => {
+  //       // commentModel.findAll.mockReturnThis();
+  //       try {
+  //         await commentService.getComments(
+  //           {
+  //             idLTE: 1,
+  //             postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+  //           },
+  //           authUserMock
+  //         );
+  //         //expect();
+  //       } catch (e) {
+  //         // const whereClause = commentModel.findAll.mock.calls[0][0]['where'];
+  //         // expect({ postId: whereClause.postId, parentId: whereClause.parentId }).toEqual({
+  //         //   postId: 1,
+  //         //   parentId: 0,
+  //         // });
+  //       }
+  //     });
+  //   });
+  //
+  //   describe('Get comments with offset', () => {
+  //     it('should make offset query', async () => {
+  //       // commentModel.findAll.mockReturnThis();
+  //       try {
+  //         await commentService.getComments(
+  //           {
+  //             offset: 0,
+  //             postId: '10dc4093-1bd0-4105-869f-8504e1986145',
+  //           },
+  //           authUserMock
+  //         );
+  //       } catch (e) {
+  //         // const offsetClause = commentModel.findAll.mock.calls[0][0]['offset'];
+  //         // expect(offsetClause).toBe(0);
+  //       }
+  //     });
+  //   });
+  // });
+
+  // describe('CommentService.getComment', () => {
+  //   it('should return comment', async () => {
+  //     const logSpy = jest.spyOn(commentService['_logger'], 'debug').mockReturnThis();
+  //
+  //     commentModel.findOne.mockResolvedValue({
+  //       ...getCommentRawMock,
+  //       toJSON: () => getCommentRawMock,
+  //     });
+  //
+  //     reactionService.bindReactionToComments.mockResolvedValue(Promise.resolve());
+  //     mentionService.bindMentionsToComment.mockResolvedValue(Promise.resolve());
+  //     giphyService.bindUrlToComment.mockResolvedValue(Promise.resolve());
+  //     commentService.bindChildrenToComment = jest.fn().mockResolvedValue(Promise.resolve());
+  //
+  //     const bindUserToCommentSpy = jest
+  //       .spyOn(commentService, 'bindUserToComment')
+  //       .mockResolvedValue(Promise.resolve());
+  //
+  //     const classTransformerSpy = jest
+  //       .spyOn(commentService['_classTransformer'], 'plainToInstance')
+  //       .mockImplementation(() => getCommentMock);
+  //     const comment = await commentService.getComment(authUserMock, createdComment.id);
+  //
+  //     expect(logSpy).toBeCalled();
+  //     expect(commentModel.findOne).toBeCalled();
+  //     expect(mentionService.bindMentionsToComment).toBeCalled();
+  //     expect(bindUserToCommentSpy).toBeCalled();
+  //     expect(classTransformerSpy).toBeCalled();
+  //     expect(comment).toEqual(getCommentMock);
+  //   });
+  // });
 
   describe('CommentService._getComments', () => {
     it('Should be successfully', async () => {
@@ -1060,17 +1060,17 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.deleteCommentsByPost', () => {
-    it('Should successfully', async () => {
-      commentModel.findAll.mockResolvedValue([]);
-      await commentService.deleteCommentsByPost(
-        '10dc4093-1bd0-4105-869f-8504e1986115',
-        new sequelizeConnection.transaction()
-      );
-      expect(commentModel.findAll).toBeCalled();
-      expect(commentModel.destroy).toBeCalled();
-    });
-  });
+  // describe('CommentService.deleteCommentsByPost', () => {
+  //   it('Should successfully', async () => {
+  //     commentModel.findAll.mockResolvedValue([]);
+  //     await commentService.deleteCommentsByPost(
+  //       '10dc4093-1bd0-4105-869f-8504e1986115',
+  //       new sequelizeConnection.transaction()
+  //     );
+  //     expect(commentModel.findAll).toBeCalled();
+  //     expect(commentModel.destroy).toBeCalled();
+  //   });
+  // });
 
   describe('CommentService.bindUserToComment', () => {
     describe('Happy case: ', () => {

@@ -685,10 +685,7 @@ export class ReactionService {
    * @param commentIds
    * @param transaction Transaction
    */
-  public async deleteByCommentIds(
-    commentIds: string[],
-    transaction: Transaction
-  ): Promise<number> {
+  public async deleteByCommentIds(commentIds: string[], transaction: Transaction): Promise<number> {
     return this._commentReactionModel.destroy({
       where: {
         commentId: commentIds,
