@@ -32,7 +32,7 @@ describe('FollowController', () => {
 
   describe('FollowController.getUserFollows', () => {
     it('should filterUserFollows be called', async () => {
-      await controller.getUserFollows(getUserFollowDtoMock)
+      await controller.gets(getUserFollowDtoMock)
       expect(followServices.filterUserFollows).toBeCalled();
     })
   })
