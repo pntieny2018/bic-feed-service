@@ -76,6 +76,7 @@ export class CommentActivityService {
           actor: ObjectHelper.omit(['groups', 'email'], comment.actor) as any,
           content: comment.content,
           media: comment.media,
+          mentions: comment.mentions as any,
           giphyId: comment.giphyId,
           giphyUrl: comment.giphyUrl,
           createdAt: comment.createdAt,
