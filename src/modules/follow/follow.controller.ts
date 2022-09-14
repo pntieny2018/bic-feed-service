@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { FollowService } from './follow.service';
 import { APP_VERSION } from '../../common/constants';
-import { GetUserFollowsDto } from './dto/requests/get-user-follows.dto';
+import { GetUserFollowsDto } from './dto/requests';
 import { ApiTags } from '@nestjs/swagger';
+import { FollowsDto } from './dto/response/follows.dto';
 
 @ApiTags('Follow')
 @Controller({
@@ -13,11 +14,8 @@ export class FollowController {
   public constructor(private _followService: FollowService) {}
 
   @Get('/')
-  public getUserFollows(@Query() getUserFollowsDto: GetUserFollowsDto): Promise<{
-    userIds: string[];
-    latestFollowId: number;
-  }> {
-    return this._followService.filterUserFollows(
+  public gets(@Query() getUserFollowsDto: GetUserFollowsDto): Promise<FollowsDto> {
+    return this._followService.gets(
       getUserFollowsDto.ignoreUserIds,
       getUserFollowsDto.groupIds,
       getUserFollowsDto.followId,

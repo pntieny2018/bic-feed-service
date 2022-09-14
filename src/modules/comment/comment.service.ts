@@ -317,7 +317,7 @@ export class CommentService {
     }
     const rawComment = response.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToComments([rawComment]),
+      this._reactionService.bindToComments([rawComment]),
       this._mentionService.bindMentionsToComment([rawComment]),
       this._giphyService.bindUrlToComment([rawComment]),
       this.bindUserToComment([rawComment]),
@@ -418,7 +418,7 @@ export class CommentService {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
     await Promise.all([
-      this._reactionService.bindReactionToComments(comments.list),
+      this._reactionService.bindToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
       this._giphyService.bindUrlToComment(comments.list),
       this.bindUserToComment(comments.list),
@@ -503,7 +503,7 @@ export class CommentService {
       return cm;
     });
     await Promise.all([
-      this._reactionService.bindReactionToComments(comments.list),
+      this._reactionService.bindToComments(comments.list),
       this._mentionService.bindMentionsToComment(comments.list),
       this._giphyService.bindUrlToComment(comments.list),
       this.bindUserToComment(comments.list),
@@ -713,7 +713,7 @@ export class CommentService {
           transaction
         ),
 
-        this._reactionService.deleteReactionByCommentIds([commentId], transaction),
+        this._reactionService.deleteByCommentIds([commentId], transaction),
       ]);
 
       await this._commentModel.destroy({
@@ -888,7 +888,7 @@ export class CommentService {
         MentionableType.COMMENT,
         transaction
       ),
-      this._reactionService.deleteReactionByCommentIds(commentIds, transaction),
+      this._reactionService.deleteByCommentIds(commentIds, transaction),
     ]).catch((ex) => {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
@@ -950,7 +950,7 @@ export class CommentService {
 
     await this.bindUserToComment([rawComment]);
 
-    await this._reactionService.bindReactionToComments([rawComment]);
+    await this._reactionService.bindToComments([rawComment]);
 
     return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
