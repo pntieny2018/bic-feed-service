@@ -27,4 +27,4 @@ async function bootstrap(): Promise<void> {
   await AppBootstrap.init(app, configService);
 }
 
-(async (): Promise<void> => await bootstrap())();
+(async (): Promise<void> => bootstrap())();

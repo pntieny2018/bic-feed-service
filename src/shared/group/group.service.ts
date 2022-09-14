@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@app/redis';
-import { ChildGroup, GroupPrivacy, GroupSharedDto } from './dto';
+import { GroupPrivacy, GroupSharedDto } from './dto';
 import { UserDto } from '../../modules/auth';
 import { ArrayHelper } from '../../common/helpers';
 import { AppHelper } from '../../common/helpers/app.helper';

@@ -25,7 +25,7 @@ export class CategoryService {
   ) {}
   private _logger = new Logger(CategoryService.name);
 
-  public async getCategory(
+  public async get(
     user: UserDto,
     getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
@@ -60,7 +60,7 @@ export class CategoryService {
     });
   }
 
-  public async createCategory(
+  public async create(
     user: UserDto,
     createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
@@ -101,7 +101,7 @@ export class CategoryService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostToCategories(
+  public async addToPost(
     categoryIds: string[],
     postId: string,
     transaction: Transaction
@@ -112,7 +112,6 @@ export class CategoryService {
       categoryId,
     }));
     await this._postCategoryModel.bulkCreate(dataCreate, { transaction });
-    return;
   }
 
   /**
@@ -123,7 +122,7 @@ export class CategoryService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async setCategoriesByPost(
+  public async updateToPost(
     categoryIds: string[],
     postId: string,
     transaction: Transaction

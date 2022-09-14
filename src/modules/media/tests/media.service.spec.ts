@@ -135,7 +135,7 @@ describe('MediaService', () => {
   describe('MediaService.checkValidMedia', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.checkValidMedia(['1','2'], '8c846fe3-a615-42ae-958a-33a43d24a033')
+      const returnValue = await service.isValid(['1','2'], '8c846fe3-a615-42ae-958a-33a43d24a033')
       expect(mediaModel.findAll).toBeCalled()
       expect(returnValue).toEqual(true)
     });

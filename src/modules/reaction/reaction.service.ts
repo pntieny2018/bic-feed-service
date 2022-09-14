@@ -2,10 +2,8 @@ import { UserDto } from '../auth';
 import { PostAllow } from '../post';
 import { CommentService } from '../comment';
 import { ReactionEnum } from './reaction.enum';
-import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
-import { GroupService } from '../../shared/group';
 import { plainToInstance } from 'class-transformer';
 import { PostService } from '../post/post.service';
 import {
@@ -17,7 +15,6 @@ import { getDatabaseConfig } from '../../config/database';
 import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { ReactionCountService } from '../../shared/reaction-count';
 import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
 import { NotificationService, TypeActivity } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
@@ -49,15 +46,12 @@ export class ReactionService {
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     private readonly _userService: UserService,
-    private readonly _groupService: GroupService,
-    private readonly _configService: ConfigService,
     @Inject(forwardRef(() => CommentService))
     private readonly _commentService: CommentService,
     private readonly _followService: FollowService,
     private readonly _postPolicyService: PostPolicyService,
     private readonly _notificationService: NotificationService,
     @InjectConnection() private readonly _sequelize: Sequelize,
-    private readonly _reactionCountService: ReactionCountService,
     @InjectModel(PostReactionModel)
     private readonly _postReactionModel: typeof PostReactionModel,
     @InjectModel(CommentReactionModel)

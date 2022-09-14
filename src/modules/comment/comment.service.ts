@@ -152,7 +152,7 @@ export class CommentService {
       if (media.length) {
         const mediaIds = media.map((m) => m.id);
 
-        await this._mediaService.checkValidMedia(mediaIds, user.id);
+        await this._mediaService.isValid(mediaIds, user.id);
         await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
       }
 
@@ -253,7 +253,7 @@ export class CommentService {
 
       const mediaIds = media.map((m) => m.id);
       if (mediaIds.length) {
-        await this._mediaService.checkValidMedia(mediaIds, user.id);
+        await this._mediaService.isValid(mediaIds, user.id);
       }
       await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
 

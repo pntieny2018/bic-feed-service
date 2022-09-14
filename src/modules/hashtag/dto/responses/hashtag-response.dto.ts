@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
-import { IHashtag } from '../../../../database/models/hashtag.model';
 
 export class HashtagResponseDto {
   @ApiProperty()
