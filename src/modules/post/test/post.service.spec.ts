@@ -687,47 +687,47 @@ describe('PostService', () => {
       }
     });
   });
-  //
-  // describe('bindActorToPost', () => {
-  //   const posts = [{ createdBy: '09c88080-a975-44e1-ae67-89f3d37e114f', actor: null }];
-  //   it('Should bind actor successfully', async () => {
-  //     userService.getMany = jest.fn().mockResolvedValueOnce([
-  //       {
-  //         id: '09c88080-a975-44e1-ae67-89f3d37e114f',
-  //       },
-  //     ]);
-  //     await postBindingService.bindActorToPost(posts);
-  //     expect(posts[0].actor).toStrictEqual({ id: '09c88080-a975-44e1-ae67-89f3d37e114f' });
-  //   });
-  // });
-  //
-  // describe('bindPostData', () => {
-  //   const posts = [{ id: '09c88080-a975-44e1-ae67-89f3d37e114f', commentsCount: 0 }];
-  //   it('Should bind actor successfully', async () => {
-  //     postModelMock.findAll.mockResolvedValueOnce(posts);
-  //     await postBindingService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true });
-  //     expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
-  //   });
-  // });
-  //
-  // describe('bindAudienceToPost', () => {
-  //   const posts = [
-  //     {
-  //       audience: null,
-  //       groups: [
-  //         {
-  //           id: mockedGroups[0].id,
-  //         },
-  //       ],
-  //     },
-  //   ];
-  //
-  //   it('Should bind audience successfully', async () => {
-  //     groupService.getMany = jest.fn().mockResolvedValueOnce(mockedGroups);
-  //     await postBindingService.bindAudienceToPost(posts);
-  //     expect(posts[0].audience.groups).toStrictEqual([mockedGroups[0]]);
-  //   });
-  // });
+
+  describe.skip('bindActorToPost', () => {
+    const posts = [{ createdBy: '09c88080-a975-44e1-ae67-89f3d37e114f', actor: null }];
+    it('Should bind actor successfully', async () => {
+      userService.getMany = jest.fn().mockResolvedValueOnce([
+        {
+          id: '09c88080-a975-44e1-ae67-89f3d37e114f',
+        },
+      ]);
+      await postBindingService.bindActorToPost(posts);
+      expect(posts[0].actor).toStrictEqual({ id: '09c88080-a975-44e1-ae67-89f3d37e114f' });
+    });
+  });
+
+  describe.skip('bindPostData', () => {
+    const posts = [{ id: '09c88080-a975-44e1-ae67-89f3d37e114f', commentsCount: 0 }];
+    it('Should bind actor successfully', async () => {
+      postModelMock.findAll.mockResolvedValueOnce(posts);
+      await postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']);
+      expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
+    });
+  });
+
+  describe.skip('bindAudienceToPost', () => {
+    const posts = [
+      {
+        audience: null,
+        groups: [
+          {
+            id: mockedGroups[0].id,
+          },
+        ],
+      },
+    ];
+
+    it('Should bind audience successfully', async () => {
+      groupService.getMany = jest.fn().mockResolvedValueOnce(mockedGroups);
+      await postBindingService.bindAudienceToPost(posts);
+      expect(posts[0].audience.groups).toStrictEqual([mockedGroups[0]]);
+    });
+  });
 
   describe('processVideo', () => {
     it('Should successfully', async () => {
@@ -782,13 +782,13 @@ describe('PostService', () => {
     });
   });
 
-  // describe('markReadPost', () => {
-  //   it('Should successfully', async () => {
+  describe.skip('markReadPost', () => {
+    it('Should successfully', async () => {
 
-  //   });
-  // });
+    });
+  });
 
-  // describe('findPostIdsByGroupId', () => {});
+  describe.skip('findPostIdsByGroupId', () => {});
 
   describe('getPostEditedHistory', () => {
     it('Should successfully', async () => {

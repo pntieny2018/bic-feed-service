@@ -659,29 +659,29 @@ describe('ArticleService', () => {
     });
   });
 
-  // describe('getList', () => {
-  //   it('Should get list article successfully', async () => {
-  //     const getArticleListDto: GetListArticlesDto = {
-  //       categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-  //       offset: 0,
-  //       limit: 1,
-  //     };
-  //
-  //     PostModel.getArticlesData = jest.fn().mockResolvedValue(Promise.resolve());
-  //     userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
-  //
-  //     postBindingService.bindActorToPost = jest.fn();
-  //     postBindingService.bindAudienceToPost = jest.fn();
-  //     postService.groupPosts = jest.fn().mockResolvedValue([]);
-  //     articleService.maskArticleContent = jest.fn();
-  //     reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-  //     mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-  //
-  //     const result = await articleService.getList(mockedUserAuth, getArticleListDto);
-  //
-  //     expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
-  //     expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
-  //     expect(result).toBeInstanceOf(PageDto);
-  //   });
-  // });
+  describe.skip('getList', () => {
+    it('Should get list article successfully', async () => {
+      const getArticleListDto: GetListArticlesDto = {
+        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
+        offset: 0,
+        limit: 1,
+      };
+
+      PostModel.getArticlesData = jest.fn().mockResolvedValue(Promise.resolve());
+      userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
+
+      postBindingService.bindActorToPost = jest.fn();
+      postBindingService.bindAudienceToPost = jest.fn();
+      postService.groupPosts = jest.fn().mockResolvedValue([]);
+      articleService.maskArticleContent = jest.fn();
+      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+
+      const result = await articleService.getList(mockedUserAuth, getArticleListDto);
+
+      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(result).toBeInstanceOf(PageDto);
+    });
+  });
 });

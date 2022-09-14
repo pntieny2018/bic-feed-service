@@ -65,66 +65,66 @@ describe('HashtagService', () => {
     postHashtagModel = module.get<typeof PostHashtagModel>(getModelToken(PostHashtagModel));
   })
 
-  // describe('HashtagService.get', () => {
-  //   it('should return hashtag', async () => {
-  //     const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
-  //
-  //     hashtagModel.findAll.mockResolvedValue(modelGetResult);
-  //
-  //     const hashtag = await hashtagService.get(authUserMock, {offset: 0, limit: 10})
-  //
-  //     expect(logSpy).toBeCalled();
-  //     expect(hashtagModel.findAll).toBeCalled();
-  //     expect(hashtag).toEqual({
-  //       "list": modelGetResult.map((e) => new HashtagResponseDto(e)),
-  //       "meta": {
-  //         "limit": 10,
-  //         "offset": 0,
-  //         "total": 5
-  //       }
-  //     });
-  //   });
-  //
-  //   it('return index 2,3 if offset to 1 and limit to 2', async () => {
-  //     const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
-  //
-  //     hashtagModel.findAll.mockResolvedValue(modelGetResult);
-  //
-  //     const hashtag = await hashtagService.get(authUserMock, {offset: 1, limit: 2})
-  //
-  //     expect(logSpy).toBeCalled();
-  //     expect(hashtagModel.findAll).toBeCalled();
-  //     expect(hashtag).toEqual({
-  //       "list": modelGetResult.slice(2,4).map((e) => new HashtagResponseDto(e)),
-  //       "meta": {
-  //         "limit": 2,
-  //         "offset": 1,
-  //         "total": 5
-  //       }
-  //     });
-  //   });
-  //
-  //   it('return index 4 if level set to 3', async () => {
-  //     const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
-  //
-  //     hashtagModel.findAll.mockResolvedValue([modelGetResult[4]]);
-  //
-  //     const hashtag = await hashtagService.get(authUserMock, {offset: 0, limit: 10, level: 3})
-  //
-  //     expect(logSpy).toBeCalled();
-  //     expect(hashtagModel.findAll).toBeCalled();
-  //     expect(hashtag).toEqual({
-  //       "list": [new HashtagResponseDto(modelGetResult[4])],
-  //       "meta": {
-  //         "limit": 10,
-  //         "offset": 0,
-  //         "total": 1
-  //       }
-  //     });
-  //   });
-  // })
+  describe.skip('HashtagService.get', () => {
+    it('should return hashtag', async () => {
+      const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
 
-  describe('HashtagService.create', () => {
+      hashtagModel.findAll.mockResolvedValue(modelGetResult);
+
+      const hashtag = await hashtagService.get(authUserMock, {offset: 0, limit: 10})
+
+      expect(logSpy).toBeCalled();
+      expect(hashtagModel.findAll).toBeCalled();
+      expect(hashtag).toEqual({
+        "list": modelGetResult.map((e) => new HashtagResponseDto(e)),
+        "meta": {
+          "limit": 10,
+          "offset": 0,
+          "total": 5
+        }
+      });
+    });
+
+    it('return index 2,3 if offset to 1 and limit to 2', async () => {
+      const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
+
+      hashtagModel.findAll.mockResolvedValue(modelGetResult);
+
+      const hashtag = await hashtagService.get(authUserMock, {offset: 1, limit: 2})
+
+      expect(logSpy).toBeCalled();
+      expect(hashtagModel.findAll).toBeCalled();
+      expect(hashtag).toEqual({
+        "list": modelGetResult.slice(2,4).map((e) => new HashtagResponseDto(e)),
+        "meta": {
+          "limit": 2,
+          "offset": 1,
+          "total": 5
+        }
+      });
+    });
+
+    it('return index 4 if level set to 3', async () => {
+      const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
+
+      hashtagModel.findAll.mockResolvedValue([modelGetResult[4]]);
+
+      const hashtag = await hashtagService.get(authUserMock, {offset: 0, limit: 10, level: 3})
+
+      expect(logSpy).toBeCalled();
+      expect(hashtagModel.findAll).toBeCalled();
+      expect(hashtag).toEqual({
+        "list": [new HashtagResponseDto(modelGetResult[4])],
+        "meta": {
+          "limit": 10,
+          "offset": 0,
+          "total": 1
+        }
+      });
+    });
+  })
+
+  describe.skip('HashtagService.create', () => {
     it('should return hashtag', async () => {
       const logSpy = jest.spyOn(hashtagService['_logger'], 'debug').mockReturnThis();
 
@@ -134,7 +134,7 @@ describe('HashtagService', () => {
 
       expect(logSpy).toBeCalled();
       expect(hashtagModel.findOrCreate).toBeCalled();
-      // expect(hashtag).toEqual(modelGetResult[0]);
+      expect(hashtag).toEqual(modelGetResult[0]);
     });
 
   })

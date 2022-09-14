@@ -639,39 +639,39 @@ describe('ReactionService', () => {
     });
   });
 
-  // describe('Get reaction', () => {
-  //   describe('Get post reaction', () => {
-  //     it('Should successfully', async () => {
-  //       postReactionModel.findAll = jest.fn().mockResolvedValue(mockPostReactionModels);
-  //
-  //       reactionService['_bindActorToReaction'] = jest
-  //         .fn()
-  //         .mockResolvedValue(mockReactionResponseDtos.post);
-  //
-  //       const rsp = await reactionService.gets(mockGetReactionDto.post);
-  //
-  //       expect(rsp).toEqual(mockReactionsResponseDto.post);
-  //       expect(postReactionModel.findAll).toBeCalledTimes(1);
-  //       expect(reactionService['_bindActorToReaction']).toBeCalledTimes(1);
-  //     });
-  //   });
-  //
-  //   describe('Get comment reaction', () => {
-  //     it('Should successfully', async () => {
-  //       commentReactionModel.findAll = jest.fn().mockResolvedValue(mockCommentReactionModels);
-  //
-  //       reactionService['_bindActorToReaction'] = jest
-  //         .fn()
-  //         .mockResolvedValue(mockReactionResponseDtos.comment);
-  //
-  //       const rsp = await reactionService.gets(mockGetReactionDto.comment);
-  //
-  //       expect(rsp).toEqual(mockReactionsResponseDto.comment);
-  //       expect(commentReactionModel.findAll).toBeCalledTimes(1);
-  //       expect(reactionService['_bindActorToReaction']).toBeCalledTimes(1);
-  //     });
-  //   });
-  // });
+  describe.skip('Get reaction', () => {
+    describe('Get post reaction', () => {
+      it('Should successfully', async () => {
+        postReactionModel.findAll = jest.fn().mockResolvedValue(mockPostReactionModels);
+
+        reactionService['_bindActorToReaction'] = jest
+          .fn()
+          .mockResolvedValue(mockReactionResponseDtos.post);
+
+        const rsp = await reactionService.gets(mockGetReactionDto.post);
+
+        expect(rsp).toEqual(mockReactionsResponseDto.post);
+        expect(postReactionModel.findAll).toBeCalledTimes(1);
+        expect(reactionService['_bindActorToReaction']).toBeCalledTimes(1);
+      });
+    });
+
+    describe('Get comment reaction', () => {
+      it('Should successfully', async () => {
+        commentReactionModel.findAll = jest.fn().mockResolvedValue(mockCommentReactionModels);
+
+        reactionService['_bindActorToReaction'] = jest
+          .fn()
+          .mockResolvedValue(mockReactionResponseDtos.comment);
+
+        const rsp = await reactionService.gets(mockGetReactionDto.comment);
+
+        expect(rsp).toEqual(mockReactionsResponseDto.comment);
+        expect(commentReactionModel.findAll).toBeCalledTimes(1);
+        expect(reactionService['_bindActorToReaction']).toBeCalledTimes(1);
+      });
+    });
+  });
 
   describe('Utility function', () => {
     describe('Function: deleteReactionByPostIds', () => {
