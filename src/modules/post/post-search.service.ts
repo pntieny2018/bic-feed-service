@@ -151,7 +151,7 @@ export class PostSearchService {
     });
 
     await Promise.all([
-      this.reactionService.bindReactionToPosts(posts),
+      this.reactionService.bindToPosts(posts),
       this.postBindingService.bindActorToPost(posts),
       this.postBindingService.bindAudienceToPost(posts),
       this.postBindingService.bindPostData(posts, [

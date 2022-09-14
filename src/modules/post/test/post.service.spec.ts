@@ -42,6 +42,7 @@ import { PostResponseDto } from '../dto/responses';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUserAuth } from './mocks/user.mock';
 import { AuthorityFactory } from '../../authority/authority.factory';
+import { PostBindingService } from '../post-binding.service';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -57,6 +58,7 @@ describe('PostService', () => {
   let reactionService: ReactionService;
   let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
+  let postBindingService: PostBindingService;
   let transactionMock;
   let clientKafka;
   let sequelize: Sequelize;
@@ -96,6 +98,10 @@ describe('PostService', () => {
         },
         {
           provide: ReactionService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: PostBindingService,
           useClass: jest.fn(),
         },
         {
@@ -188,6 +194,7 @@ describe('PostService', () => {
     mediaService = moduleRef.get<MediaService>(MediaService);
     commentService = moduleRef.get<CommentService>(CommentService);
     feedService = moduleRef.get<FeedService>(FeedService);
+    postBindingService = moduleRef.get<PostBindingService>(PostBindingService);
     reactionService = moduleRef.get<ReactionService>(ReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
@@ -241,7 +248,7 @@ describe('PostService', () => {
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
         isProcessing: false,
-        privacy: PostPrivacy.PUBLIC,
+        // privacy: PostPrivacy.PUBLIC,
         hashtagsJson: [],
       });
     });
@@ -270,7 +277,6 @@ describe('PostService', () => {
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
-      mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
           id: mockedUpdatePostDto.media.images[0].id,
@@ -318,7 +324,6 @@ describe('PostService', () => {
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
       postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
-      mediaService.getMediaList = jest.fn().mockResolvedValue(mockMediaModelArray);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
           id: mockedUpdatePostDto.media.images[0].id,
@@ -423,7 +428,7 @@ describe('PostService', () => {
 
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
-      reactionService.deleteReactionByPostIds = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.deleteByPostIds = jest.fn().mockResolvedValue(Promise.resolve());
 
       commentService.deleteCommentsByPost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -441,7 +446,7 @@ describe('PostService', () => {
       expect(mediaService.sync).toHaveBeenCalledTimes(1);
       expect(feedService.deleteNewsFeedByPost).toHaveBeenCalledTimes(1);
       expect(postService.setGroupByPost).toHaveBeenCalledTimes(1);
-      expect(reactionService.deleteReactionByPostIds).toHaveBeenCalledTimes(1);
+      expect(reactionService.deleteByPostIds).toHaveBeenCalledTimes(1);
       expect(userMarkedImportantPostModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(commentService.deleteCommentsByPost).toHaveBeenCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
@@ -597,18 +602,18 @@ describe('PostService', () => {
       const rowsSliced = [postData].slice(getDraftPostsDto.offset, getDraftPostsDto.limit + getDraftPostsDto.offset);
       postModelMock.findAll.mockResolvedValue(mockPosts);
 
-      postService.bindActorToPost = jest.fn();
-      postService.bindAudienceToPost = jest.fn();
+      postBindingService.bindActorToPost = jest.fn();
+      postBindingService.bindAudienceToPost = jest.fn();
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
       const result = await postService.getDraftPosts(mockedUserAuth.id, getDraftPostsDto);
 
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledWith(rowsSliced);
-      expect(postService.bindActorToPost).toBeCalledTimes(1);
-      expect(postService.bindActorToPost).toBeCalledWith(rowsSliced);
-      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postService.bindAudienceToPost).toBeCalledWith(rowsSliced);
+      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindActorToPost).toBeCalledWith(rowsSliced);
+      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindAudienceToPost).toBeCalledWith(rowsSliced);
       expect(result).toBeInstanceOf(PageDto);
       expect(result.meta.total).toEqual(total);
       expect(result.list[0]).toBeInstanceOf(PostResponseDto);
@@ -631,25 +636,25 @@ describe('PostService', () => {
 
       authorityService.checkCanReadPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
+      commentService.getComments = jest.fn().mockResolvedValue(null);
 
-      postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      reactionService.bindReactionToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
-      postService.bindActorToPost = jest.fn();
-      postService.bindAudienceToPost = jest.fn();
+      postBindingService.bindActorToPost = jest.fn();
+      postBindingService.bindAudienceToPost = jest.fn();
 
       const result = await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
 
-      expect(result.comments).toStrictEqual(mockedPostResponse.comments);
-      expect(postService.bindActorToPost).toBeCalledTimes(1);
-      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindReactionToPosts).toBeCalledTimes(1);
+      expect(result.comments).toStrictEqual(null);
+      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(reactionService.bindToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
     });
 
@@ -683,7 +688,7 @@ describe('PostService', () => {
     });
   });
 
-  describe('bindActorToPost', () => {
+  describe.skip('bindActorToPost', () => {
     const posts = [{ createdBy: '09c88080-a975-44e1-ae67-89f3d37e114f', actor: null }];
     it('Should bind actor successfully', async () => {
       userService.getMany = jest.fn().mockResolvedValueOnce([
@@ -691,21 +696,21 @@ describe('PostService', () => {
           id: '09c88080-a975-44e1-ae67-89f3d37e114f',
         },
       ]);
-      await postService.bindActorToPost(posts);
+      await postBindingService.bindActorToPost(posts);
       expect(posts[0].actor).toStrictEqual({ id: '09c88080-a975-44e1-ae67-89f3d37e114f' });
     });
   });
 
-  describe('bindPostData', () => {
+  describe.skip('bindPostData', () => {
     const posts = [{ id: '09c88080-a975-44e1-ae67-89f3d37e114f', commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
-      await postService.bindPostData(posts, { commentsCount: true, totalUsersSeen: true });
+      await postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']);
       expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
 
-  describe('bindAudienceToPost', () => {
+  describe.skip('bindAudienceToPost', () => {
     const posts = [
       {
         audience: null,
@@ -719,7 +724,7 @@ describe('PostService', () => {
 
     it('Should bind audience successfully', async () => {
       groupService.getMany = jest.fn().mockResolvedValueOnce(mockedGroups);
-      await postService.bindAudienceToPost(posts);
+      await postBindingService.bindAudienceToPost(posts);
       expect(posts[0].audience.groups).toStrictEqual([mockedGroups[0]]);
     });
   });
@@ -762,28 +767,28 @@ describe('PostService', () => {
     it('Should successfully', async () => {
       postModelMock.findAll = jest.fn().mockResolvedValue([{ toJSON: () => ({}) }]);
 
-      postService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
-      postService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
       await postService.getPostsByMedia('d3c1fa78-de9b-4f40-ad97-ee4dc19e36d9');
 
       expect(postModelMock.findAll).toBeCalledTimes(1);
-      expect(postService.bindAudienceToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-      expect(postService.bindActorToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
     });
   });
 
-  // describe('markReadPost', () => {
-  //   it('Should successfully', async () => {
+  describe.skip('markReadPost', () => {
+    it('Should successfully', async () => {
 
-  //   });
-  // });
+    });
+  });
 
-  // describe('findPostIdsByGroupId', () => {});
+  describe.skip('findPostIdsByGroupId', () => {});
 
   describe('getPostEditedHistory', () => {
     it('Should successfully', async () => {

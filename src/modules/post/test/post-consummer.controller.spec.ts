@@ -1,24 +1,31 @@
 import { PostService } from '../post.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import { InternalPostController } from '../post-consummer.controller';
+import { PostConsumerController } from '../post-consummer.controller';
 import { PostPrivacy } from '../../../database/models/post.model';
+import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 jest.mock('../post.service')
-describe('InternalPostController', () => {
+describe('PostConsumerController', () => {
   let postService: PostService;
-  let internalPostController: InternalPostController;
+  let internalPostController: PostConsumerController;
 
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
-      controllers: [InternalPostController],
+      controllers: [PostConsumerController],
       providers: [
         {
           provide: PostService,
           useClass: jest.fn(),
         },
+        {
+          provide: InternalEventEmitterService,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
       ],
     }).compile();
-    internalPostController = moduleRef.get<InternalPostController>(InternalPostController);
+    internalPostController = moduleRef.get<PostConsumerController>(PostConsumerController);
     postService = moduleRef.get<PostService>(PostService);
   });
 

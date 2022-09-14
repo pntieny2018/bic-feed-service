@@ -14,8 +14,8 @@ describe('CategoryController', () => {
       providers: [{
         provide: CategoryService,
         useValue: {
-          createCategory: jest.fn(),
-          getCategory: jest.fn(),
+          create: jest.fn(),
+          get: jest.fn(),
         },
       }],
     }).compile();
@@ -38,11 +38,11 @@ describe('CategoryController', () => {
     });
 
     it('CommentService.getComments should be called', async () => {
-      categoryService.getCategory.mockResolvedValue([]);
+      categoryService.get.mockResolvedValue([]);
       await controller.get(authUserMock, {
         limit: 10,
       });
-      expect(categoryService.getCategory).toBeCalled();
+      expect(categoryService.get).toBeCalled();
     });
   })
 
@@ -54,9 +54,9 @@ describe('CategoryController', () => {
     });
 
     it('CommentService.create should be called', async () => {
-      categoryService.createCategory.mockResolvedValue({});
+      categoryService.create.mockResolvedValue({});
       await controller.create(authUserMock, createCategoryDto);
-      expect(categoryService.createCategory).toBeCalled();
+      expect(categoryService.create).toBeCalled();
     });
   })
 })
