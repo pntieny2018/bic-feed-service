@@ -10,13 +10,17 @@ import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
 import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
+import { PostSearchService } from '../post-search.service';
+import { FeedService } from '../../feed/feed.service';
 
 describe('PostController', () => {
   let postService: PostService;
   let postController: PostController;
+  let postSearchService: PostSearchService;
   let eventEmitter: InternalEventEmitterService;
   let mentionService: MentionService;
   let authorityService: AuthorityService;
+  let feedService: FeedService;
   const userDto = mockedUserAuth;
 
   beforeEach(async () => {
@@ -28,12 +32,22 @@ describe('PostController', () => {
           useClass: jest.fn(),
         },
         {
+          provide: PostSearchService,
+          useClass: jest.fn(),
+        },
+        {
           provide: MentionService,
           useClass: jest.fn(),
         },
         {
           provide: AuthorityService,
           useClass: jest.fn(),
+        },
+        {
+          provide: FeedService,
+          useValue: {
+            markSeenPosts: jest.fn(),
+          },
         },
         {
           provide: InternalEventEmitterService,
@@ -45,10 +59,12 @@ describe('PostController', () => {
     }).compile();
 
     postService = moduleRef.get<PostService>(PostService);
+    postSearchService = moduleRef.get<PostSearchService>(PostSearchService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     mentionService = moduleRef.get<MentionService>(MentionService);
     postController = moduleRef.get<PostController>(PostController);
     eventEmitter = moduleRef.get<InternalEventEmitterService>(InternalEventEmitterService);
+    feedService = moduleRef.get<FeedService>(FeedService);
   });
 
   afterEach(async () => {
@@ -58,13 +74,13 @@ describe('PostController', () => {
 
   describe('searchPosts', () => {
     it('Should call searchPosts', async () => {
-      postService.searchPosts = jest.fn().mockResolvedValue(true);
+      postSearchService.searchPosts = jest.fn().mockResolvedValue(true);
       const searchPostsDto: SearchPostsDto = {
-        content: 'a',
+        contentSearch: 'a',
       };
       const result = await postController.searchPosts(userDto, searchPostsDto);
-      expect(postService.searchPosts).toBeCalledTimes(1);
-      expect(postService.searchPosts).toBeCalledWith(userDto, searchPostsDto);
+      expect(postSearchService.searchPosts).toBeCalledTimes(1);
+      expect(postSearchService.searchPosts).toBeCalledWith(userDto, searchPostsDto);
     });
   });
 
@@ -84,6 +100,7 @@ describe('PostController', () => {
   describe('getPost', () => {
     it('Get post successfully', async () => {
       postService.getPost = jest.fn().mockResolvedValue(true);
+      feedService.markSeenPosts = jest.fn().mockResolvedValue([]);
       const getPostDto: GetPostDto = {
         commentLimit: 1,
         childCommentLimit: 1,

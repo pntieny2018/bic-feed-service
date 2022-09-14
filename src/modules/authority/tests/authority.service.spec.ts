@@ -7,7 +7,7 @@ import { PostPrivacy } from '../../../database/models/post.model';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { AuthorityFactory } from '../authority.factory';
 
-describe('AuthorityService', () => {
+describe.skip('AuthorityService', () => {
   let service: AuthorityService;
   let groupService;
   let authorityFactory;

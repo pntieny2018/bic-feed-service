@@ -53,73 +53,83 @@ export class FeedService {
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    try {
-      const authUserId = authUser.id;
-      const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-      let totalImportantPosts = 0;
-      let importantPostsExc = Promise.resolve([]);
+    const authUserId = authUser.id;
+    const constraints = PostModel.getIdConstrains(getNewsFeedDto);
+    let totalImportantPosts = 0;
+    let importantPostsExc = Promise.resolve([]);
 
-      const hasGetImportantPost = isImportant || isImportant === null;
-      if (hasGetImportantPost) {
-        totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
-          authUserId,
-          constraints
-        );
+    const hasGetImportantPost = isImportant || isImportant === null;
+    if (hasGetImportantPost) {
+      totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
+        authUserId,
+        constraints
+      );
 
-        if (offset < totalImportantPosts) {
-          importantPostsExc = PostModel.getNewsFeedData({
-            ...getNewsFeedDto,
-            limit: limit + 1,
-            authUserId,
-            isImportant: true,
-          });
-        }
-      }
-
-      let normalPostsExc = Promise.resolve([]);
-      const isNeedMorePost = offset + limit >= totalImportantPosts;
-      const hasGetNormalPost = isImportant === false || isImportant === null;
-      if (isNeedMorePost && hasGetNormalPost) {
-        const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
-        normalPostsExc = PostModel.getNewsFeedData({
+      if (offset < totalImportantPosts) {
+        importantPostsExc = PostModel.getNewsFeedData({
           ...getNewsFeedDto,
-          offset: Math.max(0, offset - totalImportantPosts),
-          limit: Math.max(0, normalLimit),
+          limit: limit + 1,
           authUserId,
-          isImportant: false,
+          isImportant: true,
         });
       }
-      const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-      const rows = importantPosts.concat(normalPosts);
+    }
 
-      const posts = this._postService.groupPosts(rows);
-
-      const hasNextPage = posts.length === limit + 1;
-      if (hasNextPage) posts.pop();
-
-      await Promise.all([
-        this._reactionService.bindReactionToPosts(posts),
-        this._mentionService.bindMentionsToPosts(posts),
-        this._postBindingService.bindActorToPost(posts),
-        this._postBindingService.bindAudienceToPost(posts, authUser),
-      ]);
-      const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
-        excludeExtraneousValues: true,
-      });
-      return new PageDto<PostResponseDto>(result, {
-        limit,
-        offset,
-        hasNextPage,
-      });
-    } catch (e) {
-      this._logger.error(e, e.stack);
-      this._sentryService.captureException(e);
-      return new PageDto<PostResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
+    let normalPostsExc = Promise.resolve([]);
+    const isNeedMorePost = offset + limit >= totalImportantPosts;
+    const hasGetNormalPost = isImportant === false || isImportant === null;
+    if (isNeedMorePost && hasGetNormalPost) {
+      const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
+      normalPostsExc = PostModel.getNewsFeedData({
+        ...getNewsFeedDto,
+        offset: Math.max(0, offset - totalImportantPosts),
+        limit: Math.max(0, normalLimit),
+        authUserId,
+        isImportant: false,
       });
     }
+
+    return this._bindAndTransformData({
+      importantPostsExc,
+      normalPostsExc,
+      offset,
+      limit,
+      authUser,
+    });
+  }
+
+  private async _bindAndTransformData({
+    importantPostsExc,
+    normalPostsExc,
+    offset,
+    limit,
+    authUser,
+  }: {
+    importantPostsExc: any;
+    normalPostsExc: any;
+    offset: number;
+    limit: number;
+    authUser: UserDto;
+  }): Promise<PageDto<PostResponseDto>> {
+    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
+    const rows = importantPosts.concat(normalPosts);
+    const posts = this._postService.groupPosts(rows);
+    const hasNextPage = posts.length === limit + 1;
+    if (hasNextPage) posts.pop();
+    await Promise.all([
+      this._reactionService.bindToPosts(posts),
+      this._mentionService.bindMentionsToPosts(posts),
+      this._postBindingService.bindActorToPost(posts),
+      this._postBindingService.bindAudienceToPost(posts, authUser),
+    ]);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+    return new PageDto<PostResponseDto>(result, {
+      limit,
+      offset,
+      hasNextPage,
+    });
   }
 
   public async getUsersSeenPots(
@@ -263,25 +273,12 @@ export class FeedService {
         isImportant: false,
       });
     }
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1;
-    if (hasNextPage) posts.pop();
-    await Promise.all([
-      this._reactionService.bindReactionToPosts(posts),
-      this._mentionService.bindMentionsToPosts(posts),
-      this._postBindingService.bindActorToPost(posts),
-      this._postBindingService.bindAudienceToPost(posts, authUser),
-    ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      limit,
+    return this._bindAndTransformData({
+      importantPostsExc,
+      normalPostsExc,
       offset,
-      hasNextPage,
+      limit,
+      authUser,
     });
   }
 

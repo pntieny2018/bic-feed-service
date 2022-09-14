@@ -254,7 +254,7 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this.reactionService.bindReactionToPosts([jsonPost]),
+      this.reactionService.bindToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
       this.postBinding.bindActorToPost([jsonPost]),
       this.postBinding.bindAudienceToPost(
@@ -334,7 +334,7 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this.reactionService.bindReactionToPosts([jsonPost]),
+      this.reactionService.bindToPosts([jsonPost]),
       this.mentionService.bindMentionsToPosts([jsonPost]),
       this.postBinding.bindActorToPost([jsonPost]),
       this.postBinding.bindAudienceToPost([jsonPost]),
@@ -716,7 +716,7 @@ export class PostService {
         ? this.mediaService.sync(postId, EntityType.POST, [], transaction)
         : Promise.resolve(),
       this.setGroupByPost([], postId, transaction),
-      this.reactionService.deleteReactionByPostIds([postId]),
+      this.reactionService.deleteByPostIds([postId]),
       this.commentService.deleteCommentsByPost(postId, transaction),
       this.feedService.deleteNewsFeedByPost(postId, transaction),
       this.feedService.deleteUserSeenByPost(postId, transaction),
