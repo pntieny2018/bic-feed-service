@@ -18,6 +18,18 @@ module.exports = {
         }
       );
 
+      await queryInterface.addColumn(
+        {
+          tableName: tableName,
+          schema: schemaName,
+        },
+        'is_active',
+        {
+          type: Sequelize.BOOLEAN,
+          allowNull: true,
+        }
+      );
+
       const masterData = [
         {
           name: 'Fashion & Beauty',
@@ -144,6 +156,13 @@ module.exports = {
           schema: schemaName,
         },
         'zindex'
+      );
+      await queryInterface.removeColumn(
+        {
+          tableName: tableName,
+          schema: schemaName,
+        },
+        'is_active'
       );
     },
 };
