@@ -67,7 +67,7 @@ export class ReactionService {
    * @param getReactionDto GetReactionDto
    * @returns Promise resolve ReactionsResponseDto
    */
-  public async getReactions(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
+  public async gets(getReactionDto: GetReactionDto): Promise<ReactionsResponseDto> {
     const { schema } = getDatabaseConfig();
     const response = new ReactionsResponseDto();
     const { target, targetId, latestId, limit, order, reactionName } = getReactionDto;
@@ -104,7 +104,7 @@ export class ReactionService {
         const reactionsPost = (rsp ?? []).map((r) => r.toJSON());
         return {
           order: order,
-          list: await this._bindActorToReaction(reactionsPost),
+          list: await this._bindActor(reactionsPost),
           limit: limit,
           latestId: reactionsPost.length > 0 ? reactionsPost[reactionsPost.length - 1]?.id : null,
         };
@@ -131,7 +131,7 @@ export class ReactionService {
         const reactionsComment = (rsc ?? []).map((r) => r.toJSON());
 
         return {
-          list: await this._bindActorToReaction(reactionsComment),
+          list: await this._bindActor(reactionsComment),
           limit: limit,
           latestId:
             reactionsComment.length > 0 ? reactionsComment[reactionsComment.length - 1]?.id : null,
@@ -141,7 +141,7 @@ export class ReactionService {
     return response;
   }
 
-  private async _bindActorToReaction(
+  private async _bindActor(
     reactions: IPostReaction[] | ICommentReaction[]
   ): Promise<ReactionResponseDto[]> {
     const actorIds = reactions.map((r) => r.createdBy);
@@ -165,7 +165,7 @@ export class ReactionService {
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve ReactionResponseDto
    */
-  public createReaction(
+  public create(
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
@@ -436,7 +436,7 @@ export class ReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteReaction(
+  public async delete(
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<IPostReaction | ICommentReaction> {
@@ -685,10 +685,7 @@ export class ReactionService {
    * @param commentIds
    * @param transaction Transaction
    */
-  public async deleteReactionByCommentIds(
-    commentIds: string[],
-    transaction: Transaction
-  ): Promise<number> {
+  public async deleteByCommentIds(commentIds: string[], transaction: Transaction): Promise<number> {
     return this._commentReactionModel.destroy({
       where: {
         commentId: commentIds,
@@ -703,7 +700,7 @@ export class ReactionService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deleteReactionByPostIds(postIds: string[]): Promise<number> {
+  public async deleteByPostIds(postIds: string[]): Promise<number> {
     return this._postReactionModel.destroy({
       where: {
         postId: postIds,
@@ -717,7 +714,7 @@ export class ReactionService {
    * @returns Promise resolve void
    * @throws HttpException
    */
-  public async bindReactionToPosts(posts: any[]): Promise<void> {
+  public async bindToPosts(posts: any[]): Promise<void> {
     const { schema } = getDatabaseConfig();
     const postIds = [];
     for (const post of posts) {
@@ -756,7 +753,7 @@ export class ReactionService {
    * @throws HttpException
    * @param comments
    */
-  public async bindReactionToComments(comments: any[]): Promise<void> {
+  public async bindToComments(comments: any[]): Promise<void> {
     const { schema } = getDatabaseConfig();
     const commentIds = [];
     for (const comment of comments) {

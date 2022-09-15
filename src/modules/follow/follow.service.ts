@@ -10,7 +10,7 @@ import { FollowModel } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import { NIL as NIL_UUID } from 'uuid';
+import { FollowsDto } from './dto/response/follows.dto';
 
 @Injectable()
 export class FollowService {
@@ -115,16 +115,14 @@ export class FollowService {
    * @param followId Number
    * @param limit Number
    */
-  public async getUniqueUserFollows(
+  // TODO remove this
+  public async getsUnique(
     ignoreUserIds: string[],
     targetGroupIds: string[],
     groupIds: string[],
     followId = 0,
     limit = 1000
-  ): Promise<{
-    userIds: string[];
-    latestFollowId: number;
-  }> {
+  ): Promise<FollowsDto> {
     try {
       const schema = this._databaseConfig.schema;
 
@@ -181,15 +179,12 @@ export class FollowService {
    * @param followId Number
    * @param limit Number
    */
-  public async filterUserFollows(
+  public async gets(
     ignoreUserIds: string[],
     groupIds: string[],
     followId = 0,
     limit = 1000
-  ): Promise<{
-    userIds: string[];
-    latestFollowId: number;
-  }> {
+  ): Promise<FollowsDto> {
     this._logger.debug(
       `[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}. groupIds: ${groupIds}`
     );
@@ -240,6 +235,7 @@ export class FollowService {
     }
   }
 
+  // TODO move this
   public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
     const { schema } = getDatabaseConfig();
 

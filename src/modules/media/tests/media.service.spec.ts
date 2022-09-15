@@ -123,15 +123,6 @@ describe('MediaService', () => {
     });
   })
 
-  describe('MediaService.getMediaList', () => {
-    it('should return create if success', async () => {
-      mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.getMediaList({})
-      expect(mediaModel.findAll).toBeCalled()
-      expect(returnValue).toEqual([])
-    });
-  })
-
   describe('MediaService.checkValidMedia', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
