@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FollowService } from '../../modules/follow';
 import { SentryService } from '@app/sentry';
 import { FollowListener } from '../follow/follow.listener';
 import { PostService } from '../../modules/post/post.service';
@@ -25,7 +24,7 @@ describe('FollowListener', () => {
         {
           provide: PostService,
           useValue: {
-            findPostIdsByGroupId: jest.fn(),
+            findIdsByGroupId: jest.fn(),
           },
         },
         {
@@ -69,21 +68,21 @@ describe('FollowListener', () => {
     )
     it('should success', async () => {
       const loggerSpy = jest.spyOn(followListener['_logger'], 'debug').mockReturnThis();
-      postService.findPostIdsByGroupId.mockResolvedValue(['655a4c00-c245-4399-b64c-5ffa674a7c26']);
+      postService.findIdsByGroupId.mockResolvedValue(['655a4c00-c245-4399-b64c-5ffa674a7c26']);
       feedPublisherService.attachPostsForUsersNewsFeed.mockResolvedValue()
       await followListener.onUsersFollowGroups(usersHasBeenFollowedEvent)
       expect(loggerSpy).toBeCalled()
-      expect(postService.findPostIdsByGroupId).toBeCalled()
+      expect(postService.findIdsByGroupId).toBeCalled()
       expect(feedPublisherService.attachPostsForUsersNewsFeed).toBeCalled()
     })
 
     it('should fail', async () => {
       const loggerSpy = jest.spyOn(followListener['_logger'], 'debug').mockReturnThis();
-      postService.findPostIdsByGroupId.mockResolvedValue([1]);
+      postService.findIdsByGroupId.mockResolvedValue([1]);
       feedPublisherService.attachPostsForUsersNewsFeed.mockRejectedValue()
       await followListener.onUsersFollowGroups(usersHasBeenFollowedEvent)
       expect(loggerSpy).toBeCalled()
-      expect(postService.findPostIdsByGroupId).toBeCalled()
+      expect(postService.findIdsByGroupId).toBeCalled()
       expect(feedPublisherService.attachPostsForUsersNewsFeed).toBeCalled()
       expect(sentryService.captureException).toBeCalled()
     })

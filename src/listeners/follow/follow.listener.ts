@@ -32,7 +32,7 @@ export class FollowListener {
 
     const { userIds, groupIds } = payload;
 
-    const postIds = await this._postService.findPostIdsByGroupId(groupIds);
+    const postIds = await this._postService.findIdsByGroupId(groupIds);
 
     if (postIds && postIds.length) {
       this._feedPublishService

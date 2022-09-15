@@ -5,10 +5,9 @@ import { PageDto } from '../../../common/dto/pagination/page.dto';
 import { PostModel, PostPrivacy } from '../../../database/models/post.model';
 import { PostService } from '../post.service';
 import { GetPostDto } from './../dto/requests/get-post.dto';
-import { mockedGroups, mockIPost, mockMediaModelArray, mockPostEditedHistoryModelArr } from './mocks/input.mock';
+import { mockedGroups, mockIPost, mockPostEditedHistoryModelArr } from './mocks/input.mock';
 import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
 import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
-import { mockedSearchResponse } from './mocks/response/search.response.mock';
 
 import { RedisModule } from '@app/redis';
 import { SentryService } from '@app/sentry';
@@ -18,7 +17,6 @@ import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { EntityIdDto } from '../../../common/dto';
 import { LogicException } from '../../../common/exceptions';
-import { ElasticsearchHelper } from '../../../common/helpers';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
@@ -56,7 +54,6 @@ describe('PostService', () => {
   let commentService: CommentService;
   let feedService: FeedService;
   let reactionService: ReactionService;
-  let elasticSearchService: ElasticsearchService;
   let authorityService: AuthorityService;
   let postBindingService: PostBindingService;
   let transactionMock;
@@ -197,7 +194,6 @@ describe('PostService', () => {
     postBindingService = moduleRef.get<PostBindingService>(PostBindingService);
     reactionService = moduleRef.get<ReactionService>(ReactionService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
-    elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
     clientKafka = moduleRef.get<ClientKafka>(KAFKA_PRODUCER);
     transactionMock = createMock<Transaction>({
@@ -224,18 +220,18 @@ describe('PostService', () => {
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
-      postService.addPostGroup = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.addGroup = jest.fn().mockResolvedValue(Promise.resolve());
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       postModelMock.create = jest.fn().mockResolvedValue(mockedPostCreated);
 
-      await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+      await postService.create(mockedUserAuth, mockedCreatePostDto);
 
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
       expect(mediaService.sync).toBeCalledTimes(1);
       expect(mentionService.create).not.toBeCalled();
-      expect(postService.addPostGroup).toBeCalledTimes(1);
+      expect(postService.addGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
         isDraft: true,
         isArticle: false,
@@ -254,13 +250,13 @@ describe('PostService', () => {
     });
 
     it('Should rollback if have an exception when insert data into DB', async () => {
-      postService.getPrivacyPost = jest.fn().mockResolvedValue('public');
+      postService.getPrivacy = jest.fn().mockResolvedValue('public');
       postModelMock.create = jest
         .fn()
         .mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        await postService.createPost(mockedUserAuth, mockedCreatePostDto);
+        await postService.create(mockedUserAuth, mockedCreatePostDto);
       } catch (error) {
         expect(transactionMock.commit).not.toBeCalled();
         expect(transactionMock.rollback).toBeCalledTimes(1);
@@ -276,7 +272,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
           id: mockedUpdatePostDto.media.images[0].id,
@@ -296,7 +292,7 @@ describe('PostService', () => {
 
       postModelMock.update = jest.fn().mockResolvedValue(mockedPostCreated);
 
-      await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
+      await postService.update(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
 
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
@@ -323,7 +319,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
           id: mockedUpdatePostDto.media.images[0].id,
@@ -344,7 +340,7 @@ describe('PostService', () => {
         .mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        await postService.updatePost(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
+        await postService.update(mockedPostResponse, mockedUserAuth, mockedUpdatePostDto);
       } catch (e) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalledTimes(1);
@@ -363,9 +359,9 @@ describe('PostService', () => {
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
       authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-      postService.getPrivacyPost = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mockedUserAuth.id = mockedDataUpdatePost.createdBy;
-      const result = await postService.publishPost(
+      const result = await postService.publish(
         mockedDataUpdatePost.id,
         mockedUserAuth
       );
@@ -389,7 +385,7 @@ describe('PostService', () => {
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
 
       try {
-        await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
+        await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
         expect(error).toBeInstanceOf(LogicException);
       }
@@ -399,7 +395,7 @@ describe('PostService', () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(null);
 
       try {
-        await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
+        await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
         expect(error).toBeInstanceOf(LogicException);
       }
@@ -409,7 +405,7 @@ describe('PostService', () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       mediaService.countMediaByPost = jest.fn().mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
       try {
-        await postService.publishPost(mockedDataUpdatePost.id, mockedUserAuth);
+        await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
         expect(error).toBeInstanceOf(LogicException);
       }
@@ -439,7 +435,7 @@ describe('PostService', () => {
 
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataDeletePost);
 
-      const result = await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
+      const result = await postService.delete(mockedDataDeletePost.id, mockedUserAuth);
 
       expect(postModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
@@ -463,7 +459,7 @@ describe('PostService', () => {
         .fn()
         .mockRejectedValue(new Error('Any error when insert data to DB'));
       try {
-        await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
+        await postService.delete(mockedDataDeletePost.id, mockedUserAuth);
       } catch (error) {
         expect(transactionMock.commit).not.toBeCalledTimes(1);
         expect(transactionMock.rollback).toBeCalledTimes(1);
@@ -474,7 +470,7 @@ describe('PostService', () => {
       postModelMock.findByPk = jest.fn().mockResolvedValueOnce(mockedDataDeletePost);
       mockedUserAuth.id = mockedDataDeletePost.createdBy + '09c88080-a975-44e1-ae67-89f3d37e114f';
       try {
-        await postService.deletePost(mockedDataDeletePost.id, mockedUserAuth);
+        await postService.delete(mockedDataDeletePost.id, mockedUserAuth);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -483,31 +479,29 @@ describe('PostService', () => {
     it('Should throw exception if post not exist', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValueOnce(null);
       try {
-        await postService.deletePost('ad70928e-cffd-44a9-9b27-19faa7210530', mockedUserAuth);
+        await postService.delete('ad70928e-cffd-44a9-9b27-19faa7210530', mockedUserAuth);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
     });
   });
 
-  describe('addPostGroup', () => {
+  describe('addGroup', () => {
     it('Return if parameter is empty', async () => {
-      const result = await postService.addPostGroup(
+      const result = await postService.addGroup(
         [],
         'ad70928e-cffd-44a9-9b27-19faa7210530',
         transactionMock
       );
-      expect(result).toBe(true);
     });
 
     it('Return if parameter is empty', async () => {
-      const result = await postService.addPostGroup(
+      const result = await postService.addGroup(
         ['09c88080-a975-44e1-ae67-89f3d37e114f', '69fa2be3-5d43-4edf-84d9-650ce6799b41'],
         'ad70928e-cffd-44a9-9b27-19faa7210530',
         transactionMock
       );
       expect(postGroupModelMock.bulkCreate).toBeCalledTimes(1);
-      expect(result).toBe(true);
     });
   });
 
@@ -606,7 +600,7 @@ describe('PostService', () => {
       postBindingService.bindAudienceToPost = jest.fn();
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
-      const result = await postService.getDraftPosts(mockedUserAuth.id, getDraftPostsDto);
+      const result = await postService.getDrafts(mockedUserAuth.id, getDraftPostsDto);
 
       expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
       expect(mentionService.bindMentionsToPosts).toBeCalledWith(rowsSliced);
@@ -649,7 +643,7 @@ describe('PostService', () => {
       postBindingService.bindActorToPost = jest.fn();
       postBindingService.bindAudienceToPost = jest.fn();
 
-      const result = await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
+      const result = await postService.get(mockedPostData.id, mockedUserAuth, getPostDto);
 
       expect(result.comments).toStrictEqual(null);
       expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
@@ -662,7 +656,7 @@ describe('PostService', () => {
       postModelMock.findOne = jest.fn().mockResolvedValueOnce(null);
       PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
       try {
-        await postService.getPost(mockedPostData.id, mockedUserAuth, getPostDto);
+        await postService.get(mockedPostData.id, mockedUserAuth, getPostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -681,7 +675,7 @@ describe('PostService', () => {
         );
 
       try {
-        await postService.getPost(mockedPostResponse.id, mockedUserAuth, getPostDto);
+        await postService.get(mockedPostResponse.id, mockedUserAuth, getPostDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -773,7 +767,7 @@ describe('PostService', () => {
 
       postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
-      await postService.getPostsByMedia('d3c1fa78-de9b-4f40-ad97-ee4dc19e36d9');
+      await postService.getsByMedia('d3c1fa78-de9b-4f40-ad97-ee4dc19e36d9');
 
       expect(postModelMock.findAll).toBeCalledTimes(1);
       expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
@@ -801,7 +795,7 @@ describe('PostService', () => {
         count: mockPostEditedHistoryModelArr.length,
       });
 
-      const result = await postService.getPostEditedHistory(
+      const result = await postService.getEditedHistory(
         mockedUserAuth,
         mockIPost.id,
         mockGetPostEditedHistoryDto
@@ -823,7 +817,7 @@ describe('PostService', () => {
         .mockResolvedValue({ rows: [], count: 0 });
 
       try {
-        await postService.getPostEditedHistory(
+        await postService.getEditedHistory(
           mockedUserAuth,
           mockIPost.id,
           mockGetPostEditedHistoryDto
@@ -861,7 +855,7 @@ describe('PostService', () => {
 
   describe('updatePostStatus', () => {
     it('should success', async () => {
-      await postService.updatePostStatus('09c88080-a975-44e1-ae67-89f3d37e114f')
+      await postService.updateStatus('09c88080-a975-44e1-ae67-89f3d37e114f')
       expect(sequelize.query).toBeCalled()
     })
   })
@@ -878,7 +872,7 @@ describe('PostService', () => {
       });
       groupService.getMany = jest.fn().mockResolvedValue([{id: '09c88080-a975-44e1-ae67-89f3d37e114f', privacy: PostPrivacy.SECRET}, {id: '69fa2be3-5d43-4edf-84d9-650ce6799b41', privacy: PostPrivacy.PRIVATE}])
 
-      await postService.updatePostPrivacy('40dc4093-1bd0-4105-869f-8504e1986141')
+      await postService.updatePrivacy('40dc4093-1bd0-4105-869f-8504e1986141')
       expect(postModelMock.findOne).toBeCalled()
       expect(groupService.getMany).toBeCalled()
       expect(postModelMock.update).toBeCalled()
@@ -888,7 +882,7 @@ describe('PostService', () => {
   describe('groupPosts', () => {
     it('should success', async () => {
 
-      const groupResult = postService.groupPosts([mockedPostResponse])
+      const groupResult = postService.group([mockedPostResponse])
 
     })
   })
@@ -903,14 +897,6 @@ describe('PostService', () => {
       expect(updatedPostIds).toEqual({
         [PostPrivacy.PRIVATE.toString()]: ['09c88080-a975-44e1-ae67-89f3d37e114f']
       })
-    })
-  })
-
-  describe('bulkUpdatePostPrivacy', () => {
-    it('must follow rule privacy order', async () => {
-      const updatedPostIds = await postService.bulkUpdatePostPrivacy(['09c88080-a975-44e1-ae67-89f3d37e114f','69fa2be3-5d43-4edf-84d9-650ce6799b41','2f43bde9-261e-4538-9a0b-bf5b29b025de','b25a9ed3-5515-4958-85c1-7fbeda3928c5'], PostPrivacy.SECRET)
-
-      expect(postModelMock.update).toBeCalled()
     })
   })
 });

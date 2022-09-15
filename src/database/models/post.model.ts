@@ -1,6 +1,11 @@
 import { MentionModel, IMention } from './mention.model';
-import { IMedia } from './media.model';
-import { Optional, BelongsToManyAddAssociationsMixin, QueryTypes, DataTypes } from 'sequelize';
+import { IMedia, MediaModel } from './media.model';
+import sequelize, {
+  Optional,
+  BelongsToManyAddAssociationsMixin,
+  QueryTypes,
+  DataTypes,
+} from 'sequelize';
 import {
   AllowNull,
   BelongsToMany,
@@ -16,13 +21,11 @@ import {
   DeletedAt,
 } from 'sequelize-typescript';
 import { CommentModel, IComment } from './comment.model';
-import { MediaModel } from './media.model';
 import { PostMediaModel } from './post-media.model';
 import { UserNewsFeedModel } from './user-newsfeed.model';
 import { PostGroupModel, IPostGroup } from './post-group.model';
 import { PostReactionModel } from './post-reaction.model';
 import { Literal } from 'sequelize/types/utils';
-import sequelize from 'sequelize';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { MentionableType } from '../../common/constants';

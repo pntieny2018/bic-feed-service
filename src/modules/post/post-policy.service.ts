@@ -19,15 +19,10 @@ export class PostPolicyService {
    * @returns Promise resolve boolean
    */
   public async allow(post: IPost | PostResponseDto, action: PostAllow): Promise<void> {
-    if (post instanceof PostResponseDto && !post.setting[action]) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message:
-          action === PostAllow.REACT
-            ? `React of this post are not available`
-            : `Comment of this post are not available`,
-      });
-    } else if (!(post instanceof PostResponseDto) && !post[action]) {
+    if (
+      (post instanceof PostResponseDto && !post.setting[action]) ||
+      (!(post instanceof PostResponseDto) && !post[action])
+    ) {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message:

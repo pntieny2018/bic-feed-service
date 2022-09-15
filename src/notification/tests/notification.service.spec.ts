@@ -246,22 +246,22 @@ describe('NotificationService', () => {
     it('Func: create', async () => {
       sentryService.captureException = jest.fn();
       kafkaProducer.emit = jest.fn();
-      postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+      postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
       await commentNotificationService.create('event-name', mockUserDto, mockCommentResponseDto);
-      expect(postService.getPost).toBeCalledTimes(1);
+      expect(postService.get).toBeCalledTimes(1);
     });
 
     it('Func: update', async () => {
       sentryService.captureException = jest.fn();
       kafkaProducer.emit = jest.fn();
-      postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+      postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
       await commentNotificationService.update(
         'event-name',
         mockUserDto,
         mockCommentModel as unknown as IComment,
         mockCommentResponseDto
       );
-      expect(postService.getPost).toBeCalledTimes(1);
+      expect(postService.get).toBeCalledTimes(1);
     });
 
     it('Func: destroy', async () => {

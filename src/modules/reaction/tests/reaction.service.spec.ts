@@ -216,7 +216,7 @@ describe('ReactionService', () => {
   describe('Create post reaction', () => {
     describe('Happy case', () => {
       it('Should successfully', async () => {
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -242,7 +242,7 @@ describe('ReactionService', () => {
         );
 
         expect(JSON.stringify(response)).toEqual(JSON.stringify(mockReactionResponseDto.post));
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(sequelizeConnection.transaction).toBeCalledTimes(1);
         expect(postReactionModel.findByPk).toBeCalledTimes(1);
         expect(followService.getValidUserIds).toBeCalledTimes(1);
@@ -254,7 +254,7 @@ describe('ReactionService', () => {
 
     describe("Reaction is existed | Post isn't allow to react | Post is draft", () => {
       it('Should failed', async () => {
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -270,7 +270,7 @@ describe('ReactionService', () => {
           expect(e.message).toEqual('Error in database layer');
         }
 
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
         expect(sequelizeConnection.transaction).toBeCalledTimes(1);
       });
@@ -278,7 +278,7 @@ describe('ReactionService', () => {
 
     describe('User is not in the any groups of post', () => {
       it('Should failed', async () => {
-        postService.getPost = jest
+        postService.get = jest
           .fn()
           .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
@@ -288,7 +288,7 @@ describe('ReactionService', () => {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
       });
     });
 
@@ -325,7 +325,7 @@ describe('ReactionService', () => {
       it('Should successfully', async () => {
         commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
 
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -350,7 +350,7 @@ describe('ReactionService', () => {
 
         expect(JSON.stringify(response)).toEqual(JSON.stringify(mockReactionResponseDto.comment));
         expect(commentService.findComment).toBeCalledTimes(1);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(sequelizeConnection.transaction).toBeCalledTimes(1);
         expect(commentReactionModel.findByPk).toBeCalledTimes(1);
         expect(followService.getValidUserIds).toBeCalledTimes(1);
@@ -364,7 +364,7 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
 
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -379,7 +379,7 @@ describe('ReactionService', () => {
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
         expect(sequelizeConnection.transaction).toBeCalledTimes(1);
       });
@@ -403,7 +403,7 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
 
-        postService.getPost = jest.fn().mockResolvedValue(null);
+        postService.get = jest.fn().mockResolvedValue(null);
 
         try {
           await reactionService.create(mockUserDto, mockCreateReactionDto.comment);
@@ -412,7 +412,7 @@ describe('ReactionService', () => {
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
       });
     });
 
@@ -434,7 +434,7 @@ describe('ReactionService', () => {
   describe('Delete post reaction', () => {
     describe('Happy case', () => {
       it('Should successfully', async () => {
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -450,7 +450,7 @@ describe('ReactionService', () => {
         );
 
         expect(response).toEqual(mockIPostReaction);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
         expect(postReactionModel.findOne).toBeCalledTimes(1);
         expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
@@ -460,7 +460,7 @@ describe('ReactionService', () => {
 
     describe("User isn't in the any groups of post", () => {
       it('Should failed', async () => {
-        postService.getPost = jest
+        postService.get = jest
           .fn()
           .mockRejectedValue(new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING));
 
@@ -470,13 +470,13 @@ describe('ReactionService', () => {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
         }
 
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
       });
     });
 
     describe("Post isn't not allow to react", () => {
       it('Should failed', async () => {
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest
           .fn()
@@ -488,14 +488,14 @@ describe('ReactionService', () => {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_POST_SETTING_DISABLE);
         }
 
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
       });
     });
 
     describe('Reaction is not existed', () => {
       it('Should failed', async () => {
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -507,7 +507,7 @@ describe('ReactionService', () => {
           expect(e.message).toEqual(HTTP_STATUS_ID.APP_REACTION_NOT_EXISTING);
         }
 
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
         expect(postReactionModel.findOne).toBeCalledTimes(1);
       });
@@ -546,7 +546,7 @@ describe('ReactionService', () => {
       it('Should successfully', async () => {
         commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
 
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -563,7 +563,7 @@ describe('ReactionService', () => {
 
         expect(response).toEqual(mockICommentReaction);
         expect(commentService.findComment).toBeCalledTimes(1);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(commentReactionModel.findOne).toBeCalledTimes(1);
         expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
         expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
@@ -574,7 +574,7 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
 
-        postService.getPost = jest.fn().mockResolvedValue(null);
+        postService.get = jest.fn().mockResolvedValue(null);
 
         try {
           await reactionService.delete(mockUserDto, mockDeleteReactionDto.comment);
@@ -583,7 +583,7 @@ describe('ReactionService', () => {
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
       });
     });
 
@@ -605,7 +605,7 @@ describe('ReactionService', () => {
       it('Should failed', async () => {
         commentService.findComment = jest.fn().mockResolvedValue(mockCommentResponseDto);
 
-        postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+        postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
 
         postPolicyService.allow = jest.fn();
 
@@ -618,7 +618,7 @@ describe('ReactionService', () => {
         }
 
         expect(commentService.findComment).toBeCalledTimes(1);
-        expect(postService.getPost).toBeCalledTimes(1);
+        expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
         expect(commentReactionModel.findOne).toBeCalledTimes(1);
       });

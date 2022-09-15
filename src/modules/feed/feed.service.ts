@@ -113,7 +113,7 @@ export class FeedService {
   }): Promise<PageDto<PostResponseDto>> {
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
     const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.groupPosts(rows);
+    const posts = this._postService.group(rows);
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     await Promise.all([

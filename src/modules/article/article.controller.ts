@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { APP_VERSION, HTTP_STATUS_ID } from '../../common/constants';
+import { APP_VERSION } from '../../common/constants';
 import { AuthUser, UserDto } from '../auth';
 import { ArticleService } from './article.service';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
@@ -21,7 +21,6 @@ import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetPostPipe } from '../post/pipes';
 import { PageDto } from '../../common/dto';
-import { SearchArticlesDto } from './dto/requests/search-article.dto';
 import { GetListArticlesDto } from './dto/requests';
 import {
   ArticleHasBeenDeletedEvent,
@@ -31,8 +30,6 @@ import {
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { AuthorityService } from '../authority';
 import { PostService } from '../post/post.service';
-import { MentionService } from '../mention';
-import { LogicException } from '../../common/exceptions';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -47,18 +44,6 @@ export class ArticleController {
     private _authorityService: AuthorityService,
     private _postService: PostService
   ) {}
-
-  @ApiOperation({ summary: 'Search article' })
-  @ApiOkResponse({
-    type: ArticleResponseDto,
-  })
-  @Get('/search')
-  public searchArticles(
-    @AuthUser() user: UserDto,
-    @Query() searchArticlesDto: SearchArticlesDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.searchArticle(user, searchArticlesDto);
-  }
 
   @ApiOperation({ summary: 'Get list article' })
   @ApiOkResponse({
@@ -77,14 +62,14 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/:id')
-  public getArticle(
+  public get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    if (user === null) return this._articleService.getPublicArticle(articleId, getArticleDto);
+    if (user === null) return this._articleService.getPublic(articleId, getArticleDto);
     else {
-      const article = this._articleService.getArticle(articleId, user, getArticleDto);
+      const article = this._articleService.get(articleId, user, getArticleDto);
       return article;
     }
   }
@@ -96,13 +81,13 @@ export class ArticleController {
   })
   @Post('/')
   @InjectUserToBody()
-  public async createArticle(
+  public async create(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const created = await this._articleService.createArticle(user, createArticleDto);
+    const created = await this._articleService.create(user, createArticleDto);
     if (created) {
-      const article = await this._articleService.getArticle(created.id, user, new GetArticleDto());
+      const article = await this._articleService.get(created.id, user, new GetArticleDto());
       return article;
     }
   }
@@ -127,38 +112,26 @@ export class ArticleController {
   })
   @Put('/:id')
   @InjectUserToBody()
-  public async updateArticle(
+  public async update(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
     const { audience } = updateArticleDto;
-    const articleBefore = await this._articleService.getArticle(
-      articleId,
-      user,
-      new GetArticleDto()
-    );
+    const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (articleBefore.isDraft === false && audience.groupIds.length === 0) {
       throw new BadRequestException('Audience is required');
     }
 
     await this._authorityService.checkCanUpdatePost(user, articleBefore, audience.groupIds);
     if (articleBefore.isDraft === false) {
-      await this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
+      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
     }
     await this._authorityService.checkPostOwner(articleBefore, user.id);
 
-    const isUpdated = await this._articleService.updateArticle(
-      articleBefore,
-      user,
-      updateArticleDto
-    );
+    const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
     if (isUpdated) {
-      const articleUpdated = await this._articleService.getArticle(
-        articleId,
-        user,
-        new GetArticleDto()
-      );
+      const articleUpdated = await this._articleService.get(articleId, user, new GetArticleDto());
       this._eventEmitter.emit(
         new ArticleHasBeenUpdatedEvent({
           oldArticle: articleBefore,
@@ -177,13 +150,13 @@ export class ArticleController {
     description: 'Publish article successfully',
   })
   @Put('/:id/publish')
-  public async publishArticle(
+  public async publish(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
-    const isPublished = await this._articleService.publishArticle(articleId, user);
+    const isPublished = await this._articleService.publish(articleId, user);
     if (isPublished) {
-      const article = await this._articleService.getArticle(articleId, user, new GetArticleDto());
+      const article = await this._articleService.get(articleId, user, new GetArticleDto());
       this._eventEmitter.emit(
         new ArticleHasBeenPublishedEvent({
           article,
@@ -200,11 +173,11 @@ export class ArticleController {
     description: 'Delete article successfully',
   })
   @Delete('/:id')
-  public async deleteArticle(
+  public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<boolean> {
-    const articleDeleted = await this._articleService.deleteArticle(articleId, user);
+    const articleDeleted = await this._articleService.delete(articleId, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
         new ArticleHasBeenDeletedEvent({

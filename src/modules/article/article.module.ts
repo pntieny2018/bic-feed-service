@@ -14,12 +14,14 @@ import { HashtagModule } from '../hashtag';
 import { SeriesModule } from '../series';
 import { CanUseCategoryConstraint } from './validators/can-use-category.validator';
 import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
+import { FeedModule } from '../feed';
 @Module({
   imports: [
     PostModule,
     UserModule,
     GroupModule,
     MediaModule,
+    FeedModule,
     MentionModule,
     CategoryModule,
     HashtagModule,
