@@ -51,11 +51,6 @@ describe('ReactionService', () => {
   let reactionService: ReactionService;
   let commentReactionModel: typeof CommentReactionModel;
   let postReactionModel: typeof PostReactionModel;
-  let postModel: typeof PostModel;
-  let commentModel: typeof CommentModel;
-  let postGroupModel: typeof PostGroupModel;
-  let userService: UserService;
-  let groupService: GroupService;
   let notificationService: NotificationService;
   let postService: PostService;
   let sequelizeConnection: Sequelize;
@@ -189,15 +184,11 @@ describe('ReactionService', () => {
     commentReactionModel = module.get<typeof CommentReactionModel>(
       getModelToken(CommentReactionModel)
     );
-    userService = module.get<UserService>(UserService);
-    groupService = module.get<GroupService>(GroupService);
+    
     commentReactionModel = module.get<typeof CommentReactionModel>(
       getModelToken(CommentReactionModel)
     );
     postReactionModel = module.get<typeof PostReactionModel>(getModelToken(PostReactionModel));
-    postModel = module.get<typeof PostModel>(getModelToken(PostModel));
-    commentModel = module.get<typeof CommentModel>(getModelToken(CommentModel));
-    postGroupModel = module.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     notificationService = module.get<NotificationService>(NotificationService);
     postService = module.get<PostService>(PostService);
     sequelizeConnection = module.get<Sequelize>(Sequelize);

@@ -57,9 +57,7 @@ describe('ArticleService', () => {
   let seriesService: SeriesService;
   let hashtagService: HashtagService;
   let postBindingService: PostBindingService;
-  let feedService: FeedService;
   let postModelMock;
-  let postGroupModelMock;
   let authorityService: AuthorityService;
   let transactionMock;
   let sequelize: Sequelize;
@@ -219,7 +217,6 @@ describe('ArticleService', () => {
     seriesService = moduleRef.get<SeriesService>(SeriesService);
     hashtagService = moduleRef.get<HashtagService>(HashtagService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
-    postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
     transactionMock = createMock<Transaction>({

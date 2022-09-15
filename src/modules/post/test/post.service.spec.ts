@@ -28,7 +28,7 @@ import { FeedService } from '../../feed/feed.service';
 import { MediaService } from '../../media';
 import { MentionService } from '../../mention';
 import { ReactionService } from '../../reaction';
-import { SearchPostsDto, UpdatePostDto } from '../dto/requests';
+import { UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostPolicyService } from '../post-policy.service';
 
@@ -416,7 +416,6 @@ describe('PostService', () => {
     const mockedDataDeletePost = createMock<PostModel>(mockedPostData);
 
     it('Delete post successfully', async () => {
-      // postService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
       authorityService.checkCanDeletePost = jest.fn().mockReturnThis();
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -435,7 +434,7 @@ describe('PostService', () => {
 
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataDeletePost);
 
-      const result = await postService.delete(mockedDataDeletePost.id, mockedUserAuth);
+      await postService.delete(mockedDataDeletePost.id, mockedUserAuth);
 
       expect(postModelMock.destroy).toHaveBeenCalledTimes(1);
       expect(mentionService.setMention).toHaveBeenCalledTimes(1);
@@ -488,7 +487,7 @@ describe('PostService', () => {
 
   describe('addGroup', () => {
     it('Return if parameter is empty', async () => {
-      const result = await postService.addGroup(
+      await postService.addGroup(
         [],
         'ad70928e-cffd-44a9-9b27-19faa7210530',
         transactionMock
@@ -496,7 +495,7 @@ describe('PostService', () => {
     });
 
     it('Return if parameter is empty', async () => {
-      const result = await postService.addGroup(
+      await postService.addGroup(
         ['09c88080-a975-44e1-ae67-89f3d37e114f', '69fa2be3-5d43-4edf-84d9-650ce6799b41'],
         'ad70928e-cffd-44a9-9b27-19faa7210530',
         transactionMock
@@ -563,14 +562,14 @@ describe('PostService', () => {
     it('Should get post successfully', async () => {
       const mockedPost = createMock<PostModel>(mockedPostCreated);
       postModelMock.findOne.mockResolvedValueOnce(mockedPost);
-      const result = await postService.findPost(entity);
+      await postService.findPost(entity);
       expect(postModelMock.findOne).toBeCalledTimes(1);
     });
 
     it('Catch exception', async () => {
       postModelMock.findOne.mockResolvedValueOnce(null);
       try {
-        const result = await postService.findPost(entity);
+        await postService.findPost(entity);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -795,7 +794,7 @@ describe('PostService', () => {
         count: mockPostEditedHistoryModelArr.length,
       });
 
-      const result = await postService.getEditedHistory(
+      await postService.getEditedHistory(
         mockedUserAuth,
         mockIPost.id,
         mockGetPostEditedHistoryDto
@@ -845,7 +844,7 @@ describe('PostService', () => {
         }
       }
       try{
-      const result = postService.checkContent(updatePostDto.content, updatePostDto.media);
+      postService.checkContent(updatePostDto.content, updatePostDto.media);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
