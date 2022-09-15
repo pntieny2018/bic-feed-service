@@ -130,7 +130,7 @@ describe('ReactionController', () => {
   describe('Create reaction', () => {
     describe('Create post reaction', () => {
       it('Create post reaction successfully', async () => {
-        reactionService.createReaction = jest.fn().mockResolvedValue(mockReactionResponseDto.post);
+        reactionService.create = jest.fn().mockResolvedValue(mockReactionResponseDto.post);
         const rsp = await reactionController.create(mockUserDto, mockCreateReactionDto.post);
         expect(rsp).toEqual(mockReactionResponseDto.post);
       });
@@ -139,7 +139,7 @@ describe('ReactionController', () => {
 
   describe('Create comment reaction', () => {
     it('Create comment reaction successfully', async () => {
-      reactionService.createReaction = jest.fn().mockResolvedValue(mockReactionResponseDto.comment);
+      reactionService.create = jest.fn().mockResolvedValue(mockReactionResponseDto.comment);
       const rsp = await reactionController.create(mockUserDto, mockCreateReactionDto.comment);
       expect(rsp).toEqual(mockReactionResponseDto.comment);
     });
@@ -147,7 +147,7 @@ describe('ReactionController', () => {
 
   describe('Delete reaction', () => {
     it('Delete post reaction successfully', async () => {
-      reactionService.deleteReaction = jest.fn().mockResolvedValue(mockReactionResponseDto.post);
+      reactionService.delete = jest.fn().mockResolvedValue(mockReactionResponseDto.post);
       const rsp = await reactionController.delete(mockUserDto, mockCreateReactionDto.post);
       expect(rsp).toEqual(mockReactionResponseDto.post);
     });
@@ -155,8 +155,8 @@ describe('ReactionController', () => {
 
   describe('Get reaction', () => {
     it('Should successfully', async () => {
-      reactionService.getReactions = jest.fn().mockResolvedValue(mockReactionsResponseDto);
-      const rsp = await reactionController.get(mockUserDto, mockGetReactionDto.post);
+      reactionService.gets = jest.fn().mockResolvedValue(mockReactionsResponseDto);
+      const rsp = await reactionController.gets(mockUserDto, mockGetReactionDto.post);
       expect(rsp).toEqual(mockReactionsResponseDto);
     });
   });

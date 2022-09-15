@@ -15,8 +15,7 @@ describe('FollowController', () => {
           useValue: {
             follow: jest.fn(),
             unfollow: jest.fn(),
-            getUserFollow: jest.fn(),
-            filterUserFollows: jest.fn(),
+            gets: jest.fn(),
           },
         },
       ],
@@ -30,10 +29,10 @@ describe('FollowController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('FollowController.getUserFollows', () => {
-    it('should filterUserFollows be called', async () => {
-      await controller.getUserFollows(getUserFollowDtoMock)
-      expect(followServices.filterUserFollows).toBeCalled();
+  describe('FollowController.getss', () => {
+    it('should gets be called', async () => {
+      await controller.gets(getUserFollowDtoMock)
+      expect(followServices.gets).toBeCalled();
     })
   })
 });

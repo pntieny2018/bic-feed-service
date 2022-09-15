@@ -9,6 +9,7 @@ import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { SentryService } from '@app/sentry';
 import { NIL as NIL_UUID } from 'uuid';
+import { FollowsDto } from '../follow/dto/response/follows.dto';
 
 @Injectable()
 export class FeedPublisherService {
@@ -119,14 +120,14 @@ export class FeedPublisherService {
     this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
     let latestFollowId = 0;
     const { old, attached, detached, current } = changeGroupAudienceDto;
-    let followers: { userIds: string[]; latestFollowId: number };
+    let followers: FollowsDto;
 
     while (true) {
       try {
         if (attached.length) {
           // if attached new group
           // I will get only users who are in the new group but not in the old groups
-          followers = await this._followService.getUniqueUserFollows(
+          followers = await this._followService.getsUnique(
             [NIL_UUID],
             attached,
             old,
@@ -144,7 +145,7 @@ export class FeedPublisherService {
            ** replace group
            */
           // I will get only users who are in the attached group but not in the old groups
-          followers = await this._followService.getUniqueUserFollows(
+          followers = await this._followService.getsUnique(
             [NIL_UUID],
             detached,
             current,

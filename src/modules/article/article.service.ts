@@ -147,7 +147,7 @@ export class ArticleService {
     if (hasNextPage) articles.pop();
 
     await Promise.all([
-      this._reactionService.bindReactionToPosts(articles),
+      this._reactionService.bindToPosts(articles),
       this._mentionService.bindMentionsToPosts(articles),
       this._postBindingService.bindActorToPost(articles),
       this._postBindingService.bindAudienceToPost(articles),
@@ -333,7 +333,7 @@ export class ArticleService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToPosts([jsonPost]),
+      this._reactionService.bindToPosts([jsonPost]),
       this._mentionService.bindMentionsToPosts([jsonPost]),
       this._postBindingService.bindActorToPost([jsonPost]),
       this._postBindingService.bindAudienceToPost([jsonPost]),
@@ -430,7 +430,7 @@ export class ArticleService {
     }
     const jsonPost = post.toJSON();
     await Promise.all([
-      this._reactionService.bindReactionToPosts([jsonPost]),
+      this._reactionService.bindToPosts([jsonPost]),
       this._mentionService.bindMentionsToPosts([jsonPost]),
       this._postBindingService.bindActorToPost([jsonPost]),
       this._postBindingService.bindAudienceToPost([jsonPost]),

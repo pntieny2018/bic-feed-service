@@ -11,6 +11,7 @@ import {
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
 import { CommentHasBeenUpdatedEventPayload } from '../../events/comment/payload';
+import { FeedService } from '../../modules/feed/feed.service';
 
 describe('CommentListener', () => {
 
@@ -18,6 +19,7 @@ describe('CommentListener', () => {
   let commentNotificationService;
   let commentService;
   let sentryService;
+  let feedService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,6 +30,10 @@ describe('CommentListener', () => {
           useValue: {
             getComment: jest.fn(),
           },
+        },
+        {
+          provide: FeedService,
+          useValue: {},
         },
         {
           provide: CommentNotificationService,
@@ -50,6 +56,7 @@ describe('CommentListener', () => {
     commentService = module.get<CommentService>(CommentService);
     commentNotificationService = module.get<CommentNotificationService>(CommentNotificationService);
     sentryService = module.get<SentryService>(SentryService);
+    feedService = module.get<FeedService>(FeedService);
   })
   const errorMessage = 'Error'
 
@@ -58,6 +65,7 @@ describe('CommentListener', () => {
       const loggerSpy = jest.spyOn(commentListener['_logger'], 'debug').mockReturnThis();
       commentService.getComment.mockResolvedValue([]);
       commentNotificationService.create.mockResolvedValue()
+      feedService.markSeenPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mockCommentResponseDto.parentId = '1234'
       await commentListener.onCommentHasBeenCreated(new CommentHasBeenCreatedEvent({
         actor: authUserMock,
@@ -71,6 +79,7 @@ describe('CommentListener', () => {
     it('should fail', async () => {
       const loggerSpy = jest.spyOn(commentListener['_logger'], 'error').mockReturnThis();
       commentNotificationService.create.mockRejectedValue(errorMessage)
+      feedService.markSeenPosts = jest.fn().mockResolvedValue(Promise.resolve());
       await commentListener.onCommentHasBeenCreated(new CommentHasBeenCreatedEvent({
         actor: authUserMock,
         commentResponse: mockCommentResponseDto,

@@ -165,7 +165,7 @@ describe('FeedPublisherService', () => {
 
   describe('Func: processFanout', () => {
     it('Should successfully', async () => {
-      followService.getUniqueUserFollows = jest.fn().mockResolvedValue({ userIds: [2, 3, 4] });
+      followService.getsUnique = jest.fn().mockResolvedValue({ userIds: [2, 3, 4] });
 
       feedPublisherService.attachPostForAnyNewsFeed = jest
         .fn()
@@ -177,11 +177,11 @@ describe('FeedPublisherService', () => {
         attached: ['31c2e99b-88dd-40c8-9d1a-5ad7d54572c1'],
       });
 
-      expect(followService.getUniqueUserFollows).toBeCalled();
+      expect(followService.getsUnique).toBeCalled();
     });
 
     it('Should failed', async () => {
-      followService.getUniqueUserFollows = jest
+      followService.getsUnique = jest
         .fn()
         .mockRejectedValue(new Error('Database connection error.'));
 
@@ -196,7 +196,7 @@ describe('FeedPublisherService', () => {
       }
 
       expect(sentryService.captureException).toBeCalled();
-      expect(followService.getUniqueUserFollows).toBeCalled();
+      expect(followService.getsUnique).toBeCalled();
     });
   });
 
