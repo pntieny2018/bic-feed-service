@@ -28,21 +28,22 @@ import { CategoryModel } from '../../../database/models/category.model';
 import { SeriesModel } from '../../../database/models/series.model';
 import { HashtagModel } from '../../../database/models/hashtag.model';
 import { mockedPostResponse } from '../../post/test/mocks/response/post.response.mock';
-import { ElasticsearchHelper } from '../../../common/helpers';
-import { mockedSearchResponse } from '../../post/test/mocks/response/search.response.mock';
 import { PageDto } from '../../../common/dto';
-import { PostResponseDto } from '../../post/dto/responses';
-import { mockedPostCreated } from '../../post/test/mocks/response/create-post.response.mock';
-import { mockedCreatePostDto } from '../../post/test/mocks/request/create-post.dto.mock';
 import { LogicException } from '../../../common/exceptions';
 import { mockedCreateArticleDto } from './mocks/request/create-article.dto.mock';
 import { mockedArticleCreated } from './mocks/response/create-article.response.mock';
-import { mockMediaModelArray } from '../../post/test/mocks/input.mock';
 import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
 import { AuthorityFactory } from '../../authority/authority.factory';
 import { PostBindingService } from '../../post/post-binding.service';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
+import { FeedService } from '../../feed/feed.service';
+import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
+import { KAFKA_PRODUCER } from '../../../common/constants';
+import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
+import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -56,11 +57,7 @@ describe('ArticleService', () => {
   let seriesService: SeriesService;
   let hashtagService: HashtagService;
   let postBindingService: PostBindingService;
-  let elasticSearchService: ElasticsearchService;
   let postModelMock;
-  let categoryModelMock;
-  let seriesModelMock;
-  let hashtagModelMock;
   let authorityService: AuthorityService;
   let transactionMock;
   let sequelize: Sequelize;
@@ -69,6 +66,8 @@ describe('ArticleService', () => {
       imports: [RedisModule, ClientsModule],
       providers: [
         ArticleService,
+        PostBindingService,
+        FeedService,
         AuthorityService,
         {
           provide: AuthorityFactory,
@@ -89,17 +88,7 @@ describe('ArticleService', () => {
           useClass: jest.fn(),
         },
         {
-          provide: ElasticsearchService,
-          useClass: jest.fn(),
-        },
-        {
           provide: PostService,
-          useValue: {
-            deletePost: jest.fn(),
-          },
-        },
-        {
-          provide: PostBindingService,
           useValue: {
             deletePost: jest.fn(),
           },
@@ -160,7 +149,28 @@ describe('ArticleService', () => {
           },
         },
         {
+          provide: getModelToken(PostGroupModel),
+          useValue: {
+            create: jest.fn(),
+            update: jest.fn(),
+            findOne: jest.fn(),
+            findByPk: jest.fn(),
+            addMedia: jest.fn(),
+            destroy: jest.fn(),
+            findAll: jest.fn(),
+            findAndCountAll: jest.fn(),
+          },
+        },
+        {
           provide: getModelToken(CategoryModel),
+          useClass: jest.fn(),
+        },
+        {
+          provide: getModelToken(UserMarkReadPostModel),
+          useClass: jest.fn(),
+        },
+        {
+          provide: getModelToken(PostEditedHistoryModel),
           useClass: jest.fn(),
         },
         {
@@ -169,6 +179,18 @@ describe('ArticleService', () => {
         },
         {
           provide: getModelToken(HashtagModel),
+          useClass: jest.fn(),
+        },
+        {
+          provide: getModelToken(UserNewsFeedModel),
+          useClass: jest.fn(),
+        },
+        {
+          provide: getModelToken(UserSeenPostModel),
+          useClass: jest.fn(),
+        },
+        {
+          provide: KAFKA_PRODUCER,
           useClass: jest.fn(),
         },
       ],
@@ -185,11 +207,7 @@ describe('ArticleService', () => {
     categoryService = moduleRef.get<CategoryService>(CategoryService);
     seriesService = moduleRef.get<SeriesService>(SeriesService);
     hashtagService = moduleRef.get<HashtagService>(HashtagService);
-    elasticSearchService = moduleRef.get<ElasticsearchService>(ElasticsearchService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
-    categoryModelMock = moduleRef.get<typeof CategoryModel>(getModelToken(CategoryModel));
-    seriesModelMock = moduleRef.get<typeof SeriesModel>(getModelToken(SeriesModel));
-    hashtagModelMock = moduleRef.get<typeof HashtagModel>(getModelToken(HashtagModel));
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     sequelize = moduleRef.get<Sequelize>(Sequelize);
     transactionMock = createMock<Transaction>({
@@ -206,16 +224,8 @@ describe('ArticleService', () => {
     expect(articleService).toBeDefined();
   });
 
-  describe('deleteArticle', () => {
-    const mockedDataDeletePost = createMock<PostModel>(mockedArticleData);
-    it('Should delete article successfully', async () => {
-      jest.spyOn(postService, 'deletePost').mockResolvedValueOnce(mockedDataDeletePost);
-      const result = await articleService.deleteArticle('abcd', mockedUserAuth);
-      expect(result).toStrictEqual(mockedDataDeletePost);
-    });
-  });
 
-  describe('getArticle', () => {
+  describe.skip('get', () => {
     const getArticleDto: GetArticleDto = {
       commentLimit: 1,
       childCommentLimit: 1,
@@ -233,31 +243,24 @@ describe('ArticleService', () => {
 
       authorityService.checkCanReadArticle = jest.fn().mockResolvedValue(Promise.resolve());
       commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
-      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindRelatedData = jest.fn().mockResolvedValue(Promise.resolve());
 
-      const result = await articleService.getArticle(
+      const result = await articleService.get(
         mockedArticleData.id,
         mockedUserAuth,
         getArticleDto
       );
 
       expect(result.comments).toStrictEqual(mockedArticleResponse.comments);
-      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
-      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindToPosts).toBeCalledTimes(1);
-      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
+      expect(postBindingService.bindRelatedData).toBeCalledTimes(1);
     });
 
     it('Should catch exception if post not found', async () => {
       postModelMock.findOne = jest.fn();
       PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
-      PostModel.loadLock = jest.fn().mockResolvedValue([])
 
       try {
-        const result = await articleService.getArticle(
+        await articleService.get(
           mockedArticleData.id,
           mockedUserAuth,
           getArticleDto
@@ -268,196 +271,7 @@ describe('ArticleService', () => {
     });
   });
 
-  describe('getPublicArticle', () => {
-    const getArticleDto: GetArticleDto = {
-      commentLimit: 1,
-      childCommentLimit: 1,
-      withComment: true,
-      categories: ['a'],
-    };
-
-    it('Should get public article successfully', async () => {
-      postModelMock.findOne = jest.fn().mockResolvedValue({
-        ...mockedArticleResponse,
-        toJSON: () => mockedArticleResponse,
-      });
-
-      authorityService.checkIsPublicArticle = jest.fn().mockResolvedValue(Promise.resolve());
-      commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
-      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      const result = await articleService.getPublicArticle(mockedArticleData.id, getArticleDto);
-
-      expect(result.comments).toStrictEqual(mockedArticleResponse.comments);
-      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
-      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindToPosts).toBeCalledTimes(1);
-      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-    });
-
-    it('Should catch exception if post not found', async () => {
-      postModelMock.findOne = jest.fn();
-      try {
-        const result = await articleService.getPublicArticle(mockedArticleData.id, getArticleDto);
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-  });
-
-  describe('getPayloadSearch', () => {
-    it('Should return payload correctly with no content, actor, time', async () => {
-      const searchDto: SearchArticlesDto = {
-        offset: 0,
-        limit: 1,
-        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-        series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
-      };
-      const expectedResult = {
-        index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
-        body: {
-          query: {
-            bool: {
-              filter: [
-                {
-                  terms: {
-                    'category.id': ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-                  },
-                },
-                {
-                  terms: {
-                    'series.id': ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
-                  },
-                },
-                {
-                  terms: {
-                    'audience.groups.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
-                  },
-                },
-              ],
-              must: [],
-              should: [],
-            },
-          },
-          sort: [{ createdAt: 'desc' }],
-        },
-        from: 0,
-        size: 1,
-      };
-      const result = await articleService.getPayloadSearch(searchDto, ['838ca621-e37d-414b-babf-4efc6ac2b5aa']);
-      expect(result).toStrictEqual(expectedResult);
-    });
-
-    it('Should return payload correctly with actor', async () => {
-      const searchDto: SearchArticlesDto = {
-        offset: 0,
-        limit: 1,
-        actors: ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
-        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-        series: ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
-      };
-      const expectedResult = {
-        index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
-        body: {
-          query: {
-            bool: {
-              filter: [
-                {
-                  terms: {
-                    'category.id': ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-                  },
-                },
-                {
-                  terms: {
-                    'series.id': ['1bfb93ac-2322-4323-b7ef-5e809bf9b722'],
-                  },
-                },
-                {
-                  terms: {
-                    'actor.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
-                  },
-                },
-                {
-                  terms: {
-                    'audience.groups.id': ['838ca621-e37d-414b-babf-4efc6ac2b5aa'],
-                  },
-                },
-              ],
-              must: [],
-              should: [],
-            },
-          },
-          sort: [{ createdAt: 'desc' }],
-        },
-        from: 0,
-        size: 1,
-      };
-      const result = await articleService.getPayloadSearch(searchDto, ['838ca621-e37d-414b-babf-4efc6ac2b5aa']);
-      expect(result).toStrictEqual(expectedResult);
-    });
-  });
-
-  describe('searchArticles', () => {
-    it('Should search article successfully', async () => {
-      const searchDto: SearchArticlesDto = {
-        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-        offset: 0,
-        limit: 1,
-      };
-      elasticSearchService.search = jest.fn().mockResolvedValue(mockedSearchResponse);
-      const mockPosts = mockedSearchResponse.body.hits.hits.map((item) => {
-        const source = item._source;
-        source['id'] = parseInt(item._id);
-       // source['highlight'] = item.highlight['content'][0];
-        return source;
-      });
-      userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
-      articleService.getPayloadSearch = jest.fn();
-
-      postBindingService.bindActorToPost = jest.fn();
-      postBindingService.bindAudienceToPost = jest.fn();
-      postBindingService.bindPostData = jest.fn();
-
-      const result = await articleService.searchArticle(mockedUserAuth, searchDto);
-
-      expect(articleService.getPayloadSearch).toBeCalledTimes(1);
-      expect(elasticSearchService.search).toBeCalledTimes(1);
-      expect(articleService.getPayloadSearch).toBeCalledWith(
-        searchDto,
-        mockedUserAuth.profile.groups
-      );
-
-      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
-      expect(postBindingService.bindActorToPost).toBeCalledWith(mockPosts);
-      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(postBindingService.bindPostData).toBeCalledTimes(1);
-      expect(postBindingService.bindAudienceToPost).toBeCalledWith(mockPosts);
-      expect(result).toBeInstanceOf(PageDto);
-
-      expect(result.list[0]).toBeInstanceOf(PostResponseDto);
-    });
-    it('Should return []', async () => {
-      const searchDto: SearchArticlesDto = {
-        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-        offset: 0,
-        limit: 1,
-      };
-      elasticSearchService.search = jest.fn().mockResolvedValue(mockedSearchResponse);
-      const result = await articleService.searchArticle(
-        { ...mockedUserAuth, profile: null },
-        searchDto
-      );
-      expect(elasticSearchService.search).not.toBeCalled();
-      expect(result).toBeInstanceOf(PageDto);
-
-      expect(result.list).toStrictEqual([]);
-    });
-  });
-
-  describe.skip('createArticle', () => {
+  describe.skip('create', () => {
     it('Create article successfully', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -474,19 +288,19 @@ describe('ArticleService', () => {
       mentionService.create = jest.fn().mockResolvedValue(mockedCreateArticleDto.mentions);
       mentionService.checkValidMentions = jest.fn();
 
-      postService.addPostGroup = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+      articleService.addGroup = jest.fn().mockResolvedValue(Promise.resolve());
+      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       postModelMock.create = jest.fn().mockResolvedValue(mockedArticleCreated);
 
-      await articleService.createArticle(mockedUserAuth, mockedCreateArticleDto);
+      await articleService.create(mockedUserAuth, mockedCreateArticleDto);
 
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
       expect(transactionMock.rollback).not.toBeCalled();
       expect(mediaService.sync).toBeCalledTimes(1);
       expect(mentionService.create).toBeCalledTimes(1);
-      expect(postService.addPostGroup).toBeCalledTimes(1);
+      expect(articleService.addGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
         isDraft: true,
         isArticle: true,
@@ -512,7 +326,7 @@ describe('ArticleService', () => {
 
       mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacyPost = jest.fn().mockResolvedValue(Promise.resolve());
+      articleService.getPrivacy = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.checkValid = jest.fn().mockResolvedValue(Promise.resolve());
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
 
@@ -524,7 +338,7 @@ describe('ArticleService', () => {
         .mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        await articleService.createArticle(mockedUserAuth, mockedCreateArticleDto);
+        await articleService.create(mockedUserAuth, mockedCreateArticleDto);
       } catch (error) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalled();
@@ -541,7 +355,7 @@ describe('ArticleService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
-      postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       categoryService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -567,7 +381,7 @@ describe('ArticleService', () => {
 
       postModelMock.update = jest.fn().mockResolvedValue(mockedArticleCreated);
 
-      await articleService.updateArticle(
+      await articleService.update(
         mockedArticleResponse,
         mockedUserAuth,
         mockedUpdateArticleDto
@@ -599,7 +413,7 @@ describe('ArticleService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacyPost = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
 
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
@@ -621,7 +435,7 @@ describe('ArticleService', () => {
         .mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        await articleService.updateArticle(
+        await articleService.update(
           mockedArticleResponse,
           mockedUserAuth,
           mockedUpdateArticleDto
@@ -672,7 +486,7 @@ describe('ArticleService', () => {
 
       postBindingService.bindActorToPost = jest.fn();
       postBindingService.bindAudienceToPost = jest.fn();
-      postService.groupPosts = jest.fn().mockResolvedValue([]);
+      articleService.group = jest.fn().mockResolvedValue([]);
       articleService.maskArticleContent = jest.fn();
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());

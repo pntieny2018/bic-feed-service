@@ -138,11 +138,7 @@ export class MediaService {
     return true;
   }
 
-  public async createIfNotExist(
-    data: MediaDto,
-    createdBy: string,
-    transaction: Transaction
-  ): Promise<IMedia[]> {
+  public async createIfNotExist(data: MediaDto, createdBy: string): Promise<IMedia[]> {
     const { images, files, videos } = data;
     const insertData = [];
     const mediaIds = [];
@@ -207,14 +203,10 @@ export class MediaService {
       where: {
         id: mediaIds,
       },
-      transaction,
     });
 
     const existingMediaIds = existingMediaList.map((m) => m.id);
-    await this._mediaModel.bulkCreate(
-      insertData.filter((i) => !existingMediaIds.includes(i.id)),
-      { transaction }
-    );
+    await this._mediaModel.bulkCreate(insertData.filter((i) => !existingMediaIds.includes(i.id)));
 
     this.emitMediaToUploadService(
       MediaType.VIDEO,
@@ -233,7 +225,6 @@ export class MediaService {
       where: {
         id: mediaIds,
       },
-      transaction,
     });
   }
 
