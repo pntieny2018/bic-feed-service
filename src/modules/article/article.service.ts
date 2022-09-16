@@ -1,7 +1,14 @@
 import { HTTP_STATUS_ID, KAFKA_PRODUCER, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
@@ -29,7 +36,6 @@ import { LogicException } from '../../common/exceptions';
 import { GetListArticlesDto } from './dto/requests';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { MentionModel } from '../../database/models/mention.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
@@ -39,6 +45,7 @@ import { PostEditedHistoryModel } from '../../database/models/post-edited-histor
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserService } from '../../shared/user';
+import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -135,12 +142,67 @@ export class ArticleService extends PostService {
     await this.maskArticleContent(articles);
     const result = await this.postBinding.bindRelatedData(articles, {
       shouldBindReation: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
 
     return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
       hasNextPage,
+      limit,
+      offset,
+    });
+  }
+
+  /**
+   * Get list Article
+   * @throws HttpException
+   * @param authUser UserDto
+   * @param getArticleListDto GetListArticlesDto
+   * @returns Promise resolve PageDto<ArticleResponseDto>
+   */
+  public async getRelatedById(
+    getRelatedArticlesDto: GetRelatedArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, id } = getRelatedArticlesDto;
+
+    const includePostDetail = this.getIncludeObj({
+      shouldIncludeCategory: true,
+    });
+    const attributes = this.getAttributesObj();
+    const article = await this.postModel.findOne({
+      attributes,
+      include: includePostDetail,
+      where: {
+        id,
+      },
+    });
+
+    if (!article) {
+      throw new NotFoundException('Article not found');
+    }
+    const categoryIds = article.categories.map((category) => category.id);
+
+    const includeRelated = this.getIncludeObj({
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      filterCategoryIds: categoryIds,
+    });
+    const relatedRows = await this.postModel.findAll({
+      attributes,
+      include: includeRelated,
+      offset,
+      limit,
+    });
+
+    const rowsJson = relatedRows.map((row) => row.toJSON());
+    const result = await this.postBinding.bindRelatedData(rowsJson, {
+      shouldBindActor: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
       limit,
       offset,
     });
@@ -169,7 +231,15 @@ export class ArticleService extends PostService {
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: authUser.id });
-    const include = this.getIncludeObj({ hasOwnerReaction: true, authUserId: authUser.id });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+      authUserId: authUser.id,
+    });
     const article = await this.postModel.findOne({
       attributes,
       where: { id: postId },
@@ -202,6 +272,9 @@ export class ArticleService extends PostService {
     await this.maskArticleContent([jsonArticle]);
     const rows = await this.postBinding.bindRelatedData([jsonArticle], {
       shouldBindReation: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -209,14 +282,11 @@ export class ArticleService extends PostService {
     return rows[0] as ArticleResponseDto;
   }
 
-  protected getAttributesObj({
-    loadMarkRead,
-    authUserId,
-  }: {
+  protected getAttributesObj(options?: {
     loadMarkRead?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
-    const attributes: FindAttributeOptions = super.getAttributesObj({ loadMarkRead, authUserId });
+    const attributes: FindAttributeOptions = super.getAttributesObj(options);
 
     if (attributes['includes'] && Array.isArray(attributes['includes'])) {
       attributes['include'].push([['hashtags_json', 'hashtags']]);
@@ -227,24 +297,34 @@ export class ArticleService extends PostService {
   }
 
   protected getIncludeObj({
-    hasOwnerReaction,
+    shouldIncludeOwnerReaction,
+    shouldIncludeGroup,
+    shouldIncludeMention,
+    shouldIncludeMedia,
+    shouldIncludeCategory,
+    shouldIncludeSeries,
+    filterCategoryIds,
     authUserId,
   }: {
-    hasOwnerReaction?: boolean;
+    shouldIncludeOwnerReaction?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeMention?: boolean;
+    shouldIncludeMedia?: boolean;
+    shouldIncludeCategory?: boolean;
+    shouldIncludeSeries?: boolean;
+    filterCategoryIds?: string[];
     authUserId?: string;
   }): Includeable[] {
-    const includes: Includeable[] = super.getIncludeObj({ hasOwnerReaction, authUserId });
-    includes.push(
-      {
-        model: SeriesModel,
-        as: 'series',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'name'],
-      },
-      {
+    const includes: Includeable[] = super.getIncludeObj({
+      shouldIncludeOwnerReaction,
+      shouldIncludeGroup,
+      shouldIncludeMention,
+      shouldIncludeMedia,
+      authUserId,
+    });
+
+    if (shouldIncludeCategory) {
+      const obj = {
         model: CategoryModel,
         as: 'categories',
         required: false,
@@ -252,8 +332,27 @@ export class ArticleService extends PostService {
           attributes: [],
         },
         attributes: ['id', 'name'],
+      };
+      if (filterCategoryIds) {
+        obj['where'] = {
+          id: filterCategoryIds,
+        };
       }
-    );
+
+      includes.push(obj);
+    }
+
+    if (shouldIncludeSeries) {
+      includes.push({
+        model: SeriesModel,
+        as: 'series',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'name'],
+      });
+    }
     return includes;
   }
 

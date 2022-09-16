@@ -120,7 +120,12 @@ export class PostService {
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
 
     const attributes = this.getAttributesObj({ loadMarkRead: false });
-    const include = this.getIncludeObj({ hasOwnerReaction: false });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: false,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+    });
     const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
       where: condition,
       attributes,
@@ -130,7 +135,12 @@ export class PostService {
       limit,
     });
     const jsonPosts = rows.map((r) => r.toJSON());
-    const result = await this.postBinding.bindRelatedData(jsonPosts);
+    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
     return new PageDto<PostResponseDto>(result, {
       total: count,
       limit,
@@ -152,7 +162,13 @@ export class PostService {
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
     const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: user.id });
-    const include = this.getIncludeObj({ hasOwnerReaction: true, authUserId: user.id });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      authUserId: user.id,
+    });
     const post = await this.postModel.findOne({
       attributes,
       where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
@@ -186,6 +202,9 @@ export class PostService {
     const jsonPost = post.toJSON();
     const rows = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReation: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: null,
     });
@@ -194,42 +213,52 @@ export class PostService {
     return rows[0];
   }
 
-  protected getAttributesObj({
-    loadMarkRead,
-    authUserId,
-  }: {
+  protected getAttributesObj(options?: {
     loadMarkRead?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = { exclude: ['updatedBy'] };
-    if (authUserId && loadMarkRead) {
-      attributes.include = [PostModel.loadMarkReadPost(authUserId)];
+    if (options?.authUserId && options?.loadMarkRead) {
+      attributes.include = [PostModel.loadMarkReadPost(options.authUserId)];
     }
 
     return attributes;
   }
 
   protected getIncludeObj({
-    hasOwnerReaction,
+    shouldIncludeOwnerReaction,
+    shouldIncludeGroup,
+    shouldIncludeMention,
+    shouldIncludeMedia,
     authUserId,
   }: {
-    hasOwnerReaction?: boolean;
+    shouldIncludeOwnerReaction?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeMention?: boolean;
+    shouldIncludeMedia?: boolean;
     authUserId?: string;
   }): Includeable[] {
-    const includes: Includeable[] = [
-      {
+    const includes: Includeable[] = [];
+    if (shouldIncludeGroup) {
+      includes.push({
         model: PostGroupModel,
         as: 'groups',
         required: false,
         attributes: ['groupId'],
-      },
-      {
+      });
+    }
+
+    if (shouldIncludeMention) {
+      includes.push({
         model: MentionModel,
         as: 'mentions',
         required: false,
         attributes: ['userId'],
-      },
-      {
+      });
+    }
+
+    if (shouldIncludeMedia) {
+      includes.push({
         model: MediaModel,
         as: 'media',
         required: false,
@@ -248,9 +277,9 @@ export class PostService {
           'thumbnails',
           'createdAt',
         ],
-      },
-    ];
-    if (hasOwnerReaction && authUserId) {
+      });
+    }
+    if (shouldIncludeOwnerReaction && authUserId) {
       includes.push({
         model: PostReactionModel,
         as: 'ownerReactions',
