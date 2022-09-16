@@ -54,16 +54,16 @@ export class PostBindingService {
       authUser: UserDto;
     }
   ): Promise<PostResponseDto[]> {
-    const { shouldBindReation, shouldHideSecretAudienceCanNotAccess, authUser } = options;
     const processList = [
       this.mentionService.bindMentionsToPosts(posts),
       this.bindActorToPost(posts),
       this.bindAudienceToPost(posts, {
-        shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? false,
-        authUser,
+        shouldHideSecretAudienceCanNotAccess:
+          options?.shouldHideSecretAudienceCanNotAccess ?? false,
+        authUser: options?.authUser ?? null,
       }),
     ];
-    if (shouldBindReation) {
+    if (options?.shouldBindReation) {
       processList.push(this.reactionService.bindToPosts(posts));
     }
     await Promise.all(processList);
@@ -80,7 +80,6 @@ export class PostBindingService {
       authUser?: UserDto;
     }
   ): Promise<void> {
-    const { shouldHideSecretAudienceCanNotAccess, authUser } = options;
     //get all groups in onetime
     const dataGroups = await this._getGroupsByPosts(posts);
     for (const post of posts) {
@@ -90,10 +89,10 @@ export class PostBindingService {
           const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
           if (isPostOutOfScope) return false;
 
-          const isUserNotInGroup = !authUser.profile.groups.includes(dataGroup.id);
-          const isGuest = !authUser;
+          const isUserNotInGroup = !options?.authUser?.profile.groups.includes(dataGroup.id);
+          const isGuest = !options?.authUser;
           if (
-            shouldHideSecretAudienceCanNotAccess &&
+            options?.shouldHideSecretAudienceCanNotAccess &&
             dataGroup.privacy === GroupPrivacy.SECRET &&
             (isUserNotInGroup || isGuest)
           ) {

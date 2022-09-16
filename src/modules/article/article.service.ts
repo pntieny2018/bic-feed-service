@@ -168,7 +168,7 @@ export class ArticleService extends PostService {
     authUser: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const attributes = this.getAttributesObj({ loadMarkRead: false, authUserId: authUser.id });
+    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: authUser.id });
     const include = this.getIncludeObj({ hasOwnerReaction: true, authUserId: authUser.id });
     const article = await this.postModel.findOne({
       attributes,
@@ -217,7 +217,12 @@ export class ArticleService extends PostService {
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj({ loadMarkRead, authUserId });
-    attributes['include'].push(['hashtags_json', 'hashtags']);
+
+    if (attributes['includes'] && Array.isArray(attributes['includes'])) {
+      attributes['include'].push([['hashtags_json', 'hashtags']]);
+    } else {
+      attributes['include'] = [['hashtags_json', 'hashtags']];
+    }
     return attributes;
   }
 
