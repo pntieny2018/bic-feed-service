@@ -118,67 +118,21 @@ export class PostService {
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
-    const rows = await this.postModel.findAll<PostModel>({
+
+    const attributes = this.getAttributesObj({ loadMarkRead: false });
+    const include = this.getIncludeObj({ hasOwnerReaction: false });
+    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
       where: condition,
-      attributes: {
-        exclude: ['commentsCount'],
-      },
-      include: [
-        {
-          model: PostGroupModel,
-          attributes: ['groupId'],
-          required: false,
-        },
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'size',
-            'thumbnails',
-            'createdAt',
-            'status',
-            'mimeType',
-          ],
-          required: false,
-        },
-        {
-          model: MentionModel,
-          required: false,
-        },
-      ],
+      attributes,
+      include,
       order: [['createdAt', order]],
+      offset,
+      limit,
     });
-    const jsonPostsFilterByMediaStatus = rows
-      .map((r) => r.toJSON())
-      .filter((row) => {
-        if (getDraftPostDto.isFailed === null) return true;
-        const failedItem = row.media.find((e) => e.status === MediaStatus.FAILED);
-        return (
-          (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
-        );
-      });
-    const total = jsonPostsFilterByMediaStatus.length;
-    const rowsSliced = jsonPostsFilterByMediaStatus.slice(offset, limit + offset);
-
-    await Promise.all([
-      this.mentionService.bindMentionsToPosts(rowsSliced),
-      this.postBinding.bindActorToPost(rowsSliced),
-      this.postBinding.bindAudienceToPost(rowsSliced),
-    ]);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, rowsSliced, {
-      excludeExtraneousValues: true,
-    });
-
+    const jsonPosts = rows.map((r) => r.toJSON());
+    const result = await this.postBinding.bindRelatedData(jsonPosts);
     return new PageDto<PostResponseDto>(result, {
-      total,
+      total: count,
       limit,
       offset,
     });
@@ -197,8 +151,8 @@ export class PostService {
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
-    const attributes = this.getAttributesObjDetail(user.id);
-    const include = this.getIncludeObjDetail(user.id);
+    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: user.id });
+    const include = this.getIncludeObj({ hasOwnerReaction: true, authUserId: user.id });
     const post = await this.postModel.findOne({
       attributes,
       where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
@@ -231,6 +185,7 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     const rows = await this.postBinding.bindRelatedData([jsonPost], {
+      shouldBindReation: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: null,
     });
@@ -239,16 +194,28 @@ export class PostService {
     return rows[0];
   }
 
-  protected getAttributesObjDetail(authUserId?: string): FindAttributeOptions {
+  protected getAttributesObj({
+    loadMarkRead,
+    authUserId,
+  }: {
+    loadMarkRead?: boolean;
+    authUserId?: string;
+  }): FindAttributeOptions {
     const attributes: FindAttributeOptions = { exclude: ['updatedBy'] };
-    if (authUserId) {
+    if (authUserId && loadMarkRead) {
       attributes.include = [PostModel.loadMarkReadPost(authUserId)];
     }
 
     return attributes;
   }
 
-  protected getIncludeObjDetail(authUserId?: string): Includeable[] {
+  protected getIncludeObj({
+    hasOwnerReaction,
+    authUserId,
+  }: {
+    hasOwnerReaction?: boolean;
+    authUserId?: string;
+  }): Includeable[] {
     const includes: Includeable[] = [
       {
         model: PostGroupModel,
@@ -283,7 +250,7 @@ export class PostService {
         ],
       },
     ];
-    if (authUserId) {
+    if (hasOwnerReaction && authUserId) {
       includes.push({
         model: PostReactionModel,
         as: 'ownerReactions',

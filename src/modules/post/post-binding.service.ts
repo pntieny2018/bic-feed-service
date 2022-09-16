@@ -48,17 +48,25 @@ export class PostBindingService {
 
   public async bindRelatedData(
     posts: any[],
-    {
-      shouldHideSecretAudienceCanNotAccess,
-      authUser,
-    }: { shouldHideSecretAudienceCanNotAccess: boolean; authUser: UserDto }
+    options?: {
+      shouldBindReation?: boolean;
+      shouldHideSecretAudienceCanNotAccess: boolean;
+      authUser: UserDto;
+    }
   ): Promise<PostResponseDto[]> {
-    await Promise.all([
-      this.reactionService.bindToPosts(posts),
+    const { shouldBindReation, shouldHideSecretAudienceCanNotAccess, authUser } = options;
+    const processList = [
       this.mentionService.bindMentionsToPosts(posts),
       this.bindActorToPost(posts),
-      this.bindAudienceToPost(posts, { shouldHideSecretAudienceCanNotAccess, authUser }),
-    ]);
+      this.bindAudienceToPost(posts, {
+        shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? false,
+        authUser,
+      }),
+    ];
+    if (shouldBindReation) {
+      processList.push(this.reactionService.bindToPosts(posts));
+    }
+    await Promise.all(processList);
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
       excludeExtraneousValues: true,
     });

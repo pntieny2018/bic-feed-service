@@ -134,6 +134,7 @@ export class ArticleService extends PostService {
 
     await this.maskArticleContent(articles);
     const result = await this.postBinding.bindRelatedData(articles, {
+      shouldBindReation: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -167,8 +168,8 @@ export class ArticleService extends PostService {
     authUser: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const attributes = this.getAttributesObjDetail(authUser.id);
-    const include = this.getIncludeObjDetail(authUser.id);
+    const attributes = this.getAttributesObj({ loadMarkRead: false, authUserId: authUser.id });
+    const include = this.getIncludeObj({ hasOwnerReaction: true, authUserId: authUser.id });
     const article = await this.postModel.findOne({
       attributes,
       where: { id: postId },
@@ -200,6 +201,7 @@ export class ArticleService extends PostService {
     const jsonArticle = article.toJSON();
     await this.maskArticleContent([jsonArticle]);
     const rows = await this.postBinding.bindRelatedData([jsonArticle], {
+      shouldBindReation: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -207,14 +209,26 @@ export class ArticleService extends PostService {
     return rows[0] as ArticleResponseDto;
   }
 
-  protected getAttributesObjDetail(authUserId?: string): FindAttributeOptions {
-    const attributes: FindAttributeOptions = super.getAttributesObjDetail(authUserId);
+  protected getAttributesObj({
+    loadMarkRead,
+    authUserId,
+  }: {
+    loadMarkRead?: boolean;
+    authUserId?: string;
+  }): FindAttributeOptions {
+    const attributes: FindAttributeOptions = super.getAttributesObj({ loadMarkRead, authUserId });
     attributes['include'].push(['hashtags_json', 'hashtags']);
     return attributes;
   }
 
-  protected getIncludeObjDetail(authUserId?: string): Includeable[] {
-    const includes: Includeable[] = super.getIncludeObjDetail(authUserId);
+  protected getIncludeObj({
+    hasOwnerReaction,
+    authUserId,
+  }: {
+    hasOwnerReaction?: boolean;
+    authUserId?: string;
+  }): Includeable[] {
+    const includes: Includeable[] = super.getIncludeObj({ hasOwnerReaction, authUserId });
     includes.push(
       {
         model: SeriesModel,
