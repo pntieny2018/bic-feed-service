@@ -69,7 +69,7 @@ export class PostSearchService {
         })
         .then((res) => {
           const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-          this.postService.updatePostData([dataIndex.id], { lang });
+          this.postService.updateData([dataIndex.id], { lang });
         })
         .catch((e) => {
           this.logger.debug(e);
@@ -92,7 +92,7 @@ export class PostSearchService {
         .then((res) => {
           const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
           if (dataIndex.lang !== newLang) {
-            this.postService.updatePostData([dataIndex.id], { lang: newLang });
+            this.postService.updateData([dataIndex.id], { lang: newLang });
             const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(dataIndex.lang);
             this.elasticsearchService
               .delete({ index: oldIndex, id: `${dataIndex.id}` })

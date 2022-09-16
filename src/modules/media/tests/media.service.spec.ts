@@ -136,7 +136,7 @@ describe('MediaService', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
       mediaModel.bulkCreate.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, '8c846fe3-a615-42ae-958a-33a43d24a033', transactionMock)
+      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, '8c846fe3-a615-42ae-958a-33a43d24a033')
       expect(mediaModel.findAll).toBeCalled()
       expect(mediaModel.bulkCreate).toBeCalled()
       expect(returnValue).toEqual([])

@@ -113,17 +113,13 @@ export class FeedService {
   }): Promise<PageDto<PostResponseDto>> {
     const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
     const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.groupPosts(rows);
+    const posts = this._postService.group(rows);
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
-    await Promise.all([
-      this._reactionService.bindToPosts(posts),
-      this._mentionService.bindMentionsToPosts(posts),
-      this._postBindingService.bindActorToPost(posts),
-      this._postBindingService.bindAudienceToPost(posts, authUser),
-    ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
+    const result = await this._postBindingService.bindRelatedData(posts, {
+      shouldBindReation: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
     });
     return new PageDto<PostResponseDto>(result, {
       limit,
