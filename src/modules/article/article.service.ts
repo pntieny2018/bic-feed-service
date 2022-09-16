@@ -8,6 +8,7 @@ import { MentionService } from '../mention';
 import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
+import { FindAttributeOptions, Includeable } from 'sequelize';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { SentryService } from '../../../libs/sentry/src';
@@ -114,43 +115,45 @@ export class ArticleService extends PostService {
     getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, groupId } = getArticleListDto;
-    const group = await this.groupService.get(groupId);
-    if (!group) {
-      throw new BadRequestException(`Group ${groupId} not found`);
+    if (groupId) {
+      const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
+      if (groupIds.length === 0) {
+        return new PageDto<ArticleResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+      getArticleListDto.groupIds = groupIds;
     }
-    const groupIds = this.groupService.getGroupIdsCanAccessArticle(group, authUser);
-    if (groupIds.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
-    getArticleListDto.groupIds = groupIds;
+
     const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.group(rows);
     const hasNextPage = articles.length === limit + 1 ? true : false;
     if (hasNextPage) articles.pop();
 
-    await Promise.all([
-      this.reactionService.bindToPosts(articles),
-      this.mentionService.bindMentionsToPosts(articles),
-      this.postBinding.bindActorToPost(articles),
-      this.postBinding.bindAudienceToPost(articles),
-      this.maskArticleContent(articles),
-    ]);
-
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, articles, {
-      excludeExtraneousValues: true,
+    await this.maskArticleContent(articles);
+    const result = await this.postBinding.bindRelatedData(articles, {
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
     });
 
-    return new PageDto<ArticleResponseDto>(result, {
+    return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
       hasNextPage,
       limit,
       offset,
     });
   }
 
+  private async _getGroupIdAndChildIdsUserCanAccess(groupId, authUser: UserDto): Promise<string[]> {
+    const group = await this.groupService.get(groupId);
+    if (!group) {
+      throw new BadRequestException(`Group ${groupId} not found`);
+    }
+    const groupIds = this.groupService.getGroupIdsCanAccessArticle(group, authUser);
+
+    return groupIds;
+  }
   /**
    * Get Article
    * @param postId string
@@ -161,81 +164,24 @@ export class ArticleService extends PostService {
    */
   public async get(
     postId: string,
-    user: UserDto,
+    authUser: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const groupIds = user.profile.groups;
-    const post = await this.postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-        include: [
-          ['hashtags_json', 'hashtags'],
-          PostModel.loadMarkReadPost(user.id),
-          PostModel.loadLock(groupIds),
-        ],
-      },
+    const attributes = this.getAttributesObjDetail(authUser.id);
+    const include = this.getIncludeObjDetail(authUser.id);
+    const article = await this.postModel.findOne({
+      attributes,
       where: { id: postId },
-      include: [
-        {
-          model: SeriesModel,
-          as: 'series',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: CategoryModel,
-          as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'status',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: user.id,
-          },
-        },
-      ],
+      include,
     });
-    if (!post) {
+    if (!article) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
-    await this.authorityService.checkCanReadArticle(user, post);
+    if (authUser) {
+      await this.authorityService.checkCanReadArticle(authUser, article);
+    } else {
+      await this.authorityService.checkIsPublicArticle(article);
+    }
     let comments = null;
     if (getArticleDto.withComment) {
       comments = await this.commentService.getComments(
@@ -247,120 +193,49 @@ export class ArticleService extends PostService {
           childOrder: getArticleDto.childCommentOrder,
           limit: getArticleDto.commentLimit,
         },
-        user,
+        authUser,
         false
       );
     }
-    const jsonPost = post.toJSON();
-    await Promise.all([
-      this.reactionService.bindToPosts([jsonPost]),
-      this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost([jsonPost]),
-      this.maskArticleContent([jsonPost]),
-    ]);
-
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
+    const jsonArticle = article.toJSON();
+    await this.maskArticleContent([jsonArticle]);
+    const rows = await this.postBinding.bindRelatedData([jsonArticle], {
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
     });
-    result['comments'] = comments;
-    return result;
+    rows[0]['comments'] = comments;
+    return rows[0] as ArticleResponseDto;
   }
 
-  /**
-   * Get Public Article
-   * @param postId string
-   * @param getArticleDto GetArticleDto
-   * @returns Promise resolve ArticleResponseDto
-   * @throws HttpException
-   */
-  public async getPublic(
-    postId: string,
-    getArticleDto?: GetArticleDto
-  ): Promise<ArticleResponseDto> {
-    const post = await this.postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-        include: [['hashtags_json', 'hashtags']],
-      },
-      where: { id: postId },
-      include: [
-        {
-          model: SeriesModel,
-          as: 'series',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: CategoryModel,
-          as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'status',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-      ],
-    });
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
-    await this.authorityService.checkIsPublicArticle(post);
-    let comments = null;
-    if (getArticleDto.withComment) {
-      comments = await this.commentService.getComments({
-        postId,
-        parentId: NIL,
-        childLimit: getArticleDto.childCommentLimit,
-        order: getArticleDto.commentOrder,
-        childOrder: getArticleDto.childCommentOrder,
-        limit: getArticleDto.commentLimit,
-      });
-    }
-    const jsonPost = post.toJSON();
-    await Promise.all([
-      this.reactionService.bindToPosts([jsonPost]),
-      this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost([jsonPost]),
-    ]);
+  protected getAttributesObjDetail(authUserId?: string): FindAttributeOptions {
+    const attributes: FindAttributeOptions = super.getAttributesObjDetail(authUserId);
+    attributes['include'].push(['hashtags_json', 'hashtags']);
+    return attributes;
+  }
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
-    });
-    result['comments'] = comments;
-    return result;
+  protected getIncludeObjDetail(authUserId?: string): Includeable[] {
+    const includes: Includeable[] = super.getIncludeObjDetail(authUserId);
+    includes.push(
+      {
+        model: SeriesModel,
+        as: 'series',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'name'],
+      },
+      {
+        model: CategoryModel,
+        as: 'categories',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'name'],
+      }
+    );
+    return includes;
   }
 
   /**

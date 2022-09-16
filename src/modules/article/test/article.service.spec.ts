@@ -287,46 +287,6 @@ describe('ArticleService', () => {
     });
   });
 
-  describe('getPublic', () => {
-    const getArticleDto: GetArticleDto = {
-      commentLimit: 1,
-      childCommentLimit: 1,
-      withComment: true,
-      categories: ['a'],
-    };
-
-    it('Should get public article successfully', async () => {
-      postModelMock.findOne = jest.fn().mockResolvedValue({
-        ...mockedArticleResponse,
-        toJSON: () => mockedArticleResponse,
-      });
-
-      authorityService.checkIsPublicArticle = jest.fn().mockResolvedValue(Promise.resolve());
-      commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
-      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      const result = await articleService.getPublic(mockedArticleData.id, getArticleDto);
-
-      expect(result.comments).toStrictEqual(mockedArticleResponse.comments);
-      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
-      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(reactionService.bindToPosts).toBeCalledTimes(1);
-      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-    });
-
-    it('Should catch exception if post not found', async () => {
-      postModelMock.findOne = jest.fn();
-      try {
-        const result = await articleService.getPublic(mockedArticleData.id, getArticleDto);
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
-      }
-    });
-  });
-
   describe.skip('create', () => {
     it('Create article successfully', async () => {
       authorityService.checkCanCreatePost = jest.fn().mockResolvedValue(Promise.resolve());

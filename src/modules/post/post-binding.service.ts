@@ -9,6 +9,9 @@ import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
 import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
 import { UserDto } from '../auth';
+import { ReactionService } from '../reaction';
+import { MentionService } from '../mention';
+import { PostResponseDto } from './dto/responses';
 @Injectable()
 export class PostBindingService {
   /**
@@ -30,8 +33,9 @@ export class PostBindingService {
     protected postModel: typeof PostModel,
     protected userService: UserService,
     protected groupService: GroupService,
-    @Inject(forwardRef(() => CommentService))
-    protected commentService: CommentService,
+    @Inject(forwardRef(() => ReactionService))
+    protected reactionService: ReactionService,
+    protected mentionService: MentionService,
     protected readonly sentryService: SentryService
   ) {}
 
@@ -42,18 +46,48 @@ export class PostBindingService {
    * @throws HttpException
    */
 
-  public async bindAudienceToPost(posts: any[], hideSecretGroupForUser?: UserDto): Promise<void> {
+  public async bindRelatedData(
+    posts: any[],
+    {
+      shouldHideSecretAudienceCanNotAccess,
+      authUser,
+    }: { shouldHideSecretAudienceCanNotAccess: boolean; authUser: UserDto }
+  ): Promise<PostResponseDto[]> {
+    await Promise.all([
+      this.reactionService.bindToPosts(posts),
+      this.mentionService.bindMentionsToPosts(posts),
+      this.bindActorToPost(posts),
+      this.bindAudienceToPost(posts, { shouldHideSecretAudienceCanNotAccess, authUser }),
+    ]);
+    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
+  }
+
+  public async bindAudienceToPost(
+    posts: any[],
+    options?: {
+      shouldHideSecretAudienceCanNotAccess?: boolean;
+      authUser?: UserDto;
+    }
+  ): Promise<void> {
+    const { shouldHideSecretAudienceCanNotAccess, authUser } = options;
     //get all groups in onetime
     const dataGroups = await this._getGroupsByPosts(posts);
     for (const post of posts) {
       const postGroupIds = this._getGroupIdsByPost(post);
       const mappedGroups = dataGroups
         .filter((dataGroup) => {
-          if (!postGroupIds.includes(dataGroup.id)) return false;
+          const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
+          if (isPostOutOfScope) return false;
+
+          const isUserNotInGroup = !authUser.profile.groups.includes(dataGroup.id);
+          const isGuest = !authUser;
           if (
-            hideSecretGroupForUser &&
+            shouldHideSecretAudienceCanNotAccess &&
             dataGroup.privacy === GroupPrivacy.SECRET &&
-            !hideSecretGroupForUser.profile.groups.includes(dataGroup.id)
+            (isUserNotInGroup || isGuest)
           ) {
             return false;
           }

@@ -104,15 +104,14 @@ export class PostController {
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
-    if (user === null) return this._postService.getPublic(postId, getPostDto);
-    else {
-      const post = await this._postService.get(postId, user, getPostDto);
+    const post = await this._postService.get(postId, user, getPostDto);
+    if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
         this._logger.error(ex, ex.stack);
       });
-
-      return post;
     }
+
+    return post;
   }
 
   @ApiOperation({ summary: 'Create post' })

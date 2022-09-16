@@ -37,7 +37,13 @@ import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
+import sequelize, {
+  FindAttributeOptions,
+  Includeable,
+  Op,
+  QueryTypes,
+  Transaction,
+} from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { ClientKafka } from '@nestjs/microservices';
@@ -82,6 +88,7 @@ export class PostService {
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
     protected authorityService: AuthorityService,
+    @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
@@ -190,59 +197,23 @@ export class PostService {
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
+    const attributes = this.getAttributesObjDetail(user.id);
+    const include = this.getIncludeObjDetail(user.id);
     const post = await this.postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-        include: [PostModel.loadMarkReadPost(user.id)],
-      },
+      attributes,
       where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'size',
-            'extension',
-            'type',
-            'name',
-            'originName',
-            'width',
-            'height',
-            'status',
-            'mimeType',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: user.id,
-          },
-        },
-      ],
+      include,
     });
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
-    await this.authorityService.checkCanReadPost(user, post);
+
+    if (user) {
+      await this.authorityService.checkCanReadPost(user, post);
+    } else {
+      await this.authorityService.checkIsPublicPost(post);
+    }
+
     let comments = null;
     if (getPostDto.withComment && post.canComment) {
       comments = await this.commentService.getComments(
@@ -259,99 +230,71 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-    await Promise.all([
-      this.reactionService.bindToPosts([jsonPost]),
-      this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost(
-        [jsonPost],
-        getPostDto.hideSecretAudienceCanNotAccess ? user : undefined
-      ),
-    ]);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
+    const rows = await this.postBinding.bindRelatedData([jsonPost], {
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser: null,
     });
-    result['comments'] = comments;
-    return result;
+
+    rows[0]['comments'] = comments;
+    return rows[0];
   }
 
-  /**
-   * Get Public Post
-   * @param postId string
-   * @param user UserDto
-   * @param getPostDto GetPostDto
-   * @returns Promise resolve PostResponseDto
-   * @throws HttpException
-   */
-  public async getPublic(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
-    const post = await this.postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-      },
-      where: { id: postId },
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'size',
-            'width',
-            'height',
-            'status',
-            'mimeType',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-      ],
-    });
-
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+  protected getAttributesObjDetail(authUserId?: string): FindAttributeOptions {
+    const attributes: FindAttributeOptions = { exclude: ['updatedBy'] };
+    if (authUserId) {
+      attributes.include = [PostModel.loadMarkReadPost(authUserId)];
     }
-    await this.authorityService.checkIsPublicPost(post);
-    let comments = null;
-    if (getPostDto.withComment) {
-      comments = await this.commentService.getComments({
-        postId,
-        parentId: NIL,
-        childLimit: getPostDto.childCommentLimit,
-        order: getPostDto.commentOrder,
-        childOrder: getPostDto.childCommentOrder,
-        limit: getPostDto.commentLimit,
+
+    return attributes;
+  }
+
+  protected getIncludeObjDetail(authUserId?: string): Includeable[] {
+    const includes: Includeable[] = [
+      {
+        model: PostGroupModel,
+        as: 'groups',
+        required: false,
+        attributes: ['groupId'],
+      },
+      {
+        model: MentionModel,
+        as: 'mentions',
+        required: false,
+        attributes: ['userId'],
+      },
+      {
+        model: MediaModel,
+        as: 'media',
+        required: false,
+        attributes: [
+          'id',
+          'url',
+          'size',
+          'extension',
+          'type',
+          'name',
+          'originName',
+          'width',
+          'height',
+          'status',
+          'mimeType',
+          'thumbnails',
+          'createdAt',
+        ],
+      },
+    ];
+    if (authUserId) {
+      includes.push({
+        model: PostReactionModel,
+        as: 'ownerReactions',
+        required: false,
+        where: {
+          createdBy: authUserId,
+        },
       });
     }
-    const jsonPost = post.toJSON();
-    await Promise.all([
-      this.reactionService.bindToPosts([jsonPost]),
-      this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost([jsonPost]),
-    ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
-    });
-
-    result['comments'] = comments;
-    return result;
+    return includes;
   }
 
   /**
