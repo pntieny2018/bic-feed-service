@@ -53,45 +53,16 @@ export class FeedService {
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    const authUserId = authUser.id;
-    const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-    let totalImportantPosts = 0;
-    let importantPostsExc = Promise.resolve([]);
+    const rows = await PostModel.getNewsFeedData({
+      ...getNewsFeedDto,
+      limit: limit + 1,
+      authUserId: authUser.id,
+      isImportant: isImportant ?? null,
+    });
 
-    const hasGetImportantPost = isImportant || isImportant === null;
-    if (hasGetImportantPost) {
-      totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
-        authUserId,
-        constraints
-      );
-
-      if (offset < totalImportantPosts) {
-        importantPostsExc = PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          limit: limit + 1,
-          authUserId,
-          isImportant: true,
-        });
-      }
-    }
-
-    let normalPostsExc = Promise.resolve([]);
-    const isNeedMorePost = offset + limit >= totalImportantPosts;
-    const hasGetNormalPost = isImportant === false || isImportant === null;
-    if (isNeedMorePost && hasGetNormalPost) {
-      const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
-      normalPostsExc = PostModel.getNewsFeedData({
-        ...getNewsFeedDto,
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.max(0, normalLimit),
-        authUserId,
-        isImportant: false,
-      });
-    }
-
+    const posts = this._postService.group(rows);
     return this._bindAndTransformData({
-      importantPostsExc,
-      normalPostsExc,
+      posts,
       offset,
       limit,
       authUser,
@@ -99,21 +70,16 @@ export class FeedService {
   }
 
   private async _bindAndTransformData({
-    importantPostsExc,
-    normalPostsExc,
+    posts,
     offset,
     limit,
     authUser,
   }: {
-    importantPostsExc: any;
-    normalPostsExc: any;
+    posts: any[];
     offset: number;
     limit: number;
     authUser: UserDto;
   }): Promise<PageDto<PostResponseDto>> {
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.group(rows);
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     const result = await this._postBindingService.bindRelatedData(posts, {
@@ -272,9 +238,11 @@ export class FeedService {
         isImportant: false,
       });
     }
+    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
+    const rows = importantPosts.concat(normalPosts);
+    const posts = this._postService.group(rows);
     return this._bindAndTransformData({
-      importantPostsExc,
-      normalPostsExc,
+      posts,
       offset,
       limit,
       authUser,
