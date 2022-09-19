@@ -15,14 +15,14 @@ export class UserService {
    * @returns Promise resolve user info
    */
   public async get(userId: string): Promise<UserSharedDto> {
-    return await this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
+    return this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
   }
 
   public async getPermissions(userId: string, payload: string): Promise<any> {
     const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
     const permissionCached = await this._store.get(cacheKey);
     if (permissionCached) return permissionCached;
-    return await this._externalService.getPermission(payload);
+    return this._externalService.getPermission(payload);
   }
 
   /**
