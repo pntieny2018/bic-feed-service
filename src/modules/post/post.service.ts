@@ -57,7 +57,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
 import { PostBindingService } from './post-binding.service';
 import { MediaDto } from '../media/dto';
-import { up } from '../../../sequelize/migrations/20220426071342-create_post_edited_history_table';
 @Injectable()
 export class PostService {
   /**

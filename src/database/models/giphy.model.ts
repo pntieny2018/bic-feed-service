@@ -1,5 +1,4 @@
-import { Column, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { PostModel } from './post.model';
+import { Column, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 export enum GiphyType {
   GIF = 'gif',

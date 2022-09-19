@@ -1,6 +1,5 @@
 import { AuthUser } from '../decorators';
 import { userInfoExpect } from './mocks';
-import { UnauthorizedException } from '@nestjs/common';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { LogicException } from '../../../common/exceptions';
 

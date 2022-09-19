@@ -301,7 +301,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   public static parseAggregatedReaction(value: string): Record<string, Record<string, number>> {
     if (value && value !== '1=') {
-      const rawReactionsCount: string = (value as string).substring(1);
+      const rawReactionsCount: string = value.substring(1);
       const [s1, s2] = rawReactionsCount.split('=');
       const reactionsName = s1.split(',');
       const total = s2.split(',');
@@ -603,7 +603,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
     LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" 
       ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-    ORDER BY ${orderField ? `"${orderField}"` : 'RANDOM()'} ${orderField ? order : ''}`;
+    ORDER BY ${orderField ? '"${orderField}"' : 'RANDOM()'} ${orderField ? order : ''}`;
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
         groupIds,

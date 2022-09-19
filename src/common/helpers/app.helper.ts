@@ -22,7 +22,7 @@ export class AppHelper {
       case 'staging':
         return 'stg';
       case 'production':
-        return 'prod';
+        return 'pro';
     }
   }
 }
