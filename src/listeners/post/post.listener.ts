@@ -115,12 +115,10 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    this._postService
-      .saveEditedHistory(post.id, { oldData: null, newData: post })
-      .catch((e) => {
-        this._logger.error(e, e?.stack);
-        this._sentryService.captureException(e);
-      });
+    this._postService.saveEditedHistory(post.id, { oldData: null, newData: post }).catch((e) => {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
+    });
 
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -196,12 +194,10 @@ export class PostListener {
 
     if (isDraft) return;
 
-    this._postService
-      .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
-      .catch((e) => {
-        this._logger.debug(e, e?.stack);
-        this._sentryService.captureException(e);
-      });
+    this._postService.saveEditedHistory(id, { oldData: oldPost, newData: newPost }).catch((e) => {
+      this._logger.debug(e, e?.stack);
+      this._sentryService.captureException(e);
+    });
 
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);

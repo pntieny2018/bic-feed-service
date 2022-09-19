@@ -14,8 +14,5 @@ export function InjectUserToParam(): MethodDecorator {
 }
 
 export function InjectUserTo(context: 'query' | 'body' | 'params'): MethodDecorator {
-  // return applyDecorators(
-  //   UseInterceptors(new InjectUserInterceptor(context), UsePipes(StripRequestContextPipe))
-  // );
   return applyDecorators(UseInterceptors(new InjectUserInterceptor(context)));
 }

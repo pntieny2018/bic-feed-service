@@ -19,7 +19,6 @@ import { ExceptionHelper } from '../../common/helpers';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { LogicException } from '../../common/exceptions';
 import { getDatabaseConfig } from '../../config/database';
-import { PostModel } from '../../database/models/post.model';
 import { MediaModel } from '../../database/models/media.model';
 import { PostPolicyService } from '../post/post-policy.service';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -32,7 +31,6 @@ import {
 } from './dto/requests';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { PostGroupModel } from '../../database/models/post-group.model';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
@@ -906,7 +904,7 @@ export class CommentService {
 
   public async findComment(commentId: string): Promise<CommentResponseDto> {
     const get = async (cid: string): Promise<CommentModel> => {
-      return await this._commentModel.findOne({
+      return this._commentModel.findOne({
         where: {
           id: cid,
         },

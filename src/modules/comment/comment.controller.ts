@@ -33,7 +33,6 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
-import { NIL as NIL_UUID } from 'uuid';
 import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
 
 @ApiTags('Comment')

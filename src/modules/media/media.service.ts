@@ -13,7 +13,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';

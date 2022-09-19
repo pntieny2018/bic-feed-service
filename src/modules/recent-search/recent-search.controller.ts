@@ -1,4 +1,3 @@
-//import { AuthUser, UserInfoDto } from '../auth';
 import { RecentSearchDto, RecentSearchesDto } from './dto/responses';
 import { RecentSearchService } from './recent-search.service';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';

@@ -1,6 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
@@ -9,7 +8,6 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
 import { UserDto } from '../auth';
-import { MentionService } from '../mention';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -26,14 +24,11 @@ import { PostBindingService } from '../post/post-binding.service';
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
-  private _classTransformer = new ClassTransformer();
 
   public constructor(
     @Inject(forwardRef(() => ReactionService))
-    private readonly _reactionService: ReactionService,
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
-    private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
