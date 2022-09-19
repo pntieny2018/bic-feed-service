@@ -205,7 +205,7 @@ export class PostService {
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: true,
-      authUser: null,
+      authUser: user,
     });
 
     rows[0]['comments'] = comments;
