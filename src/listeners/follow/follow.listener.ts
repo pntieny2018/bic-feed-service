@@ -11,7 +11,6 @@ import { ExceptionHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
-import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FollowListener {
@@ -32,7 +31,7 @@ export class FollowListener {
 
     const { userIds, groupIds } = payload;
 
-    const postIds = await this._postService.findPostIdsByGroupId(groupIds);
+    const postIds = await this._postService.findIdsByGroupId(groupIds);
 
     if (postIds && postIds.length) {
       this._feedPublishService

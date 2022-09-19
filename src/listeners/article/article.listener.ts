@@ -6,20 +6,14 @@ import {
 import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationService } from '../../notification';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
-import { PostActivityService } from '../../notification/activities';
-import { PostService } from '../../modules/post/post.service';
 import { MediaStatus } from '../../database/models/media.model';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { MediaService } from '../../modules/media';
-import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
-import { PostPrivacy } from '../../database/models/post.model';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleService } from '../../modules/article/article.service';
@@ -32,9 +26,6 @@ export class ArticleListener {
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
-    private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService,
-    private readonly _postService: PostService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
@@ -45,12 +36,12 @@ export class ArticleListener {
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { actor, article } = event.payload;
+    const { article } = event.payload;
     if (article.isDraft) return;
 
     this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
 
-    this._postService.deletePostEditedHistory(article.id).catch((e) => {
+    this._articleService.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
@@ -59,7 +50,6 @@ export class ArticleListener {
     this._elasticsearchService.delete({ index, id: `${article.id}` }).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
-      return;
     });
     //TODO:: send noti
   }
@@ -84,12 +74,12 @@ export class ArticleListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    this._postService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
+    this._articleService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
 
     if (isDraft) return;
 
-    this._postService
-      .savePostEditedHistory(article.id, { oldData: null, newData: article })
+    this._articleService
+      .saveEditedHistory(article.id, { oldData: null, newData: article })
       .catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
@@ -163,7 +153,7 @@ export class ArticleListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._articleService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldArticle.isDraft === false && isDraft === true) {
@@ -179,8 +169,8 @@ export class ArticleListener {
 
     if (isDraft) return;
 
-    this._postService
-      .savePostEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
+    this._articleService
+      .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
         this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
@@ -241,7 +231,7 @@ export class ArticleListener {
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
     const articles = await this._articleService.getArticlesByMedia(videoId);
     articles.forEach((article) => {
-      this._postService.updatePostStatus(article.id);
+      this._articleService.updateStatus(article.id);
       //TODO:: send noti
 
       const {
@@ -314,7 +304,7 @@ export class ArticleListener {
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
     const articles = await this._articleService.getArticlesByMedia(videoId);
     articles.forEach((article) => {
-      this._postService.updatePostStatus(article.id);
+      this._articleService.updateStatus(article.id);
       //TODO:: send noti
     });
   }

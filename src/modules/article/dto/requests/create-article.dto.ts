@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsArray, IsOptional, IsUUID } from 'class-validator';
 import { CreatePostDto } from '../../../post/dto/requests';
 import { Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';

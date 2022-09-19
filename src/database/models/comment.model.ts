@@ -15,7 +15,6 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
 import { IMedia, MediaModel } from './media.model';
@@ -26,7 +25,7 @@ import { MentionableType } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
-import { BelongsToManyAddAssociationsMixin, Optional } from 'sequelize';
+import { BelongsToManyAddAssociationsMixin, Optional, Sequelize } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 

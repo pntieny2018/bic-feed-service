@@ -38,7 +38,7 @@ export class PostListener {
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
-    this._postService.deletePostEditedHistory(post.id).catch((e) => {
+    this._postService.deleteEditedHistory(post.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
@@ -115,12 +115,10 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    this._postService
-      .savePostEditedHistory(post.id, { oldData: null, newData: post })
-      .catch((e) => {
-        this._logger.error(e, e?.stack);
-        this._sentryService.captureException(e);
-      });
+    this._postService.saveEditedHistory(post.id, { oldData: null, newData: post }).catch((e) => {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
+    });
 
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -196,12 +194,10 @@ export class PostListener {
 
     if (isDraft) return;
 
-    this._postService
-      .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
-      .catch((e) => {
-        this._logger.debug(e, e?.stack);
-        this._sentryService.captureException(e);
-      });
+    this._postService.saveEditedHistory(id, { oldData: oldPost, newData: newPost }).catch((e) => {
+      this._logger.debug(e, e?.stack);
+      this._sentryService.captureException(e);
+    });
 
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);
@@ -263,9 +259,9 @@ export class PostListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], dataUpdate);
-    const posts = await this._postService.getPostsByMedia(videoId);
+    const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updatePostStatus(post.id);
+      this._postService.updateStatus(post.id);
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -333,9 +329,9 @@ export class PostListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], dataUpdate);
-    const posts = await this._postService.getPostsByMedia(videoId);
+    const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updatePostStatus(post.id);
+      this._postService.updateStatus(post.id);
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,

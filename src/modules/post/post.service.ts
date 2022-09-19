@@ -23,7 +23,12 @@ import { EntityType } from '../media/media.constants';
 import { LogicException } from '../../common/exceptions';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { MediaMarkAction, MediaModel, MediaStatus } from '../../database/models/media.model';
+import {
+  IMedia,
+  MediaMarkAction,
+  MediaModel,
+  MediaStatus,
+} from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -32,7 +37,13 @@ import { CommentModel } from '../../database/models/comment.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
+import sequelize, {
+  FindAttributeOptions,
+  Includeable,
+  Op,
+  QueryTypes,
+  Transaction,
+} from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { ClientKafka } from '@nestjs/microservices';
@@ -76,6 +87,7 @@ export class PostService {
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
     protected authorityService: AuthorityService,
+    @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
@@ -94,7 +106,7 @@ export class PostService {
    * @returns Promise resolve PageDto<PostResponseDto>
    * @throws HttpException
    */
-  public async getDraftPosts(
+  public async getDrafts(
     authUserId: string,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
@@ -105,67 +117,31 @@ export class PostService {
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
-    const rows = await this.postModel.findAll<PostModel>({
+
+    const attributes = this.getAttributesObj({ loadMarkRead: false });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: false,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+    });
+    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
       where: condition,
-      attributes: {
-        exclude: ['commentsCount'],
-      },
-      include: [
-        {
-          model: PostGroupModel,
-          attributes: ['groupId'],
-          required: false,
-        },
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'size',
-            'thumbnails',
-            'createdAt',
-            'status',
-            'mimeType',
-          ],
-          required: false,
-        },
-        {
-          model: MentionModel,
-          required: false,
-        },
-      ],
+      attributes,
+      include,
       order: [['createdAt', order]],
+      offset,
+      limit,
     });
-    const jsonPostsFilterByMediaStatus = rows
-      .map((r) => r.toJSON())
-      .filter((row) => {
-        if (getDraftPostDto.isFailed === null) return true;
-        const failedItem = row.media.find((e) => e.status === MediaStatus.FAILED);
-        return (
-          (failedItem && getDraftPostDto.isFailed) || (!failedItem && !getDraftPostDto.isFailed)
-        );
-      });
-    const total = jsonPostsFilterByMediaStatus.length;
-    const rowsSliced = jsonPostsFilterByMediaStatus.slice(offset, limit + offset);
-
-    await Promise.all([
-      this.mentionService.bindMentionsToPosts(rowsSliced),
-      this.postBinding.bindActorToPost(rowsSliced),
-      this.postBinding.bindAudienceToPost(rowsSliced),
-    ]);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, rowsSliced, {
-      excludeExtraneousValues: true,
+    const jsonPosts = rows.map((r) => r.toJSON());
+    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
     });
-
     return new PageDto<PostResponseDto>(result, {
-      total,
+      total: count,
       limit,
       offset,
     });
@@ -179,64 +155,34 @@ export class PostService {
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
    */
-  public async getPost(
+  public async get(
     postId: string,
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
+    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: user.id });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      authUserId: user.id,
+    });
     const post = await this.postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-        include: [PostModel.loadMarkReadPost(user.id)],
-      },
+      attributes,
       where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'size',
-            'extension',
-            'type',
-            'name',
-            'originName',
-            'width',
-            'height',
-            'status',
-            'mimeType',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: user.id,
-          },
-        },
-      ],
+      include,
     });
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
-    await this.authorityService.checkCanReadPost(user, post);
+
+    if (user) {
+      await this.authorityService.checkCanReadPost(user, post);
+    } else {
+      await this.authorityService.checkIsPublicPost(post);
+    }
+
     let comments = null;
     if (getPostDto.withComment && post.canComment) {
       comments = await this.commentService.getComments(
@@ -253,99 +199,97 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-    await Promise.all([
-      this.reactionService.bindToPosts([jsonPost]),
-      this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost(
-        [jsonPost],
-        getPostDto.hideSecretAudienceCanNotAccess ? user : undefined
-      ),
-    ]);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
+    const rows = await this.postBinding.bindRelatedData([jsonPost], {
+      shouldBindReation: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser: null,
     });
-    result['comments'] = comments;
-    return result;
+
+    rows[0]['comments'] = comments;
+    return rows[0];
   }
 
-  /**
-   * Get Public Post
-   * @param postId string
-   * @param user UserDto
-   * @param getPostDto GetPostDto
-   * @returns Promise resolve PostResponseDto
-   * @throws HttpException
-   */
-  public async getPublicPost(postId: string, getPostDto?: GetPostDto): Promise<PostResponseDto> {
-    const post = await this.postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-      },
-      where: { id: postId },
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'size',
-            'width',
-            'height',
-            'status',
-            'mimeType',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-      ],
-    });
-
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+  protected getAttributesObj(options?: {
+    loadMarkRead?: boolean;
+    authUserId?: string;
+  }): FindAttributeOptions {
+    const attributes: FindAttributeOptions = { exclude: ['updatedBy'] };
+    if (options?.authUserId && options?.loadMarkRead) {
+      attributes.include = [PostModel.loadMarkReadPost(options.authUserId)];
     }
-    await this.authorityService.checkIsPublicPost(post);
-    let comments = null;
-    if (getPostDto.withComment) {
-      comments = await this.commentService.getComments({
-        postId,
-        parentId: NIL,
-        childLimit: getPostDto.childCommentLimit,
-        order: getPostDto.commentOrder,
-        childOrder: getPostDto.childCommentOrder,
-        limit: getPostDto.commentLimit,
+
+    return attributes;
+  }
+
+  protected getIncludeObj({
+    shouldIncludeOwnerReaction,
+    shouldIncludeGroup,
+    shouldIncludeMention,
+    shouldIncludeMedia,
+    authUserId,
+  }: {
+    shouldIncludeOwnerReaction?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeMention?: boolean;
+    shouldIncludeMedia?: boolean;
+    authUserId?: string;
+  }): Includeable[] {
+    const includes: Includeable[] = [];
+    if (shouldIncludeGroup) {
+      includes.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: false,
+        attributes: ['groupId'],
       });
     }
-    const jsonPost = post.toJSON();
-    await Promise.all([
-      this.reactionService.bindToPosts([jsonPost]),
-      this.mentionService.bindMentionsToPosts([jsonPost]),
-      this.postBinding.bindActorToPost([jsonPost]),
-      this.postBinding.bindAudienceToPost([jsonPost]),
-    ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
-    });
+    if (shouldIncludeMention) {
+      includes.push({
+        model: MentionModel,
+        as: 'mentions',
+        required: false,
+        attributes: ['userId'],
+      });
+    }
 
-    result['comments'] = comments;
-    return result;
+    if (shouldIncludeMedia) {
+      includes.push({
+        model: MediaModel,
+        as: 'media',
+        required: false,
+        attributes: [
+          'id',
+          'url',
+          'size',
+          'extension',
+          'type',
+          'name',
+          'originName',
+          'width',
+          'height',
+          'status',
+          'mimeType',
+          'thumbnails',
+          'createdAt',
+        ],
+      });
+    }
+    if (shouldIncludeOwnerReaction && authUserId) {
+      includes.push({
+        model: PostReactionModel,
+        as: 'ownerReactions',
+        required: false,
+        where: {
+          createdBy: authUserId,
+        },
+      });
+    }
+
+    return includes;
   }
 
   /**
@@ -355,7 +299,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createPost(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
+  public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
       const { content, media, setting, mentions, audience } = createPostDto;
@@ -382,12 +326,12 @@ export class PostService {
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId, transaction);
+        await this.mediaService.createIfNotExist(media, authUserId);
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
       if (audience.groupIds.length > 0) {
-        await this.addPostGroup(audience.groupIds, post.id, transaction);
+        await this.addGroup(audience.groupIds, post.id, transaction);
       }
 
       if (mentions.length) {
@@ -418,7 +362,7 @@ export class PostService {
    * @param Object { oldData: PostResponseDto; newData: PostResponseDto }
    * @returns Promise resolve void
    */
-  public async savePostEditedHistory(
+  public async saveEditedHistory(
     postId: string,
     { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
   ): Promise<any> {
@@ -430,7 +374,7 @@ export class PostService {
     });
   }
 
-  public async getPrivacyPost(groupIds: string[]): Promise<PostPrivacy> {
+  public async getPrivacy(groupIds: string[]): Promise<PostPrivacy> {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
     }
@@ -458,7 +402,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async updatePost(
+  public async update(
     post: PostResponseDto,
     authUser: UserDto,
     updatePostDto: UpdatePostDto
@@ -466,57 +410,12 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = updatePostDto;
-      const dataUpdate = {
-        updatedBy: authUserId,
-      };
+      const { media, mentions, audience } = updatePostDto;
+      const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
 
-      const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience.groupIds.length) {
-        const postPrivacy = await this.getPrivacyPost(audience.groupIds);
-        dataUpdate['privacy'] = postPrivacy;
-      }
-
-      if (content !== null) {
-        dataUpdate['content'] = content;
-      }
-      if (setting && setting.hasOwnProperty('canShare')) {
-        dataUpdate['canShare'] = setting.canShare;
-      }
-      if (setting && setting.hasOwnProperty('canComment')) {
-        dataUpdate['canComment'] = setting.canComment;
-      }
-      if (setting && setting.hasOwnProperty('canReact')) {
-        dataUpdate['canReact'] = setting.canReact;
-      }
-
-      if (setting && setting.hasOwnProperty('isImportant')) {
-        dataUpdate['isImportant'] = setting.isImportant;
-      }
-      if (setting && setting.hasOwnProperty('importantExpiredAt')) {
-        dataUpdate['importantExpiredAt'] =
-          setting.isImportant === false ? null : setting.importantExpiredAt;
-      }
-      let newMediaIds = [];
+      //if post is draft, isProcessing alway is true
+      if (dataUpdate.isProcessing && post.isDraft === true) dataUpdate.isProcessing = false;
       transaction = await this.sequelizeConnection.transaction();
-
-      if (media) {
-        const { files, images, videos } = media;
-        newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        const mediaList = await this.mediaService.createIfNotExist(media, authUserId, transaction);
-        if (
-          mediaList.filter(
-            (m) =>
-              m.status === MediaStatus.WAITING_PROCESS ||
-              m.status === MediaStatus.PROCESSING ||
-              m.status === MediaStatus.FAILED
-          ).length > 0
-        ) {
-          dataUpdate['isDraft'] = true;
-          dataUpdate['isProcessing'] = post.isDraft === true ? false : true;
-        }
-      }
-
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
@@ -526,12 +425,16 @@ export class PostService {
       });
 
       if (media) {
+        const { files, images, videos } = media;
+        const newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
         await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
       }
 
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
+
+      const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
@@ -545,6 +448,62 @@ export class PostService {
     }
   }
 
+  protected async getDataUpdate(
+    updatePostDto: UpdatePostDto,
+    authUserId: string
+  ): Promise<Partial<IPost>> {
+    const { content, media, setting, audience } = updatePostDto;
+    const dataUpdate = {
+      updatedBy: authUserId,
+    };
+    if (audience.groupIds.length) {
+      const postPrivacy = await this.getPrivacy(audience.groupIds);
+      dataUpdate['privacy'] = postPrivacy;
+    }
+
+    if (content !== null) {
+      dataUpdate['content'] = content;
+    }
+    if (setting && setting.hasOwnProperty('canShare')) {
+      dataUpdate['canShare'] = setting.canShare;
+    }
+    if (setting && setting.hasOwnProperty('canComment')) {
+      dataUpdate['canComment'] = setting.canComment;
+    }
+    if (setting && setting.hasOwnProperty('canReact')) {
+      dataUpdate['canReact'] = setting.canReact;
+    }
+
+    if (setting && setting.hasOwnProperty('isImportant')) {
+      dataUpdate['isImportant'] = setting.isImportant;
+    }
+    if (setting && setting.hasOwnProperty('importantExpiredAt')) {
+      dataUpdate['importantExpiredAt'] =
+        setting.isImportant === false ? null : setting.importantExpiredAt;
+    }
+
+    if (media) {
+      const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
+      this._bindStatusByMediaList(dataUpdate, mediaList);
+    }
+
+    return dataUpdate;
+  }
+
+  private _bindStatusByMediaList(dataUpdate: Partial<IPost>, mediaList: IMedia[]): void {
+    if (
+      mediaList.filter(
+        (m) =>
+          m.status === MediaStatus.WAITING_PROCESS ||
+          m.status === MediaStatus.PROCESSING ||
+          m.status === MediaStatus.FAILED
+      ).length > 0
+    ) {
+      dataUpdate['isDraft'] = true;
+      dataUpdate['isProcessing'] = true;
+    }
+  }
+
   /**
    * Publish Post
    * @param postId PostID
@@ -552,7 +511,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishPost(postId: string, authUser: UserDto): Promise<boolean> {
+  public async publish(postId: string, authUser: UserDto): Promise<boolean> {
     try {
       const post = await this.postModel.findOne({
         where: {
@@ -611,7 +570,7 @@ export class PostService {
         isDraft = true;
         isProcessing = true;
       }
-      const postPrivacy = await this.getPrivacyPost(groupIds);
+      const postPrivacy = await this.getPrivacy(groupIds);
       await this.postModel.update(
         {
           isDraft,
@@ -640,7 +599,7 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async deletePost(postId: string, authUser: UserDto): Promise<IPost> {
+  public async delete(postId: string, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
     try {
       const post = await this.postModel.findOne({
@@ -677,7 +636,7 @@ export class PostService {
       }
 
       if (post.isDraft) {
-        await this._cleanPostElement(postId, transaction, true);
+        await this._cleanRelationship(postId, transaction, true);
         await this.postModel.destroy({
           where: {
             id: postId,
@@ -705,7 +664,7 @@ export class PostService {
     }
   }
 
-  private async _cleanPostElement(
+  private async _cleanRelationship(
     postId: string,
     transaction: Transaction,
     isCleanMedia = false
@@ -728,7 +687,7 @@ export class PostService {
    * Delete post edited history
    * @param postId string
    */
-  public async deletePostEditedHistory(postId: string): Promise<any> {
+  public async deleteEditedHistory(postId: string): Promise<any> {
     return this.postEditedHistoryModel.destroy({
       where: {
         postId: postId,
@@ -744,18 +703,17 @@ export class PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async addPostGroup(
+  public async addGroup(
     groupIds: string[],
     postId: string,
     transaction: Transaction
-  ): Promise<boolean> {
-    if (groupIds.length === 0) return true;
+  ): Promise<void> {
+    if (groupIds.length === 0) return;
     const postGroupDataCreate = groupIds.map((groupId) => ({
       postId: postId,
       groupId,
     }));
     await this.postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
-    return true;
   }
 
   /**
@@ -885,7 +843,7 @@ export class PostService {
     return post.toJSON();
   }
 
-  public async findPostIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
+  public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
         where: {
@@ -902,7 +860,7 @@ export class PostService {
     }
   }
 
-  public async markReadPost(postId: string, userId: string): Promise<void> {
+  public async markRead(postId: string, userId: string): Promise<void> {
     const post = await this.postModel.findByPk(postId);
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
@@ -924,35 +882,6 @@ export class PostService {
     }
   }
 
-  public async getTotalImportantPostInNewsFeed(
-    userId: string,
-    constraints: string
-  ): Promise<number> {
-    const { schema } = getDatabaseConfig();
-    const query = `SELECT COUNT(*) as total
-    FROM ${schema}.posts as p
-    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
-    AND NOT EXISTS (
-        SELECT 1
-        FROM ${schema}.users_mark_read_posts as u
-        WHERE u.user_id = :userId AND u.post_id = p.id
-      )
-    AND EXISTS(
-        SELECT 1
-        from ${schema}.user_newsfeed AS u
-        WHERE u.post_id = p.id
-        AND u.user_id = :userId
-      )
-    ${constraints}`;
-    const result: any = await this.sequelizeConnection.query(query, {
-      replacements: {
-        userId,
-      },
-      type: QueryTypes.SELECT,
-    });
-    return result[0].total;
-  }
-
   /**
    * Get post edited history
    * @param user UserDto
@@ -960,7 +889,7 @@ export class PostService {
    * @param getPostEditedHistoryDto GetPostEditedHistoryDto
    * @returns Promise resolve PageDto
    */
-  public async getPostEditedHistory(
+  public async getEditedHistory(
     user: UserDto,
     postId: string,
     getPostEditedHistoryDto: GetPostEditedHistoryDto
@@ -1071,7 +1000,7 @@ export class PostService {
     }
   }
 
-  public async getPostsByMedia(id: string): Promise<PostResponseDto[]> {
+  public async getsByMedia(id: string): Promise<PostResponseDto[]> {
     const posts = await this.postModel.findAll({
       include: [
         {
@@ -1119,7 +1048,7 @@ export class PostService {
     return result;
   }
 
-  public async updatePostStatus(postId: string): Promise<void> {
+  public async updateStatus(postId: string): Promise<void> {
     const { schema } = getDatabaseConfig();
     const postMedia = PostMediaModel.tableName;
     const post = PostModel.tableName;
@@ -1175,10 +1104,10 @@ export class PostService {
     }
   }
 
-  public async updatePostPrivacy(postId: string): Promise<void> {
+  public async updatePrivacy(postId: string): Promise<void> {
     const post = await this.findPost({ postId });
     const groupIds = post.groups.map((g) => g.groupId);
-    const privacy = await this.getPrivacyPost(groupIds);
+    const privacy = await this.getPrivacy(groupIds);
     await this.postModel.update(
       { privacy },
       {
@@ -1189,31 +1118,9 @@ export class PostService {
     );
   }
 
-  public groupPosts(posts: any[]): any[] {
+  public group(posts: any[]): any[] {
     const result = [];
     posts.forEach((post) => {
-      const {
-        id,
-        commentsCount,
-        totalUsersSeen,
-        isImportant,
-        importantExpiredAt,
-        isDraft,
-        content,
-        markedReadPost,
-        canComment,
-        canReact,
-        canShare,
-        createdBy,
-        updatedBy,
-        createdAt,
-        updatedAt,
-        isLocked,
-        title,
-        summary,
-        isArticle,
-        isNowImportant,
-      } = post;
       const postAdded = result.find((i) => i.id === post.id);
       if (!postAdded) {
         const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
@@ -1246,32 +1153,7 @@ export class PostService {
                   createdAt: post.mediaCreatedAt,
                 },
               ];
-        result.push({
-          id,
-          commentsCount,
-          totalUsersSeen,
-          isImportant,
-          importantExpiredAt,
-          isDraft,
-          content,
-          canComment,
-          markedReadPost,
-          canReact,
-          canShare,
-          createdBy,
-          updatedBy,
-          createdAt,
-          updatedAt,
-          isNowImportant,
-          groups,
-          mentions,
-          media,
-          ownerReactions,
-          isLocked,
-          title,
-          summary,
-          isArticle,
-        });
+        result.push({ ...post, groups, mentions, ownerReactions, media });
         return;
       }
       if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
@@ -1363,20 +1245,7 @@ export class PostService {
     return updatedPostIds;
   }
 
-  public async bulkUpdatePostPrivacy(postIds: string[], privacy: PostPrivacy): Promise<void> {
-    await this.postModel.update(
-      { privacy },
-      {
-        where: {
-          id: {
-            [Op.in]: postIds,
-          },
-        },
-      }
-    );
-  }
-
-  public async updatePostData(postIds: string[], data: Partial<IPost>): Promise<void> {
+  public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
     await this.postModel.update(data, {
       where: {
         id: {
@@ -1390,7 +1259,7 @@ export class PostService {
     const transaction = await this.sequelizeConnection.transaction();
     try {
       if (post.isDraft) {
-        await this._cleanPostElement(post.id, transaction, true);
+        await this._cleanRelationship(post.id, transaction, true);
         await post.destroy({
           force: true,
           transaction,
@@ -1438,7 +1307,7 @@ export class PostService {
 
       try {
         for (const post of willDeletePosts) {
-          await this._cleanPostElement(post.id, transaction, true);
+          await this._cleanRelationship(post.id, transaction, true);
           await post.destroy({ force: true, transaction });
         }
         await transaction.commit();

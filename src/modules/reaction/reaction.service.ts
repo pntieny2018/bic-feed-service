@@ -203,7 +203,7 @@ export class ReactionService {
     const { id: userId } = userDto;
     const { reactionName, targetId: postId } = createReactionDto;
     try {
-      const post = await this._postService.getPost(postId, userDto, {
+      const post = await this._postService.get(postId, userDto, {
         commentLimit: 0,
         childCommentLimit: 0,
       });
@@ -325,7 +325,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
-    const post = await this._postService.getPost(comment.postId, userDto, {
+    const post = await this._postService.get(comment.postId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
@@ -469,7 +469,7 @@ export class ReactionService {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
 
-    const post = await this._postService.getPost(deleteReactionDto.targetId, userDto, {
+    const post = await this._postService.get(deleteReactionDto.targetId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
@@ -584,7 +584,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
-    const post = await this._postService.getPost(comment.postId, userDto, {
+    const post = await this._postService.get(comment.postId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });

@@ -18,7 +18,7 @@ export class UpdatePrivacyPostCommand implements CommandRunner {
       });
       for (const post of posts) {
         console.log('update===', post.id);
-        await this._postService.updatePostPrivacy(post.id);
+        await this._postService.updatePrivacy(post.id);
       }
     } catch (e) {
       console.log(e);

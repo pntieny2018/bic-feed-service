@@ -1,6 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
@@ -9,7 +8,6 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
 import { UserDto } from '../auth';
-import { MentionService } from '../mention';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -26,14 +24,11 @@ import { PostBindingService } from '../post/post-binding.service';
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
-  private _classTransformer = new ClassTransformer();
 
   public constructor(
     @Inject(forwardRef(() => ReactionService))
-    private readonly _reactionService: ReactionService,
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
-    private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
@@ -53,45 +48,16 @@ export class FeedService {
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    const authUserId = authUser.id;
-    const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-    let totalImportantPosts = 0;
-    let importantPostsExc = Promise.resolve([]);
+    const rows = await PostModel.getNewsFeedData({
+      ...getNewsFeedDto,
+      limit: limit + 1,
+      authUserId: authUser.id,
+      isImportant: isImportant ?? null,
+    });
 
-    const hasGetImportantPost = isImportant || isImportant === null;
-    if (hasGetImportantPost) {
-      totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
-        authUserId,
-        constraints
-      );
-
-      if (offset < totalImportantPosts) {
-        importantPostsExc = PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          limit: limit + 1,
-          authUserId,
-          isImportant: true,
-        });
-      }
-    }
-
-    let normalPostsExc = Promise.resolve([]);
-    const isNeedMorePost = offset + limit >= totalImportantPosts;
-    const hasGetNormalPost = isImportant === false || isImportant === null;
-    if (isNeedMorePost && hasGetNormalPost) {
-      const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
-      normalPostsExc = PostModel.getNewsFeedData({
-        ...getNewsFeedDto,
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.max(0, normalLimit),
-        authUserId,
-        isImportant: false,
-      });
-    }
-
+    const posts = this._postService.group(rows);
     return this._bindAndTransformData({
-      importantPostsExc,
-      normalPostsExc,
+      posts,
       offset,
       limit,
       authUser,
@@ -99,31 +65,25 @@ export class FeedService {
   }
 
   private async _bindAndTransformData({
-    importantPostsExc,
-    normalPostsExc,
+    posts,
     offset,
     limit,
     authUser,
   }: {
-    importantPostsExc: any;
-    normalPostsExc: any;
+    posts: any[];
     offset: number;
     limit: number;
     authUser: UserDto;
   }): Promise<PageDto<PostResponseDto>> {
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.groupPosts(rows);
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
-    await Promise.all([
-      this._reactionService.bindToPosts(posts),
-      this._mentionService.bindMentionsToPosts(posts),
-      this._postBindingService.bindActorToPost(posts),
-      this._postBindingService.bindAudienceToPost(posts, authUser),
-    ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
+    const result = await this._postBindingService.bindRelatedData(posts, {
+      shouldBindReation: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
     });
     return new PageDto<PostResponseDto>(result, {
       limit,
@@ -273,9 +233,11 @@ export class FeedService {
         isImportant: false,
       });
     }
+    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
+    const rows = importantPosts.concat(normalPosts);
+    const posts = this._postService.group(rows);
     return this._bindAndTransformData({
-      importantPostsExc,
-      normalPostsExc,
+      posts,
       offset,
       limit,
       authUser,
