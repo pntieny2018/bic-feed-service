@@ -404,9 +404,19 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const authUserId = authUser ? authUser.id : null;
     if (isImportant) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
+      condition += `AND "p"."is_important" = true AND NOT EXISTS(
+        SELECT 1
+        from ${schema}.${userMarkReadPostTable} AS r
+        WHERE r.post_id = p.id AND r.user_id = :authUserId
+      )`;
     } else {
-      condition += `AND "p"."is_important" = false`;
+      condition += `AND ("p"."is_important" = false OR 
+                        ( "p"."is_important" = true AND EXISTS(
+                          SELECT 1
+                          from ${schema}.${userMarkReadPostTable} AS r
+                          WHERE r.post_id = p.id AND r.user_id = :authUserId
+                        ))
+                      )`;
     }
     const subQueryGetPosts = `
     SELECT
@@ -665,7 +675,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "p"."updated_at" AS "updatedAt", 
           "is_seen_post" AS "isSeenPost"`;
     if (isImportant === true) {
-      condition += `AND "p"."is_important" = true AND "p"."important_expired_at" > NOW()`;
+      condition += `AND "p"."is_important" = true`;
       subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"`;
@@ -674,12 +684,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       subSelect += `, false "markedReadPost"`;
     }
 
-    const subQueryGetPosts = `      
+    const subQueryGetPosts = `
                 ${subSelect}
                 FROM ${schema}.${postTable} AS "p"
                 INNER JOIN ${schema}.${userNewsFeedTable} AS u ON u.post_id = p.id AND u.user_id  = :authUserId
                 WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false ${condition}
-                ORDER BY "markedReadPost" ASC, "is_seen_post" ASC, "p"."created_at" ${order}
+                ORDER BY ${isImportant ? '"markedReadPost" ASC,' : ''} "p"."created_at" ${order}
                 OFFSET :offset LIMIT :limit`;
 
     const query = `
@@ -711,9 +721,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" 
         ON "PostModel"."id" = "ownerReactions"."post_id" AND "ownerReactions"."created_by" = :authUserId
-      ORDER BY ${
-        isImportant ? `"markedReadPost" ASC,` : ''
-      }"PostModel"."isSeenPost" ASC,"PostModel"."createdAt" ${order}`;
+      ORDER BY ${isImportant ? '"markedReadPost" ASC,' : ''} "PostModel"."createdAt" ${order}`;
 
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
