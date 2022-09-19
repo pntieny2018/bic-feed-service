@@ -1,7 +1,6 @@
 //import { AuthUser, UserInfoDto } from '../auth';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { Controller, Get } from '@nestjs/common';
-import { AuthUser, UserDto } from '../auth';
 import { APP_VERSION } from '../../common/constants';
 
 @ApiSecurity('authorization')
@@ -16,7 +15,7 @@ export class AuthorityController {
     type: String,
   })
   @Get('/giphy-key')
-  public getGiphyKey(@AuthUser() user: UserDto): string {
+  public getGiphyKey(): string {
     return process.env.GIPHY_API_KEY;
   }
 }

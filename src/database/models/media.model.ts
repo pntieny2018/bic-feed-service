@@ -3,7 +3,6 @@ import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
-  AutoIncrement,
   BelongsToMany,
   Column,
   CreatedAt,

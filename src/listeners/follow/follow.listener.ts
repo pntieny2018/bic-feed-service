@@ -11,7 +11,6 @@ import { ExceptionHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
-import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class FollowListener {

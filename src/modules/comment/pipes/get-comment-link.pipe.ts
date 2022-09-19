@@ -1,7 +1,4 @@
-import { GetCommentsDto } from '../dto/requests';
 import { Injectable, PipeTransform } from '@nestjs/common';
-import { OrderEnum } from '../../../common/dto';
-import { NIL as NIL_UUID } from 'uuid';
 import { GetCommentLinkDto } from '../dto/requests/get-comment-link.dto';
 
 @Injectable()

@@ -1,7 +1,6 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { CommentService } from '../comment';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
