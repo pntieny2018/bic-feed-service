@@ -229,7 +229,7 @@ export class ArticleListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
-    const articles = await this._articleService.getArticlesByMedia(videoId);
+    const articles = await this._articleService.getsByMedia(videoId);
     articles.forEach((article) => {
       this._articleService.updateStatus(article.id);
       //TODO:: send noti
@@ -302,7 +302,7 @@ export class ArticleListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
-    const articles = await this._articleService.getArticlesByMedia(videoId);
+    const articles = await this._articleService.getsByMedia(videoId);
     articles.forEach((article) => {
       this._articleService.updateStatus(article.id);
       //TODO:: send noti
