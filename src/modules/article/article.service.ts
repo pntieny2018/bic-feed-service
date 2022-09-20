@@ -46,6 +46,7 @@ import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserService } from '../../shared/user';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -219,14 +220,14 @@ export class ArticleService extends PostService {
   }
   /**
    * Get Article
-   * @param postId string
+   * @param articleId string
    * @param user UserDto
    * @param getArticleDto GetArticleDto
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
    */
   public async get(
-    postId: string,
+    articleId: string,
     authUser: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
@@ -243,13 +244,25 @@ export class ArticleService extends PostService {
       shouldIncludeSeries: true,
       authUserId: authUser?.id || null,
     });
+
+    let condition;
+    if (authUser) {
+      condition = {
+        id: articleId,
+        isArticle: true,
+        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
+      };
+    } else {
+      condition = { id: articleId, isArticle: true };
+    }
+
     const article = await this.postModel.findOne({
       attributes,
-      where: { id: postId },
+      where: condition,
       include,
     });
     if (!article) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
     if (authUser) {
       await this.authorityService.checkCanReadArticle(authUser, article);
@@ -260,7 +273,7 @@ export class ArticleService extends PostService {
     if (getArticleDto.withComment) {
       comments = await this.commentService.getComments(
         {
-          postId,
+          postId: articleId,
           parentId: NIL,
           childLimit: getArticleDto.childCommentLimit,
           order: getArticleDto.commentOrder,
