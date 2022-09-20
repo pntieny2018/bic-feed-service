@@ -10,7 +10,6 @@ import { GroupService } from '../../shared/group';
 import { UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostService } from '../post/post.service';
-import { ReactionService } from '../reaction';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { UserDataShareDto } from '../../shared/user/dto';
@@ -26,7 +25,6 @@ export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
 
   public constructor(
-    @Inject(forwardRef(() => ReactionService))
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
     @Inject(forwardRef(() => PostService))
