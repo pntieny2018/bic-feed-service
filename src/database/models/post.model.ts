@@ -680,7 +680,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"`;
     } else {
-      subSelect += `, false "markedReadPost"`;
+      subSelect += `, COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
+        WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
+      ) AS "markedReadPost"`;
     }
 
     const subQueryGetPosts = `
