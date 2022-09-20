@@ -227,22 +227,29 @@ export class PostService {
   protected getIncludeObj({
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
+    mustIncludeGroup,
     shouldIncludeMention,
     shouldIncludeMedia,
+    filterMediaIds,
+    mustIncludeMedia,
     authUserId,
   }: {
     shouldIncludeOwnerReaction?: boolean;
+    mustIncludeGroup?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
     shouldIncludeMedia?: boolean;
+    filterMediaIds?: string[];
+    mustIncludeMedia?: boolean;
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = [];
-    if (shouldIncludeGroup) {
+
+    if (shouldIncludeGroup || mustIncludeGroup) {
       includes.push({
         model: PostGroupModel,
         as: 'groups',
-        required: false,
+        required: mustIncludeGroup ? true : false,
         attributes: ['groupId'],
       });
     }
@@ -252,15 +259,14 @@ export class PostService {
         model: MentionModel,
         as: 'mentions',
         required: false,
-        attributes: ['userId'],
       });
     }
 
-    if (shouldIncludeMedia) {
-      includes.push({
+    if (shouldIncludeMedia || mustIncludeMedia) {
+      const obj = {
         model: MediaModel,
         as: 'media',
-        required: false,
+        required: mustIncludeMedia ? true : false,
         attributes: [
           'id',
           'url',
@@ -276,7 +282,11 @@ export class PostService {
           'thumbnails',
           'createdAt',
         ],
-      });
+      };
+      if (filterMediaIds) {
+        obj['where'] = { id: filterMediaIds };
+      }
+      includes.push(obj);
     }
     if (shouldIncludeOwnerReaction && authUserId) {
       includes.push({
@@ -1001,50 +1011,22 @@ export class PostService {
   }
 
   public async getsByMedia(id: string): Promise<PostResponseDto[]> {
-    const posts = await this.postModel.findAll({
-      include: [
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'mimeType',
-            'thumbnails',
-            'createdAt',
-          ],
-          required: true,
-          where: {
-            id,
-          },
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-        },
-      ],
+    const include = this.getIncludeObj({
+      mustIncludeMedia: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      filterMediaIds: [id],
     });
+    const posts = await this.postModel.findAll({ include });
 
     const jsonPosts = posts.map((p) => p.toJSON());
-    await Promise.all([
-      this.postBinding.bindAudienceToPost(jsonPosts),
-      this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.postBinding.bindActorToPost(jsonPosts),
-    ]);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, jsonPosts, {
-      excludeExtraneousValues: true,
+
+    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+      shouldBindAudience: true,
+      shouldBindMention: true,
+      shouldBindActor: true,
     });
+
     return result;
   }
 

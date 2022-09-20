@@ -232,14 +232,14 @@ describe.skip('ArticleListener', () => {
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
       mediaService.updateData.mockResolvedValue();
-      articleService.getArticlesByMedia.mockResolvedValue([mockedArticleResponse]);
+      articleService.getsByMedia.mockResolvedValue([mockedArticleResponse]);
       elasticsearchService.index.mockResolvedValue();
       seriesService.updateTotalArticle.mockResolvedValue();
       feedPublisherService.fanoutOnWrite.mockResolvedValue();
       await articleListener.onArticleVideoSuccess(articleVideoSuccessEvent);
       expect(loggerSpy).toBeCalled();
       expect(mediaService.updateData).toBeCalled();
-      expect(articleService.getArticlesByMedia).toBeCalled();
+      expect(articleService.getsByMedia).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
       expect(seriesService.updateTotalArticle).toBeCalled();
       expect(feedPublisherService.fanoutOnWrite).toBeCalled();
@@ -256,7 +256,7 @@ describe.skip('ArticleListener', () => {
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
       mediaService.updateData.mockResolvedValue();
-      articleService.getArticlesByMedia.mockResolvedValue([mockedArticleResponse]);
+      articleService.getsByMedia.mockResolvedValue([mockedArticleResponse]);
       articleService.updateStatus.mockResolvedValue();
       await articleListener.onArticleVideoFailed(articleVideoFailedEvent);
       expect(loggerSpy).toBeCalled();
