@@ -680,7 +680,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         WHERE r.post_id = p.id AND r.user_id = :authUserId ), false
       ) AS "markedReadPost"`;
     } else {
-      condition += `AND "p"."is_important" = false`;
       subSelect += `, false "markedReadPost"`;
     }
 
