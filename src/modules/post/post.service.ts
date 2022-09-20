@@ -160,7 +160,7 @@ export class PostService {
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
-    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: user.id });
+    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: user.id ?? null });
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
