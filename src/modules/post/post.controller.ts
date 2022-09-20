@@ -271,9 +271,9 @@ export class PostController {
 
   @Get('/get-user-group/:groupId/:userId/:postId')
   public async getUserGroup(
-    @Param('groupId') groupId: string,
-    @Param('userId') userId: string,
-    @Param('postId') postId: string
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<any> {
     const user = await this._userService.get(userId);
     const group = await this._groupService.get(groupId);
