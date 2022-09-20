@@ -25,7 +25,8 @@ export class FollowController {
   }
 
   @Get('/get-follows-by-user/:id')
-  public getFollowByUser(@Param('id', ParseUUIDPipe) userId: string): Promise<IFollow[]> {
-    return this._followService.getFollowByUserId(userId);
+  public async getFollowByUser(@Param('id', ParseUUIDPipe) userId: string): Promise<string[]> {
+    const groups = await this._followService.getFollowByUserId(userId);
+    return groups.map((row) => row.groupId);
   }
 }
