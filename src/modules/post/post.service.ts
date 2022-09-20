@@ -166,7 +166,7 @@ export class PostService {
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
-      authUserId: user.id,
+      authUserId: user?.id || null,
     });
     const post = await this.postModel.findOne({
       attributes,
