@@ -12,6 +12,8 @@ import { mockedPostData, mockedPostResponse } from './mocks/response/post.respon
 import { mockedUserAuth } from './mocks/user.mock';
 import { PostSearchService } from '../post-search.service';
 import { FeedService } from '../../feed/feed.service';
+import { UserService } from '../../../shared/user';
+import { GroupService } from '../../../shared/group';
 
 describe('PostController', () => {
   let postService: PostService;
@@ -33,6 +35,14 @@ describe('PostController', () => {
         },
         {
           provide: PostSearchService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: UserService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: GroupService,
           useClass: jest.fn(),
         },
         {
