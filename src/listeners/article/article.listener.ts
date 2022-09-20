@@ -39,7 +39,9 @@ export class ArticleListener {
     const { article } = event.payload;
     if (article.isDraft) return;
 
-    this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+    if (article.series.length > 0) {
+      this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+    }
 
     this._articleService.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(e, e?.stack);
@@ -104,12 +106,12 @@ export class ArticleListener {
       actor,
     };
 
-    this._seriesService
-      .updateTotalArticle((article as ArticleResponseDto).series.map((c) => c.id))
-      .catch((e) => {
+    if (article.series.length > 0) {
+      this._seriesService.updateTotalArticle(article.series.map((c) => c.id)).catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
+    }
 
     const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
@@ -163,9 +165,15 @@ export class ArticleListener {
       });
     }
 
-    this._seriesService.updateTotalArticle(
-      (oldArticle as ArticleResponseDto).series.map((c) => c.id)
-    );
+    let seriesIds = [];
+    if (oldArticle.series.length > 0) {
+      seriesIds = oldArticle.series.map((c) => c.id);
+    }
+
+    if (newArticle.series.length > 0) {
+      seriesIds.push(...newArticle.series.map((c) => c.id));
+    }
+    this._seriesService.updateTotalArticle(seriesIds);
 
     if (isDraft) return;
 
@@ -271,9 +279,11 @@ export class ArticleListener {
         this._logger.debug(e);
         this._sentryService.captureException(e);
       });
-      this._seriesService.updateTotalArticle(
-        (article as ArticleResponseDto).series.map((c) => c.id)
-      );
+
+      if (article.series.length > 0) {
+        this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+      }
+
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,
