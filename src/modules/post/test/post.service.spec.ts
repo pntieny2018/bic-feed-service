@@ -738,18 +738,12 @@ describe('PostService', () => {
     it('Should successfully', async () => {
       postModelMock.findAll = jest.fn().mockResolvedValue([{ toJSON: () => ({}) }]);
 
-      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
-
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-
-      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindRelatedData = jest.fn().mockResolvedValue(Promise.resolve());
 
       await postService.getsByMedia('d3c1fa78-de9b-4f40-ad97-ee4dc19e36d9');
 
       expect(postModelMock.findAll).toBeCalledTimes(1);
-      expect(postBindingService.bindAudienceToPost).toBeCalledTimes(1);
-      expect(mentionService.bindMentionsToPosts).toBeCalledTimes(1);
-      expect(postBindingService.bindActorToPost).toBeCalledTimes(1);
+      expect(postBindingService.bindRelatedData).toBeCalledTimes(1);
     });
   });
 
