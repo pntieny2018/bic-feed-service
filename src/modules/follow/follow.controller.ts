@@ -1,9 +1,10 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { FollowService } from './follow.service';
 import { APP_VERSION } from '../../common/constants';
 import { GetUserFollowsDto } from './dto/requests';
 import { ApiTags } from '@nestjs/swagger';
 import { FollowsDto } from './dto/response/follows.dto';
+import { IFollow } from '../../database/models/follow.model';
 
 @ApiTags('Follow')
 @Controller({
@@ -21,5 +22,10 @@ export class FollowController {
       getUserFollowsDto.followId,
       getUserFollowsDto.limit
     );
+  }
+
+  @Get('/get-follows-by-user/:id')
+  public getFollowByUser(@Param('id', ParseUUIDPipe) userId: string): Promise<IFollow[]> {
+    return this._followService.getFollowByUserId(userId);
   }
 }
