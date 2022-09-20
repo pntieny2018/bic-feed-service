@@ -232,7 +232,7 @@ export class ArticleService extends PostService {
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
       loadMarkRead: true,
-      authUserId: authUser.id ?? null,
+      authUserId: authUser?.id || null,
     });
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
@@ -241,7 +241,7 @@ export class ArticleService extends PostService {
       shouldIncludeMedia: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
-      authUserId: authUser.id,
+      authUserId: authUser?.id || null,
     });
     const article = await this.postModel.findOne({
       attributes,
