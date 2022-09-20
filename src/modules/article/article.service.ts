@@ -230,7 +230,10 @@ export class ArticleService extends PostService {
     authUser: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: authUser.id });
+    const attributes = this.getAttributesObj({
+      loadMarkRead: true,
+      authUserId: authUser.id ?? null,
+    });
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
