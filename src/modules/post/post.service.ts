@@ -168,9 +168,19 @@ export class PostService {
       shouldIncludeMedia: true,
       authUserId: user?.id || null,
     });
+    let condition;
+    if (user) {
+      condition = {
+        id: postId,
+        isArticle: false,
+        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
+      };
+    } else {
+      condition = { id: postId, isArticle: false };
+    }
     const post = await this.postModel.findOne({
       attributes,
-      where: { id: postId, [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }] },
+      where: condition,
       include,
     });
     if (!post) {
