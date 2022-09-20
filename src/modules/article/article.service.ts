@@ -474,10 +474,13 @@ export class ArticleService extends PostService {
         },
       ],
     });
+    if (!article) {
+      throw new NotFoundException('Article is not found.');
+    }
     if (article.categories.length === 0) {
       throw new BadRequestException('Category is required');
     }
-    return this.publish(articleId, authUser);
+    return super.publish(articleId, authUser);
   }
 
   /**
