@@ -39,6 +39,8 @@ import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { WebhookGuard } from '../auth/webhook.guard';
 import { FeedService } from '../feed/feed.service';
 import { PostSearchService } from './post-search.service';
+import { UserService } from '../../shared/user';
+import { GroupService } from '../../shared/group';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -53,7 +55,9 @@ export class PostController {
     private _postSearchService: PostSearchService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _feedService: FeedService
+    private _feedService: FeedService,
+    private _userService: UserService,
+    private _groupService: GroupService
   ) {}
 
   @ApiOperation({ summary: 'Search posts' })
@@ -262,5 +266,21 @@ export class PostController {
     await this.publish(user, post['id']);
 
     return true;
+  }
+
+  @Get('/get-user-group/:groupId/:userId/:postId')
+  public async getUserGroup(
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+    @Param('postId') postId: string
+  ): Promise<any> {
+    const user = await this._userService.get(userId);
+    const group = await this._groupService.get(groupId);
+    const post = await this._postService.findPost({ postId });
+    return {
+      group,
+      user,
+      post,
+    };
   }
 }
