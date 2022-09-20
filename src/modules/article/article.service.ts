@@ -299,8 +299,11 @@ export class ArticleService extends PostService {
   protected getIncludeObj({
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
+    mustIncludeGroup,
     shouldIncludeMention,
     shouldIncludeMedia,
+    filterMediaIds,
+    mustIncludeMedia,
     shouldIncludeCategory,
     shouldIncludeSeries,
     filterCategoryIds,
@@ -313,6 +316,9 @@ export class ArticleService extends PostService {
     shouldIncludeCategory?: boolean;
     shouldIncludeSeries?: boolean;
     filterCategoryIds?: string[];
+    mustIncludeGroup?: boolean;
+    mustIncludeMedia?: boolean;
+    filterMediaIds?: string[];
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = super.getIncludeObj({
@@ -320,6 +326,9 @@ export class ArticleService extends PostService {
       shouldIncludeGroup,
       shouldIncludeMention,
       shouldIncludeMedia,
+      mustIncludeGroup,
+      mustIncludeMedia,
+      filterMediaIds,
       authUserId,
     });
 
@@ -459,20 +468,12 @@ export class ArticleService extends PostService {
    * @throws HttpException
    */
   public async publish(articleId: string, authUser: UserDto): Promise<boolean> {
+    const include = this.getIncludeObj({ shouldIncludeCategory: true });
     const article = await this.postModel.findOne({
       where: {
         id: articleId,
       },
-      include: [
-        {
-          model: CategoryModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-          required: false,
-        },
-      ],
+      include,
     });
     if (!article) {
       throw new NotFoundException('Article is not found.');
@@ -600,58 +601,24 @@ export class ArticleService extends PostService {
     return dataUpdate;
   }
 
-  public async getArticlesByMedia(id: string): Promise<ArticleResponseDto[]> {
-    const posts = await this.postModel.findAll({
-      include: [
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails', 'createdAt'],
-          required: true,
-          where: {
-            id,
-          },
-        },
-        {
-          model: CategoryModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-          required: false,
-        },
-        {
-          model: SeriesModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-          required: false,
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-        },
-      ],
+  public async getsByMedia(id: string): Promise<ArticleResponseDto[]> {
+    const include = this.getIncludeObj({
+      mustIncludeMedia: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      filterMediaIds: [id],
+    });
+    const articles = await this.postModel.findAll({ include });
+
+    const jsonArticles = articles.map((p) => p.toJSON());
+
+    const result = await this.postBinding.bindRelatedData(jsonArticles, {
+      shouldBindAudience: true,
+      shouldBindMention: true,
+      shouldBindActor: true,
     });
 
-    const jsonPosts = posts.map((p) => p.toJSON());
-    await Promise.all([
-      this.postBinding.bindAudienceToPost(jsonPosts),
-      this.mentionService.bindMentionsToPosts(jsonPosts),
-      this.postBinding.bindActorToPost(jsonPosts),
-    ]);
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPosts, {
-      excludeExtraneousValues: true,
-    });
-    return result;
+    return result as ArticleResponseDto[];
   }
 
   public async maskArticleContent(articles: any[]): Promise<void> {
