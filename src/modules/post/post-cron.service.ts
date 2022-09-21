@@ -72,7 +72,6 @@ export class PostCronService {
   }
   @Cron(CronExpression.EVERY_MINUTE)
   private async _jobUpdateImportantPost(): Promise<void> {
-    console.log('cronnnnnnn==================');
     try {
       this._postModel.update(
         {
