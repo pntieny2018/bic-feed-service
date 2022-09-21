@@ -181,27 +181,6 @@ describe('MentionService', () => {
     })
   })
 
-  describe('MentionService.destroy', () => {
-    it('return success for postId', async () => {
-      sequelize.query.mockResolvedValue(true)
-      const result = await service.destroy({postId: '1'}, null);
-      expect(sequelize.query).toBeCalled()
-      expect(result).toEqual(true)
-    })
-    it('return success for commentId', async () => {
-      sequelize.query.mockResolvedValue(true)
-      const result = await service.destroy({commentId: '1'}, null);
-      expect(sequelize.query).toBeCalled()
-      expect(result).toEqual(true)
-    })
-    it('return success for mentionIds', async () => {
-      model.destroy.mockResolvedValue(true)
-      const result = await service.destroy({mentionIds: [1]}, null);
-      expect(model.destroy).toBeCalled()
-      expect(result).toEqual(true)
-    })
-  })
-
   describe('MentionService.deleteByEntityIds', () => {
     it('return success', async () => {
       model.destroy.mockResolvedValue(true)

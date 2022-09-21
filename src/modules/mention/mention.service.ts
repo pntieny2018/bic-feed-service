@@ -193,47 +193,6 @@ export class MentionService {
     return true;
   }
 
-  public async destroy(removeMentionDto: RemoveMentionDto, transaction: Transaction): Promise<any> {
-    const databaseConfig = getDatabaseConfig();
-
-    if (removeMentionDto.commentId) {
-      return this._sequelizeConnection.query(
-        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.entity_id = $commentId`,
-        {
-          type: QueryTypes.DELETE,
-          bind: {
-            commentId: removeMentionDto.commentId,
-          },
-          transaction: transaction,
-        }
-      );
-    }
-
-    if (removeMentionDto.postId) {
-      return this._sequelizeConnection.query(
-        `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.entityId = $postId`,
-        {
-          type: QueryTypes.DELETE,
-          bind: {
-            postId: removeMentionDto.postId,
-          },
-          transaction: transaction,
-        }
-      );
-    }
-
-    if (removeMentionDto.mentionIds) {
-      return this._mentionModel.destroy({
-        where: {
-          id: {
-            [Op.in]: removeMentionDto.mentionIds,
-          },
-        },
-        transaction: transaction,
-      });
-    }
-  }
-
   public async deleteByEntityIds(
     entityIds: string[],
     mentionableType: MentionableType,

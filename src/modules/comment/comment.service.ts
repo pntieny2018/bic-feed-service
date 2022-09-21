@@ -571,14 +571,7 @@ export class CommentService {
     try {
       await Promise.all([
         this._mediaService.sync(commentId, EntityType.COMMENT, [], transaction),
-
-        this._mentionService.destroy(
-          {
-            commentId: commentId,
-          },
-          transaction
-        ),
-
+        this._mentionService.setMention([], MentionableType.COMMENT, commentId, transaction),
         this._reactionService.deleteByCommentIds([commentId], transaction),
       ]);
 
