@@ -1,37 +1,33 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { SentryService } from '@app/sentry';
-import { PostListener } from '../post';
-import { PostService } from '../../modules/post/post.service';
-import { FeedPublisherService } from '../../modules/feed-publisher';
-import { UserService } from '../../shared/user';
-import { Sequelize } from 'sequelize-typescript';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { PostActivityService } from '../../notification/activities';
-import { NotificationService } from '../../notification';
-import { MediaService } from '../../modules/media';
-import { FeedService } from '../../modules/feed/feed.service';
-import { SeriesService } from '../../modules/series/series.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Sequelize } from 'sequelize-typescript';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
+  PostHasBeenUpdatedEvent
 } from '../../events/post';
-import {
-  PostHasBeenDeletedEventPayload,
-  PostHasBeenPublishedEventPayload,
-} from '../../events/post/payload';
-import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import {
-  ProcessVideoResponseDto,
-  VideoProcessingEndDto,
-} from '../../modules/post/dto/responses/process-video-response.dto';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+import { FeedService } from '../../modules/feed/feed.service';
+import { MediaService } from '../../modules/media';
+import {
+  VideoProcessingEndDto
+} from '../../modules/post/dto/responses/process-video-response.dto';
+import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostSearchService } from '../../modules/post/post-search.service';
+import { PostService } from '../../modules/post/post.service';
+import { SeriesService } from '../../modules/series/series.service';
+import { NotificationService } from '../../notification';
+import { PostActivityService } from '../../notification/activities';
+import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
+import { PostListener } from '../post';
 
 describe('PostListener', () => {
   let postListener;
   let postService;
+  let postHistoryService;
   let feedPublisherService;
   let sentryService;
   let elasticsearchService;
@@ -54,6 +50,10 @@ describe('PostListener', () => {
             index: jest.fn(),
             update: jest.fn(),
           },
+        },
+        {
+          provide: PostHistoryService,
+          useValue: {},
         },
         {
           provide: FeedPublisherService,
@@ -121,6 +121,7 @@ describe('PostListener', () => {
     }).compile();
 
     postListener = module.get<PostListener>(PostListener);
+    postHistoryService = module.get<PostHistoryService>(PostHistoryService);
     elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
     feedPublisherService = module.get<FeedPublisherService>(FeedPublisherService);
     postActivityService = module.get<PostActivityService>(PostActivityService);

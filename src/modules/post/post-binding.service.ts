@@ -61,7 +61,7 @@ export class PostBindingService {
       processList.push(this.bindActorToPost(posts));
     }
     if (options?.shouldBindMention) {
-      processList.push(this.mentionService.bindMentionsToPosts(posts));
+      processList.push(this.mentionService.bindToPosts(posts));
     }
     if (options?.shouldBindAudience) {
       processList.push(
@@ -78,10 +78,7 @@ export class PostBindingService {
     if (processList.length === 0) return [];
 
     await Promise.all(processList);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
-    return result;
+    return posts;
   }
 
   public async bindAudienceToPost(

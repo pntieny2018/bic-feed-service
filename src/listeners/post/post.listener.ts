@@ -18,6 +18,7 @@ import { FeedService } from '../../modules/feed/feed.service';
 import { PostPrivacy } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostSearchService } from '../../modules/post/post-search.service';
+import { PostHistoryService } from '../../modules/post/post-history.service';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -29,7 +30,8 @@ export class PostListener {
     private readonly _postSearchService: PostSearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _postHistoryService: PostHistoryService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -38,7 +40,7 @@ export class PostListener {
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
-    this._postService.deleteEditedHistory(post.id).catch((e) => {
+    this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
@@ -115,10 +117,12 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    this._postService.saveEditedHistory(post.id, { oldData: null, newData: post }).catch((e) => {
-      this._logger.error(e, e?.stack);
-      this._sentryService.captureException(e);
-    });
+    this._postHistoryService
+      .saveEditedHistory(post.id, { oldData: null, newData: post })
+      .catch((e) => {
+        this._logger.error(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
 
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -194,10 +198,12 @@ export class PostListener {
 
     if (isDraft) return;
 
-    this._postService.saveEditedHistory(id, { oldData: oldPost, newData: newPost }).catch((e) => {
-      this._logger.debug(e, e?.stack);
-      this._sentryService.captureException(e);
-    });
+    this._postHistoryService
+      .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
+      .catch((e) => {
+        this._logger.debug(e, e?.stack);
+        this._sentryService.captureException(e);
+      });
 
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);

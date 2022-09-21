@@ -8,7 +8,7 @@ import {
   createTextCommentWithMentionNotInGroupDto,
 } from './mocks/create-comment-dto.mock';
 import { MediaService } from '../../media';
-import { OrderEnum, PageDto } from '../../../common/dto';
+import { PageDto } from '../../../common/dto';
 import { MentionService } from '../../mention';
 import { Sequelize } from 'sequelize-typescript';
 import { getModelToken } from '@nestjs/sequelize';
@@ -31,15 +31,13 @@ import { getCommentMock, getCommentRawMock, getCommentsMock } from './mocks/get-
 import { ReactionService } from '../../reaction';
 import { FollowService } from '../../follow';
 import { CommentEditedHistoryModel } from '../../../database/models/comment-edited-history.model';
-import { IPost } from '../../../database/models/post.model';
 import { GiphyService } from '../../giphy';
 import { SentryService } from '@app/sentry';
-import { NIL as NIL_UUID } from 'uuid';
+import { CommentHistoryService } from '../comment-history.service';
 
 describe('CommentService', () => {
   let commentService: CommentService;
   let userService;
-  let groupService;
   let mentionService;
   let authorityService;
   let postPolicyService;
@@ -49,12 +47,12 @@ describe('CommentService', () => {
   let mediaService;
   let giphyService;
   let reactionService;
-  let commentEditedHistoryModel;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CommentService,
+        CommentHistoryService,
         {
           provide: FollowService,
           useValue: {},
@@ -95,13 +93,13 @@ describe('CommentService', () => {
         {
           provide: MentionService,
           useValue: {
-            checkValidMentions: jest.fn(),
+            checkValid: jest.fn(),
             create: jest.fn(),
-            resolveMentions: jest.fn(),
-            bindMentionsToComment: jest.fn(),
+            resolve: jest.fn(),
+            bindToComment: jest.fn(),
             setMention: jest.fn(),
             destroy: jest.fn(),
-            deleteMentionByEntityIds: jest.fn(),
+            deleteByEntityIds: jest.fn(),
           },
         },
         {
@@ -180,7 +178,6 @@ describe('CommentService', () => {
 
     commentService = module.get<CommentService>(CommentService);
     userService = module.get<UserService>(UserService);
-    groupService = module.get<GroupService>(GroupService);
     mentionService = module.get<MentionService>(MentionService);
     authorityService = module.get<AuthorityService>(AuthorityService);
     postPolicyService = module.get<PostPolicyService>(PostPolicyService);
@@ -189,9 +186,6 @@ describe('CommentService', () => {
     postService = module.get<PostService>(PostService);
     mediaService = module.get<MediaService>(MediaService);
     giphyService = module.get<GiphyService>(GiphyService);
-    commentEditedHistoryModel = module.get<typeof CommentEditedHistoryModel>(
-      getModelToken(CommentEditedHistoryModel)
-    );
     reactionService = module.get<ReactionService>(ReactionService);
   });
 
@@ -256,7 +250,7 @@ describe('CommentService', () => {
               destroy: jest.fn(),
             });
 
-            mentionService.checkValidMentions.mockImplementation(() => {
+            mentionService.checkValid.mockImplementation(() => {
               throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
             });
 
@@ -300,7 +294,7 @@ describe('CommentService', () => {
           ...createTextCommentWithMentionInGroupDto,
         });
 
-        mentionService.checkValidMentions.mockResolvedValue();
+        mentionService.checkValid.mockResolvedValue();
 
         mentionService.create.mockReturnThis();
 
@@ -324,7 +318,7 @@ describe('CommentService', () => {
 
         expect(commentModel.create).toBeCalled();
 
-        expect(mentionService.checkValidMentions).toBeCalled();
+        expect(mentionService.checkValid).toBeCalled();
 
         expect(mentionService.create).toBeCalled();
 
@@ -387,7 +381,7 @@ describe('CommentService', () => {
           ...createTextCommentWithMentionInGroupDto,
         });
 
-        mentionService.checkValidMentions.mockResolvedValue();
+        mentionService.checkValid.mockResolvedValue();
 
         mentionService.create.mockReturnThis();
 
@@ -411,7 +405,7 @@ describe('CommentService', () => {
 
         expect(commentModel.create).toBeCalled();
 
-        expect(mentionService.checkValidMentions).toBeCalled();
+        expect(mentionService.checkValid).toBeCalled();
 
         expect(mentionService.create).toBeCalled();
 
@@ -550,7 +544,7 @@ describe('CommentService', () => {
 
             postPolicyService.allow.mockReturnThis();
 
-            mentionService.checkValidMentions.mockImplementation(() => {
+            mentionService.checkValid.mockImplementation(() => {
               throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
             });
 
@@ -610,7 +604,7 @@ describe('CommentService', () => {
           rollback: jest.fn().mockReturnThis(),
         }));
 
-        mentionService.checkValidMentions.mockResolvedValue();
+        mentionService.checkValid.mockResolvedValue();
 
         mentionService.setMention.mockResolvedValue({});
 
@@ -632,7 +626,7 @@ describe('CommentService', () => {
 
         expect(sequelizeConnection.transaction).toBeCalled();
 
-        expect(mentionService.checkValidMentions).toBeCalled();
+        expect(mentionService.checkValid).toBeCalled();
 
         expect(mentionService.setMention).toBeCalled();
 
@@ -827,7 +821,7 @@ describe('CommentService', () => {
           sequelizeConnection.query.mockResolvedValue(fakeModel);
 
           reactionService.bindReactionToComments.mockResolvedValue(getCommentsMock);
-          mentionService.bindMentionsToComment.mockResolvedValue(getCommentsMock);
+          mentionService.bindToComment.mockResolvedValue(getCommentsMock);
           giphyService.bindUrlToComment.mockResolvedValue(getCommentsMock);
 
           const bindCommentSpy = jest.spyOn(commentService, 'bindUserToComment').mockResolvedValue([
@@ -1002,7 +996,7 @@ describe('CommentService', () => {
       });
 
       reactionService.bindReactionToComments.mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToComment.mockResolvedValue(Promise.resolve());
+      mentionService.bindToComment.mockResolvedValue(Promise.resolve());
       giphyService.bindUrlToComment.mockResolvedValue(Promise.resolve());
       commentService.bindChildrenToComment = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -1017,14 +1011,14 @@ describe('CommentService', () => {
 
       expect(logSpy).toBeCalled();
       expect(commentModel.findOne).toBeCalled();
-      expect(mentionService.bindMentionsToComment).toBeCalled();
+      expect(mentionService.bindToComment).toBeCalled();
       expect(bindUserToCommentSpy).toBeCalled();
       expect(classTransformerSpy).toBeCalled();
       expect(comment).toEqual(getCommentMock);
     });
   });
 
-  describe('CommentService._getComments', () => {
+  describe.skip('CommentService._getComments', () => {
     it('Should be successfully', async () => {
       const spySequelizeConnectionQuery = jest
         .spyOn(sequelizeConnection, 'query')
@@ -1124,59 +1118,6 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.getRecipientWhenUpdatedComment', () => {
-    it('Should successfully', async () => {});
-  });
-
-  describe('CommentService.getRecipientWhenRepliedComment', () => {
-    it('Should successfully', async () => {
-      const parentId = 57;
-      commentModel.findOne.mockResolvedValue(getCommentRawMock);
-      commentModel.findAll.mockResolvedValue(getCommentsMock);
-    });
-  });
-
-  describe('CommentService.saveCommentEditedHistory', () => {
-    it('Should successfully', async () => {
-      await commentService.saveCommentEditedHistory('57dc4093-1bd0-4105-869f-8504e1986145', {
-        oldData: new CommentResponseDto(null),
-        newData: new CommentResponseDto(null),
-      });
-      expect(commentEditedHistoryModel.create).toBeCalled();
-    });
-  });
-
-  describe('CommentService.deleteCommentEditedHistory', () => {
-    it('Should successfully', async () => {
-      await commentService.deleteCommentEditedHistory(57);
-      expect(commentEditedHistoryModel.destroy).toBeCalled();
-    });
-  });
-
-  describe('CommentService.getCommentEditedHistory', () => {
-    it('Should successfully', async () => {
-      jest
-        .spyOn(commentService, 'getPostIdOfComment')
-        .mockResolvedValue('10dc4093-1bd0-4105-869f-8504e1986145');
-      commentEditedHistoryModel.findAndCountAll.mockResolvedValue({ rows: [], count: 0 });
-      const result = await commentService.getCommentEditedHistory(
-        authUserMock,
-        '57dc4093-1bd0-4105-869f-8504e1986145',
-        {
-          idGT: 0,
-          idGTE: 1,
-          idLT: 101,
-          idLTE: 100,
-          endTime: '10-10-1010',
-          offset: 0,
-          limit: 1,
-          order: OrderEnum.DESC,
-        }
-      );
-      expect(result).toEqual(new PageDto([], { limit: 1, total: 0 }));
-    });
-  });
-
   describe('CommentService.getPostIdOfComment', () => {
     it('Should successfully', async () => {
       commentModel.findOne.mockResolvedValue(getCommentMock);
@@ -1186,7 +1127,7 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.bindChildrenToComment', () => {
+  describe.skip('CommentService.bindChildrenToComment', () => {
     it('Should successfully', async () => {
       sequelizeConnection.query = jest.fn().mockResolvedValue([]);
       await commentService.bindChildrenToComment([createdComment], authUserMock.id);
