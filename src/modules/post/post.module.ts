@@ -16,6 +16,7 @@ import { IKafkaConfig } from '../../config/kafka';
 import { PostConsumerController } from './post-consummer.controller';
 import { PostSearchService } from './post-search.service';
 import { PostBindingService } from './post-binding.service';
+import { LinkPreviewModule } from '../link-preview/link-preview.module';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -33,6 +34,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     AuthorityModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
+    forwardRef(() => LinkPreviewModule),
   ],
   controllers: [PostController, PostConsumerController],
   providers: [PostService, PostBindingService, PostSearchService, PostPolicyService],

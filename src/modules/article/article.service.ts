@@ -47,6 +47,9 @@ import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post
 import { UserService } from '../../shared/user';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { Op } from 'sequelize';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import { PostLinkPreviewModel } from '../../database/models/post-link-preview.model';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -89,7 +92,8 @@ export class ArticleService extends PostService {
     protected readonly postBinding: PostBindingService,
     private readonly _hashtagService: HashtagService,
     private readonly _seriesService: SeriesService,
-    private readonly _categoryService: CategoryService
+    private readonly _categoryService: CategoryService,
+    private readonly _linkPreviewService: LinkPreviewService
   ) {
     super(
       sequelizeConnection,
@@ -107,7 +111,8 @@ export class ArticleService extends PostService {
       postEditedHistoryModel,
       client,
       sentryService,
-      postBinding
+      postBinding,
+      _linkPreviewService
     );
   }
 

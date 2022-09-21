@@ -57,6 +57,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
 import { PostBindingService } from './post-binding.service';
 import { MediaDto } from '../media/dto';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 @Injectable()
 export class PostService {
   /**
@@ -96,7 +97,8 @@ export class PostService {
     @Inject(KAFKA_PRODUCER)
     protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService,
-    protected readonly postBinding: PostBindingService
+    protected readonly postBinding: PostBindingService,
+    protected readonly linkPreviewService: LinkPreviewService
   ) {}
 
   /**
@@ -364,8 +366,9 @@ export class PostService {
           transaction
         );
       }
-
       await transaction.commit();
+
+      await this.linkPreviewService.create(createPostDto.linkPreview, post.id);
 
       return post;
     } catch (error) {

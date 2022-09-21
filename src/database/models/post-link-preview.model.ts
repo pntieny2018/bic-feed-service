@@ -14,7 +14,7 @@ import { PostModel } from './post.model';
 
 export interface IPostLinkPreview {
   postId: string;
-  LinkPreviewId: string;
+  linkPreviewId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -33,13 +33,13 @@ export class PostLinkPreviewModel extends Model implements IPostLinkPreview {
   @PrimaryKey
   @IsUUID()
   @Column
-  public LinkPreviewId: string;
+  public linkPreviewId: string;
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;
 
   @BelongsTo(() => LinkPreviewModel)
-  public LinkPreview?: LinkPreviewModel;
+  public linkPreview?: LinkPreviewModel;
 
   @CreatedAt
   @Column

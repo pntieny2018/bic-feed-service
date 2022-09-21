@@ -7,7 +7,7 @@ import { AudienceRequestDto } from './audience.request.dto';
 import { IsOptional, ValidateNested } from 'class-validator';
 import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
-import { LinkPreviewDto } from './link-preview.dto';
+import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 
 export class CreatePostDto {
   @ApiProperty({
