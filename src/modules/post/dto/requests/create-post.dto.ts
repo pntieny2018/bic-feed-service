@@ -1,12 +1,13 @@
 import { MediaDto } from '../../../media/dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { UserMentionDto } from '../../../mention/dto';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { AudienceRequestDto } from './audience.request.dto';
 import { IsOptional, ValidateNested } from 'class-validator';
 import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
+import { LinkPreviewDto } from './link-preview.dto';
 
 export class CreatePostDto {
   @ApiProperty({
@@ -109,4 +110,21 @@ export class CreatePostDto {
   })
   @ValidateMention()
   public mentions?: string[] = [];
+
+  @ApiProperty({
+    type: LinkPreviewDto,
+    example: {
+      url: 'https://beincomm.com',
+      domain: 'beincomm.com',
+      image: 'https://www.beincomm.com/images/bic_welcomeAd_banner.webp',
+      title: 'This is title',
+      description: 'This is description',
+    },
+  })
+  @IsOptional()
+  @Type(() => LinkPreviewDto)
+  @Expose({
+    name: 'link_preview',
+  })
+  linkPreview?: LinkPreviewDto;
 }
