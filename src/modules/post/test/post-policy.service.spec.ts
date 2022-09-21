@@ -1,12 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PostPolicyService } from '../post-policy.service';
-import { IPost, PostModel } from '../../../database/models/post.model';
-import { PostAllow } from '..';
-import { Sequelize } from 'sequelize-typescript';
-import { getModelToken } from '@nestjs/sequelize';
-import { LogicException } from '../../../common/exceptions';
-import { mockedPostData } from './mocks/response/post.response.mock';
 import { createMock } from '@golevelup/ts-jest';
+import { getModelToken } from '@nestjs/sequelize';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Sequelize } from 'sequelize-typescript';
+import { PostAllow } from '..';
+import { PostModel } from '../../../database/models/post.model';
+import { PostPolicyService } from '../post-policy.service';
+import { mockedPostData } from './mocks/response/post.response.mock';
 
 describe('PostPolicyService', () => {
   let postService: PostPolicyService;

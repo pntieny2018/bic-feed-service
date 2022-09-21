@@ -1,49 +1,48 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PostModel, PostPrivacy } from '../../../database/models/post.model';
-import { getModelToken } from '@nestjs/sequelize';
-import { createMock } from '@golevelup/ts-jest';
-import { SentryService } from '@app/sentry';
 import { RedisModule } from '@app/redis';
-import { UserService } from '../../../shared/user';
-import { GroupService } from '../../../shared/group';
-import { MediaService } from '../../media';
-import { MentionService } from '../../mention';
-import { Transaction } from 'sequelize';
-import { CommentService } from '../../comment';
-import { AuthorityService } from '../../authority';
-import { Sequelize } from 'sequelize-typescript';
-import { ReactionService } from '../../reaction';
-
+import { SentryService } from '@app/sentry';
+import { createMock } from '@golevelup/ts-jest';
 import { ClientsModule } from '@nestjs/microservices';
-import { ArticleService } from '../article.service';
-import { mockedUserAuth } from './mocks/user-auth.mock';
-import { PostService } from '../../post/post.service';
-import { mockedArticleData, mockedArticleResponse } from './mocks/response/article.response.mock';
-import { GetArticleDto, GetListArticlesDto, SearchArticlesDto } from '../dto/requests';
-import { CategoryService } from '../../category/category.service';
-import { SeriesService } from '../../series/series.service';
-import { HashtagService } from '../../hashtag/hashtag.service';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { CategoryModel } from '../../../database/models/category.model';
-import { SeriesModel } from '../../../database/models/series.model';
-import { HashtagModel } from '../../../database/models/hashtag.model';
-import { mockedPostResponse } from '../../post/test/mocks/response/post.response.mock';
+import { getModelToken } from '@nestjs/sequelize';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { KAFKA_PRODUCER } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
 import { LogicException } from '../../../common/exceptions';
-import { mockedCreateArticleDto } from './mocks/request/create-article.dto.mock';
-import { mockedArticleCreated } from './mocks/response/create-article.response.mock';
-import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
+import { CategoryModel } from '../../../database/models/category.model';
+import { HashtagModel } from '../../../database/models/hashtag.model';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
-import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
-import { AuthorityFactory } from '../../authority/authority.factory';
-import { PostBindingService } from '../../post/post-binding.service';
-import { PostGroupModel } from '../../../database/models/post-group.model';
-import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
-import { FeedService } from '../../feed/feed.service';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
-import { KAFKA_PRODUCER } from '../../../common/constants';
+import { PostGroupModel } from '../../../database/models/post-group.model';
+import { PostModel, PostPrivacy } from '../../../database/models/post.model';
+import { SeriesModel } from '../../../database/models/series.model';
+import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
+import { GroupService } from '../../../shared/group';
+import { UserService } from '../../../shared/user';
+import { AuthorityService } from '../../authority';
+import { AuthorityFactory } from '../../authority/authority.factory';
+import { CategoryService } from '../../category/category.service';
+import { CommentService } from '../../comment';
+import { FeedService } from '../../feed/feed.service';
+import { HashtagService } from '../../hashtag/hashtag.service';
+import { MediaService } from '../../media';
+import { MentionService } from '../../mention';
+import { PostBindingService } from '../../post/post-binding.service';
+import { PostService } from '../../post/post.service';
+import { mockedUpdatePostDto } from '../../post/test/mocks/request/update-post.dto.mock';
+import { mockedPostResponse } from '../../post/test/mocks/response/post.response.mock';
+import { ReactionService } from '../../reaction';
+import { SeriesService } from '../../series/series.service';
+import { ArticleService } from '../article.service';
+import { GetArticleDto, GetListArticlesDto } from '../dto/requests';
+import { mockedCreateArticleDto } from './mocks/request/create-article.dto.mock';
+import { mockedUpdateArticleDto } from './mocks/request/updated-article.dto.mock';
+import { mockedArticleData, mockedArticleResponse } from './mocks/response/article.response.mock';
+import { mockedArticleCreated } from './mocks/response/create-article.response.mock';
+import { mockedUserAuth } from './mocks/user-auth.mock';
+
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -286,7 +285,7 @@ describe('ArticleService', () => {
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
       mediaService.createIfNotExist = jest.fn().mockReturnThis();
       mentionService.create = jest.fn().mockResolvedValue(mockedCreateArticleDto.mentions);
-      mentionService.checkValidMentions = jest.fn();
+      mentionService.checkValid = jest.fn();
 
       articleService.addGroup = jest.fn().mockResolvedValue(Promise.resolve());
       articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
@@ -331,7 +330,7 @@ describe('ArticleService', () => {
       hashtagService.findOrCreateHashtags = jest.fn().mockResolvedValue([]);
 
       mentionService.create = jest.fn().mockResolvedValue(mockedCreateArticleDto.mentions);
-      mentionService.checkValidMentions = jest.fn();
+      mentionService.checkValid = jest.fn();
 
       postModelMock.create = jest
         .fn()
@@ -489,7 +488,7 @@ describe('ArticleService', () => {
       articleService.group = jest.fn().mockResolvedValue([]);
       articleService.maskArticleContent = jest.fn();
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
 
       const result = await articleService.getList(mockedUserAuth, getArticleListDto);
 

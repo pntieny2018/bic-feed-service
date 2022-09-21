@@ -93,7 +93,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
 
     const jsonPosts = posts.map((r) => r.toJSON());
     await Promise.all([
-      this.mentionService.bindMentionsToPosts(jsonPosts),
+      this.mentionService.bindToPosts(jsonPosts),
       this._bindActorToPost(jsonPosts),
       this._bindAudienceToPost(jsonPosts),
     ]);

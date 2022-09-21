@@ -5,15 +5,23 @@ import { authUserMock } from './mocks/user.mock';
 import { createdComment, createTextCommentDto } from './mocks/create-comment-dto.mock';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { SentryService } from '../../../../libs/sentry/src';
+import { CommentHistoryService } from '../comment-history.service';
 
 describe('CommentController', () => {
   let controller: CommentController;
   let commentService;
+  let commentHistoryService;
   let internalEventEmitterService: InternalEventEmitterService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CommentController],
       providers: [
+        {
+          provide: CommentHistoryService,
+          useValue: {
+            getCommentEditedHistory: jest.fn()
+          },
+        },
         {
           provide: CommentService,
           useValue: {
@@ -22,8 +30,7 @@ describe('CommentController', () => {
             destroy: jest.fn(),
             getComment: jest.fn(),
             getComments: jest.fn(),
-            getCommentLink: jest.fn(),
-            getCommentEditedHistory: jest.fn(),
+            getCommentLink: jest.fn()
           },
         },
         {
@@ -43,6 +50,7 @@ describe('CommentController', () => {
 
     controller = module.get<CommentController>(CommentController);
     commentService = module.get<CommentService>(CommentService);
+    commentHistoryService = module.get<CommentHistoryService>(CommentHistoryService);
     internalEventEmitterService = module.get<InternalEventEmitterService>(
       InternalEventEmitterService
     );
@@ -156,9 +164,9 @@ describe('CommentController', () => {
 
   describe('CommentController.getCommentEditedHistory', () => {
     it('Should successfully', async () => {
-      commentService.getCommentEditedHistory = jest.fn().mockResolvedValue(Promise.resolve());
+      commentHistoryService.getCommentEditedHistory = jest.fn().mockResolvedValue(Promise.resolve());
       await controller.getCommentEditedHistory(authUserMock, createdComment.id, null);
-      expect(commentService.getCommentEditedHistory).toBeCalledTimes(1);
+      expect(commentHistoryService.getCommentEditedHistory).toBeCalledTimes(1);
     });
   });
 });

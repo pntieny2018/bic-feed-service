@@ -64,11 +64,11 @@ describe('MentionService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('MentionService.checkValidMentions', () => {
+  describe('MentionService.checkValid', () => {
     it('should success', async () => {
       userService.getMany.mockResolvedValue(Promise.resolve(['61547513-521f-4dec-9c93-f4e4973d3008']))
       groupService.isMemberOfSomeGroups.mockResolvedValue(true)
-      await service.checkValidMentions(['c233a814-1fe9-437d-9b7b-1babee5ccad5'], ['61547513-521f-4dec-9c93-f4e4973d3008'])
+      await service.checkValid(['c233a814-1fe9-437d-9b7b-1babee5ccad5'], ['61547513-521f-4dec-9c93-f4e4973d3008'])
       expect(userService.getMany).toBeCalled()
       expect(groupService.isMemberOfSomeGroups).toBeCalled()
     })
@@ -77,7 +77,7 @@ describe('MentionService', () => {
       userService.getMany.mockResolvedValue(Promise.resolve(['61547513-521f-4dec-9c93-f4e4973d3008']))
       groupService.isMemberOfSomeGroups.mockResolvedValue(false)
       try {
-        await service.checkValidMentions(['c233a814-1fe9-437d-9b7b-1babee5ccad5'], ['61547513-521f-4dec-9c93-f4e4973d3008'])
+        await service.checkValid(['c233a814-1fe9-437d-9b7b-1babee5ccad5'], ['61547513-521f-4dec-9c93-f4e4973d3008'])
 
       } catch (e) {
         expect(userService.getMany).toBeCalled()
@@ -95,20 +95,20 @@ describe('MentionService', () => {
     })
   })
 
-  describe('MentionService.resolveMentions', () => {
+  describe('MentionService.resolve', () => {
     it('return [] if input []', async () => {
-      const result = await service.resolveMentions([])
+      const result = await service.resolve([])
       expect(result).toEqual([]);
     })
     it('should success', async () => {
       userService.getMany.mockResolvedValue(Promise.resolve([{id: '61547513-521f-4dec-9c93-f4e4973d3008'}]))
-      const result = await service.resolveMentions(['61547513-521f-4dec-9c93-f4e4973d3008'])
+      const result = await service.resolve(['61547513-521f-4dec-9c93-f4e4973d3008'])
       expect(userService.getMany).toBeCalled()
       expect(result).toEqual([{id: '61547513-521f-4dec-9c93-f4e4973d3008'}])
     })
   })
 
-  describe('MentionService.bindMentionsToComment', () => {
+  describe('MentionService.bindToComment', () => {
     it('return success', async () => {
       const comments = [{
         parent: {
@@ -129,12 +129,12 @@ describe('MentionService', () => {
       }]
       userService.getMany.mockResolvedValue(Promise.resolve([{id: 1}]))
       const beforeBind = Object.assign([], comments)
-      await service.bindMentionsToComment(comments)
+      await service.bindToComment(comments)
       expect(beforeBind).toEqual(comments)
     })
   })
 
-  describe('MentionService.bindMentionsToPosts', () => {
+  describe('MentionService.bindToPosts', () => {
     it('return success', async () => {
       const posts = [{
         parent: {
@@ -154,7 +154,7 @@ describe('MentionService', () => {
         }
       }]
       const beforeBind = Object.assign([], [posts])
-      await service.bindMentionsToPosts([posts]);
+      await service.bindToPosts([posts]);
       expect(beforeBind).toEqual([posts])
     })
   })
@@ -202,10 +202,10 @@ describe('MentionService', () => {
     })
   })
 
-  describe('MentionService.deleteMentionByEntityIds', () => {
+  describe('MentionService.deleteByEntityIds', () => {
     it('return success', async () => {
       model.destroy.mockResolvedValue(true)
-      const result = await service.deleteMentionByEntityIds(['1'], MentionableType.POST, null);
+      const result = await service.deleteByEntityIds(['1'], MentionableType.POST, null);
       expect(model.destroy).toBeCalled()
       expect(result).toEqual(true)
     })

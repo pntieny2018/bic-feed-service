@@ -29,7 +29,7 @@ export class MentionService {
    * @param userIds number[]
    * @throws LogicException
    */
-  public async checkValidMentions(groupIds: string[], userIds: string[]): Promise<void> {
+  public async checkValid(groupIds: string[], userIds: string[]): Promise<void> {
     const users: UserSharedDto[] = await this._userService.getMany(userIds);
     for (const user of users) {
       if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
@@ -48,9 +48,9 @@ export class MentionService {
     transaction: Transaction = null
   ): Promise<MentionModel[]> {
     if (transaction) {
-      return await this._mentionModel.bulkCreate(mentions, { transaction });
+      return this._mentionModel.bulkCreate(mentions, { transaction });
     }
-    return await this._mentionModel.bulkCreate(mentions);
+    return this._mentionModel.bulkCreate(mentions);
   }
 
   /**
@@ -58,7 +58,7 @@ export class MentionService {
    * @param userIds number[]
    * @returns Promise resolve UserSharedDto[]
    */
-  public async resolveMentions(userIds: string[]): Promise<UserSharedDto[]> {
+  public async resolve(userIds: string[]): Promise<UserSharedDto[]> {
     if (!userIds.length) return [];
     const users = await this._userService.getMany(userIds);
     return plainToInstance(UserSharedDto, users, {
@@ -70,24 +70,10 @@ export class MentionService {
    * Bind mention to comment
    * @param commentsResponse any[]
    */
-  public async bindMentionsToComment(commentsResponse: any[]): Promise<void> {
-    const userIds: string[] = [];
+  public async bindToComment(commentsResponse: any[]): Promise<void> {
+    const userIds: string[] = this._getUserIdsFromComments(commentsResponse);
 
-    for (const comment of commentsResponse) {
-      if (comment?.parent?.mentions.length) {
-        userIds.push(...comment.parent.mentions.map((m) => m.userId));
-      }
-      if (comment.mentions && comment.mentions.length) {
-        userIds.push(...comment.mentions.map((m) => m.userId));
-      }
-      if (comment.child?.list && comment.child?.list.length) {
-        for (const cm of comment.child.list) {
-          userIds.push(...cm.mentions.map((m) => m.userId));
-        }
-      }
-    }
-
-    const usersInfo = await this.resolveMentions(userIds);
+    const usersInfo = await this.resolve(userIds);
     const convert = (usersData: any[]): UserMentionDto => {
       const replacement = {};
       usersData
@@ -117,11 +103,30 @@ export class MentionService {
     }
   }
 
+  private _getUserIdsFromComments(commentsResponse: any[]): string[] {
+    const userIds: string[] = [];
+    for (const comment of commentsResponse) {
+      if (comment?.parent?.mentions.length) {
+        userIds.push(...comment.parent.mentions.map((m) => m.userId));
+      }
+      if (comment.mentions && comment.mentions.length) {
+        userIds.push(...comment.mentions.map((m) => m.userId));
+      }
+      if (comment.child?.list && comment.child?.list.length) {
+        for (const cm of comment.child.list) {
+          userIds.push(...cm.mentions.map((m) => m.userId));
+        }
+      }
+    }
+
+    return userIds;
+  }
+
   /**
    * Bind mention to post
    * @param posts any[]
    */
-  public async bindMentionsToPosts(posts: any[]): Promise<void> {
+  public async bindToPosts(posts: any[]): Promise<void> {
     const userIds: string[] = [];
 
     for (const post of posts) {
@@ -130,7 +135,7 @@ export class MentionService {
       }
     }
 
-    const usersInfo = await this.resolveMentions(userIds);
+    const usersInfo = await this.resolve(userIds);
 
     for (const post of posts) {
       if (post.mentions && post.mentions.length) {
@@ -192,7 +197,7 @@ export class MentionService {
     const databaseConfig = getDatabaseConfig();
 
     if (removeMentionDto.commentId) {
-      return await this._sequelizeConnection.query(
+      return this._sequelizeConnection.query(
         `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.entity_id = $commentId`,
         {
           type: QueryTypes.DELETE,
@@ -205,7 +210,7 @@ export class MentionService {
     }
 
     if (removeMentionDto.postId) {
-      return await this._sequelizeConnection.query(
+      return this._sequelizeConnection.query(
         `DELETE FROM ${databaseConfig.schema}.${MentionModel.tableName} where ${databaseConfig.schema}.${MentionModel.tableName}.entityId = $postId`,
         {
           type: QueryTypes.DELETE,
@@ -218,7 +223,7 @@ export class MentionService {
     }
 
     if (removeMentionDto.mentionIds) {
-      return await this._mentionModel.destroy({
+      return this._mentionModel.destroy({
         where: {
           id: {
             [Op.in]: removeMentionDto.mentionIds,
@@ -229,7 +234,7 @@ export class MentionService {
     }
   }
 
-  public async deleteMentionByEntityIds(
+  public async deleteByEntityIds(
     entityIds: string[],
     mentionableType: MentionableType,
     transaction: Transaction
