@@ -78,7 +78,10 @@ export class PostBindingService {
     if (processList.length === 0) return [];
 
     await Promise.all(processList);
-    return posts;
+    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
   }
 
   public async bindAudienceToPost(
