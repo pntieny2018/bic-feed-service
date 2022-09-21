@@ -10,9 +10,7 @@ import { GroupModule } from '../shared/group';
 import { PostModule } from '../modules/post';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { MentionModule } from '../modules/mention';
-import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { MediaModule } from '../modules/media';
-import { DeletePostIsProgressCommand } from './delete-post-is-progress.command';
 
 @Module({
   imports: [
@@ -30,8 +28,6 @@ import { DeletePostIsProgressCommand } from './delete-post-is-progress.command';
     FixPostCommentCountCommand,
     ReIndexEsPostCommand,
     UpdatePrivacyPostCommand,
-    UpdateMediaDomainCommand,
-    DeletePostIsProgressCommand,
   ],
 })
 export class CommandModule {}
