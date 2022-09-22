@@ -44,6 +44,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
     }
 
     console.log('DONE - total:', total);
+    process.exit();
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<any> {

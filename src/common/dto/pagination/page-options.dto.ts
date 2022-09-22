@@ -44,7 +44,7 @@ export class PageOptionsDto {
   @Expose({
     name: 'id_gte',
   })
-  public idGTE?: number = 0;
+  public idGTE?: string = undefined;
 
   @ApiProperty({
     required: false,
@@ -54,7 +54,7 @@ export class PageOptionsDto {
   @Expose({
     name: 'id_lte',
   })
-  public idLTE?: number = undefined;
+  public idLTE?: string = undefined;
 
   @ApiProperty({
     required: false,
@@ -64,7 +64,7 @@ export class PageOptionsDto {
   @Expose({
     name: 'id_gt',
   })
-  public idGT?: number = undefined;
+  public idGT?: string = undefined;
 
   @ApiProperty({
     required: false,
@@ -74,5 +74,45 @@ export class PageOptionsDto {
   @Expose({
     name: 'id_lt',
   })
-  public idLT?: number = undefined;
+  public idLT?: string = undefined;
+
+  @ApiProperty({
+    required: false,
+    name: 'created_at_gt',
+  })
+  @IsOptional()
+  @Expose({
+    name: 'created_at_gt',
+  })
+  public createdAtGT?: string = undefined;
+
+  @ApiProperty({
+    required: false,
+    name: 'created_at_lt',
+  })
+  @IsOptional()
+  @Expose({
+    name: 'created_at_lt',
+  })
+  public createdAtLT?: string = undefined;
+
+  @ApiProperty({
+    required: false,
+    name: 'created_at_gte',
+  })
+  @IsOptional()
+  @Expose({
+    name: 'created_at_gte',
+  })
+  public createdAtGTE?: string = undefined;
+
+  @ApiProperty({
+    required: false,
+    name: 'created_at_lte',
+  })
+  @IsOptional()
+  @Expose({
+    name: 'created_at_lte',
+  })
+  public createdAtLTE?: string = undefined;
 }
