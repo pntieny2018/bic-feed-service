@@ -17,7 +17,7 @@ export class LinkPreviewService {
   ) {}
   private _logger = new Logger(LinkPreviewService.name);
 
-  public async create(linkPreviewDto: LinkPreviewDto, postId: string): Promise<void> {
+  public async upsert(linkPreviewDto: LinkPreviewDto, postId: string): Promise<void> {
     let transaction;
     try {
       transaction = await this.sequelizeConnection.transaction();

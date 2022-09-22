@@ -472,6 +472,8 @@ export class ArticleService extends PostService {
 
       await transaction.commit();
 
+      await this.linkPreviewService.upsert(createArticleDto.linkPreview, post.id);
+
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -597,6 +599,8 @@ export class ArticleService extends PostService {
         transaction,
       });
       await transaction.commit();
+
+      await this.linkPreviewService.upsert(updateArticleDto.linkPreview, post.id);
 
       return true;
     } catch (error) {

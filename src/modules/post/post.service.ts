@@ -368,7 +368,7 @@ export class PostService {
       }
       await transaction.commit();
 
-      await this.linkPreviewService.create(createPostDto.linkPreview, post.id);
+      await this.linkPreviewService.upsert(createPostDto.linkPreview, post.id);
 
       return post;
     } catch (error) {
@@ -462,6 +462,8 @@ export class PostService {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
       await transaction.commit();
+
+      await this.linkPreviewService.upsert(updatePostDto.linkPreview, post.id);
 
       return true;
     } catch (error) {
