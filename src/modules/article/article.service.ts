@@ -84,8 +84,6 @@ export class ArticleService extends PostService {
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
-    @InjectModel(PostEditedHistoryModel)
-    protected readonly postEditedHistoryModel: typeof PostEditedHistoryModel,
     @Inject(KAFKA_PRODUCER)
     protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService,
@@ -108,7 +106,6 @@ export class ArticleService extends PostService {
       authorityService,
       reactionService,
       feedService,
-      postEditedHistoryModel,
       client,
       sentryService,
       postBinding,

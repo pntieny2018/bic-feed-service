@@ -1,28 +1,24 @@
-import { getModelToken } from '@nestjs/sequelize';
-import { Test, TestingModule } from '@nestjs/testing';
-import { HTTP_STATUS_ID, KAFKA_PRODUCER } from '../../../common/constants';
-import { PageDto } from '../../../common/dto/pagination/page.dto';
-import { PostModel, PostPrivacy } from '../../../database/models/post.model';
-import { PostService } from '../post.service';
-import { GetPostDto } from './../dto/requests/get-post.dto';
-import { mockedGroups, mockIPost, mockPostEditedHistoryModelArr } from './mocks/input.mock';
-import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
-import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
-
 import { RedisModule } from '@app/redis';
 import { SentryService } from '@app/sentry';
 import { createMock } from '@golevelup/ts-jest';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { ClientKafka, ClientsModule } from '@nestjs/microservices';
+import { getModelToken } from '@nestjs/sequelize';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { KAFKA_PRODUCER } from '../../../common/constants';
 import { EntityIdDto } from '../../../common/dto';
+import { PageDto } from '../../../common/dto/pagination/page.dto';
 import { LogicException } from '../../../common/exceptions';
-import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
+import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
+import { PostModel, PostPrivacy } from '../../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { GroupService } from '../../../shared/group';
 import { UserService } from '../../../shared/user';
 import { AuthorityService } from '../../authority';
+import { AuthorityFactory } from '../../authority/authority.factory';
 import { CommentService } from '../../comment';
 import { FeedService } from '../../feed/feed.service';
 import { MediaService } from '../../media';
@@ -30,17 +26,17 @@ import { MentionService } from '../../mention';
 import { ReactionService } from '../../reaction';
 import { UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
+import { PostResponseDto } from '../dto/responses';
+import { PostBindingService } from '../post-binding.service';
 import { PostPolicyService } from '../post-policy.service';
-
-import { ClientKafka, ClientsModule } from '@nestjs/microservices';
-import { mockGetPostEditedHistoryDto } from './mocks/request/get-post-edited-history.dto.mock';
+import { PostService } from '../post.service';
+import { GetPostDto } from './../dto/requests/get-post.dto';
+import { mockedGroups } from './mocks/input.mock';
+import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
+import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
-import { PostResponseDto } from '../dto/responses';
-import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUserAuth } from './mocks/user.mock';
-import { AuthorityFactory } from '../../authority/authority.factory';
-import { PostBindingService } from '../post-binding.service';
 import { LinkPreviewService } from '../../link-preview/link-preview.service';
 
 describe('PostService', () => {
@@ -60,7 +56,6 @@ describe('PostService', () => {
   let transactionMock;
   let clientKafka;
   let sequelize: Sequelize;
-  let postEditedHistoryModelMock: typeof PostEditedHistoryModel;
   let sentryService: SentryService;
 
   beforeEach(async () => {
@@ -172,23 +167,12 @@ describe('PostService', () => {
             destroy: jest.fn(),
           },
         },
-        {
-          provide: getModelToken(PostEditedHistoryModel),
-          useValue: {
-            findAndCountAll: jest.fn(),
-            create: jest.fn(),
-            destroy: jest.fn(),
-          },
-        },
       ],
     }).compile();
 
     postService = moduleRef.get<PostService>(PostService);
     postModelMock = moduleRef.get<typeof PostModel>(getModelToken(PostModel));
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
-    postEditedHistoryModelMock = moduleRef.get<typeof PostEditedHistoryModel>(
-      getModelToken(PostEditedHistoryModel)
-    );
     userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(
       getModelToken(UserMarkReadPostModel)
     );
@@ -759,49 +743,6 @@ describe('PostService', () => {
   });
 
   describe.skip('findPostIdsByGroupId', () => {});
-
-  describe('getPostEditedHistory', () => {
-    it('Should successfully', async () => {
-      postService.findPost = jest.fn().mockResolvedValue(mockIPost);
-
-      authorityService.checkPostOwner = jest.fn().mockResolvedValue(Promise.resolve());
-
-      postEditedHistoryModelMock.findAndCountAll = jest.fn().mockResolvedValue({
-        rows: mockPostEditedHistoryModelArr,
-        count: mockPostEditedHistoryModelArr.length,
-      });
-
-      await postService.getEditedHistory(mockedUserAuth, mockIPost.id, mockGetPostEditedHistoryDto);
-
-      expect(authorityService.checkPostOwner).toBeCalledTimes(1);
-      expect(postService.findPost).toBeCalledTimes(1);
-    });
-
-    it('User not in post groups', async () => {
-      postService.findPost = jest.fn().mockResolvedValue(mockIPost);
-
-      // postService.checkPostOwner = jest
-      //   .fn()
-      //   .mockRejectedValue(new Error(HTTP_STATUS_ID.API_FORBIDDEN));
-
-      postEditedHistoryModelMock.findAndCountAll = jest
-        .fn()
-        .mockResolvedValue({ rows: [], count: 0 });
-
-      try {
-        await postService.getEditedHistory(
-          mockedUserAuth,
-          mockIPost.id,
-          mockGetPostEditedHistoryDto
-        );
-      } catch (e) {
-        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
-
-      // expect(postService.checkPostOwner).toBeCalledTimes(1);
-      expect(postService.findPost).toBeCalledTimes(1);
-    });
-  });
 
   describe('checkContent', () => {
     it('Should successfully', async () => {

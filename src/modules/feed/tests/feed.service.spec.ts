@@ -141,7 +141,7 @@ describe('FeedService', () => {
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
       postService.group = jest.fn().mockReturnValue([]);
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 
@@ -166,7 +166,7 @@ describe('FeedService', () => {
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
       postService.group = jest.fn().mockReturnValue([]);
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindMentionsToPosts = jest.fn().mockResolvedValue(Promise.resolve());
+      mentionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
       postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
 

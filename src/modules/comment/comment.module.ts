@@ -10,6 +10,7 @@ import { GroupModule } from '../../shared/group';
 import { ReactionModule } from '../reaction';
 import { FollowModule } from '../follow';
 import { GiphyModule } from '../giphy';
+import { CommentHistoryService } from './comment-history.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { GiphyModule } from '../giphy';
     GiphyModule,
   ],
   controllers: [CommentController],
-  providers: [CommentService],
-  exports: [CommentService],
+  providers: [CommentService, CommentHistoryService],
+  exports: [CommentService, CommentHistoryService],
 })
 export class CommentModule {}

@@ -16,6 +16,8 @@ import { IKafkaConfig } from '../../config/kafka';
 import { PostConsumerController } from './post-consummer.controller';
 import { PostSearchService } from './post-search.service';
 import { PostBindingService } from './post-binding.service';
+import { PostHistoryService } from './post-history.service';
+import { PostCronService } from './post-cron.service';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -37,7 +39,20 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     forwardRef(() => LinkPreviewModule),
   ],
   controllers: [PostController, PostConsumerController],
-  providers: [PostService, PostBindingService, PostSearchService, PostPolicyService],
-  exports: [PostService, PostSearchService, PostBindingService, PostPolicyService],
+  providers: [
+    PostService,
+    PostBindingService,
+    PostSearchService,
+    PostPolicyService,
+    PostHistoryService,
+    PostCronService,
+  ],
+  exports: [
+    PostService,
+    PostSearchService,
+    PostBindingService,
+    PostPolicyService,
+    PostHistoryService,
+  ],
 })
 export class PostModule {}

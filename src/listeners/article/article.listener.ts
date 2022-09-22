@@ -18,6 +18,7 @@ import { ArticleVideoSuccessEvent } from '../../events/article/article-video-suc
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleService } from '../../modules/article/article.service';
 import { NIL as NIL_UUID } from 'uuid';
+import { PostHistoryService } from '../../modules/post/post-history.service';
 
 @Injectable()
 export class ArticleListener {
@@ -30,7 +31,8 @@ export class ArticleListener {
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
-    private readonly _articleService: ArticleService
+    private readonly _articleService: ArticleService,
+    private readonly _postServiceHistory: PostHistoryService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -43,7 +45,7 @@ export class ArticleListener {
       this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
     }
 
-    this._articleService.deleteEditedHistory(article.id).catch((e) => {
+    this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
@@ -80,7 +82,7 @@ export class ArticleListener {
 
     if (isDraft) return;
 
-    this._articleService
+    this._postServiceHistory
       .saveEditedHistory(article.id, { oldData: null, newData: article })
       .catch((e) => {
         this._logger.error(e, e?.stack);
@@ -177,7 +179,7 @@ export class ArticleListener {
 
     if (isDraft) return;
 
-    this._articleService
+    this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
         this._logger.debug(e, e?.stack);

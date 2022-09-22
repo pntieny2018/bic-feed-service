@@ -1,62 +1,49 @@
-import { PageDto, EntityIdDto } from '../../common/dto';
+import { SentryService } from '@app/sentry';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Severity } from '@sentry/node';
+import { ClassTransformer } from 'class-transformer';
+import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { NIL } from 'uuid';
 import {
   HTTP_STATUS_ID,
   KAFKA_PRODUCER,
   KAFKA_TOPIC,
   MentionableType,
 } from '../../common/constants';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
-import { CreatePostDto, GetPostDto, UpdatePostDto, GetPostEditedHistoryDto } from './dto/requests';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { UserDto } from '../auth';
-import { MediaService } from '../media';
-import { MentionService } from '../mention';
-import { CommentService } from '../comment';
-import { AuthorityService } from '../authority';
-import { UserService } from '../../shared/user';
-import { Sequelize } from 'sequelize-typescript';
-import { PostResponseDto, PostEditedHistoryDto } from './dto/responses';
-import { GroupService } from '../../shared/group';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
-import { EntityType } from '../media/media.constants';
+import { EntityIdDto, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
-import { FeedService } from '../feed/feed.service';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import {
-  IMedia,
-  MediaMarkAction,
-  MediaModel,
-  MediaStatus,
-} from '../../database/models/media.model';
-import { MentionModel } from '../../database/models/mention.model';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { CommentModel } from '../../database/models/comment.model';
-import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
-import { ReactionService } from '../reaction';
-import sequelize, {
-  FindAttributeOptions,
-  Includeable,
-  Op,
-  QueryTypes,
-  Transaction,
-} from 'sequelize';
 import { getDatabaseConfig } from '../../config/database';
+import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { CommentModel } from '../../database/models/comment.model';
+import { IMedia, MediaModel, MediaStatus } from '../../database/models/media.model';
+import { MentionModel } from '../../database/models/mention.model';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
-import { ClientKafka } from '@nestjs/microservices';
+import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
-import { SentryService } from '@app/sentry';
-import { NIL } from 'uuid';
-import { GroupPrivacy } from '../../shared/group/dto';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { SeriesModel } from '../../database/models/series.model';
-import { Severity } from '@sentry/node';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import moment from 'moment';
-import { PostBindingService } from './post-binding.service';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { GroupService } from '../../shared/group';
+import { GroupPrivacy } from '../../shared/group/dto';
+import { UserService } from '../../shared/user';
+import { UserDto } from '../auth';
+import { AuthorityService } from '../authority';
+import { CommentService } from '../comment';
+import { FeedService } from '../feed/feed.service';
+import { MediaService } from '../media';
 import { MediaDto } from '../media/dto';
+import { EntityType } from '../media/media.constants';
+import { MentionService } from '../mention';
+import { ReactionService } from '../reaction';
+import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PostResponseDto } from './dto/responses';
+import { PostBindingService } from './post-binding.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 @Injectable()
 export class PostService {
@@ -92,8 +79,6 @@ export class PostService {
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
-    @InjectModel(PostEditedHistoryModel)
-    protected readonly postEditedHistoryModel: typeof PostEditedHistoryModel,
     @Inject(KAFKA_PRODUCER)
     protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService,
@@ -380,24 +365,6 @@ export class PostService {
     }
   }
 
-  /**
-   * Save post edited history
-   * @param postId string
-   * @param Object { oldData: PostResponseDto; newData: PostResponseDto }
-   * @returns Promise resolve void
-   */
-  public async saveEditedHistory(
-    postId: string,
-    { oldData, newData }: { oldData: PostResponseDto; newData: PostResponseDto }
-  ): Promise<any> {
-    return this.postEditedHistoryModel.create({
-      postId: postId,
-      editedAt: newData.updatedAt ?? newData.createdAt,
-      oldData: oldData,
-      newData: newData,
-    });
-  }
-
   public async getPrivacy(groupIds: string[]): Promise<PostPrivacy> {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
@@ -662,7 +629,7 @@ export class PostService {
       }
 
       if (post.isDraft) {
-        await this._cleanRelationship(postId, transaction, true);
+        await this.cleanRelationship(postId, transaction, true);
         await this.postModel.destroy({
           where: {
             id: postId,
@@ -690,7 +657,7 @@ export class PostService {
     }
   }
 
-  private async _cleanRelationship(
+  public async cleanRelationship(
     postId: string,
     transaction: Transaction,
     isCleanMedia = false
@@ -708,19 +675,6 @@ export class PostService {
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
-
-  /**
-   * Delete post edited history
-   * @param postId string
-   */
-  public async deleteEditedHistory(postId: string): Promise<any> {
-    return this.postEditedHistoryModel.destroy({
-      where: {
-        postId: postId,
-      },
-    });
-  }
-
   /**
    * Add group to post
    * @param groupIds Array of Group ID
@@ -905,124 +859,6 @@ export class PostService {
         postId,
         userId,
       });
-    }
-  }
-
-  /**
-   * Get post edited history
-   * @param user UserDto
-   * @param postId string
-   * @param getPostEditedHistoryDto GetPostEditedHistoryDto
-   * @returns Promise resolve PageDto
-   */
-  public async getEditedHistory(
-    user: UserDto,
-    postId: string,
-    getPostEditedHistoryDto: GetPostEditedHistoryDto
-  ): Promise<PageDto<PostEditedHistoryDto>> {
-    const { schema } = getDatabaseConfig();
-    try {
-      const post = await this.findPost({ postId: postId });
-      await this.authorityService.checkPostOwner(post, user.id);
-      const { idGT, idGTE, idLT, idLTE, endTime, offset, limit, order } = getPostEditedHistoryDto;
-
-      if (post.isDraft === true) {
-        return new PageDto([], {
-          limit: limit,
-          total: 0,
-        });
-      }
-
-      const conditions = {};
-      conditions['postId'] = postId;
-
-      if (idGT) {
-        conditions['id'] = {
-          [Op.not]: idGT,
-          ...conditions['id'],
-        };
-        conditions['editedAt'] = {
-          [Op.gte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
-            idGT
-          )}
-          `),
-          ...conditions['editedAt'],
-        };
-      }
-
-      if (idGTE) {
-        conditions['editedAt'] = {
-          [Op.gte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
-            idGTE
-          )}
-          `),
-          ...conditions['editedAt'],
-        };
-      }
-
-      if (idLT) {
-        conditions['id'] = {
-          [Op.not]: idLT,
-          ...conditions['id'],
-        };
-        conditions['editedAt'] = {
-          [Op.lte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
-            idLT
-          )}
-          `),
-          ...conditions['editedAt'],
-        };
-      }
-
-      if (idLTE) {
-        conditions['editedAt'] = {
-          [Op.lte]: sequelize.literal(`
-            SELECT "peh".edited_at FROM ${schema}.post_edited_history AS "peh" WHERE "peh".id = ${this.sequelizeConnection.escape(
-            idLT
-          )}
-          `),
-          ...conditions['editedAt'],
-        };
-      }
-
-      if (endTime) {
-        conditions['editedAt'] = {
-          [Op.lt]: endTime,
-        };
-      }
-
-      const { rows, count } = await this.postEditedHistoryModel.findAndCountAll({
-        where: {
-          ...conditions,
-        },
-        order: [['id', order]],
-        offset: offset,
-        limit: limit,
-      });
-
-      const result = rows.map((e) => {
-        const newData: PostResponseDto = e.toJSON().newData;
-        return plainToInstance(
-          PostEditedHistoryDto,
-          {
-            ...newData,
-            postId: newData.id,
-            editedAt: newData.updatedAt ?? newData.createdAt,
-          },
-          { excludeExtraneousValues: true }
-        );
-      });
-
-      return new PageDto(result, {
-        limit: limit,
-        total: count,
-      });
-    } catch (e) {
-      this.logger.error(e, e?.stack);
-      throw e;
     }
   }
 
@@ -1251,92 +1087,5 @@ export class PostService {
         },
       },
     });
-  }
-
-  public async deleteAPostModel(post: PostModel): Promise<any> {
-    const transaction = await this.sequelizeConnection.transaction();
-    try {
-      if (post.isDraft) {
-        await this._cleanRelationship(post.id, transaction, true);
-        await post.destroy({
-          force: true,
-          transaction,
-        });
-      } else {
-        await post.destroy({ transaction });
-      }
-      await transaction.commit();
-
-      return post;
-    } catch (error) {
-      this.logger.error(error, error?.stack);
-      await transaction.rollback();
-      throw error;
-    }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  private async _cleanDeletedPost(): Promise<void> {
-    const willDeletePosts = await this.postModel.findAll({
-      where: {
-        deletedAt: {
-          [Op.lte]: moment().subtract(30, 'days').toDate(),
-        },
-      },
-      paranoid: false,
-      include: {
-        model: MediaModel,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'type'],
-        required: false,
-      },
-    });
-    if (willDeletePosts.length) {
-      const mediaList = ArrayHelper.arrayUnique(
-        willDeletePosts.filter((e) => e.media.length).map((e) => e.media)
-      );
-      if (!(await this.mediaService.isExistOnPostOrComment(mediaList.map((e) => e.id)))) {
-        this.mediaService.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE);
-      }
-      const transaction = await this.sequelizeConnection.transaction();
-
-      try {
-        for (const post of willDeletePosts) {
-          await this._cleanRelationship(post.id, transaction, true);
-          await post.destroy({ force: true, transaction });
-        }
-        await transaction.commit();
-      } catch (e) {
-        this.logger.error(e.message);
-        this.sentryService.captureException(e);
-        await transaction.rollback();
-      }
-    }
-  }
-  @Cron(CronExpression.EVERY_MINUTE)
-  private async _jobUpdateImportantPost(): Promise<void> {
-    try {
-      this.postModel.update(
-        {
-          isImportant: false,
-          importantExpiredAt: null,
-        },
-        {
-          where: {
-            isImportant: true,
-            importantExpiredAt: {
-              [Op.lt]: Sequelize.literal('NOW()'),
-            },
-          },
-          paranoid: false,
-        }
-      );
-    } catch (e) {
-      this.logger.error(e.message);
-      this.sentryService.captureException(e);
-    }
   }
 }
