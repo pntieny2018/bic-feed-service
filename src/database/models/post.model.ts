@@ -33,7 +33,7 @@ import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { UserDto } from '../../modules/auth';
-import { OrderEnum } from '../../common/dto';
+import { OrderEnum, PageOptionsDto } from '../../common/dto';
 import { GetTimelineDto } from '../../modules/feed/dto/request';
 import { GetNewsFeedDto } from '../../modules/feed/dto/request/get-newsfeed.dto';
 import { CategoryModel, ICategory } from './category.model';
@@ -313,7 +313,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }
 
   public static getIdConstrains(
-    getPostsDto: GetTimelineDto | GetNewsFeedDto | GetListArticlesDto
+    getPostsDto: Pick<PageOptionsDto, 'idGT' | 'idGTE' | 'idLT' | 'idLTE'>
   ): string {
     const { schema } = getDatabaseConfig();
     const { idGT, idGTE, idLT, idLTE } = getPostsDto;
@@ -385,10 +385,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     authUser: UserDto;
     groupIds: string[];
     isImportant: boolean;
-    idGT?: number;
-    idGTE?: any;
-    idLT?: any;
-    idLTE?: any;
+    idGT?: string;
+    idGTE?: string;
+    idLT?: string;
+    idLTE?: string;
     offset?: number;
     limit?: number;
     order?: OrderEnum;
@@ -639,10 +639,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   }: {
     authUserId: string;
     isImportant: boolean;
-    idGT?: number;
-    idGTE?: any;
-    idLT?: any;
-    idLTE?: any;
+    idGT?: string;
+    idGTE?: string;
+    idLT?: string;
+    idLTE?: string;
     offset?: number;
     limit?: number;
     order?: OrderEnum;

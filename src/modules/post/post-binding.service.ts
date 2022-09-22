@@ -61,7 +61,7 @@ export class PostBindingService {
       processList.push(this.bindActorToPost(posts));
     }
     if (options?.shouldBindMention) {
-      processList.push(this.mentionService.bindMentionsToPosts(posts));
+      processList.push(this.mentionService.bindToPosts(posts));
     }
     if (options?.shouldBindAudience) {
       processList.push(

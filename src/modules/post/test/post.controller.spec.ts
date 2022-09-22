@@ -14,9 +14,11 @@ import { PostSearchService } from '../post-search.service';
 import { FeedService } from '../../feed/feed.service';
 import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
+import { PostHistoryService } from '../post-history.service';
 
 describe('PostController', () => {
   let postService: PostService;
+  let postHistoryService: PostHistoryService;
   let postController: PostController;
   let postSearchService: PostSearchService;
   let eventEmitter: InternalEventEmitterService;
@@ -31,6 +33,10 @@ describe('PostController', () => {
       providers: [
         {
           provide: PostService,
+          useClass: jest.fn(),
+        },
+        {
+          provide: PostHistoryService,
           useClass: jest.fn(),
         },
         {
@@ -69,6 +75,7 @@ describe('PostController', () => {
     }).compile();
 
     postService = moduleRef.get<PostService>(PostService);
+    postHistoryService = moduleRef.get<PostHistoryService>(PostHistoryService);
     postSearchService = moduleRef.get<PostSearchService>(PostSearchService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     mentionService = moduleRef.get<MentionService>(MentionService);

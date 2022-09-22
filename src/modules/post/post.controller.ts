@@ -41,6 +41,7 @@ import { FeedService } from '../feed/feed.service';
 import { PostSearchService } from './post-search.service';
 import { UserService } from '../../shared/user';
 import { GroupService } from '../../shared/group';
+import { PostHistoryService } from './post-history.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -52,6 +53,7 @@ export class PostController {
   private _logger = new Logger(PostController.name);
   public constructor(
     private _postService: PostService,
+    private _postHistoryService: PostHistoryService,
     private _postSearchService: PostSearchService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
@@ -82,7 +84,7 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
-    return this._postService.getEditedHistory(user, postId, getPostEditedHistoryDto);
+    return this._postHistoryService.getEditedHistory(user, postId, getPostEditedHistoryDto);
   }
 
   @ApiOperation({ summary: 'Get draft posts' })
