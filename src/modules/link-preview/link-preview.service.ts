@@ -27,7 +27,7 @@ export class LinkPreviewService {
           where: { url: linkPreviewDto.url },
         });
         if (linkPreview) {
-          // await linkPreview.update(linkPreviewDto, { transaction }); // waiting for requirement
+          await linkPreview.update(linkPreviewDto, { transaction }); // waiting for requirement
         } else {
           linkPreview = await this._linkPreviewModel.create(linkPreviewDto, {
             transaction,
@@ -43,6 +43,7 @@ export class LinkPreviewService {
           transaction,
         });
       }
+      await transaction.commit();
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);

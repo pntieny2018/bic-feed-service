@@ -37,9 +37,6 @@ module.exports = {
         schema: schemaName,
       }
     );
-    await queryInterface.addIndex(tableName, ['link_preview_id'], {
-      unique: true,
-    });
     await queryInterface.addIndex(tableName, ['post_id', 'link_preview_id'], {
       unique: true,
     });
