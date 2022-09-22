@@ -228,7 +228,18 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   private static async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
     const { schema } = getDatabaseConfig();
-    const { postId, parentId, idGT, idGTE, idLT, idLTE } = getCommentsDto;
+    const {
+      postId,
+      parentId,
+      idGT,
+      idGTE,
+      idLT,
+      idLTE,
+      createdAtGT,
+      createdAtGTE,
+      createdAtLT,
+      createdAtLTE,
+    } = getCommentsDto;
     let condition = ` "c".parent_id = ${this.sequelize.escape(parentId ?? NIL)}`;
     if (postId) {
       condition += ` AND "c".post_id = ${this.sequelize.escape(postId)}`;
@@ -249,6 +260,23 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     if (idLTE) {
       const id = this.sequelize.escape(idLTE);
       condition += ` AND ( "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
+    }
+
+    if (createdAtGT) {
+      const createdAt = this.sequelize.escape(createdAtGT);
+      condition += ` AND "c".created_at > ${createdAt}`;
+    }
+    if (createdAtGTE) {
+      const createdAt = this.sequelize.escape(createdAtGTE);
+      condition += ` AND "c".created_at >= ${createdAt}`;
+    }
+    if (createdAtLT) {
+      const createdAt = this.sequelize.escape(createdAtLT);
+      condition += ` AND "c".created_at < ${createdAt}`;
+    }
+    if (createdAtLTE) {
+      const createdAt = this.sequelize.escape(createdAtLTE);
+      condition += ` AND "c".created_at <= ${createdAt}`;
     }
     return condition;
   }
