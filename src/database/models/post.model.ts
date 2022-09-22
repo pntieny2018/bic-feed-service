@@ -44,8 +44,6 @@ import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
 import { GetListArticlesDto } from '../../modules/article/dto/requests';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
-import { LinkPreviewModel } from './link-preview.model';
-import { PostLinkPreviewModel } from './post-link-preview.model';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
@@ -404,8 +402,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
-    const linkPreviewTable = LinkPreviewModel.tableName;
-    const postLinkPreviewTable = PostLinkPreviewModel.tableName;
     const authUserId = authUser ? authUser.id : null;
     if (isImportant) {
       condition += `AND "p"."is_important" = true AND NOT EXISTS(
