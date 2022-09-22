@@ -34,15 +34,20 @@ export class LinkPreviewService {
             transaction,
           });
         }
-        const postLinkPreviewData = {
-          postId: postId,
-          linkPreviewId: linkPreview.id,
-        };
-        await this._postLinkPreviewModel.findOrCreate({
-          where: postLinkPreviewData,
-          defaults: postLinkPreviewData,
-          transaction,
-        });
+        const postLinkPreview = await this._postLinkPreviewModel.findOne({ where: { postId } });
+        if (postLinkPreview) {
+          await this._postLinkPreviewModel.create(
+            {
+              postId: postId,
+              linkPreviewId: linkPreview.id,
+            },
+            { transaction }
+          );
+        } else {
+          if (postLinkPreview.linkPreviewId !== linkPreview.id) {
+            await postLinkPreview.update({ linkPreviewId: linkPreview.id }, { transaction });
+          }
+        }
       }
       await transaction.commit();
     } catch (error) {
