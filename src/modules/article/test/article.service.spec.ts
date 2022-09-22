@@ -44,6 +44,7 @@ import { PostEditedHistoryModel } from '../../../database/models/post-edited-his
 import { KAFKA_PRODUCER } from '../../../common/constants';
 import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
+import { LinkPreviewService } from '../../link-preview/link-preview.service';
 
 describe('ArticleService', () => {
   let articleService: ArticleService;
@@ -108,6 +109,12 @@ describe('ArticleService', () => {
         {
           provide: UserService,
           useClass: jest.fn(),
+        },
+        {
+          provide: LinkPreviewService,
+          useValue: {
+            upsert: jest.fn(),
+          },
         },
         {
           provide: GroupService,

@@ -41,6 +41,7 @@ import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { mockedUserAuth } from './mocks/user.mock';
 import { AuthorityFactory } from '../../authority/authority.factory';
 import { PostBindingService } from '../post-binding.service';
+import { LinkPreviewService } from '../../link-preview/link-preview.service';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -120,6 +121,12 @@ describe('PostService', () => {
         {
           provide: MentionService,
           useClass: jest.fn(),
+        },
+        {
+          provide: LinkPreviewService,
+          useValue: {
+            upsert: jest.fn(),
+          },
         },
         {
           provide: Sequelize,
