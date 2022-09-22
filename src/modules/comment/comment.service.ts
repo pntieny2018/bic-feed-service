@@ -567,12 +567,27 @@ export class CommentService {
     await this._authorityService.checkCanReadPost(user, post);
 
     const transaction = await this._sequelizeConnection.transaction();
-
+    const childComments = await this._commentModel.findAll({
+      where: {
+        parentId: comment.id,
+      },
+      transaction: transaction,
+    });
+    const commentIdsNeedDelete = childComments.map((child) => child.id);
+    commentIdsNeedDelete.push(comment.id);
     try {
       await Promise.all([
-        this._mediaService.sync(commentId, EntityType.COMMENT, [], transaction),
-        this._mentionService.setMention([], MentionableType.COMMENT, commentId, transaction),
-        this._reactionService.deleteByCommentIds([commentId], transaction),
+        this._mediaService.deleteMediaByEntityIds(
+          commentIdsNeedDelete,
+          EntityType.COMMENT,
+          transaction
+        ),
+        this._mentionService.deleteByEntityIds(
+          commentIdsNeedDelete,
+          MentionableType.COMMENT,
+          transaction
+        ),
+        this._reactionService.deleteByCommentIds(commentIdsNeedDelete, transaction),
       ]);
 
       await this._commentModel.destroy({
