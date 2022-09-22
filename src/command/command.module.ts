@@ -11,6 +11,7 @@ import { PostModule } from '../modules/post';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { MentionModule } from '../modules/mention';
 import { MediaModule } from '../modules/media';
+import { UpdateMediaDomainCommand } from './update-media-domain.command';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MediaModule } from '../modules/media';
     FixPostCommentCountCommand,
     ReIndexEsPostCommand,
     UpdatePrivacyPostCommand,
+    UpdateMediaDomainCommand,
   ],
 })
 export class CommandModule {}
