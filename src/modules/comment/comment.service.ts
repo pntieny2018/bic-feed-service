@@ -312,7 +312,9 @@ export class CommentService {
     const result = this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
-    await this.bindChildrenToComment([result], user.id, childLimit);
+    if (childLimit > 0) {
+      await this.bindChildrenToComment([result], user.id, childLimit);
+    }
     return result;
   }
 
