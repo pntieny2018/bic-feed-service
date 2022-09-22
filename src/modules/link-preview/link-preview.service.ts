@@ -4,6 +4,7 @@ import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostLinkPreviewModel } from '../../database/models/post-link-preview.model';
 import { LinkPreviewDto } from './dto/link-preview.dto';
 import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class LinkPreviewService {
@@ -48,6 +49,23 @@ export class LinkPreviewService {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
+    }
+  }
+
+  public async bindToPosts(posts: any[]): Promise<void> {
+    const linkPreviewList = await this._postLinkPreviewModel.findAll({
+      where: { postId: { [Op.in]: posts.map((e) => e.id) } },
+      include: {
+        model: LinkPreviewModel,
+        required: true,
+      },
+    });
+
+    for (const post of posts) {
+      const linkPreview = linkPreviewList.find((e) => e.postId === post.id);
+      if (linkPreview) {
+        post.linkPreview = linkPreview.linkPreview.get();
+      }
     }
   }
 }

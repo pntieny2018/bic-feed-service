@@ -76,10 +76,11 @@ export class FeedService {
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
     const result = await this._postBindingService.bindRelatedData(posts, {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });

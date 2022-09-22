@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { PostResponseDto } from '../../../post/dto/responses';
+import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 
 class CategoryResponseDto {
   @ApiProperty({
@@ -93,6 +94,19 @@ export class ArticleResponseDto extends PostResponseDto {
   @Expose()
   public views: number;
 
+  @ApiProperty({
+    type: LinkPreviewDto,
+    example: {
+      url: 'https://beincomm.com',
+      domain: 'beincomm.com',
+      image: 'https://www.beincomm.com/images/bic_welcomeAd_banner.webp',
+      title: 'This is title',
+      description: 'This is description',
+    },
+    name: 'link_preview',
+  })
+  @Expose()
+  linkPreview?: LinkPreviewDto;
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);
   }

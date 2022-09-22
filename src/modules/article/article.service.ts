@@ -147,10 +147,11 @@ export class ArticleService extends PostService {
 
     await this.maskArticleContent(articles);
     const result = await this.postBinding.bindRelatedData(articles, {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -226,7 +227,7 @@ export class ArticleService extends PostService {
   /**
    * Get Article
    * @param articleId string
-   * @param user UserDto
+   * @param authUser
    * @param getArticleDto GetArticleDto
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
@@ -292,10 +293,11 @@ export class ArticleService extends PostService {
     const jsonArticle = article.toJSON();
     await this.maskArticleContent([jsonArticle]);
     const rows = await this.postBinding.bindRelatedData([jsonArticle], {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });

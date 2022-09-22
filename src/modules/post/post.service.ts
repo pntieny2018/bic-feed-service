@@ -212,10 +212,11 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     const rows = await this.postBinding.bindRelatedData([jsonPost], {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });

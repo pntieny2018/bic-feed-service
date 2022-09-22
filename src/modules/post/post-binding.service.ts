@@ -11,6 +11,8 @@ import { UserDto } from '../auth';
 import { ReactionService } from '../reaction';
 import { MentionService } from '../mention';
 import { PostResponseDto } from './dto/responses';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+
 @Injectable()
 export class PostBindingService {
   /**
@@ -35,12 +37,14 @@ export class PostBindingService {
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     protected mentionService: MentionService,
+    protected linkPreviewService: LinkPreviewService,
     protected readonly sentryService: SentryService
   ) {}
 
   /**
    * Bind Audience To Post.Groups
    * @param posts Array of post
+   * @param options
    * @returns Promise resolve void
    * @throws HttpException
    */
@@ -51,9 +55,10 @@ export class PostBindingService {
       shouldBindActor?: boolean;
       shouldBindMention?: boolean;
       shouldBindAudience?: boolean;
-      shouldBindReation?: boolean;
+      shouldBindReaction?: boolean;
       shouldHideSecretAudienceCanNotAccess?: boolean;
       authUser?: UserDto;
+      shouldBindLinkPreview?: boolean;
     }
   ): Promise<PostResponseDto[]> {
     const processList = [];
@@ -72,8 +77,11 @@ export class PostBindingService {
         })
       );
     }
-    if (options?.shouldBindReation) {
+    if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
+    }
+    if (options?.shouldBindLinkPreview) {
+      processList.push(this.linkPreviewService.bindToPosts(posts));
     }
     if (processList.length === 0) return [];
 
