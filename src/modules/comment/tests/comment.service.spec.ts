@@ -873,7 +873,7 @@ describe('CommentService', () => {
 
           const response = await commentService.getComments(
             {
-              idGT: 1,
+              idGT: '1',
               postId: createdComment.postId,
             },
             authUserMock
@@ -902,7 +902,7 @@ describe('CommentService', () => {
         try {
           await commentService.getComments(
             {
-              idGTE: 1,
+              idGTE: '1',
               postId: '10dc4093-1bd0-4105-869f-8504e1986145',
             },
             authUserMock
@@ -924,7 +924,7 @@ describe('CommentService', () => {
         try {
           await commentService.getComments(
             {
-              idLT: 1,
+              idLT: '1',
               postId: '10dc4093-1bd0-4105-869f-8504e1986145',
             },
             authUserMock
@@ -951,7 +951,7 @@ describe('CommentService', () => {
         try {
           await commentService.getComments(
             {
-              idLTE: 1,
+              idLTE: '1',
               postId: '10dc4093-1bd0-4105-869f-8504e1986145',
             },
             authUserMock
@@ -1026,7 +1026,7 @@ describe('CommentService', () => {
       await commentService['_getComments'](
         {
           postId: '999c4093-1bd0-4105-869f-8504e1986145',
-          idGT: 1,
+          idGT: '1',
         },
         authUserMock.id
       );
