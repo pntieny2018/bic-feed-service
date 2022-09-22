@@ -28,7 +28,7 @@ export class LinkPreviewService {
           where: { url: linkPreviewDto.url },
         });
         if (linkPreview) {
-          await linkPreview.update(linkPreviewDto, { transaction }); // waiting for requirement
+          await linkPreview.update(linkPreviewDto, { transaction });
         } else {
           linkPreview = await this._linkPreviewModel.create(linkPreviewDto, {
             transaction,
@@ -36,6 +36,13 @@ export class LinkPreviewService {
         }
         const postLinkPreview = await this._postLinkPreviewModel.findOne({ where: { postId } });
         if (postLinkPreview) {
+          if (postLinkPreview.linkPreviewId !== linkPreview.id) {
+            await this._postLinkPreviewModel.update(
+              { linkPreviewId: linkPreview.id },
+              { where: { postId: postLinkPreview.postId }, transaction }
+            );
+          }
+        } else {
           await this._postLinkPreviewModel.create(
             {
               postId: postId,
@@ -43,10 +50,6 @@ export class LinkPreviewService {
             },
             { transaction }
           );
-        } else {
-          if (postLinkPreview.linkPreviewId !== linkPreview.id) {
-            await postLinkPreview.update({ linkPreviewId: linkPreview.id }, { transaction });
-          }
         }
       }
       await transaction.commit();

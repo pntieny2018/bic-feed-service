@@ -420,7 +420,7 @@ export class PostService {
 
   /**
    * Update Post except isDraft
-   * @param postId string
+   * @param post
    * @param authUser UserDto
    * @param updatePostDto UpdatePostDto
    * @returns Promise resolve boolean
