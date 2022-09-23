@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
@@ -7,6 +7,7 @@ import { AudienceRequestDto } from './audience.request.dto';
 import { UserMentionDto } from '../../../mention/dto';
 import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
+import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 
 export class UpdatePostDto {
   @ApiProperty({
@@ -106,4 +107,21 @@ export class UpdatePostDto {
   public mentions?: string[];
 
   public isDraft?: boolean;
+
+  @ApiProperty({
+    type: LinkPreviewDto,
+    example: {
+      url: 'https://beincomm.com',
+      domain: 'beincomm.com',
+      image: 'https://www.beincomm.com/images/bic_welcomeAd_banner.webp',
+      title: 'This is title',
+      description: 'This is description',
+    },
+  })
+  @IsOptional()
+  @Type(() => LinkPreviewDto)
+  @Expose({
+    name: 'link_preview',
+  })
+  linkPreview?: LinkPreviewDto;
 }
