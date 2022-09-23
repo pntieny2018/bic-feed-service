@@ -16,6 +16,7 @@ import { UserMentionDto } from '../mention/dto';
 import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
+import { IPost } from '../../database/models/post.model';
 
 export type DataPostToAdd = {
   id: string;
@@ -108,10 +109,10 @@ export class PostSearchService {
         });
     }
   }
-  public async deletePostsToSearch(ids: string[]): Promise<void> {
-    const index = ElasticsearchHelper.ALIAS.POST.all.name;
-    for (const id of ids) {
-      this.elasticsearchService.delete({ index, id }).catch((e) => {
+  public async deletePostsToSearch(posts: IPost[]): Promise<void> {
+    for (const post of posts) {
+      const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
+      this.elasticsearchService.delete({ index, id: post.id }).catch((e) => {
         this.logger.debug(e);
         this.sentryService.captureException(e);
       });
