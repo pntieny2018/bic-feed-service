@@ -15,14 +15,14 @@ import { MentionService } from '../mention';
 import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
-import { FindAttributeOptions, Includeable } from 'sequelize';
+import { FindAttributeOptions, Includeable, Op } from 'sequelize';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import { SentryService } from '../../../libs/sentry/src';
-import { CreateArticleDto } from './dto/requests/create-article.dto';
-import { ArticleResponseDto } from './dto/responses/article.response.dto';
-import { UpdateArticleDto } from './dto/requests/update-article.dto';
-import { GetArticleDto } from './dto/requests/get-article.dto';
+import { SentryService } from '@app/sentry';
+import { CreateArticleDto } from './dto/requests';
+import { ArticleResponseDto } from './dto/responses';
+import { UpdateArticleDto } from './dto/requests';
+import { GetArticleDto } from './dto/requests';
 import { ClassTransformer } from 'class-transformer';
 import { PostService } from '../post/post.service';
 import { PageDto } from '../../common/dto';
@@ -31,22 +31,19 @@ import { CategoryService } from '../category/category.service';
 import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
 import { GroupService } from '../../shared/group';
-import { MediaModel } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
 import { GetListArticlesDto } from './dto/requests';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { MentionModel } from '../../database/models/mention.model';
 import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
 import { PostBindingService } from '../post/post-binding.service';
 import { ClientKafka } from '@nestjs/microservices';
-import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserService } from '../../shared/user';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
-import { Op } from 'sequelize';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -87,7 +84,8 @@ export class ArticleService extends PostService {
     protected readonly postBinding: PostBindingService,
     private readonly _hashtagService: HashtagService,
     private readonly _seriesService: SeriesService,
-    private readonly _categoryService: CategoryService
+    private readonly _categoryService: CategoryService,
+    private readonly _linkPreviewService: LinkPreviewService
   ) {
     super(
       sequelizeConnection,
@@ -104,7 +102,8 @@ export class ArticleService extends PostService {
       feedService,
       client,
       sentryService,
-      postBinding
+      postBinding,
+      _linkPreviewService
     );
   }
 
@@ -139,10 +138,11 @@ export class ArticleService extends PostService {
 
     await this.maskArticleContent(articles);
     const result = await this.postBinding.bindRelatedData(articles, {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -218,7 +218,7 @@ export class ArticleService extends PostService {
   /**
    * Get Article
    * @param articleId string
-   * @param user UserDto
+   * @param authUser
    * @param getArticleDto GetArticleDto
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
@@ -284,10 +284,11 @@ export class ArticleService extends PostService {
     const jsonArticle = article.toJSON();
     await this.maskArticleContent([jsonArticle]);
     const rows = await this.postBinding.bindRelatedData([jsonArticle], {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -464,6 +465,8 @@ export class ArticleService extends PostService {
 
       await transaction.commit();
 
+      await this.linkPreviewService.upsert(createArticleDto.linkPreview, post.id);
+
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -589,6 +592,8 @@ export class ArticleService extends PostService {
         transaction,
       });
       await transaction.commit();
+
+      await this.linkPreviewService.upsert(updateArticleDto.linkPreview, post.id);
 
       return true;
     } catch (error) {

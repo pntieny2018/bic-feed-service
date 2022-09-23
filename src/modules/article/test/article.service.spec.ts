@@ -19,6 +19,7 @@ import { SeriesModel } from '../../../database/models/series.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
+import { LinkPreviewService } from '../../link-preview/link-preview.service';
 import { GroupService } from '../../../shared/group';
 import { UserService } from '../../../shared/user';
 import { AuthorityService } from '../../authority';
@@ -107,6 +108,12 @@ describe('ArticleService', () => {
         {
           provide: UserService,
           useClass: jest.fn(),
+        },
+        {
+          provide: LinkPreviewService,
+          useValue: {
+            upsert: jest.fn(),
+          },
         },
         {
           provide: GroupService,
