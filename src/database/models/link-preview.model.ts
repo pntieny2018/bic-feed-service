@@ -3,6 +3,7 @@ import {
   Column,
   CreatedAt,
   Default,
+  Length,
   Model,
   PrimaryKey,
   Table,
@@ -36,21 +37,26 @@ export class LinkPreviewModel
   @Column
   public id: string;
 
+  @Length({ max: 2048 })
   @Column
   public url: string;
 
+  @Length({ max: 255 })
   @AllowNull(true)
   @Column
   public domain: string;
 
+  @Length({ max: 255 })
   @AllowNull(true)
   @Column
   public image: string;
 
+  @Length({ max: 255 })
   @AllowNull(true)
   @Column
   public title: string;
 
+  @Length({ max: 255 })
   @AllowNull(true)
   @Column
   public description: string;

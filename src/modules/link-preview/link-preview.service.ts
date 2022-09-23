@@ -22,7 +22,6 @@ export class LinkPreviewService {
     let transaction;
     try {
       transaction = await this.sequelizeConnection.transaction();
-
       if (linkPreviewDto) {
         let linkPreview: LinkPreviewModel = await this._linkPreviewModel.findOne({
           where: { url: linkPreviewDto.url },
@@ -51,6 +50,8 @@ export class LinkPreviewService {
             { transaction }
           );
         }
+      } else if (linkPreviewDto === null) {
+        await this._postLinkPreviewModel.destroy({ where: { postId: postId } });
       }
       await transaction.commit();
     } catch (error) {
@@ -72,7 +73,12 @@ export class LinkPreviewService {
     for (const post of posts) {
       const linkPreview = linkPreviewList.find((e) => e.postId === post.id);
       if (linkPreview) {
-        post.linkPreview = linkPreview.linkPreview.get();
+        post.linkPreview = {};
+        post.linkPreview.url = linkPreview.linkPreview.url;
+        post.linkPreview.domain = linkPreview.linkPreview.domain;
+        post.linkPreview.image = linkPreview.linkPreview.image;
+        post.linkPreview.title = linkPreview.linkPreview.title;
+        post.linkPreview.description = linkPreview.linkPreview.description;
       }
     }
   }
