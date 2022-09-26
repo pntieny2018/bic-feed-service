@@ -16,6 +16,7 @@ import { UserMentionDto } from '../mention/dto';
 import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { IPost } from '../../database/models/post.model';
 
 export type DataPostToAdd = {
@@ -54,7 +55,8 @@ export class PostSearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly postBindingService: PostBindingService
+    protected readonly postBindingService: PostBindingService,
+    protected readonly linkPreviewService: LinkPreviewService
   ) {}
 
   public async addPostsToSearch(posts: DataPostToAdd[]): Promise<void> {
@@ -161,6 +163,7 @@ export class PostSearchService {
         'totalUsersSeen',
         'setting',
       ]),
+      this.linkPreviewService.bindToPosts(posts),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {

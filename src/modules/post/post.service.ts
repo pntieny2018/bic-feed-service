@@ -44,6 +44,7 @@ import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 @Injectable()
 export class PostService {
   /**
@@ -81,7 +82,8 @@ export class PostService {
     @Inject(KAFKA_PRODUCER)
     protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService,
-    protected readonly postBinding: PostBindingService
+    protected readonly postBinding: PostBindingService,
+    protected readonly linkPreviewService: LinkPreviewService
   ) {}
 
   /**
@@ -195,10 +197,11 @@ export class PostService {
     }
     const jsonPost = post.toJSON();
     const rows = await this.postBinding.bindRelatedData([jsonPost], {
-      shouldBindReation: true,
+      shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
+      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });
@@ -349,8 +352,9 @@ export class PostService {
           transaction
         );
       }
-
       await transaction.commit();
+
+      await this.linkPreviewService.upsert(createPostDto.linkPreview, post.id);
 
       return post;
     } catch (error) {
@@ -383,7 +387,7 @@ export class PostService {
 
   /**
    * Update Post except isDraft
-   * @param postId string
+   * @param post
    * @param authUser UserDto
    * @param updatePostDto UpdatePostDto
    * @returns Promise resolve boolean
@@ -426,6 +430,8 @@ export class PostService {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
       await transaction.commit();
+
+      await this.linkPreviewService.upsert(updatePostDto.linkPreview, post.id);
 
       return true;
     } catch (error) {

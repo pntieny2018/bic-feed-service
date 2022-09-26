@@ -12,6 +12,7 @@ import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostPrivacy } from '../../../../database/models/post.model';
+import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 
 export class PostResponseDto {
   @ApiProperty({
@@ -232,6 +233,20 @@ export class PostResponseDto {
   })
   @Expose()
   public privacy: PostPrivacy;
+
+  @ApiProperty({
+    type: LinkPreviewDto,
+    example: {
+      url: 'https://beincomm.com',
+      domain: 'beincomm.com',
+      image: 'https://www.beincomm.com/images/bic_welcomeAd_banner.webp',
+      title: 'This is title',
+      description: 'This is description',
+    },
+    name: 'link_preview',
+  })
+  @Expose()
+  linkPreview?: LinkPreviewDto;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

@@ -37,8 +37,7 @@ import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
-
-
+import { LinkPreviewService } from '../../link-preview/link-preview.service';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -117,6 +116,12 @@ describe('PostService', () => {
         {
           provide: MentionService,
           useClass: jest.fn(),
+        },
+        {
+          provide: LinkPreviewService,
+          useValue: {
+            upsert: jest.fn(),
+          },
         },
         {
           provide: Sequelize,
