@@ -33,8 +33,8 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
-import { NIL as NIL_UUID } from 'uuid';
 import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
+import { CommentHistoryService } from './comment-history.service';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -47,6 +47,7 @@ export class CommentController {
 
   public constructor(
     private _commentService: CommentService,
+    private _commentHistoryService: CommentHistoryService,
     private _eventEmitter: InternalEventEmitterService
   ) {}
 
@@ -156,7 +157,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query() getCommentEditedHistoryDto: GetCommentEditedHistoryDto
   ): Promise<PageDto<CommentEditedHistoryDto>> {
-    return this._commentService.getCommentEditedHistory(
+    return this._commentHistoryService.getCommentEditedHistory(
       user,
       commentId,
       getCommentEditedHistoryDto

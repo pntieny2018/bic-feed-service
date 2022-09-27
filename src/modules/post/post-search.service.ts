@@ -16,6 +16,7 @@ import { UserMentionDto } from '../mention/dto';
 import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 
 export type DataPostToAdd = {
   id: string;
@@ -53,7 +54,8 @@ export class PostSearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly postBindingService: PostBindingService
+    protected readonly postBindingService: PostBindingService,
+    protected readonly linkPreviewService: LinkPreviewService
   ) {}
 
   public async addPostsToSearch(posts: DataPostToAdd[]): Promise<void> {
@@ -69,7 +71,7 @@ export class PostSearchService {
         })
         .then((res) => {
           const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-          this.postService.updatePostData([dataIndex.id], { lang });
+          this.postService.updateData([dataIndex.id], { lang });
         })
         .catch((e) => {
           this.logger.debug(e);
@@ -92,7 +94,7 @@ export class PostSearchService {
         .then((res) => {
           const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
           if (dataIndex.lang !== newLang) {
-            this.postService.updatePostData([dataIndex.id], { lang: newLang });
+            this.postService.updateData([dataIndex.id], { lang: newLang });
             const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(dataIndex.lang);
             this.elasticsearchService
               .delete({ index: oldIndex, id: `${dataIndex.id}` })
@@ -160,6 +162,7 @@ export class PostSearchService {
         'totalUsersSeen',
         'setting',
       ]),
+      this.linkPreviewService.bindToPosts(posts),
     ]);
 
     const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {

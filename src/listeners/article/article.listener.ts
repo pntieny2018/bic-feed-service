@@ -6,24 +6,19 @@ import {
 import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationService } from '../../notification';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
-import { PostActivityService } from '../../notification/activities';
-import { PostService } from '../../modules/post/post.service';
 import { MediaStatus } from '../../database/models/media.model';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { MediaService } from '../../modules/media';
-import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
-import { PostPrivacy } from '../../database/models/post.model';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleService } from '../../modules/article/article.service';
 import { NIL as NIL_UUID } from 'uuid';
+import { PostHistoryService } from '../../modules/post/post-history.service';
 
 @Injectable()
 export class ArticleListener {
@@ -32,25 +27,25 @@ export class ArticleListener {
   public constructor(
     private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
-    private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService,
-    private readonly _postService: PostService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
-    private readonly _articleService: ArticleService
+    private readonly _articleService: ArticleService,
+    private readonly _postServiceHistory: PostHistoryService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     this._logger.debug(`Event: ${JSON.stringify(event)}`);
-    const { actor, article } = event.payload;
+    const { article } = event.payload;
     if (article.isDraft) return;
 
-    this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+    if (article.series?.length > 0) {
+      this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+    }
 
-    this._postService.deletePostEditedHistory(article.id).catch((e) => {
+    this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
@@ -59,7 +54,6 @@ export class ArticleListener {
     this._elasticsearchService.delete({ index, id: `${article.id}` }).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
-      return;
     });
     //TODO:: send noti
   }
@@ -84,12 +78,12 @@ export class ArticleListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    this._postService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
+    this._articleService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
 
     if (isDraft) return;
 
-    this._postService
-      .savePostEditedHistory(article.id, { oldData: null, newData: article })
+    this._postServiceHistory
+      .saveEditedHistory(article.id, { oldData: null, newData: article })
       .catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
@@ -114,12 +108,12 @@ export class ArticleListener {
       actor,
     };
 
-    this._seriesService
-      .updateTotalArticle((article as ArticleResponseDto).series.map((c) => c.id))
-      .catch((e) => {
+    if (article.series?.length > 0) {
+      this._seriesService.updateTotalArticle(article.series.map((c) => c.id)).catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
       });
+    }
 
     const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
     this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
@@ -163,7 +157,7 @@ export class ArticleListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._articleService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldArticle.isDraft === false && isDraft === true) {
@@ -173,14 +167,20 @@ export class ArticleListener {
       });
     }
 
-    this._seriesService.updateTotalArticle(
-      (oldArticle as ArticleResponseDto).series.map((c) => c.id)
-    );
+    let seriesIds = [];
+    if (oldArticle.series?.length > 0) {
+      seriesIds = oldArticle.series.map((c) => c.id);
+    }
+
+    if (newArticle.series?.length > 0) {
+      seriesIds.push(...newArticle.series.map((c) => c.id));
+    }
+    this._seriesService.updateTotalArticle(seriesIds);
 
     if (isDraft) return;
 
-    this._postService
-      .savePostEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
+    this._postServiceHistory
+      .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
         this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
@@ -239,9 +239,9 @@ export class ArticleListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
-    const articles = await this._articleService.getArticlesByMedia(videoId);
+    const articles = await this._articleService.getsByMedia(videoId);
     articles.forEach((article) => {
-      this._postService.updatePostStatus(article.id);
+      this._articleService.updateStatus(article.id);
       //TODO:: send noti
 
       const {
@@ -281,9 +281,11 @@ export class ArticleListener {
         this._logger.debug(e);
         this._sentryService.captureException(e);
       });
-      this._seriesService.updateTotalArticle(
-        (article as ArticleResponseDto).series.map((c) => c.id)
-      );
+
+      if (article.series?.length > 0) {
+        this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
+      }
+
       try {
         this._feedPublisherService.fanoutOnWrite(
           actor.id,
@@ -312,9 +314,9 @@ export class ArticleListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
-    const articles = await this._articleService.getArticlesByMedia(videoId);
+    const articles = await this._articleService.getsByMedia(videoId);
     articles.forEach((article) => {
-      this._postService.updatePostStatus(article.id);
+      this._articleService.updateStatus(article.id);
       //TODO:: send noti
     });
   }

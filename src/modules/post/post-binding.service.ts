@@ -1,7 +1,6 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { CommentService } from '../comment';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
@@ -9,6 +8,11 @@ import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
 import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
 import { UserDto } from '../auth';
+import { ReactionService } from '../reaction';
+import { MentionService } from '../mention';
+import { PostResponseDto } from './dto/responses';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+
 @Injectable()
 export class PostBindingService {
   /**
@@ -30,30 +34,86 @@ export class PostBindingService {
     protected postModel: typeof PostModel,
     protected userService: UserService,
     protected groupService: GroupService,
-    @Inject(forwardRef(() => CommentService))
-    protected commentService: CommentService,
+    @Inject(forwardRef(() => ReactionService))
+    protected reactionService: ReactionService,
+    protected mentionService: MentionService,
+    protected linkPreviewService: LinkPreviewService,
     protected readonly sentryService: SentryService
   ) {}
 
   /**
    * Bind Audience To Post.Groups
    * @param posts Array of post
+   * @param options
    * @returns Promise resolve void
    * @throws HttpException
    */
 
-  public async bindAudienceToPost(posts: any[], hideSecretGroupForUser?: UserDto): Promise<void> {
+  public async bindRelatedData(
+    posts: any[],
+    options?: {
+      shouldBindActor?: boolean;
+      shouldBindMention?: boolean;
+      shouldBindAudience?: boolean;
+      shouldBindReaction?: boolean;
+      shouldHideSecretAudienceCanNotAccess?: boolean;
+      authUser?: UserDto;
+      shouldBindLinkPreview?: boolean;
+    }
+  ): Promise<PostResponseDto[]> {
+    const processList = [];
+    if (options?.shouldBindActor) {
+      processList.push(this.bindActorToPost(posts));
+    }
+    if (options?.shouldBindMention) {
+      processList.push(this.mentionService.bindToPosts(posts));
+    }
+    if (options?.shouldBindAudience) {
+      processList.push(
+        this.bindAudienceToPost(posts, {
+          shouldHideSecretAudienceCanNotAccess:
+            options?.shouldHideSecretAudienceCanNotAccess ?? false,
+          authUser: options?.authUser ?? null,
+        })
+      );
+    }
+    if (options?.shouldBindReaction) {
+      processList.push(this.reactionService.bindToPosts(posts));
+    }
+    if (options?.shouldBindLinkPreview) {
+      processList.push(this.linkPreviewService.bindToPosts(posts));
+    }
+    if (processList.length === 0) return [];
+
+    await Promise.all(processList);
+    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+    return result;
+  }
+
+  public async bindAudienceToPost(
+    posts: any[],
+    options?: {
+      shouldHideSecretAudienceCanNotAccess?: boolean;
+      authUser?: UserDto;
+    }
+  ): Promise<void> {
     //get all groups in onetime
     const dataGroups = await this._getGroupsByPosts(posts);
     for (const post of posts) {
       const postGroupIds = this._getGroupIdsByPost(post);
       const mappedGroups = dataGroups
         .filter((dataGroup) => {
-          if (!postGroupIds.includes(dataGroup.id)) return false;
+          const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
+          if (isPostOutOfScope) return false;
+
+          const isUserNotInGroup = !options?.authUser?.profile.groups.includes(dataGroup.id);
+          const isGuest = !options?.authUser;
           if (
-            hideSecretGroupForUser &&
+            options?.shouldHideSecretAudienceCanNotAccess &&
             dataGroup.privacy === GroupPrivacy.SECRET &&
-            !hideSecretGroupForUser.profile.groups.includes(dataGroup.id)
+            (isUserNotInGroup || isGuest)
           ) {
             return false;
           }

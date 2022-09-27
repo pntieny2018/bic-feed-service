@@ -213,7 +213,7 @@ describe('NotificationService', () => {
       commentModel.findAll = jest.fn().mockResolvedValue([]);
       commentDissociationService.getValidUserIds = jest.fn().mockResolvedValue(mockValidUserIds);
 
-      const rsp = await commentDissociationService.dissociateComment(
+      await commentDissociationService.dissociateComment(
         mockUserDto.id,
         mockCommentResponseDto.id,
         mockPostResponseDto
@@ -228,7 +228,7 @@ describe('NotificationService', () => {
       sentryService.captureException = jest.fn();
       commentDissociationService.getValidUserIds = jest.fn().mockResolvedValue(mockValidUserIds);
 
-      const rsp = await commentDissociationService.dissociateReplyComment(
+      await commentDissociationService.dissociateReplyComment(
         mockUserDto.id,
         mockCommentModel as unknown as CommentModel,
         ['8e4d4988-0897-4854-8bbc-aef21dac7618', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e7', '0f253efd-4272-48c1-ab9e-9663c172a96e']
@@ -246,22 +246,22 @@ describe('NotificationService', () => {
     it('Func: create', async () => {
       sentryService.captureException = jest.fn();
       kafkaProducer.emit = jest.fn();
-      postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+      postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
       await commentNotificationService.create('event-name', mockUserDto, mockCommentResponseDto);
-      expect(postService.getPost).toBeCalledTimes(1);
+      expect(postService.get).toBeCalledTimes(1);
     });
 
     it('Func: update', async () => {
       sentryService.captureException = jest.fn();
       kafkaProducer.emit = jest.fn();
-      postService.getPost = jest.fn().mockResolvedValue(mockPostResponseDto);
+      postService.get = jest.fn().mockResolvedValue(mockPostResponseDto);
       await commentNotificationService.update(
         'event-name',
         mockUserDto,
         mockCommentModel as unknown as IComment,
         mockCommentResponseDto
       );
-      expect(postService.getPost).toBeCalledTimes(1);
+      expect(postService.get).toBeCalledTimes(1);
     });
 
     it('Func: destroy', async () => {

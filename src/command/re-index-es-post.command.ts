@@ -7,10 +7,9 @@ import { PostResponseDto } from '../modules/post/dto/responses';
 import { plainToInstance } from 'class-transformer';
 import { UserService } from '../shared/user';
 import { GroupService } from '../shared/group';
-import { forwardRef, Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { MentionModel } from '../database/models/mention.model';
 import { MentionService } from '../modules/mention';
-import { DataPostToAdd, PostSearchService } from '../modules/post/post-search.service';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -45,6 +44,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
     }
 
     console.log('DONE - total:', total);
+    process.exit();
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<any> {
@@ -94,7 +94,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
 
     const jsonPosts = posts.map((r) => r.toJSON());
     await Promise.all([
-      this.mentionService.bindMentionsToPosts(jsonPosts),
+      this.mentionService.bindToPosts(jsonPosts),
       this._bindActorToPost(jsonPosts),
       this._bindAudienceToPost(jsonPosts),
     ]);
