@@ -8,7 +8,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { SentryService } from '../../../libs/sentry/src';
 import { ArrayHelper } from '../../common/helpers';
 import { MediaMarkAction, MediaModel } from '../../database/models/media.model';
-import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
 import { PostModel } from '../../database/models/post.model';
 import { MediaService } from '../media';
 import { PostService } from './post.service';
@@ -19,7 +18,7 @@ export class PostCronService {
   protected classTransformer = new ClassTransformer();
 
   public constructor(
-    @InjectModel(PostEditedHistoryModel)
+    @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
 
     @InjectConnection()
