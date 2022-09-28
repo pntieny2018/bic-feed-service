@@ -544,7 +544,7 @@ export class PostService {
         throw new BadRequestException('Audience is required.');
       }
       await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
-      if (post.content === '' && post.media.length === 0) {
+      if (!post.content && post.media.length === 0) {
         throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
       }
 
@@ -929,7 +929,7 @@ export class PostService {
 
   public checkContent(content: string, media: MediaDto): void {
     if (
-      content === '' &&
+      !content &&
       media?.files.length === 0 &&
       media?.videos.length === 0 &&
       media?.images.length === 0
