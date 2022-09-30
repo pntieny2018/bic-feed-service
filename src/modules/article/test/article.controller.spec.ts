@@ -55,7 +55,6 @@ describe('ArticleController', () => {
     it('Get article successfully', async () => {
       articleService.get = jest.fn().mockResolvedValue(true);
       const getDto: GetArticleDto = {
-        categories: ['a'],
       };
       const result = await articleController.get(
         userDto,
