@@ -149,7 +149,7 @@ export class ArticleService extends PostService {
       authUser,
     });
 
-    return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
+    return new PageDto<ArticleResponseDto>(result, {
       hasNextPage,
       limit,
       offset,
@@ -202,7 +202,7 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
     });
 
-    return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
+    return new PageDto<ArticleResponseDto>(result, {
       limit,
       offset,
     });
@@ -295,7 +295,7 @@ export class ArticleService extends PostService {
       authUser,
     });
     rows[0]['comments'] = comments;
-    return rows[0] as ArticleResponseDto;
+    return rows[0];
   }
 
   protected getAttributesObj(options?: {
@@ -638,7 +638,7 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
     });
 
-    return result as ArticleResponseDto[];
+    return result;
   }
 
   public async maskArticleContent(articles: any[]): Promise<void> {
