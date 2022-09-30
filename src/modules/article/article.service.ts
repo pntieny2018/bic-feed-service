@@ -19,10 +19,13 @@ import { FindAttributeOptions, Includeable, Op } from 'sequelize';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { SentryService } from '@app/sentry';
-import { CreateArticleDto } from './dto/requests';
 import { ArticleResponseDto } from './dto/responses';
-import { UpdateArticleDto } from './dto/requests';
-import { GetArticleDto } from './dto/requests';
+import {
+  CreateArticleDto,
+  UpdateArticleDto,
+  GetListArticlesDto,
+  GetArticleDto,
+} from './dto/requests';
 import { ClassTransformer } from 'class-transformer';
 import { PostService } from '../post/post.service';
 import { PageDto } from '../../common/dto';
@@ -32,18 +35,17 @@ import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
 import { GroupService } from '../../shared/group';
 import { LogicException } from '../../common/exceptions';
-import { GetListArticlesDto } from './dto/requests';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
-import { PostBindingService } from '../post/post-binding.service';
 import { ClientKafka } from '@nestjs/microservices';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserService } from '../../shared/user';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { ArticleBindingService } from './article-binding.service';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -81,7 +83,7 @@ export class ArticleService extends PostService {
     @Inject(KAFKA_PRODUCER)
     protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService,
-    protected readonly postBinding: PostBindingService,
+    protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
@@ -102,7 +104,7 @@ export class ArticleService extends PostService {
       feedService,
       client,
       sentryService,
-      postBinding,
+      articleBinding,
       _linkPreviewService
     );
   }
@@ -137,7 +139,7 @@ export class ArticleService extends PostService {
     if (hasNextPage) articles.pop();
 
     await this.maskArticleContent(articles);
-    const result = await this.postBinding.bindRelatedData(articles, {
+    const result = await this.articleBinding.bindRelatedData(articles, {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -147,7 +149,7 @@ export class ArticleService extends PostService {
       authUser,
     });
 
-    return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
+    return new PageDto<ArticleResponseDto>(result, {
       hasNextPage,
       limit,
       offset,
@@ -196,11 +198,11 @@ export class ArticleService extends PostService {
     });
 
     const rowsJson = relatedRows.map((row) => row.toJSON());
-    const result = await this.postBinding.bindRelatedData(rowsJson, {
+    const result = await this.articleBinding.bindRelatedData(rowsJson, {
       shouldBindActor: true,
     });
 
-    return new PageDto<ArticleResponseDto>(result as ArticleResponseDto[], {
+    return new PageDto<ArticleResponseDto>(result, {
       limit,
       offset,
     });
@@ -283,7 +285,7 @@ export class ArticleService extends PostService {
     }
     const jsonArticle = article.toJSON();
     await this.maskArticleContent([jsonArticle]);
-    const rows = await this.postBinding.bindRelatedData([jsonArticle], {
+    const rows = await this.articleBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -293,7 +295,7 @@ export class ArticleService extends PostService {
       authUser,
     });
     rows[0]['comments'] = comments;
-    return rows[0] as ArticleResponseDto;
+    return rows[0];
   }
 
   protected getAttributesObj(options?: {
@@ -630,13 +632,13 @@ export class ArticleService extends PostService {
 
     const jsonArticles = articles.map((p) => p.toJSON());
 
-    const result = await this.postBinding.bindRelatedData(jsonArticles, {
+    const result = await this.articleBinding.bindRelatedData(jsonArticles, {
       shouldBindAudience: true,
       shouldBindMention: true,
       shouldBindActor: true,
     });
 
-    return result as ArticleResponseDto[];
+    return result;
   }
 
   public async maskArticleContent(articles: any[]): Promise<void> {

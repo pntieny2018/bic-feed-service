@@ -650,7 +650,7 @@ describe('PostService', () => {
     });
   });
 
-  describe.skip('bindActorToPost', () => {
+  describe.skip('bindActor', () => {
     const posts = [{ createdBy: '09c88080-a975-44e1-ae67-89f3d37e114f', actor: null }];
     it('Should bind actor successfully', async () => {
       userService.getMany = jest.fn().mockResolvedValueOnce([
@@ -658,21 +658,21 @@ describe('PostService', () => {
           id: '09c88080-a975-44e1-ae67-89f3d37e114f',
         },
       ]);
-      await postBindingService.bindActorToPost(posts);
+      await postBindingService.bindActor(posts);
       expect(posts[0].actor).toStrictEqual({ id: '09c88080-a975-44e1-ae67-89f3d37e114f' });
     });
   });
 
-  describe.skip('bindPostData', () => {
+  describe.skip('bindAttributes', () => {
     const posts = [{ id: '09c88080-a975-44e1-ae67-89f3d37e114f', commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
-      await postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']);
+      await postBindingService.bindAttributes(posts, ['commentsCount', 'totalUsersSeen']);
       expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
 
-  describe.skip('bindAudienceToPost', () => {
+  describe.skip('bindAudience', () => {
     const posts = [
       {
         audience: null,
@@ -686,7 +686,7 @@ describe('PostService', () => {
 
     it('Should bind audience successfully', async () => {
       groupService.getMany = jest.fn().mockResolvedValueOnce(mockedGroups);
-      await postBindingService.bindAudienceToPost(posts);
+      await postBindingService.bindAudience(posts);
       expect(posts[0].audience.groups).toStrictEqual([mockedGroups[0]]);
     });
   });

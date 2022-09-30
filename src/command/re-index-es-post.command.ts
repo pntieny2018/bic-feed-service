@@ -95,15 +95,15 @@ export class ReIndexEsPostCommand implements CommandRunner {
     const jsonPosts = posts.map((r) => r.toJSON());
     await Promise.all([
       this.mentionService.bindToPosts(jsonPosts),
-      this._bindActorToPost(jsonPosts),
-      this._bindAudienceToPost(jsonPosts),
+      this._bindActor(jsonPosts),
+      this._bindAudience(jsonPosts),
     ]);
     return plainToInstance(PostResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
   }
 
-  private async _bindAudienceToPost(posts: any[]): Promise<void> {
+  private async _bindAudience(posts: any[]): Promise<void> {
     const groupIds = [];
     for (const post of posts) {
       let postGroups = post.groups;
@@ -133,7 +133,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
     }
   }
 
-  private async _bindActorToPost(posts: any[]): Promise<void> {
+  private async _bindActor(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
       if (post.actor?.id) {
