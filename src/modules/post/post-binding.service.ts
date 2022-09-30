@@ -43,10 +43,6 @@ export class PostBindingService {
 
   /**
    * Bind Audience To Post.Groups
-   * @param posts Array of post
-   * @param options
-   * @returns Promise resolve void
-   * @throws HttpException
    */
 
   public async bindRelatedData(
@@ -63,14 +59,14 @@ export class PostBindingService {
   ): Promise<PostResponseDto[]> {
     const processList = [];
     if (options?.shouldBindActor) {
-      processList.push(this.bindActorToPost(posts));
+      processList.push(this.bindActor(posts));
     }
     if (options?.shouldBindMention) {
       processList.push(this.mentionService.bindToPosts(posts));
     }
     if (options?.shouldBindAudience) {
       processList.push(
-        this.bindAudienceToPost(posts, {
+        this.bindAudience(posts, {
           shouldHideSecretAudienceCanNotAccess:
             options?.shouldHideSecretAudienceCanNotAccess ?? false,
           authUser: options?.authUser ?? null,
@@ -86,13 +82,16 @@ export class PostBindingService {
     if (processList.length === 0) return [];
 
     await Promise.all(processList);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
-    return result;
+    return this.transform(posts);
   }
 
-  public async bindAudienceToPost(
+  protected transform(posts: any[]): PostResponseDto[] {
+    return this.classTransformer.plainToInstance(PostResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+  }
+  
+  public async bindAudience(
     posts: any[],
     options?: {
       shouldHideSecretAudienceCanNotAccess?: boolean;
@@ -157,11 +156,8 @@ export class PostBindingService {
 
   /**
    * Bind Actor info to post.createdBy
-   * @param posts Array of post
-   * @returns Promise resolve void
-   * @throws HttpException
    */
-  public async bindActorToPost(posts: any[]): Promise<void> {
+  public async bindActor(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
       if (post.actor?.id) {
@@ -182,12 +178,8 @@ export class PostBindingService {
 
   /**
    * Bind data info to post
-   * @param posts Array of post
-   * @param objects {commentsCount: boolean, totalUsersSeen: boolean}
-   * @returns Promise resolve void
-   * @throws HttpException
    */
-  public async bindPostData(
+  public async bindAttributes(
     posts: any[],
     attributes: Array<'content' | 'commentsCount' | 'totalUsersSeen' | 'setting'>
   ): Promise<void> {
