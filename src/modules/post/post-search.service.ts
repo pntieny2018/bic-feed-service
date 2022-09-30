@@ -154,9 +154,9 @@ export class PostSearchService {
 
     await Promise.all([
       this.reactionService.bindToPosts(posts),
-      this.postBindingService.bindActorToPost(posts),
-      this.postBindingService.bindAudienceToPost(posts),
-      this.postBindingService.bindPostData(posts, [
+      this.postBindingService.bindActor(posts),
+      this.postBindingService.bindAudience(posts),
+      this.postBindingService.bindAttributes(posts, [
         'content',
         'commentsCount',
         'totalUsersSeen',
