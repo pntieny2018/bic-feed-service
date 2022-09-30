@@ -235,8 +235,7 @@ describe.skip('ArticleService', () => {
     const getArticleDto: GetArticleDto = {
       commentLimit: 1,
       childCommentLimit: 1,
-      withComment: true,
-      categories: ['a'],
+      withComment: true
     };
 
     it('Should get article successfully', async () => {
