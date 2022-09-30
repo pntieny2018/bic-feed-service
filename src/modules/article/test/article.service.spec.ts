@@ -238,7 +238,7 @@ describe.skip('ArticleService', () => {
       withComment: true
     };
 
-    it('Should get article successfully ', async () => {
+    it('Should get article successfully', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValue({
         ...mockedArticleResponse,
         toJSON: () => mockedArticleResponse,
