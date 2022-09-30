@@ -142,8 +142,8 @@ describe('FeedService', () => {
       postService.group = jest.fn().mockReturnValue([]);
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindActor = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindAudience = jest.fn().mockResolvedValue(Promise.resolve());
 
       await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
 
@@ -167,8 +167,8 @@ describe('FeedService', () => {
       postService.group = jest.fn().mockReturnValue([]);
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindActorToPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postBindingService.bindAudienceToPost = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindActor = jest.fn().mockResolvedValue(Promise.resolve());
+      postBindingService.bindAudience = jest.fn().mockResolvedValue(Promise.resolve());
 
       await feedService.getTimeline(null, mockedGetTimeLineDto);
 

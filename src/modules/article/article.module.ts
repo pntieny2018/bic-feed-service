@@ -16,6 +16,7 @@ import { CanUseCategoryConstraint } from './validators/can-use-category.validato
 import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
 import { FeedModule } from '../feed';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
+import { ArticleBindingService } from './article-binding.service';
 @Module({
   imports: [
     PostModule,
@@ -33,7 +34,12 @@ import { LinkPreviewModule } from '../link-preview/link-preview.module';
     forwardRef(() => LinkPreviewModule),
   ],
   controllers: [ArticleController],
-  providers: [ArticleService, CanUseCategoryConstraint, CanUseSeriesConstraint],
+  providers: [
+    ArticleService,
+    ArticleBindingService,
+    CanUseCategoryConstraint,
+    CanUseSeriesConstraint,
+  ],
   exports: [ArticleService],
 })
 export class ArticleModule {}
