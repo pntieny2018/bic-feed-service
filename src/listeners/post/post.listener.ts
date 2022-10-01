@@ -46,7 +46,7 @@ export class PostListener {
     });
 
     try {
-      this._postSearchService.deletePostsToSearch([post.id]);
+      this._postSearchService.deletePostsToSearch([post]);
 
       const activity = this._postActivityService.createPayload({
         actor: actor,
