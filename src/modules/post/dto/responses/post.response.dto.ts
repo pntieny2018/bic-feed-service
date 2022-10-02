@@ -164,7 +164,12 @@ export class PostResponseDto {
       const reactionsName = s1.split(',');
       const total = s2.split(',');
       const reactionsCount = {};
-      reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
+      reactionsName.forEach((v, i) => {
+        if (!isNaN(parseInt(v))) {
+          v = `+${v}`;
+        }
+        reactionsCount[i] = { [v]: parseInt(total[i]) };
+      });
       return reactionsCount;
     }
     if (Array.isArray(value)) {
