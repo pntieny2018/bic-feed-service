@@ -434,6 +434,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "p"."updated_by" AS "updatedBy", 
           "p"."created_at" AS "createdAt", 
           "p"."updated_at" AS "updatedAt",
+          "p"."is_article" AS "isArticle", 
           COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
             WHERE r.post_id = p.id ${authUserId ? 'AND r.user_id = :authUserId' : ''} ), false
           ) AS "markedReadPost"
@@ -672,7 +673,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "p"."created_by" AS "createdBy", 
           "p"."updated_by" AS "updatedBy", 
           "p"."created_at" AS "createdAt", 
-          "p"."updated_at" AS "updatedAt", 
+          "p"."updated_at" AS "updatedAt",
+          "p"."is_article" AS "isArticle", 
           "is_seen_post" AS "isSeenPost"`;
     if (isImportant === true) {
       condition += `AND "p"."is_important" = true`;
