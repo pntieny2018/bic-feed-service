@@ -80,9 +80,8 @@ export class PostBindingService {
       processList.push(this.linkPreviewService.bindToPosts(posts));
     }
     if (processList.length === 0) return [];
-
     await Promise.all(processList);
-    return this.transform(posts);
+    return posts;
   }
 
   protected transform(posts: any[]): PostResponseDto[] {

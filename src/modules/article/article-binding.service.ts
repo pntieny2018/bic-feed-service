@@ -92,12 +92,6 @@ export class ArticleBindingService extends PostBindingService {
     }
     if (processList.length === 0) return [];
     await Promise.all(processList);
-    return this.transform(posts);
-  }
-
-  protected transform(posts: any[]): ArticleResponseDto[] {
-    return this.classTransformer.plainToInstance(ArticleResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
+    return posts;
   }
 }

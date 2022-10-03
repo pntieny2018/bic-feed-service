@@ -19,11 +19,13 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserService } from '../../shared/user';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { PostBindingService } from '../post/post-binding.service';
+import { ClassTransformer } from 'class-transformer';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
-
+  private readonly _classTransformer = new ClassTransformer();
   public constructor(
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
@@ -75,7 +77,7 @@ export class FeedService {
   }): Promise<PageDto<PostResponseDto>> {
     const hasNextPage = posts.length === limit + 1;
     if (hasNextPage) posts.pop();
-    const result = await this._postBindingService.bindRelatedData(posts, {
+    const postsBindedData = await this._postBindingService.bindRelatedData(posts, {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -83,6 +85,11 @@ export class FeedService {
       shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
+    });
+
+    console.log('postsBindedData=', postsBindedData[0]);
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
     });
     return new PageDto<PostResponseDto>(result, {
       limit,
