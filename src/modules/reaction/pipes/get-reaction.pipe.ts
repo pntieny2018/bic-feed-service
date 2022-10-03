@@ -6,12 +6,6 @@ import { NIL as NIL_UUID } from 'uuid';
 @Injectable()
 export class GetReactionPipe implements PipeTransform {
   public transform(getReactionDto: GetReactionDto): GetReactionDto {
-    if (getReactionDto.reactionName === '+1') {
-      getReactionDto.reactionName = 'thumbsup';
-    }
-    if (getReactionDto.reactionName === '-1') {
-      getReactionDto.reactionName = 'thumbsdown';
-    }
     if (!getReactionDto.latestId) {
       getReactionDto.latestId = NIL_UUID;
     }
