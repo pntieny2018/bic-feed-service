@@ -163,7 +163,7 @@ export class PostService {
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
       };
     } else {
-      condition = { id: postId, isArticle: false };
+      condition = { id: postId };
     }
     const post = await this.postModel.findOne({
       attributes,
