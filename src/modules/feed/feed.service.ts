@@ -87,7 +87,6 @@ export class FeedService {
       authUser,
     });
 
-    console.log('postsBindedData=', postsBindedData[0]);
     const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
