@@ -70,7 +70,7 @@ export class CommentController {
     description: 'Create comment successfully',
   })
   @ResponseMessages({
-    success: 'Create comment successfully',
+    success: 'Create comment successfully.',
   })
   @Post('/')
   public async create(

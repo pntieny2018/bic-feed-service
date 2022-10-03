@@ -246,7 +246,7 @@ export class PostResponseDto {
     name: 'link_preview',
   })
   @Expose()
-  linkPreview?: LinkPreviewDto;
+  public linkPreview?: LinkPreviewDto;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
