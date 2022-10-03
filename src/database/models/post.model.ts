@@ -708,8 +708,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "ownerReactions"."reaction_name" as "reactionName",
           "ownerReactions"."id" as "postReactionId",
           "ownerReactions"."created_at" as "reactCreatedAt",
-          "cate"."name" as "category_name",
-          "cate"."id" as "category_id",
+          "cate"."name" as "categoryName",
+          "cate"."id" as "categoryId",
           "media"."id" as "mediaId",
           "media"."url",
           "media"."name",
@@ -730,7 +730,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       LEFT OUTER JOIN (
         ${schema}.${postCategoryTable} AS "media->PostCategoryModel"
         INNER JOIN ${schema}.${categoryTable} AS "cate" ON "cate"."id" = "media->PostCategoryModel"."category_id"
-      ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+      ) ON "PostModel"."id" = "media->PostCategoryModel"."post_id"
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" 
         ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" 

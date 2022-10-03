@@ -53,10 +53,6 @@ export class PostService {
    */
   protected logger = new Logger(PostService.name);
 
-  /**
-   *  ClassTransformer
-   * @protected
-   */
   protected classTransformer = new ClassTransformer();
 
   public constructor(
@@ -121,12 +117,17 @@ export class PostService {
       limit,
     });
     const jsonPosts = rows.map((r) => r.toJSON());
-    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
+
+    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
     return new PageDto<PostResponseDto>(result, {
       total: count,
       limit,
@@ -195,7 +196,7 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-    const rows = await this.postBinding.bindRelatedData([jsonPost], {
+    const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -205,8 +206,12 @@ export class PostService {
       authUser: user,
     });
 
-    rows[0]['comments'] = comments;
-    return rows[0];
+    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    result[0]['comments'] = comments;
+    return result[0];
   }
 
   protected getAttributesObj(options?: {
@@ -872,13 +877,15 @@ export class PostService {
 
     const jsonPosts = posts.map((p) => p.toJSON());
 
-    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
       shouldBindAudience: true,
       shouldBindMention: true,
       shouldBindActor: true,
     });
 
-    return result;
+    return this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   public async updateStatus(postId: string): Promise<void> {
