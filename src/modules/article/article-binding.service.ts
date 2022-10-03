@@ -91,7 +91,7 @@ export class ArticleBindingService extends PostBindingService {
       processList.push(this.linkPreviewService.bindToPosts(posts));
     }
     if (processList.length === 0) return [];
-
+    await Promise.all(processList);
     return this.transform(posts);
   }
 

@@ -54,6 +54,7 @@ export class FeedService {
     });
 
     const posts = this._postService.group(rows);
+    console.log('posts=', posts);
     return this._bindAndTransformData({
       posts,
       offset,
