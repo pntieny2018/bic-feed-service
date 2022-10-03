@@ -562,7 +562,6 @@ export class ArticleService extends PostService {
 
       const oldGroupIds = post.audience?.groups.map((group) => group.id) ?? [];
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
-        console.log('22222222222');
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
