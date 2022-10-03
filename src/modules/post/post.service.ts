@@ -159,7 +159,6 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
-        isArticle: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
       };
     } else {
@@ -959,6 +958,8 @@ export class PostService {
       if (!postAdded) {
         const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
         const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const categories =
+          post.categoryId === null ? [] : [{ id: post.categoryId, name: post.categoryName }];
         const ownerReactions =
           post.postReactionId === null
             ? []
@@ -987,7 +988,7 @@ export class PostService {
                   createdAt: post.mediaCreatedAt,
                 },
               ];
-        result.push({ ...post, groups, mentions, ownerReactions, media });
+        result.push({ ...post, groups, mentions, categories, ownerReactions, media });
         return;
       }
       if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
@@ -995,6 +996,9 @@ export class PostService {
       }
       if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
         postAdded.mentions.push({ userId: post.userId });
+      }
+      if (post.categoryId !== null && !postAdded.categories.find((m) => m.id === post.categoryId)) {
+        postAdded.categories.push({ id: post.categoryId, name: post.categoryName });
       }
       if (
         post.postReactionId !== null &&
