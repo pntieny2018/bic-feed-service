@@ -84,10 +84,6 @@ export class PostService {
 
   /**
    * Get Draft Posts
-   * @param authUserId auth user ID
-   * @param getDraftPostDto GetDraftPostDto
-   * @returns Promise resolve PageDto<PostResponseDto>
-   * @throws HttpException
    */
   public async getDrafts(
     authUserId: string,
@@ -97,6 +93,7 @@ export class PostService {
     const condition = {
       createdBy: authUserId,
       isDraft: true,
+      isArticle: false,
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;

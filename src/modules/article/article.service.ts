@@ -46,6 +46,7 @@ import { UserService } from '../../shared/user';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { ArticleBindingService } from './article-binding.service';
+import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -160,7 +161,59 @@ export class ArticleService extends PostService {
   }
 
   /**
-   * Get list Article
+   * Get Draft Articles
+   */
+  public async getDrafts(
+    authUserId: string,
+    getDraftPostDto: GetDraftArticleDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, order, isProcessing } = getDraftPostDto;
+    const condition = {
+      createdBy: authUserId,
+      isDraft: true,
+      isArticle: true,
+    };
+
+    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
+
+    const attributes = this.getAttributesObj({ loadMarkRead: false });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: false,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+    });
+    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+      where: condition,
+      attributes,
+      include,
+      order: [['createdAt', order]],
+      offset,
+      limit,
+    });
+    const jsonArticles = rows.map((r) => r.toJSON());
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonArticles, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
+  }
+
+  /**
+   * Get list related article
    * @throws HttpException
    * @param authUser UserDto
    * @param getArticleListDto GetListArticlesDto
