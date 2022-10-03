@@ -139,7 +139,7 @@ export class ArticleService extends PostService {
     if (hasNextPage) articles.pop();
 
     await this.maskArticleContent(articles);
-    const result = await this.articleBinding.bindRelatedData(articles, {
+    const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -149,6 +149,9 @@ export class ArticleService extends PostService {
       authUser,
     });
 
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
     return new PageDto<ArticleResponseDto>(result, {
       hasNextPage,
       limit,
@@ -198,8 +201,12 @@ export class ArticleService extends PostService {
     });
 
     const rowsJson = relatedRows.map((row) => row.toJSON());
-    const result = await this.articleBinding.bindRelatedData(rowsJson, {
+    const articlesBindedData = await this.articleBinding.bindRelatedData(rowsJson, {
       shouldBindActor: true,
+    });
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
     });
 
     return new PageDto<ArticleResponseDto>(result, {
@@ -285,7 +292,7 @@ export class ArticleService extends PostService {
     }
     const jsonArticle = article.toJSON();
     await this.maskArticleContent([jsonArticle]);
-    const rows = await this.articleBinding.bindRelatedData([jsonArticle], {
+    const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -294,8 +301,12 @@ export class ArticleService extends PostService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
-    rows[0]['comments'] = comments;
-    return rows[0];
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
+    result[0]['comments'] = comments;
+    return result[0];
   }
 
   protected getAttributesObj(options?: {
@@ -638,7 +649,9 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
     });
 
-    return result;
+    return this.classTransformer.plainToInstance(ArticleResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   public async maskArticleContent(articles: any[]): Promise<void> {
