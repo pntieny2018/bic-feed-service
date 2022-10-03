@@ -169,11 +169,14 @@ export class ReactionService {
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
-    switch (createReactionDto.target) {
+    const newCreateReactionDto =
+      ReactionService.transformReactionNameNodeEmoji<CreateReactionDto>(createReactionDto);
+
+    switch (newCreateReactionDto.target) {
       case ReactionEnum.POST:
-        return this._createPostReaction(userDto, createReactionDto);
+        return this._createPostReaction(userDto, newCreateReactionDto);
       case ReactionEnum.COMMENT:
-        return this._createCommentReaction(userDto, createReactionDto);
+        return this._createCommentReaction(userDto, newCreateReactionDto);
       case ReactionEnum.ARTICLE:
         break;
       default:
@@ -440,11 +443,13 @@ export class ReactionService {
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<IPostReaction | ICommentReaction> {
+    const newDeleteReactionDto =
+      ReactionService.transformReactionNameNodeEmoji<DeleteReactionDto>(deleteReactionDto);
     switch (deleteReactionDto.target) {
       case ReactionEnum.POST:
-        return this._deletePostReaction(userDto, deleteReactionDto);
+        return this._deletePostReaction(userDto, newDeleteReactionDto);
       case ReactionEnum.COMMENT:
-        return this._deleteCommentReaction(userDto, deleteReactionDto);
+        return this._deleteCommentReaction(userDto, newDeleteReactionDto);
       default:
         throw new NotFoundException('Reaction type not match.');
     }
@@ -805,5 +810,16 @@ export class ReactionService {
         }
       }
     }
+  }
+
+  public static transformReactionNameNodeEmoji<T>(doActionReactionDto: T): T {
+    const copy = { ...doActionReactionDto };
+    if (copy['reactionName'] === '+1') {
+      copy['reactionName'] = 'thumbsup';
+    }
+    if (copy['reactionName'] === '-1') {
+      copy['reactionName'] = 'thumbsdown';
+    }
+    return copy;
   }
 }
