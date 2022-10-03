@@ -90,7 +90,7 @@ export class PostBindingService {
       excludeExtraneousValues: true,
     });
   }
-  
+
   public async bindAudience(
     posts: any[],
     options?: {
