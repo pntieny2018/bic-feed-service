@@ -46,6 +46,7 @@ import { UserService } from '../../shared/user';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { ArticleBindingService } from './article-binding.service';
+import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -139,7 +140,7 @@ export class ArticleService extends PostService {
     if (hasNextPage) articles.pop();
 
     await this.maskArticleContent(articles);
-    const result = await this.articleBinding.bindRelatedData(articles, {
+    const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -149,6 +150,9 @@ export class ArticleService extends PostService {
       authUser,
     });
 
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
     return new PageDto<ArticleResponseDto>(result, {
       hasNextPage,
       limit,
@@ -157,7 +161,59 @@ export class ArticleService extends PostService {
   }
 
   /**
-   * Get list Article
+   * Get Draft Articles
+   */
+  public async getDrafts(
+    authUserId: string,
+    getDraftPostDto: GetDraftArticleDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, order, isProcessing } = getDraftPostDto;
+    const condition = {
+      createdBy: authUserId,
+      isDraft: true,
+      isArticle: true,
+    };
+
+    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
+
+    const attributes = this.getAttributesObj({ loadMarkRead: false });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: false,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+    });
+    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+      where: condition,
+      attributes,
+      include,
+      order: [['createdAt', order]],
+      offset,
+      limit,
+    });
+    const jsonArticles = rows.map((r) => r.toJSON());
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonArticles, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      total: count,
+      limit,
+      offset,
+    });
+  }
+
+  /**
+   * Get list related article
    * @throws HttpException
    * @param authUser UserDto
    * @param getArticleListDto GetListArticlesDto
@@ -198,8 +254,12 @@ export class ArticleService extends PostService {
     });
 
     const rowsJson = relatedRows.map((row) => row.toJSON());
-    const result = await this.articleBinding.bindRelatedData(rowsJson, {
+    const articlesBindedData = await this.articleBinding.bindRelatedData(rowsJson, {
       shouldBindActor: true,
+    });
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
     });
 
     return new PageDto<ArticleResponseDto>(result, {
@@ -285,7 +345,7 @@ export class ArticleService extends PostService {
     }
     const jsonArticle = article.toJSON();
     await this.maskArticleContent([jsonArticle]);
-    const rows = await this.articleBinding.bindRelatedData([jsonArticle], {
+    const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -294,8 +354,12 @@ export class ArticleService extends PostService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
-    rows[0]['comments'] = comments;
-    return rows[0];
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
+    result[0]['comments'] = comments;
+    return result[0];
   }
 
   protected getAttributesObj(options?: {
@@ -638,7 +702,9 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
     });
 
-    return result;
+    return this.classTransformer.plainToInstance(ArticleResponseDto, result, {
+      excludeExtraneousValues: true,
+    });
   }
 
   public async maskArticleContent(articles: any[]): Promise<void> {

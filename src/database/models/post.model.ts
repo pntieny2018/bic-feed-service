@@ -401,6 +401,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
+    const postCategoryTable = PostCategoryModel.tableName;
+    const categoryTable = CategoryModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const authUserId = authUser ? authUser.id : null;
     if (isImportant) {
@@ -435,6 +437,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "p"."created_at" AS "createdAt", 
           "p"."updated_at" AS "updatedAt",
           "p"."is_article" AS "isArticle", 
+          "p"."title" AS "title", 
+          "p"."summary" AS "summary",
+          "p"."hashtags_json" AS "hashtags",
           COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
             WHERE r.post_id = p.id ${authUserId ? 'AND r.user_id = :authUserId' : ''} ), false
           ) AS "markedReadPost"
@@ -456,6 +461,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "ownerReactions"."reaction_name" as "reactionName",
           "ownerReactions"."id" as "postReactionId",
           "ownerReactions"."created_at" as "reactCreatedAt",
+          "cate"."name" as "categoryName",
+          "cate"."id" as "categoryId",
           "media"."id" as "mediaId",
           "media"."url",
           "media"."name",
@@ -473,6 +480,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       ${schema}.${postMediaTable} AS "media->PostMediaModel"
       INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
     ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+    LEFT OUTER JOIN (
+      ${schema}.${postCategoryTable} AS "media->PostCategoryModel"
+      INNER JOIN ${schema}.${categoryTable} AS "cate" ON "cate"."id" = "media->PostCategoryModel"."category_id"
+    ) ON "PostModel"."id" = "media->PostCategoryModel"."post_id"
     LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" 
       ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
     LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" 
@@ -524,6 +535,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
+    const postCategoryTable = PostCategoryModel.tableName;
+    const categoryTable = CategoryModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const authUserId = authUser.id;
 
@@ -583,6 +596,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     "ownerReactions"."reaction_name" as "reactionName",
     "ownerReactions"."id" as "postReactionId",
     "ownerReactions"."created_at" as "reactCreatedAt",
+    "cate"."name" as "categoryName",
+    "cate"."id" as "categoryId",
     "media"."id" as "mediaId",
     "media"."url",
     "media"."name",
@@ -600,6 +615,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         ${schema}.${postMediaTable} AS "media->PostMediaModel"
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
     ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+    LEFT OUTER JOIN (
+      ${schema}.${postCategoryTable} AS "media->PostCategoryModel"
+      INNER JOIN ${schema}.${categoryTable} AS "cate" ON "cate"."id" = "media->PostCategoryModel"."category_id"
+    ) ON "PostModel"."id" = "media->PostCategoryModel"."post_id"
     LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" 
       ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
     LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" 
@@ -656,6 +675,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const postReactionTable = PostReactionModel.tableName;
     const mediaTable = MediaModel.tableName;
     const postMediaTable = PostMediaModel.tableName;
+    const postCategoryTable = PostCategoryModel.tableName;
+    const categoryTable = CategoryModel.tableName;
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
     const postGroupTable = PostGroupModel.tableName;
     let subSelect = `
@@ -675,6 +696,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "p"."created_at" AS "createdAt", 
           "p"."updated_at" AS "updatedAt",
           "p"."is_article" AS "isArticle", 
+          "p"."title" AS "title", 
+          "p"."summary" AS "summary",
+          "p"."hashtags_json" AS "hashtags",
           "is_seen_post" AS "isSeenPost"`;
     if (isImportant === true) {
       condition += `AND "p"."is_important" = true`;
@@ -703,6 +727,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           "ownerReactions"."reaction_name" as "reactionName",
           "ownerReactions"."id" as "postReactionId",
           "ownerReactions"."created_at" as "reactCreatedAt",
+          "cate"."name" as "categoryName",
+          "cate"."id" as "categoryId",
           "media"."id" as "mediaId",
           "media"."url",
           "media"."name",
@@ -720,6 +746,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         ${schema}.${postMediaTable} AS "media->PostMediaModel"
         INNER JOIN ${schema}.${mediaTable} AS "media" ON "media"."id" = "media->PostMediaModel"."media_id"
       ) ON "PostModel"."id" = "media->PostMediaModel"."post_id"
+      LEFT OUTER JOIN (
+        ${schema}.${postCategoryTable} AS "media->PostCategoryModel"
+        INNER JOIN ${schema}.${categoryTable} AS "cate" ON "cate"."id" = "media->PostCategoryModel"."category_id"
+      ) ON "PostModel"."id" = "media->PostCategoryModel"."post_id"
       LEFT OUTER JOIN ${schema}.${mentionTable} AS "mentions" 
         ON "PostModel"."id" = "mentions"."entity_id" AND "mentions"."mentionable_type" = 'post'
       LEFT OUTER JOIN ${schema}.${postReactionTable} AS "ownerReactions" 
