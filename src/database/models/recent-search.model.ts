@@ -1,7 +1,9 @@
+import { IsUUID } from 'class-validator';
+import { v4 as uuid_v4 } from 'uuid';
 import {
-  AutoIncrement,
   Column,
   CreatedAt,
+  Default,
   Model,
   PrimaryKey,
   Table,
@@ -10,7 +12,7 @@ import {
 import { Optional } from 'sequelize/types';
 
 export interface IRecentSearchAttribute {
-  id: number;
+  id: string;
   createdBy: string;
   updatedBy: string;
   target: string;
@@ -28,9 +30,10 @@ export class RecentSearchModel extends Model<
   Optional<IRecentSearchAttribute, 'id'>
 > {
   @PrimaryKey
-  @AutoIncrement
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
-  public id: number;
+  public id: string;
 
   @Column
   public createdBy: string;
