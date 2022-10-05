@@ -228,7 +228,6 @@ describe('RecentSearchService', () => {
       try {
         await recentSearchService.clean(createdBy, target as RecentSearchType);
       } catch (e) {
-        //expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
       }
     });
