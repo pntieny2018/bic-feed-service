@@ -228,46 +228,6 @@ export class MediaService {
     });
   }
 
-  /**
-   * Update Media.isDraft, called when update Post
-   * @param mediaIds Array of Media ID
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateMediaDraft(mediaIds: number[], transaction: Transaction): Promise<boolean> {
-    try {
-      const { schema } = getDatabaseConfig();
-      const postMedia = PostMediaModel.tableName;
-      const commentMedia = CommentMediaModel.tableName;
-      if (mediaIds.length === 0) return true;
-      const query = ` UPDATE ${schema}.media
-                SET is_draft = tmp.not_has_post
-                FROM (
-                  SELECT media.id, 
-                  CASE WHEN COUNT(${postMedia}.post_id) + COUNT(${commentMedia}.comment_id) > 0 THEN false ELSE true
-                  END as not_has_post
-                  FROM ${schema}.media
-                  LEFT JOIN ${schema}.${postMedia} ON ${postMedia}.media_id = media.id
-                  LEFT JOIN ${schema}.${commentMedia} ON ${commentMedia}.media_id = media.id
-                  WHERE media.id IN (:mediaIds)
-                  GROUP BY media.id
-                ) as tmp 
-                WHERE tmp.id = ${schema}.media.id`;
-      await this._sequelizeConnection.query(query, {
-        replacements: {
-          mediaIds,
-        },
-        type: QueryTypes.UPDATE,
-        raw: true,
-        transaction: transaction,
-      });
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
   public async sync(
     entityId: string,
     entityType: EntityType,
@@ -351,8 +311,6 @@ export class MediaService {
             getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
           ));
     }
-
-    await this.updateMediaDraft([...changes.attached, ...changes.detached], transaction);
   }
   /**
    * Filter media type
@@ -416,14 +374,6 @@ export class MediaService {
           where: { commentId: entityIds },
           transaction: transaction,
         }));
-
-    await this.updateMediaDraft(mediaIds, transaction);
-  }
-
-  public async countMediaByPost(postId: string): Promise<number> {
-    return this._postMediaModel.count({
-      where: { postId },
-    });
   }
 
   public async updateData(
