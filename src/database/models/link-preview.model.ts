@@ -46,7 +46,7 @@ export class LinkPreviewModel
   @Column
   public domain: string;
 
-  @Length({ max: 255 })
+  @Length({ max: 2048 })
   @AllowNull(true)
   @Column
   public image: string;

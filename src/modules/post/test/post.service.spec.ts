@@ -344,9 +344,7 @@ describe('PostService', () => {
     it('Should return result successfully', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataUpdatePost);
 
-      mediaService.countMediaByPost = jest
-        .fn()
-        .mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
+
       authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
@@ -369,10 +367,6 @@ describe('PostService', () => {
         .fn()
         .mockResolvedValue({ ...mockedDataUpdatePost, content: null });
 
-      mediaService.countMediaByPost = jest
-        .fn()
-        .mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
-
       try {
         await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
@@ -392,9 +386,7 @@ describe('PostService', () => {
 
     it('Should catch ForbiddenException if user is not owner', async () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-      mediaService.countMediaByPost = jest
-        .fn()
-        .mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
+
       try {
         await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {

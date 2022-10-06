@@ -20,7 +20,7 @@ export class LinkPreviewDto {
     example: 'beincomm.com',
   })
   @Transform((e) => {
-    if (e.value.length > 160) {
+    if (e.value && e.value.length > 160) {
       return e.value.substring(0, 160) + '...';
     }
     return e.value;
@@ -34,12 +34,6 @@ export class LinkPreviewDto {
     type: String,
     example: 'https://www.beincomm.com/images/bic_welcomeAd_banner.webp',
   })
-  @Transform((e) => {
-    if (e.value.length > 160) {
-      return e.value.substring(0, 160) + '...';
-    }
-    return e.value;
-  })
   @IsOptional()
   @Type(() => String)
   public image: string = null;
@@ -50,8 +44,8 @@ export class LinkPreviewDto {
     example: 'This is title',
   })
   @Transform((e) => {
-    if (e.value.length > 160) {
-      return e.value.substring(0, 160) + '...';
+    if (e.value && e.value.length > 250) {
+      return e.value.substring(0, 250) + '...';
     }
     return e.value;
   })
@@ -65,8 +59,8 @@ export class LinkPreviewDto {
     example: 'This is description',
   })
   @Transform((e) => {
-    if (e.value.length > 160) {
-      return e.value.substring(0, 160) + '...';
+    if (e.value && e.value.length > 250) {
+      return e.value.substring(0, 250) + '...';
     }
     return e.value;
   })
