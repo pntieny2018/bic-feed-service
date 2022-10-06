@@ -44,6 +44,6 @@ export class NotificationService implements OnModuleInit {
   }
 
   public async onModuleInit(): Promise<void> {
-    await this._kafkaProducer.connect();
+    //await this._kafkaProducer.connect();
   }
 }
