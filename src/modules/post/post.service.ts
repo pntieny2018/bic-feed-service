@@ -45,6 +45,9 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostCategoryModel } from '../../database/models/post-category.model';
+import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 @Injectable()
 export class PostService {
   /**
@@ -62,6 +65,12 @@ export class PostService {
     protected postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     protected postGroupModel: typeof PostGroupModel,
+    @InjectModel(PostSeriesModel)
+    protected postSeriesModel: typeof PostSeriesModel,
+    @InjectModel(PostCategoryModel)
+    protected postCategoryModel: typeof PostCategoryModel,
+    @InjectModel(PostHashtagModel)
+    protected postHashtagModel: typeof PostHashtagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     protected userService: UserService,
@@ -588,10 +597,6 @@ export class PostService {
 
   /**
    * Delete post by id
-   * @param postId string
-   * @param authUser UserDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async delete(postId: string, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
@@ -673,6 +678,9 @@ export class PostService {
       this.commentService.deleteCommentsByPost(postId, transaction),
       this.feedService.deleteNewsFeedByPost(postId, transaction),
       this.feedService.deleteUserSeenByPost(postId, transaction),
+      this.postCategoryModel.destroy({ where: { postId: postId } }),
+      this.postSeriesModel.destroy({ where: { postId: postId } }),
+      this.postHashtagModel.destroy({ where: { postId: postId } }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
