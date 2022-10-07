@@ -38,6 +38,9 @@ import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
 import { LinkPreviewService } from '../../link-preview/link-preview.service';
+import { PostSeriesModel } from '../../../database/models/post-series.model';
+import { PostHashtagModel } from '../../../database/models/post-hashtag.model';
+import { PostCategoryModel } from '../../../database/models/post-category.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -57,6 +60,9 @@ describe('PostService', () => {
   let clientKafka;
   let sequelize: Sequelize;
   let sentryService: SentryService;
+  let postSeriesModelMock;
+  let postHashtagModelMock;
+  let postCategoryModelMock;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -167,6 +173,24 @@ describe('PostService', () => {
             destroy: jest.fn(),
           },
         },
+        {
+          provide: getModelToken(PostSeriesModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostCategoryModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostHashtagModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -175,6 +199,11 @@ describe('PostService', () => {
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(
       getModelToken(UserMarkReadPostModel)
+    );
+    postSeriesModelMock = moduleRef.get<typeof PostSeriesModel>(getModelToken(PostSeriesModel));
+    postHashtagModelMock = moduleRef.get<typeof PostHashtagModel>(getModelToken(PostHashtagModel));
+    postCategoryModelMock = moduleRef.get<typeof PostCategoryModel>(
+      getModelToken(PostCategoryModel)
     );
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
@@ -343,7 +372,6 @@ describe('PostService', () => {
 
     it('Should return result successfully', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-
 
       authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
