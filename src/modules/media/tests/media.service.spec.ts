@@ -143,29 +143,11 @@ describe('MediaService', () => {
     });
   })
 
-  describe('MediaService.countMediaByPost', () => {
-    it('should return if success', async () => {
-      postMediaModel.count.mockResolvedValue(Promise.resolve(1))
-      const returnValue = await service.countMediaByPost('12123')
-      expect(postMediaModel.count).toBeCalled()
-      expect(returnValue).toEqual(1)
-    });
-  })
-
   describe('MediaService.updateData', () => {
     it('should return if success', async () => {
       mediaModel.update.mockResolvedValue(Promise.resolve({}))
       const returnValue = await service.updateData(['12123'], { status: MediaStatus.COMPLETED })
       expect(mediaModel.update).toBeCalled()
-    });
-  })
-
-  describe('MediaService.updateMediaDraft', () => {
-    it('should return if success', async () => {
-      sequelize.query.mockResolvedValue(Promise.resolve({}))
-      const returnValue = await service.updateMediaDraft([1], null)
-      expect(sequelize.query).toBeCalled()
-      expect(returnValue).toEqual(true)
     });
   })
 
