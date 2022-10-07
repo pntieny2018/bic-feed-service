@@ -678,9 +678,9 @@ export class PostService {
       this.commentService.deleteCommentsByPost(postId, transaction),
       this.feedService.deleteNewsFeedByPost(postId, transaction),
       this.feedService.deleteUserSeenByPost(postId, transaction),
-      this.postCategoryModel.destroy({ where: { postId: postId } }),
-      this.postSeriesModel.destroy({ where: { postId: postId } }),
-      this.postHashtagModel.destroy({ where: { postId: postId } }),
+      this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
+      this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
+      this.postHashtagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
