@@ -47,6 +47,9 @@ import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { ArticleBindingService } from './article-binding.service';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostCategoryModel } from '../../database/models/post-category.model';
+import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -69,6 +72,12 @@ export class ArticleService extends PostService {
     protected postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     protected postGroupModel: typeof PostGroupModel,
+    @InjectModel(PostSeriesModel)
+    protected postSeriesModel: typeof PostSeriesModel,
+    @InjectModel(PostCategoryModel)
+    protected postCategoryModel: typeof PostCategoryModel,
+    @InjectModel(PostHashtagModel)
+    protected postHashtagModel: typeof PostHashtagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     protected userService: UserService,
@@ -94,6 +103,9 @@ export class ArticleService extends PostService {
       sequelizeConnection,
       postModel,
       postGroupModel,
+      postSeriesModel,
+      postCategoryModel,
+      postHashtagModel,
       userMarkReadPostModel,
       userService,
       groupService,
