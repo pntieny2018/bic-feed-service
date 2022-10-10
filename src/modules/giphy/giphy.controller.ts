@@ -5,7 +5,7 @@ import { HttpService } from '@nestjs/axios';
 import { TrendingDto } from './dto/requests';
 import { SearchDto } from './dto/requests/search.dto';
 import { GiphyResponseDto } from './dto/responses/giphy-response.dto';
-import { getGiphyDetailInfo, GiphyType } from './giphy.util';
+import { getGiphyDetailInfo, GifType } from './giphy.util';
 import { DEFAULT_REQUEST_TIME_OUT } from './giphy.constants';
 import { SentryService } from '@app/sentry';
 
@@ -20,9 +20,9 @@ export class GiphyController {
     private readonly _sentryService: SentryService
   ) {}
 
-  public transferGiphyResponseApi(response): GiphyResponseDto[] {
+  public transferGiphyResponseApi(response, gifType: GifType): GiphyResponseDto[] {
     return response.data.data.map((e) => {
-      const details = getGiphyDetailInfo(e.id, GiphyType.GIF_PREVIEW, e.images);
+      const details = getGiphyDetailInfo(e.id, gifType, e.images);
       return new GiphyResponseDto(
         e.id,
         e.type,
@@ -40,7 +40,7 @@ export class GiphyController {
     const trendingGiphyUrl = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=${trendingDto.limit}&rating=${trendingDto.rating}`;
     return this._httpService.axiosRef
       .get(trendingGiphyUrl, { timeout: DEFAULT_REQUEST_TIME_OUT })
-      .then((response) => this.transferGiphyResponseApi(response))
+      .then((response) => this.transferGiphyResponseApi(response, trendingDto.type))
       .catch((e) => {
         this._sentryService.captureException(e);
         throw e;
@@ -53,7 +53,7 @@ export class GiphyController {
     const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchDto.q}&limit=${searchDto.limit}&offset=${searchDto.offset}&rating=${searchDto.rating}&lang=${searchDto.lang}`;
     return this._httpService.axiosRef
       .get(giphyUrl, { timeout: DEFAULT_REQUEST_TIME_OUT })
-      .then((response) => this.transferGiphyResponseApi(response))
+      .then((response) => this.transferGiphyResponseApi(response, searchDto.type))
       .catch((e) => {
         this._sentryService.captureException(e);
         throw e;
