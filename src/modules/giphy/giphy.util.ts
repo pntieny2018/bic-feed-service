@@ -15,7 +15,7 @@ export function createUrlFromId(id?: string, type: GifType = GifType.ORIGINAL): 
 
 export function getGiphyDetailInfo(
   id?: string,
-  type: GifType = GifType.PREVIEW_WEBP,
+  type: GifType = GifType.PREVIEW_GIF,
   images?: object
 ): { url: string; height: string; width: string; size: string } {
   if (!id) return null;
