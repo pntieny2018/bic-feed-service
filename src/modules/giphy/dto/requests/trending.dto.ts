@@ -29,8 +29,8 @@ export class TrendingDto {
   @IsOptional()
   public rating?: Rating = Rating.g;
 
-  @ApiProperty({ enum: GifType, default: GifType.PREVIEW_WEBP, required: false })
+  @ApiProperty({ enum: GifType, default: GifType.PREVIEW_GIF, required: false })
   @IsEnum(GifType)
   @IsOptional()
-  public type?: GifType = GifType.PREVIEW_WEBP;
+  public type?: GifType = GifType.PREVIEW_GIF;
 }
