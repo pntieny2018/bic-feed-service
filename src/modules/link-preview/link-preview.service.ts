@@ -22,7 +22,7 @@ export class LinkPreviewService {
     let transaction;
     try {
       transaction = await this.sequelizeConnection.transaction();
-      if (linkPreviewDto) {
+      if (linkPreviewDto && linkPreviewDto.url) {
         let linkPreview: LinkPreviewModel = await this._linkPreviewModel.findOne({
           where: { url: linkPreviewDto.url },
         });
