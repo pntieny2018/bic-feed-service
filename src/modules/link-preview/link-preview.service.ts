@@ -50,8 +50,19 @@ export class LinkPreviewService {
             { transaction }
           );
         }
-      } else if (linkPreviewDto === null) {
-        await this._postLinkPreviewModel.destroy({ where: { postId: postId } });
+      } else {
+        const postLinkPreview = await this._postLinkPreviewModel.findOne({
+          where: { postId: postId },
+        });
+        if (postLinkPreview) {
+          await this._postLinkPreviewModel.destroy({ where: { postId: postId } });
+          const remainPostLink = await this._postLinkPreviewModel.findOne({
+            where: { linkPreviewId: postLinkPreview.linkPreviewId },
+          });
+          if (!remainPostLink) {
+            await this._linkPreviewModel.destroy({ where: { id: postLinkPreview.linkPreviewId } });
+          }
+        }
       }
       await transaction.commit();
     } catch (error) {
