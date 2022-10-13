@@ -81,6 +81,7 @@ describe('LinkPreviewService', () => {
     });
 
     it('should destroy if linkPreviewDto=null', async () => {
+      postLinkPreviewModel.findOne.mockResolvedValue({postId: postId, linkPreviewId: linkPreviewDtoMock.id, linkPreview: linkPreviewDtoMock});
       await linkPreviewService.upsert(null, postId);
       expect(postLinkPreviewModel.destroy).toBeCalled()
     })
