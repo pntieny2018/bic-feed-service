@@ -84,8 +84,6 @@ export class PostService {
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
-    @Inject(KAFKA_PRODUCER)
-    protected readonly client: ClientKafka,
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService
@@ -918,24 +916,6 @@ export class PostService {
       type: QueryTypes.UPDATE,
       raw: true,
     });
-  }
-
-  public async processVideo(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
-    try {
-      this.client.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
-        key: null,
-        value: JSON.stringify({ videoIds: ids }),
-      });
-      this.sentryService.captureMessage(
-        `update to processing-- ${JSON.stringify(ids)}`,
-        Severity.Debug
-      );
-      await this.mediaService.updateData(ids, { status: MediaStatus.PROCESSING });
-    } catch (e) {
-      this.logger.error(e, e?.stack);
-      this.sentryService.captureException(e);
-    }
   }
 
   public checkContent(content: string, media: MediaDto): void {
