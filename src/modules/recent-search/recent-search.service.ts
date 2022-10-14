@@ -29,9 +29,6 @@ export class RecentSearchService {
 
   /**
    * Get list recent search
-   * @param createdBy number
-   * @param getRecentSearchPostDto GetRecentSearchPostDto
-   * @returns Promise resolve RecentSearchDto[] or []
    */
   public async get(
     createdBy: string,
@@ -65,10 +62,6 @@ export class RecentSearchService {
 
   /**
    * Create recent search
-   * @param createdBy Number
-   * @param createRecentSearchDto CreateRecentSearchDto
-   * @returns Promise resolve recentSearchPostDto
-   * @throws HttpException
    */
   public async create(
     createdBy: string,
@@ -111,12 +104,8 @@ export class RecentSearchService {
 
   /**
    * Delete recent search by id
-   * @param createdBy Number
-   * @param id Number
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
-  public async delete(createdBy: string, id: number): Promise<boolean> {
+  public async delete(createdBy: string, id: string): Promise<boolean> {
     try {
       await this._recentSearchModel.destroy({
         where: {
@@ -135,10 +124,6 @@ export class RecentSearchService {
 
   /**
    * Clean recent search post
-   * @param createdBy Number
-   * @param target RecentSearchType
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async clean(createdBy: string, target: RecentSearchType): Promise<boolean> {
     try {

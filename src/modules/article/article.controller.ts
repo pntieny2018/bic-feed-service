@@ -30,6 +30,7 @@ import {
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { AuthorityService } from '../authority';
 import { PostService } from '../post/post.service';
+import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -44,6 +45,18 @@ export class ArticleController {
     private _authorityService: AuthorityService,
     private _postService: PostService
   ) {}
+
+  @ApiOperation({ summary: 'Get draft articles' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/draft')
+  public getDrafts(
+    @AuthUser() user: UserDto,
+    @Query() getDraftDto: GetDraftArticleDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.getDrafts(user.id, getDraftDto);
+  }
 
   @ApiOperation({ summary: 'Get list article' })
   @ApiOkResponse({

@@ -38,6 +38,9 @@ import { mockedPostCreated } from './mocks/response/create-post.response.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
 import { LinkPreviewService } from '../../link-preview/link-preview.service';
+import { PostSeriesModel } from '../../../database/models/post-series.model';
+import { PostHashtagModel } from '../../../database/models/post-hashtag.model';
+import { PostCategoryModel } from '../../../database/models/post-category.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -57,6 +60,9 @@ describe('PostService', () => {
   let clientKafka;
   let sequelize: Sequelize;
   let sentryService: SentryService;
+  let postSeriesModelMock;
+  let postHashtagModelMock;
+  let postCategoryModelMock;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -167,6 +173,24 @@ describe('PostService', () => {
             destroy: jest.fn(),
           },
         },
+        {
+          provide: getModelToken(PostSeriesModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostCategoryModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostHashtagModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -175,6 +199,11 @@ describe('PostService', () => {
     postGroupModelMock = moduleRef.get<typeof PostGroupModel>(getModelToken(PostGroupModel));
     userMarkedImportantPostModelMock = moduleRef.get<typeof UserMarkReadPostModel>(
       getModelToken(UserMarkReadPostModel)
+    );
+    postSeriesModelMock = moduleRef.get<typeof PostSeriesModel>(getModelToken(PostSeriesModel));
+    postHashtagModelMock = moduleRef.get<typeof PostHashtagModel>(getModelToken(PostHashtagModel));
+    postCategoryModelMock = moduleRef.get<typeof PostCategoryModel>(
+      getModelToken(PostCategoryModel)
     );
     userService = moduleRef.get<UserService>(UserService);
     groupService = moduleRef.get<GroupService>(GroupService);
@@ -344,9 +373,6 @@ describe('PostService', () => {
     it('Should return result successfully', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataUpdatePost);
 
-      mediaService.countMediaByPost = jest
-        .fn()
-        .mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
       authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
@@ -369,10 +395,6 @@ describe('PostService', () => {
         .fn()
         .mockResolvedValue({ ...mockedDataUpdatePost, content: null });
 
-      mediaService.countMediaByPost = jest
-        .fn()
-        .mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
-
       try {
         await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
@@ -392,9 +414,7 @@ describe('PostService', () => {
 
     it('Should catch ForbiddenException if user is not owner', async () => {
       postModelMock.findByPk = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-      mediaService.countMediaByPost = jest
-        .fn()
-        .mockResolvedValueOnce('09c88080-a975-44e1-ae67-89f3d37e114f');
+
       try {
         await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
       } catch (error) {
@@ -650,7 +670,7 @@ describe('PostService', () => {
     });
   });
 
-  describe.skip('bindActorToPost', () => {
+  describe.skip('bindActor', () => {
     const posts = [{ createdBy: '09c88080-a975-44e1-ae67-89f3d37e114f', actor: null }];
     it('Should bind actor successfully', async () => {
       userService.getMany = jest.fn().mockResolvedValueOnce([
@@ -658,21 +678,21 @@ describe('PostService', () => {
           id: '09c88080-a975-44e1-ae67-89f3d37e114f',
         },
       ]);
-      await postBindingService.bindActorToPost(posts);
+      await postBindingService.bindActor(posts);
       expect(posts[0].actor).toStrictEqual({ id: '09c88080-a975-44e1-ae67-89f3d37e114f' });
     });
   });
 
-  describe.skip('bindPostData', () => {
+  describe.skip('bindAttributes', () => {
     const posts = [{ id: '09c88080-a975-44e1-ae67-89f3d37e114f', commentsCount: 0 }];
     it('Should bind actor successfully', async () => {
       postModelMock.findAll.mockResolvedValueOnce(posts);
-      await postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']);
+      await postBindingService.bindAttributes(posts, ['commentsCount', 'totalUsersSeen']);
       expect(posts[0].commentsCount).toStrictEqual(posts[0].commentsCount);
     });
   });
 
-  describe.skip('bindAudienceToPost', () => {
+  describe.skip('bindAudience', () => {
     const posts = [
       {
         audience: null,
@@ -686,7 +706,7 @@ describe('PostService', () => {
 
     it('Should bind audience successfully', async () => {
       groupService.getMany = jest.fn().mockResolvedValueOnce(mockedGroups);
-      await postBindingService.bindAudienceToPost(posts);
+      await postBindingService.bindAudience(posts);
       expect(posts[0].audience.groups).toStrictEqual([mockedGroups[0]]);
     });
   });

@@ -45,6 +45,9 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostCategoryModel } from '../../database/models/post-category.model';
+import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 @Injectable()
 export class PostService {
   /**
@@ -53,10 +56,6 @@ export class PostService {
    */
   protected logger = new Logger(PostService.name);
 
-  /**
-   *  ClassTransformer
-   * @protected
-   */
   protected classTransformer = new ClassTransformer();
 
   public constructor(
@@ -66,6 +65,12 @@ export class PostService {
     protected postModel: typeof PostModel,
     @InjectModel(PostGroupModel)
     protected postGroupModel: typeof PostGroupModel,
+    @InjectModel(PostSeriesModel)
+    protected postSeriesModel: typeof PostSeriesModel,
+    @InjectModel(PostCategoryModel)
+    protected postCategoryModel: typeof PostCategoryModel,
+    @InjectModel(PostHashtagModel)
+    protected postHashtagModel: typeof PostHashtagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     protected userService: UserService,
@@ -88,10 +93,6 @@ export class PostService {
 
   /**
    * Get Draft Posts
-   * @param authUserId auth user ID
-   * @param getDraftPostDto GetDraftPostDto
-   * @returns Promise resolve PageDto<PostResponseDto>
-   * @throws HttpException
    */
   public async getDrafts(
     authUserId: string,
@@ -101,6 +102,7 @@ export class PostService {
     const condition = {
       createdBy: authUserId,
       isDraft: true,
+      isArticle: false,
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
@@ -121,12 +123,17 @@ export class PostService {
       limit,
     });
     const jsonPosts = rows.map((r) => r.toJSON());
-    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
+
+    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
     return new PageDto<PostResponseDto>(result, {
       total: count,
       limit,
@@ -159,11 +166,10 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
-        isArticle: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
       };
     } else {
-      condition = { id: postId, isArticle: false };
+      condition = { id: postId };
     }
     const post = await this.postModel.findOne({
       attributes,
@@ -196,7 +202,7 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-    const rows = await this.postBinding.bindRelatedData([jsonPost], {
+    const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -206,8 +212,12 @@ export class PostService {
       authUser: user,
     });
 
-    rows[0]['comments'] = comments;
-    return rows[0];
+    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    result[0]['comments'] = comments;
+    return result[0];
   }
 
   protected getAttributesObj(options?: {
@@ -587,10 +597,6 @@ export class PostService {
 
   /**
    * Delete post by id
-   * @param postId string
-   * @param authUser UserDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async delete(postId: string, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
@@ -672,6 +678,9 @@ export class PostService {
       this.commentService.deleteCommentsByPost(postId, transaction),
       this.feedService.deleteNewsFeedByPost(postId, transaction),
       this.feedService.deleteUserSeenByPost(postId, transaction),
+      this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
+      this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
+      this.postHashtagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
@@ -873,13 +882,15 @@ export class PostService {
 
     const jsonPosts = posts.map((p) => p.toJSON());
 
-    const result = await this.postBinding.bindRelatedData(jsonPosts, {
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
       shouldBindAudience: true,
       shouldBindMention: true,
       shouldBindActor: true,
     });
 
-    return result;
+    return this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   public async updateStatus(postId: string): Promise<void> {
@@ -959,6 +970,8 @@ export class PostService {
       if (!postAdded) {
         const groups = post.groupId === null ? [] : [{ groupId: post.groupId }];
         const mentions = post.userId === null ? [] : [{ userId: post.userId }];
+        const categories =
+          post.categoryId === null ? [] : [{ id: post.categoryId, name: post.categoryName }];
         const ownerReactions =
           post.postReactionId === null
             ? []
@@ -987,7 +1000,7 @@ export class PostService {
                   createdAt: post.mediaCreatedAt,
                 },
               ];
-        result.push({ ...post, groups, mentions, ownerReactions, media });
+        result.push({ ...post, groups, mentions, categories, ownerReactions, media });
         return;
       }
       if (post.groupId !== null && !postAdded.groups.find((g) => g.groupId === post.groupId)) {
@@ -995,6 +1008,9 @@ export class PostService {
       }
       if (post.userId !== null && !postAdded.mentions.find((m) => m.userId === post.userId)) {
         postAdded.mentions.push({ userId: post.userId });
+      }
+      if (post.categoryId !== null && !postAdded.categories.find((m) => m.id === post.categoryId)) {
+        postAdded.categories.push({ id: post.categoryId, name: post.categoryName });
       }
       if (
         post.postReactionId !== null &&
