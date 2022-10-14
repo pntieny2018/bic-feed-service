@@ -14,7 +14,6 @@ import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
 import { Op, QueryTypes, Transaction } from 'sequelize';
-import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
@@ -479,5 +478,19 @@ export class MediaService {
       return true;
     }
     return false;
+  }
+
+  public async processVideo(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    try {
+      this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+        key: null,
+        value: JSON.stringify({ videoIds: ids }),
+      });
+      await this.updateData(ids, { status: MediaStatus.PROCESSING });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
+    }
   }
 }
