@@ -711,40 +711,6 @@ describe('PostService', () => {
     });
   });
 
-  describe('processVideo', () => {
-    it('Should successfully', async () => {
-      clientKafka.emit = jest.fn().mockResolvedValue(Promise.resolve());
-      mediaService.updateData = jest.fn().mockResolvedValue(Promise.resolve());
-
-      await postService.processVideo([
-        '4cfcadc9-a8f9-49f4-b037-bd02ce96022d',
-        '658a1165-ae1d-4e4b-b369-d3c296533fb2',
-      ]);
-
-      expect(clientKafka.emit).toBeCalledTimes(1);
-      expect(mediaService.updateData).toBeCalledTimes(1);
-    });
-
-    it('Should failed if have an error connecting to DB', async () => {
-      clientKafka.emit = jest.fn().mockResolvedValue(Promise.resolve());
-      mediaService.updateData = jest.fn().mockRejectedValue(new Error('Error when connect to DB'));
-      sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
-
-      try {
-        await postService.processVideo([
-          '4cfcadc9-a8f9-49f4-b037-bd02ce96022d',
-          '658a1165-ae1d-4e4b-b369-d3c296533fb2',
-        ]);
-      } catch (e) {
-        expect(e?.message).toEqual('Error when connect to DB');
-      }
-
-      expect(mediaService.updateData).toBeCalledTimes(1);
-      expect(clientKafka.emit).toBeCalledTimes(1);
-      expect(sentryService.captureException).toBeCalledTimes(1);
-    });
-  });
-
   describe('getPostsByMedia', () => {
     it('Should successfully', async () => {
       postModelMock.findAll = jest.fn().mockResolvedValue([{ toJSON: () => ({}) }]);
