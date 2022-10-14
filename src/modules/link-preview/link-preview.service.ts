@@ -12,43 +12,34 @@ export class LinkPreviewService {
     @InjectModel(LinkPreviewModel)
     private _linkPreviewModel: typeof LinkPreviewModel,
     @InjectModel(PostLinkPreviewModel)
-    private _postLinkPreviewModel: typeof PostLinkPreviewModel,
-    @InjectConnection()
-    protected sequelizeConnection: Sequelize
+    private _postLinkPreviewModel: typeof PostLinkPreviewModel
   ) {}
   private _logger = new Logger(LinkPreviewService.name);
 
   public async upsert(linkPreviewDto: LinkPreviewDto, postId: string): Promise<void> {
-    let transaction;
     try {
-      transaction = await this.sequelizeConnection.transaction();
       if (linkPreviewDto && linkPreviewDto.url) {
         let linkPreview: LinkPreviewModel = await this._linkPreviewModel.findOne({
           where: { url: linkPreviewDto.url },
         });
         if (linkPreview) {
-          await linkPreview.update(linkPreviewDto, { transaction });
+          await linkPreview.update(linkPreviewDto);
         } else {
-          linkPreview = await this._linkPreviewModel.create(linkPreviewDto, {
-            transaction,
-          });
+          linkPreview = await this._linkPreviewModel.create(linkPreviewDto);
         }
         const postLinkPreview = await this._postLinkPreviewModel.findOne({ where: { postId } });
         if (postLinkPreview) {
           if (postLinkPreview.linkPreviewId !== linkPreview.id) {
             await this._postLinkPreviewModel.update(
               { linkPreviewId: linkPreview.id },
-              { where: { postId: postLinkPreview.postId }, transaction }
+              { where: { postId: postLinkPreview.postId } }
             );
           }
         } else {
-          await this._postLinkPreviewModel.create(
-            {
-              postId: postId,
-              linkPreviewId: linkPreview.id,
-            },
-            { transaction }
-          );
+          await this._postLinkPreviewModel.create({
+            postId: postId,
+            linkPreviewId: linkPreview.id,
+          });
         }
       } else {
         const postLinkPreview = await this._postLinkPreviewModel.findOne({
@@ -64,9 +55,7 @@ export class LinkPreviewService {
           }
         }
       }
-      await transaction.commit();
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       throw error;
     }
