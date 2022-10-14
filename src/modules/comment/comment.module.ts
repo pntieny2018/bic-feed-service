@@ -11,6 +11,7 @@ import { ReactionModule } from '../reaction';
 import { FollowModule } from '../follow';
 import { GiphyModule } from '../giphy';
 import { CommentHistoryService } from './comment-history.service';
+import { CommentAppService } from './application/comment.app-service';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { CommentHistoryService } from './comment-history.service';
     GiphyModule,
   ],
   controllers: [CommentController],
-  providers: [CommentService, CommentHistoryService],
+  providers: [CommentService, CommentHistoryService, CommentAppService],
   exports: [CommentService, CommentHistoryService],
 })
 export class CommentModule {}

@@ -7,7 +7,7 @@ import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { SentryService } from '../../../../libs/sentry/src';
 import { CommentHistoryService } from '../comment-history.service';
 
-describe('CommentController', () => {
+describe.skip('CommentController', () => {
   let controller: CommentController;
   let commentService;
   let commentHistoryService;
