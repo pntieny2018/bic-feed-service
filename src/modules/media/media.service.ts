@@ -456,6 +456,7 @@ export class MediaService {
   @Cron(CronExpression.EVERY_4_HOURS)
   async deleteUnusedMedia(): Promise<void> {
     //TODO:: need to optimize
+    //
     const postMedia = await this._postMediaModel.findAll();
     const commentMedia = await this._commentMediaModel.findAll();
     const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
