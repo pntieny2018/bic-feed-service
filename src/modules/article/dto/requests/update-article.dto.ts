@@ -59,4 +59,10 @@ export class UpdateArticleDto extends UpdatePostDto {
     return value;
   })
   public hashtags?: string[];
+
+  @ApiProperty({
+    type: String,
+  })
+  @IsOptional()
+  public cover?: string = null;
 }

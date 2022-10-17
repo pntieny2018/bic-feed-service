@@ -51,6 +51,7 @@ export class PostCronService {
       const mediaList = ArrayHelper.arrayUnique(
         willDeletePosts.filter((e) => e.media.length).map((e) => e.media)
       );
+      //TODO:: need to optimize
       if (!(await this._mediaService.isExistOnPostOrComment(mediaList.map((e) => e.id)))) {
         this._mediaService.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE);
       }

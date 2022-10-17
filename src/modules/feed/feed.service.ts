@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
@@ -48,18 +48,16 @@ export class FeedService {
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    const rows = await PostModel.getNewsFeedData({
-      ...getNewsFeedDto,
-      limit: limit + 1,
-      authUserId: authUser.id,
-      isImportant: isImportant ?? null,
+    const posts = await this._postService.getPostsInNewsFeed(authUser.id, {
+      limit: limit + 1, //1 is next row
+      offset,
+      isImportant,
     });
 
-    const posts = this._postService.group(rows);
     return this._bindAndTransformData({
-      posts,
+      posts: posts,
       offset,
-      limit,
+      limit: limit,
       authUser,
     });
   }
@@ -70,7 +68,7 @@ export class FeedService {
     limit,
     authUser,
   }: {
-    posts: any[];
+    posts: IPost[];
     offset: number;
     limit: number;
     authUser: UserDto;
@@ -211,36 +209,12 @@ export class FeedService {
         hasNextPage: false,
       });
     }
-    const constraints = PostModel.getIdConstrains(getTimelineDto);
 
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      groupIds,
-      constraints
-    );
-    let importantPostsExc = Promise.resolve([]);
-    if (offset < totalImportantPosts) {
-      importantPostsExc = PostModel.getTimelineData({
-        ...getTimelineDto,
-        limit: limit + 1,
-        groupIds,
-        authUser,
-        isImportant: true,
-      });
-    }
-    let normalPostsExc = Promise.resolve([]);
-    if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = PostModel.getTimelineData({
-        ...getTimelineDto,
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
-        groupIds,
-        authUser,
-        isImportant: false,
-      });
-    }
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.group(rows);
+    const authUserId = authUser?.id || null;
+    const posts = await this._postService.getPostsInGroupIds(groupIds, authUserId, {
+      offset,
+      limit,
+    });
     return this._bindAndTransformData({
       posts,
       offset,
