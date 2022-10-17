@@ -50,6 +50,7 @@ import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
+import { MediaStatus } from '../../database/models/media.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -142,7 +143,7 @@ export class ArticleService extends PostService {
       }
       getArticleListDto.groupIds = groupIds;
     }
-
+    //TODO:: need to optimize
     const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
     const articles = this.group(rows);
     const hasNextPage = articles.length === limit + 1 ? true : false;
@@ -154,7 +155,6 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -310,6 +310,8 @@ export class ArticleService extends PostService {
       shouldIncludeMedia: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
+      shouldIncludePreviewLink: true,
+      shouldIncludeCover: true,
       authUserId: authUser?.id || null,
     });
 
@@ -359,7 +361,6 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
@@ -386,59 +387,48 @@ export class ArticleService extends PostService {
   }
 
   protected getIncludeObj({
+    mustIncludeGroup,
+    mustIncludeMedia,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
-    mustIncludeGroup,
     shouldIncludeMention,
     shouldIncludeMedia,
+    shouldIncludePreviewLink,
     filterMediaIds,
-    mustIncludeMedia,
     shouldIncludeCategory,
     shouldIncludeSeries,
+    shouldIncludeCover,
     filterCategoryIds,
     authUserId,
   }: {
+    mustIncludeGroup?: boolean;
+    mustIncludeMedia?: boolean;
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
     shouldIncludeMedia?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludeSeries?: boolean;
+    shouldIncludePreviewLink?: boolean;
+    shouldIncludeCover?: boolean;
     filterCategoryIds?: string[];
-    mustIncludeGroup?: boolean;
-    mustIncludeMedia?: boolean;
     filterMediaIds?: string[];
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = super.getIncludeObj({
+      mustIncludeGroup,
+      mustIncludeMedia,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
       shouldIncludeMention,
       shouldIncludeMedia,
-      mustIncludeGroup,
-      mustIncludeMedia,
+      shouldIncludePreviewLink,
+      shouldIncludeCategory,
+      shouldIncludeCover,
       filterMediaIds,
+      filterCategoryIds,
       authUserId,
     });
-
-    if (shouldIncludeCategory) {
-      const obj = {
-        model: CategoryModel,
-        as: 'categories',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'name'],
-      };
-      if (filterCategoryIds) {
-        obj['where'] = {
-          id: filterCategoryIds,
-        };
-      }
-
-      includes.push(obj);
-    }
 
     if (shouldIncludeSeries) {
       includes.push({
@@ -485,6 +475,9 @@ export class ArticleService extends PostService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+
+      const linkPreview = await this.linkPreviewService.upsert(createArticleDto.linkPreview);
+
       transaction = await this.sequelizeConnection.transaction();
       let hashtagArr = [];
       if (hashtags) {
@@ -508,6 +501,7 @@ export class ArticleService extends PostService {
           privacy: null,
           hashtagsJson: hashtagArr,
           views: 0,
+          linkPreviewId: linkPreview.id,
         },
         { transaction }
       );
@@ -539,8 +533,6 @@ export class ArticleService extends PostService {
       }
 
       await transaction.commit();
-
-      await this.linkPreviewService.upsert(createArticleDto.linkPreview, post.id);
 
       return post;
     } catch (error) {
@@ -621,6 +613,32 @@ export class ArticleService extends PostService {
     let transaction;
     try {
       const { media, mentions, audience, categories, series, hashtags } = updateArticleDto;
+      let mediaListChanged = [];
+      if (media) {
+        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
+      }
+
+      const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
+
+      if (
+        mediaListChanged &&
+        mediaListChanged.filter(
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
+        ).length > 0
+      ) {
+        dataUpdate['isDraft'] = true;
+        dataUpdate['isProcessing'] = true;
+      }
+
+      dataUpdate.linkPreviewId = null;
+      if (updateArticleDto.linkPreview) {
+        const linkPreview = await this.linkPreviewService.upsert(updateArticleDto.linkPreview);
+        dataUpdate.linkPreviewId = linkPreview.id ?? null;
+      }
+
       transaction = await this.sequelizeConnection.transaction();
 
       if (media) {
@@ -645,8 +663,6 @@ export class ArticleService extends PostService {
         await this._seriesService.updateToPost(series, post.id, transaction);
       }
 
-      const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
-
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
         await this._hashtagService.updateToPost(
@@ -668,8 +684,6 @@ export class ArticleService extends PostService {
       });
       await transaction.commit();
 
-      await this.linkPreviewService.upsert(updateArticleDto.linkPreview, post.id);
-
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -683,12 +697,16 @@ export class ArticleService extends PostService {
     authUserId: string
   ): Promise<Partial<IPost>> {
     const dataUpdate = await super.getDataUpdate(updateArticleDto, authUserId);
-    const { title, summary } = updateArticleDto;
+    const { title, summary, cover } = updateArticleDto;
     if (title !== null) {
       dataUpdate['title'] = title;
     }
     if (summary !== null) {
       dataUpdate['summary'] = summary;
+    }
+
+    if (cover !== null) {
+      dataUpdate['cover'] = cover;
     }
 
     return dataUpdate;

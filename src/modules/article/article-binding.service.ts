@@ -65,7 +65,6 @@ export class ArticleBindingService extends PostBindingService {
       shouldBindReaction?: boolean;
       shouldHideSecretAudienceCanNotAccess?: boolean;
       authUser?: UserDto;
-      shouldBindLinkPreview?: boolean;
     }
   ): Promise<ArticleResponseDto[]> {
     const processList = [];
@@ -86,9 +85,6 @@ export class ArticleBindingService extends PostBindingService {
     }
     if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
-    }
-    if (options?.shouldBindLinkPreview) {
-      processList.push(this.linkPreviewService.bindToPosts(posts));
     }
     if (processList.length === 0) return [];
     await Promise.all(processList);
