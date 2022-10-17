@@ -48,6 +48,9 @@ import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
+import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { CategoryModel } from '../../database/models/category.model';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
 @Injectable()
 export class PostService {
   /**
@@ -158,6 +161,7 @@ export class PostService {
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
+      shouldIncludePreviewLink: true,
       authUserId: user?.id || null,
     });
     let condition;
@@ -231,22 +235,31 @@ export class PostService {
   }
 
   protected getIncludeObj({
+    mustIncludeGroup,
+    mustIncludeMedia,
+    shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
-    mustIncludeGroup,
     shouldIncludeMention,
     shouldIncludeMedia,
+    shouldIncludePreviewLink,
+    shouldIncludeCover,
     filterMediaIds,
-    mustIncludeMedia,
+    filterCategoryIds,
     authUserId,
   }: {
-    shouldIncludeOwnerReaction?: boolean;
     mustIncludeGroup?: boolean;
+    mustIncludeMedia?: boolean;
+    shouldIncludeCategory?: boolean;
+    shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
     shouldIncludeMedia?: boolean;
+    shouldIncludePreviewLink?: boolean;
+    shouldIncludeCover?: boolean;
     filterMediaIds?: string[];
-    mustIncludeMedia?: boolean;
+    filterCategoryIds?: string[];
+
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = [];
@@ -283,9 +296,9 @@ export class PostService {
           'originName',
           'width',
           'height',
+          'thumbnails',
           'status',
           'mimeType',
-          'thumbnails',
           'createdAt',
         ],
       };
@@ -305,6 +318,49 @@ export class PostService {
       });
     }
 
+    if (shouldIncludeCategory) {
+      const obj = {
+        model: CategoryModel,
+        as: 'categories',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'name'],
+      };
+      if (filterCategoryIds) {
+        obj['where'] = {
+          id: filterCategoryIds,
+        };
+      }
+
+      includes.push(obj);
+    }
+
+    if (shouldIncludePreviewLink) {
+      const obj = {
+        model: LinkPreviewModel,
+        as: 'linkPreview',
+        required: false,
+      };
+      if (filterCategoryIds) {
+        obj['where'] = {
+          id: filterCategoryIds,
+        };
+      }
+
+      includes.push(obj);
+    }
+
+    if (shouldIncludeCover) {
+      const obj = {
+        model: MediaModel,
+        as: 'coverMedia',
+        required: false,
+      };
+
+      includes.push(obj);
+    }
     return includes;
   }
 
@@ -323,6 +379,8 @@ export class PostService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+      const linkPreview = await this.linkPreviewService.upsert(createPostDto.linkPreview);
+
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
@@ -338,6 +396,7 @@ export class PostService {
           canReact: setting.canReact,
           isProcessing: false,
           hashtagsJson: [],
+          linkPreviewId: linkPreview.id,
         },
         { transaction }
       );
@@ -361,8 +420,6 @@ export class PostService {
         );
       }
       await transaction.commit();
-
-      await this.linkPreviewService.upsert(createPostDto.linkPreview, post.id);
 
       return post;
     } catch (error) {
@@ -410,10 +467,38 @@ export class PostService {
     let transaction;
     try {
       const { media, mentions, audience } = updatePostDto;
+
+      let mediaListChanged = [];
+      if (media) {
+        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
+      }
+
       const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
 
-      //if post is draft, isProcessing alway is true
-      if (dataUpdate.isProcessing && post.isDraft === true) dataUpdate.isProcessing = false;
+      if (
+        mediaListChanged &&
+        mediaListChanged.filter(
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
+        ).length > 0
+      ) {
+        dataUpdate['isDraft'] = true;
+        dataUpdate['isProcessing'] = true;
+      }
+
+      //if post is draft, isProcessing alway is false
+      if (dataUpdate.isProcessing === true && post.isDraft === true) {
+        dataUpdate.isProcessing = false;
+      }
+
+      dataUpdate.linkPreviewId = null;
+      if (updatePostDto.linkPreview) {
+        const linkPreview = await this.linkPreviewService.upsert(updatePostDto.linkPreview);
+        dataUpdate.linkPreviewId = linkPreview.id ?? null;
+      }
+
       transaction = await this.sequelizeConnection.transaction();
       await this.postModel.update(dataUpdate, {
         where: {
@@ -439,8 +524,6 @@ export class PostService {
       }
       await transaction.commit();
 
-      await this.linkPreviewService.upsert(updatePostDto.linkPreview, post.id);
-
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -453,7 +536,7 @@ export class PostService {
     updatePostDto: UpdatePostDto,
     authUserId: string
   ): Promise<Partial<IPost>> {
-    const { content, media, setting, audience } = updatePostDto;
+    const { content, setting, audience } = updatePostDto;
     const dataUpdate = {
       updatedBy: authUserId,
     };
@@ -483,34 +566,11 @@ export class PostService {
         setting.isImportant === false ? null : setting.importantExpiredAt;
     }
 
-    if (media) {
-      const mediaList = await this.mediaService.createIfNotExist(media, authUserId);
-      this._bindStatusByMediaList(dataUpdate, mediaList);
-    }
-
     return dataUpdate;
-  }
-
-  private _bindStatusByMediaList(dataUpdate: Partial<IPost>, mediaList: IMedia[]): void {
-    if (
-      mediaList.filter(
-        (m) =>
-          m.status === MediaStatus.WAITING_PROCESS ||
-          m.status === MediaStatus.PROCESSING ||
-          m.status === MediaStatus.FAILED
-      ).length > 0
-    ) {
-      dataUpdate['isDraft'] = true;
-      dataUpdate['isProcessing'] = true;
-    }
   }
 
   /**
    * Publish Post
-   * @param postId PostID
-   * @param authUserId UserID
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async publish(postId: string, authUser: UserDto): Promise<boolean> {
     try {
@@ -1083,5 +1143,168 @@ export class PostService {
         },
       },
     });
+  }
+
+  public async getPostsInNewsFeed(
+    userId: string,
+    filters: {
+      offset: number;
+      limit: number;
+      isImportant: boolean;
+    }
+  ): Promise<IPost[]> {
+    const postIdsAndSorted = await this.getPostIdsInNewsFeed(userId, filters);
+    if (postIdsAndSorted.length === 0) return [];
+
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMedia: true,
+      shouldIncludeMention: true,
+      shouldIncludeOwnerReaction: true,
+      shouldIncludePreviewLink: true,
+      authUserId: userId,
+    });
+    const rows = await this.postModel.findAll({
+      attributes: {
+        include: [PostModel.loadMarkReadPost(userId)],
+        exclude: ['content'],
+      },
+      include,
+      where: {
+        id: postIdsAndSorted,
+      },
+    });
+
+    const mappedPosts = postIdsAndSorted.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return mappedPosts;
+  }
+
+  public async getPostIdsInNewsFeed(
+    userId: string,
+    filters: {
+      offset: number;
+      limit: number;
+      isImportant: boolean;
+    }
+  ): Promise<string[]> {
+    const { offset, limit, isImportant } = filters;
+    const conditions = {
+      isDraft: false,
+    };
+    const order = [];
+    if (isImportant) {
+      conditions['isImportant'] = true;
+      order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
+    }
+    order.push(['createdAt', 'desc']);
+
+    const posts = await this.postModel.findAll({
+      attributes: ['id', PostModel.loadMarkReadPost(userId)],
+      include: [
+        {
+          model: UserNewsFeedModel,
+          as: 'userNewsfeeds',
+          required: true,
+          attributes: [],
+          where: {
+            userId,
+          },
+        },
+      ],
+      subQuery: false,
+      where: conditions,
+      order,
+      offset,
+      limit,
+    });
+
+    return posts.map((post) => post.id);
+  }
+
+  public async getPostsInGroupIds(
+    groupIds: string[],
+    userId: string | null,
+    filters: {
+      offset: number;
+      limit: number;
+    }
+  ): Promise<IPost[]> {
+    const postIdsAndSorted = await this.getPostIdsInGroupIds(groupIds, filters);
+    if (postIdsAndSorted.length === 0) return [];
+
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMedia: true,
+      shouldIncludeMention: true,
+      shouldIncludeOwnerReaction: true,
+      shouldIncludePreviewLink: true,
+      authUserId: userId,
+    });
+
+    const attributes = {
+      include: [],
+      exclude: ['content'],
+    };
+    if (userId) {
+      attributes.include = [PostModel.loadMarkReadPost(userId)];
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        id: postIdsAndSorted,
+      },
+    });
+
+    const mappedPosts = postIdsAndSorted.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return mappedPosts;
+  }
+
+  public async getPostIdsInGroupIds(
+    groupIds: string[],
+    filters: {
+      offset: number;
+      limit: number;
+    }
+  ): Promise<string[]> {
+    const { offset, limit } = filters;
+    const conditions = {
+      isDraft: false,
+    };
+
+    const posts = await this.postModel.findAll({
+      attributes: ['id'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: {
+            groupId: groupIds,
+          },
+        },
+      ],
+      subQuery: false,
+      where: conditions,
+      order: [
+        ['isImportant', 'desc'],
+        ['createdAt', 'desc'],
+      ],
+      offset,
+      limit,
+    });
+
+    return posts.map((post) => post.id);
   }
 }

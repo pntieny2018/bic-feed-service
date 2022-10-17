@@ -126,5 +126,5 @@ export class CreatePostDto {
   @Expose({
     name: 'link_preview',
   })
-  linkPreview?: LinkPreviewDto;
+  public linkPreview?: LinkPreviewDto;
 }

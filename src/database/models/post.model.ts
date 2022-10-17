@@ -19,10 +19,11 @@ import {
   UpdatedAt,
   Sequelize,
   DeletedAt,
+  BelongsTo,
 } from 'sequelize-typescript';
 import { CommentModel, IComment } from './comment.model';
 import { PostMediaModel } from './post-media.model';
-import { UserNewsFeedModel } from './user-newsfeed.model';
+import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { PostGroupModel, IPostGroup } from './post-group.model';
 import { PostReactionModel } from './post-reaction.model';
 import { Literal } from 'sequelize/types/utils';
@@ -34,8 +35,6 @@ import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 import { UserDto } from '../../modules/auth';
 import { OrderEnum, PageOptionsDto } from '../../common/dto';
-import { GetTimelineDto } from '../../modules/feed/dto/request';
-import { GetNewsFeedDto } from '../../modules/feed/dto/request/get-newsfeed.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { ISeries, SeriesModel } from './series.model';
 import { HashtagModel, IHashtag } from './hashtag.model';
@@ -44,6 +43,7 @@ import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
 import { GetListArticlesDto } from '../../modules/article/dto/requests';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
+import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
@@ -72,6 +72,7 @@ export interface IPost {
   comments?: IComment[];
   media?: IMedia[];
   groups?: IPostGroup[];
+  userNewsfeeds?: IUserNewsFeed[];
   mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
@@ -86,6 +87,9 @@ export interface IPost {
   hashtags?: IHashtag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
+  linkPreviewId?: string;
+  linkPreview?: ILinkPreview;
+  cover?: string;
 }
 
 @Table({
@@ -169,6 +173,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public updatedBy: string;
 
+  @AllowNull(true)
+  @Column
+  public linkPreviewId: string;
+
+  @AllowNull(true)
+  @Column
+  public cover: string;
+
   @CreatedAt
   @Column
   public createdAt: Date;
@@ -210,13 +222,19 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @HasMany(() => PostGroupModel)
   public groups: PostGroupModel[];
 
+  @HasMany(() => UserNewsFeedModel)
+  public userNewsfeeds: UserNewsFeedModel[];
+
   @HasMany(() => PostReactionModel)
   public reactions: PostReactionModel[];
 
-  @HasMany(() => UserNewsFeedModel, {
-    foreignKey: 'postId',
-  })
+  @HasMany(() => UserNewsFeedModel)
   public userNewsFeeds: UserNewsFeedModel[];
+
+  @BelongsTo(() => LinkPreviewModel, {
+    foreignKey: 'linkPreviewId',
+  })
+  public linkPreview: LinkPreviewModel;
 
   @HasMany(() => PostReactionModel, {
     as: 'ownerReactions',
@@ -225,6 +243,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public postReactions: PostReactionModel[];
 
   public reactionsCount: string;
+
+  @BelongsTo(() => MediaModel, {
+    foreignKey: 'cover',
+  })
+  public coverMedia: MediaModel;
 
   public static loadMarkReadPost(authUserId: string, alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();

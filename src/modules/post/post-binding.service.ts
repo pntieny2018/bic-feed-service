@@ -76,9 +76,6 @@ export class PostBindingService {
     if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
     }
-    if (options?.shouldBindLinkPreview) {
-      processList.push(this.linkPreviewService.bindToPosts(posts));
-    }
     if (processList.length === 0) return [];
     await Promise.all(processList);
     return posts;
