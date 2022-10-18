@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
+import { MediaResponseDto } from '../../../media/dto/response';
 
 class CategoryResponseDto {
   @ApiProperty({
@@ -106,7 +107,15 @@ export class ArticleResponseDto extends PostResponseDto {
     name: 'link_preview',
   })
   @Expose()
-  linkPreview?: LinkPreviewDto;
+  public linkPreview?: LinkPreviewDto;
+
+  @ApiProperty({
+    type: MediaResponseDto,
+    name: 'cover_media',
+  })
+  @Expose()
+  public coverMedia?: MediaResponseDto;
+
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);
   }
