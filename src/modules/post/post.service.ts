@@ -1169,7 +1169,6 @@ export class PostService {
     const rows = await this.postModel.findAll({
       attributes: {
         include: [PostModel.loadMarkReadPost(userId)],
-        exclude: ['content'],
       },
       include,
       where: {
@@ -1250,7 +1249,6 @@ export class PostService {
 
     const attributes = {
       include: [],
-      exclude: ['content'],
     };
     if (userId) {
       attributes.include = [PostModel.loadMarkReadPost(userId)];
