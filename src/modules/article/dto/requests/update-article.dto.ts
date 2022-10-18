@@ -66,6 +66,9 @@ export class UpdateArticleDto extends UpdatePostDto {
 
   @ApiProperty({
     type: CoverMediaDto,
+    example: {
+      id: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
+    },
   })
   @IsOptional()
   @Expose({
