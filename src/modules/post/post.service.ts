@@ -496,7 +496,7 @@ export class PostService {
       dataUpdate.linkPreviewId = null;
       if (updatePostDto.linkPreview) {
         const linkPreview = await this.linkPreviewService.upsert(updatePostDto.linkPreview);
-        dataUpdate.linkPreviewId = linkPreview.id ?? null;
+        dataUpdate.linkPreviewId = linkPreview?.id || null;
       }
 
       transaction = await this.sequelizeConnection.transaction();
