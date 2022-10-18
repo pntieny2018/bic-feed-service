@@ -396,7 +396,7 @@ export class PostService {
           canReact: setting.canReact,
           isProcessing: false,
           hashtagsJson: [],
-          linkPreviewId: linkPreview.id,
+          linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
       );
