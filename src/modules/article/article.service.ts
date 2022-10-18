@@ -331,6 +331,7 @@ export class ArticleService extends PostService {
       where: condition,
       include,
     });
+
     if (!article) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
@@ -501,7 +502,7 @@ export class ArticleService extends PostService {
           privacy: null,
           hashtagsJson: hashtagArr,
           views: 0,
-          linkPreviewId: linkPreview.id,
+          linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
       );
@@ -636,7 +637,7 @@ export class ArticleService extends PostService {
       dataUpdate.linkPreviewId = null;
       if (updateArticleDto.linkPreview) {
         const linkPreview = await this.linkPreviewService.upsert(updateArticleDto.linkPreview);
-        dataUpdate.linkPreviewId = linkPreview.id ?? null;
+        dataUpdate.linkPreviewId = linkPreview?.id || null;
       }
 
       transaction = await this.sequelizeConnection.transaction();
@@ -697,7 +698,7 @@ export class ArticleService extends PostService {
     authUserId: string
   ): Promise<Partial<IPost>> {
     const dataUpdate = await super.getDataUpdate(updateArticleDto, authUserId);
-    const { title, summary, cover } = updateArticleDto;
+    const { title, summary, coverMedia } = updateArticleDto;
     if (title !== null) {
       dataUpdate['title'] = title;
     }
@@ -705,9 +706,7 @@ export class ArticleService extends PostService {
       dataUpdate['summary'] = summary;
     }
 
-    if (cover !== null) {
-      dataUpdate['cover'] = cover;
-    }
+    dataUpdate['cover'] = coverMedia?.id || null;
 
     return dataUpdate;
   }
