@@ -21,7 +21,7 @@ module.exports = {
       await queryInterface.sequelize.query(
         `
           UPDATE ${schemaName}.${tableName} p
-          SET p.link_preview_id=(SELECT link_preview_id FROM ${schemaName}.posts_link_preview plp WHERE plp.post_id=p.id)
+          SET link_preview_id=(SELECT link_preview_id FROM ${schemaName}.posts_link_preview plp WHERE plp.post_id=p.id)
           `,
           { transaction: t }
       )
