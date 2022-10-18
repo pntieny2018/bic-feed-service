@@ -32,12 +32,6 @@ export class CreatePostDto {
   })
   @IsOptional()
   @Type(() => String)
-  @Transform(({ obj }) => {
-    if (typeof obj.content === 'object') {
-      return JSON.stringify(obj.content);
-    }
-    return obj.content;
-  })
   public content: string = null;
 
   @ApiProperty({
