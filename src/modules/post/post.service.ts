@@ -581,6 +581,7 @@ export class PostService {
         include: [
           {
             model: MediaModel,
+            as: 'media',
             through: {
               attributes: [],
             },

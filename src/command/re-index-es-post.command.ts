@@ -65,6 +65,7 @@ export class ReIndexEsPostCommand implements CommandRunner {
         },
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },

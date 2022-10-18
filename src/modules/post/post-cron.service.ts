@@ -40,6 +40,7 @@ export class PostCronService {
       paranoid: false,
       include: {
         model: MediaModel,
+        as: 'media',
         through: {
           attributes: [],
         },
