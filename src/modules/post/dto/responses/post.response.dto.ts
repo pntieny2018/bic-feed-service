@@ -27,6 +27,13 @@ export class PostResponseDto {
     type: String,
   })
   @Expose()
+  @Transform(({ value }) => {
+    try {
+      return JSON.parse(value) ?? value;
+    } catch (e) {
+      return value;
+    }
+  })
   public content: string;
 
   @Expose()

@@ -1,3 +1,4 @@
+import { Node } from 'slate';
 export class StringHelper {
   /**
    * Convert camel case string to snake case string
@@ -109,5 +110,9 @@ export class StringHelper {
 
   public static serializePaginationCursor(payload: [string, 'ASC' | 'DESC']): string {
     return Buffer.from(JSON.stringify(payload)).toString('base64');
+  }
+
+  public static serializeEditorContentToText(value: Node[]): string {
+    return value.map((node) => Node.string(node)).join('\n');
   }
 }
