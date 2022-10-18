@@ -277,6 +277,7 @@ export class CommentService {
       include: [
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },
@@ -336,6 +337,7 @@ export class CommentService {
       include: [
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },
@@ -731,6 +733,7 @@ export class CommentService {
         include: [
           {
             model: MediaModel,
+            as: 'media',
             through: {
               attributes: [],
             },
