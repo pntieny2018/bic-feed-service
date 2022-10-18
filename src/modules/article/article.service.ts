@@ -1,4 +1,4 @@
-import { HTTP_STATUS_ID, KAFKA_PRODUCER, MentionableType } from '../../common/constants';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import {
@@ -356,7 +356,6 @@ export class ArticleService extends PostService {
       );
     }
     const jsonArticle = article.toJSON();
-    await this.maskArticleContent([jsonArticle]);
     const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -490,7 +489,7 @@ export class ArticleService extends PostService {
           summary,
           isDraft: true,
           isArticle: true,
-          content,
+          content: content,
           createdBy: authUserId,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
