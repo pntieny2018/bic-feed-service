@@ -5,12 +5,8 @@ const schemaName = process.env.DB_SCHEMA;
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    try {
     await queryInterface.sequelize.query(`ALTER TABLE ${schemaName}.comments_media ADD PRIMARY KEY(comment_id, media_id);`)
     await queryInterface.sequelize.query(`ALTER TABLE ${schemaName}.posts_media ADD PRIMARY KEY(comment_id, media_id);`)
-    } catch (e) {
-      console.log('error');
-    }
   },
 
   down: async (queryInterface) => {
