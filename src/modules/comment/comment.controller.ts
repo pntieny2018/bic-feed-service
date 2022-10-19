@@ -102,7 +102,7 @@ export class CommentController {
   })
   @Get('/:commentId')
   public get(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query(GetCommentLinkPipe) getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
