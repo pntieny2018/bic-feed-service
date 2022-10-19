@@ -404,7 +404,7 @@ export class CommentService {
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
 
-    if (comments.list.length && parentId === NIL_UUID) {
+    if (comments.list.length && parentId === NIL_UUID && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
     await Promise.all([
@@ -434,7 +434,6 @@ export class CommentService {
       )}`
     );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
-
     //check post exist
     if (getCommentLinkDto.postId) {
       await this._postService.findPost({
@@ -473,7 +472,7 @@ export class CommentService {
       userId,
       parentId
     );
-    if (comments.list.length && limit > 1) {
+    if (comments.list.length && limit > 1 && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
 
