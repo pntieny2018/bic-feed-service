@@ -114,6 +114,7 @@ export class PostService {
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
+      shouldIncludeCover: true,
     });
     const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
       where: condition,
@@ -247,6 +248,7 @@ export class PostService {
     filterMediaIds,
     filterCategoryIds,
     authUserId,
+    filterGroupIds,
   }: {
     mustIncludeGroup?: boolean;
     mustIncludeMedia?: boolean;
@@ -259,18 +261,23 @@ export class PostService {
     shouldIncludeCover?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
-
+    filterGroupIds?: string[];
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = [];
-
     if (shouldIncludeGroup || mustIncludeGroup) {
-      includes.push({
+      const obj = {
         model: PostGroupModel,
         as: 'groups',
         required: mustIncludeGroup ? true : false,
         attributes: ['groupId'],
-      });
+      };
+      if (filterGroupIds) {
+        obj['where'] = {
+          groupId: filterGroupIds,
+        };
+      }
+      includes.push(obj);
     }
 
     if (shouldIncludeMention) {
@@ -1192,6 +1199,7 @@ export class PostService {
       offset: number;
       limit: number;
       isImportant: boolean;
+      isArticle?: boolean;
     }
   ): Promise<string[]> {
     const { offset, limit, isImportant } = filters;

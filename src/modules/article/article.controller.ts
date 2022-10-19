@@ -31,6 +31,7 @@ import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { AuthorityService } from '../authority';
 import { PostService } from '../post/post.service';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
+import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -45,6 +46,19 @@ export class ArticleController {
     private _authorityService: AuthorityService,
     private _postService: PostService
   ) {}
+
+  @ApiOperation({ summary: 'Get related article' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Get related article successfully',
+  })
+  @Get('/related')
+  public async getRelated(
+    @AuthUser() user: UserDto,
+    @Query() getArticleListDto: GetRelatedArticlesDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.getRelatedById(getArticleListDto, user);
+  }
 
   @ApiOperation({ summary: 'Get draft articles' })
   @ApiOkResponse({
