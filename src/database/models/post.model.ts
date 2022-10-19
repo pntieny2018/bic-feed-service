@@ -263,6 +263,13 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
+  public static loadContent(alias?: string): [Literal, string] {
+    return [
+      Sequelize.literal(`(CASE WHEN is_article = false THEN content ELSE null END)`),
+      alias ? alias : 'content',
+    ];
+  }
+
   public static loadLock(groupIds: string[], alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
     const postGroupTable = PostGroupModel.tableName;

@@ -65,9 +65,7 @@ export class PostSearchService {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
       if (dataIndex.isArticle) {
-        dataIndex.content = StringHelper.serializeEditorContentToText(
-          JSON.parse(dataIndex.content)
-        );
+        dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       } else {
         dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
       }
@@ -93,9 +91,7 @@ export class PostSearchService {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
       if (dataIndex.isArticle) {
-        dataIndex.content = StringHelper.serializeEditorContentToText(
-          JSON.parse(dataIndex.content)
-        );
+        dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       } else {
         dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
       }

@@ -1164,11 +1164,13 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeOwnerReaction: true,
       shouldIncludePreviewLink: true,
+      shouldIncludeCover: true,
       authUserId: userId,
     });
     const rows = await this.postModel.findAll({
       attributes: {
-        include: [PostModel.loadMarkReadPost(userId)],
+        include: [PostModel.loadContent(), PostModel.loadMarkReadPost(userId)],
+        exclude: ['content'],
       },
       include,
       where: {
@@ -1244,14 +1246,16 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeOwnerReaction: true,
       shouldIncludePreviewLink: true,
+      shouldIncludeCover: true,
       authUserId: userId,
     });
 
     const attributes = {
-      include: [],
+      include: [PostModel.loadContent()],
+      exclude: ['content'],
     };
     if (userId) {
-      attributes.include = [PostModel.loadMarkReadPost(userId)];
+      attributes.include.push(PostModel.loadMarkReadPost(userId));
     }
     const rows = await this.postModel.findAll({
       attributes,
