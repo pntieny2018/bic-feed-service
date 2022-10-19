@@ -112,7 +112,13 @@ export class StringHelper {
     return Buffer.from(JSON.stringify(payload)).toString('base64');
   }
 
-  public static serializeEditorContentToText(value: Node[]): string {
-    return value.map((node) => Node.string(node)).join('\n');
+  public static serializeEditorContentToText(textStringify: string): string {
+    if (!textStringify) return textStringify;
+    try {
+      const nodes: Node[] = JSON.parse(textStringify);
+      return nodes.map((node) => Node.string(node)).join('\n');
+    } catch (e) {
+      return null;
+    }
   }
 }
