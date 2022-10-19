@@ -17,7 +17,7 @@ export class GetPostPipe implements PipeTransform {
     }
 
     if (!getArticleDto.childCommentLimit) {
-      getArticleDto.childCommentLimit = 10;
+      getArticleDto.childCommentLimit = 0;
     }
 
     return getArticleDto;
