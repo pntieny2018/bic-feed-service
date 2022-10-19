@@ -8,7 +8,7 @@ export class GetCommentLinkPipe implements PipeTransform {
       getCommentDto.targetChildLimit = 10;
     }
     if (!getCommentDto.childLimit) {
-      getCommentDto.childLimit = 10;
+      getCommentDto.childLimit = 0;
     }
     if (!getCommentDto.limit) {
       getCommentDto.limit = 10;
