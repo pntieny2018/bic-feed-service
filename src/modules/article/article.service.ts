@@ -193,6 +193,7 @@ export class ArticleService extends PostService {
       shouldIncludeMedia: true,
       shouldIncludeCategory: true,
       shouldIncludeSeries: true,
+      shouldIncludeCover: true,
     });
     const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
       where: condition,
@@ -229,16 +230,17 @@ export class ArticleService extends PostService {
    * @returns Promise resolve PageDto<ArticleResponseDto>
    */
   public async getRelatedById(
-    getRelatedArticlesDto: GetRelatedArticlesDto
+    getRelatedArticlesDto: GetRelatedArticlesDto,
+    user: UserDto
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, id } = getRelatedArticlesDto;
 
+    const groupIdsUserCanAccess: string[] = user.profile.groups;
     const includePostDetail = this.getIncludeObj({
       shouldIncludeCategory: true,
     });
-    const attributes = this.getAttributesObj();
+
     const article = await this.postModel.findOne({
-      attributes,
       include: includePostDetail,
       where: {
         id,
@@ -251,13 +253,28 @@ export class ArticleService extends PostService {
     const categoryIds = article.categories.map((category) => category.id);
 
     const includeRelated = this.getIncludeObj({
-      shouldIncludeMedia: true,
+      shouldIncludeCover: true,
       shouldIncludeCategory: true,
+      mustIncludeGroup: true,
+      filterGroupIds: groupIdsUserCanAccess,
       filterCategoryIds: categoryIds,
     });
     const relatedRows = await this.postModel.findAll({
-      attributes,
+      attributes: [
+        'id',
+        'title',
+        'summary',
+        'isArticle',
+        'cover',
+        'createdBy',
+        'linkPreviewId',
+        'createdAt',
+      ],
       include: includeRelated,
+      where: {
+        isArticle: true,
+        isDraft: false,
+      },
       offset,
       limit,
     });
@@ -399,6 +416,7 @@ export class ArticleService extends PostService {
     shouldIncludeSeries,
     shouldIncludeCover,
     filterCategoryIds,
+    filterGroupIds,
     authUserId,
   }: {
     mustIncludeGroup?: boolean;
@@ -413,6 +431,7 @@ export class ArticleService extends PostService {
     shouldIncludeCover?: boolean;
     filterCategoryIds?: string[];
     filterMediaIds?: string[];
+    filterGroupIds?: string[];
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = super.getIncludeObj({
@@ -427,6 +446,7 @@ export class ArticleService extends PostService {
       shouldIncludeCover,
       filterMediaIds,
       filterCategoryIds,
+      filterGroupIds,
       authUserId,
     });
 

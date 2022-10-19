@@ -39,6 +39,7 @@ import { PostModel } from '../../database/models/post.model';
 export class MediaService {
   private _logger = new Logger(MediaService.name);
   public constructor(
+    @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
     @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
@@ -453,35 +454,40 @@ export class MediaService {
     );
   }
 
-  //Remove later
-  public async deleteUnusedMedia(): Promise<void> {
-    const postMedia = await this._postMediaModel.findAll();
-    const commentMedia = await this._commentMediaModel.findAll();
-    const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
-    const willDeleteMedia = await this._mediaModel.findAll({
-      where: {
-        id: { [Op.notIn]: mediaIdList },
-        createdAt: {
-          [Op.lte]: moment().subtract(4, 'hours').toDate(),
-        },
-      },
-    });
-    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
-    willDeleteMedia.forEach((e) => e.destroy());
-  }
-
   @Cron(CronExpression.EVERY_4_HOURS)
   public async deleteUnusedMediav2(): Promise<void> {
-    const mediaCreatedIn4Hours = await this._mediaModel.findAll({
+    const unusedMediaList = await this._mediaModel.findAll({
+      attributes: ['id', 'type', 'url'],
+      include: [
+        {
+          model: PostMediaModel,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: CommentMediaModel,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: PostModel,
+          attributes: [],
+          required: false,
+          paranoid: false,
+        },
+      ],
       where: {
         createdAt: {
           [Op.lte]: moment().subtract(4, 'hours').toDate(),
         },
+        [Op.and]: this._sequelizeConnection.literal(
+          'post_id is null and comment_id is null and cover is null'
+        ),
       },
     });
-    const willDeleteMedia = await this._getMediaUnusedFromMediaList(mediaCreatedIn4Hours);
-    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
-    const deleteMediaIds = willDeleteMedia.map((media) => media.id);
+
+    this.emitMediaToUploadServiceFromMediaList(unusedMediaList, MediaMarkAction.DELETE);
+    const deleteMediaIds = unusedMediaList.map((media) => media.id);
     await this.deleteMediaByIds(deleteMediaIds);
   }
 
@@ -491,48 +497,6 @@ export class MediaService {
         id: ids,
       },
     });
-  }
-  private async _getMediaUnusedFromMediaList(mediaList: IMedia[]): Promise<IMedia[]> {
-    const mediaIdsCreatedIn4Hours = mediaList.map((media) => media.id);
-
-    const mediaUsingInPost = await this._postMediaModel.findAll({
-      where: {
-        mediaId: mediaIdsCreatedIn4Hours,
-      },
-    });
-    const mediaIdsUsingInPost = mediaUsingInPost.map((postMedia) => postMedia.mediaId);
-
-    const mediaUsingInComment = await this._commentMediaModel.findAll({
-      where: {
-        mediaId: mediaIdsCreatedIn4Hours,
-      },
-    });
-    const mediaIdsUsingInComment = mediaUsingInComment.map((postComment) => postComment.mediaId);
-
-    const mediaUsingInCover = await this._postModel.findAll({
-      where: {
-        cover: mediaIdsCreatedIn4Hours,
-      },
-    });
-    const mediaIdsUsingInCover = mediaUsingInCover.map((post) => post.cover);
-
-    const mediaIdsUsing = ArrayHelper.arrayUnique([
-      ...mediaIdsUsingInPost,
-      ...mediaIdsUsingInComment,
-      ...mediaIdsUsingInCover,
-    ]);
-
-    return mediaList.filter((media) => !mediaIdsUsing.includes(media.id));
-  }
-
-  public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {
-    if (await this._postMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
-      return true;
-    }
-    if (await this._commentMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
-      return true;
-    }
-    return false;
   }
 
   public async processVideo(ids: string[]): Promise<void> {

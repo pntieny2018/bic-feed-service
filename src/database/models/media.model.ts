@@ -74,7 +74,6 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   public type: MediaType;
 
   @Column
-  @ApiProperty()
   public isDraft: boolean;
 
   @AllowNull(false)
@@ -87,8 +86,13 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @HasMany(() => PostMediaModel)
   public posts: PostModel[];
 
-  @BelongsToMany(() => CommentModel, () => CommentMediaModel)
+  @HasMany(() => CommentMediaModel)
   public comments: CommentModel[];
+
+  @HasMany(() => PostModel, {
+    foreignKey: 'cover',
+  })
+  public postCovers: PostModel[];
 
   @Column
   public name: string;
