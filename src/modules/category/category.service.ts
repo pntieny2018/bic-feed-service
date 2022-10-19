@@ -54,7 +54,7 @@ export class CategoryService {
       excludeExtraneousValues: true,
     });
     return new PageDto<CategoryResponseDto>(result, {
-      total: count,
+      hasNextPage: limit + offset >= count ? false : true,
       limit: getCategoryDto.limit,
       offset: getCategoryDto.offset,
     });

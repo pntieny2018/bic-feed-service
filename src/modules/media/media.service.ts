@@ -33,15 +33,16 @@ import { VideoMetadataResponseDto } from './dto/response/video-metadata-response
 import { ClientKafka } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
+import { PostModel } from '../../database/models/post.model';
 
 @Injectable()
 export class MediaService {
   private _logger = new Logger(MediaService.name);
   public constructor(
-    @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
     @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
+    @InjectModel(PostModel) private _postModel: typeof PostModel,
     private readonly _sentryService: SentryService,
     @Inject(KAFKA_PRODUCER)
     private readonly _clientKafka: ClientKafka
@@ -452,11 +453,8 @@ export class MediaService {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
-  @Cron(CronExpression.EVERY_4_HOURS)
-  async deleteUnusedMedia(): Promise<void> {
-    //TODO:: need to optimize
-    //
+  //Remove later
+  public async deleteUnusedMedia(): Promise<void> {
     const postMedia = await this._postMediaModel.findAll();
     const commentMedia = await this._commentMediaModel.findAll();
     const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
@@ -470,6 +468,61 @@ export class MediaService {
     });
     this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
     willDeleteMedia.forEach((e) => e.destroy());
+  }
+
+  @Cron(CronExpression.EVERY_4_HOURS)
+  public async deleteUnusedMediav2(): Promise<void> {
+    const mediaCreatedIn4Hours = await this._mediaModel.findAll({
+      where: {
+        createdAt: {
+          [Op.lte]: moment().subtract(4, 'hours').toDate(),
+        },
+      },
+    });
+    const willDeleteMedia = await this._getMediaUnusedFromMediaList(mediaCreatedIn4Hours);
+    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
+    const deleteMediaIds = willDeleteMedia.map((media) => media.id);
+    await this.deleteMediaByIds(deleteMediaIds);
+  }
+
+  public async deleteMediaByIds(ids: string[]): Promise<void> {
+    this._mediaModel.destroy({
+      where: {
+        id: ids,
+      },
+    });
+  }
+  private async _getMediaUnusedFromMediaList(mediaList: IMedia[]): Promise<IMedia[]> {
+    const mediaIdsCreatedIn4Hours = mediaList.map((media) => media.id);
+
+    const mediaUsingInPost = await this._postMediaModel.findAll({
+      where: {
+        mediaId: mediaIdsCreatedIn4Hours,
+      },
+    });
+    const mediaIdsUsingInPost = mediaUsingInPost.map((postMedia) => postMedia.mediaId);
+
+    const mediaUsingInComment = await this._commentMediaModel.findAll({
+      where: {
+        mediaId: mediaIdsCreatedIn4Hours,
+      },
+    });
+    const mediaIdsUsingInComment = mediaUsingInComment.map((postComment) => postComment.mediaId);
+
+    const mediaUsingInCover = await this._postModel.findAll({
+      where: {
+        cover: mediaIdsCreatedIn4Hours,
+      },
+    });
+    const mediaIdsUsingInCover = mediaUsingInCover.map((post) => post.cover);
+
+    const mediaIdsUsing = ArrayHelper.arrayUnique([
+      ...mediaIdsUsingInPost,
+      ...mediaIdsUsingInComment,
+      ...mediaIdsUsingInCover,
+    ]);
+
+    return mediaList.filter((media) => !mediaIdsUsing.includes(media.id));
   }
 
   public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {
