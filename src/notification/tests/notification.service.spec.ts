@@ -52,11 +52,8 @@ describe('NotificationService', () => {
         CommentNotificationService,
         {
           provide: KAFKA_PRODUCER,
-          // useClass: jest.fn(),
           useValue: {
-            producer: {
-              send: jest.fn()
-            },
+            emit: jest.fn()
           },
         },
         {
@@ -114,17 +111,17 @@ describe('NotificationService', () => {
   describe('NotificationService', () => {
     it('Func: publishPostNotification', async () => {
       notificationService.publishPostNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
+      expect(kafkaProducer.emit).toBeCalledTimes(1);
     });
 
     it('Func: publishCommentNotification', async () => {
       notificationService.publishCommentNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
+      expect(kafkaProducer.emit).toBeCalledTimes(1);
     });
 
     it('Func: publishReactionNotification', async () => {
       notificationService.publishReactionNotification(mockNotificationPayloadDto);
-      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
+      expect(kafkaProducer.emit).toBeCalledTimes(1);
     });
   });
 
@@ -269,7 +266,7 @@ describe('NotificationService', () => {
         'event-name',
         mockCommentModel as unknown as IComment
       );
-      expect(kafkaProducer['producer'].send).toBeCalledTimes(1);
+      expect(kafkaProducer.emit).toBeCalledTimes(1);
     });
   });
 });
