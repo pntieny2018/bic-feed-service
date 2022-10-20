@@ -13,6 +13,7 @@ import { MentionModule } from '../modules/mention';
 import { MediaModule } from '../modules/media';
 import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { CleanArticleCommand } from './clean-article.command';
+import { CleanDraftPostCommand } from './clean-draft-posts.command';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CleanArticleCommand } from './clean-article.command';
     UpdatePrivacyPostCommand,
     UpdateMediaDomainCommand,
     CleanArticleCommand,
+    CleanDraftPostCommand,
   ],
 })
 export class CommandModule {}
