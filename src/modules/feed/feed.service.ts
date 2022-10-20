@@ -41,10 +41,6 @@ export class FeedService {
 
   /**
    * Get NewsFeed
-   * @param authUser number
-   * @param getNewsFeedDto GetNewsFeedDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
@@ -179,10 +175,6 @@ export class FeedService {
 
   /**
    * Get Timeline
-   * @param authUser UserDto
-   * @param getTimelineDto GetTimelineDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
     const { limit, offset, groupId } = getTimelineDto;
@@ -207,12 +199,32 @@ export class FeedService {
     }
 
     const authUserId = authUser?.id || null;
-    const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
-      offset,
-      limit,
-      isImportant: true,
-      authUserId,
-    });
+
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
+      groupIds,
+      getTimelineDto
+    );
+    const postIdsAndSorted = [];
+    if (offset < totalImportantPosts) {
+      const postImportantIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+        offset,
+        limit: limit + 1,
+        isImportant: true,
+        authUserId,
+      });
+      postIdsAndSorted.push(...postImportantIdsAndSorted);
+    }
+
+    if (offset + limit >= totalImportantPosts) {
+      const postNormalIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+        offset: Math.max(0, offset - totalImportantPosts),
+        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
+        isImportant: false,
+        authUserId,
+      });
+      postIdsAndSorted.push(...postNormalIdsAndSorted);
+    }
+
     const hasNextPage = postIdsAndSorted.length === limit + 1;
     postIdsAndSorted.pop();
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
@@ -230,9 +242,6 @@ export class FeedService {
 
   /**
    * Delete newsfeed by post
-   * @param postId string
-   * @param transaction Transaction
-   * @returns object
    */
   public deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });

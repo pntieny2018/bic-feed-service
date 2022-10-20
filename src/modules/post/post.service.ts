@@ -1253,7 +1253,7 @@ export class PostService {
             WHERE r.post_id = "PostModel"."id" AND r.user_id = ${this.sequelizeConnection.escape(
               authUserId
             )}
-          `
+          )`
         ),
       };
     } else {
@@ -1290,10 +1290,7 @@ export class PostService {
         isDraft: false,
         ...importantCondition,
       },
-      order: [
-        ['isImportant', 'desc'],
-        ['createdAt', 'desc'],
-      ],
+      order: [['createdAt', 'desc']],
       offset,
       limit,
     });

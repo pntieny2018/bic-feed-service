@@ -44,6 +44,7 @@ import { PostHashtagModel } from './post-hashtag.model';
 import { GetListArticlesDto } from '../../modules/article/dto/requests';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
+import { GetTimelineDto } from '../../modules/feed/dto/request';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
@@ -202,11 +203,20 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @BelongsToMany(() => CategoryModel, () => PostCategoryModel)
   public categories?: CategoryModel[];
 
+  @HasMany(() => PostCategoryModel)
+  public postCategories?: PostCategoryModel[];
+
   @BelongsToMany(() => HashtagModel, () => PostHashtagModel)
   public hashtags?: HashtagModel[];
 
+  @HasMany(() => PostHashtagModel)
+  public postHashtags?: PostHashtagModel[];
+
   @BelongsToMany(() => SeriesModel, () => PostSeriesModel)
   public series?: SeriesModel[];
+
+  @HasMany(() => PostSeriesModel)
+  public postSeries?: PostSeriesModel[];
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',
@@ -784,9 +794,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   public static async getTotalImportantPostInGroups(
     groupIds: string[],
-    constraints: string
+    getTimelineDto: GetTimelineDto
   ): Promise<number> {
     const { schema } = getDatabaseConfig();
+    const constraints = PostModel.getIdConstrains(getTimelineDto);
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
     WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()

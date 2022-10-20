@@ -205,7 +205,7 @@ export class ArticleService extends PostService {
       });
     }
 
-    if (categories) {
+    if (categories && categories.length > 0) {
       include.push({
         model: PostCategoryModel,
         required: true,
@@ -216,7 +216,7 @@ export class ArticleService extends PostService {
       });
     }
 
-    if (series) {
+    if (series && series.length > 0) {
       include.push({
         model: PostSeriesModel,
         required: true,
@@ -227,7 +227,7 @@ export class ArticleService extends PostService {
       });
     }
 
-    if (hashtags) {
+    if (hashtags && hashtags.length > 0) {
       include.push({
         model: PostHashtagModel,
         required: true,
