@@ -79,7 +79,6 @@ describe('PostListener', () => {
           provide: PostService,
           useValue: {
             deletePostEditedHistory: jest.fn(),
-            processVideo: jest.fn(),
             saveEditedHistory: jest.fn(),
             getsByMedia: jest.fn(),
             updateStatus: jest.fn(),
@@ -206,7 +205,7 @@ describe('PostListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
@@ -218,7 +217,7 @@ describe('PostListener', () => {
     });
     it('should success even if postService.saveEditedHistory', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.saveEditedHistory.mockRejectedValue();
       elasticsearchService.index.mockResolvedValue();
@@ -239,13 +238,13 @@ describe('PostListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
       await postListener.onPostUpdated(postHasBeenUpdatedEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.processVideo).toBeCalled();
+      expect(mediaService.processVideo).toBeCalled();
       expect(postActivityService.createPayload).toBeCalled();
       expect(postService.saveEditedHistory).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();

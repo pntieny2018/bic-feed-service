@@ -19,6 +19,7 @@ import { PostBindingService } from './post-binding.service';
 import { PostHistoryService } from './post-history.service';
 import { PostCronService } from './post-cron.service';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
+import { PostAppService } from './application/post.app-service';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -46,6 +47,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     PostPolicyService,
     PostHistoryService,
     PostCronService,
+    PostAppService,
   ],
   exports: [
     PostService,

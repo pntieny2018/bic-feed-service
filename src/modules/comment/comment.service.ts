@@ -277,6 +277,7 @@ export class CommentService {
       include: [
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },
@@ -336,6 +337,7 @@ export class CommentService {
       include: [
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },
@@ -402,7 +404,7 @@ export class CommentService {
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
 
-    if (comments.list.length && parentId === NIL_UUID) {
+    if (comments.list.length && parentId === NIL_UUID && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
     await Promise.all([
@@ -432,7 +434,6 @@ export class CommentService {
       )}`
     );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
-
     //check post exist
     if (getCommentLinkDto.postId) {
       await this._postService.findPost({
@@ -471,25 +472,30 @@ export class CommentService {
       userId,
       parentId
     );
-    if (comments.list.length && limit > 1) {
+    //get child comment
+    if (comments.list.length && limit > 1 && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
 
-    const aroundChildId = checkComment.parentId !== NIL_UUID ? commentId : NIL_UUID;
-    const child = await this._getComments(
-      {
-        limit: targetChildLimit,
-        parentId,
-        postId,
-      },
-      userId,
-      aroundChildId
-    );
-    comments.list.forEach((cm) => {
-      if (cm.id === parentId) {
-        cm.child = child;
-      }
-    });
+    //get child for target comment
+    if (targetChildLimit > 0) {
+      const aroundChildId = checkComment.parentId !== NIL_UUID ? commentId : NIL_UUID;
+      const child = await this._getComments(
+        {
+          limit: targetChildLimit,
+          parentId,
+          postId,
+        },
+        userId,
+        aroundChildId
+      );
+      comments.list.forEach((cm) => {
+        if (cm.id === parentId) {
+          cm.child = child;
+        }
+      });
+    }
+
     await Promise.all([
       this._reactionService.bindToComments(comments.list),
       this._mentionService.bindToComment(comments.list),
@@ -731,6 +737,7 @@ export class CommentService {
         include: [
           {
             model: MediaModel,
+            as: 'media',
             through: {
               attributes: [],
             },

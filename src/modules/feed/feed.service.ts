@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
@@ -41,42 +41,37 @@ export class FeedService {
 
   /**
    * Get NewsFeed
-   * @param authUser number
-   * @param getNewsFeedDto GetNewsFeedDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    const rows = await PostModel.getNewsFeedData({
-      ...getNewsFeedDto,
-      limit: limit + 1,
-      authUserId: authUser.id,
-      isImportant: isImportant ?? null,
+    const postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
+      limit: limit + 1, //1 is next row
+      offset,
+      isImportant,
+    });
+    const hasNextPage = postIdsAndSorted.length === limit + 1;
+    postIdsAndSorted.pop();
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+
+    const postsBindedData = await this._bindAndTransformData({
+      posts: posts,
+      authUser,
     });
 
-    const posts = this._postService.group(rows);
-    return this._bindAndTransformData({
-      posts,
-      offset,
+    return new PageDto<PostResponseDto>(postsBindedData, {
       limit,
-      authUser,
+      offset,
+      hasNextPage,
     });
   }
 
   private async _bindAndTransformData({
     posts,
-    offset,
-    limit,
     authUser,
   }: {
-    posts: any[];
-    offset: number;
-    limit: number;
+    posts: IPost[];
     authUser: UserDto;
-  }): Promise<PageDto<PostResponseDto>> {
-    const hasNextPage = posts.length === limit + 1;
-    if (hasNextPage) posts.pop();
+  }): Promise<ArticleResponseDto[]> {
     const postsBindedData = await this._postBindingService.bindRelatedData(posts, {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -87,13 +82,8 @@ export class FeedService {
       authUser,
     });
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+    return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
-    });
-    return new PageDto<PostResponseDto>(result, {
-      limit,
-      offset,
-      hasNextPage,
     });
   }
 
@@ -185,10 +175,6 @@ export class FeedService {
 
   /**
    * Get Timeline
-   * @param authUser UserDto
-   * @param getTimelineDto GetTimelineDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
     const { limit, offset, groupId } = getTimelineDto;
@@ -211,49 +197,48 @@ export class FeedService {
         hasNextPage: false,
       });
     }
-    const constraints = PostModel.getIdConstrains(getTimelineDto);
 
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      groupIds,
-      constraints
-    );
-    let importantPostsExc = Promise.resolve([]);
+    const authUserId = authUser?.id || null;
+
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(groupIds);
+    const postIdsAndSorted = [];
     if (offset < totalImportantPosts) {
-      importantPostsExc = PostModel.getTimelineData({
-        ...getTimelineDto,
+      const postImportantIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+        offset,
         limit: limit + 1,
-        groupIds,
-        authUser,
         isImportant: true,
+        authUserId,
       });
+      postIdsAndSorted.push(...postImportantIdsAndSorted);
     }
-    let normalPostsExc = Promise.resolve([]);
+
     if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = PostModel.getTimelineData({
-        ...getTimelineDto,
+      const postNormalIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
-        groupIds,
-        authUser,
         isImportant: false,
+        authUserId,
       });
+      postIdsAndSorted.push(...postNormalIdsAndSorted);
     }
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.group(rows);
-    return this._bindAndTransformData({
+
+    const hasNextPage = postIdsAndSorted.length === limit + 1;
+    postIdsAndSorted.pop();
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
+    const postsBindedData = await this._bindAndTransformData({
       posts,
-      offset,
-      limit,
       authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindedData, {
+      limit,
+      offset,
+      hasNextPage,
     });
   }
 
   /**
    * Delete newsfeed by post
-   * @param postId string
-   * @param transaction Transaction
-   * @returns object
    */
   public deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });

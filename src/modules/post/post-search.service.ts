@@ -31,6 +31,8 @@ export type DataPostToAdd = {
   createdAt: Date;
   actor: UserSharedDto;
   isArticle: boolean;
+  title?: string;
+  summary?: string;
 };
 type DataPostToUpdate = DataPostToAdd & {
   lang: string;
@@ -62,7 +64,11 @@ export class PostSearchService {
   public async addPostsToSearch(posts: DataPostToAdd[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      if (dataIndex.isArticle) {
+        dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
+      } else {
+        dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      }
       this.elasticsearchService
         .index({
           index,
@@ -84,7 +90,12 @@ export class PostSearchService {
   public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      if (dataIndex.isArticle) {
+        dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
+      } else {
+        dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      }
+
       this.elasticsearchService
         .index({
           index,

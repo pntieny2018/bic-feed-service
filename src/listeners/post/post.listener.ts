@@ -109,7 +109,7 @@ export class PostListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    await this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    await this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
 
     if (isDraft) return;
 
@@ -186,7 +186,7 @@ export class PostListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldPost.isDraft === false && isDraft === true) {

@@ -16,7 +16,7 @@ import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
 import { PostHistoryService } from '../post-history.service';
 
-describe('PostController', () => {
+describe.skip('PostController', () => {
   let postService: PostService;
   let postHistoryService: PostHistoryService;
   let postController: PostController;

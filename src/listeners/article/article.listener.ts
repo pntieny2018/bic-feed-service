@@ -6,33 +6,31 @@ import {
 import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
 import { Injectable, Logger } from '@nestjs/common';
-import { ElasticsearchHelper } from '../../common/helpers';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { MediaStatus } from '../../database/models/media.model';
 import { MediaService } from '../../modules/media';
 import { FeedService } from '../../modules/feed/feed.service';
 import { SeriesService } from '../../modules/series/series.service';
-import { ArticleResponseDto } from '../../modules/article/dto/responses';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleService } from '../../modules/article/article.service';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostHistoryService } from '../../modules/post/post-history.service';
+import { PostSearchService } from '../../modules/post/post-search.service';
 
 @Injectable()
 export class ArticleListener {
   private _logger = new Logger(ArticleListener.name);
 
   public constructor(
-    private readonly _elasticsearchService: ElasticsearchService,
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
     private readonly _articleService: ArticleService,
-    private readonly _postServiceHistory: PostHistoryService
+    private readonly _postServiceHistory: PostHistoryService,
+    private readonly _postSearchService: PostSearchService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -50,11 +48,7 @@ export class ArticleListener {
       this._sentryService.captureException(e);
     });
 
-    const index = ElasticsearchHelper.ALIAS.ARTICLE[article.lang]?.name || 'default';
-    this._elasticsearchService.delete({ index, id: `${article.id}` }).catch((e) => {
-      this._logger.error(e, e?.stack);
-      this._sentryService.captureException(e);
-    });
+    this._postSearchService.deletePostsToSearch([article]);
     //TODO:: send noti
   }
 
@@ -74,11 +68,13 @@ export class ArticleListener {
       audience,
       createdAt,
       isArticle,
+      title,
+      summary,
     } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    this._articleService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
+    this._mediaService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
 
     if (isDraft) return;
 
@@ -89,25 +85,6 @@ export class ArticleListener {
         this._sentryService.captureException(e);
       });
 
-    const dataIndex = {
-      id,
-      isArticle,
-      categories: article.categories ?? [],
-      series: article.series ?? [],
-      hashtags: article.hashtags ?? [],
-      title: article.title ?? null,
-      summary: article.summary ?? null,
-      commentsCount,
-      totalUsersSeen,
-      content,
-      media,
-      mentions,
-      audience,
-      setting,
-      createdAt,
-      actor,
-    };
-
     if (article.series?.length > 0) {
       this._seriesService.updateTotalArticle(article.series.map((c) => c.id)).catch((e) => {
         this._logger.error(e, e?.stack);
@@ -115,11 +92,23 @@ export class ArticleListener {
       });
     }
 
-    const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
-    this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
-      this._logger.debug(e);
-      this._sentryService.captureException(e);
-    });
+    this._postSearchService.addPostsToSearch([
+      {
+        id,
+        isArticle,
+        commentsCount,
+        totalUsersSeen,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+        title,
+        summary,
+      },
+    ]);
 
     //TODO:: send noti
     try {
@@ -151,13 +140,17 @@ export class ArticleListener {
       setting,
       audience,
       isArticle,
+      createdAt,
+      lang,
+      summary,
+      title,
     } = oldArticle;
 
     if (oldArticle.isDraft === false) {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._articleService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldArticle.isDraft === false && isDraft === true) {
@@ -187,30 +180,24 @@ export class ArticleListener {
       });
     //TODO:: send noti
 
-    const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
-    const dataUpdate = {
-      commentsCount,
-      totalUsersSeen,
-      content,
-      media,
-      mentions,
-      audience,
-      setting,
-      actor,
-      isArticle,
-      categories: newArticle.categories ?? [],
-      series: newArticle.series ?? [],
-      hashtags: newArticle.hashtags ?? [],
-      title: newArticle.title ?? null,
-      summary: newArticle.summary ?? null,
-    };
-    this._elasticsearchService
-      .index({ index, id: `${id}`, body: dataUpdate })
-      .then()
-      .catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      });
+    this._postSearchService.updatePostsToSearch([
+      {
+        id,
+        isArticle,
+        commentsCount,
+        totalUsersSeen,
+        content,
+        media,
+        mentions,
+        audience,
+        setting,
+        createdAt,
+        actor,
+        lang,
+        summary,
+        title,
+      },
+    ]);
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -256,31 +243,27 @@ export class ArticleListener {
         audience,
         createdAt,
         isArticle,
+        summary,
+        title,
       } = article;
 
-      const dataIndex = {
-        id,
-        commentsCount,
-        totalUsersSeen,
-        content,
-        media,
-        mentions,
-        audience,
-        setting,
-        createdAt,
-        actor,
-        isArticle,
-        categories: article.categories ?? [],
-        series: article.series ?? [],
-        hashtags: article.hashtags ?? [],
-        title: article.title ?? null,
-        summary: article.summary ?? null,
-      };
-      const index = ElasticsearchHelper.ALIAS.ARTICLE.default.name;
-      this._elasticsearchService.index({ index, id: `${id}`, body: dataIndex }).catch((e) => {
-        this._logger.debug(e);
-        this._sentryService.captureException(e);
-      });
+      this._postSearchService.addPostsToSearch([
+        {
+          id,
+          isArticle,
+          commentsCount,
+          totalUsersSeen,
+          content,
+          media,
+          mentions,
+          audience,
+          setting,
+          createdAt,
+          actor,
+          summary,
+          title,
+        },
+      ]);
 
       if (article.series?.length > 0) {
         this._seriesService.updateTotalArticle(article.series.map((c) => c.id));

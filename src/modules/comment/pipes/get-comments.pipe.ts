@@ -16,7 +16,7 @@ export class GetCommentsPipe implements PipeTransform {
       getCommentDto.childOrder = OrderEnum.DESC;
     }
     if (!getCommentDto.childLimit) {
-      getCommentDto.childLimit = 10;
+      getCommentDto.childLimit = 0;
     }
     if (!getCommentDto.parentId) {
       getCommentDto.parentId = NIL_UUID;

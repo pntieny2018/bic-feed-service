@@ -7,13 +7,12 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { AudienceResponseDto } from './audience.response.dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
-import { MediaFilterResponseDto } from '../../../media/dto/response';
+import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostPrivacy } from '../../../../database/models/post.model';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
-
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',

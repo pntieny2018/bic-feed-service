@@ -14,7 +14,6 @@ import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
 import { Op, QueryTypes, Transaction } from 'sequelize';
-import { getDatabaseConfig } from '../../config/database';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
@@ -34,6 +33,7 @@ import { VideoMetadataResponseDto } from './dto/response/video-metadata-response
 import { ClientKafka } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
+import { PostModel } from '../../database/models/post.model';
 
 @Injectable()
 export class MediaService {
@@ -43,6 +43,7 @@ export class MediaService {
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
     @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
+    @InjectModel(PostModel) private _postModel: typeof PostModel,
     private readonly _sentryService: SentryService,
     @Inject(KAFKA_PRODUCER)
     private readonly _clientKafka: ClientKafka
@@ -453,31 +454,62 @@ export class MediaService {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @Cron(CronExpression.EVERY_4_HOURS)
-  async deleteUnusedMedia(): Promise<void> {
-    const postMedia = await this._postMediaModel.findAll();
-    const commentMedia = await this._commentMediaModel.findAll();
-    const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
-    const willDeleteMedia = await this._mediaModel.findAll({
+  public async deleteUnusedMediav2(): Promise<void> {
+    const unusedMediaList = await this._mediaModel.findAll({
+      attributes: ['id', 'type', 'url'],
+      include: [
+        {
+          model: PostMediaModel,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: CommentMediaModel,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: PostModel,
+          attributes: [],
+          required: false,
+          paranoid: false,
+        },
+      ],
       where: {
-        id: { [Op.notIn]: mediaIdList },
         createdAt: {
           [Op.lte]: moment().subtract(4, 'hours').toDate(),
         },
+        [Op.and]: this._sequelizeConnection.literal(
+          'post_id is null and comment_id is null and cover is null'
+        ),
       },
     });
-    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
-    willDeleteMedia.forEach((e) => e.destroy());
+
+    this.emitMediaToUploadServiceFromMediaList(unusedMediaList, MediaMarkAction.DELETE);
+    const deleteMediaIds = unusedMediaList.map((media) => media.id);
+    await this.deleteMediaByIds(deleteMediaIds);
   }
 
-  public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {
-    if (await this._postMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
-      return true;
+  public async deleteMediaByIds(ids: string[]): Promise<void> {
+    this._mediaModel.destroy({
+      where: {
+        id: ids,
+      },
+    });
+  }
+
+  public async processVideo(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    try {
+      this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+        key: null,
+        value: JSON.stringify({ videoIds: ids }),
+      });
+      await this.updateData(ids, { status: MediaStatus.PROCESSING });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
     }
-    if (await this._commentMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
-      return true;
-    }
-    return false;
   }
 }

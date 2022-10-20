@@ -57,6 +57,7 @@ export class PostBindingService {
       shouldBindLinkPreview?: boolean;
     }
   ): Promise<PostResponseDto[]> {
+    if (posts.length === 0) return [];
     const processList = [];
     if (options?.shouldBindActor) {
       processList.push(this.bindActor(posts));
@@ -75,9 +76,6 @@ export class PostBindingService {
     }
     if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
-    }
-    if (options?.shouldBindLinkPreview) {
-      processList.push(this.linkPreviewService.bindToPosts(posts));
     }
     if (processList.length === 0) return [];
     await Promise.all(processList);
