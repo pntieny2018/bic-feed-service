@@ -1235,12 +1235,42 @@ export class PostService {
     filters: {
       offset: number;
       limit: number;
+      isImportant: boolean;
+      authUserId: string;
     }
   ): Promise<string[]> {
-    const { offset, limit } = filters;
-    const conditions = {
-      isDraft: false,
-    };
+    const { offset, limit, isImportant, authUserId } = filters;
+
+    const { schema } = getDatabaseConfig();
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    let importantCondition;
+    if (isImportant) {
+      importantCondition = {
+        [Op.and]: this.sequelizeConnection.literal(
+          `"PostModel"."is_important" = true AND NOT EXISTS(
+            SELECT 1
+            from ${schema}.${userMarkReadPostTable} AS r
+            WHERE r.post_id = "PostModel"."id" AND r.user_id = ${this.sequelizeConnection.escape(
+              authUserId
+            )}
+          `
+        ),
+      };
+    } else {
+      importantCondition = {
+        [Op.and]: this.sequelizeConnection.literal(
+          `"PostModel"."is_important" = false OR 
+          ( "PostModel"."is_important" = true AND EXISTS(
+            SELECT 1
+            from ${schema}.${userMarkReadPostTable} AS r
+            WHERE r.post_id = "PostModel"."id" AND r.user_id = ${this.sequelizeConnection.escape(
+              authUserId
+            )}
+          ))
+          `
+        ),
+      };
+    }
 
     const posts = await this.postModel.findAll({
       attributes: ['id'],
@@ -1256,7 +1286,10 @@ export class PostService {
         },
       ],
       subQuery: false,
-      where: conditions,
+      where: {
+        isDraft: false,
+        ...importantCondition,
+      },
       order: [
         ['isImportant', 'desc'],
         ['createdAt', 'desc'],

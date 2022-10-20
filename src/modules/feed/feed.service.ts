@@ -210,6 +210,8 @@ export class FeedService {
     const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
       offset,
       limit,
+      isImportant: true,
+      authUserId,
     });
     const hasNextPage = postIdsAndSorted.length === limit + 1;
     postIdsAndSorted.pop();
