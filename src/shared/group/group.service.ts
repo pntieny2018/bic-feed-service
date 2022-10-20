@@ -57,26 +57,17 @@ export class GroupService {
    * @returns
    */
   public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): string[] {
-    let groupIds = [];
-    if (
-      group.privacy === GroupPrivacy.OPEN ||
-      group.privacy === GroupPrivacy.PUBLIC ||
-      group.privacy === GroupPrivacy.PRIVATE
-    ) {
-      groupIds = [...group.child.public, ...group.child.open, ...group.child.private];
-
-      const privateGroupIds = [...group.child.secret].filter((groupId) =>
-        authUser.profile.groups.includes(groupId)
-      );
-      groupIds.push(...privateGroupIds, group.id);
-    } else {
-      groupIds = [group.id, ...group.child.secret].filter((groupId) =>
-        authUser.profile.groups.includes(groupId)
-      );
-      groupIds.push(...group.child.open);
-      groupIds.push(...group.child.public);
-    }
-    return ArrayHelper.arrayUnique(groupIds);
+    const groupIdsUserJoined = authUser.profile.groups;
+    const childIds = [
+      ...group.child.public,
+      ...group.child.open,
+      ...group.child.private,
+      ...group.child.secret,
+    ];
+    const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
+      groupIdsUserJoined.includes(groupId)
+    );
+    return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
   }
 
   /**

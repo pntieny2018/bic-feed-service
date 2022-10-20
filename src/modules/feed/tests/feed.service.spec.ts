@@ -57,8 +57,9 @@ describe('FeedService', () => {
           provide: PostService,
           useValue: {
             groupPosts: jest.fn(),
-            getPostsInNewsFeed: jest.fn(),
-            getPostsInGroupIds: jest.fn(),
+            getPostIdsInNewsFeed: jest.fn(),
+            getPostIdsInGroupIds: jest.fn(),
+            getPostsByIds: jest.fn(),
           },
         },
         {
@@ -139,7 +140,8 @@ describe('FeedService', () => {
           '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
         ]);
       PostModel.getTotalImportantPostInGroups = jest.fn().mockResolvedValue(0);
-      postService.getPostsInGroupIds = jest.fn().mockResolvedValue([]);
+      postService.getPostIdsInGroupIds = jest.fn().mockResolvedValue([]);
+      postService.getPostsByIds = jest.fn().mockResolvedValue([]);
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
       postService.group = jest.fn().mockReturnValue([]);
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
@@ -151,7 +153,8 @@ describe('FeedService', () => {
 
       expect(groupService.get).toBeCalledTimes(1);
       expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
-      expect(postService.getPostsInGroupIds).toBeCalledTimes(1);
+      expect(postService.getPostIdsInGroupIds).toBeCalledTimes(1);
+      expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
 
     it('Should get successfully with predefined timeline and null user', async () => {
@@ -163,7 +166,8 @@ describe('FeedService', () => {
           '1c63365d-a7ba-4b02-ba01-8a5f515f941d',
           '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
         ]);
-        postService.getPostsInGroupIds = jest.fn().mockResolvedValue(0);
+      postService.getPostIdsInGroupIds = jest.fn().mockResolvedValue([]);
+      postService.getPostsByIds = jest.fn().mockResolvedValue([]);
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
       postService.group = jest.fn().mockReturnValue([]);
       reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
@@ -175,7 +179,8 @@ describe('FeedService', () => {
 
       expect(groupService.get).toBeCalledTimes(1);
       expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
-      expect(postService.getPostsInGroupIds).toBeCalledTimes(1);
+      expect(postService.getPostIdsInGroupIds).toBeCalledTimes(1);
+      expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
 
     it('Should return BadRequestException if group found post', async () => {
@@ -191,14 +196,17 @@ describe('FeedService', () => {
   describe('getNewsFeed', () => {
     it('Should get newsfeed successfully', async () => {
       postBindingService.bindRelatedData = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPostsInNewsFeed = jest.fn().mockResolvedValue([])
+      postService.getPostIdsInNewsFeed = jest.fn().mockResolvedValue([])
+      postService.getPostsByIds = jest.fn().mockResolvedValue([])
       await feedService.getNewsFeed(mockedUserAuth, mockedGetNewsFeedDto);
 
-       expect(postService.getPostsInNewsFeed).toBeCalledTimes(1);
+       expect(postService.getPostIdsInNewsFeed).toBeCalledTimes(1);
+       expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
 
     it('Should failed', async () => {
-      postService.getPostsInNewsFeed = jest.fn().mockResolvedValue(0);
+      postService.getPostIdsInNewsFeed = jest.fn().mockResolvedValue([]);
+      postService.getPostsByIds = jest.fn().mockResolvedValue([]);
       PostModel.getNewsFeedData = jest
         .fn()
         .mockRejectedValue(new Error('Database connection error.'));
