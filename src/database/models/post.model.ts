@@ -252,6 +252,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public static loadMarkReadPost(authUserId: string, alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
     const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    if (!authUserId) {
+      return [Sequelize.literal(`(false)`), alias ? alias : 'markedReadPost'];
+    }
     return [
       Sequelize.literal(`(
         COALESCE((SELECT true FROM ${schema}.${userMarkReadPostTable} as r
@@ -346,33 +349,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     getPostsDto: Pick<PageOptionsDto, 'idGT' | 'idGTE' | 'idLT' | 'idLTE'>
   ): string {
     const { schema } = getDatabaseConfig();
-    const { idGT, idGTE, idLT, idLTE } = getPostsDto;
     const postCategoryTable = PostCategoryModel.tableName;
     const postSeriesTable = PostSeriesModel.tableName;
     const postHastagTable = PostHashtagModel.tableName;
     let constraints = '';
-    if (idGT) {
-      constraints += `AND p.id != ${this.sequelize.escape(idGT)}`;
-      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
-        idGT
-      )})`;
-    }
-    if (idGTE) {
-      constraints += `AND p.created_at >= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
-        idGT
-      )})`;
-    }
-    if (idLT) {
-      constraints += `AND p.id != ${this.sequelize.escape(idLT)}`;
-      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
-        idLT
-      )})`;
-    }
-    if (idLTE) {
-      constraints += `AND p.created_at <= (SELECT p_subquery.created_at FROM ${schema}.posts AS p_subquery WHERE p_subquery.id=${this.sequelize.escape(
-        idLT
-      )})`;
-    }
     if ((getPostsDto as GetListArticlesDto).categories?.length > 0) {
       constraints += `AND EXISTS(
         SELECT 1

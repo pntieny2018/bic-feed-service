@@ -1153,46 +1153,6 @@ export class PostService {
     });
   }
 
-  public async getPostsInNewsFeed(
-    userId: string,
-    filters: {
-      offset: number;
-      limit: number;
-      isImportant: boolean;
-    }
-  ): Promise<IPost[]> {
-    const postIdsAndSorted = await this.getPostIdsInNewsFeed(userId, filters);
-    if (postIdsAndSorted.length === 0) return [];
-
-    const include = this.getIncludeObj({
-      shouldIncludeCategory: true,
-      shouldIncludeGroup: true,
-      shouldIncludeMedia: true,
-      shouldIncludeMention: true,
-      shouldIncludeOwnerReaction: true,
-      shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
-      authUserId: userId,
-    });
-    const rows = await this.postModel.findAll({
-      attributes: {
-        include: [PostModel.loadContent(), PostModel.loadMarkReadPost(userId)],
-        exclude: ['content'],
-      },
-      include,
-      where: {
-        id: postIdsAndSorted,
-      },
-    });
-
-    const mappedPosts = postIdsAndSorted.map((postId) => {
-      const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
-    });
-
-    return mappedPosts;
-  }
-
   public async getPostIdsInNewsFeed(
     userId: string,
     filters: {
@@ -1236,16 +1196,8 @@ export class PostService {
     return posts.map((post) => post.id);
   }
 
-  public async getPostsInGroupIds(
-    groupIds: string[],
-    userId: string | null,
-    filters: {
-      offset: number;
-      limit: number;
-    }
-  ): Promise<IPost[]> {
-    const postIdsAndSorted = await this.getPostIdsInGroupIds(groupIds, filters);
-    if (postIdsAndSorted.length === 0) return [];
+  public async getPostsByIds(ids: string[], userId: string | null): Promise<IPost[]> {
+    if (ids.length === 0) return [];
 
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
@@ -1259,21 +1211,18 @@ export class PostService {
     });
 
     const attributes = {
-      include: [PostModel.loadContent()],
+      include: [PostModel.loadContent(), PostModel.loadMarkReadPost(userId)],
       exclude: ['content'],
     };
-    if (userId) {
-      attributes.include.push(PostModel.loadMarkReadPost(userId));
-    }
     const rows = await this.postModel.findAll({
       attributes,
       include,
       where: {
-        id: postIdsAndSorted,
+        id: ids,
       },
     });
 
-    const mappedPosts = postIdsAndSorted.map((postId) => {
+    const mappedPosts = ids.map((postId) => {
       const post = rows.find((row) => row.id === postId);
       if (post) return post.toJSON();
     });
