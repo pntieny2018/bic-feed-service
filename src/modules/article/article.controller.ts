@@ -7,17 +7,14 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
-  Query,
+  Query
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
-import { AuthorityService } from '../authority';
 import { GetPostPipe } from '../post/pipes';
-import { PostService } from '../post/post.service';
 import { ArticleAppService } from './application/article.app-service';
 import { GetListArticlesDto } from './dto/requests';
 import { CreateArticleDto } from './dto/requests/create-article.dto';

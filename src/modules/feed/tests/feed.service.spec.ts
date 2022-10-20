@@ -207,9 +207,6 @@ describe('FeedService', () => {
     it('Should failed', async () => {
       postService.getPostIdsInNewsFeed = jest.fn().mockResolvedValue([]);
       postService.getPostsByIds = jest.fn().mockResolvedValue([]);
-      PostModel.getNewsFeedData = jest
-        .fn()
-        .mockRejectedValue(new Error('Database connection error.'));
       postBindingService.bindRelatedData = jest.fn().mockResolvedValue(Promise.resolve());
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 

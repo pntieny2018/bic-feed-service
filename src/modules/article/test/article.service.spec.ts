@@ -477,30 +477,4 @@ describe.skip('ArticleService', () => {
       }
     });
   });
-
-  describe.skip('getList', () => {
-    it('Should get list article successfully', async () => {
-      const getArticleListDto: GetListArticlesDto = {
-        categories: ['0afb93ac-1234-4323-b7ef-5e809bf9b722'],
-        offset: 0,
-        limit: 1,
-      };
-
-      PostModel.getArticlesData = jest.fn().mockResolvedValue(Promise.resolve());
-      userService.get = jest.fn().mockResolvedValue(mockedUserAuth);
-
-      articleBindingService.bindActor = jest.fn();
-      articleBindingService.bindAudience = jest.fn();
-      articleService.group = jest.fn().mockResolvedValue([]);
-      articleService.maskArticleContent = jest.fn();
-      reactionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      mentionService.bindToPosts = jest.fn().mockResolvedValue(Promise.resolve());
-
-      const result = await articleService.getList(mockedUserAuth, getArticleListDto);
-
-      expect(articleBindingService.bindActor).toBeCalledTimes(1);
-      expect(articleBindingService.bindAudience).toBeCalledTimes(1);
-      expect(result).toBeInstanceOf(PageDto);
-    });
-  });
 });

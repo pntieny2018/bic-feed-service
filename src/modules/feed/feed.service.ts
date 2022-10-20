@@ -200,10 +200,7 @@ export class FeedService {
 
     const authUserId = authUser?.id || null;
 
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      groupIds,
-      getTimelineDto
-    );
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(groupIds);
     const postIdsAndSorted = [];
     if (offset < totalImportantPosts) {
       const postImportantIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
