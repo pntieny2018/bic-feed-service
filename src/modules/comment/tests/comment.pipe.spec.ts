@@ -23,9 +23,9 @@ describe('GetCommentLinkPipe.transform', () => {
 
   it('expect transform', async () => {
     return expect(pipe.transform({})).toEqual({
-      "childLimit": 10,
+      "childLimit": 0,
       "limit": 10,
-      "targetChildLimit": 10
+      "targetChildLimit": 0
     });
   })
 })
@@ -36,7 +36,7 @@ describe('GetCommentsPipe.transform', () => {
 
   it('expect transform', async () => {
     return expect(pipe.transform({ postId: '1' })).toEqual({
-      "childLimit": 10,
+      "childLimit": 0,
       "childOrder": "DESC",
       "limit": 25,
       "order": "DESC",
