@@ -41,7 +41,6 @@ export interface IMedia {
   createdBy: string;
   url: string;
   type: MediaType;
-  isDraft: boolean;
   posts?: PostModel[];
   comments?: CommentModel[];
   createdAt?: Date;
@@ -72,9 +71,6 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
 
   @Column
   public type: MediaType;
-
-  @Column
-  public isDraft: boolean;
 
   @AllowNull(false)
   @Column
