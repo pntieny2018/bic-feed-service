@@ -58,33 +58,6 @@ export class GroupService {
    */
   public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): string[] {
     let groupIds = [];
-    if (!authUser) return ArrayHelper.arrayUnique([...group.child.public, group.id]);
-    if (group.privacy === GroupPrivacy.OPEN || group.privacy === GroupPrivacy.PUBLIC) {
-      groupIds = [...group.child.public, ...group.child.open];
-
-      const privateGroupIds = [...group.child.private, ...group.child.secret].filter((groupId) =>
-        authUser.profile.groups.includes(groupId)
-      );
-      groupIds.push(...privateGroupIds, group.id);
-    } else {
-      groupIds = [group.id, ...group.child.private, ...group.child.secret].filter((groupId) =>
-        authUser.profile.groups.includes(groupId)
-      );
-      groupIds.push(...group.child.open);
-      groupIds.push(...group.child.public);
-    }
-    return ArrayHelper.arrayUnique(groupIds);
-  }
-
-  /**
-   * Get all groupIds(include all child) that user can acess to SEE articles (allow public, open, secret)
-   *
-   * @param group
-   * @param authUser
-   * @returns
-   */
-  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): string[] {
-    let groupIds = [];
     if (
       group.privacy === GroupPrivacy.OPEN ||
       group.privacy === GroupPrivacy.PUBLIC ||
@@ -104,5 +77,16 @@ export class GroupService {
       groupIds.push(...group.child.public);
     }
     return ArrayHelper.arrayUnique(groupIds);
+  }
+
+  /**
+   * Get all groupIds(include all child) that user can acess to SEE articles (allow public, open, secret)
+   *
+   * @param group
+   * @param authUser
+   * @returns
+   */
+  public getGroupIdsCanAccessArticle(group: GroupSharedDto, authUser: UserDto): string[] {
+    return this.getGroupIdsCanAccess(group, authUser);
   }
 }
