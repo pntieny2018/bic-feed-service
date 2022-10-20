@@ -48,33 +48,34 @@ export class FeedService {
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    const posts = await this._postService.getPostsInNewsFeed(authUser.id, {
+    const postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
       limit: limit + 1, //1 is next row
       offset,
       isImportant,
     });
+    const hasNextPage = postIdsAndSorted.length === limit + 1;
+    postIdsAndSorted.pop();
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
 
-    return this._bindAndTransformData({
+    const postsBindedData = await this._bindAndTransformData({
       posts: posts,
-      offset,
-      limit: limit,
       authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindedData, {
+      limit,
+      offset,
+      hasNextPage,
     });
   }
 
   private async _bindAndTransformData({
     posts,
-    offset,
-    limit,
     authUser,
   }: {
     posts: IPost[];
-    offset: number;
-    limit: number;
     authUser: UserDto;
-  }): Promise<PageDto<PostResponseDto>> {
-    const hasNextPage = posts.length === limit + 1;
-    if (hasNextPage) posts.pop();
+  }): Promise<ArticleResponseDto[]> {
     const postsBindedData = await this._postBindingService.bindRelatedData(posts, {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -85,13 +86,8 @@ export class FeedService {
       authUser,
     });
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+    return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
-    });
-    return new PageDto<PostResponseDto>(result, {
-      limit,
-      offset,
-      hasNextPage,
     });
   }
 
@@ -211,15 +207,22 @@ export class FeedService {
     }
 
     const authUserId = authUser?.id || null;
-    const posts = await this._postService.getPostsInGroupIds(groupIds, authUserId, {
+    const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
       offset,
       limit,
     });
-    return this._bindAndTransformData({
+    const hasNextPage = postIdsAndSorted.length === limit + 1;
+    postIdsAndSorted.pop();
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
+    const postsBindedData = await this._bindAndTransformData({
       posts,
-      offset,
-      limit,
       authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindedData, {
+      limit,
+      offset,
+      hasNextPage,
     });
   }
 

@@ -121,54 +121,139 @@ export class ArticleService extends PostService {
   }
 
   /**
-   * Get list Article
-   * @throws HttpException
-   * @param authUser UserDto
-   * @param getArticleListDto GetListArticlesDto
-   * @returns Promise resolve PageDto<ArticleResponseDto>
+   * Get article list
    */
   public async getList(
     authUser: UserDto,
     getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset, groupId } = getArticleListDto;
-    if (groupId) {
-      const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
-      if (groupIds.length === 0) {
-        return new PageDto<ArticleResponseDto>([], {
-          limit,
-          offset,
-          hasNextPage: false,
-        });
-      }
-      getArticleListDto.groupIds = groupIds;
+    const { limit, offset } = getArticleListDto;
+
+    const articleIdsAndSorted = await this._getArticleIdsWithFilter(getArticleListDto, authUser);
+    if (articleIdsAndSorted.length === 0) {
+      return new PageDto<ArticleResponseDto>([], {
+        hasNextPage: false,
+        limit,
+        offset,
+      });
     }
-    //TODO:: need to optimize
-    const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
-    const articles = this.group(rows);
-    const hasNextPage = articles.length === limit + 1 ? true : false;
-    if (hasNextPage) articles.pop();
+    const hasNextPage = articleIdsAndSorted.length === limit + 1;
+    articleIdsAndSorted.pop();
 
-    await this.maskArticleContent(articles);
-    const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
-      shouldBindReaction: true,
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
-      authUser,
-    });
+    const articles = await this._getArticlesByIds(articleIdsAndSorted, authUser);
 
-    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
-      excludeExtraneousValues: true,
-    });
-    return new PageDto<ArticleResponseDto>(result, {
+    return new PageDto<ArticleResponseDto>(articles, {
       hasNextPage,
       limit,
       offset,
     });
   }
 
+  private async _getArticlesByIds(ids: string[], authUser): Promise<ArticleResponseDto[]> {
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMedia: true,
+      shouldIncludeMention: true,
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeCover: true,
+      authUserId: authUser.id,
+    });
+
+    const attributes = {
+      include: [PostModel.loadContent()],
+      exclude: ['content'],
+    };
+    if (authUser) {
+      attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        id: ids,
+      },
+    });
+
+    const mappedPosts = ids.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return this.classTransformer.plainToInstance(ArticleResponseDto, mappedPosts, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  private async _getArticleIdsWithFilter(
+    getListArticleDto: GetListArticlesDto,
+    authUser: UserDto
+  ): Promise<string[]> {
+    const { groupId, categories, hashtags, series, offset, limit } = getListArticleDto;
+    const include = [];
+    if (groupId) {
+      const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
+      if (groupIds.length === 0) return [];
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: [],
+        where: {
+          groupId: groupIds,
+        },
+      });
+    }
+
+    if (categories) {
+      include.push({
+        model: PostCategoryModel,
+        required: true,
+        attributes: [],
+        where: {
+          categoryId: categories,
+        },
+      });
+    }
+
+    if (series) {
+      include.push({
+        model: PostSeriesModel,
+        required: true,
+        attributes: [],
+        where: {
+          seriesId: series,
+        },
+      });
+    }
+
+    if (hashtags) {
+      include.push({
+        model: PostHashtagModel,
+        required: true,
+        attributes: [],
+        where: {
+          hashtagId: hashtags,
+        },
+      });
+    }
+
+    const conditions = {
+      isDraft: false,
+    };
+
+    const articles = await this.postModel.findAll({
+      attributes: ['id'],
+      include,
+      subQuery: false,
+      where: conditions,
+      order: [['createdAt', 'desc']],
+      offset,
+      limit,
+    });
+
+    return articles.map((article) => article.id);
+  }
   /**
    * Get Draft Articles
    */

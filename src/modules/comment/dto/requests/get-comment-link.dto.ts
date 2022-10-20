@@ -33,7 +33,7 @@ export class GetCommentLinkDto {
   @Expose({
     name: 'child_limit',
   })
-  public childLimit?: number = 10;
+  public childLimit?: number;
 
   @ApiProperty({
     required: false,
@@ -45,5 +45,5 @@ export class GetCommentLinkDto {
   @Expose({
     name: 'target_child_limit',
   })
-  public targetChildLimit?: number = 10;
+  public targetChildLimit?: number;
 }
