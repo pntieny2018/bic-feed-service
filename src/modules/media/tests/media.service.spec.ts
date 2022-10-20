@@ -13,12 +13,14 @@ import { Transaction } from 'sequelize';
 import { EntityType } from '../media.constants';
 import { KAFKA_PRODUCER } from '../../../common/constants';
 import { ClientKafka } from '@nestjs/microservices';
+import { PostModel } from '../../../database/models/post.model';
 
 describe('MediaService', () => {
   let service: MediaService;
   let mediaModel;
   let postMediaModel;
   let commentMediaModel;
+  let postModel;
   let sentryService;
   let transactionMock;
   let sequelize;
@@ -43,6 +45,18 @@ describe('MediaService', () => {
         { provide: Sequelize, useValue: { query: jest.fn(), transaction: jest.fn() } },
         {
           provide: getModelToken(MediaModel),
+          useValue: {
+            findOne: jest.fn(),
+            findAndCountAll: jest.fn(),
+            findAll: jest.fn(),
+            update: jest.fn(),
+            create: jest.fn(),
+            destroy: jest.fn(),
+            bulkCreate: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostModel),
           useValue: {
             findOne: jest.fn(),
             findAndCountAll: jest.fn(),
@@ -85,6 +99,7 @@ describe('MediaService', () => {
     sequelize = module.get<Sequelize>(Sequelize)
     mediaModel = module.get<typeof MediaModel>(getModelToken(MediaModel));
     postMediaModel = module.get<typeof PostMediaModel>(getModelToken(PostMediaModel));
+    postModel = module.get<typeof PostModel>(getModelToken(PostModel));
     commentMediaModel = module.get<typeof CommentMediaModel>(getModelToken(CommentMediaModel));
     sentryService = module.get<SentryService>(SentryService);
     clientKafka = module.get<ClientKafka>(KAFKA_PRODUCER);

@@ -18,7 +18,7 @@ describe('GetCommentsPipe', function () {
       limit: 25,
       order: OrderEnum.DESC,
       childOrder: OrderEnum.DESC,
-      childLimit: 10,
+      childLimit: 0,
       parentId: "00000000-0000-0000-0000-000000000000",
     });
   });

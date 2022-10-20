@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -13,25 +12,20 @@ import {
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
-import { AuthUser, UserDto } from '../auth';
-import { ArticleService } from './article.service';
-import { ArticleResponseDto } from './dto/responses/article.response.dto';
-import { CreateArticleDto } from './dto/requests/create-article.dto';
-import { UpdateArticleDto } from './dto/requests/update-article.dto';
-import { GetArticleDto } from './dto/requests/get-article.dto';
-import { GetPostPipe } from '../post/pipes';
-import { PageDto } from '../../common/dto';
-import { GetListArticlesDto } from './dto/requests';
-import {
-  ArticleHasBeenDeletedEvent,
-  ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent,
-} from '../../events/article';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
+import { PageDto } from '../../common/dto';
+import { AuthUser, UserDto } from '../auth';
 import { AuthorityService } from '../authority';
+import { GetPostPipe } from '../post/pipes';
 import { PostService } from '../post/post.service';
+import { ArticleAppService } from './application/article.app-service';
+import { GetListArticlesDto } from './dto/requests';
+import { CreateArticleDto } from './dto/requests/create-article.dto';
+import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { ArticleResponseDto } from './dto/responses/article.response.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -40,12 +34,7 @@ import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
   path: 'articles',
 })
 export class ArticleController {
-  public constructor(
-    private _articleService: ArticleService,
-    private _eventEmitter: InternalEventEmitterService,
-    private _authorityService: AuthorityService,
-    private _postService: PostService
-  ) {}
+  public constructor(private _articleAppService: ArticleAppService) {}
 
   @ApiOperation({ summary: 'Get related article' })
   @ApiOkResponse({
@@ -57,7 +46,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Query() getArticleListDto: GetRelatedArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getRelatedById(getArticleListDto, user);
+    return this._articleAppService.getRelatedById(user, getArticleListDto);
   }
 
   @ApiOperation({ summary: 'Get draft articles' })
@@ -69,7 +58,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Query() getDraftDto: GetDraftArticleDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getDrafts(user.id, getDraftDto);
+    return this._articleAppService.getDrafts(user, getDraftDto);
   }
 
   @ApiOperation({ summary: 'Get list article' })
@@ -81,7 +70,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Query() getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getList(user, getArticleListDto);
+    return this._articleAppService.getList(user, getArticleListDto);
   }
 
   @ApiOperation({ summary: 'Get article detail' })
@@ -94,7 +83,7 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    return this._articleService.get(articleId, user, getArticleDto);
+    return this._articleAppService.get(user, articleId, getArticleDto);
   }
 
   @ApiOperation({ summary: 'Create article' })
@@ -108,11 +97,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const created = await this._articleService.create(user, createArticleDto);
-    if (created) {
-      const article = await this._articleService.get(created.id, user, new GetArticleDto());
-      return article;
-    }
+    return await this._articleAppService.create(user, createArticleDto);
   }
 
   @ApiOperation({ summary: 'Update view article' })
@@ -125,7 +110,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<boolean> {
-    return this._articleService.updateView(articleId, user);
+    return this._articleAppService.updateView(user, articleId);
   }
 
   @ApiOperation({ summary: 'Update article' })
@@ -140,31 +125,7 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string,
     @Body() updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience } = updateArticleDto;
-    const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (articleBefore.isDraft === false && audience.groupIds.length === 0) {
-      throw new BadRequestException('Audience is required');
-    }
-
-    await this._authorityService.checkCanUpdatePost(user, articleBefore, audience.groupIds);
-    if (articleBefore.isDraft === false) {
-      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
-    }
-    await this._authorityService.checkPostOwner(articleBefore, user.id);
-
-    const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
-    if (isUpdated) {
-      const articleUpdated = await this._articleService.get(articleId, user, new GetArticleDto());
-      this._eventEmitter.emit(
-        new ArticleHasBeenUpdatedEvent({
-          oldArticle: articleBefore,
-          newArticle: articleUpdated,
-          actor: user.profile,
-        })
-      );
-
-      return articleUpdated;
-    }
+    return this._articleAppService.update(user, articleId, updateArticleDto);
   }
 
   @ApiOperation({ summary: 'Publish article' })
@@ -177,17 +138,7 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
-    const isPublished = await this._articleService.publish(articleId, user);
-    if (isPublished) {
-      const article = await this._articleService.get(articleId, user, new GetArticleDto());
-      this._eventEmitter.emit(
-        new ArticleHasBeenPublishedEvent({
-          article,
-          actor: user.profile,
-        })
-      );
-      return article;
-    }
+    return this._articleAppService.publish(user, articleId);
   }
 
   @ApiOperation({ summary: 'Delete article' })
@@ -200,16 +151,6 @@ export class ArticleController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<boolean> {
-    const articleDeleted = await this._articleService.delete(articleId, user);
-    if (articleDeleted) {
-      this._eventEmitter.emit(
-        new ArticleHasBeenDeletedEvent({
-          article: articleDeleted,
-          actor: user.profile,
-        })
-      );
-      return true;
-    }
-    return false;
+    return this._articleAppService.delete(user, articleId);
   }
 }
