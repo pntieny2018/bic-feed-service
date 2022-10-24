@@ -70,7 +70,6 @@ export class PostCronService {
       this._postModel.update(
         {
           isImportant: false,
-          importantExpiredAt: null,
         },
         {
           where: {
