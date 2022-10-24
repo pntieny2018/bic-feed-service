@@ -54,7 +54,6 @@ export class PostBindingService {
       shouldBindReaction?: boolean;
       shouldHideSecretAudienceCanNotAccess?: boolean;
       authUser?: UserDto;
-      shouldBindLinkPreview?: boolean;
     }
   ): Promise<PostResponseDto[]> {
     if (posts.length === 0) return [];
@@ -80,12 +79,6 @@ export class PostBindingService {
     if (processList.length === 0) return [];
     await Promise.all(processList);
     return posts;
-  }
-
-  protected transform(posts: any[]): PostResponseDto[] {
-    return this.classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
   }
 
   public async bindAudience(
