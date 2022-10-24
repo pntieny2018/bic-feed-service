@@ -199,12 +199,6 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
-        content: {
-          [Op.and]: {
-            [Op.not]: null,
-            [Op.not]: '',
-          },
-        },
       },
       offset,
       limit,
