@@ -1,5 +1,5 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { plainToInstance } from 'class-transformer';
 import { Logger } from '@nestjs/common';
@@ -19,6 +19,8 @@ import { POST_JA_MAPPING } from './post_ja_mapping';
 import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -35,7 +37,8 @@ export class IndexPostCommand implements CommandRunner {
     public readonly postBingdingService: PostBindingService,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
     private _configService: ConfigService,
-    protected readonly elasticsearchService: ElasticsearchService
+    protected readonly elasticsearchService: ElasticsearchService,
+    @InjectConnection() private _sequelizeConnection: Sequelize
   ) {}
 
   public delay(time) {
@@ -121,12 +124,12 @@ export class IndexPostCommand implements CommandRunner {
           is_write_index: true,
         },
       },
-      {
-        remove: {
-          index: `${currentDefaultIndex}_${prevVersionDate}`,
-          alias: currentDefaultIndex,
-        },
-      },
+      // {
+      //   remove: {
+      //     index: `${currentDefaultIndex}_${prevVersionDate}`,
+      //     alias: currentDefaultIndex,
+      //   },
+      // },
     ];
 
     ElasticsearchHelper.LANGUAGES_SUPPORTED.forEach((lang) => {
@@ -138,12 +141,12 @@ export class IndexPostCommand implements CommandRunner {
           is_write_index: true,
         },
       });
-      actionList.push({
-        remove: {
-          index: `${currentDefaultIndex}_${lang}_${prevVersionDate}`,
-          alias: `${currentDefaultIndex}_${lang}`,
-        },
-      });
+      // actionList.push({
+      //   remove: {
+      //     index: `${currentDefaultIndex}_${lang}_${prevVersionDate}`,
+      //     alias: `${currentDefaultIndex}_${lang}`,
+      //   },
+      // });
     });
 
     const updateAliasResult = await this.elasticsearchService.indices.updateAliases({
@@ -154,7 +157,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 5;
+    const limitEach = 100;
     let offset = 0;
     let hasMore = true;
     let total = 0;
@@ -169,6 +172,7 @@ export class IndexPostCommand implements CommandRunner {
         offset = offset + limitEach;
         total += posts.length;
         console.log(`Indexed ${posts.length}`);
+        console.log('-----------------------------------');
         await this.delay(1000);
         //process.exit();
       }
@@ -195,6 +199,12 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
+        content: {
+          [Op.and]: {
+            [Op.not]: null,
+            [Op.not]: '',
+          },
+        },
       },
       offset,
       limit,

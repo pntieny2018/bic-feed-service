@@ -62,12 +62,6 @@ export class CommentService {
     createCommentDto: CreateCommentDto,
     replyId = NIL_UUID
   ): Promise<IComment> {
-    this._logger.debug(
-      `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
-        createCommentDto
-      )},replyId: ${replyId} `
-    );
-
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
@@ -167,12 +161,6 @@ export class CommentService {
     comment: IComment;
     oldComment: IComment;
   }> {
-    this._logger.debug(
-      `[update] user: ${JSON.stringify(user)}, updateCommentDto: ${JSON.stringify(
-        updateCommentDto
-      )},commentId: ${commentId} `
-    );
-
     const comment = await this._commentModel.findOne({
       include: [
         {
@@ -268,8 +256,6 @@ export class CommentService {
     commentId: string,
     childLimit = 25
   ): Promise<CommentResponseDto> {
-    this._logger.debug(`[getComment] commentId: ${commentId} `);
-
     const response = await this._commentModel.findOne({
       where: {
         id: commentId,
@@ -325,7 +311,6 @@ export class CommentService {
    * @returns Promise resolve CommentResponseDto
    */
   public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
-    this._logger.debug(`[getComment] commentId: ${commentIds} `);
 
     const responses = await this._commentModel.findAll({
       order: [['createdAt', 'DESC']],
@@ -377,11 +362,6 @@ export class CommentService {
     user?: UserDto,
     checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.debug(
-      `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
-        getCommentsDto
-      )}`
-    );
     const { childLimit, postId, parentId, limit } = getCommentsDto;
     const post = await this._postService.findPost({
       postId,
@@ -428,11 +408,6 @@ export class CommentService {
     user: UserDto,
     getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
-    this._logger.debug(
-      `[getCommentLink] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
-        getCommentLinkDto
-      )}`
-    );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
     //check post exist
     if (getCommentLinkDto.postId) {
@@ -556,8 +531,6 @@ export class CommentService {
    * @returns Promise resolve boolean
    */
   public async destroy(user: UserDto, commentId: string): Promise<IComment> {
-    this._logger.debug(`[destroy] user: ${JSON.stringify(user)}, commentID: ${commentId}`);
-
     const comment = await this._commentModel.findOne({
       where: {
         id: commentId,

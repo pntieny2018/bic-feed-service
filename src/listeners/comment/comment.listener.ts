@@ -23,8 +23,6 @@ export class CommentListener {
 
   @On(CommentHasBeenCreatedEvent)
   public async onCommentHasBeenCreated(event: CommentHasBeenCreatedEvent): Promise<void> {
-    this._logger.debug(`[CommentHasBeenCreatedEvent]: ${JSON.stringify(event)}`);
-
     const { commentResponse, actor } = event.payload;
 
     if (commentResponse.parentId !== NIL_UUID) {
@@ -48,8 +46,6 @@ export class CommentListener {
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
-    this._logger.debug(`[CommentHasBeenUpdatedEvent]: ${JSON.stringify(event)}`);
-
     const { oldComment, commentResponse, actor } = event.payload;
 
     this._commentNotificationService
@@ -62,7 +58,6 @@ export class CommentListener {
 
   @On(CommentHasBeenDeletedEvent)
   public async onCommentHasBeenDeleted(event: CommentHasBeenDeletedEvent): Promise<void> {
-    this._logger.debug(`[CommentHasBeenDeletedEvent]: ${JSON.stringify(event)}`);
     const { comment } = event.payload;
 
     this._commentNotificationService.destroy(event.getEventName(), comment).catch((ex) => {

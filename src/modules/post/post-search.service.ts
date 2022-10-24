@@ -92,14 +92,10 @@ export class PostSearchService {
           maxRetries: 5,
         }
       );
-      console.log('Success==', !res.errors);
-      console.log('Success items:', res.items.length);
-      // if (res.errors === true) {
-      //   console.log('Has errors:', JSON.stringify(res.items, null, 4));
-      // }
+      this.logger.debug(res);
       await this._updateLangAfterIndexToES(res?.items || [], index);
     } catch (e) {
-      this.logger.debug('111', e);
+      this.logger.debug(e);
       this.sentryService.captureException(e);
     }
   }
