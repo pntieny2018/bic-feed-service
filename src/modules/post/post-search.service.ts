@@ -82,14 +82,21 @@ export class PostSearchService {
       body.push(post);
     }
     try {
-      const res = await this.elasticsearchService.bulk({
-        refresh: true,
-        body,
-        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-      });
-      if (res.errors === true) {
-        console.log('Has errors:', JSON.stringify(res.items, null, 4));
-      }
+      const res = await this.elasticsearchService.bulk(
+        {
+          refresh: true,
+          body,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        },
+        {
+          maxRetries: 5,
+        }
+      );
+      console.log('Success==', !res.errors);
+      console.log('Success items:', res.items.length);
+      // if (res.errors === true) {
+      //   console.log('Has errors:', JSON.stringify(res.items, null, 4));
+      // }
       await this._updateLangAfterIndexToES(res?.items || [], index);
     } catch (e) {
       this.logger.debug('111', e);
@@ -181,6 +188,8 @@ export class PostSearchService {
     const posts = hits.map((item) => {
       const source = item._source;
       source.content = item._source.content['text'];
+      source.summary = item._source.summary['text'];
+      source.title = item._source.title['text'];
       source['id'] = item._id;
       if (
         contentSearch &&
