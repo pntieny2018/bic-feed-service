@@ -567,9 +567,8 @@ export class PostService {
     if (setting && setting.hasOwnProperty('isImportant')) {
       dataUpdate['isImportant'] = setting.isImportant;
     }
-    if (setting && setting.hasOwnProperty('importantExpiredAt')) {
-      dataUpdate['importantExpiredAt'] =
-        setting.isImportant === false ? null : setting.importantExpiredAt;
+    if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
+      dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
     }
 
     return dataUpdate;
