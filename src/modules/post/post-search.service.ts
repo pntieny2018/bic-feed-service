@@ -180,7 +180,6 @@ export class PostSearchService {
     const hits = response.hits.hits;
     const posts = hits.map((item) => {
       const source = item._source;
-      console.log('object', JSON.stringify(item, null, 4));
       source.content = item._source.content['text'];
       source['id'] = item._id;
       if (
@@ -193,7 +192,6 @@ export class PostSearchService {
       }
 
       if (contentSearch && item.highlight && item.highlight['title.text']?.length && source.title) {
-        console.log('ddddddddddddd');
         source['titleHighlight'] = item.highlight['title.text'][0];
       }
 
@@ -253,12 +251,11 @@ export class PostSearchService {
 
     this._applyActorFilter(actors, body);
 
-    //this._applyAudienceFilter(groupIds, body);
+    this._applyAudienceFilter(groupIds, body);
 
     this._applyFilterKeyword(contentSearch, body);
     this._applySort(contentSearch, body);
     this._applyFilterTime(startTime, endTime, body);
-    console.log('object', JSON.stringify(body, null, 4));
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
       body,
