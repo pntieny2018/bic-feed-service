@@ -124,12 +124,12 @@ export class IndexPostCommand implements CommandRunner {
           is_write_index: true,
         },
       },
-      // {
-      //   remove: {
-      //     index: `${currentDefaultIndex}_${prevVersionDate}`,
-      //     alias: currentDefaultIndex,
-      //   },
-      // },
+      {
+        remove: {
+          index: `${currentDefaultIndex}_${prevVersionDate}`,
+          alias: currentDefaultIndex,
+        },
+      },
     ];
 
     ElasticsearchHelper.LANGUAGES_SUPPORTED.forEach((lang) => {
@@ -141,12 +141,12 @@ export class IndexPostCommand implements CommandRunner {
           is_write_index: true,
         },
       });
-      // actionList.push({
-      //   remove: {
-      //     index: `${currentDefaultIndex}_${lang}_${prevVersionDate}`,
-      //     alias: `${currentDefaultIndex}_${lang}`,
-      //   },
-      // });
+      actionList.push({
+        remove: {
+          index: `${currentDefaultIndex}_${lang}_${prevVersionDate}`,
+          alias: `${currentDefaultIndex}_${lang}`,
+        },
+      });
     });
 
     const updateAliasResult = await this.elasticsearchService.indices.updateAliases({
