@@ -134,7 +134,7 @@ export class IndexPostCommand implements CommandRunner {
         add: {
           index: `${currentDefaultIndex}_${lang}_${currentDate}`,
           alias: `${currentDefaultIndex}_${lang}`,
-          // eslint-disable-next-line @typescript-eslint/naming-convention
+          //eslint-disable-next-line @typescript-eslint/naming-convention
           is_write_index: true,
         },
       });
