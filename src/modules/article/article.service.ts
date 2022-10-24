@@ -598,7 +598,7 @@ export class ArticleService extends PostService {
           createdBy: authUserId,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          importantExpiredAt: setting.importantExpiredAt,
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,

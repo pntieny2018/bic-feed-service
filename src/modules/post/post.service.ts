@@ -396,7 +396,7 @@ export class PostService {
           createdBy: authUserId,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
-          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          importantExpiredAt: setting.importantExpiredAt,
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
@@ -568,8 +568,7 @@ export class PostService {
       dataUpdate['isImportant'] = setting.isImportant;
     }
     if (setting && setting.hasOwnProperty('importantExpiredAt')) {
-      dataUpdate['importantExpiredAt'] =
-        setting.isImportant === false ? null : setting.importantExpiredAt;
+      dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
     }
 
     return dataUpdate;
