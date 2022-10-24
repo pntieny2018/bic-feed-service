@@ -30,7 +30,6 @@ export class ReactionController {
     @AuthUser() userDto: UserDto,
     @Query(GetReactionPipe) getReactionDto: GetReactionDto
   ): Promise<ReactionsResponseDto> {
-    this._logger.debug(`[Get reaction]`);
     return this._reactionService.gets(getReactionDto);
   }
 

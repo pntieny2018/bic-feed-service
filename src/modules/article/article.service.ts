@@ -488,7 +488,7 @@ export class ArticleService extends PostService {
     return attributes;
   }
 
-  protected getIncludeObj({
+  public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
     shouldIncludeOwnerReaction,

@@ -151,10 +151,8 @@ describe('MediaService', () => {
   
   describe('MediaService.create', () => {
     it('should return create if success', async () => {
-      const logSpy = jest.spyOn(service['_logger'], 'debug').mockReturnThis();
       mediaModel.create.mockResolvedValue(createMediaDtoMock)
       const returnValue = await service.create(mockUserDto, createMediaDtoMock)
-      expect(logSpy).toBeCalled()
       expect(mediaModel.create).toBeCalled()
       expect(returnValue).toEqual(createMediaDtoMock)
     });
