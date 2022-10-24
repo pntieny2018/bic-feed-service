@@ -62,7 +62,6 @@ describe('CommentListener', () => {
 
   describe('CommentListener.onCommentHasBeenCreated', () => {
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(commentListener['_logger'], 'debug').mockReturnThis();
       commentService.getComment.mockResolvedValue([]);
       commentNotificationService.create.mockResolvedValue()
       feedService.markSeenPosts = jest.fn().mockResolvedValue(Promise.resolve());
@@ -71,7 +70,6 @@ describe('CommentListener', () => {
         actor: authUserMock,
         commentResponse: mockCommentResponseDto,
       }))
-      expect(loggerSpy).toBeCalled()
       expect(commentService.getComment).toBeCalled()
       expect(commentNotificationService.create).toBeCalled()
     })
@@ -94,10 +92,8 @@ describe('CommentListener', () => {
 
     const commentHasBeenUpdatedEvent = new CommentHasBeenUpdatedEvent(new CommentHasBeenUpdatedEventPayload())
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(commentListener['_logger'], 'debug').mockReturnThis();
       commentNotificationService.update.mockResolvedValue()
       await commentListener.onCommentHasBeenUpdated(commentHasBeenUpdatedEvent)
-      expect(loggerSpy).toBeCalled()
       expect(commentNotificationService.update).toBeCalled()
     })
 
@@ -117,10 +113,8 @@ describe('CommentListener', () => {
       actor: authUserMock
     })
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(commentListener['_logger'], 'debug').mockReturnThis();
       commentNotificationService.destroy.mockResolvedValue()
       await commentListener.onCommentHasBeenDeleted(commentHasBeenDeletedEvent)
-      expect(loggerSpy).toBeCalled()
       expect(commentNotificationService.destroy).toBeCalled()
     })
 

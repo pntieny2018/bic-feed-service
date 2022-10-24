@@ -29,14 +29,6 @@ describe('CategoryController', () => {
   });
 
   describe('CategoryController.get', () => {
-    it('logger should be called', async () => {
-      const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.get(authUserMock, {
-        limit: 10,
-      });
-      expect(logSpy).toBeCalled();
-    });
-
     it('CommentService.getComments should be called', async () => {
       categoryService.get.mockResolvedValue([]);
       await controller.get(authUserMock, {
@@ -47,12 +39,6 @@ describe('CategoryController', () => {
   })
 
   describe('CategoryController.create', () => {
-    it('logger should be called', async () => {
-      const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.create(authUserMock, createCategoryDto).catch(() => {});
-      expect(logSpy).toBeCalled();
-    });
-
     it('CommentService.create should be called', async () => {
       categoryService.create.mockResolvedValue({});
       await controller.create(authUserMock, createCategoryDto);
