@@ -57,7 +57,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   public async run(params: string[] = [], options?: ICommandOptions): Promise<any> {
-    const updateIndex = options.updateIndex ?? false;
+    const shouldUpdateIndex = options.updateIndex ?? false;
     const currentDefaultIndex =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
 
@@ -65,7 +65,7 @@ export class IndexPostCommand implements CommandRunner {
     const today = new Date();
     const currentDate = `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
 
-    if (prevVersionDate && updateIndex) {
+    if (prevVersionDate && shouldUpdateIndex) {
       console.log('updating index...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
@@ -195,7 +195,6 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
-        isArticle: true,
       },
       offset,
       limit,
