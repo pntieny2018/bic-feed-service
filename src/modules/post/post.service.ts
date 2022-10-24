@@ -210,7 +210,6 @@ export class PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });
@@ -235,7 +234,7 @@ export class PostService {
     return attributes;
   }
 
-  protected getIncludeObj({
+  public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
     shouldIncludeCategory,

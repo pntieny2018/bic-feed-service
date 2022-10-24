@@ -86,11 +86,9 @@ export class ElasticsearchHelper {
     POST: 'pipe_lang_ident_post',
   };
 
-  public static getLangOfPostByIndexName(indexName: string): string {
-    const lang = indexName.slice(
-      this.ALIAS.POST.default.name.length + 1,
-      this.ALIAS.POST.default.name.length + 3
-    );
+  public static getLangOfPostByIndexName(indexName: string, defaultIndex?: string): string {
+    const index = defaultIndex ? defaultIndex : this.ALIAS.POST.default.name;
+    const lang = indexName.slice(index.length + 1, index.length + 3);
 
     return this.LANGUAGES_SUPPORTED.includes(lang) ? lang : null;
   }
