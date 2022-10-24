@@ -283,7 +283,6 @@ describe('PostListener', () => {
     postVideoFailedEvent.payload.properties.mimeType = '1212'
     postVideoFailedEvent.payload.properties.codec = '1212'
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
       postService.getsByMedia.mockResolvedValue([
         { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
         { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
@@ -291,7 +290,6 @@ describe('PostListener', () => {
       postService.updateStatus.mockResolvedValue();
 
       await postListener.onPostVideoFailed(postVideoFailedEvent);
-      expect(loggerSpy).toBeCalled();
       expect(postService.getsByMedia).toBeCalled();
       expect(postService.updateStatus).toBeCalled();
     });

@@ -322,7 +322,6 @@ describe('PostService', () => {
         content: mockedUpdatePostDto.content,
         updatedBy: mockedUserAuth.id,
         isImportant: mockedCreatePostDto.setting.isImportant,
-        importantExpiredAt: mockedCreatePostDto.setting.importantExpiredAt,
         canShare: mockedCreatePostDto.setting.canShare,
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
