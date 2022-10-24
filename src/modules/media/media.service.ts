@@ -81,18 +81,6 @@ export class MediaService {
       mimeType?: string;
     }
   ): Promise<any> {
-    this._logger.debug(
-      `[create]: ${JSON.stringify(user)} ${JSON.stringify({
-        url,
-        uploadType,
-        name,
-        originName,
-        extension,
-        width,
-        height,
-        status,
-      })}`
-    );
     try {
       const mediaType = uploadType.split('_')[1] as MediaType;
       const media = await this._mediaModel.create({

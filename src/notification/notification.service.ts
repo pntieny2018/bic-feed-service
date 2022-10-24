@@ -10,7 +10,6 @@ export class NotificationService {
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    this._logger.debug(`[publishPostNotification]: ${payload.key}`);
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
       key: payload.key,
       value: payload.value,
@@ -18,7 +17,6 @@ export class NotificationService {
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
-    this._logger.debug(`[publishCommentNotification]: ${payload.key}`);
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.COMMENT, {
       key: payload.key,
       value: payload.value,
@@ -26,7 +24,6 @@ export class NotificationService {
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
-    this._logger.debug(`[publishReactionNotification]: ${payload.key}`);
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: payload.key,
       value: payload.value,

@@ -33,7 +33,6 @@ export class CommentAppService {
     user: UserDto,
     getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.debug('get comments');
     return this._commentService.getComments(getCommentsDto, user);
   }
 
@@ -41,9 +40,6 @@ export class CommentAppService {
     user: UserDto,
     createCommentDto: CreateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug(
-      `create comment by ${user.id} with body: ${JSON.stringify(createCommentDto)}`
-    );
     const comment = await this._commentService.create(user, createCommentDto);
 
     const commentResponse = await this._commentService.getComment(user, comment.id);
@@ -63,7 +59,6 @@ export class CommentAppService {
     commentId: string,
     createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug('reply comment');
     const comment = await this._commentService.create(
       user,
       {
@@ -85,7 +80,6 @@ export class CommentAppService {
   }
 
   public get(user: UserDto, commentId: string, getCommentLinkDto: GetCommentLinkDto): Promise<any> {
-    this._logger.debug('get comment');
     return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
   }
 
@@ -106,7 +100,6 @@ export class CommentAppService {
     commentId: string,
     updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug('update comment');
     const response = await this._commentService.update(user, commentId, updateCommentDto);
 
     const commentResponse = await this._commentService.getComment(user, response.comment.id);
@@ -121,7 +114,6 @@ export class CommentAppService {
   }
 
   public async destroy(user: UserDto, commentId: string): Promise<boolean> {
-    this._logger.debug('delete comment');
     const comment = await this._commentService.destroy(user, commentId);
 
     this._eventEmitter.emit(

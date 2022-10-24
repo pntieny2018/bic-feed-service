@@ -18,7 +18,6 @@ export class HashtagService {
   private _logger = new Logger(HashtagService.name);
   private _classTransformer = new ClassTransformer();
   public async get(getHashtagDto: GetHashtagDto): Promise<PageDto<HashtagResponseDto>> {
-    this._logger.debug('getHashtag');
     const { offset, limit } = getHashtagDto;
     const conditions = {};
     if (getHashtagDto.name) {
@@ -44,7 +43,6 @@ export class HashtagService {
   }
 
   public async create(hashtagName: string): Promise<HashtagResponseDto> {
-    this._logger.debug('createHashtag');
     const name = hashtagName.trim();
     const slug = StringHelper.convertToSlug(hashtagName);
     const findOrCreateResult = await this._hashtagModel.findOrCreate({

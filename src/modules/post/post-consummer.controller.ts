@@ -20,7 +20,6 @@ export class PostConsumerController {
 
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.UPDATED_PRIVACY_GROUP)
   public async privacyUpdate(@Payload('value') updatePrivacyDto: UpdatePrivacyDto): Promise<void> {
-    this._logger.debug(`[privacyUpdate]: ${JSON.stringify(updatePrivacyDto)}`);
     const postIds = await this._postService.findIdsByGroupId([updatePrivacyDto.groupId], null);
     const postIdsNeedToUpdatePrivacy = await this._postService.filterPostIdsNeedToUpdatePrivacy(
       postIds,
