@@ -139,6 +139,7 @@ export class PostSearchService {
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         });
+        this.logger.debug(res);
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
         if (dataIndex.lang !== newLang) {
           await this.postService.updateData([dataIndex.id], { lang: newLang });
