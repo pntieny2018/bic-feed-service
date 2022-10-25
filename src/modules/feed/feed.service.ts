@@ -50,7 +50,9 @@ export class FeedService {
       isImportant,
     });
     const hasNextPage = postIdsAndSorted.length === limit + 1;
-    postIdsAndSorted.pop();
+    if (postIdsAndSorted.length > limit) {
+      postIdsAndSorted.pop();
+    }
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
 
     const postsBindedData = await this._bindAndTransformData({
@@ -220,9 +222,11 @@ export class FeedService {
       });
       postIdsAndSorted.push(...postNormalIdsAndSorted);
     }
-
+    console.log('postIdsAndSorte=', postIdsAndSorted);
     const hasNextPage = postIdsAndSorted.length === limit + 1;
-    postIdsAndSorted.pop();
+    if (postIdsAndSorted.length > limit) {
+      postIdsAndSorted.pop();
+    }
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
     const postsBindedData = await this._bindAndTransformData({
       posts,
