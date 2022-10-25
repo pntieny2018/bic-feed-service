@@ -49,8 +49,11 @@ export class FeedService {
       offset,
       isImportant,
     });
-    const hasNextPage = postIdsAndSorted.length === limit + 1;
-    postIdsAndSorted.pop();
+    let hasNextPage = false;
+    if (postIdsAndSorted.length > limit) {
+      postIdsAndSorted.pop();
+      hasNextPage = true;
+    }
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
 
     const postsBindedData = await this._bindAndTransformData({
@@ -220,9 +223,11 @@ export class FeedService {
       });
       postIdsAndSorted.push(...postNormalIdsAndSorted);
     }
-
-    const hasNextPage = postIdsAndSorted.length === limit + 1;
-    postIdsAndSorted.pop();
+    let hasNextPage = false;
+    if (postIdsAndSorted.length > limit) {
+      postIdsAndSorted.pop();
+      hasNextPage = true;
+    }
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
     const postsBindedData = await this._bindAndTransformData({
       posts,
