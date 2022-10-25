@@ -28,6 +28,7 @@ interface ICommandOptions {
 }
 
 //npx ts-node -r tsconfig-paths/register src/command/cli.ts es:index-post --update-index --old-index=18-08-2022
+//node dist/src/command/cli.js es:index-post --update-index --old-index=001
 @Command({ name: 'es:index-post', description: 'Reindex post in elasticsearch' })
 export class IndexPostCommand implements CommandRunner {
   private _logger = new Logger(IndexPostCommand.name);
@@ -157,7 +158,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 100;
+    const limitEach = 50;
     let offset = 0;
     let hasMore = true;
     let total = 0;
