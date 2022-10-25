@@ -1209,8 +1209,7 @@ export class PostService {
     });
 
     const attributes = {
-      include: [PostModel.loadContent(), PostModel.loadMarkReadPost(userId)],
-      exclude: ['content'],
+      include: [PostModel.loadMarkReadPost(userId)],
     };
     const rows = await this.postModel.findAll({
       attributes,
