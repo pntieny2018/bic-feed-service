@@ -19,6 +19,10 @@ import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { IPost } from '../../database/models/post.model';
+import {
+  IPostResponseElasticsearch,
+  IPostElasticsearch,
+} from './interfaces/post-response-elasticsearch.interface';
 
 export type DataPostToAdd = {
   id: string;
@@ -180,14 +184,24 @@ export class PostSearchService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    const response = await this.searchService.search<ArticleResponseDto>(payload);
+    const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const posts = hits.map((item) => {
-      const source = item._source;
-      source.content = item._source.content['text'];
-      source.summary = item._source.summary['text'];
-      source.title = item._source.title['text'];
-      source['id'] = item._id;
+      const source: IPostResponseElasticsearch = {
+        id: item._source.id,
+        audience: item._source.audience,
+        isArticle: item._source.isArticle,
+        media: item._source.media,
+        content: item._source.content.text,
+        title: item._source.title?.text || null,
+        summary: item._source.summary?.text || null,
+        setting: item._source.setting,
+        actor: item._source.actor,
+        mentions: item._source.mentions,
+        createdAt: item._source.createdAt,
+        totalUsersSeen: item._source.totalUsersSeen,
+        commentsCount: item._source.commentsCount,
+      };
       if (
         contentSearch &&
         item.highlight &&
@@ -198,7 +212,7 @@ export class PostSearchService {
       }
 
       if (contentSearch && item.highlight && item.highlight['title.text']?.length && source.title) {
-        source['titleHighlight'] = item.highlight['title.text'][0];
+        source.titleHighlight = item.highlight['title.text'][0];
       }
 
       if (
@@ -207,7 +221,7 @@ export class PostSearchService {
         item.highlight['summary.text']?.length &&
         source.summary
       ) {
-        source['summaryHighlight'] = item.highlight['summary.text'][0];
+        source.summaryHighlight = item.highlight['summary.text'][0];
       }
       return source;
     });
