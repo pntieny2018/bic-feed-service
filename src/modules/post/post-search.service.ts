@@ -184,6 +184,7 @@ export class PostSearchService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
+    console.log('object', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const posts = hits.map((item) => {
@@ -340,9 +341,7 @@ export class PostSearchService {
       const queryContent = this._getQueryMatchKeyword(content, keyword);
       const queryTitle = this._getQueryMatchKeyword(title, keyword);
       const querySummary = this._getQueryMatchKeyword(summary, keyword);
-      body.query.bool.should.push({
-        ['dis_max']: { queries: [...queryContent, ...querySummary, ...queryTitle] },
-      });
+      body.query.bool.should = [...queryContent, ...querySummary, ...queryTitle];
       body.query.bool['minimum_should_match'] = 1;
       this._bindHighlight(body);
     }
