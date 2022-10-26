@@ -184,7 +184,6 @@ export class PostSearchService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    console.log('object', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const posts = hits.map((item) => {
