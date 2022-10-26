@@ -154,6 +154,10 @@ export const POST_EN_MAPPING = {
         type: 'object',
         enabled: false,
       },
+      linkPreview: {
+        type: 'object',
+        enabled: false,
+      },
       mentions: {
         type: 'object',
         enabled: false,

@@ -146,6 +146,14 @@ export const POST_RU_MAPPING = {
         type: 'object',
         enabled: false,
       },
+      coverMedia: {
+        type: 'object',
+        enabled: false,
+      },
+      linkPreview: {
+        type: 'object',
+        enabled: false,
+      },
       mentions: {
         type: 'object',
         enabled: false,
