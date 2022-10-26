@@ -96,7 +96,7 @@ export class PostSearchService {
           maxRetries: 5,
         }
       );
-      this.logger.debug(res);
+      this.logger.debug(`[Add post to ES] ${JSON.stringify(res)}`);
       await this._updateLangAfterIndexToES(res?.items || [], index);
     } catch (e) {
       this.logger.debug(e);
@@ -143,7 +143,6 @@ export class PostSearchService {
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         });
-        this.logger.debug(res);
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
         if (dataIndex.lang !== newLang) {
           await this.postService.updateData([dataIndex.id], { lang: newLang });
@@ -160,7 +159,6 @@ export class PostSearchService {
     for (const post of posts) {
       const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
       this.elasticsearchService.delete({ index, id: post.id }).catch((e) => {
-        this.logger.debug(e);
         this.sentryService.captureException(e);
       });
     }
