@@ -204,7 +204,6 @@ export class IndexPostCommand implements CommandRunner {
       offset,
       limit,
     });
-
     const jsonPosts = rows.map((r) => r.toJSON());
     const result = this.postBingdingService.bindRelatedData(jsonPosts, {
       shouldBindActor: true,

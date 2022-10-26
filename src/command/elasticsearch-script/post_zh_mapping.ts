@@ -136,6 +136,14 @@ export const POST_ZH_MAPPING = {
         type: 'object',
         enabled: false,
       },
+      coverMedia: {
+        type: 'object',
+        enabled: false,
+      },
+      linkPreview: {
+        type: 'object',
+        enabled: false,
+      },
       mentions: {
         type: 'object',
         enabled: false,

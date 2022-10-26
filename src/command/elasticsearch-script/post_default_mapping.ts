@@ -156,6 +156,10 @@ export const POST_DEFAULT_MAPPING = {
         type: 'object',
         enabled: false,
       },
+      linkPreview: {
+        type: 'object',
+        enabled: false,
+      },
       coverMedia: {
         type: 'object',
         enabled: false,
