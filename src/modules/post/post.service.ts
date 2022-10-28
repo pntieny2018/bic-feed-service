@@ -116,7 +116,7 @@ export class PostService {
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
     });
-    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+    const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes,
       include,
@@ -136,8 +136,13 @@ export class PostService {
       excludeExtraneousValues: true,
     });
 
+    const total = await this.postModel.count<PostModel>({
+      where: condition,
+      attributes,
+    });
+
     return new PageDto<PostResponseDto>(result, {
-      total: count,
+      total,
       limit,
       offset,
     });
