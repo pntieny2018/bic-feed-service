@@ -183,10 +183,13 @@ export class PostBindingService {
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      if (attributes['content']) post.content = findPost?.content || '';
-      if (attributes['commentsCount']) post.commentsCount = findPost?.commentsCount || 0;
-      if (attributes['totalUsersSeen']) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (attributes['setting']) {
+      if (attributes.includes('content')) post.content = findPost?.content || '';
+      if (attributes.includes('commentsCount')) {
+        post.commentsCount = findPost?.commentsCount || 0;
+      }
+      if (attributes.includes('totalUsersSeen'))
+        post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+      if (attributes.includes('setting')) {
         post.setting = {
           importantExpiredAt: findPost.importantExpiredAt,
           isImportant: findPost.isImportant,
