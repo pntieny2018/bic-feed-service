@@ -390,7 +390,6 @@ export class PostService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      const linkPreview = await this.linkPreviewService.upsert(createPostDto.linkPreview);
 
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
@@ -406,8 +405,6 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
-          hashtagsJson: [],
-          linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
       );
