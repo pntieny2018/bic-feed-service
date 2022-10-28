@@ -5,7 +5,7 @@ import { Expose, Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
 
-class CoverMediaDto {
+export class CoverMediaDto {
   public id: string;
 }
 export class UpdateArticleDto extends UpdatePostDto {
