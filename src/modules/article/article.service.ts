@@ -280,7 +280,7 @@ export class ArticleService extends PostService {
       shouldIncludeSeries: true,
       shouldIncludeCover: true,
     });
-    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+    const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes,
       include,
@@ -300,8 +300,13 @@ export class ArticleService extends PostService {
       excludeExtraneousValues: true,
     });
 
+    const total = await this.postModel.count<PostModel>({
+      where: condition,
+      attributes,
+    });
+
     return new PageDto<ArticleResponseDto>(result, {
-      total: count,
+      total,
       limit,
       offset,
     });
@@ -488,7 +493,7 @@ export class ArticleService extends PostService {
     return attributes;
   }
 
-  protected getIncludeObj({
+  public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
     shouldIncludeOwnerReaction,

@@ -54,7 +54,6 @@ export class CommentController {
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.debug('get comments');
     return this._commentAppService.getList(user, getCommentsDto);
   }
 
@@ -88,7 +87,6 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug('reply comment');
     return this._commentAppService.reply(user, commentId, createReplyCommentDto);
   }
 
@@ -106,7 +104,6 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query(GetCommentLinkPipe) getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
-    this._logger.debug('get comment');
     return this._commentAppService.get(user, commentId, getCommentLinkDto);
   }
 
@@ -141,7 +138,6 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug('update comment');
     return this._commentAppService.update(user, commentId, updateCommentDto);
   }
 
@@ -158,7 +154,6 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<boolean> {
-    this._logger.debug('delete comment');
     return this._commentAppService.destroy(user, commentId);
   }
 }

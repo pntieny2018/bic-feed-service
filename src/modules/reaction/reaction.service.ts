@@ -201,8 +201,6 @@ export class ReactionService {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
 
-    this._logger.debug(`[_createPostReaction]: ${JSON.stringify(createReactionDto)}`);
-
     const { id: userId } = userDto;
     const { reactionName, targetId: postId } = createReactionDto;
     try {
@@ -468,8 +466,6 @@ export class ReactionService {
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<IPostReaction> {
-    this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
-
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
@@ -575,8 +571,6 @@ export class ReactionService {
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<ICommentReaction> {
-    this._logger.debug(`[_deleteCommentReaction]: ${JSON.stringify(deleteReactionDto)},${attempt}`);
-
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }

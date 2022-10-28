@@ -19,6 +19,18 @@ export const ELASTIC_POST_MAPPING_PATH = {
   },
   commentsCount: 'commentsCount',
   totalUsersSeen: 'totalUsersSeen',
+  title: {
+    text: {
+      default: 'title.text.default',
+      ascii: 'title.text.ascii',
+    },
+  },
+  summary: {
+    text: {
+      default: 'summary.text.default',
+      ascii: 'summary.text.ascii',
+    },
+  },
   content: {
     language: 'content.language',
     text: {

@@ -35,7 +35,6 @@ export class ArticleListener {
 
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { article } = event.payload;
     if (article.isDraft) return;
 
@@ -54,7 +53,6 @@ export class ArticleListener {
 
   @On(ArticleHasBeenPublishedEvent)
   public async onArticlePublished(event: ArticleHasBeenPublishedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { article, actor } = event.payload;
     const {
       isDraft,
@@ -127,7 +125,6 @@ export class ArticleListener {
 
   @On(ArticleHasBeenUpdatedEvent)
   public async onArticleUpdated(event: ArticleHasBeenUpdatedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldArticle, newArticle, actor } = event.payload;
     const {
       isDraft,
@@ -215,7 +212,6 @@ export class ArticleListener {
 
   @On(ArticleVideoSuccessEvent)
   public async onArticleVideoSuccess(event: ArticleVideoSuccessEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
@@ -285,8 +281,6 @@ export class ArticleListener {
 
   @On(ArticleVideoFailedEvent)
   public async onArticleVideoFailed(event: ArticleVideoFailedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
-
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,

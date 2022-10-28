@@ -40,6 +40,20 @@ export class PostResponseDto {
   public highlight?: string;
 
   @ApiProperty({
+    description: 'title highlight',
+    type: String,
+  })
+  @Expose()
+  public titleHighlight?: string;
+
+  @ApiProperty({
+    description: 'summary highlight',
+    type: String,
+  })
+  @Expose()
+  public summaryHighlight?: string;
+
+  @ApiProperty({
     description: 'Array of files, images, videos',
     type: MediaFilterResponseDto,
   })

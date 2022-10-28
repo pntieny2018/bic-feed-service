@@ -116,7 +116,7 @@ export class PostService {
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
     });
-    const { rows, count } = await this.postModel.findAndCountAll<PostModel>({
+    const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes,
       include,
@@ -136,8 +136,13 @@ export class PostService {
       excludeExtraneousValues: true,
     });
 
+    const total = await this.postModel.count<PostModel>({
+      where: condition,
+      attributes,
+    });
+
     return new PageDto<PostResponseDto>(result, {
-      total: count,
+      total,
       limit,
       offset,
     });
@@ -210,7 +215,6 @@ export class PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldBindLinkPreview: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });
@@ -235,7 +239,7 @@ export class PostService {
     return attributes;
   }
 
-  protected getIncludeObj({
+  public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
     shouldIncludeCategory,
@@ -568,9 +572,8 @@ export class PostService {
     if (setting && setting.hasOwnProperty('isImportant')) {
       dataUpdate['isImportant'] = setting.isImportant;
     }
-    if (setting && setting.hasOwnProperty('importantExpiredAt')) {
-      dataUpdate['importantExpiredAt'] =
-        setting.isImportant === false ? null : setting.importantExpiredAt;
+    if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
+      dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
     }
 
     return dataUpdate;
@@ -1211,8 +1214,7 @@ export class PostService {
     });
 
     const attributes = {
-      include: [PostModel.loadContent(), PostModel.loadMarkReadPost(userId)],
-      exclude: ['content'],
+      include: [PostModel.loadMarkReadPost(userId)],
     };
     const rows = await this.postModel.findAll({
       attributes,
