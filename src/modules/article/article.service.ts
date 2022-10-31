@@ -412,7 +412,6 @@ export class ArticleService extends PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludeCategory: true,
-      shouldIncludeSeries: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
       authUserId: authUser?.id || null,
