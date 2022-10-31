@@ -19,6 +19,20 @@ export class SeriesResponseDto {
   public lang?: string;
 
   @ApiProperty({
+    description: 'Title',
+    type: String,
+  })
+  @Expose()
+  public title: string;
+
+  @ApiProperty({
+    description: 'Summary',
+    type: String,
+  })
+  @Expose()
+  public summary: string;
+
+  @ApiProperty({
     description: 'Highlight',
     type: String,
   })
@@ -139,7 +153,7 @@ export class SeriesResponseDto {
   @Expose()
   public comments?: PageDto<CommentResponseDto>;
 
-  public constructor(data: Partial<PostResponseDto>) {
+  public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);
   }
 }

@@ -28,11 +28,11 @@ export type DataPostToAdd = {
   id: string;
   commentsCount: number;
   totalUsersSeen: number;
-  content: string;
-  media: MediaFilterResponseDto;
-  mentions: UserMentionDto;
+  content?: string;
+  media?: MediaFilterResponseDto;
+  mentions?: UserMentionDto;
   audience: AudienceResponseDto;
-  setting: PostSettingDto;
+  setting?: PostSettingDto;
   createdAt: Date;
   actor: UserSharedDto;
   isArticle: boolean;

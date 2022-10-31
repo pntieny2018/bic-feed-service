@@ -8,88 +8,78 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
-import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
-import { WebhookGuard } from '../auth/webhook.guard';
-import { PostAppService } from './application/series.app-service';
-import {
-  CreateFastlaneDto,
-  CreatePostDto,
-  GetPostDto,
-  GetPostEditedHistoryDto,
-  SearchPostsDto,
-  UpdatePostDto,
-} from './dto/requests';
-import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
-import { GetPostPipe } from './pipes';
+import { SeriesAppService } from './application/series.app-service';
+import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+
+import { SeriesResponseDto } from './dto/responses';
+import { GetSeriesPipe } from './pipes';
 
 @ApiSecurity('authorization')
-@ApiTags('Posts')
+@ApiTags('Series')
 @Controller({
   version: APP_VERSION,
-  path: 'posts',
+  path: 'series',
 })
 export class SeriesController {
-  public constructor(private _postAppService: PostAppService) {}
+  public constructor(private _seriesAppService: SeriesAppService) {}
 
-  @ApiOperation({ summary: 'Get post detail' })
+  @ApiOperation({ summary: 'Get series detail' })
   @ApiOkResponse({
-    type: PostResponseDto,
+    type: SeriesResponseDto,
   })
   @Get('/:id')
   public async get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
-    @Query(GetPostPipe) getPostDto: GetPostDto
-  ): Promise<PostResponseDto> {
-    return this._postAppService.getSeries(user, id, getPostDto);
+    @Query(GetSeriesPipe) getPostDto: GetSeriesDto
+  ): Promise<SeriesResponseDto> {
+    return this._seriesAppService.getSeriesDetail(user, id, getPostDto);
   }
 
-  @ApiOperation({ summary: 'Create post' })
+  @ApiOperation({ summary: 'Create series' })
   @ApiOkResponse({
-    type: PostResponseDto,
-    description: 'Create post successfully',
+    type: SeriesResponseDto,
+    description: 'Create series successfully',
   })
   @Post('/')
   @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
-    @Body() createPostDto: CreatePostDto
+    @Body() createSeriesDto: CreateSeriesDto
   ): Promise<any> {
-    return this._postAppService.createSeries(user, createPostDto);
+    return this._seriesAppService.createSeries(user, createSeriesDto);
   }
 
-  @ApiOperation({ summary: 'Update post' })
+  @ApiOperation({ summary: 'Update series' })
   @ApiOkResponse({
-    type: PostResponseDto,
-    description: 'Update post successfully',
+    type: SeriesResponseDto,
+    description: 'Update series successfully',
   })
   @Put('/:id')
   @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updatePostDto: UpdatePostDto
-  ): Promise<PostResponseDto> {
-    return this._postAppService.updateSeries(user, id, updatePostDto);
+    @Body() updateSeriesDto: UpdateSeriesDto
+  ): Promise<void> {
+    return this._seriesAppService.updateSeries(user, id, updateSeriesDto);
   }
 
-  @ApiOperation({ summary: 'Delete post' })
+  @ApiOperation({ summary: 'Delete series' })
   @ApiOkResponse({
     type: Boolean,
-    description: 'Delete post successfully',
+    description: 'Delete series successfully',
   })
   @Delete('/:id')
   public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<boolean> {
-    return this._postAppService.deleteSeries(user, id);
+    return this._seriesAppService.deleteSeries(user, id);
   }
 }

@@ -81,6 +81,7 @@ export interface IPost {
   giphyId?: string;
   markedReadPost?: boolean;
   isArticle: boolean;
+  type: PostType;
   title?: string;
   summary?: string;
   views: number;
@@ -143,6 +144,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public title: string;
+
+  @AllowNull(false)
+  @Column
+  public type: PostType;
 
   @AllowNull(true)
   @Column

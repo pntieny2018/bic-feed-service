@@ -348,18 +348,11 @@ export class PostService {
     }
 
     if (shouldIncludePreviewLink) {
-      const obj = {
+      includes.push({
         model: LinkPreviewModel,
         as: 'linkPreview',
         required: false,
-      };
-      if (filterCategoryIds) {
-        obj['where'] = {
-          id: filterCategoryIds,
-        };
-      }
-
-      includes.push(obj);
+      });
     }
 
     if (shouldIncludeCover) {

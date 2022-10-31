@@ -12,8 +12,17 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { Op, Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PostSeriesModel } from '../../database/models/post-series.model';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostReactionModel } from '../../database/models/post-reaction.model';
+import { MediaModel } from '../../database/models/media.model';
+import { AuthorityService } from '../authority';
+import { CommentService } from '../comment';
+import { NIL } from 'uuid';
+import { PostBindingService } from '../post/post-binding.service';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { FeedService } from '../feed/feed.service';
+import { ReactionService } from '../reaction';
 
 @Injectable()
 export class SeriesService {
@@ -32,14 +41,23 @@ export class SeriesService {
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
+
     @InjectModel(PostModel)
     private _postModel: typeof PostModel,
     @InjectModel(PostSeriesModel)
     private _postSeriesModel: typeof PostSeriesModel,
 
+    @InjectModel(UserMarkReadPostModel)
+    private _userMarkReadPostModel: typeof UserMarkReadPostModel,
+
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
-    private readonly _sentryService: SentryService
+    private _authorityService: AuthorityService,
+    private readonly _sentryService: SentryService,
+    private readonly _commentService: CommentService,
+    private readonly _postBinding: PostBindingService,
+    private readonly _feedService: FeedService,
+    private readonly _reactionService: ReactionService
   ) {}
 
   /**
@@ -49,105 +67,87 @@ export class SeriesService {
    * @returns Promise resolve PageDto<SeriesResponseDto>
    */
   public async get(
-    articleId: string,
+    id: string,
     authUser: UserDto,
-    getArticleDto?: GetArticleDto
-  ): Promise<ArticleResponseDto> {
-    const attributes = this.getAttributesObj({
-      loadMarkRead: true,
-      authUserId: authUser?.id || null,
-    });
-    const include = this.getIncludeObj({
-      shouldIncludeOwnerReaction: true,
-      shouldIncludeGroup: true,
-      shouldIncludeMention: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCategory: true,
-      shouldIncludeSeries: true,
-      shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
-      authUserId: authUser?.id || null,
-    });
-
+    getSeriesDto?: GetSeriesDto
+  ): Promise<SeriesResponseDto> {
     let condition;
     if (authUser) {
       condition = {
-        id: articleId,
-        isArticle: true,
+        id,
+        type: PostType.SERIES,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
-      condition = { id: articleId, isArticle: true };
+      condition = { id, type: PostType.SERIES };
     }
 
-    const article = await this.postModel.findOne({
-      attributes,
+    const series = await this._postModel.findOne({
+      attributes: {
+        include: [PostModel.loadMarkReadPost(authUser.id)],
+      },
       where: condition,
-      include,
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId'],
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: authUser.id,
+          },
+        },
+        {
+          model: MediaModel,
+          as: 'coverMedia',
+          required: false,
+        },
+      ],
     });
 
-    if (!article) {
+    if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
     if (authUser) {
-      await this.authorityService.checkCanReadArticle(authUser, article);
+      await this._authorityService.checkCanReadSeries(authUser, series);
     } else {
-      await this.authorityService.checkIsPublicArticle(article);
+      await this._authorityService.checkIsPublicSeries(series);
     }
     let comments = null;
-    if (getArticleDto.withComment) {
-      comments = await this.commentService.getComments(
+    if (getSeriesDto.withComment) {
+      comments = await this._commentService.getComments(
         {
-          postId: articleId,
+          postId: id,
           parentId: NIL,
-          childLimit: getArticleDto.childCommentLimit,
-          order: getArticleDto.commentOrder,
-          childOrder: getArticleDto.childCommentOrder,
-          limit: getArticleDto.commentLimit,
+          childLimit: getSeriesDto.childCommentLimit,
+          order: getSeriesDto.commentOrder,
+          childOrder: getSeriesDto.childCommentOrder,
+          limit: getSeriesDto.commentLimit,
         },
         authUser,
         false
       );
     }
-    const jsonArticle = article.toJSON();
-    const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
+    const jsonArticle = series.toJSON();
+    const articlesBindedData = await this._postBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
-      shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+    const result = this._classTransformer.plainToInstance(SeriesResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
     return result[0];
   }
-
-  /**
-   * Get Series By Id
-   * @throws HttpException
-   * @param id string
-   * @returns Promise resolve SeriesResponseDto
-   */
-  public async getById(id: string): Promise<SeriesResponseDto> {
-    try {
-      const series = await this._postModel.findOne<PostModel>({
-        where: { id: id },
-      });
-      const jsonSeries = series.toJSON();
-      return this._classTransformer.plainToInstance(SeriesResponseDto, jsonSeries, {
-        excludeExtraneousValues: true,
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
-      throw error;
-    }
-  }
-
   /**
    * Create Series
    * @param authUser UserDto
@@ -169,6 +169,7 @@ export class SeriesService {
           updatedBy: authUserId,
           isDraft: false,
           cover: coverMedia.id,
+          type: PostType.SERIES,
         },
         { transaction }
       );
@@ -224,29 +225,70 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async delete(authUser: UserDto, seriesId: string): Promise<boolean> {
-    let transaction;
+  public async delete(authUser: UserDto, seriesId: string): Promise<IPost> {
+    const transaction = await this._sequelizeConnection.transaction();
     try {
-      const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
-      const series = await this.getById(seriesId);
-      transaction = await this._sequelizeConnection.transaction();
-      await this._postModel.destroy({
+      const series = await this._postModel.findOne({
         where: {
-          id: series.id,
-          createdBy: authUserId,
+          id: seriesId,
         },
-        transaction,
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
+        ],
       });
+
+      if (!series) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      }
+      if (series.isDraft === false) {
+        await this._authorityService.checkCanDeletePost(
+          authUser,
+          series.groups.map((g) => g.groupId),
+          series.createdBy
+        );
+      }
+
+      if (series.isDraft) {
+        await Promise.all([
+          this._postGroupModel.destroy({
+            where: {
+              postId: seriesId,
+            },
+          }),
+          this._reactionService.deleteByPostIds([seriesId]),
+          this._commentService.deleteCommentsByPost(seriesId, transaction),
+          this._feedService.deleteNewsFeedByPost(seriesId, transaction),
+          this._feedService.deleteUserSeenByPost(seriesId, transaction),
+          this._postSeriesModel.destroy({ where: { postId: seriesId }, transaction }),
+          this._userMarkReadPostModel.destroy({ where: { seriesId }, transaction }),
+        ]);
+        await this._postModel.destroy({
+          where: {
+            id: seriesId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+          force: true,
+        });
+      } else {
+        await this._postModel.destroy({
+          where: {
+            id: seriesId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+        });
+      }
       await transaction.commit();
-      return true;
+
+      return series;
     } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
+      await transaction.rollback();
       throw error;
     }
   }
@@ -308,22 +350,5 @@ export class SeriesService {
         { transaction }
       );
     }
-  }
-
-  public async checkValid(seriesIds: string[], userId: string): Promise<void> {
-    const seriesCount = await this._postModel.count({
-      where: {
-        id: seriesIds,
-        createdBy: userId,
-      },
-    });
-    if (seriesCount < seriesIds.length) {
-      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_INVALID_PARAMETER);
-    }
-  }
-
-  public async updateTotalArticle(seriesIds: string[]): Promise<void> {
-    if (seriesIds.length === 0) return;
-   // return SeriesModel.updateTotalArticle(seriesIds);
   }
 }

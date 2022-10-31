@@ -55,6 +55,7 @@ import { HealthModule } from '../modules/health/health.module';
     HashtagModule,
     ScheduleModule.forRoot(),
     HealthModule,
+    SeriesModule,
   ],
   controllers: [AppController],
   providers: [],

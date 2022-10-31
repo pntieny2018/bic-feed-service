@@ -286,14 +286,14 @@ export class ArticleService extends PostService {
       limit,
     });
     const jsonArticles = rows.map((r) => r.toJSON());
-    const postsBindedData = await this.postBinding.bindRelatedData(jsonArticles, {
+    const articlesBindedData = await this.articleBinding.bindRelatedData(jsonArticles, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
-    const result = this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
 
