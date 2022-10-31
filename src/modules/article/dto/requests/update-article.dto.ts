@@ -5,7 +5,7 @@ import { Expose, Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
 
-class CoverMediaDto {
+export class CoverMediaDto {
   public id: string;
 }
 export class UpdateArticleDto extends UpdatePostDto {
@@ -70,9 +70,9 @@ export class UpdateArticleDto extends UpdatePostDto {
       id: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
   @Expose({
     name: 'cover_media',
   })
-  public coverMedia?: CoverMediaDto;
+  public coverMedia: CoverMediaDto;
 }

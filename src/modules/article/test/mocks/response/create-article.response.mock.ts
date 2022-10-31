@@ -1,7 +1,9 @@
+import { PostType } from '../../../../../database/models/post.model';
+
 export const mockedArticleCreated = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   isDraft: true,
-  isArticle: true,
+  type: PostType.ARTICLE,
   content: 'bbbbbb',
   hashtags: ['hashtag1'],
   title: 'aaa',

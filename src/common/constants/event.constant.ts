@@ -14,6 +14,10 @@ export const ArticleHasBeenPublished = 'article.has.been.published';
 export const ArticleHasBeenDeleted = 'article.has.been.deleted';
 export const ArticleVideoHasBeenPublished = 'article_video.has.been.published';
 export const ArticleVideoHasBeenFailed = 'article_video.has.been.failed';
+
+export const SeriesHasBeenUpdated = 'series.has.been.updated';
+export const SeriesHasBeenPublished = 'series.has.been.published';
+export const SeriesHasBeenDeleted = 'series.has.been.deleted';
 // comment
 export const CommentWillBeCreated = 'comment.will.be.created';
 export const CommentWillBeUpdated = 'comment.will.be.updated';

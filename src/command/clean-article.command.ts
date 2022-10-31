@@ -1,16 +1,14 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../database/models/post.model';
+import { PostModel, PostType } from '../database/models/post.model';
 import { PostService } from '../modules/post/post.service';
 import { PostEditedHistoryModel } from '../database/models/post-edited-history.model';
-import { SeriesModel } from '../database/models/series.model';
 
 @Command({ name: 'clean-article', description: 'Clean all article' })
 export class CleanArticleCommand implements CommandRunner {
   public constructor(
     @InjectModel(PostModel) private _postModel: typeof PostModel,
     @InjectModel(PostEditedHistoryModel) private _postHistoryModel: typeof PostEditedHistoryModel,
-    @InjectModel(SeriesModel) private _seriesModel: typeof SeriesModel,
     private _postService: PostService
   ) {}
 
@@ -19,7 +17,7 @@ export class CleanArticleCommand implements CommandRunner {
       const posts = await this._postModel.findAll({
         attributes: ['id'],
         where: {
-          isArticle: true,
+          type: PostType.ARTICLE,
         },
         paranoid: false,
       });
@@ -38,8 +36,6 @@ export class CleanArticleCommand implements CommandRunner {
           postId: postIds,
         },
       });
-
-      await this._seriesModel.destroy({ where: { isActive: true } });
 
       console.log(`Deleted ${posts.length} articles. Done`);
     } catch (e) {

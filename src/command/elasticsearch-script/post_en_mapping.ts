@@ -137,8 +137,8 @@ export const POST_EN_MAPPING = {
           },
         },
       },
-      isArticle: {
-        type: 'boolean',
+      type: {
+        type: 'keyword',
       },
       createdAt: {
         type: 'date',

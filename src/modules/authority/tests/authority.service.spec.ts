@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthorityService } from '../authority.service';
 import { GroupService } from '../../../shared/group';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Post } from '@nestjs/common';
 import { GroupPrivacy, GroupSharedDto } from '../../../shared/group/dto';
-import { PostPrivacy } from '../../../database/models/post.model';
+import { PostPrivacy, PostType } from '../../../database/models/post.model';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { AuthorityFactory } from '../authority.factory';
 
@@ -128,7 +128,7 @@ describe.skip('AuthorityService', () => {
         content: '',
         createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
-        isArticle: false,
+        type: PostType.POST,
         isDraft: false,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
@@ -151,7 +151,7 @@ describe.skip('AuthorityService', () => {
           content: '',
           createdBy: '00000000-0000-0000-0000-000000000000',
           id: '',
-          isArticle: false,
+          type: PostType.POST,
           isDraft: false,
           isImportant: false,
           updatedBy: '00000000-0000-0000-0000-000000000000',
@@ -193,7 +193,7 @@ describe.skip('AuthorityService', () => {
         content: '',
         createdBy: '853ab699-ee44-42ab-b98d-d190c4af66ee',
         id: '',
-        isArticle: false,
+        type: PostType.POST,
         isDraft: false,
         isImportant: false,
         totalUsersSeen: 0,
