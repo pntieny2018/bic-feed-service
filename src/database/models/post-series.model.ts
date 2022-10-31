@@ -9,7 +9,6 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { SeriesModel } from './series.model';
 import { PostModel } from './post.model';
 
 export interface IPostSeries {
@@ -29,7 +28,7 @@ export class PostSeriesModel extends Model implements IPostSeries {
   @Column
   public postId: string;
 
-  @ForeignKey(() => SeriesModel)
+  @ForeignKey(() => PostModel)
   @PrimaryKey
   @IsUUID()
   @Column
@@ -38,9 +37,8 @@ export class PostSeriesModel extends Model implements IPostSeries {
   @BelongsTo(() => PostModel)
   public post?: PostModel;
 
-  @BelongsTo(() => SeriesModel)
-  public series?: SeriesModel;
-
+  @BelongsTo(() => PostModel)
+  public series?: PostModel;
   @CreatedAt
   @Column
   public createdAt?: Date;

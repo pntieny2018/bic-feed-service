@@ -18,7 +18,7 @@ import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { IPost } from '../../database/models/post.model';
+import { IPost, PostType } from '../../database/models/post.model';
 import {
   IPostResponseElasticsearch,
   IPostElasticsearch,
@@ -28,14 +28,14 @@ export type DataPostToAdd = {
   id: string;
   commentsCount: number;
   totalUsersSeen: number;
-  content: string;
-  media: MediaFilterResponseDto;
-  mentions: UserMentionDto;
+  content?: string;
+  media?: MediaFilterResponseDto;
+  mentions?: UserMentionDto;
   audience: AudienceResponseDto;
-  setting: PostSettingDto;
+  setting?: PostSettingDto;
   createdAt: Date;
   actor: UserSharedDto;
-  isArticle: boolean;
+  type: PostType;
   title?: string;
   summary?: string;
 };
@@ -76,9 +76,10 @@ export class PostSearchService {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
-      if (post.isArticle) {
+      if (post.type === PostType.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
-      } else {
+      }
+      if (post.type === PostType.POST) {
         post.content = StringHelper.removeMarkdownCharacter(post.content);
       }
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -130,9 +131,10 @@ export class PostSearchService {
   public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      if (dataIndex.isArticle) {
+      if (dataIndex.type === PostType.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
-      } else {
+      }
+      if (dataIndex.type === PostType.POST) {
         dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
       }
 
@@ -188,7 +190,7 @@ export class PostSearchService {
       const source: IPostResponseElasticsearch = {
         id: item._source.id,
         audience: item._source.audience,
-        isArticle: item._source.isArticle,
+        type: item._source.type,
         media: item._source.media,
         content: item._source.content.text,
         title: item._source.title?.text || null,

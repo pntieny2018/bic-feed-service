@@ -38,10 +38,6 @@ export class ArticleListener {
     const { article } = event.payload;
     if (article.isDraft) return;
 
-    if (article.series?.length > 0) {
-      this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
-    }
-
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
@@ -65,7 +61,7 @@ export class ArticleListener {
       setting,
       audience,
       createdAt,
-      isArticle,
+      type,
       title,
       summary,
     } = article;
@@ -83,17 +79,10 @@ export class ArticleListener {
         this._sentryService.captureException(e);
       });
 
-    if (article.series?.length > 0) {
-      this._seriesService.updateTotalArticle(article.series.map((c) => c.id)).catch((e) => {
-        this._logger.error(e, e?.stack);
-        this._sentryService.captureException(e);
-      });
-    }
-
     this._postSearchService.addPostsToSearch([
       {
         id,
-        isArticle,
+        type,
         commentsCount,
         totalUsersSeen,
         content,
@@ -136,7 +125,7 @@ export class ArticleListener {
       mentions,
       setting,
       audience,
-      isArticle,
+      type,
       createdAt,
       lang,
       summary,
@@ -157,16 +146,6 @@ export class ArticleListener {
       });
     }
 
-    let seriesIds = [];
-    if (oldArticle.series?.length > 0) {
-      seriesIds = oldArticle.series.map((c) => c.id);
-    }
-
-    if (newArticle.series?.length > 0) {
-      seriesIds.push(...newArticle.series.map((c) => c.id));
-    }
-    this._seriesService.updateTotalArticle(seriesIds);
-
     if (isDraft) return;
 
     this._postServiceHistory
@@ -180,7 +159,7 @@ export class ArticleListener {
     this._postSearchService.updatePostsToSearch([
       {
         id,
-        isArticle,
+        type,
         commentsCount,
         totalUsersSeen,
         content,
@@ -238,7 +217,7 @@ export class ArticleListener {
         setting,
         audience,
         createdAt,
-        isArticle,
+        type,
         summary,
         title,
       } = article;
@@ -246,7 +225,7 @@ export class ArticleListener {
       this._postSearchService.addPostsToSearch([
         {
           id,
-          isArticle,
+          type,
           commentsCount,
           totalUsersSeen,
           content,
@@ -260,10 +239,6 @@ export class ArticleListener {
           title,
         },
       ]);
-
-      if (article.series?.length > 0) {
-        this._seriesService.updateTotalArticle(article.series.map((c) => c.id));
-      }
 
       try {
         this._feedPublisherService.fanoutOnWrite(

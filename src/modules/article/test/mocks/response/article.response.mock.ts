@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy, PostType } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { ArticleResponseDto } from '../../../dto/responses';
 
@@ -9,7 +9,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
   summary: 'bbb',
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
-  isArticle: true,
+  type: PostType.ARTICLE,
   isLocked: true,
   media: {
     files: [],
@@ -94,7 +94,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
 export const mockedArticleData = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   commentsCount: 3,
-  isArticle: true,
+  type: PostType.ARTICLE,
   isImportant: false,
   importantExpiredAt: null,
   isDraft: true,

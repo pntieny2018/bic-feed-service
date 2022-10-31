@@ -143,8 +143,8 @@ export const POST_VI_MAPPING = {
           },
         },
       },
-      isArticle: {
-        type: 'boolean',
+      type: {
+        type: 'keyword',
       },
       createdAt: {
         type: 'date',

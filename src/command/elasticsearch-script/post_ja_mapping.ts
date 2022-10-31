@@ -130,8 +130,8 @@ export const POST_JA_MAPPING = {
           },
         },
       },
-      isArticle: {
-        type: 'boolean',
+      type: {
+        type: 'keyword',
       },
       createdAt: {
         type: 'date',

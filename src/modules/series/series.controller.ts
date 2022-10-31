@@ -1,13 +1,23 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
-import { PageDto } from '../../common/dto';
-import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
-import { SeriesResponseDto } from './dto/responses';
-import { SeriesService } from './series.service';
-import { GetSeriesPipe } from './pipes';
-import { ResponseMessages } from '../../common/decorators';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { AuthUser, UserDto } from '../auth';
+import { SeriesAppService } from './application/series.app-service';
+import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+
+import { SeriesResponseDto } from './dto/responses';
+import { GetSeriesPipe } from './pipes';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -16,19 +26,19 @@ import { AuthUser, UserDto } from '../auth';
   path: 'series',
 })
 export class SeriesController {
-  private _logger = new Logger(SeriesController.name);
+  public constructor(private _seriesAppService: SeriesAppService) {}
 
-  public constructor(private _seriesService: SeriesService) {}
-
-  @ApiOperation({ summary: 'Get series' })
-  @ResponseMessages({
-    success: 'Get series successfully',
+  @ApiOperation({ summary: 'Get series detail' })
+  @ApiOkResponse({
+    type: SeriesResponseDto,
   })
-  @Get('/')
-  public get(
-    @Query(GetSeriesPipe) getSeriesDto: GetSeriesDto
-  ): Promise<PageDto<SeriesResponseDto>> {
-    return this._seriesService.get(getSeriesDto);
+  @Get('/:id')
+  public async get(
+    @AuthUser(false) user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(GetSeriesPipe) getPostDto: GetSeriesDto
+  ): Promise<SeriesResponseDto> {
+    return this._seriesAppService.getSeriesDetail(user, id, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create series' })
@@ -37,17 +47,12 @@ export class SeriesController {
     description: 'Create series successfully',
   })
   @Post('/')
+  @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
     @Body() createSeriesDto: CreateSeriesDto
-  ): Promise<SeriesResponseDto> {
-    const created = await this._seriesService.create(user, createSeriesDto);
-    if (created) {
-      const result = await this._seriesService.getById(created.id);
-      if (result) {
-        return result;
-      }
-    }
+  ): Promise<any> {
+    return this._seriesAppService.createSeries(user, createSeriesDto);
   }
 
   @ApiOperation({ summary: 'Update series' })
@@ -56,28 +61,25 @@ export class SeriesController {
     description: 'Update series successfully',
   })
   @Put('/:id')
+  @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id') seriesId: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSeriesDto: UpdateSeriesDto
-  ): Promise<SeriesResponseDto> {
-    const isUpdated = await this._seriesService.update(user, seriesId, updateSeriesDto);
-    if (isUpdated) {
-      return this._seriesService.getById(seriesId);
-    }
+  ): Promise<void> {
+    return this._seriesAppService.updateSeries(user, id, updateSeriesDto);
   }
 
   @ApiOperation({ summary: 'Delete series' })
   @ApiOkResponse({
-    type: SeriesResponseDto,
+    type: Boolean,
     description: 'Delete series successfully',
   })
   @Delete('/:id')
-  public async delete(@AuthUser() user: UserDto, @Param('id') seriesId: string): Promise<boolean> {
-    const isDeleted = await this._seriesService.delete(user, seriesId);
-    if (isDeleted) {
-      return isDeleted;
-    }
-    return false;
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<boolean> {
+    return this._seriesAppService.deleteSeries(user, id);
   }
 }

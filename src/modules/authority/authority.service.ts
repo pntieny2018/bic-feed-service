@@ -173,6 +173,14 @@ export class AuthorityService {
     return this.checkIsPublicPost(post);
   }
 
+  public async checkCanReadSeries(user: UserDto, post: IPost): Promise<void> {
+    return this.checkCanReadPost(user, post);
+  }
+
+  public async checkIsPublicSeries(post: IPost): Promise<void> {
+    return this.checkIsPublicPost(post);
+  }
+
   private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);

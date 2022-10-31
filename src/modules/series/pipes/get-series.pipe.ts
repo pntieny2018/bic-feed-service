@@ -1,23 +1,27 @@
-import { GetSeriesDto, OrderFields } from '../dto/requests';
+import { GetSeriesDto } from '../dto/requests';
 import { Injectable, PipeTransform } from '@nestjs/common';
+import { OrderEnum } from '../../../common/dto';
 
 @Injectable()
 export class GetSeriesPipe implements PipeTransform {
   public transform(getSeriesDto: GetSeriesDto): GetSeriesDto {
-    if (!getSeriesDto.limit) {
-      getSeriesDto.limit = 10;
+    if (!getSeriesDto.commentOrder) {
+      getSeriesDto.commentOrder = OrderEnum.DESC;
+    }
+    if (!getSeriesDto.childCommentOrder) {
+      getSeriesDto.childCommentOrder = OrderEnum.DESC;
     }
 
-    if (!getSeriesDto.offset) {
-      getSeriesDto.offset = 0;
+    if (!getSeriesDto.commentLimit) {
+      getSeriesDto.commentLimit = 10;
     }
 
-    if (!getSeriesDto.orderField) {
-      getSeriesDto.orderField = OrderFields[0]; // default if empty
+    if (!getSeriesDto.childCommentLimit) {
+      getSeriesDto.childCommentLimit = 0;
     }
 
-    if (!OrderFields.includes(getSeriesDto.orderField)) {
-      getSeriesDto.orderField = OrderFields[0]; // default if wrong param
+    if (!getSeriesDto.withComment) {
+      getSeriesDto.withComment = false;
     }
 
     return getSeriesDto;
