@@ -121,27 +121,23 @@ describe('CategoryService', () => {
 
   describe('CategoryService.create', () => {
     it('should return category', async () => {
-      const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
 
       categoryModel.findOne.mockResolvedValue(modelGetResult[0]);
       categoryModel.create.mockResolvedValue(createCategoryDto);
 
       const categories = await categoryService.create(authUserMock, createCategoryDto)
 
-      expect(logSpy).toBeCalled();
       expect(categoryModel.findOne).toBeCalled();
       expect(categoryModel.create).toBeCalled();
       expect(categories).toEqual(createCategoryDto);
     });
 
     it('fail when create level 0', async () => {
-      const logSpy = jest.spyOn(categoryService['_logger'], 'debug').mockReturnThis();
       const createCategoryDto2 = createCategoryDto
       createCategoryDto2.parentId = '00000000-0000-0000-0000-000000000000'
       try {
         await categoryService.create(authUserMock, createCategoryDto2)
       } catch (e) {
-        expect(logSpy).toBeCalled();
         expect(e).toBeInstanceOf(LogicException);
         expect((e as LogicException).message).toEqual(HTTP_STATUS_ID.APP_CATEGORY_NOT_ALLOW);
       }

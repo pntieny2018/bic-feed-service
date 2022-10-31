@@ -5,7 +5,7 @@ describe('GetPostPipe.transform', () => {
 
   it('expect transform', async () => {
     return expect(pipe.transform({})).toEqual({
-      "childCommentLimit": 10,
+      "childCommentLimit": 0,
       "childCommentOrder": "DESC",
       "commentLimit": 10,
       "commentOrder": "DESC",

@@ -13,16 +13,18 @@ import { Transaction } from 'sequelize';
 import { EntityType } from '../media.constants';
 import { KAFKA_PRODUCER } from '../../../common/constants';
 import { ClientKafka } from '@nestjs/microservices';
+import { PostModel } from '../../../database/models/post.model';
 
 describe('MediaService', () => {
   let service: MediaService;
   let mediaModel;
   let postMediaModel;
   let commentMediaModel;
+  let postModel;
   let sentryService;
   let transactionMock;
   let sequelize;
-  let kafkaProducer: ClientKafka;
+  let clientKafka: ClientKafka;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,6 +45,18 @@ describe('MediaService', () => {
         { provide: Sequelize, useValue: { query: jest.fn(), transaction: jest.fn() } },
         {
           provide: getModelToken(MediaModel),
+          useValue: {
+            findOne: jest.fn(),
+            findAndCountAll: jest.fn(),
+            findAll: jest.fn(),
+            update: jest.fn(),
+            create: jest.fn(),
+            destroy: jest.fn(),
+            bulkCreate: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostModel),
           useValue: {
             findOne: jest.fn(),
             findAndCountAll: jest.fn(),
@@ -85,9 +99,10 @@ describe('MediaService', () => {
     sequelize = module.get<Sequelize>(Sequelize)
     mediaModel = module.get<typeof MediaModel>(getModelToken(MediaModel));
     postMediaModel = module.get<typeof PostMediaModel>(getModelToken(PostMediaModel));
+    postModel = module.get<typeof PostModel>(getModelToken(PostModel));
     commentMediaModel = module.get<typeof CommentMediaModel>(getModelToken(CommentMediaModel));
     sentryService = module.get<SentryService>(SentryService);
-    kafkaProducer = module.get<ClientKafka>(KAFKA_PRODUCER);
+    clientKafka = module.get<ClientKafka>(KAFKA_PRODUCER);
     transactionMock = createMock<Transaction>({
       rollback: jest.fn(),
       commit: jest.fn(),
@@ -99,12 +114,45 @@ describe('MediaService', () => {
     expect(service).toBeDefined();
   });
 
+
+  describe('processVideo', () => {
+    it('Should successfully', async () => {
+      clientKafka.emit = jest.fn().mockResolvedValue(Promise.resolve());
+      service.updateData = jest.fn().mockResolvedValue(Promise.resolve());
+
+      await service.processVideo([
+        '4cfcadc9-a8f9-49f4-b037-bd02ce96022d',
+        '658a1165-ae1d-4e4b-b369-d3c296533fb2',
+      ]);
+
+      expect(clientKafka.emit).toBeCalledTimes(1);
+      expect(service.updateData).toBeCalledTimes(1);
+    });
+
+    it('Should failed if have an error connecting to DB', async () => {
+      clientKafka.emit = jest.fn().mockResolvedValue(Promise.resolve());
+      service.updateData = jest.fn().mockRejectedValue(new Error('Error when connect to DB'));
+      sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
+
+      try {
+        await service.processVideo([
+          '4cfcadc9-a8f9-49f4-b037-bd02ce96022d',
+          '658a1165-ae1d-4e4b-b369-d3c296533fb2',
+        ]);
+      } catch (e) {
+        expect(e?.message).toEqual('Error when connect to DB');
+      }
+
+      expect(service.updateData).toBeCalledTimes(1);
+      expect(clientKafka.emit).toBeCalledTimes(1);
+      expect(sentryService.captureException).toBeCalledTimes(1);
+    });
+  });
+  
   describe('MediaService.create', () => {
     it('should return create if success', async () => {
-      const logSpy = jest.spyOn(service['_logger'], 'debug').mockReturnThis();
       mediaModel.create.mockResolvedValue(createMediaDtoMock)
       const returnValue = await service.create(mockUserDto, createMediaDtoMock)
-      expect(logSpy).toBeCalled()
       expect(mediaModel.create).toBeCalled()
       expect(returnValue).toEqual(createMediaDtoMock)
     });
@@ -136,19 +184,10 @@ describe('MediaService', () => {
     it('should return create if success', async () => {
       mediaModel.findAll.mockResolvedValue(Promise.resolve([]))
       mediaModel.bulkCreate.mockResolvedValue(Promise.resolve([]))
-      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, '8c846fe3-a615-42ae-958a-33a43d24a033', transactionMock)
+      const returnValue = await service.createIfNotExist({images: [], files: [], videos: []}, '8c846fe3-a615-42ae-958a-33a43d24a033')
       expect(mediaModel.findAll).toBeCalled()
       expect(mediaModel.bulkCreate).toBeCalled()
       expect(returnValue).toEqual([])
-    });
-  })
-
-  describe('MediaService.countMediaByPost', () => {
-    it('should return if success', async () => {
-      postMediaModel.count.mockResolvedValue(Promise.resolve(1))
-      const returnValue = await service.countMediaByPost('12123')
-      expect(postMediaModel.count).toBeCalled()
-      expect(returnValue).toEqual(1)
     });
   })
 
@@ -157,15 +196,6 @@ describe('MediaService', () => {
       mediaModel.update.mockResolvedValue(Promise.resolve({}))
       const returnValue = await service.updateData(['12123'], { status: MediaStatus.COMPLETED })
       expect(mediaModel.update).toBeCalled()
-    });
-  })
-
-  describe('MediaService.updateMediaDraft', () => {
-    it('should return if success', async () => {
-      sequelize.query.mockResolvedValue(Promise.resolve({}))
-      const returnValue = await service.updateMediaDraft([1], null)
-      expect(sequelize.query).toBeCalled()
-      expect(returnValue).toEqual(true)
     });
   })
 

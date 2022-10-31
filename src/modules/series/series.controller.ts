@@ -28,7 +28,6 @@ export class SeriesController {
   public get(
     @Query(GetSeriesPipe) getSeriesDto: GetSeriesDto
   ): Promise<PageDto<SeriesResponseDto>> {
-    this._logger.debug('get series');
     return this._seriesService.get(getSeriesDto);
   }
 

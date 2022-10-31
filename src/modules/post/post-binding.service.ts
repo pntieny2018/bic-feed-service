@@ -1,7 +1,6 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { CommentService } from '../comment';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
@@ -9,6 +8,11 @@ import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
 import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
 import { UserDto } from '../auth';
+import { ReactionService } from '../reaction';
+import { MentionService } from '../mention';
+import { PostResponseDto } from './dto/responses';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+
 @Injectable()
 export class PostBindingService {
   /**
@@ -30,30 +34,75 @@ export class PostBindingService {
     protected postModel: typeof PostModel,
     protected userService: UserService,
     protected groupService: GroupService,
-    @Inject(forwardRef(() => CommentService))
-    protected commentService: CommentService,
+    @Inject(forwardRef(() => ReactionService))
+    protected reactionService: ReactionService,
+    protected mentionService: MentionService,
+    protected linkPreviewService: LinkPreviewService,
     protected readonly sentryService: SentryService
   ) {}
 
   /**
    * Bind Audience To Post.Groups
-   * @param posts Array of post
-   * @returns Promise resolve void
-   * @throws HttpException
    */
 
-  public async bindAudienceToPost(posts: any[], hideSecretGroupForUser?: UserDto): Promise<void> {
+  public async bindRelatedData(
+    posts: any[],
+    options?: {
+      shouldBindActor?: boolean;
+      shouldBindMention?: boolean;
+      shouldBindAudience?: boolean;
+      shouldBindReaction?: boolean;
+      shouldHideSecretAudienceCanNotAccess?: boolean;
+      authUser?: UserDto;
+    }
+  ): Promise<PostResponseDto[]> {
+    if (posts.length === 0) return [];
+    const processList = [];
+    if (options?.shouldBindActor) {
+      processList.push(this.bindActor(posts));
+    }
+    if (options?.shouldBindMention) {
+      processList.push(this.mentionService.bindToPosts(posts));
+    }
+    if (options?.shouldBindAudience) {
+      processList.push(
+        this.bindAudience(posts, {
+          shouldHideSecretAudienceCanNotAccess:
+            options?.shouldHideSecretAudienceCanNotAccess ?? false,
+          authUser: options?.authUser ?? null,
+        })
+      );
+    }
+    if (options?.shouldBindReaction) {
+      processList.push(this.reactionService.bindToPosts(posts));
+    }
+    if (processList.length === 0) return [];
+    await Promise.all(processList);
+    return posts;
+  }
+
+  public async bindAudience(
+    posts: any[],
+    options?: {
+      shouldHideSecretAudienceCanNotAccess?: boolean;
+      authUser?: UserDto;
+    }
+  ): Promise<void> {
     //get all groups in onetime
     const dataGroups = await this._getGroupsByPosts(posts);
     for (const post of posts) {
       const postGroupIds = this._getGroupIdsByPost(post);
       const mappedGroups = dataGroups
         .filter((dataGroup) => {
-          if (!postGroupIds.includes(dataGroup.id)) return false;
+          const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
+          if (isPostOutOfScope) return false;
+
+          const isUserNotInGroup = !options?.authUser?.profile.groups.includes(dataGroup.id);
+          const isGuest = !options?.authUser;
           if (
-            hideSecretGroupForUser &&
+            options?.shouldHideSecretAudienceCanNotAccess &&
             dataGroup.privacy === GroupPrivacy.SECRET &&
-            !hideSecretGroupForUser.profile.groups.includes(dataGroup.id)
+            (isUserNotInGroup || isGuest)
           ) {
             return false;
           }
@@ -97,11 +146,8 @@ export class PostBindingService {
 
   /**
    * Bind Actor info to post.createdBy
-   * @param posts Array of post
-   * @returns Promise resolve void
-   * @throws HttpException
    */
-  public async bindActorToPost(posts: any[]): Promise<void> {
+  public async bindActor(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
       if (post.actor?.id) {
@@ -122,12 +168,8 @@ export class PostBindingService {
 
   /**
    * Bind data info to post
-   * @param posts Array of post
-   * @param objects {commentsCount: boolean, totalUsersSeen: boolean}
-   * @returns Promise resolve void
-   * @throws HttpException
    */
-  public async bindPostData(
+  public async bindAttributes(
     posts: any[],
     attributes: Array<'content' | 'commentsCount' | 'totalUsersSeen' | 'setting'>
   ): Promise<void> {
@@ -141,10 +183,13 @@ export class PostBindingService {
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      if (attributes['content']) post.content = findPost?.content || '';
-      if (attributes['commentsCount']) post.commentsCount = findPost?.commentsCount || 0;
-      if (attributes['totalUsersSeen']) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (attributes['setting']) {
+      if (attributes.includes('content')) post.content = findPost?.content || '';
+      if (attributes.includes('commentsCount')) {
+        post.commentsCount = findPost?.commentsCount || 0;
+      }
+      if (attributes.includes('totalUsersSeen'))
+        post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+      if (attributes.includes('setting')) {
         post.setting = {
           importantExpiredAt: findPost.importantExpiredAt,
           isImportant: findPost.isImportant,

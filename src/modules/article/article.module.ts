@@ -14,12 +14,17 @@ import { HashtagModule } from '../hashtag';
 import { SeriesModule } from '../series';
 import { CanUseCategoryConstraint } from './validators/can-use-category.validator';
 import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
+import { FeedModule } from '../feed';
+import { LinkPreviewModule } from '../link-preview/link-preview.module';
+import { ArticleBindingService } from './article-binding.service';
+import { ArticleAppService } from './application/article.app-service';
 @Module({
   imports: [
     PostModule,
     UserModule,
     GroupModule,
     MediaModule,
+    FeedModule,
     MentionModule,
     CategoryModule,
     HashtagModule,
@@ -27,9 +32,16 @@ import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
     forwardRef(() => ReactionModule),
     AuthorityModule,
     forwardRef(() => CommentModule),
+    forwardRef(() => LinkPreviewModule),
   ],
   controllers: [ArticleController],
-  providers: [ArticleService, CanUseCategoryConstraint, CanUseSeriesConstraint],
+  providers: [
+    ArticleService,
+    ArticleAppService,
+    ArticleBindingService,
+    CanUseCategoryConstraint,
+    CanUseSeriesConstraint,
+  ],
   exports: [ArticleService],
 })
 export class ArticleModule {}

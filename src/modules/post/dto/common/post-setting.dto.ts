@@ -69,7 +69,7 @@ export class PostSettingDto {
     name: 'important_expired_at',
   })
   @ValidateIf((i) => i.isImportant === true)
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
   @Expose({
     name: 'important_expired_at',

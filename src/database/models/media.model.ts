@@ -3,7 +3,6 @@ import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
-  AutoIncrement,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -42,7 +41,6 @@ export interface IMedia {
   createdBy: string;
   url: string;
   type: MediaType;
-  isDraft: boolean;
   posts?: PostModel[];
   comments?: CommentModel[];
   createdAt?: Date;
@@ -74,10 +72,6 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @Column
   public type: MediaType;
 
-  @Column
-  @ApiProperty()
-  public isDraft: boolean;
-
   @AllowNull(false)
   @Column
   public createdBy: string;
@@ -88,8 +82,13 @@ export class MediaModel extends Model<IMedia, Optional<IMedia, 'id'>> implements
   @HasMany(() => PostMediaModel)
   public posts: PostModel[];
 
-  @BelongsToMany(() => CommentModel, () => CommentMediaModel)
+  @HasMany(() => CommentMediaModel)
   public comments: CommentModel[];
+
+  @HasMany(() => PostModel, {
+    foreignKey: 'cover',
+  })
+  public postCovers: PostModel[];
 
   @Column
   public name: string;

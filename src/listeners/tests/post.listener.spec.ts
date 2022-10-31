@@ -1,37 +1,33 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { SentryService } from '@app/sentry';
-import { PostListener } from '../post';
-import { PostService } from '../../modules/post/post.service';
-import { FeedPublisherService } from '../../modules/feed-publisher';
-import { UserService } from '../../shared/user';
-import { Sequelize } from 'sequelize-typescript';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { PostActivityService } from '../../notification/activities';
-import { NotificationService } from '../../notification';
-import { MediaService } from '../../modules/media';
-import { FeedService } from '../../modules/feed/feed.service';
-import { SeriesService } from '../../modules/series/series.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Sequelize } from 'sequelize-typescript';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
+  PostHasBeenUpdatedEvent
 } from '../../events/post';
-import {
-  PostHasBeenDeletedEventPayload,
-  PostHasBeenPublishedEventPayload,
-} from '../../events/post/payload';
-import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import {
-  ProcessVideoResponseDto,
-  VideoProcessingEndDto,
-} from '../../modules/post/dto/responses/process-video-response.dto';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+import { FeedService } from '../../modules/feed/feed.service';
+import { MediaService } from '../../modules/media';
+import {
+  VideoProcessingEndDto
+} from '../../modules/post/dto/responses/process-video-response.dto';
+import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostSearchService } from '../../modules/post/post-search.service';
+import { PostService } from '../../modules/post/post.service';
+import { SeriesService } from '../../modules/series/series.service';
+import { NotificationService } from '../../notification';
+import { PostActivityService } from '../../notification/activities';
+import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
+import { PostListener } from '../post';
 
 describe('PostListener', () => {
   let postListener;
   let postService;
+  let postHistoryService;
   let feedPublisherService;
   let sentryService;
   let elasticsearchService;
@@ -54,6 +50,10 @@ describe('PostListener', () => {
             index: jest.fn(),
             update: jest.fn(),
           },
+        },
+        {
+          provide: PostHistoryService,
+          useValue: {},
         },
         {
           provide: FeedPublisherService,
@@ -79,10 +79,9 @@ describe('PostListener', () => {
           provide: PostService,
           useValue: {
             deletePostEditedHistory: jest.fn(),
-            processVideo: jest.fn(),
-            savePostEditedHistory: jest.fn(),
-            getPostsByMedia: jest.fn(),
-            updatePostStatus: jest.fn(),
+            saveEditedHistory: jest.fn(),
+            getsByMedia: jest.fn(),
+            updateStatus: jest.fn(),
           },
         },
         {
@@ -121,6 +120,7 @@ describe('PostListener', () => {
     }).compile();
 
     postListener = module.get<PostListener>(PostListener);
+    postHistoryService = module.get<PostHistoryService>(PostHistoryService);
     elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
     feedPublisherService = module.get<FeedPublisherService>(FeedPublisherService);
     postActivityService = module.get<PostActivityService>(PostActivityService);
@@ -205,26 +205,26 @@ describe('PostListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
-      postService.savePostEditedHistory.mockResolvedValue();
+      postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
       await postListener.onPostPublished(postHasBeenPublishedEvent);
       expect(loggerSpy).toBeCalled();
       expect(postActivityService.createPayload).toBeCalled();
-      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(postService.saveEditedHistory).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
     });
-    it('should success even if postService.savePostEditedHistory', async () => {
+    it('should success even if postService.saveEditedHistory', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
-      postService.savePostEditedHistory.mockRejectedValue();
+      postService.saveEditedHistory.mockRejectedValue();
       elasticsearchService.index.mockResolvedValue();
       await postListener.onPostPublished(postHasBeenPublishedEvent);
       expect(loggerSpy).toBeCalled();
       expect(postActivityService.createPayload).toBeCalled();
-      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(postService.saveEditedHistory).toBeCalled();
       expect(sentryService.captureException).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
     });
@@ -238,15 +238,15 @@ describe('PostListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
-      postService.savePostEditedHistory.mockResolvedValue();
+      postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
       await postListener.onPostUpdated(postHasBeenUpdatedEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.processVideo).toBeCalled();
+      expect(mediaService.processVideo).toBeCalled();
       expect(postActivityService.createPayload).toBeCalled();
-      expect(postService.savePostEditedHistory).toBeCalled();
+      expect(postService.saveEditedHistory).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
     });
   });
@@ -260,7 +260,7 @@ describe('PostListener', () => {
     postVideoSuccessEvent.payload.properties.codec = '1212'
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.getPostsByMedia.mockResolvedValue([
+      postService.getsByMedia.mockResolvedValue([
         { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
         { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
       ]);
@@ -269,7 +269,7 @@ describe('PostListener', () => {
       postSearchService.addPostsToSearch = jest.fn().mockResolvedValue(null)
       await postListener.onPostVideoSuccess(postVideoSuccessEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.getPostsByMedia).toBeCalled();
+      expect(postService.getsByMedia).toBeCalled();
       expect(postService.updatePostStatus).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
     });
@@ -283,17 +283,15 @@ describe('PostListener', () => {
     postVideoFailedEvent.payload.properties.mimeType = '1212'
     postVideoFailedEvent.payload.properties.codec = '1212'
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.getPostsByMedia.mockResolvedValue([
+      postService.getsByMedia.mockResolvedValue([
         { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
         { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
       ]);
-      postService.updatePostStatus.mockResolvedValue();
+      postService.updateStatus.mockResolvedValue();
 
       await postListener.onPostVideoFailed(postVideoFailedEvent);
-      expect(loggerSpy).toBeCalled();
-      expect(postService.getPostsByMedia).toBeCalled();
-      expect(postService.updatePostStatus).toBeCalled();
+      expect(postService.getsByMedia).toBeCalled();
+      expect(postService.updateStatus).toBeCalled();
     });
   });
 });

@@ -18,6 +18,7 @@ import { FeedService } from '../../modules/feed/feed.service';
 import { PostPrivacy } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostSearchService } from '../../modules/post/post-search.service';
+import { PostHistoryService } from '../../modules/post/post-history.service';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -29,22 +30,22 @@ export class PostListener {
     private readonly _postSearchService: PostSearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _postHistoryService: PostHistoryService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
   public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
-    this._postService.deletePostEditedHistory(post.id).catch((e) => {
+    this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
       this._logger.error(e, e?.stack);
       this._sentryService.captureException(e);
     });
 
     try {
-      this._postSearchService.deletePostsToSearch([post.id]);
+      this._postSearchService.deletePostsToSearch([post]);
 
       const activity = this._postActivityService.createPayload({
         actor: actor,
@@ -89,7 +90,6 @@ export class PostListener {
 
   @On(PostHasBeenPublishedEvent)
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { post, actor } = event.payload;
     const {
       isDraft,
@@ -107,7 +107,7 @@ export class PostListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    await this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    await this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
 
     if (isDraft) return;
 
@@ -115,8 +115,8 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    this._postService
-      .savePostEditedHistory(post.id, { oldData: null, newData: post })
+    this._postHistoryService
+      .saveEditedHistory(post.id, { oldData: null, newData: post })
       .catch((e) => {
         this._logger.error(e, e?.stack);
         this._sentryService.captureException(e);
@@ -163,7 +163,6 @@ export class PostListener {
 
   @On(PostHasBeenUpdatedEvent)
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
     const {
       isDraft,
@@ -184,7 +183,7 @@ export class PostListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldPost.isDraft === false && isDraft === true) {
@@ -196,8 +195,8 @@ export class PostListener {
 
     if (isDraft) return;
 
-    this._postService
-      .savePostEditedHistory(id, { oldData: oldPost, newData: newPost })
+    this._postHistoryService
+      .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
       .catch((e) => {
         this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
@@ -252,7 +251,6 @@ export class PostListener {
 
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
@@ -263,9 +261,9 @@ export class PostListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], dataUpdate);
-    const posts = await this._postService.getPostsByMedia(videoId);
+    const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updatePostStatus(post.id);
+      this._postService.updateStatus(post.id);
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -321,8 +319,6 @@ export class PostListener {
 
   @On(PostVideoFailedEvent)
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
-
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
@@ -333,9 +329,9 @@ export class PostListener {
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     await this._mediaService.updateData([videoId], dataUpdate);
-    const posts = await this._postService.getPostsByMedia(videoId);
+    const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updatePostStatus(post.id);
+      this._postService.updateStatus(post.id);
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,

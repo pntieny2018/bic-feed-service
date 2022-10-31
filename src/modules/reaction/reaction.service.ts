@@ -169,11 +169,14 @@ export class ReactionService {
     userDto: UserDto,
     createReactionDto: CreateReactionDto
   ): Promise<ReactionResponseDto> {
-    switch (createReactionDto.target) {
+    const newCreateReactionDto =
+      ReactionService.transformReactionNameNodeEmoji<CreateReactionDto>(createReactionDto);
+
+    switch (newCreateReactionDto.target) {
       case ReactionEnum.POST:
-        return this._createPostReaction(userDto, createReactionDto);
+        return this._createPostReaction(userDto, newCreateReactionDto);
       case ReactionEnum.COMMENT:
-        return this._createCommentReaction(userDto, createReactionDto);
+        return this._createCommentReaction(userDto, newCreateReactionDto);
       case ReactionEnum.ARTICLE:
         break;
       default:
@@ -198,12 +201,10 @@ export class ReactionService {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
 
-    this._logger.debug(`[_createPostReaction]: ${JSON.stringify(createReactionDto)}`);
-
     const { id: userId } = userDto;
     const { reactionName, targetId: postId } = createReactionDto;
     try {
-      const post = await this._postService.getPost(postId, userDto, {
+      const post = await this._postService.get(postId, userDto, {
         commentLimit: 0,
         childCommentLimit: 0,
       });
@@ -325,7 +326,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
-    const post = await this._postService.getPost(comment.postId, userDto, {
+    const post = await this._postService.get(comment.postId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
@@ -440,11 +441,13 @@ export class ReactionService {
     userDto: UserDto,
     deleteReactionDto: DeleteReactionDto
   ): Promise<IPostReaction | ICommentReaction> {
+    const newDeleteReactionDto =
+      ReactionService.transformReactionNameNodeEmoji<DeleteReactionDto>(deleteReactionDto);
     switch (deleteReactionDto.target) {
       case ReactionEnum.POST:
-        return this._deletePostReaction(userDto, deleteReactionDto);
+        return this._deletePostReaction(userDto, newDeleteReactionDto);
       case ReactionEnum.COMMENT:
-        return this._deleteCommentReaction(userDto, deleteReactionDto);
+        return this._deleteCommentReaction(userDto, newDeleteReactionDto);
       default:
         throw new NotFoundException('Reaction type not match.');
     }
@@ -463,13 +466,11 @@ export class ReactionService {
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<IPostReaction> {
-    this._logger.debug(`[_deletePostReaction]: ${JSON.stringify(deleteReactionDto)}`);
-
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
 
-    const post = await this._postService.getPost(deleteReactionDto.targetId, userDto, {
+    const post = await this._postService.get(deleteReactionDto.targetId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
@@ -570,8 +571,6 @@ export class ReactionService {
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<ICommentReaction> {
-    this._logger.debug(`[_deleteCommentReaction]: ${JSON.stringify(deleteReactionDto)},${attempt}`);
-
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
@@ -584,7 +583,7 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
-    const post = await this._postService.getPost(comment.postId, userDto, {
+    const post = await this._postService.get(comment.postId, userDto, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
@@ -805,5 +804,16 @@ export class ReactionService {
         }
       }
     }
+  }
+
+  public static transformReactionNameNodeEmoji<T>(doActionReactionDto: T): T {
+    const copy = { ...doActionReactionDto };
+    if (copy['reactionName'] === '+1') {
+      copy['reactionName'] = 'thumbsup';
+    }
+    if (copy['reactionName'] === '-1') {
+      copy['reactionName'] = 'thumbsdown';
+    }
+    return copy;
   }
 }

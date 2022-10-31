@@ -10,30 +10,25 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import {
-  CreateCommentDto,
-  UpdateCommentDto,
-  CreateReplyCommentDto,
-  GetCommentsDto,
-  GetCommentEditedHistoryDto,
-} from './dto/requests';
-import {
-  CommentHasBeenCreatedEvent,
-  CommentHasBeenDeletedEvent,
-  CommentHasBeenUpdatedEvent,
-} from '../../events/comment';
-import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
-import { CommentService } from './comment.service';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
-import { CreateCommentPipe, GetCommentsPipe } from './pipes';
+import { PageDto } from '../../common/dto';
+import { AuthUser, UserDto } from '../auth';
+import { CommentAppService } from './application/comment.app-service';
+import { CommentHistoryService } from './comment-history.service';
+import {
+  CreateCommentDto,
+  CreateReplyCommentDto,
+  GetCommentEditedHistoryDto,
+  GetCommentsDto,
+  UpdateCommentDto,
+} from './dto/requests';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
-import { NIL as NIL_UUID } from 'uuid';
+import { CreateCommentPipe, GetCommentsPipe } from './pipes';
 import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
 
 @ApiTags('Comment')
@@ -46,8 +41,8 @@ export class CommentController {
   private _logger = new Logger(CommentController.name);
 
   public constructor(
-    private _commentService: CommentService,
-    private _eventEmitter: InternalEventEmitterService
+    private _commentAppService: CommentAppService,
+    private _commentHistoryService: CommentHistoryService
   ) {}
 
   @ApiOperation({ summary: 'Get comment list' })
@@ -59,8 +54,7 @@ export class CommentController {
     @AuthUser(false) user: UserDto,
     @Query(GetCommentsPipe) getCommentsDto: GetCommentsDto
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.debug('get comments');
-    return this._commentService.getComments(getCommentsDto, user);
+    return this._commentAppService.getList(user, getCommentsDto);
   }
 
   @ApiOperation({ summary: 'Create new comment' })
@@ -69,28 +63,14 @@ export class CommentController {
     description: 'Create comment successfully',
   })
   @ResponseMessages({
-    success: 'Create comment successfully',
+    success: 'Create comment successfully.',
   })
   @Post('/')
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug(
-      `create comment by ${user.id} with body: ${JSON.stringify(createCommentDto)}`
-    );
-    const comment = await this._commentService.create(user, createCommentDto);
-
-    const commentResponse = await this._commentService.getComment(user, comment.id);
-
-    this._eventEmitter.emit(
-      new CommentHasBeenCreatedEvent({
-        actor: user,
-        commentResponse: commentResponse,
-      })
-    );
-
-    return commentResponse;
+    return this._commentAppService.create(user, createCommentDto);
   }
 
   @ApiOperation({ summary: 'Reply comment' })
@@ -107,25 +87,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body(CreateCommentPipe) createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug('reply comment');
-    const comment = await this._commentService.create(
-      user,
-      {
-        ...createReplyCommentDto,
-      },
-      commentId
-    );
-
-    const commentResponse = await this._commentService.getComment(user, comment.id);
-
-    this._eventEmitter.emit(
-      new CommentHasBeenCreatedEvent({
-        actor: user,
-        commentResponse: commentResponse,
-      })
-    );
-
-    return commentResponse;
+    return this._commentAppService.reply(user, commentId, createReplyCommentDto);
   }
 
   @ApiOperation({ summary: 'Get comment detail' })
@@ -138,12 +100,11 @@ export class CommentController {
   })
   @Get('/:commentId')
   public get(
-    @AuthUser() user: UserDto,
+    @AuthUser(false) user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query(GetCommentLinkPipe) getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
-    this._logger.debug('get comment');
-    return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
+    return this._commentAppService.get(user, commentId, getCommentLinkDto);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })
@@ -156,7 +117,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Query() getCommentEditedHistoryDto: GetCommentEditedHistoryDto
   ): Promise<PageDto<CommentEditedHistoryDto>> {
-    return this._commentService.getCommentEditedHistory(
+    return this._commentHistoryService.getCommentEditedHistory(
       user,
       commentId,
       getCommentEditedHistoryDto
@@ -177,18 +138,7 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
-    this._logger.debug('update comment');
-    const response = await this._commentService.update(user, commentId, updateCommentDto);
-
-    const commentResponse = await this._commentService.getComment(user, response.comment.id);
-    this._eventEmitter.emit(
-      new CommentHasBeenUpdatedEvent({
-        actor: user,
-        oldComment: response.oldComment,
-        commentResponse: commentResponse,
-      })
-    );
-    return commentResponse;
+    return this._commentAppService.update(user, commentId, updateCommentDto);
   }
 
   @ApiOperation({ summary: 'Delete comment' })
@@ -204,15 +154,6 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<boolean> {
-    this._logger.debug('delete comment');
-    const comment = await this._commentService.destroy(user, commentId);
-
-    this._eventEmitter.emit(
-      new CommentHasBeenDeletedEvent({
-        actor: user,
-        comment: comment,
-      })
-    );
-    return true;
+    return this._commentAppService.destroy(user, commentId);
   }
 }

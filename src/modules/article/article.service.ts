@@ -1,42 +1,59 @@
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../../database/models/post.model';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { IPost, PostModel } from '../../database/models/post.model';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserDto } from '../auth';
 import { MediaService } from '../media';
 import { MentionService } from '../mention';
 import { CommentService } from '../comment';
 import { AuthorityService } from '../authority';
 import { Sequelize } from 'sequelize-typescript';
-import { ArrayHelper, ElasticsearchHelper, ExceptionHelper } from '../../common/helpers';
+import { FindAttributeOptions, Includeable, Op } from 'sequelize';
+import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
-import { SentryService } from '../../../libs/sentry/src';
-import { CreateArticleDto } from './dto/requests/create-article.dto';
-import { ArticleResponseDto } from './dto/responses/article.response.dto';
-import { UpdateArticleDto } from './dto/requests/update-article.dto';
-import { GetArticleDto } from './dto/requests/get-article.dto';
+import { SentryService } from '@app/sentry';
+import { ArticleResponseDto } from './dto/responses';
+import {
+  CreateArticleDto,
+  UpdateArticleDto,
+  GetListArticlesDto,
+  GetArticleDto,
+} from './dto/requests';
 import { ClassTransformer } from 'class-transformer';
 import { PostService } from '../post/post.service';
 import { PageDto } from '../../common/dto';
-import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { EntityType } from '../media/media.constants';
 import { CategoryService } from '../category/category.service';
 import { SeriesService } from '../series/series.service';
 import { HashtagService } from '../hashtag/hashtag.service';
 import { GroupService } from '../../shared/group';
-import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { LogicException } from '../../common/exceptions';
-import { GetListArticlesDto, SearchArticlesDto } from './dto/requests';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { MentionModel } from '../../database/models/mention.model';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { NIL } from 'uuid';
 import { CategoryModel } from '../../database/models/category.model';
 import { SeriesModel } from '../../database/models/series.model';
-import { PostBindingService } from '../post/post-binding.service';
+import { ClientKafka } from '@nestjs/microservices';
+import { FeedService } from '../feed/feed.service';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { UserService } from '../../shared/user';
+import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { ArticleBindingService } from './article-binding.service';
+import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostCategoryModel } from '../../database/models/post-category.model';
+import { PostHashtagModel } from '../../database/models/post-hashtag.model';
+import { MediaStatus } from '../../database/models/media.model';
 
 @Injectable()
-export class ArticleService {
+export class ArticleService extends PostService {
   /**
    * Logger
    * @private
@@ -51,396 +68,490 @@ export class ArticleService {
 
   public constructor(
     @InjectConnection()
-    private _sequelizeConnection: Sequelize,
+    protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
-    private readonly _postModel: typeof PostModel,
-    private readonly _postService: PostService,
-    private readonly _groupService: GroupService,
-    private readonly _commentService: CommentService,
-    private readonly _reactionService: ReactionService,
-    private readonly _mentionService: MentionService,
-    private readonly _mediaService: MediaService,
-    private readonly _categoryService: CategoryService,
-    private readonly _seriesService: SeriesService,
+    protected postModel: typeof PostModel,
+    @InjectModel(PostGroupModel)
+    protected postGroupModel: typeof PostGroupModel,
+    @InjectModel(PostSeriesModel)
+    protected postSeriesModel: typeof PostSeriesModel,
+    @InjectModel(PostCategoryModel)
+    protected postCategoryModel: typeof PostCategoryModel,
+    @InjectModel(PostHashtagModel)
+    protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(UserMarkReadPostModel)
+    protected userMarkReadPostModel: typeof UserMarkReadPostModel,
+    protected userService: UserService,
+    protected groupService: GroupService,
+    protected mediaService: MediaService,
+    protected mentionService: MentionService,
+    @Inject(forwardRef(() => CommentService))
+    protected commentService: CommentService,
+    protected authorityService: AuthorityService,
+    protected reactionService: ReactionService,
+    @Inject(forwardRef(() => FeedService))
+    protected feedService: FeedService,
+    protected readonly sentryService: SentryService,
+    protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
-    private readonly _authorityService: AuthorityService,
-    private readonly _searchService: ElasticsearchService,
-    private readonly _sentryService: SentryService,
-    private readonly _postBindingService: PostBindingService
-  ) {}
-
-  /**
-   * Search Article
-   * @throws HttpException
-   * @param authUser UserDto
-   * @param searchArticlesDto SearchArticlesDto
-   * @returns Promise resolve PageDto<ArticleResponseDto>
-   */
-  public async searchArticle(
-    authUser: UserDto,
-    searchArticlesDto: SearchArticlesDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset } = searchArticlesDto;
-    const user = authUser.profile;
-    if (!user || user.groups.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
-        total: 0,
-        limit,
-        offset,
-      });
-    }
-    const groupIds = user.groups;
-    const payload = await this.getPayloadSearch(searchArticlesDto, groupIds);
-    const response = await this._searchService.search(payload);
-    const hits = response.body.hits.hits;
-    const posts = hits.map((item) => {
-      const source = item._source;
-      source['id'] = item._id;
-      return source;
-    });
-
-    await Promise.all([
-      this._postBindingService.bindActorToPost(posts),
-      this._postBindingService.bindAudienceToPost(posts),
-      this._postBindingService.bindPostData(posts, ['commentsCount', 'totalUsersSeen']),
-    ]);
-
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<ArticleResponseDto>(result, {
-      total: response.body.hits.total.value,
-      limit,
-      offset,
-    });
+    private readonly _seriesService: SeriesService,
+    private readonly _categoryService: CategoryService,
+    private readonly _linkPreviewService: LinkPreviewService
+  ) {
+    super(
+      sequelizeConnection,
+      postModel,
+      postGroupModel,
+      postSeriesModel,
+      postCategoryModel,
+      postHashtagModel,
+      userMarkReadPostModel,
+      userService,
+      groupService,
+      mediaService,
+      mentionService,
+      commentService,
+      authorityService,
+      reactionService,
+      feedService,
+      sentryService,
+      articleBinding,
+      _linkPreviewService
+    );
   }
 
   /**
-   * Get list Article
-   * @throws HttpException
-   * @param authUser UserDto
-   * @param getArticleListDto GetListArticlesDto
-   * @returns Promise resolve PageDto<ArticleResponseDto>
+   * Get article list
    */
   public async getList(
     authUser: UserDto,
     getArticleListDto: GetListArticlesDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset, groupId } = getArticleListDto;
-    const group = await this._groupService.get(groupId);
-    if (!group) {
-      throw new BadRequestException(`Group ${groupId} not found`);
-    }
-    const groupIds = this._groupService.getGroupIdsCanAccessArticle(group, authUser);
-    if (groupIds.length === 0) {
+    const { limit, offset } = getArticleListDto;
+
+    const articleIdsAndSorted = await this._getArticleIdsWithFilter(getArticleListDto, authUser);
+    if (articleIdsAndSorted.length === 0) {
       return new PageDto<ArticleResponseDto>([], {
+        hasNextPage: false,
         limit,
         offset,
-        hasNextPage: false,
       });
     }
-    getArticleListDto.groupIds = groupIds;
-    const rows = await PostModel.getArticlesData(getArticleListDto, authUser);
-    const articles = this.groupArticles(rows);
-    const hasNextPage = articles.length === limit + 1 ? true : false;
-    if (hasNextPage) articles.pop();
+    const hasNextPage = articleIdsAndSorted.length === limit + 1;
+    articleIdsAndSorted.pop();
 
-    await Promise.all([
-      this._reactionService.bindToPosts(articles),
-      this._mentionService.bindMentionsToPosts(articles),
-      this._postBindingService.bindActorToPost(articles),
-      this._postBindingService.bindAudienceToPost(articles),
-      this.maskArticleContent(articles),
-    ]);
+    const articles = await this._getArticlesByIds(articleIdsAndSorted, authUser);
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, articles, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<ArticleResponseDto>(result, {
+    return new PageDto<ArticleResponseDto>(articles, {
       hasNextPage,
       limit,
       offset,
     });
   }
 
-  /**
-   *
-   * @param SearchArticlesDto
-   * @param groupIds
-   * @returns
-   */
-  public async getPayloadSearch(
-    { categories, series, actors, limit, offset }: SearchArticlesDto,
-    groupIds: string[]
-  ): Promise<{
-    index: string;
-    body: any;
-    from: number;
-    size: number;
-  }> {
-    // search article
-    const body = {
-      query: {
-        bool: {
-          must: [],
-          filter: [],
-          should: [],
-        },
+  private async _getArticlesByIds(ids: string[], authUser): Promise<ArticleResponseDto[]> {
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMedia: true,
+      shouldIncludeMention: true,
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeCover: true,
+      authUserId: authUser.id,
+    });
+
+    const attributes = {
+      include: [PostModel.loadContent()],
+      exclude: ['content'],
+    };
+    if (authUser) {
+      attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        id: ids,
       },
+    });
+
+    const mappedPosts = ids.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return this.classTransformer.plainToInstance(ArticleResponseDto, mappedPosts, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  private async _getArticleIdsWithFilter(
+    getListArticleDto: GetListArticlesDto,
+    authUser: UserDto
+  ): Promise<string[]> {
+    const { groupId, categories, hashtags, series, offset, limit } = getListArticleDto;
+    const include = [];
+    if (groupId) {
+      const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
+      if (groupIds.length === 0) return [];
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: [],
+        where: {
+          groupId: groupIds,
+        },
+      });
+    }
+
+    if (categories && categories.length > 0) {
+      include.push({
+        model: PostCategoryModel,
+        required: true,
+        attributes: [],
+        where: {
+          categoryId: categories,
+        },
+      });
+    }
+
+    if (series && series.length > 0) {
+      include.push({
+        model: PostSeriesModel,
+        required: true,
+        attributes: [],
+        where: {
+          seriesId: series,
+        },
+      });
+    }
+
+    if (hashtags && hashtags.length > 0) {
+      include.push({
+        model: PostHashtagModel,
+        required: true,
+        attributes: [],
+        where: {
+          hashtagId: hashtags,
+        },
+      });
+    }
+
+    const conditions = {
+      isDraft: false,
     };
 
-    if (categories && categories.length) {
-      body.query.bool.filter.push({
-        terms: {
-          ['category.id']: categories,
-        },
-      });
-    }
+    const articles = await this.postModel.findAll({
+      attributes: ['id'],
+      include,
+      subQuery: false,
+      where: conditions,
+      order: [['createdAt', 'desc']],
+      offset,
+      limit,
+    });
 
-    if (series && series.length) {
-      body.query.bool.filter.push({
-        terms: {
-          ['series.id']: series,
-        },
-      });
-    }
-
-    if (actors && actors.length) {
-      body.query.bool.filter.push({
-        terms: {
-          ['actor.id']: actors,
-        },
-      });
-    }
-
-    if (groupIds.length) {
-      body.query.bool.filter.push({
-        terms: {
-          ['audience.groups.id']: groupIds,
-        },
-      });
-    }
-    body['sort'] = [{ createdAt: 'desc' }];
-    return {
-      index: ElasticsearchHelper.ALIAS.ARTICLE.all.name,
-      body,
-      from: offset,
-      size: limit,
+    return articles.map((article) => article.id);
+  }
+  /**
+   * Get Draft Articles
+   */
+  public async getDrafts(
+    authUserId: string,
+    getDraftPostDto: GetDraftArticleDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, order, isProcessing } = getDraftPostDto;
+    const condition = {
+      createdBy: authUserId,
+      isDraft: true,
+      isArticle: true,
     };
+
+    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
+
+    const attributes = this.getAttributesObj({ loadMarkRead: false });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: false,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+      shouldIncludeCover: true,
+    });
+    const rows = await this.postModel.findAll<PostModel>({
+      where: condition,
+      attributes,
+      include,
+      order: [['createdAt', order]],
+      offset,
+      limit,
+    });
+    const jsonArticles = rows.map((r) => r.toJSON());
+    const postsBindedData = await this.postBinding.bindRelatedData(jsonArticles, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    const total = await this.postModel.count<PostModel>({
+      where: condition,
+      attributes,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      total,
+      limit,
+      offset,
+    });
   }
 
   /**
+   * Get list related article
+   * @throws HttpException
+   * @param authUser UserDto
+   * @param getArticleListDto GetListArticlesDto
+   * @returns Promise resolve PageDto<ArticleResponseDto>
+   */
+  public async getRelatedById(
+    getRelatedArticlesDto: GetRelatedArticlesDto,
+    user: UserDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, id } = getRelatedArticlesDto;
+
+    const groupIdsUserCanAccess: string[] = user.profile.groups;
+    const includePostDetail = this.getIncludeObj({
+      shouldIncludeCategory: true,
+    });
+
+    const article = await this.postModel.findOne({
+      include: includePostDetail,
+      where: {
+        id,
+      },
+    });
+
+    if (!article) {
+      throw new NotFoundException('Article not found');
+    }
+    const categoryIds = article.categories.map((category) => category.id);
+
+    const includeRelated = this.getIncludeObj({
+      shouldIncludeCover: true,
+      shouldIncludeCategory: true,
+      mustIncludeGroup: true,
+      filterGroupIds: groupIdsUserCanAccess,
+      filterCategoryIds: categoryIds,
+    });
+    const relatedRows = await this.postModel.findAll({
+      attributes: [
+        'id',
+        'title',
+        'summary',
+        'isArticle',
+        'cover',
+        'createdBy',
+        'linkPreviewId',
+        'createdAt',
+      ],
+      include: includeRelated,
+      where: {
+        isArticle: true,
+        isDraft: false,
+      },
+      offset,
+      limit,
+    });
+
+    const rowsJson = relatedRows.map((row) => row.toJSON());
+    const articlesBindedData = await this.articleBinding.bindRelatedData(rowsJson, {
+      shouldBindActor: true,
+    });
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      limit,
+      offset,
+    });
+  }
+
+  private async _getGroupIdAndChildIdsUserCanAccess(groupId, authUser: UserDto): Promise<string[]> {
+    const group = await this.groupService.get(groupId);
+    if (!group) {
+      throw new BadRequestException(`Group ${groupId} not found`);
+    }
+    const groupIds = this.groupService.getGroupIdsCanAccessArticle(group, authUser);
+
+    return groupIds;
+  }
+  /**
    * Get Article
-   * @param postId string
-   * @param user UserDto
+   * @param articleId string
+   * @param authUser
    * @param getArticleDto GetArticleDto
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
    */
-  public async getArticle(
-    postId: string,
-    user: UserDto,
+  public async get(
+    articleId: string,
+    authUser: UserDto,
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const groupIds = user.profile.groups;
-    const post = await this._postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-        include: [
-          ['hashtags_json', 'hashtags'],
-          PostModel.loadMarkReadPost(user.id),
-          PostModel.loadLock(groupIds),
-        ],
-      },
-      where: { id: postId },
-      include: [
-        {
-          model: SeriesModel,
-          as: 'series',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: CategoryModel,
-          as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'status',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: user.id,
-          },
-        },
-      ],
+    const attributes = this.getAttributesObj({
+      loadMarkRead: true,
+      authUserId: authUser?.id || null,
     });
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+      shouldIncludePreviewLink: true,
+      shouldIncludeCover: true,
+      authUserId: authUser?.id || null,
+    });
+
+    let condition;
+    if (authUser) {
+      condition = {
+        id: articleId,
+        isArticle: true,
+        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
+      };
+    } else {
+      condition = { id: articleId, isArticle: true };
     }
-    await this._authorityService.checkCanReadArticle(user, post);
+
+    const article = await this.postModel.findOne({
+      attributes,
+      where: condition,
+      include,
+    });
+
+    if (!article) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
+    if (authUser) {
+      await this.authorityService.checkCanReadArticle(authUser, article);
+    } else {
+      await this.authorityService.checkIsPublicArticle(article);
+    }
     let comments = null;
     if (getArticleDto.withComment) {
-      comments = await this._commentService.getComments(
+      comments = await this.commentService.getComments(
         {
-          postId,
+          postId: articleId,
           parentId: NIL,
           childLimit: getArticleDto.childCommentLimit,
           order: getArticleDto.commentOrder,
           childOrder: getArticleDto.childCommentOrder,
           limit: getArticleDto.commentLimit,
         },
-        user,
+        authUser,
         false
       );
     }
-    const jsonPost = post.toJSON();
-    await Promise.all([
-      this._reactionService.bindToPosts([jsonPost]),
-      this._mentionService.bindMentionsToPosts([jsonPost]),
-      this._postBindingService.bindActorToPost([jsonPost]),
-      this._postBindingService.bindAudienceToPost([jsonPost]),
-      this.maskArticleContent([jsonPost]),
-    ]);
+    const jsonArticle = article.toJSON();
+    const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
+    });
 
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
-    result['comments'] = comments;
-    return result;
+    result[0]['comments'] = comments;
+    return result[0];
   }
 
-  /**
-   * Get Public Article
-   * @param postId string
-   * @param getArticleDto GetArticleDto
-   * @returns Promise resolve ArticleResponseDto
-   * @throws HttpException
-   */
-  public async getPublicArticle(
-    postId: string,
-    getArticleDto?: GetArticleDto
-  ): Promise<ArticleResponseDto> {
-    const post = await this._postModel.findOne({
-      attributes: {
-        exclude: ['updatedBy'],
-        include: [['hashtags_json', 'hashtags']],
-      },
-      where: { id: postId },
-      include: [
-        {
-          model: SeriesModel,
-          as: 'series',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: CategoryModel,
-          as: 'categories',
-          required: false,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-          attributes: ['userId'],
-        },
-        {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'type',
-            'name',
-            'width',
-            'height',
-            'status',
-            'thumbnails',
-            'createdAt',
-          ],
-        },
-      ],
-    });
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+  protected getAttributesObj(options?: {
+    loadMarkRead?: boolean;
+    authUserId?: string;
+  }): FindAttributeOptions {
+    const attributes: FindAttributeOptions = super.getAttributesObj(options);
+
+    if (attributes['includes'] && Array.isArray(attributes['includes'])) {
+      attributes['include'].push([['hashtags_json', 'hashtags']]);
+    } else {
+      attributes['include'] = [['hashtags_json', 'hashtags']];
     }
-    await this._authorityService.checkIsPublicArticle(post);
-    let comments = null;
-    if (getArticleDto.withComment) {
-      comments = await this._commentService.getComments({
-        postId,
-        parentId: NIL,
-        childLimit: getArticleDto.childCommentLimit,
-        order: getArticleDto.commentOrder,
-        childOrder: getArticleDto.childCommentOrder,
-        limit: getArticleDto.commentLimit,
+    return attributes;
+  }
+
+  public getIncludeObj({
+    mustIncludeGroup,
+    mustIncludeMedia,
+    shouldIncludeOwnerReaction,
+    shouldIncludeGroup,
+    shouldIncludeMention,
+    shouldIncludeMedia,
+    shouldIncludePreviewLink,
+    filterMediaIds,
+    shouldIncludeCategory,
+    shouldIncludeSeries,
+    shouldIncludeCover,
+    filterCategoryIds,
+    filterGroupIds,
+    authUserId,
+  }: {
+    mustIncludeGroup?: boolean;
+    mustIncludeMedia?: boolean;
+    shouldIncludeOwnerReaction?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeMention?: boolean;
+    shouldIncludeMedia?: boolean;
+    shouldIncludeCategory?: boolean;
+    shouldIncludeSeries?: boolean;
+    shouldIncludePreviewLink?: boolean;
+    shouldIncludeCover?: boolean;
+    filterCategoryIds?: string[];
+    filterMediaIds?: string[];
+    filterGroupIds?: string[];
+    authUserId?: string;
+  }): Includeable[] {
+    const includes: Includeable[] = super.getIncludeObj({
+      mustIncludeGroup,
+      mustIncludeMedia,
+      shouldIncludeOwnerReaction,
+      shouldIncludeGroup,
+      shouldIncludeMention,
+      shouldIncludeMedia,
+      shouldIncludePreviewLink,
+      shouldIncludeCategory,
+      shouldIncludeCover,
+      filterMediaIds,
+      filterCategoryIds,
+      filterGroupIds,
+      authUserId,
+    });
+
+    if (shouldIncludeSeries) {
+      includes.push({
+        model: SeriesModel,
+        as: 'series',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'name'],
       });
     }
-    const jsonPost = post.toJSON();
-    await Promise.all([
-      this._reactionService.bindToPosts([jsonPost]),
-      this._mentionService.bindMentionsToPosts([jsonPost]),
-      this._postBindingService.bindActorToPost([jsonPost]),
-      this._postBindingService.bindAudienceToPost([jsonPost]),
-    ]);
-
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPost, {
-      excludeExtraneousValues: true,
-    });
-    result['comments'] = comments;
-    return result;
+    return includes;
   }
 
   /**
@@ -450,7 +561,7 @@ export class ArticleService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async createArticle(authUser: UserDto, createArticleDto: CreateArticleDto): Promise<any> {
+  public async create(authUser: UserDto, createArticleDto: CreateArticleDto): Promise<any> {
     let transaction;
     try {
       const {
@@ -474,18 +585,21 @@ export class ArticleService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      transaction = await this._sequelizeConnection.transaction();
+
+      const linkPreview = await this.linkPreviewService.upsert(createArticleDto.linkPreview);
+
+      transaction = await this.sequelizeConnection.transaction();
       let hashtagArr = [];
       if (hashtags) {
         hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
       }
-      const post = await this._postModel.create(
+      const post = await this.postModel.create(
         {
           title,
           summary,
           isDraft: true,
           isArticle: true,
-          content,
+          content: content,
           createdBy: authUserId,
           updatedBy: authUserId,
           isImportant: setting.isImportant,
@@ -497,12 +611,13 @@ export class ArticleService {
           privacy: null,
           hashtagsJson: hashtagArr,
           views: 0,
+          linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
       );
       if (uniqueMediaIds.length) {
-        await this._mediaService.createIfNotExist(media, authUserId, transaction);
-        await this._mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
+        await this.mediaService.createIfNotExist(media, authUserId);
+        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
       }
 
       await Promise.all([
@@ -513,11 +628,11 @@ export class ArticleService {
           transaction
         ),
         this._categoryService.addToPost(categories, post.id, transaction),
-        this._postService.addPostGroup(groupIds, post.id, transaction),
+        this.addGroup(groupIds, post.id, transaction),
       ]);
 
       if (mentions.length) {
-        await this._mentionService.create(
+        await this.mentionService.create(
           mentions.map((userId) => ({
             entityId: post.id,
             userId,
@@ -533,7 +648,7 @@ export class ArticleService {
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
+      this.sentryService.captureException(error);
       throw error;
     }
   }
@@ -545,26 +660,21 @@ export class ArticleService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publishArticle(articleId: string, authUser: UserDto): Promise<boolean> {
-    const article = await this._postModel.findOne({
+  public async publish(articleId: string, authUser: UserDto): Promise<boolean> {
+    const include = this.getIncludeObj({ shouldIncludeCategory: true });
+    const article = await this.postModel.findOne({
       where: {
         id: articleId,
       },
-      include: [
-        {
-          model: CategoryModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-          required: false,
-        },
-      ],
+      include,
     });
+    if (!article) {
+      throw new NotFoundException('Article is not found.');
+    }
     if (article.categories.length === 0) {
       throw new BadRequestException('Category is required');
     }
-    return this._postService.publishPost(articleId, authUser);
+    return super.publish(articleId, authUser);
   }
 
   /**
@@ -582,7 +692,7 @@ export class ArticleService {
     }
     try {
       const dataUpdate = { views: 1 };
-      await this._postModel.increment(dataUpdate, {
+      await this.postModel.increment(dataUpdate, {
         where: {
           id: postId,
           createdBy: authUserId,
@@ -603,7 +713,7 @@ export class ArticleService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async updateArticle(
+  public async update(
     post: ArticleResponseDto,
     authUser: UserDto,
     updateArticleDto: UpdateArticleDto
@@ -612,78 +722,48 @@ export class ArticleService {
 
     let transaction;
     try {
-      const {
-        summary,
-        title,
-        content,
-        media,
-        setting,
-        mentions,
-        audience,
-        categories,
-        series,
-        hashtags,
-      } = updateArticleDto;
-      const dataUpdate = {
-        updatedBy: authUserId,
-      };
-
-      const oldGroupIds = post.audience.groups.map((group) => group.id);
-      if (audience.groupIds) {
-        const postPrivacy = await this._postService.getPrivacyPost(audience.groupIds);
-        dataUpdate['privacy'] = postPrivacy;
+      const { media, mentions, audience, categories, series, hashtags } = updateArticleDto;
+      let mediaListChanged = [];
+      if (media) {
+        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
       }
 
-      if (content !== null) {
-        dataUpdate['content'] = content;
+      const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
+
+      if (
+        mediaListChanged &&
+        mediaListChanged.filter(
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
+        ).length > 0
+      ) {
+        dataUpdate['isDraft'] = true;
+        dataUpdate['isProcessing'] = true;
       }
-      if (title !== null) {
-        dataUpdate['title'] = title;
+
+      dataUpdate.linkPreviewId = null;
+      if (updateArticleDto.linkPreview) {
+        const linkPreview = await this.linkPreviewService.upsert(updateArticleDto.linkPreview);
+        dataUpdate.linkPreviewId = linkPreview?.id || null;
       }
-      if (summary !== null) {
-        dataUpdate['summary'] = summary;
-      }
-      if (setting && setting.hasOwnProperty('canShare')) {
-        dataUpdate['canShare'] = setting.canShare;
-      }
-      if (setting && setting.hasOwnProperty('canComment')) {
-        dataUpdate['canComment'] = setting.canComment;
-      }
-      if (setting && setting.hasOwnProperty('canReact')) {
-        dataUpdate['canReact'] = setting.canReact;
-      }
-      if (setting && setting.hasOwnProperty('isImportant')) {
-        dataUpdate['isImportant'] = setting.isImportant;
-      }
-      if (setting && setting.hasOwnProperty('importantExpiredAt')) {
-        dataUpdate['importantExpiredAt'] =
-          setting.isImportant === false ? null : setting.importantExpiredAt;
-      }
-      let newMediaIds = [];
-      transaction = await this._sequelizeConnection.transaction();
+
+      transaction = await this.sequelizeConnection.transaction();
+
       if (media) {
         const { files, images, videos } = media;
-        newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        const mediaList = await this._mediaService.createIfNotExist(media, authUserId, transaction);
-        if (
-          mediaList.filter(
-            (m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.PROCESSING
-          ).length > 0
-        ) {
-          dataUpdate['isDraft'] = true;
-          dataUpdate['isProcessing'] = post.isDraft === true ? false : true;
-        }
-      }
-
-      if (media) {
-        await this._mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
+        const newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
+        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
       }
 
       if (mentions) {
-        await this._mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
+        await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
+
+      const oldGroupIds = post.audience?.groups.map((group) => group.id) ?? [];
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
-        await this._postService.setGroupByPost(audience.groupIds, post.id, transaction);
+        await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
       if (categories) {
@@ -692,6 +772,7 @@ export class ArticleService {
       if (series) {
         await this._seriesService.updateToPost(series, post.id, transaction);
       }
+
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
         await this._hashtagService.updateToPost(
@@ -701,7 +782,10 @@ export class ArticleService {
         );
         dataUpdate['hashtagsJson'] = hashtagArr;
       }
-      await this._postModel.update(dataUpdate, {
+
+      //if post is draft, isProcessing alway is true
+      if (dataUpdate.isProcessing && post.isDraft === true) dataUpdate.isProcessing = false;
+      await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
           createdBy: authUserId,
@@ -718,73 +802,44 @@ export class ArticleService {
     }
   }
 
-  /**
-   * Delete post by id
-   * @param postId postID
-   * @param authUserId auth user ID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async deleteArticle(id: string, user: UserDto): Promise<any> {
-    return this._postService.deletePost(id, user);
+  protected async getDataUpdate(
+    updateArticleDto: UpdateArticleDto,
+    authUserId: string
+  ): Promise<Partial<IPost>> {
+    const dataUpdate = await super.getDataUpdate(updateArticleDto, authUserId);
+    const { title, summary, coverMedia } = updateArticleDto;
+    if (title !== null) {
+      dataUpdate['title'] = title;
+    }
+    if (summary !== null) {
+      dataUpdate['summary'] = summary;
+    }
+
+    dataUpdate['cover'] = coverMedia?.id || null;
+
+    return dataUpdate;
   }
 
-  public groupArticles(articles: any[]): any[] {
-    return this._postService.groupPosts(articles);
-  }
+  public async getsByMedia(id: string): Promise<ArticleResponseDto[]> {
+    const include = this.getIncludeObj({
+      mustIncludeMedia: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      filterMediaIds: [id],
+    });
+    const articles = await this.postModel.findAll({ include });
 
-  public async getArticlesByMedia(id: string): Promise<ArticleResponseDto[]> {
-    const posts = await this._postModel.findAll({
-      include: [
-        {
-          model: MediaModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'url', 'type', 'name', 'width', 'height', 'thumbnails', 'createdAt'],
-          required: true,
-          where: {
-            id,
-          },
-        },
-        {
-          model: CategoryModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-          required: false,
-        },
-        {
-          model: SeriesModel,
-          through: {
-            attributes: [],
-          },
-          attributes: ['id', 'name'],
-          required: false,
-        },
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          attributes: ['groupId'],
-        },
-        {
-          model: MentionModel,
-          as: 'mentions',
-        },
-      ],
+    const jsonArticles = articles.map((p) => p.toJSON());
+
+    const result = await this.articleBinding.bindRelatedData(jsonArticles, {
+      shouldBindAudience: true,
+      shouldBindMention: true,
+      shouldBindActor: true,
     });
 
-    const jsonPosts = posts.map((p) => p.toJSON());
-    await Promise.all([
-      this._postBindingService.bindAudienceToPost(jsonPosts),
-      this._mentionService.bindMentionsToPosts(jsonPosts),
-      this._postBindingService.bindActorToPost(jsonPosts),
-    ]);
-    const result = this._classTransformer.plainToInstance(ArticleResponseDto, jsonPosts, {
+    return this.classTransformer.plainToInstance(ArticleResponseDto, result, {
       excludeExtraneousValues: true,
     });
-    return result;
   }
 
   public async maskArticleContent(articles: any[]): Promise<void> {

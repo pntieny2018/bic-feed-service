@@ -1,9 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { UpdatePostDto } from '../../../post/dto/requests';
-import { Transform } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
+
+class CoverMediaDto {
+  public id: string;
+}
 export class UpdateArticleDto extends UpdatePostDto {
   @ApiProperty({
     type: String,
@@ -59,4 +63,16 @@ export class UpdateArticleDto extends UpdatePostDto {
     return value;
   })
   public hashtags?: string[];
+
+  @ApiProperty({
+    type: CoverMediaDto,
+    example: {
+      id: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
+    },
+  })
+  @IsOptional()
+  @Expose({
+    name: 'cover_media',
+  })
+  public coverMedia?: CoverMediaDto;
 }

@@ -7,12 +7,12 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { AudienceResponseDto } from './audience.response.dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
-import { MediaFilterResponseDto } from '../../../media/dto/response';
+import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostPrivacy } from '../../../../database/models/post.model';
-
+import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -38,6 +38,20 @@ export class PostResponseDto {
   })
   @Expose()
   public highlight?: string;
+
+  @ApiProperty({
+    description: 'title highlight',
+    type: String,
+  })
+  @Expose()
+  public titleHighlight?: string;
+
+  @ApiProperty({
+    description: 'summary highlight',
+    type: String,
+  })
+  @Expose()
+  public summaryHighlight?: string;
 
   @ApiProperty({
     description: 'Array of files, images, videos',
@@ -232,6 +246,20 @@ export class PostResponseDto {
   })
   @Expose()
   public privacy: PostPrivacy;
+
+  @ApiProperty({
+    type: LinkPreviewDto,
+    example: {
+      url: 'https://beincomm.com',
+      domain: 'beincomm.com',
+      image: 'https://www.beincomm.com/images/bic_welcomeAd_banner.webp',
+      title: 'This is title',
+      description: 'This is description',
+    },
+    name: 'link_preview',
+  })
+  @Expose()
+  public linkPreview?: LinkPreviewDto;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

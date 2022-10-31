@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel } from '../database/models/media.model';
 import { Op } from 'sequelize';
 import { ConfigService } from '@nestjs/config';
-import { IAppConfig } from '../config/app';
 
 @Command({ name: 'fix:media:domain', description: 'Update domain of media url' })
 export class UpdateMediaDomainCommand implements CommandRunner {
@@ -12,20 +11,14 @@ export class UpdateMediaDomainCommand implements CommandRunner {
     private _configService: ConfigService
   ) {}
 
-  public async run(): Promise<any> {
+  public async run(passedParam: string[]): Promise<any> {
+    if (passedParam.length < 2) {
+      console.log('Incorrect command, please run with :fix:media:domain {oldDomain} {newDomain}');
+      process.exit();
+    }
     try {
-      const env = this._configService.get<IAppConfig>('app').env;
-
-      let oldDomain, newDomain;
-      if (env === 'sandbox') {
-        oldDomain = 'sbx.bein.group';
-        newDomain = 'beincomm.io';
-      } else if (env === 'staging') {
-        oldDomain = 'stg.beincomm.com';
-        newDomain = 'beincomm.app';
-      } else {
-        process.exit();
-      }
+      const oldDomain = passedParam[0];
+      const newDomain = passedParam[1];
       const mediaFix = await this._mediaModel.findAll({
         where: { url: { [Op.like]: '%' + oldDomain + '%' } },
       });

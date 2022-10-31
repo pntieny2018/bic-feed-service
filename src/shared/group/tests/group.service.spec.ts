@@ -113,11 +113,7 @@ describe('GroupService', () => {
     it('return list access', () => {
       const listAccess = service.getGroupIdsCanAccess(sharedGroupMock[0], mockedUserAuth);
       expect(listAccess).toEqual(
-        [
-          "d3a2e019-1dba-485d-a8cf-ec037e9f25af",
-          "d3bc1d0d-0511-43e7-acfa-197a7aeab7eb",
-          "22ccce09-0cea-4984-be0f-44e8839ac52b"
-        ]
+        []
       );
     });
     it('return list access group secret', () => {
@@ -130,11 +126,7 @@ describe('GroupService', () => {
     it('return list access', () => {
       const listAccess = service.getGroupIdsCanAccessArticle(sharedGroupMock[2], mockedUserAuth);
       expect(listAccess).toEqual(
-        [
-          "9d3468c0-4b35-49ad-b569-21f0f6e32a32",
-          "f8ff0be9-fd98-482e-a20c-0af26f37b4cf",
-          "94cc5afd-eaa9-4bb7-9150-5fde275e3cef"
-        ]
+        []
       );
     });
     it('return list access group secret', () => {

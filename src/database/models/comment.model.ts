@@ -15,7 +15,6 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Sequelize } from 'sequelize';
 import { Literal } from 'sequelize/types/utils';
 import { IPost, PostModel } from './post.model';
 import { IMedia, MediaModel } from './media.model';
@@ -26,9 +25,11 @@ import { MentionableType } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
-import { BelongsToManyAddAssociationsMixin, Optional } from 'sequelize';
+import { BelongsToManyAddAssociationsMixin, Optional, QueryTypes, Sequelize } from 'sequelize';
 import { IsUUID } from 'class-validator';
-import { NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
+import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
+import { OrderEnum } from '../../common/dto';
+import { GetCommentsDto } from '../../modules/comment/dto/requests';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -223,5 +224,236 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     if (post) {
       await post[action]('comments_count');
     }
+  }
+
+  private static async _getCondition(getCommentsDto: GetCommentsDto): Promise<any> {
+    const { schema } = getDatabaseConfig();
+    const {
+      postId,
+      parentId,
+      idGT,
+      idGTE,
+      idLT,
+      idLTE,
+      createdAtGT,
+      createdAtGTE,
+      createdAtLT,
+      createdAtLTE,
+    } = getCommentsDto;
+    let condition = ` "c".parent_id = ${this.sequelize.escape(parentId ?? NIL)}`;
+    if (postId) {
+      condition += ` AND "c".post_id = ${this.sequelize.escape(postId)}`;
+    }
+
+    if (idGT) {
+      const id = this.sequelize.escape(idGT);
+      condition += ` AND ( "c".id != ${id} AND "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
+    }
+    if (idGTE) {
+      const id = this.sequelize.escape(idGTE);
+      condition += ` AND ( "c".created_at >= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
+    }
+    if (idLT) {
+      const id = this.sequelize.escape(idLT);
+      condition += ` AND ( "c".id != ${id} AND "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
+    }
+    if (idLTE) {
+      const id = this.sequelize.escape(idLTE);
+      condition += ` AND ( "c".created_at <= (SELECT "c".created_at FROM ${schema}.comments AS "c" WHERE "c".id = ${id}))`;
+    }
+
+    if (createdAtGT) {
+      const createdAt = this.sequelize.escape(createdAtGT);
+      condition += ` AND "c".created_at > ${createdAt}`;
+    }
+    if (createdAtGTE) {
+      const createdAt = this.sequelize.escape(createdAtGTE);
+      condition += ` AND "c".created_at >= ${createdAt}`;
+    }
+    if (createdAtLT) {
+      const createdAt = this.sequelize.escape(createdAtLT);
+      condition += ` AND "c".created_at < ${createdAt}`;
+    }
+    if (createdAtLTE) {
+      const createdAt = this.sequelize.escape(createdAtLTE);
+      condition += ` AND "c".created_at <= ${createdAt}`;
+    }
+    return condition;
+  }
+
+  public static async getListData(
+    getCommentsDto: GetCommentsDto,
+    authUserId?: string,
+    aroundId = NIL_UUID
+  ): Promise<any[]> {
+    const { limit } = getCommentsDto;
+    const order = getCommentsDto.order ?? OrderEnum.DESC;
+    const { schema } = getDatabaseConfig();
+    let query: string;
+    const condition = await CommentModel._getCondition(getCommentsDto);
+
+    let select = `SELECT "CommentModel".*,
+    "media"."id" AS "mediaId",
+    "media"."url" AS "mediaUrl", 
+    "media"."type" AS "mediaType",
+    "media"."name" AS "mediaName",
+    "media"."width" AS "mediaWidth", 
+    "media"."height" AS "mediaHeight", 
+    "media"."extension" AS "mediaExtension",
+    "mentions"."user_id" AS "mentionUserId"`;
+
+    if (authUserId) {
+      select += `,"ownerReactions"."id" AS "commentReactionId", 
+      "ownerReactions"."reaction_name" AS "reactionName",
+      "ownerReactions"."created_at" AS "reactCreatedAt"`;
+    }
+
+    const subSelect = `SELECT 
+    "c"."id",
+    "c"."parent_id" AS "parentId", 
+    "c"."post_id" AS "postId",
+    "c"."content", 
+    "c"."edited", 
+    "c"."giphy_id" as "giphyId",
+    "c"."total_reply" AS "totalReply", 
+    "c"."created_by" AS "createdBy", 
+    "c"."updated_by" AS "updatedBy", 
+    "c"."created_at" AS "createdAt", 
+    "c"."updated_at" AS "updatedAt"`;
+    if (aroundId === NIL_UUID) {
+      query = `${select}
+      FROM (
+        ${subSelect}
+        FROM ${schema}."comments" AS "c"
+        WHERE ${condition} 
+        ORDER BY "c"."created_at" ${order}
+        OFFSET 0 LIMIT :limitTop
+      ) AS "CommentModel" 
+      LEFT OUTER JOIN ( 
+        ${schema}."comments_media" AS "media->CommentMediaModel" 
+       INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+      ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+      LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
+        "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
+      ) 
+      ${
+        authUserId
+          ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId`
+          : ``
+      }
+      ORDER BY "CommentModel"."createdAt" ${order}`;
+    } else {
+      query = `${select}
+      FROM (
+        (
+        ${subSelect}
+        FROM ${schema}."comments" AS "c"
+        WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
+        ORDER BY "c"."created_at" DESC
+        OFFSET 0 LIMIT :limitTop
+        )
+        UNION ALL 
+        (
+          ${subSelect}
+          FROM ${schema}."comments" AS "c"
+          WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
+          ORDER BY "c"."created_at" ASC
+          OFFSET 0 LIMIT :limitBottom
+        )
+      ) AS "CommentModel" 
+      LEFT OUTER JOIN ( 
+        ${schema}."comments_media" AS "media->CommentMediaModel" 
+       INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+      ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+      LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
+        "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
+      )
+      ${
+        authUserId
+          ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId `
+          : ``
+      }
+      ORDER BY "CommentModel"."createdAt" ${order}`;
+    }
+    const rows: any[] = await this.sequelize.query(query, {
+      replacements: {
+        aroundId,
+        authUserId,
+        limitTop: limit + 1,
+        limitBottom: limit,
+      },
+      type: QueryTypes.SELECT,
+    });
+
+    return rows;
+  }
+
+  public static async getChildByComments(
+    comments: any[],
+    authUserId: string,
+    limit: number
+  ): Promise<any[]> {
+    const subQuery = [];
+    const { schema } = getDatabaseConfig();
+    for (const comment of comments) {
+      subQuery.push(`(SELECT * 
+      FROM (
+        SELECT 
+              "id", 
+              "parent_id" AS "parentId", 
+              "post_id" AS "postId", 
+              "content", 
+              "edited",
+              "total_reply" AS "totalReply", 
+              "created_by" AS "createdBy", 
+              "updated_by" AS "updatedBy", 
+              "created_at" AS "createdAt", 
+              "updated_at" AS "updatedAt",
+              "giphy_id" AS "giphyId"
+        FROM ${schema}."comments" AS "CommentModel" 
+        WHERE "CommentModel"."parent_id" = ${this.sequelize.escape(comment.id)} 
+        ORDER BY "CommentModel"."created_at" DESC LIMIT :limit
+      ) AS sub)`);
+    }
+
+    let query = `SELECT 
+      "CommentModel".*,
+      "media"."id" AS "mediaId",
+      "media"."url" AS "mediaUrl", 
+      "media"."type" AS "mediaType",
+      "media"."name" AS "mediaName",
+      "media"."width" AS "mediaWidth", 
+      "media"."height" AS "mediaHeight", 
+      "media"."extension" AS "mediaExtension",
+      "mentions"."user_id" AS "mentionUserId"
+      ${
+        authUserId
+          ? `,"ownerReactions"."id" AS "commentReactionId", 
+      "ownerReactions"."reaction_name" AS "reactionName",
+      "ownerReactions"."created_at" AS "reactCreatedAt"`
+          : ``
+      }
+    FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel" 
+    LEFT OUTER JOIN ( 
+      ${schema}."comments_media" AS "media->CommentMediaModel" 
+      INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+    ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+    LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" 
+        AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment')`;
+    if (authUserId) {
+      query += `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
+      AND "ownerReactions"."created_by" = :authUserId`;
+    }
+    query += ` ORDER BY "CommentModel"."createdAt" DESC`;
+
+    const rows: any[] = await this.sequelize.query(query, {
+      replacements: {
+        authUserId,
+        limit: limit + 1,
+      },
+      type: QueryTypes.SELECT,
+    });
+
+    return rows;
   }
 }

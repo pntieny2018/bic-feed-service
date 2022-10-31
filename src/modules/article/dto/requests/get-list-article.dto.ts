@@ -39,7 +39,7 @@ export class GetListArticlesDto extends PageOptionsDto {
     required: false,
     example: 1,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
   @Expose({
     name: 'group_id',
@@ -48,7 +48,7 @@ export class GetListArticlesDto extends PageOptionsDto {
 
   public groupIds?: string[];
 
-  @ApiProperty({ enum: OrderField, required: true })
+  @ApiProperty({ enum: OrderField, description: 'Do not order_field if you want to sort randomly' })
   @IsEnum(OrderField)
   @IsOptional()
   @Expose({

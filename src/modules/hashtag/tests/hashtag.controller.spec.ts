@@ -29,14 +29,6 @@ describe('HashtagController', () => {
   });
 
   describe('HashtagController.get', () => {
-    it('logger should be called', async () => {
-      const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
-      await controller.get(authUserMock, {
-        limit: 10,
-      });
-      expect(logSpy).toBeCalled();
-    });
-
     it('CommentService.getComments should be called', async () => {
       hashtagService.get.mockResolvedValue([]);
       await controller.get(authUserMock, {
@@ -48,9 +40,7 @@ describe('HashtagController', () => {
 
   describe('HashtagController.create', () => {
     it('logger should be called', async () => {
-      const logSpy = jest.spyOn(controller['_logger'], 'debug').mockReturnThis();
       await controller.create(authUserMock, createHashtagDto).catch(() => {});
-      expect(logSpy).toBeCalled();
     });
 
     it('CommentService.create should be called', async () => {
