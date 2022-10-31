@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { PostHasBeenDeletedEvent, PostHasBeenUpdatedEvent } from '../../../events/post';
+import { SeriesHasBeenDeletedEvent, SeriesHasBeenPublishedEvent } from '../../../events/series';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
@@ -41,7 +41,14 @@ export class SeriesAppService {
     }
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
-      return this._seriesService.get(created.id, user, new GetSeriesDto());
+      const series = await this._seriesService.get(created.id, user, new GetSeriesDto());
+      this._eventEmitter.emit(
+        new SeriesHasBeenPublishedEvent({
+          series,
+          actor: user.profile,
+        })
+      );
+      return series;
     }
   }
 
@@ -54,11 +61,11 @@ export class SeriesAppService {
   }
 
   public async deleteSeries(user: UserDto, seriesId: string): Promise<boolean> {
-    const postDeleted = await this._seriesService.delete(user, seriesId);
-    if (postDeleted) {
+    const seriesDeleted = await this._seriesService.delete(user, seriesId);
+    if (seriesDeleted) {
       this._eventEmitter.emit(
-        new PostHasBeenDeletedEvent({
-          post: postDeleted,
+        new SeriesHasBeenDeletedEvent({
+          series: seriesDeleted,
           actor: user.profile,
         })
       );

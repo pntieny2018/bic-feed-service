@@ -1,4 +1,3 @@
-import { OrderEnum, PageDto } from '../../common/dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
