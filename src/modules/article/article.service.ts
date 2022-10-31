@@ -274,7 +274,6 @@ export class ArticleService extends PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludeCategory: true,
-      shouldIncludeSeries: true,
       shouldIncludeCover: true,
     });
     const rows = await this.postModel.findAll<PostModel>({
