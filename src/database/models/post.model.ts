@@ -80,7 +80,6 @@ export interface IPost {
   reactionsCount?: string;
   giphyId?: string;
   markedReadPost?: boolean;
-  isArticle: boolean;
   type: PostType;
   title?: string;
   summary?: string;
@@ -133,9 +132,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @Column
   public canShare: boolean;
-
-  @Column
-  public isArticle: boolean;
 
   @AllowNull(true)
   @Column

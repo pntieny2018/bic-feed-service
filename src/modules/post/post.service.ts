@@ -25,7 +25,7 @@ import { PostEditedHistoryModel } from '../../database/models/post-edited-histor
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
+import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
@@ -102,7 +102,7 @@ export class PostService {
     const condition = {
       createdBy: authUserId,
       isDraft: true,
-      isArticle: false,
+      type: PostType.POST,
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
@@ -387,7 +387,7 @@ export class PostService {
       const post = await this.postModel.create(
         {
           isDraft: true,
-          isArticle: false,
+          type: PostType.POST,
           content,
           createdBy: authUserId,
           updatedBy: authUserId,
@@ -1142,7 +1142,6 @@ export class PostService {
       offset: number;
       limit: number;
       isImportant: boolean;
-      isArticle?: boolean;
     }
   ): Promise<string[]> {
     const { offset, limit, isImportant } = filters;

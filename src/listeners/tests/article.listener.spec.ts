@@ -20,6 +20,7 @@ import { mockedArticleResponse } from '../../modules/article/test/mocks/response
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
 import { VideoProcessingEndDto } from '../../modules/post/dto/responses/process-video-response.dto';
+import { PostType } from '../../database/models/post.model';
 
 describe.skip('ArticleListener', () => {
   let articleListener;
@@ -121,7 +122,7 @@ describe.skip('ArticleListener', () => {
         content: '',
         createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
-        isArticle: false,
+        type: PostType.ARTICLE,
         isDraft: false,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',

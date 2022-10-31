@@ -11,7 +11,7 @@ import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/res
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
-import { PostPrivacy } from '../../../../database/models/post.model';
+import { PostPrivacy, PostType } from '../../../../database/models/post.model';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 export class PostResponseDto {
   @ApiProperty({
@@ -236,10 +236,10 @@ export class PostResponseDto {
   public comments?: PageDto<CommentResponseDto>;
 
   @ApiProperty({
-    type: Boolean,
+    enum: PostType,
   })
   @Expose()
-  public isArticle: boolean;
+  public type: PostType;
 
   @ApiProperty({
     enum: PostPrivacy,

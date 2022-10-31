@@ -123,8 +123,8 @@ export const POST_KO_MAPPING = {
           },
         },
       },
-      isArticle: {
-        type: 'boolean',
+      type: {
+        type: 'keyword',
       },
       createdAt: {
         type: 'date',

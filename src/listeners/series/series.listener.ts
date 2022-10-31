@@ -5,11 +5,12 @@ import {
 } from '../../events/series';
 import { SentryService } from '@app/sentry';
 import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Post } from '@nestjs/common';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostSearchService } from '../../modules/post/post-search.service';
+import { PostType } from '../../database/models/post.model';
 
 @Injectable()
 export class SeriesListener {
@@ -51,7 +52,7 @@ export class SeriesListener {
         title,
         summary,
         audience,
-        isArticle: false,
+        type: PostType.SERIES,
       },
     ]);
 
@@ -89,7 +90,7 @@ export class SeriesListener {
         lang,
         summary,
         title,
-        isArticle: false,
+        type: PostType.SERIES,
       },
     ]);
 

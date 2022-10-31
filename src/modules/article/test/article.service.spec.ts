@@ -14,7 +14,7 @@ import { HashtagModel } from '../../../database/models/hashtag.model';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PostModel, PostPrivacy } from '../../../database/models/post.model';
+import { PostModel, PostPrivacy, PostType } from '../../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
@@ -303,7 +303,7 @@ describe.skip('ArticleService', () => {
       expect(articleService.addGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
         isDraft: true,
-        isArticle: true,
+        type: PostType.ARTICLE,
         content: mockedCreateArticleDto.content,
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,

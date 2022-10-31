@@ -1,5 +1,5 @@
 'use strict';
-
+const schemaName = process.env.DB_SCHEMA;
 module.exports = {
   async up (queryInterface, Sequelize) {
     await queryInterface.sequelize.query(

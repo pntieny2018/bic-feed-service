@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy, PostType } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { PostResponseDto } from '../../../dto/responses';
 
@@ -7,7 +7,7 @@ export const mockedPostResponse: PostResponseDto = {
   ownerReactions: [],
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
-  isArticle: false,
+  type: PostType.POST,
   media: {
     files: [],
     videos: [],

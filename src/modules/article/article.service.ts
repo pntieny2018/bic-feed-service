@@ -1,6 +1,6 @@
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import {
   BadRequestException,
   forwardRef,
@@ -262,7 +262,7 @@ export class ArticleService extends PostService {
     const condition = {
       createdBy: authUserId,
       isDraft: true,
-      isArticle: true,
+      type: PostType.ARTICLE,
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
@@ -351,7 +351,7 @@ export class ArticleService extends PostService {
         'id',
         'title',
         'summary',
-        'isArticle',
+        'type',
         'cover',
         'createdBy',
         'linkPreviewId',
@@ -359,7 +359,7 @@ export class ArticleService extends PostService {
       ],
       include: includeRelated,
       where: {
-        isArticle: true,
+        type: PostType.ARTICLE,
         isDraft: false,
       },
       offset,
@@ -423,11 +423,11 @@ export class ArticleService extends PostService {
     if (authUser) {
       condition = {
         id: articleId,
-        isArticle: true,
+        type: PostType.ARTICLE,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
-      condition = { id: articleId, isArticle: true };
+      condition = { id: articleId, type: PostType.ARTICLE };
     }
 
     const article = await this.postModel.findOne({
@@ -595,7 +595,7 @@ export class ArticleService extends PostService {
           title,
           summary,
           isDraft: true,
-          isArticle: true,
+          type: PostType.ARTICLE,
           content: content,
           createdBy: authUserId,
           updatedBy: authUserId,

@@ -39,7 +39,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
     },
   },
   id: 'id',
-  isArticle: 'isArticle',
+  type: 'type',
   createdAt: 'createdAt',
   media: 'media',
   mentions: 'mentions',

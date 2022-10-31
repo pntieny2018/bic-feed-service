@@ -61,7 +61,7 @@ export class ArticleListener {
       setting,
       audience,
       createdAt,
-      isArticle,
+      type,
       title,
       summary,
     } = article;
@@ -82,7 +82,7 @@ export class ArticleListener {
     this._postSearchService.addPostsToSearch([
       {
         id,
-        isArticle,
+        type,
         commentsCount,
         totalUsersSeen,
         content,
@@ -125,7 +125,7 @@ export class ArticleListener {
       mentions,
       setting,
       audience,
-      isArticle,
+      type,
       createdAt,
       lang,
       summary,
@@ -146,7 +146,6 @@ export class ArticleListener {
       });
     }
 
-
     if (isDraft) return;
 
     this._postServiceHistory
@@ -160,7 +159,7 @@ export class ArticleListener {
     this._postSearchService.updatePostsToSearch([
       {
         id,
-        isArticle,
+        type,
         commentsCount,
         totalUsersSeen,
         content,
@@ -218,7 +217,7 @@ export class ArticleListener {
         setting,
         audience,
         createdAt,
-        isArticle,
+        type,
         summary,
         title,
       } = article;
@@ -226,7 +225,7 @@ export class ArticleListener {
       this._postSearchService.addPostsToSearch([
         {
           id,
-          isArticle,
+          type,
           commentsCount,
           totalUsersSeen,
           content,
