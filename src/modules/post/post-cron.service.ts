@@ -28,7 +28,7 @@ export class PostCronService {
     private readonly _postService: PostService
   ) {}
 
-  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
+  /* Delete posts that had been deleted after 30 days*/
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   private async _cleanDeletedPost(): Promise<void> {
     const willDeletePosts = await this._postModel.findAll({
@@ -40,6 +40,7 @@ export class PostCronService {
       paranoid: false,
       include: {
         model: MediaModel,
+        as: 'media',
         through: {
           attributes: [],
         },
@@ -47,26 +48,20 @@ export class PostCronService {
         required: false,
       },
     });
-    if (willDeletePosts.length) {
-      const mediaList = ArrayHelper.arrayUnique(
-        willDeletePosts.filter((e) => e.media.length).map((e) => e.media)
-      );
-      if (!(await this._mediaService.isExistOnPostOrComment(mediaList.map((e) => e.id)))) {
-        this._mediaService.emitMediaToUploadServiceFromMediaList(mediaList, MediaMarkAction.DELETE);
-      }
-      const transaction = await this._sequelizeConnection.transaction();
+    if (willDeletePosts.length === 0) return;
 
-      try {
-        for (const post of willDeletePosts) {
-          await this._postService.cleanRelationship(post.id, transaction, true);
-          await post.destroy({ force: true, transaction });
-        }
-        await transaction.commit();
-      } catch (e) {
-        this._logger.error(e.message);
-        this._sentryService.captureException(e);
-        await transaction.rollback();
+    const transaction = await this._sequelizeConnection.transaction();
+
+    try {
+      for (const post of willDeletePosts) {
+        await this._postService.cleanRelationship(post.id, transaction, true);
+        await post.destroy({ force: true, transaction });
       }
+      await transaction.commit();
+    } catch (e) {
+      this._logger.error(e.message);
+      this._sentryService.captureException(e);
+      await transaction.rollback();
     }
   }
   @Cron(CronExpression.EVERY_MINUTE)
@@ -75,7 +70,6 @@ export class PostCronService {
       this._postModel.update(
         {
           isImportant: false,
-          importantExpiredAt: null,
         },
         {
           where: {

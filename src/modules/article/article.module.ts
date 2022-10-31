@@ -17,6 +17,7 @@ import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
 import { FeedModule } from '../feed';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { ArticleBindingService } from './article-binding.service';
+import { ArticleAppService } from './application/article.app-service';
 @Module({
   imports: [
     PostModule,
@@ -36,6 +37,7 @@ import { ArticleBindingService } from './article-binding.service';
   controllers: [ArticleController],
   providers: [
     ArticleService,
+    ArticleAppService,
     ArticleBindingService,
     CanUseCategoryConstraint,
     CanUseSeriesConstraint,

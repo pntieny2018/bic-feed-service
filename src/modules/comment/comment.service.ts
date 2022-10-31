@@ -62,12 +62,6 @@ export class CommentService {
     createCommentDto: CreateCommentDto,
     replyId = NIL_UUID
   ): Promise<IComment> {
-    this._logger.debug(
-      `[create] user: ${JSON.stringify(user)}, createCommentDto: ${JSON.stringify(
-        createCommentDto
-      )},replyId: ${replyId} `
-    );
-
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
@@ -167,12 +161,6 @@ export class CommentService {
     comment: IComment;
     oldComment: IComment;
   }> {
-    this._logger.debug(
-      `[update] user: ${JSON.stringify(user)}, updateCommentDto: ${JSON.stringify(
-        updateCommentDto
-      )},commentId: ${commentId} `
-    );
-
     const comment = await this._commentModel.findOne({
       include: [
         {
@@ -268,8 +256,6 @@ export class CommentService {
     commentId: string,
     childLimit = 25
   ): Promise<CommentResponseDto> {
-    this._logger.debug(`[getComment] commentId: ${commentId} `);
-
     const response = await this._commentModel.findOne({
       where: {
         id: commentId,
@@ -277,6 +263,7 @@ export class CommentService {
       include: [
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },
@@ -324,7 +311,6 @@ export class CommentService {
    * @returns Promise resolve CommentResponseDto
    */
   public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
-    this._logger.debug(`[getComment] commentId: ${commentIds} `);
 
     const responses = await this._commentModel.findAll({
       order: [['createdAt', 'DESC']],
@@ -336,6 +322,7 @@ export class CommentService {
       include: [
         {
           model: MediaModel,
+          as: 'media',
           through: {
             attributes: [],
           },
@@ -375,11 +362,6 @@ export class CommentService {
     user?: UserDto,
     checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
-    this._logger.debug(
-      `[getComments] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
-        getCommentsDto
-      )}`
-    );
     const { childLimit, postId, parentId, limit } = getCommentsDto;
     const post = await this._postService.findPost({
       postId,
@@ -402,7 +384,7 @@ export class CommentService {
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
 
-    if (comments.list.length && parentId === NIL_UUID) {
+    if (comments.list.length && parentId === NIL_UUID && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
     await Promise.all([
@@ -426,13 +408,7 @@ export class CommentService {
     user: UserDto,
     getCommentLinkDto: GetCommentLinkDto
   ): Promise<any> {
-    this._logger.debug(
-      `[getCommentLink] user: ${JSON.stringify(user)}, getCommentDto: ${JSON.stringify(
-        getCommentLinkDto
-      )}`
-    );
     const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
-
     //check post exist
     if (getCommentLinkDto.postId) {
       await this._postService.findPost({
@@ -471,25 +447,30 @@ export class CommentService {
       userId,
       parentId
     );
-    if (comments.list.length && limit > 1) {
+    //get child comment
+    if (comments.list.length && limit > 1 && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
 
-    const aroundChildId = checkComment.parentId !== NIL_UUID ? commentId : NIL_UUID;
-    const child = await this._getComments(
-      {
-        limit: targetChildLimit,
-        parentId,
-        postId,
-      },
-      userId,
-      aroundChildId
-    );
-    comments.list.forEach((cm) => {
-      if (cm.id === parentId) {
-        cm.child = child;
-      }
-    });
+    //get child for target comment
+    if (targetChildLimit > 0) {
+      const aroundChildId = checkComment.parentId !== NIL_UUID ? commentId : NIL_UUID;
+      const child = await this._getComments(
+        {
+          limit: targetChildLimit,
+          parentId,
+          postId,
+        },
+        userId,
+        aroundChildId
+      );
+      comments.list.forEach((cm) => {
+        if (cm.id === parentId) {
+          cm.child = child;
+        }
+      });
+    }
+
     await Promise.all([
       this._reactionService.bindToComments(comments.list),
       this._mentionService.bindToComment(comments.list),
@@ -550,8 +531,6 @@ export class CommentService {
    * @returns Promise resolve boolean
    */
   public async destroy(user: UserDto, commentId: string): Promise<IComment> {
-    this._logger.debug(`[destroy] user: ${JSON.stringify(user)}, commentID: ${commentId}`);
-
     const comment = await this._commentModel.findOne({
       where: {
         id: commentId,
@@ -731,6 +710,7 @@ export class CommentService {
         include: [
           {
             model: MediaModel,
+            as: 'media',
             through: {
               attributes: [],
             },

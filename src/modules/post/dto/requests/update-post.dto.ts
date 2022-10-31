@@ -123,5 +123,5 @@ export class UpdatePostDto {
   @Expose({
     name: 'link_preview',
   })
-  linkPreview?: LinkPreviewDto;
+  public linkPreview?: LinkPreviewDto;
 }

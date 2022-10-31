@@ -79,7 +79,6 @@ describe('PostListener', () => {
           provide: PostService,
           useValue: {
             deletePostEditedHistory: jest.fn(),
-            processVideo: jest.fn(),
             saveEditedHistory: jest.fn(),
             getsByMedia: jest.fn(),
             updateStatus: jest.fn(),
@@ -206,7 +205,7 @@ describe('PostListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
@@ -218,7 +217,7 @@ describe('PostListener', () => {
     });
     it('should success even if postService.saveEditedHistory', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.saveEditedHistory.mockRejectedValue();
       elasticsearchService.index.mockResolvedValue();
@@ -239,13 +238,13 @@ describe('PostListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postActivityService.createPayload.mockReturnValue({ object: {} });
       postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
       await postListener.onPostUpdated(postHasBeenUpdatedEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.processVideo).toBeCalled();
+      expect(mediaService.processVideo).toBeCalled();
       expect(postActivityService.createPayload).toBeCalled();
       expect(postService.saveEditedHistory).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
@@ -284,7 +283,6 @@ describe('PostListener', () => {
     postVideoFailedEvent.payload.properties.mimeType = '1212'
     postVideoFailedEvent.payload.properties.codec = '1212'
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
       postService.getsByMedia.mockResolvedValue([
         { id: '6020620d-142d-4f63-89f0-b63d24d60916' },
         { id: 'f6843473-58dc-49c8-a5c9-58d0be4673c1' },
@@ -292,7 +290,6 @@ describe('PostListener', () => {
       postService.updateStatus.mockResolvedValue();
 
       await postListener.onPostVideoFailed(postVideoFailedEvent);
-      expect(loggerSpy).toBeCalled();
       expect(postService.getsByMedia).toBeCalled();
       expect(postService.updateStatus).toBeCalled();
     });

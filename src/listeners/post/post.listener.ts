@@ -36,7 +36,6 @@ export class PostListener {
 
   @On(PostHasBeenDeletedEvent)
   public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { actor, post } = event.payload;
     if (post.isDraft) return;
 
@@ -91,7 +90,6 @@ export class PostListener {
 
   @On(PostHasBeenPublishedEvent)
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { post, actor } = event.payload;
     const {
       isDraft,
@@ -109,7 +107,7 @@ export class PostListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    await this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    await this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
 
     if (isDraft) return;
 
@@ -165,7 +163,6 @@ export class PostListener {
 
   @On(PostHasBeenUpdatedEvent)
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { oldPost, newPost, actor } = event.payload;
     const {
       isDraft,
@@ -186,7 +183,7 @@ export class PostListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._postService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
     }
 
     if (oldPost.isDraft === false && isDraft === true) {
@@ -254,7 +251,6 @@ export class PostListener {
 
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
@@ -323,8 +319,6 @@ export class PostListener {
 
   @On(PostVideoFailedEvent)
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
-    this._logger.debug(`Event: ${JSON.stringify(event)}`);
-
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,

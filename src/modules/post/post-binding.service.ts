@@ -54,9 +54,9 @@ export class PostBindingService {
       shouldBindReaction?: boolean;
       shouldHideSecretAudienceCanNotAccess?: boolean;
       authUser?: UserDto;
-      shouldBindLinkPreview?: boolean;
     }
   ): Promise<PostResponseDto[]> {
+    if (posts.length === 0) return [];
     const processList = [];
     if (options?.shouldBindActor) {
       processList.push(this.bindActor(posts));
@@ -76,18 +76,9 @@ export class PostBindingService {
     if (options?.shouldBindReaction) {
       processList.push(this.reactionService.bindToPosts(posts));
     }
-    if (options?.shouldBindLinkPreview) {
-      processList.push(this.linkPreviewService.bindToPosts(posts));
-    }
     if (processList.length === 0) return [];
     await Promise.all(processList);
     return posts;
-  }
-
-  protected transform(posts: any[]): PostResponseDto[] {
-    return this.classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
   }
 
   public async bindAudience(
@@ -192,10 +183,13 @@ export class PostBindingService {
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      if (attributes['content']) post.content = findPost?.content || '';
-      if (attributes['commentsCount']) post.commentsCount = findPost?.commentsCount || 0;
-      if (attributes['totalUsersSeen']) post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (attributes['setting']) {
+      if (attributes.includes('content')) post.content = findPost?.content || '';
+      if (attributes.includes('commentsCount')) {
+        post.commentsCount = findPost?.commentsCount || 0;
+      }
+      if (attributes.includes('totalUsersSeen'))
+        post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+      if (attributes.includes('setting')) {
         post.setting = {
           importantExpiredAt: findPost.importantExpiredAt,
           isImportant: findPost.isImportant,

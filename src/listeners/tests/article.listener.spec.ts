@@ -55,7 +55,6 @@ describe.skip('ArticleListener', () => {
           provide: PostService,
           useValue: {
             deletePostEditedHistory: jest.fn(),
-            processVideo: jest.fn(),
             saveEditedHistory: jest.fn(),
             getsByMedia: jest.fn(),
             updateStatus: jest.fn(),
@@ -185,14 +184,14 @@ describe.skip('ArticleListener', () => {
     it('should success even processVideo and saveEditedHistory and updateTotalArticle error', async () => {
       articleHasBeenPublishedEvent.payload.article.isDraft = false;
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockRejectedValue(new Error('b0d0287a-3ec9-4b9b-8032-2c491d954945'));
+      mediaService.processVideo.mockRejectedValue(new Error('b0d0287a-3ec9-4b9b-8032-2c491d954945'));
       postService.saveEditedHistory.mockRejectedValue(new Error('2'));
       seriesService.updateTotalArticle.mockRejectedValue(new Error('3'));
       elasticsearchService.index.mockResolvedValue();
       feedPublisherService.fanoutOnWrite.mockResolvedValue();
       await articleListener.onArticlePublished(articleHasBeenPublishedEvent);
       expect(loggerSpy).toBeCalled();
-      expect(postService.processVideo).toBeCalled();
+      expect(mediaService.processVideo).toBeCalled();
       expect(postService.saveEditedHistory).toBeCalled();
       expect(seriesService.updateTotalArticle).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
@@ -210,13 +209,13 @@ describe.skip('ArticleListener', () => {
     });
     it('should success', async () => {
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      postService.processVideo.mockResolvedValue();
+      mediaService.processVideo.mockResolvedValue();
       postService.saveEditedHistory.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
       feedPublisherService.fanoutOnWrite.mockResolvedValue();
 
       await articleListener.onArticleUpdated(articleHasBeenUpdatedEvent);
-      expect(postService.processVideo).toBeCalled();
+      expect(mediaService.processVideo).toBeCalled();
       expect(postService.saveEditedHistory).toBeCalled();
       expect(elasticsearchService.index).toBeCalled();
     });

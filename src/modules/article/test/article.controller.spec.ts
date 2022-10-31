@@ -1,16 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { ArticleService } from '../article.service';
 import { ArticleController } from '../article.controller';
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { GetArticleDto } from '../dto/requests';
 import { PostService } from '../../post/post.service';
 import { AuthorityService } from '../../authority';
+import { ArticleAppService } from '../application/article.app-service';
 
 describe('ArticleController', () => {
-  let articleService: ArticleService;
-  let postService: PostService;
-  let authorityService: AuthorityService;
+  let articleService: ArticleAppService;
   let articleController: ArticleController;
   let eventEmitter: InternalEventEmitterService;
 
@@ -21,7 +19,7 @@ describe('ArticleController', () => {
       controllers: [ArticleController],
       providers: [
         {
-          provide: ArticleService,
+          provide: ArticleAppService,
           useClass: jest.fn(),
         },
         {
@@ -41,7 +39,7 @@ describe('ArticleController', () => {
       ],
     }).compile();
 
-    articleService = moduleRef.get<ArticleService>(ArticleService);
+    articleService = moduleRef.get<ArticleAppService>(ArticleAppService);
     articleController = moduleRef.get<ArticleController>(ArticleController);
     eventEmitter = moduleRef.get<InternalEventEmitterService>(InternalEventEmitterService);
   });
@@ -63,8 +61,8 @@ describe('ArticleController', () => {
       );
       expect(articleService.get).toBeCalledTimes(1);
       expect(articleService.get).toBeCalledWith(
-        '8f80cce8-3318-4ce5-8750-275425677a41',
         userDto,
+        '8f80cce8-3318-4ce5-8750-275425677a41',
         getDto
       );
     });
@@ -77,7 +75,7 @@ describe('ArticleController', () => {
       const result = await articleController.delete(userDto, postId);
 
       expect(articleService.delete).toBeCalledTimes(1);
-      expect(articleService.delete).toBeCalledWith(postId, userDto);
+      expect(articleService.delete).toBeCalledWith(userDto, postId);
       expect(result).toBe(true);
     });
   });

@@ -1,3 +1,4 @@
+import { Node } from 'slate';
 export class StringHelper {
   /**
    * Convert camel case string to snake case string
@@ -93,5 +94,32 @@ export class StringHelper {
       .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5') //remove _
       .replace(/~(.*?)~/g, '$1'); //remove ~~
     return stringConverted;
+  }
+
+  public static parsePaginationCursor(cursor: string): [string, 'ASC' | 'DESC'] {
+    if (!cursor) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(Buffer.from(cursor, 'base64').toString('utf8'));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  public static serializePaginationCursor(payload: [string, 'ASC' | 'DESC']): string {
+    return Buffer.from(JSON.stringify(payload)).toString('base64');
+  }
+
+  public static serializeEditorContentToText(textStringify: string): string {
+    if (!textStringify) return textStringify;
+    try {
+      const nodes: Node[] = JSON.parse(textStringify);
+      return nodes.map((node) => Node.string(node)).join('\n');
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   }
 }

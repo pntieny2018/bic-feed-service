@@ -31,7 +31,6 @@ export class HashtagController {
     @AuthUser() _user: UserDto,
     @Query() getHashtagDto: GetHashtagDto
   ): Promise<PageDto<HashtagResponseDto>> {
-    this._logger.debug('get hashtag');
     return this._hashtagService.get(getHashtagDto);
   }
 
@@ -48,7 +47,6 @@ export class HashtagController {
     @AuthUser() _user: UserDto,
     @Body() createHashtagDto: CreateHashtagDto
   ): Promise<HashtagResponseDto> {
-    this._logger.debug('create hashtag');
     return this._hashtagService.create(createHashtagDto.name);
   }
 }
