@@ -87,13 +87,18 @@ export class StringHelper {
   }
 
   public static removeMarkdownCharacter(str: string): string {
-    const stringConverted = str
-      //.replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')// Remove reference-style links?
-      .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3') // Remove **
-      .replace(/([\+]+)(\S)(.*?\S)??\1/g, '$2$3') // Remove ++
-      .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5') //remove _
-      .replace(/~(.*?)~/g, '$1'); //remove ~~
-    return stringConverted;
+    try {
+      const stringConverted = str
+        //.replace(/^\s{1,2}\[(.*?)\]: (\S+)( ".*?")?\s*$/g, '')// Remove reference-style links?
+        .replace(/([\*]+)(\S)(.*?\S)??\1/g, '$2$3') // Remove **
+        .replace(/([\+]+)(\S)(.*?\S)??\1/g, '$2$3') // Remove ++
+        .replace(/(^|\W)([_]+)(\S)(.*?\S)??\2($|\W)/g, '$1$3$4$5') //remove _
+        .replace(/~(.*?)~/g, '$1'); //remove ~~
+      return stringConverted;
+    } catch (e) {
+      console.log('Invalid content=', str);
+      return str;
+    }
   }
 
   public static parsePaginationCursor(cursor: string): [string, 'ASC' | 'DESC'] {
@@ -106,10 +111,6 @@ export class StringHelper {
     } catch (e) {
       return null;
     }
-  }
-
-  public static serializePaginationCursor(payload: [string, 'ASC' | 'DESC']): string {
-    return Buffer.from(JSON.stringify(payload)).toString('base64');
   }
 
   public static serializeEditorContentToText(textStringify: string): string {
