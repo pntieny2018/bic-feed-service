@@ -37,9 +37,6 @@ import { GroupService } from '../../shared/group';
 import { LogicException } from '../../common/exceptions';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { NIL } from 'uuid';
-import { CategoryModel } from '../../database/models/category.model';
-import { SeriesModel } from '../../database/models/series.model';
-import { ClientKafka } from '@nestjs/microservices';
 import { FeedService } from '../feed/feed.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserService } from '../../shared/user';
@@ -542,7 +539,7 @@ export class ArticleService extends PostService {
 
     if (shouldIncludeSeries) {
       includes.push({
-        model: SeriesModel,
+        model: PostModel,
         as: 'series',
         required: false,
         through: {

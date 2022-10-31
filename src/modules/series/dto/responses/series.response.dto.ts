@@ -1,91 +1,145 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { PageDto } from '../../../../common/dto';
+import { Expose, Transform, Type } from 'class-transformer';
+import { UserSharedDto } from '../../../../shared/user/dto';
+import { CommentResponseDto } from '../../../comment/dto/response';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
-
+import { AudienceResponseDto } from '../../../post/dto/responses';
 export class SeriesResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Post ID',
+    type: String,
+  })
   @IsUUID()
   @Expose()
   public id: string;
 
+  @Expose()
+  public lang?: string;
+
   @ApiProperty({
+    description: 'Highlight',
     type: String,
-    name: 'name',
   })
   @Expose()
-  public name: string;
+  public highlight?: string;
 
   @ApiProperty({
+    description: 'title highlight',
     type: String,
-    name: 'slug',
   })
   @Expose()
-  public slug: string;
+  public titleHighlight?: string;
 
   @ApiProperty({
-    type: Boolean,
-    name: 'is_active',
-  })
-  @Expose({
-    name: 'is_active',
-  })
-  public isActive: boolean;
-
-  @ApiProperty({
+    description: 'summary highlight',
     type: String,
-    name: 'created_by',
   })
-  @Expose({
-    name: 'created_by',
-  })
-  public createdBy: string;
+  @Expose()
+  public summaryHighlight?: string;
 
   @ApiProperty({
-    type: String,
-    name: 'updated_by',
+    description: 'Post creator information',
+    type: UserSharedDto,
   })
-  @Expose({
-    name: 'updated_by',
-  })
-  public updatedBy: string;
+  @Expose()
+  @Type(() => UserSharedDto)
+  public actor: UserSharedDto;
 
   @ApiProperty({
+    description: 'Total number of comments',
     type: Number,
-    name: 'total_article',
+    name: 'comments_count',
   })
-  @Expose({
-    name: 'total_article',
-  })
-  public totalArticle: number;
+  @Expose()
+  public commentsCount: number;
 
   @ApiProperty({
+    description: 'Total users seen post',
     type: Number,
-    name: 'total_view',
+    name: 'total_users_seen',
   })
-  @Expose({
-    name: 'total_view',
+  @Expose()
+  public totalUsersSeen: number;
+
+  @ApiProperty({
+    type: 'object',
+    example: {
+      [0]: {
+        id: 1,
+        username: 'dangdiep',
+        avatar: 'https://google.com',
+        fullname: 'Diep Dang',
+      },
+      [1]: {
+        id: 2,
+        username: 'tuine',
+        avatar: 'https://google.com',
+        fullname: 'Tui Day Ne',
+      },
+    },
+    name: 'reactions_count',
   })
-  public totalView: number;
+  @Transform(({ value }) => {
+    if (value && value !== '1=' && typeof value === 'string') {
+      const rawReactionsCount: string = (value as string).substring(1);
+      const [s1, s2] = rawReactionsCount.split('=');
+      const reactionsName = s1.split(',');
+      const total = s2.split(',');
+      const reactionsCount = {};
+      reactionsName.forEach((v, i) => (reactionsCount[i] = { [v]: parseInt(total[i]) }));
+      return reactionsCount;
+    }
+    if (Array.isArray(value)) {
+      const reactionsCount = {};
+      value.forEach((v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) }));
+      return reactionsCount;
+    }
+    return null;
+  })
+  @Expose()
+  public reactionsCount?: Record<string, Record<string, number>>;
 
   @ApiProperty({
     type: Date,
     name: 'created_at',
   })
-  @Expose({
-    name: 'created_at',
-  })
+  @Expose()
   public createdAt: Date;
 
   @ApiProperty({
     type: Date,
     name: 'updated_at',
   })
-  @Expose({
-    name: 'updated_at',
-  })
-  public updatedAt: Date;
+  @Expose()
+  public updatedAt?: Date;
 
-  public constructor(data: Partial<SeriesResponseDto>) {
+  @ApiProperty({
+    type: Number,
+    name: 'created_by',
+  })
+  @Expose()
+  public createdBy: string;
+
+  @ApiProperty({
+    type: AudienceResponseDto,
+  })
+  @Expose()
+  public audience: AudienceResponseDto;
+
+  @ApiProperty({
+    type: [ReactionResponseDto],
+    name: 'owner_reactions',
+  })
+  @Expose()
+  public ownerReactions?: ReactionResponseDto[] = [];
+
+  //@ApiProperty({ type: PageDto<CommentResponseDto>, isArray: true })
+  @Expose()
+  public comments?: PageDto<CommentResponseDto>;
+
+  public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
   }
 }

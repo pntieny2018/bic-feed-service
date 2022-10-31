@@ -70,9 +70,9 @@ export class UpdateArticleDto extends UpdatePostDto {
       id: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
   @Expose({
     name: 'cover_media',
   })
-  public coverMedia?: CoverMediaDto;
+  public coverMedia: CoverMediaDto;
 }

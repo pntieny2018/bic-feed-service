@@ -15,7 +15,6 @@ import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostEditedHistoryModel } from '../../../database/models/post-edited-history.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
 import { PostModel, PostPrivacy } from '../../../database/models/post.model';
-import { SeriesModel } from '../../../database/models/series.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../../database/models/user-seen-post.model';
@@ -177,10 +176,6 @@ describe.skip('ArticleService', () => {
         },
         {
           provide: getModelToken(PostEditedHistoryModel),
-          useClass: jest.fn(),
-        },
-        {
-          provide: getModelToken(SeriesModel),
           useClass: jest.fn(),
         },
         {

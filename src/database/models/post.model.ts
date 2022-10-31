@@ -33,24 +33,25 @@ import { MentionableType } from '../../common/constants';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { UserDto } from '../../modules/auth';
-import { OrderEnum, PageOptionsDto } from '../../common/dto';
 import { CategoryModel, ICategory } from './category.model';
-import { ISeries, SeriesModel } from './series.model';
 import { HashtagModel, IHashtag } from './hashtag.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
-import { GetListArticlesDto } from '../../modules/article/dto/requests';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
-import { GetTimelineDto } from '../../modules/feed/dto/request';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
   OPEN = 'OPEN',
   PRIVATE = 'PRIVATE',
   SECRET = 'SECRET',
+}
+
+export enum PostType {
+  POST = 'POST',
+  ARTICLE = 'ARTICLE',
+  SERIES = 'SERIES',
 }
 export interface IPost {
   id: string;
@@ -84,7 +85,7 @@ export interface IPost {
   summary?: string;
   views: number;
   categories?: ICategory[];
-  series?: ISeries[];
+  series?: IPost[];
   hashtags?: IHashtag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
@@ -212,8 +213,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @HasMany(() => PostHashtagModel)
   public postHashtags?: PostHashtagModel[];
 
-  @BelongsToMany(() => SeriesModel, () => PostSeriesModel)
-  public series?: SeriesModel[];
+  @BelongsToMany(() => PostModel, () => PostSeriesModel)
+  public series?: PostModel[];
 
   @HasMany(() => PostSeriesModel)
   public postSeries?: PostSeriesModel[];

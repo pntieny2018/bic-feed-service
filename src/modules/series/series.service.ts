@@ -11,9 +11,9 @@ import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { Op, Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
-import { ISeries, SeriesModel } from '../../database/models/series.model';
-import slugify from 'slugify';
 import { PostSeriesModel } from '../../database/models/post-series.model';
+import { IPost, PostModel } from '../../database/models/post.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
 
 @Injectable()
 export class SeriesService {
@@ -32,10 +32,13 @@ export class SeriesService {
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
-    @InjectModel(SeriesModel)
-    private _seriesModel: typeof SeriesModel,
+    @InjectModel(PostModel)
+    private _postModel: typeof PostModel,
     @InjectModel(PostSeriesModel)
     private _postSeriesModel: typeof PostSeriesModel,
+
+    @InjectModel(PostGroupModel)
+    private _postGroupModel: typeof PostGroupModel,
     private readonly _sentryService: SentryService
   ) {}
 
@@ -45,36 +48,82 @@ export class SeriesService {
    * @param getSeriesDto GetSeriesDto
    * @returns Promise resolve PageDto<SeriesResponseDto>
    */
-  public async get(getSeriesDto: GetSeriesDto): Promise<PageDto<SeriesResponseDto>> {
-    const { orderField, name, limit, offset } = getSeriesDto;
+  public async get(
+    articleId: string,
+    authUser: UserDto,
+    getArticleDto?: GetArticleDto
+  ): Promise<ArticleResponseDto> {
+    const attributes = this.getAttributesObj({
+      loadMarkRead: true,
+      authUserId: authUser?.id || null,
+    });
+    const include = this.getIncludeObj({
+      shouldIncludeOwnerReaction: true,
+      shouldIncludeGroup: true,
+      shouldIncludeMention: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCategory: true,
+      shouldIncludeSeries: true,
+      shouldIncludePreviewLink: true,
+      shouldIncludeCover: true,
+      authUserId: authUser?.id || null,
+    });
 
-    try {
-      const { rows, count } = await this._seriesModel.findAndCountAll<SeriesModel>({
-        where: {
-          name: {
-            [Op.iLike]: '%' + name + '%',
-          },
-        },
-        offset: offset,
-        limit: limit,
-        order: [[orderField, OrderEnum.DESC]],
-      });
-
-      const jsonSeries = rows.map((r) => r.toJSON());
-      const result = this._classTransformer.plainToInstance(SeriesResponseDto, jsonSeries, {
-        excludeExtraneousValues: true,
-      });
-
-      return new PageDto<SeriesResponseDto>(result, {
-        total: count,
-        limit,
-        offset,
-      });
-    } catch (error) {
-      this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
-      throw error;
+    let condition;
+    if (authUser) {
+      condition = {
+        id: articleId,
+        isArticle: true,
+        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
+      };
+    } else {
+      condition = { id: articleId, isArticle: true };
     }
+
+    const article = await this.postModel.findOne({
+      attributes,
+      where: condition,
+      include,
+    });
+
+    if (!article) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
+    if (authUser) {
+      await this.authorityService.checkCanReadArticle(authUser, article);
+    } else {
+      await this.authorityService.checkIsPublicArticle(article);
+    }
+    let comments = null;
+    if (getArticleDto.withComment) {
+      comments = await this.commentService.getComments(
+        {
+          postId: articleId,
+          parentId: NIL,
+          childLimit: getArticleDto.childCommentLimit,
+          order: getArticleDto.commentOrder,
+          childOrder: getArticleDto.childCommentOrder,
+          limit: getArticleDto.commentLimit,
+        },
+        authUser,
+        false
+      );
+    }
+    const jsonArticle = article.toJSON();
+    const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
+    });
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
+    result[0]['comments'] = comments;
+    return result[0];
   }
 
   /**
@@ -85,7 +134,7 @@ export class SeriesService {
    */
   public async getById(id: string): Promise<SeriesResponseDto> {
     try {
-      const series = await this._seriesModel.findOne<SeriesModel>({
+      const series = await this._postModel.findOne<PostModel>({
         where: { id: id },
       });
       const jsonSeries = series.toJSON();
@@ -106,39 +155,50 @@ export class SeriesService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async create(
-    authUser: UserDto,
-    createSeriesDto: CreateSeriesDto
-  ): Promise<SeriesResponseDto> {
+  public async create(authUser: UserDto, createPostDto: CreateSeriesDto): Promise<IPost> {
     let transaction;
     try {
-      const { name, isActive } = createSeriesDto;
-      const slug = slugify(name);
+      const { title, summary, audience, coverMedia } = createPostDto;
       const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
       transaction = await this._sequelizeConnection.transaction();
-      const series = await this._seriesModel.create(
+      const post = await this._postModel.create(
         {
-          name,
-          isActive,
-          slug,
+          title,
+          summary,
           createdBy: authUserId,
           updatedBy: authUserId,
+          isDraft: false,
+          cover: coverMedia.id,
         },
         { transaction }
       );
 
+      if (audience.groupIds.length > 0) {
+        await this.addGroup(audience.groupIds, post.id, transaction);
+      }
+
       await transaction.commit();
-      return series;
+
+      return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
       this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
       throw error;
     }
+  }
+
+  public async addGroup(
+    groupIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    if (groupIds.length === 0) return;
+    const postGroupDataCreate = groupIds.map((groupId) => ({
+      postId: postId,
+      groupId,
+    }));
+    await this._postGroupModel.bulkCreate(postGroupDataCreate, { transaction });
   }
 
   /**
@@ -154,38 +214,7 @@ export class SeriesService {
     seriesId: string,
     updateSeriesDto: UpdateSeriesDto
   ): Promise<boolean> {
-    let transaction;
-    try {
-      const authUserId = authUser.id;
-      const creator = authUser.profile;
-      if (!creator) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-      }
-      const seriesBefore = await this.getById(seriesId);
-      await this.checkOwner(seriesBefore, authUserId);
-      const { name, isActive } = updateSeriesDto;
-      const slug = slugify(name);
-      transaction = await this._sequelizeConnection.transaction();
-      const dataUpdate = {
-        name,
-        isActive,
-        slug,
-      };
-      await this._seriesModel.update(dataUpdate, {
-        where: {
-          id: seriesBefore.id,
-          createdBy: authUserId,
-        },
-        transaction,
-      });
-      await transaction.commit();
-      return true;
-    } catch (error) {
-      if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
-      this._sentryService.captureException(error);
-      throw error;
-    }
+    return true;
   }
 
   /**
@@ -204,9 +233,8 @@ export class SeriesService {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
       }
       const series = await this.getById(seriesId);
-      await this.checkOwner(series, authUserId);
       transaction = await this._sequelizeConnection.transaction();
-      await this._seriesModel.destroy({
+      await this._postModel.destroy({
         where: {
           id: series.id,
           createdBy: authUserId,
@@ -221,27 +249,6 @@ export class SeriesService {
       this._sentryService.captureException(error);
       throw error;
     }
-  }
-
-  /**
-   * Check series exist and owner
-   * @param series SeriesResponseDto
-   * @param authUserId Auth userID
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async checkOwner(
-    series: SeriesResponseDto | SeriesModel | ISeries,
-    authUserId: string
-  ): Promise<boolean> {
-    if (!series) {
-      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
-    }
-
-    if (series.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-    return true;
   }
 
   /**
@@ -304,7 +311,7 @@ export class SeriesService {
   }
 
   public async checkValid(seriesIds: string[], userId: string): Promise<void> {
-    const seriesCount = await this._seriesModel.count({
+    const seriesCount = await this._postModel.count({
       where: {
         id: seriesIds,
         createdBy: userId,
@@ -317,6 +324,6 @@ export class SeriesService {
 
   public async updateTotalArticle(seriesIds: string[]): Promise<void> {
     if (seriesIds.length === 0) return;
-    return SeriesModel.updateTotalArticle(seriesIds);
+   // return SeriesModel.updateTotalArticle(seriesIds);
   }
 }

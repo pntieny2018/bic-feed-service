@@ -26,7 +26,6 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
-import { SeriesModel } from '../../database/models/series.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
@@ -676,15 +675,6 @@ export class PostService {
             model: PostGroupModel,
             as: 'groups',
             attributes: ['groupId'],
-          },
-          {
-            model: SeriesModel,
-            as: 'series',
-            through: {
-              attributes: [],
-            },
-            required: false,
-            attributes: ['id'],
           },
         ],
       });

@@ -3,14 +3,12 @@ import { InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../database/models/post.model';
 import { PostService } from '../modules/post/post.service';
 import { PostEditedHistoryModel } from '../database/models/post-edited-history.model';
-import { SeriesModel } from '../database/models/series.model';
 
 @Command({ name: 'clean-draft-posts', description: 'Clean all draft posts' })
 export class CleanDraftPostCommand implements CommandRunner {
   public constructor(
     @InjectModel(PostModel) private _postModel: typeof PostModel,
     @InjectModel(PostEditedHistoryModel) private _postHistoryModel: typeof PostEditedHistoryModel,
-    @InjectModel(SeriesModel) private _seriesModel: typeof SeriesModel,
     private _postService: PostService
   ) {}
 
@@ -38,8 +36,6 @@ export class CleanDraftPostCommand implements CommandRunner {
           postId: postIds,
         },
       });
-
-      await this._seriesModel.destroy({ where: { isActive: true } });
 
       console.log(`Deleted ${posts.length} draft posts. Done`);
     } catch (e) {

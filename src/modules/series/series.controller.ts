@@ -1,83 +1,95 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
-import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
-import { SeriesResponseDto } from './dto/responses';
-import { SeriesService } from './series.service';
-import { GetSeriesPipe } from './pipes';
-import { ResponseMessages } from '../../common/decorators';
 import { AuthUser, UserDto } from '../auth';
+import { WebhookGuard } from '../auth/webhook.guard';
+import { PostAppService } from './application/series.app-service';
+import {
+  CreateFastlaneDto,
+  CreatePostDto,
+  GetPostDto,
+  GetPostEditedHistoryDto,
+  SearchPostsDto,
+  UpdatePostDto,
+} from './dto/requests';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
+import { GetPostPipe } from './pipes';
 
 @ApiSecurity('authorization')
-@ApiTags('Series')
+@ApiTags('Posts')
 @Controller({
   version: APP_VERSION,
-  path: 'series',
+  path: 'posts',
 })
 export class SeriesController {
-  private _logger = new Logger(SeriesController.name);
+  public constructor(private _postAppService: PostAppService) {}
 
-  public constructor(private _seriesService: SeriesService) {}
-
-  @ApiOperation({ summary: 'Get series' })
-  @ResponseMessages({
-    success: 'Get series successfully',
+  @ApiOperation({ summary: 'Get post detail' })
+  @ApiOkResponse({
+    type: PostResponseDto,
   })
-  @Get('/')
-  public get(
-    @Query(GetSeriesPipe) getSeriesDto: GetSeriesDto
-  ): Promise<PageDto<SeriesResponseDto>> {
-    return this._seriesService.get(getSeriesDto);
+  @Get('/:id')
+  public async get(
+    @AuthUser(false) user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query(GetPostPipe) getPostDto: GetPostDto
+  ): Promise<PostResponseDto> {
+    return this._postAppService.getSeries(user, id, getPostDto);
   }
 
-  @ApiOperation({ summary: 'Create series' })
+  @ApiOperation({ summary: 'Create post' })
   @ApiOkResponse({
-    type: SeriesResponseDto,
-    description: 'Create series successfully',
+    type: PostResponseDto,
+    description: 'Create post successfully',
   })
   @Post('/')
+  @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
-    @Body() createSeriesDto: CreateSeriesDto
-  ): Promise<SeriesResponseDto> {
-    const created = await this._seriesService.create(user, createSeriesDto);
-    if (created) {
-      const result = await this._seriesService.getById(created.id);
-      if (result) {
-        return result;
-      }
-    }
+    @Body() createPostDto: CreatePostDto
+  ): Promise<any> {
+    return this._postAppService.createSeries(user, createPostDto);
   }
 
-  @ApiOperation({ summary: 'Update series' })
+  @ApiOperation({ summary: 'Update post' })
   @ApiOkResponse({
-    type: SeriesResponseDto,
-    description: 'Update series successfully',
+    type: PostResponseDto,
+    description: 'Update post successfully',
   })
   @Put('/:id')
+  @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id') seriesId: string,
-    @Body() updateSeriesDto: UpdateSeriesDto
-  ): Promise<SeriesResponseDto> {
-    const isUpdated = await this._seriesService.update(user, seriesId, updateSeriesDto);
-    if (isUpdated) {
-      return this._seriesService.getById(seriesId);
-    }
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updatePostDto: UpdatePostDto
+  ): Promise<PostResponseDto> {
+    return this._postAppService.updateSeries(user, id, updatePostDto);
   }
 
-  @ApiOperation({ summary: 'Delete series' })
+  @ApiOperation({ summary: 'Delete post' })
   @ApiOkResponse({
-    type: SeriesResponseDto,
-    description: 'Delete series successfully',
+    type: Boolean,
+    description: 'Delete post successfully',
   })
   @Delete('/:id')
-  public async delete(@AuthUser() user: UserDto, @Param('id') seriesId: string): Promise<boolean> {
-    const isDeleted = await this._seriesService.delete(user, seriesId);
-    if (isDeleted) {
-      return isDeleted;
-    }
-    return false;
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<boolean> {
+    return this._postAppService.deleteSeries(user, id);
   }
 }
