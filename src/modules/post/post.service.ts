@@ -1218,26 +1218,26 @@ export class PostService {
     if (isImportant) {
       importantCondition = {
         [Op.and]: this.sequelizeConnection.literal(
-          `"PostModel"."is_important" = true AND NOT EXISTS(
+          `("PostModel"."is_important" = true AND NOT EXISTS(
             SELECT 1
             from ${schema}.${userMarkReadPostTable} AS r
             WHERE r.post_id = "PostModel"."id" AND r.user_id = ${this.sequelizeConnection.escape(
               authUserId
             )}
-          )`
+          ))`
         ),
       };
     } else {
       importantCondition = {
         [Op.and]: this.sequelizeConnection.literal(
-          `"PostModel"."is_important" = false OR 
+          `("PostModel"."is_important" = false OR 
           ( "PostModel"."is_important" = true AND EXISTS(
             SELECT 1
             from ${schema}.${userMarkReadPostTable} AS r
             WHERE r.post_id = "PostModel"."id" AND r.user_id = ${this.sequelizeConnection.escape(
               authUserId
             )}
-          ))
+          )))
           `
         ),
       };
