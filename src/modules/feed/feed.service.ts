@@ -184,7 +184,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    if (!authUser && group.privacy !== GroupPrivacy.PUBLIC) {
+    if (!authUser) {
       return new PageDto<PostResponseDto>([], {
         limit,
         offset,
