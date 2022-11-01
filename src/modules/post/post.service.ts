@@ -451,12 +451,7 @@ export class PostService {
   }
 
   /**
-   * Update Post except isDraft
-   * @param post
-   * @param authUser UserDto
-   * @param updatePostDto UpdatePostDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
+   * Update Post
    */
   public async update(
     post: PostResponseDto,
@@ -756,11 +751,6 @@ export class PostService {
 
   /**
    * Delete/Insert group by post
-   * @param groupIds Array of Group ID
-   * @param postId PostID
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async setGroupByPost(
     groupIds: string[],

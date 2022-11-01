@@ -82,7 +82,7 @@ export class ArticleAppService {
       throw new BadRequestException('Audience is required');
     }
 
-    await this._authorityService.checkCanUpdatePost(user, articleBefore, audience.groupIds);
+    await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
     if (articleBefore.isDraft === false) {
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
     }
