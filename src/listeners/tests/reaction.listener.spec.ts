@@ -37,9 +37,7 @@ describe('ReactionListener', () => {
       new CreateReactionEventInternalPayload()
     )
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(reactionListener['_logger'], 'debug').mockReturnThis();
       await reactionListener.onCreatedReactionEvent(usersHasBeenReactionedEvent)
-      expect(loggerSpy).toBeCalled()
       expect(notificationService.publishReactionNotification).toBeCalled()
     })
   })
@@ -49,9 +47,7 @@ describe('ReactionListener', () => {
       new DeleteReactionEventInternalPayload()
     )
     it('should success', async () => {
-      const loggerSpy = jest.spyOn(reactionListener['_logger'], 'debug').mockReturnThis();
       await reactionListener.onDeleteReactionEvent(deleteReactionInternalEvent)
-      expect(loggerSpy).toBeCalled()
       expect(notificationService.publishReactionNotification).toBeCalled()
     })
   })

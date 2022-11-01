@@ -29,7 +29,6 @@ export class CategoryService {
     user: UserDto,
     getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
-    this._logger.debug('getCategory');
     const conditions = {};
     const { offset, limit, isCreatedByMe, name, level } = getCategoryDto;
     if (isCreatedByMe) {
@@ -54,7 +53,7 @@ export class CategoryService {
       excludeExtraneousValues: true,
     });
     return new PageDto<CategoryResponseDto>(result, {
-      total: count,
+      hasNextPage: limit + offset >= count ? false : true,
       limit: getCategoryDto.limit,
       offset: getCategoryDto.offset,
     });
@@ -64,8 +63,6 @@ export class CategoryService {
     user: UserDto,
     createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
-    this._logger.debug('createCategory');
-
     if (createCategoryDto.parentId === NIL_UUID) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_CATEGORY_NOT_ALLOW);
     }

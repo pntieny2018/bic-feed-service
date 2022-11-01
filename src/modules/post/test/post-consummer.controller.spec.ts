@@ -36,13 +36,11 @@ describe('PostConsumerController', () => {
 
   describe('privacyUpdate', () => {
     it('should done', async () => {
-      const logSpy = jest.spyOn(internalPostController['_logger'], 'debug').mockReturnThis();
-      postService.findPostIdsByGroupId = jest.fn().mockResolvedValue([1,2])
-      postService.bulkUpdatePostPrivacy = jest.fn().mockResolvedValue([1,2])
+      postService.findIdsByGroupId = jest.fn().mockResolvedValue([1,2])
+      postService.updateData = jest.fn().mockResolvedValue([1,2])
 
       postService.filterPostIdsNeedToUpdatePrivacy = jest.fn().mockResolvedValue({[PostPrivacy.PRIVATE.toString()]: ['8c846fe3-a615-42ae-958a-33a43d24a033']})
       await internalPostController.privacyUpdate({privacy: PostPrivacy.SECRET, groupId: '8c846fe3-a615-42ae-958a-33a43d24a033'})
-      expect(logSpy).toBeCalled()
     })
   })
 })

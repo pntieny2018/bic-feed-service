@@ -31,7 +31,6 @@ export class CategoryController {
     @AuthUser() user: UserDto,
     @Query() getCategoryDto: GetCategoryDto
   ): Promise<PageDto<CategoryResponseDto>> {
-    this._logger.debug('get category');
     return this._categoryService.get(user, getCategoryDto);
   }
 
@@ -48,7 +47,6 @@ export class CategoryController {
     @AuthUser() user: UserDto,
     @Body() createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
-    this._logger.debug('create category');
     return this._categoryService.create(user, createCategoryDto);
   }
 }

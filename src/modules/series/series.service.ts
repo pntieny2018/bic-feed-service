@@ -316,6 +316,7 @@ export class SeriesService {
   }
 
   public async updateTotalArticle(seriesIds: string[]): Promise<void> {
+    if (seriesIds.length === 0) return;
     return SeriesModel.updateTotalArticle(seriesIds);
   }
 }

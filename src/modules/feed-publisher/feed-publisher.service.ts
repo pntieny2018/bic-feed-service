@@ -24,7 +24,6 @@ export class FeedPublisherService {
   ) {}
 
   public async attachPostsForUsersNewsFeed(userIds: string[], postIds: string[]): Promise<void> {
-    this._logger.debug(`[attachPostsForUserNewsFeed]: ${JSON.stringify({ userIds, postIds })}`);
     const schema = this._databaseConfig.schema;
     try {
       const seenPostData = await this._userSeenPostModel.findAll({
@@ -62,7 +61,6 @@ export class FeedPublisherService {
    * @param postId String
    */
   public async attachPostForAnyNewsFeed(userIds: string[], postId: string): Promise<void> {
-    this._logger.debug(`[attachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
     const schema = this._databaseConfig.schema;
     try {
       const seenPostData = await this._userSeenPostModel.findAll({
@@ -95,8 +93,6 @@ export class FeedPublisherService {
    * @param postId String
    */
   public async detachPostForAnyNewsFeed(userIds: string[], postId: string): Promise<void> {
-    this._logger.debug(`[detachPostsForAnyNewsFeed]: ${JSON.stringify({ userIds, postId })}`);
-
     try {
       await this._userNewsFeedModel.destroy({
         where: {
@@ -117,7 +113,6 @@ export class FeedPublisherService {
     postId: string,
     changeGroupAudienceDto: ChangeGroupAudienceDto
   ): Promise<void> {
-    this._logger.debug(`[processFanout]: ${JSON.stringify({ postId, changeGroupAudienceDto })}`);
     let latestFollowId = 0;
     const { old, attached, detached, current } = changeGroupAudienceDto;
     let followers: FollowsDto;

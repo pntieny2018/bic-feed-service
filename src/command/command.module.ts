@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { SequelizeTinkerCommand } from './sequelize-tinker.command';
 import { FixCommentCountCommand } from './fix-comment-count.command';
 import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
-import { ReIndexEsPostCommand } from './re-index-es-post.command';
 import { DatabaseModule } from '../database';
 import { LibModule } from '../app/lib.module';
 import { UserModule } from '../shared/user';
@@ -10,12 +9,21 @@ import { GroupModule } from '../shared/group';
 import { PostModule } from '../modules/post';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { MentionModule } from '../modules/mention';
-import { UpdateMediaDomainCommand } from './update-media-domain.command';
 import { MediaModule } from '../modules/media';
-import { DeletePostIsProgressCommand } from './delete-post-is-progress.command';
+import { UpdateMediaDomainCommand } from './update-media-domain.command';
+import { CleanArticleCommand } from './clean-article.command';
+import { CleanDraftPostCommand } from './clean-draft-posts.command';
+import { IndexPostCommand } from './elasticsearch-script/index-post.command';
+import { ConfigModule } from '@nestjs/config';
+import { configs } from '../config/configuration';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      load: [configs],
+    }),
     DatabaseModule,
     LibModule,
     UserModule,
@@ -28,10 +36,11 @@ import { DeletePostIsProgressCommand } from './delete-post-is-progress.command';
     SequelizeTinkerCommand,
     FixCommentCountCommand,
     FixPostCommentCountCommand,
-    ReIndexEsPostCommand,
     UpdatePrivacyPostCommand,
     UpdateMediaDomainCommand,
-    DeletePostIsProgressCommand,
+    CleanArticleCommand,
+    CleanDraftPostCommand,
+    IndexPostCommand,
   ],
 })
 export class CommandModule {}

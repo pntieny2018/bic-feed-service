@@ -1,17 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { ArticleService } from '../article.service';
 import { ArticleController } from '../article.controller';
 import { mockedUserAuth } from './mocks/user-auth.mock';
-import { SearchArticlesDto } from '../dto/requests/search-article.dto';
 import { GetArticleDto } from '../dto/requests';
 import { PostService } from '../../post/post.service';
 import { AuthorityService } from '../../authority';
+import { ArticleAppService } from '../application/article.app-service';
 
 describe('ArticleController', () => {
-  let articleService: ArticleService;
-  let postService: PostService;
-  let authorityService: AuthorityService;
+  let articleService: ArticleAppService;
   let articleController: ArticleController;
   let eventEmitter: InternalEventEmitterService;
 
@@ -22,7 +19,7 @@ describe('ArticleController', () => {
       controllers: [ArticleController],
       providers: [
         {
-          provide: ArticleService,
+          provide: ArticleAppService,
           useClass: jest.fn(),
         },
         {
@@ -42,7 +39,7 @@ describe('ArticleController', () => {
       ],
     }).compile();
 
-    articleService = moduleRef.get<ArticleService>(ArticleService);
+    articleService = moduleRef.get<ArticleAppService>(ArticleAppService);
     articleController = moduleRef.get<ArticleController>(ArticleController);
     eventEmitter = moduleRef.get<InternalEventEmitterService>(InternalEventEmitterService);
   });
@@ -52,46 +49,33 @@ describe('ArticleController', () => {
     jest.resetAllMocks();
   });
 
-  describe('searchArticles', () => {
-    it('Should call searchArticles', async () => {
-      articleService.searchArticle = jest.fn().mockResolvedValue(true);
-      const searchArticlesDto: SearchArticlesDto = {
-        categories: ['a'],
-      };
-      const result = await articleController.searchArticles(userDto, searchArticlesDto);
-      expect(articleService.searchArticle).toBeCalledTimes(1);
-      expect(articleService.searchArticle).toBeCalledWith(userDto, searchArticlesDto);
-    });
-  });
-
-  describe('getArticle', () => {
+  describe('get', () => {
     it('Get article successfully', async () => {
-      articleService.getArticle = jest.fn().mockResolvedValue(true);
-      const getArticleDto: GetArticleDto = {
-        categories: ['a'],
+      articleService.get = jest.fn().mockResolvedValue(true);
+      const getDto: GetArticleDto = {
       };
-      const result = await articleController.getArticle(
+      await articleController.get(
         userDto,
         '8f80cce8-3318-4ce5-8750-275425677a41',
-        getArticleDto
+        getDto
       );
-      expect(articleService.getArticle).toBeCalledTimes(1);
-      expect(articleService.getArticle).toBeCalledWith(
-        '8f80cce8-3318-4ce5-8750-275425677a41',
+      expect(articleService.get).toBeCalledTimes(1);
+      expect(articleService.get).toBeCalledWith(
         userDto,
-        getArticleDto
+        '8f80cce8-3318-4ce5-8750-275425677a41',
+        getDto
       );
     });
   });
 
-  describe('deleteArticle', () => {
+  describe('delete', () => {
     it('Delete article successfully', async () => {
-      articleService.deleteArticle = jest.fn().mockResolvedValue(true);
+      articleService.delete = jest.fn().mockResolvedValue(true);
       const postId = '123';
-      const result = await articleController.deleteArticle(userDto, postId);
+      const result = await articleController.delete(userDto, postId);
 
-      expect(articleService.deleteArticle).toBeCalledTimes(1);
-      expect(articleService.deleteArticle).toBeCalledWith(postId, userDto);
+      expect(articleService.delete).toBeCalledTimes(1);
+      expect(articleService.delete).toBeCalledWith(userDto, postId);
       expect(result).toBe(true);
     });
   });

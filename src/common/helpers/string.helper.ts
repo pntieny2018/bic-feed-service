@@ -113,10 +113,6 @@ export class StringHelper {
     }
   }
 
-  public static serializePaginationCursor(payload: [string, 'ASC' | 'DESC']): string {
-    return Buffer.from(JSON.stringify(payload)).toString('base64');
-  }
-
   public static serializeEditorContentToText(textStringify: string): string {
     if (!textStringify) return textStringify;
     try {

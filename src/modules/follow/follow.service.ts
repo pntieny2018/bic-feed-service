@@ -6,7 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { getDatabaseConfig } from '../../config/database';
 import { CreateFollowDto, UnfollowDto } from './dto/requests';
-import { FollowModel } from '../../database/models/follow.model';
+import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
@@ -257,5 +257,9 @@ export class FollowService {
     }
 
     return rows[0].map((r) => r['user_id']);
+  }
+
+  public async getFollowByUserId(userId: string): Promise<IFollow[]> {
+    return this._followModel.findAll({ where: { userId } });
   }
 }

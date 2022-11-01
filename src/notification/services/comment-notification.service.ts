@@ -29,10 +29,9 @@ export class CommentNotificationService {
     actor: UserDto,
     commentResponse: CommentResponseDto
   ): Promise<void> {
-    this._logger.debug(`[create] ${event}: ${JSON.stringify(commentResponse)}`);
     let commentActivity;
 
-    const postResponse = await this._postService.getPost(commentResponse.postId, actor, {
+    const postResponse = await this._postService.get(commentResponse.postId, actor, {
       commentLimit: 0,
       childCommentLimit: 0,
     });
@@ -104,11 +103,7 @@ export class CommentNotificationService {
     oldComment: IComment,
     commentResponse: CommentResponseDto
   ): Promise<void> {
-    this._logger.debug(
-      `[update] ${event}: ${JSON.stringify(oldComment)} :${JSON.stringify(commentResponse)}`
-    );
-
-    const postResponse = await this._postService.getPost(commentResponse.postId, actor, {
+    const postResponse = await this._postService.get(commentResponse.postId, actor, {
       commentLimit: 0,
       childCommentLimit: 0,
     });

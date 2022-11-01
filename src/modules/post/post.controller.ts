@@ -1,10 +1,8 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
-  Logger,
   Param,
   ParseUUIDPipe,
   Post,
@@ -13,15 +11,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
-import {
-  PostHasBeenDeletedEvent,
-  PostHasBeenPublishedEvent,
-  PostHasBeenUpdatedEvent,
-} from '../../events/post';
 import { AuthUser, UserDto } from '../auth';
+import { WebhookGuard } from '../auth/webhook.guard';
+import { PostAppService } from './application/post.app-service';
 import {
   CreateFastlaneDto,
   CreatePostDto,
@@ -32,13 +27,7 @@ import {
 } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
-import { PostService } from './post.service';
 import { GetPostPipe } from './pipes';
-import { AuthorityService } from '../authority';
-import { InjectUserToBody } from '../../common/decorators/inject.decorator';
-import { WebhookGuard } from '../auth/webhook.guard';
-import { FeedService } from '../feed/feed.service';
-import { PostSearchService } from './post-search.service';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -47,14 +36,7 @@ import { PostSearchService } from './post-search.service';
   path: 'posts',
 })
 export class PostController {
-  private _logger = new Logger(PostController.name);
-  public constructor(
-    private _postService: PostService,
-    private _postSearchService: PostSearchService,
-    private _eventEmitter: InternalEventEmitterService,
-    private _authorityService: AuthorityService,
-    private _feedService: FeedService
-  ) {}
+  public constructor(private _postAppService: PostAppService) {}
 
   @ApiOperation({ summary: 'Search posts' })
   @ApiOkResponse({
@@ -65,7 +47,7 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Query() searchPostsDto: SearchPostsDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postSearchService.searchPosts(user, searchPostsDto);
+    return this._postAppService.searchPosts(user, searchPostsDto);
   }
 
   @ApiOperation({ summary: 'Get post edited history' })
@@ -73,12 +55,12 @@ export class PostController {
     type: PostEditedHistoryDto,
   })
   @Get('/:postId/edited-history')
-  public getPostEditedHistory(
+  public getEditedHistory(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query() getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
-    return this._postService.getPostEditedHistory(user, postId, getPostEditedHistoryDto);
+    return this._postAppService.getEditedHistory(user, postId, getPostEditedHistoryDto);
   }
 
   @ApiOperation({ summary: 'Get draft posts' })
@@ -86,11 +68,11 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/draft')
-  public getDraftPosts(
+  public getDrafts(
     @AuthUser() user: UserDto,
     @Query() getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.getDraftPosts(user.id, getDraftPostDto);
+    return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 
   @ApiOperation({ summary: 'Get post detail' })
@@ -98,21 +80,12 @@ export class PostController {
     type: PostResponseDto,
   })
   @Get('/:postId')
-  public async getPost(
+  public async get(
     @AuthUser(false) user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
-    getPostDto.hideSecretAudienceCanNotAccess = true;
-    if (user === null) return this._postService.getPublicPost(postId, getPostDto);
-    else {
-      const post = await this._postService.getPost(postId, user, getPostDto);
-      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
-        this._logger.error(ex, ex.stack);
-      });
-
-      return post;
-    }
+    return this._postAppService.getPost(user, postId, getPostDto);
   }
 
   @ApiOperation({ summary: 'Create post' })
@@ -122,18 +95,11 @@ export class PostController {
   })
   @Post('/')
   @InjectUserToBody()
-  public async createPost(
+  public async create(
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<any> {
-    const { audience, setting } = createPostDto;
-    if (audience.groupIds?.length > 0) {
-      await this._authorityService.checkCanCreatePost(user, audience.groupIds, setting.isImportant);
-    }
-    const created = await this._postService.createPost(user, createPostDto);
-    if (created) {
-      return this._postService.getPost(created.id, user, new GetPostDto());
-    }
+    return this._postAppService.createPost(user, createPostDto);
   }
 
   @ApiOperation({ summary: 'Update post' })
@@ -143,45 +109,12 @@ export class PostController {
   })
   @Put('/:postId')
   @InjectUserToBody()
-  public async updatePost(
+  public async update(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience, setting } = updatePostDto;
-    const postBefore = await this._postService.getPost(postId, user, new GetPostDto());
-    if (postBefore.isDraft === false && audience.groupIds.length === 0) {
-      throw new BadRequestException('Audience is required');
-    }
-    await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
-
-    const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
-    const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
-    if (newAudienceIds.length) {
-      const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
-      await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
-    }
-    if (postBefore.isDraft === false) {
-      this._postService.checkContent(updatePostDto.content, updatePostDto.media);
-      const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
-      if (removeGroupIds.length) {
-        await this._authorityService.checkCanDeletePost(user, removeGroupIds, postBefore.createdBy);
-      }
-    }
-
-    const isUpdated = await this._postService.updatePost(postBefore, user, updatePostDto);
-    if (isUpdated) {
-      const postUpdated = await this._postService.getPost(postId, user, new GetPostDto());
-      this._eventEmitter.emit(
-        new PostHasBeenUpdatedEvent({
-          oldPost: postBefore,
-          newPost: postUpdated,
-          actor: user.profile,
-        })
-      );
-
-      return postUpdated;
-    }
+    return this._postAppService.updatePost(user, postId, updatePostDto);
   }
 
   @ApiOperation({ summary: 'Publish post' })
@@ -190,22 +123,11 @@ export class PostController {
     description: 'Publish post successfully',
   })
   @Put('/:postId/publish')
-  public async publishPost(
+  public async publish(
     @AuthUser() user: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<PostResponseDto> {
-    const isPublished = await this._postService.publishPost(postId, user);
-    const post = await this._postService.getPost(postId, user, new GetPostDto());
-    if (isPublished) {
-      this._eventEmitter.emit(
-        new PostHasBeenPublishedEvent({
-          post: post,
-          actor: user.profile,
-        })
-      );
-    }
-
-    return post;
+    return this._postAppService.publishPost(user, postId);
   }
 
   @ApiOperation({ summary: 'Delete post' })
@@ -214,21 +136,11 @@ export class PostController {
     description: 'Delete post successfully',
   })
   @Delete('/:id')
-  public async deletePost(
+  public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
-    const postDeleted = await this._postService.deletePost(postId, user);
-    if (postDeleted) {
-      this._eventEmitter.emit(
-        new PostHasBeenDeletedEvent({
-          post: postDeleted,
-          actor: user.profile,
-        })
-      );
-      return true;
-    }
-    return false;
+    return this._postAppService.deletePost(user, postId);
   }
 
   @ApiOperation({ summary: 'Mark as read' })
@@ -236,12 +148,11 @@ export class PostController {
     type: Boolean,
   })
   @Put('/:id/mark-as-read')
-  public async markReadPost(
+  public async markRead(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) postId: string
   ): Promise<boolean> {
-    await this._postService.markReadPost(postId, user.id);
-    return true;
+    return this._postAppService.markReadPost(user, postId);
   }
 
   @UseGuards(WebhookGuard)
@@ -258,10 +169,19 @@ export class PostController {
     };
     input.mentions = createFastlaneDto.mentionUserIds;
 
-    const post = await this.createPost(user, input);
+    const post = await this.create(user, input);
 
-    await this.publishPost(user, post['id']);
+    await this.publish(user, post['id']);
 
     return true;
+  }
+
+  @Get('/get-user-group/:groupId/:userId/:postId')
+  public async getUserGroup(
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<any> {
+    return this._postAppService.getUserGroup(groupId, userId, postId);
   }
 }

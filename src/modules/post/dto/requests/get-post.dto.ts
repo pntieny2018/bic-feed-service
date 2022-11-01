@@ -49,7 +49,7 @@ export class GetPostDto {
   @Expose({
     name: 'child_comment_limit',
   })
-  public childCommentLimit?: number = 10;
+  public childCommentLimit?: number;
 
   @ApiProperty({
     required: false,

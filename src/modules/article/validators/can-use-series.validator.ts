@@ -7,7 +7,6 @@ import {
   ValidationOptions,
   registerDecorator,
 } from 'class-validator';
-import { Op } from 'sequelize';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { CategoryModel } from '../../../database/models/category.model';
 import { SeriesModel } from '../../../database/models/series.model';

@@ -13,8 +13,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
 import { MediaFilterResponseDto } from './dto/response';
-import { FindOptions, Op, QueryTypes, Transaction } from 'sequelize';
-import { getDatabaseConfig } from '../../config/database';
+import { Op, QueryTypes, Transaction } from 'sequelize';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostMediaModel } from '../../database/models/post-media.model';
@@ -34,6 +33,7 @@ import { VideoMetadataResponseDto } from './dto/response/video-metadata-response
 import { ClientKafka } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
+import { PostModel } from '../../database/models/post.model';
 
 @Injectable()
 export class MediaService {
@@ -43,6 +43,7 @@ export class MediaService {
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
     @InjectModel(PostMediaModel) private _postMediaModel: typeof PostMediaModel,
     @InjectModel(CommentMediaModel) private _commentMediaModel: typeof CommentMediaModel,
+    @InjectModel(PostModel) private _postModel: typeof PostModel,
     private readonly _sentryService: SentryService,
     @Inject(KAFKA_PRODUCER)
     private readonly _clientKafka: ClientKafka
@@ -80,18 +81,6 @@ export class MediaService {
       mimeType?: string;
     }
   ): Promise<any> {
-    this._logger.debug(
-      `[create]: ${JSON.stringify(user)} ${JSON.stringify({
-        url,
-        uploadType,
-        name,
-        originName,
-        extension,
-        width,
-        height,
-        status,
-      })}`
-    );
     try {
       const mediaType = uploadType.split('_')[1] as MediaType;
       const media = await this._mediaModel.create({
@@ -138,11 +127,7 @@ export class MediaService {
     return true;
   }
 
-  public async createIfNotExist(
-    data: MediaDto,
-    createdBy: string,
-    transaction: Transaction
-  ): Promise<IMedia[]> {
+  public async createIfNotExist(data: MediaDto, createdBy: string): Promise<IMedia[]> {
     const { images, files, videos } = data;
     const insertData = [];
     const mediaIds = [];
@@ -207,14 +192,10 @@ export class MediaService {
       where: {
         id: mediaIds,
       },
-      transaction,
     });
 
     const existingMediaIds = existingMediaList.map((m) => m.id);
-    await this._mediaModel.bulkCreate(
-      insertData.filter((i) => !existingMediaIds.includes(i.id)),
-      { transaction }
-    );
+    await this._mediaModel.bulkCreate(insertData.filter((i) => !existingMediaIds.includes(i.id)));
 
     this.emitMediaToUploadService(
       MediaType.VIDEO,
@@ -233,48 +214,7 @@ export class MediaService {
       where: {
         id: mediaIds,
       },
-      transaction,
     });
-  }
-
-  /**
-   * Update Media.isDraft, called when update Post
-   * @param mediaIds Array of Media ID
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateMediaDraft(mediaIds: number[], transaction: Transaction): Promise<boolean> {
-    try {
-      const { schema } = getDatabaseConfig();
-      const postMedia = PostMediaModel.tableName;
-      const commentMedia = CommentMediaModel.tableName;
-      if (mediaIds.length === 0) return true;
-      const query = ` UPDATE ${schema}.media
-                SET is_draft = tmp.not_has_post
-                FROM (
-                  SELECT media.id, 
-                  CASE WHEN COUNT(${postMedia}.post_id) + COUNT(${commentMedia}.comment_id) > 0 THEN false ELSE true
-                  END as not_has_post
-                  FROM ${schema}.media
-                  LEFT JOIN ${schema}.${postMedia} ON ${postMedia}.media_id = media.id
-                  LEFT JOIN ${schema}.${commentMedia} ON ${commentMedia}.media_id = media.id
-                  WHERE media.id IN (:mediaIds)
-                  GROUP BY media.id
-                ) as tmp 
-                WHERE tmp.id = ${schema}.media.id`;
-      await this._sequelizeConnection.query(query, {
-        replacements: {
-          mediaIds,
-        },
-        type: QueryTypes.UPDATE,
-        raw: true,
-        transaction: transaction,
-      });
-      return true;
-    } catch (e) {
-      return false;
-    }
   }
 
   public async sync(
@@ -360,8 +300,6 @@ export class MediaService {
             getDetachedData(changes.detached, 'commentId', entityId, 'mediaId')
           ));
     }
-
-    await this.updateMediaDraft([...changes.attached, ...changes.detached], transaction);
   }
   /**
    * Filter media type
@@ -425,14 +363,6 @@ export class MediaService {
           where: { commentId: entityIds },
           transaction: transaction,
         }));
-
-    await this.updateMediaDraft(mediaIds, transaction);
-  }
-
-  public async countMediaByPost(postId: string): Promise<number> {
-    return this._postMediaModel.count({
-      where: { postId },
-    });
   }
 
   public async updateData(
@@ -512,31 +442,62 @@ export class MediaService {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   @Cron(CronExpression.EVERY_4_HOURS)
-  async deleteUnusedMedia(): Promise<void> {
-    const postMedia = await this._postMediaModel.findAll();
-    const commentMedia = await this._commentMediaModel.findAll();
-    const mediaIdList = [...postMedia.map((e) => e.mediaId), ...commentMedia.map((e) => e.mediaId)];
-    const willDeleteMedia = await this._mediaModel.findAll({
+  public async deleteUnusedMediav2(): Promise<void> {
+    const unusedMediaList = await this._mediaModel.findAll({
+      attributes: ['id', 'type', 'url'],
+      include: [
+        {
+          model: PostMediaModel,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: CommentMediaModel,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: PostModel,
+          attributes: [],
+          required: false,
+          paranoid: false,
+        },
+      ],
       where: {
-        id: { [Op.notIn]: mediaIdList },
         createdAt: {
           [Op.lte]: moment().subtract(4, 'hours').toDate(),
         },
+        [Op.and]: this._sequelizeConnection.literal(
+          'post_id is null and comment_id is null and cover is null'
+        ),
       },
     });
-    this.emitMediaToUploadServiceFromMediaList(willDeleteMedia, MediaMarkAction.DELETE);
-    willDeleteMedia.forEach((e) => e.destroy());
+
+    this.emitMediaToUploadServiceFromMediaList(unusedMediaList, MediaMarkAction.DELETE);
+    const deleteMediaIds = unusedMediaList.map((media) => media.id);
+    await this.deleteMediaByIds(deleteMediaIds);
   }
 
-  public async isExistOnPostOrComment(mediaIds: string[]): Promise<boolean> {
-    if (await this._postMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
-      return true;
+  public async deleteMediaByIds(ids: string[]): Promise<void> {
+    this._mediaModel.destroy({
+      where: {
+        id: ids,
+      },
+    });
+  }
+
+  public async processVideo(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    try {
+      this._clientKafka.emit(KAFKA_TOPIC.STREAM.VIDEO_POST_PUBLIC, {
+        key: null,
+        value: JSON.stringify({ videoIds: ids }),
+      });
+      await this.updateData(ids, { status: MediaStatus.PROCESSING });
+    } catch (e) {
+      this._logger.error(e, e?.stack);
+      this._sentryService.captureException(e);
     }
-    if (await this._commentMediaModel.findOne({ where: { mediaId: { [Op.in]: mediaIds } } })) {
-      return true;
-    }
-    return false;
   }
 }

@@ -1,18 +1,15 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
 import { PageDto, PageMetaDto } from '../../common/dto';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
 import { UserDto } from '../auth';
-import { MentionService } from '../mention';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostService } from '../post/post.service';
-import { ReactionService } from '../reaction';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { UserDataShareDto } from '../../shared/user/dto';
@@ -22,18 +19,16 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserService } from '../../shared/user';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { PostBindingService } from '../post/post-binding.service';
+import { ClassTransformer } from 'class-transformer';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
-  private _classTransformer = new ClassTransformer();
-
+  private readonly _classTransformer = new ClassTransformer();
   public constructor(
-    @Inject(forwardRef(() => ReactionService))
-    private readonly _reactionService: ReactionService,
     private readonly _userService: UserService,
     private readonly _groupService: GroupService,
-    private readonly _mentionService: MentionService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
@@ -46,89 +41,51 @@ export class FeedService {
 
   /**
    * Get NewsFeed
-   * @param authUser number
-   * @param getNewsFeedDto GetNewsFeedDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
     const { isImportant, limit, offset } = getNewsFeedDto;
-    const authUserId = authUser.id;
-    const constraints = PostModel.getIdConstrains(getNewsFeedDto);
-    let totalImportantPosts = 0;
-    let importantPostsExc = Promise.resolve([]);
-
-    const hasGetImportantPost = isImportant || isImportant === null;
-    if (hasGetImportantPost) {
-      totalImportantPosts = await PostModel.getTotalImportantPostInNewsFeed(
-        authUserId,
-        constraints
-      );
-
-      if (offset < totalImportantPosts) {
-        importantPostsExc = PostModel.getNewsFeedData({
-          ...getNewsFeedDto,
-          limit: limit + 1,
-          authUserId,
-          isImportant: true,
-        });
-      }
-    }
-
-    let normalPostsExc = Promise.resolve([]);
-    const isNeedMorePost = offset + limit >= totalImportantPosts;
-    const hasGetNormalPost = isImportant === false || isImportant === null;
-    if (isNeedMorePost && hasGetNormalPost) {
-      const normalLimit = Math.min(limit + 1, limit + offset - totalImportantPosts + 1);
-      normalPostsExc = PostModel.getNewsFeedData({
-        ...getNewsFeedDto,
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.max(0, normalLimit),
-        authUserId,
-        isImportant: false,
-      });
-    }
-
-    return this._bindAndTransformData({
-      importantPostsExc,
-      normalPostsExc,
+    const postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
+      limit: limit + 1, //1 is next row
       offset,
-      limit,
+      isImportant,
+    });
+    let hasNextPage = false;
+    if (postIdsAndSorted.length > limit) {
+      postIdsAndSorted.pop();
+      hasNextPage = true;
+    }
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+
+    const postsBindedData = await this._bindAndTransformData({
+      posts: posts,
       authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindedData, {
+      limit,
+      offset,
+      hasNextPage,
     });
   }
 
   private async _bindAndTransformData({
-    importantPostsExc,
-    normalPostsExc,
-    offset,
-    limit,
+    posts,
     authUser,
   }: {
-    importantPostsExc: any;
-    normalPostsExc: any;
-    offset: number;
-    limit: number;
+    posts: IPost[];
     authUser: UserDto;
-  }): Promise<PageDto<PostResponseDto>> {
-    const [importantPosts, normalPosts] = await Promise.all([importantPostsExc, normalPostsExc]);
-    const rows = importantPosts.concat(normalPosts);
-    const posts = this._postService.groupPosts(rows);
-    const hasNextPage = posts.length === limit + 1;
-    if (hasNextPage) posts.pop();
-    await Promise.all([
-      this._reactionService.bindToPosts(posts),
-      this._mentionService.bindMentionsToPosts(posts),
-      this._postBindingService.bindActorToPost(posts),
-      this._postBindingService.bindAudienceToPost(posts, authUser),
-    ]);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, posts, {
-      excludeExtraneousValues: true,
+  }): Promise<ArticleResponseDto[]> {
+    const postsBindedData = await this._postBindingService.bindRelatedData(posts, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
     });
-    return new PageDto<PostResponseDto>(result, {
-      limit,
-      offset,
-      hasNextPage,
+
+    return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
     });
   }
 
@@ -220,10 +177,6 @@ export class FeedService {
 
   /**
    * Get Timeline
-   * @param authUser UserDto
-   * @param getTimelineDto GetTimelineDto
-   * @returns Promise resolve PageDto
-   * @throws HttpException
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
     const { limit, offset, groupId } = getTimelineDto;
@@ -246,47 +199,50 @@ export class FeedService {
         hasNextPage: false,
       });
     }
-    const constraints = PostModel.getIdConstrains(getTimelineDto);
 
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(
-      groupIds,
-      constraints
-    );
-    let importantPostsExc = Promise.resolve([]);
+    const authUserId = authUser?.id || null;
+
+    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(groupIds);
+    const postIdsAndSorted = [];
     if (offset < totalImportantPosts) {
-      importantPostsExc = PostModel.getTimelineData({
-        ...getTimelineDto,
+      const postImportantIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+        offset,
         limit: limit + 1,
-        groupIds,
-        authUser,
         isImportant: true,
+        authUserId,
       });
+      postIdsAndSorted.push(...postImportantIdsAndSorted);
     }
-    let normalPostsExc = Promise.resolve([]);
+
     if (offset + limit >= totalImportantPosts) {
-      normalPostsExc = PostModel.getTimelineData({
-        ...getTimelineDto,
+      const postNormalIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
         offset: Math.max(0, offset - totalImportantPosts),
         limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
-        groupIds,
-        authUser,
         isImportant: false,
+        authUserId,
       });
+      postIdsAndSorted.push(...postNormalIdsAndSorted);
     }
-    return this._bindAndTransformData({
-      importantPostsExc,
-      normalPostsExc,
-      offset,
-      limit,
+    let hasNextPage = false;
+    if (postIdsAndSorted.length > limit) {
+      postIdsAndSorted.pop();
+      hasNextPage = true;
+    }
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
+    const postsBindedData = await this._bindAndTransformData({
+      posts,
       authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindedData, {
+      limit,
+      offset,
+      hasNextPage,
     });
   }
 
   /**
    * Delete newsfeed by post
-   * @param postId string
-   * @param transaction Transaction
-   * @returns object
    */
   public deleteNewsFeedByPost(postId: string, transaction: Transaction): Promise<number> {
     return this._newsFeedModel.destroy({ where: { postId }, transaction: transaction });

@@ -3,6 +3,7 @@ import { SearchPostsDto } from './dto/requests';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { AudienceResponseDto, PostResponseDto } from './dto/responses';
+import { ArticleResponseDto } from '../article/dto/responses';
 import { ClassTransformer } from 'class-transformer';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { SentryService } from '@app/sentry';
@@ -16,6 +17,12 @@ import { UserMentionDto } from '../mention/dto';
 import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { IPost } from '../../database/models/post.model';
+import {
+  IPostResponseElasticsearch,
+  IPostElasticsearch,
+} from './interfaces/post-response-elasticsearch.interface';
 
 export type DataPostToAdd = {
   id: string;
@@ -29,9 +36,17 @@ export type DataPostToAdd = {
   createdAt: Date;
   actor: UserSharedDto;
   isArticle: boolean;
+  title?: string;
+  summary?: string;
 };
 type DataPostToUpdate = DataPostToAdd & {
   lang: string;
+};
+type FieldSearch = {
+  text: {
+    default: string;
+    ascii: string;
+  };
 };
 @Injectable()
 export class PostSearchService {
@@ -53,79 +68,113 @@ export class PostSearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly postBindingService: PostBindingService
+    protected readonly postBindingService: PostBindingService,
+    protected readonly linkPreviewService: LinkPreviewService
   ) {}
 
-  public async addPostsToSearch(posts: DataPostToAdd[]): Promise<void> {
-    const index = ElasticsearchHelper.ALIAS.POST.default.name;
-    for (const dataIndex of posts) {
-      dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
-      this.elasticsearchService
-        .index({
-          index,
-          id: dataIndex.id,
-          body: dataIndex,
+  public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<void> {
+    const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
+    const body = [];
+    for (const post of posts) {
+      if (post.isArticle) {
+        post.content = StringHelper.serializeEditorContentToText(post.content);
+      } else {
+        post.content = StringHelper.removeMarkdownCharacter(post.content);
+      }
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      body.push({ index: { _index: index, _id: post.id } });
+      body.push(post);
+    }
+    try {
+      const res = await this.elasticsearchService.bulk(
+        {
+          refresh: true,
+          body,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        })
-        .then((res) => {
-          const lang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-          this.postService.updatePostData([dataIndex.id], { lang });
-        })
-        .catch((e) => {
-          this.logger.debug(e);
-          this.sentryService.captureException(e);
-        });
+        },
+        {
+          maxRetries: 5,
+        }
+      );
+      this.logger.debug(`[Add post to ES] ${JSON.stringify(res)}`);
+      await this._updateLangAfterIndexToES(res?.items || [], index);
+    } catch (e) {
+      this.logger.debug(e);
+      this.sentryService.captureException(e);
+    }
+  }
+
+  private async _updateLangAfterIndexToES(resItems: any[], index: string): Promise<void> {
+    const groupSuccessItemsByLang = [];
+    resItems.forEach(({ index: resPost }) => {
+      if (resPost.status === 201) {
+        const lang = ElasticsearchHelper.getLangOfPostByIndexName(resPost._index, index);
+        const postId = resPost._id;
+
+        const foundIndex = groupSuccessItemsByLang.findIndex((item) => item.lang === lang);
+        if (foundIndex === -1) {
+          groupSuccessItemsByLang.push({ lang, ids: [postId] });
+        } else {
+          groupSuccessItemsByLang[foundIndex].ids.push(postId);
+        }
+      }
+    });
+
+    for (const item of groupSuccessItemsByLang) {
+      await this.postService.updateData(item.ids, {
+        lang: item.lang,
+      });
     }
   }
 
   public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
-      this.elasticsearchService
-        .index({
+      if (dataIndex.isArticle) {
+        dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
+      } else {
+        dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
+      }
+
+      try {
+        const res = await this.elasticsearchService.index({
           index,
           id: dataIndex.id,
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        })
-        .then((res) => {
-          const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res.body._index);
-          if (dataIndex.lang !== newLang) {
-            this.postService.updatePostData([dataIndex.id], { lang: newLang });
-            const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(dataIndex.lang);
-            this.elasticsearchService
-              .delete({ index: oldIndex, id: `${dataIndex.id}` })
-              .catch((e) => {
-                this.logger.debug(e);
-                this.sentryService.captureException(e);
-              });
-          }
-        })
-        .catch((e) => {
-          this.logger.debug(e);
-          this.sentryService.captureException(e);
         });
+        const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
+        if (dataIndex.lang !== newLang) {
+          await this.postService.updateData([dataIndex.id], { lang: newLang });
+          const oldIndex = ElasticsearchHelper.getIndexOfPostByLang(dataIndex.lang);
+          await this.elasticsearchService.delete({ index: oldIndex, id: `${dataIndex.id}` });
+        }
+      } catch (e) {
+        this.logger.debug(e);
+        this.sentryService.captureException(e);
+      }
     }
   }
-  public async deletePostsToSearch(ids: string[]): Promise<void> {
-    const index = ElasticsearchHelper.ALIAS.POST.all.name;
-    for (const id of ids) {
-      this.elasticsearchService.delete({ index, id }).catch((e) => {
-        this.logger.debug(e);
+  public async deletePostsToSearch(posts: IPost[]): Promise<void> {
+    for (const post of posts) {
+      const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
+      this.elasticsearchService.delete({ index, id: post.id }).catch((e) => {
         this.sentryService.captureException(e);
       });
     }
   }
 
+  /*
+    Search posts and articles
+  */
   public async searchPosts(
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<ArticleResponseDto>> {
     const { contentSearch, limit, offset } = searchPostsDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
-      return new PageDto<PostResponseDto>([], {
+      return new PageDto<ArticleResponseDto>([], {
         total: 0,
         limit,
         offset,
@@ -133,41 +182,67 @@ export class PostSearchService {
     }
     const groupIds = user.groups;
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
-    const response = await this.searchService.search(payload);
-    const hits = response.body.hits.hits;
+    const response = await this.searchService.search<IPostElasticsearch>(payload);
+    const hits = response.hits.hits;
     const posts = hits.map((item) => {
-      const source = item._source;
-      source.content = item._source.content.text;
-      source['id'] = item._id;
+      const source: IPostResponseElasticsearch = {
+        id: item._source.id,
+        audience: item._source.audience,
+        isArticle: item._source.isArticle,
+        media: item._source.media,
+        content: item._source.content.text,
+        title: item._source.title?.text || null,
+        summary: item._source.summary?.text || null,
+        setting: item._source.setting,
+        actor: item._source.actor,
+        mentions: item._source.mentions,
+        createdAt: item._source.createdAt,
+        totalUsersSeen: item._source.totalUsersSeen,
+        commentsCount: item._source.commentsCount,
+      };
       if (
         contentSearch &&
         item.highlight &&
-        item.highlight['content.text'].length != 0 &&
+        item.highlight['content.text']?.length &&
         source.content
       ) {
         source.highlight = item.highlight['content.text'][0];
+      }
+
+      if (contentSearch && item.highlight && item.highlight['title.text']?.length && source.title) {
+        source.titleHighlight = item.highlight['title.text'][0];
+      }
+
+      if (
+        contentSearch &&
+        item.highlight &&
+        item.highlight['summary.text']?.length &&
+        source.summary
+      ) {
+        source.summaryHighlight = item.highlight['summary.text'][0];
       }
       return source;
     });
 
     await Promise.all([
       this.reactionService.bindToPosts(posts),
-      this.postBindingService.bindActorToPost(posts),
-      this.postBindingService.bindAudienceToPost(posts),
-      this.postBindingService.bindPostData(posts, [
+      this.postBindingService.bindActor(posts),
+      this.postBindingService.bindAudience(posts),
+      this.postBindingService.bindAttributes(posts, [
         'content',
         'commentsCount',
         'totalUsersSeen',
         'setting',
       ]),
+      this.linkPreviewService.bindToPosts(posts),
     ]);
 
-    const result = this.classTransformer.plainToInstance(PostResponseDto, posts, {
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, posts, {
       excludeExtraneousValues: true,
     });
 
-    return new PageDto<PostResponseDto>(result, {
-      total: response.body.hits.total.value,
+    return new PageDto<ArticleResponseDto>(result, {
+      total: response.hits.total['value'],
       limit,
       offset,
     });
@@ -196,7 +271,7 @@ export class PostSearchService {
 
     this._applyAudienceFilter(groupIds, body);
 
-    this._applyFilterContent(contentSearch, body);
+    this._applyFilterKeyword(contentSearch, body);
     this._applySort(contentSearch, body);
     this._applyFilterTime(startTime, endTime, body);
     return {
@@ -257,12 +332,13 @@ export class PostSearchService {
       });
     }
   }
-  private _applyFilterContent(contentSearch: string, body: BodyES): void {
-    if (contentSearch) {
-      const queries = this._getQueryMatchContent(contentSearch);
-      body.query.bool.should.push({
-        ['dis_max']: { queries },
-      });
+  private _applyFilterKeyword(keyword: string, body: BodyES): void {
+    if (keyword) {
+      const { content, title, summary } = ELASTIC_POST_MAPPING_PATH;
+      const queryContent = this._getQueryMatchKeyword(content, keyword);
+      const queryTitle = this._getQueryMatchKeyword(title, keyword);
+      const querySummary = this._getQueryMatchKeyword(summary, keyword);
+      body.query.bool.should = [...queryContent, ...querySummary, ...queryTitle];
       body.query.bool['minimum_should_match'] = 1;
       this._bindHighlight(body);
     }
@@ -277,7 +353,7 @@ export class PostSearchService {
   }
 
   private _bindHighlight(body: BodyES): void {
-    const { content } = ELASTIC_POST_MAPPING_PATH;
+    const { content, summary, title } = ELASTIC_POST_MAPPING_PATH;
     body['highlight'] = {
       ['pre_tags']: ['=='],
       ['post_tags']: ['=='],
@@ -288,35 +364,46 @@ export class PostSearchService {
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'summary.text': {
+          ['matched_fields']: [summary.text.default, summary.text.ascii],
+          type: 'fvh',
+          ['number_of_fragments']: 0,
+        },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        'title.text': {
+          ['matched_fields']: [title.text.default, title.text.ascii],
+          type: 'fvh',
+          ['number_of_fragments']: 0,
+        },
       },
     };
   }
-  private _getQueryMatchContent(contentSearch: string): any[] {
-    const { content } = ELASTIC_POST_MAPPING_PATH;
+  private _getQueryMatchKeyword(field: FieldSearch, keyword: string): any[] {
     let queries;
-    const isASCII = this._isASCIIKeyword(contentSearch);
+    const isASCII = this._isASCIIKeyword(keyword);
     if (isASCII) {
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
-            query: contentSearch,
-            fields: [content.text.default, content.text.ascii],
-            type: 'phrase', //Match pharse with heigh priority
+            query: keyword,
+            fields: [field.text.default, field.text.ascii],
+            type: 'phrase', //Match pharse with high priority
             boost: 2,
           },
         },
         {
           match: {
-            [content.text.default]: {
-              query: contentSearch,
+            [field.text.default]: {
+              query: keyword,
             },
           },
         },
         {
           match: {
-            [content.text.ascii]: {
-              query: contentSearch,
+            [field.text.ascii]: {
+              query: keyword,
             },
           },
         },
@@ -326,16 +413,16 @@ export class PostSearchService {
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
-            query: contentSearch,
-            fields: [content.text.default],
+            query: keyword,
+            fields: [field.text.default],
             type: 'phrase',
             boost: 2,
           },
         },
         {
           match: {
-            [content.text.default]: {
-              query: contentSearch,
+            [field.text.default]: {
+              query: keyword,
             },
           },
         },
