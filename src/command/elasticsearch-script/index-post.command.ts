@@ -69,7 +69,7 @@ export class IndexPostCommand implements CommandRunner {
     const today = new Date();
     const currentDate = `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
 
-    if (prevVersionDate && shouldUpdateIndex) {
+    if (shouldUpdateIndex) {
       console.log('updating index...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
