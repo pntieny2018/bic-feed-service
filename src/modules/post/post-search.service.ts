@@ -1,6 +1,6 @@
 import { PageDto } from '../../common/dto';
 import { SearchPostsDto } from './dto/requests';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { AudienceResponseDto, PostResponseDto } from './dto/responses';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -23,6 +23,7 @@ import {
   IPostResponseElasticsearch,
   IPostElasticsearch,
 } from './interfaces/post-response-elasticsearch.interface';
+import { GroupService } from '../../shared/group';
 
 export type DataPostToAdd = {
   id: string;
@@ -69,7 +70,8 @@ export class PostSearchService {
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly postBindingService: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService
+    protected readonly linkPreviewService: LinkPreviewService,
+    protected readonly groupService: GroupService
   ) {}
 
   public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<void> {
@@ -173,7 +175,7 @@ export class PostSearchService {
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { contentSearch, limit, offset } = searchPostsDto;
+    const { contentSearch, limit, offset, groupId } = searchPostsDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleResponseDto>([], {
@@ -182,7 +184,23 @@ export class PostSearchService {
         offset,
       });
     }
-    const groupIds = user.groups;
+
+    let groupIds = user.groups;
+    if (groupId) {
+      const group = await this.groupService.get(groupId);
+      if (!group) {
+        throw new BadRequestException(`Group ${groupId} not found`);
+      }
+      groupIds = this.groupService.getGroupIdsCanAccess(group, authUser);
+      if (groupIds.length === 0) {
+        return new PageDto<ArticleResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+    }
+
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;

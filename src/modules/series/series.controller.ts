@@ -66,7 +66,7 @@ export class SeriesController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSeriesDto: UpdateSeriesDto
-  ): Promise<void> {
+  ): Promise<SeriesResponseDto> {
     return this._seriesAppService.updateSeries(user, id, updateSeriesDto);
   }
 

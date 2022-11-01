@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { UpdatePostDto } from '../../../post/dto/requests';
 import { Expose, Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';
@@ -71,6 +71,7 @@ export class UpdateArticleDto extends UpdatePostDto {
     },
   })
   @IsNotEmpty()
+  @ValidateIf((i) => i.isDraft === false)
   @Expose({
     name: 'cover_media',
   })

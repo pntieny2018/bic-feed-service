@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
-import { IsBoolean, IsDateString, IsInt, IsOptional, IsString } from 'class-validator';
+import { Expose, Transform, Type } from 'class-transformer';
+import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 export class SearchPostsDto extends PageOptionsDto {
   @ApiPropertyOptional({
@@ -56,4 +56,17 @@ export class SearchPostsDto extends PageOptionsDto {
     name: 'end_time',
   })
   public endTime?: string;
+
+  @ApiProperty({
+    description: 'Group ID',
+    required: false,
+    name: 'group_id',
+  })
+  @Expose({
+    name: 'group_id',
+  })
+  @Type(() => String)
+  @IsUUID()
+  @IsOptional()
+  public groupId?: string;
 }

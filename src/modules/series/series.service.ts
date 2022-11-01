@@ -1,4 +1,3 @@
-import { OrderEnum, PageDto } from '../../common/dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
@@ -62,9 +61,6 @@ export class SeriesService {
 
   /**
    * Get Series
-   * @throws HttpException
-   * @param getSeriesDto GetSeriesDto
-   * @returns Promise resolve PageDto<SeriesResponseDto>
    */
   public async get(
     id: string,
@@ -150,10 +146,6 @@ export class SeriesService {
   }
   /**
    * Create Series
-   * @param authUser UserDto
-   * @param createSeriesDto CreateSeriesDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async create(authUser: UserDto, createPostDto: CreateSeriesDto): Promise<IPost> {
     let transaction;
@@ -168,6 +160,7 @@ export class SeriesService {
           createdBy: authUserId,
           updatedBy: authUserId,
           isDraft: false,
+          isProcessing: false,
           cover: coverMedia.id,
           type: PostType.SERIES,
         },
@@ -203,27 +196,84 @@ export class SeriesService {
   }
 
   /**
-   * Create Series
-   * @param authUser UserDto
-   * @param seriesId string
-   * @param updateSeriesDto UpdateSeriesDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
+   * Update Series
    */
   public async update(
+    post: SeriesResponseDto,
     authUser: UserDto,
-    seriesId: string,
     updateSeriesDto: UpdateSeriesDto
   ): Promise<boolean> {
+    const authUserId = authUser.id;
+    let transaction;
+    try {
+      const { audience, title, summary, coverMedia } = updateSeriesDto;
+      transaction = await this._sequelizeConnection.transaction();
+      await this._postModel.update(
+        {
+          updatedBy: authUserId,
+          title,
+          summary,
+          cover: coverMedia.id,
+        },
+        {
+          where: {
+            id: post.id,
+            createdBy: authUserId,
+          },
+          transaction,
+        }
+      );
+
+      const oldGroupIds = post.audience.groups.map((group) => group.id);
+      if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
+        await this.setGroupByPost(audience.groupIds, post.id, transaction);
+      }
+      await transaction.commit();
+
+      return true;
+    } catch (error) {
+      if (typeof transaction !== 'undefined') await transaction.rollback();
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete/Insert group by post
+   */
+  public async setGroupByPost(
+    groupIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<boolean> {
+    const currentGroups = await this._postGroupModel.findAll({
+      where: { postId },
+    });
+    const currentGroupIds = currentGroups.map((i) => i.groupId);
+
+    const deleteGroupIds = ArrayHelper.arrDifferenceElements(currentGroupIds, groupIds);
+    if (deleteGroupIds.length) {
+      await this._postGroupModel.destroy({
+        where: { groupId: deleteGroupIds, postId },
+        transaction,
+      });
+    }
+
+    const addGroupIds = ArrayHelper.arrDifferenceElements(groupIds, currentGroupIds);
+    if (addGroupIds.length) {
+      await this._postGroupModel.bulkCreate(
+        addGroupIds.map((groupId) => ({
+          postId,
+          groupId,
+        })),
+        { transaction }
+      );
+    }
     return true;
   }
 
   /**
    * Delete Series
-   * @param authUser UserDto
-   @param seriesId string
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async delete(authUser: UserDto, seriesId: string): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
@@ -295,11 +345,6 @@ export class SeriesService {
 
   /**
    * Add post to series
-   * @param seriesIds Array of Series ID
-   * @param postId string
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async addToPost(
     seriesIds: string[],
@@ -316,11 +361,6 @@ export class SeriesService {
 
   /**
    * Delete/Insert series by post
-   * @param seriesIds Array of Series ID
-   * @param postId PostID
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async updateToPost(
     seriesIds: string[],
