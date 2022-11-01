@@ -13,16 +13,6 @@ export class AppHelper {
   }
 
   public static getRedisEnv(): string {
-    const appEnv = process.env.APP_ENV;
-    switch (appEnv) {
-      case 'development':
-        return '';
-      case 'sandbox':
-        return 'sbx';
-      case 'staging':
-        return 'stg';
-      case 'production':
-        return 'pro';
-    }
+    return process.env.APP_ENV;
   }
 }

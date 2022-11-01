@@ -69,7 +69,7 @@ export class IndexPostCommand implements CommandRunner {
     const today = new Date();
     const currentDate = `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
 
-    if (prevVersionDate && shouldUpdateIndex) {
+    if (shouldUpdateIndex) {
       console.log('updating index...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
@@ -116,7 +116,7 @@ export class IndexPostCommand implements CommandRunner {
 
   private async _updateAlias(currentDefaultIndex, prevVersionDate, currentDate): Promise<void> {
     console.log('Updating alias...');
-    const actionList = [
+    const actionList: any = [
       {
         add: {
           index: `${currentDefaultIndex}_${currentDate}`,
@@ -125,13 +125,16 @@ export class IndexPostCommand implements CommandRunner {
           is_write_index: true,
         },
       },
-      {
+    ];
+
+    if (prevVersionDate) {
+      actionList.push({
         remove: {
           index: `${currentDefaultIndex}_${prevVersionDate}`,
           alias: currentDefaultIndex,
         },
-      },
-    ];
+      });
+    }
 
     ElasticsearchHelper.LANGUAGES_SUPPORTED.forEach((lang) => {
       actionList.push({
@@ -142,12 +145,14 @@ export class IndexPostCommand implements CommandRunner {
           is_write_index: true,
         },
       });
-      actionList.push({
-        remove: {
-          index: `${currentDefaultIndex}_${lang}_${prevVersionDate}`,
-          alias: `${currentDefaultIndex}_${lang}`,
-        },
-      });
+      if (prevVersionDate) {
+        actionList.push({
+          remove: {
+            index: `${currentDefaultIndex}_${lang}_${prevVersionDate}`,
+            alias: `${currentDefaultIndex}_${lang}`,
+          },
+        });
+      }
     });
 
     const updateAliasResult = await this.elasticsearchService.indices.updateAliases({
