@@ -13,6 +13,6 @@ export class AppHelper {
   }
 
   public static getRedisEnv(): string {
-    return process.env.APP_ENV;
+    return process.env.REDIS_ENV;
   }
 }
