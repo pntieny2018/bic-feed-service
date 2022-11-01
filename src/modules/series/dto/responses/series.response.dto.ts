@@ -6,6 +6,7 @@ import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { AudienceResponseDto } from '../../../post/dto/responses';
+import { MediaResponseDto } from '../../../media/dto/response';
 export class SeriesResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -152,6 +153,13 @@ export class SeriesResponseDto {
   //@ApiProperty({ type: PageDto<CommentResponseDto>, isArray: true })
   @Expose()
   public comments?: PageDto<CommentResponseDto>;
+
+  @ApiProperty({
+    type: MediaResponseDto,
+    name: 'cover_media',
+  })
+  @Expose()
+  public coverMedia?: MediaResponseDto;
 
   public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);
