@@ -51,11 +51,7 @@ export class CommentService {
   ) {}
 
   /**
-   * Create new comment
-   * @param user UserDto
-   * @param createCommentDto CreateCommentDto
-   * @param replyId String
-   * @return Promise resolve CommentResponseDto
+   * Create/reply new comment
    */
   public async create(
     user: UserDto,
@@ -246,10 +242,6 @@ export class CommentService {
 
   /**
    * Get single comment
-   * @param user UserDto
-   * @param commentId String
-   * @param childLimit Number
-   * @returns Promise resolve CommentResponseDto
    */
   public async getComment(
     user: UserDto,
@@ -307,11 +299,8 @@ export class CommentService {
 
   /**
    * Get multiple comment by ids
-   * @param commentIds String
-   * @returns Promise resolve CommentResponseDto
    */
   public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
-
     const responses = await this._commentModel.findAll({
       order: [['createdAt', 'DESC']],
       where: {
@@ -352,10 +341,6 @@ export class CommentService {
   }
   /**
    * Get comment list
-   * @param user UserDto
-   * @param getCommentsDto GetCommentsDto
-   * @param checkAccess Boolean
-   * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getComments(
     getCommentsDto: GetCommentsDto,
@@ -398,10 +383,6 @@ export class CommentService {
 
   /**
    * Get comment list
-   * @param commentId String
-   * @param user UserDto
-   * @param getCommentLinkDto GetCommentLinkDto
-   * @returns Promise resolve PageDto<CommentResponseDto>
    */
   public async getCommentLink(
     commentId: string,
@@ -526,9 +507,6 @@ export class CommentService {
 
   /**
    * Delete single comment
-   * @param user UserDto
-   * @param commentId string
-   * @returns Promise resolve boolean
    */
   public async destroy(user: UserDto, commentId: string): Promise<IComment> {
     const comment = await this._commentModel.findOne({
@@ -593,8 +571,6 @@ export class CommentService {
 
   /**
    * Bind user info to comment list
-   * @param commentsResponse  Array<IComment>
-   * @returns Promise resolve void
    */
   public async bindUserToComment(commentsResponse: any[]): Promise<void> {
     const actorIds = this._getActorIdsByComments(commentsResponse);
@@ -638,10 +614,6 @@ export class CommentService {
 
   /**
    * Bind user info to comment list
-   * @returns Promise resolve void
-   * @param comments
-   * @param authUserId
-   * @param limit
    */
   public async bindChildrenToComment(
     comments: any[],
@@ -672,9 +644,6 @@ export class CommentService {
 
   /**
    * Delete all comments by postID
-   * @param postId string
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
    */
   public async deleteCommentsByPost(postId: string, transaction: Transaction): Promise<void> {
     const comments = await this._commentModel.findAll({
@@ -757,9 +726,6 @@ export class CommentService {
 
   /**
    * Get post ID of a comment
-   * @param commentId string
-   * @returns Promise resolve string
-   * @throws Logical exception
    */
   public async getPostIdOfComment(commentId: string): Promise<string> {
     const comment = await this._commentModel.findOne({

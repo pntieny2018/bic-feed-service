@@ -1,6 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
-import { SeriesHasBeenDeletedEvent, SeriesHasBeenPublishedEvent } from '../../../events/series';
+import {
+  SeriesHasBeenDeletedEvent,
+  SeriesHasBeenPublishedEvent,
+  SeriesHasBeenUpdatedEvent,
+} from '../../../events/series';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
@@ -56,8 +60,37 @@ export class SeriesAppService {
     user: UserDto,
     postId: string,
     updateSeriesDto: UpdateSeriesDto
-  ): Promise<void> {
-    //
+  ): Promise<SeriesResponseDto> {
+    const { audience } = updateSeriesDto;
+    const seriesBefore = await this._seriesService.get(postId, user, new GetSeriesDto());
+    if (audience.groupIds.length === 0) {
+      throw new BadRequestException('Audience is required');
+    }
+    await this._authorityService.checkCanUpdateSeries(user, seriesBefore, audience.groupIds);
+
+    const oldGroupIds = seriesBefore.audience.groups.map((group) => group.id);
+    const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+    if (newAudienceIds.length) {
+      await this._authorityService.checkCanCreatePost(user, newAudienceIds, false);
+    }
+    const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+    if (removeGroupIds.length) {
+      await this._authorityService.checkCanDeletePost(user, removeGroupIds, seriesBefore.createdBy);
+    }
+
+    const isUpdated = await this._seriesService.update(seriesBefore, user, updateSeriesDto);
+    if (isUpdated) {
+      const seriesUpdated = await this._seriesService.get(postId, user, new GetSeriesDto());
+      this._eventEmitter.emit(
+        new SeriesHasBeenUpdatedEvent({
+          oldSeries: seriesBefore,
+          newSeries: seriesUpdated,
+          actor: user.profile,
+        })
+      );
+
+      return seriesUpdated;
+    }
   }
 
   public async deleteSeries(user: UserDto, seriesId: string): Promise<boolean> {
