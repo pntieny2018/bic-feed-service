@@ -13,6 +13,7 @@ import { FeedModule } from '../modules/feed';
 import { SeriesModule } from '../modules/series';
 import { ArticleListener } from './article';
 import { ArticleModule } from '../modules/article';
+import { SeriesListener } from './series';
 
 @Module({
   imports: [
@@ -26,6 +27,13 @@ import { ArticleModule } from '../modules/article';
     SeriesModule,
     ArticleModule,
   ],
-  providers: [PostListener, CommentListener, ReactionListener, FollowListener, ArticleListener],
+  providers: [
+    PostListener,
+    CommentListener,
+    ReactionListener,
+    FollowListener,
+    ArticleListener,
+    SeriesListener,
+  ],
 })
 export class ListenerModule {}

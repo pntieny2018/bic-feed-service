@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
+import { PostType } from '../../../../database/models/post.model';
 export class SearchPostsDto extends PageOptionsDto {
   @ApiPropertyOptional({
     type: 'string',
@@ -69,4 +70,14 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsUUID()
   @IsOptional()
   public groupId?: string;
+
+  @ApiProperty({
+    description: 'Type',
+    required: false,
+    default: '',
+    enum: PostType,
+  })
+  @Expose()
+  @IsOptional()
+  public type?: PostType;
 }
