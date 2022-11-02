@@ -184,13 +184,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    if (!authUser) {
-      return new PageDto<PostResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
+
     const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
