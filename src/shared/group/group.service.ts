@@ -57,6 +57,13 @@ export class GroupService {
    * @returns
    */
   public getGroupIdsCanAccess(group: GroupSharedDto, authUser: UserDto): string[] {
+    if (!authUser) {
+      if (group.privacy === GroupPrivacy.PUBLIC) {
+        return [group.id];
+      }
+      return [];
+    }
+
     const groupIdsUserJoined = authUser.profile.groups;
     const childIds = [
       ...group.child.public,
@@ -67,6 +74,10 @@ export class GroupService {
     const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
       groupIdsUserJoined.includes(groupId)
     );
+
+    if (group.privacy === GroupPrivacy.PUBLIC || group.privacy === GroupPrivacy.OPEN) {
+      filterGroupIdsUserJoined.push(group.id);
+    }
     return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
   }
 
