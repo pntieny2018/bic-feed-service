@@ -288,6 +288,8 @@ export class PostSearchService {
             ...this._getFilterTime(startTime, endTime),
           ],
           should: [...this._getMatchKeyword(contentSearch)],
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          minimum_should_match: 1,
         },
       },
     };
@@ -419,15 +421,21 @@ export class PostSearchService {
           multi_match: {
             query: keyword,
             fields: [field.text.default, field.text.ascii],
-            type: 'phrase',
+            type: 'phrase', //Match pharse with high priority
           },
         },
         {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          multi_match: {
-            query: keyword,
-            fields: [field.text.default, field.text.ascii],
-            type: 'most_fields',
+          match: {
+            [field.text.default]: {
+              query: keyword,
+            },
+          },
+        },
+        {
+          match: {
+            [field.text.ascii]: {
+              query: keyword,
+            },
           },
         },
       ];
@@ -435,10 +443,10 @@ export class PostSearchService {
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          match_phrase: {
-            [field.text.default]: {
-              query: keyword,
-            },
+          multi_match: {
+            query: keyword,
+            fields: [field.text.default],
+            type: 'phrase',
           },
         },
         {
