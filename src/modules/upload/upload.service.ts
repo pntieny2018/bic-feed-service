@@ -16,10 +16,6 @@ export class UploadService {
     this._s3Config = s3Config;
     this._storage = new S3Client({
       region: s3Config.region,
-      credentials: {
-        accessKeyId: s3Config.accessKeyId,
-        secretAccessKey: s3Config.secretAccessKey,
-      },
     });
   }
 
