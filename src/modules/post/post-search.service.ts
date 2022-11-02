@@ -1,6 +1,6 @@
 import { PageDto } from '../../common/dto';
 import { SearchPostsDto } from './dto/requests';
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { AudienceResponseDto, PostResponseDto } from './dto/responses';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -18,24 +18,25 @@ import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostBindingService } from './post-binding.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { IPost } from '../../database/models/post.model';
+import { IPost, PostType } from '../../database/models/post.model';
 import {
   IPostResponseElasticsearch,
   IPostElasticsearch,
 } from './interfaces/post-response-elasticsearch.interface';
+import { GroupService } from '../../shared/group';
 
 export type DataPostToAdd = {
   id: string;
   commentsCount: number;
   totalUsersSeen: number;
-  content: string;
-  media: MediaFilterResponseDto;
-  mentions: UserMentionDto;
+  content?: string;
+  media?: MediaFilterResponseDto;
+  mentions?: UserMentionDto;
   audience: AudienceResponseDto;
-  setting: PostSettingDto;
+  setting?: PostSettingDto;
   createdAt: Date;
   actor: UserSharedDto;
-  isArticle: boolean;
+  type: PostType;
   title?: string;
   summary?: string;
 };
@@ -69,16 +70,18 @@ export class PostSearchService {
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly postBindingService: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService
+    protected readonly linkPreviewService: LinkPreviewService,
+    protected readonly groupService: GroupService
   ) {}
 
   public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<void> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
-      if (post.isArticle) {
+      if (post.type === PostType.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
-      } else {
+      }
+      if (post.type === PostType.POST) {
         post.content = StringHelper.removeMarkdownCharacter(post.content);
       }
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -130,9 +133,10 @@ export class PostSearchService {
   public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      if (dataIndex.isArticle) {
+      if (dataIndex.type === PostType.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
-      } else {
+      }
+      if (dataIndex.type === PostType.POST) {
         dataIndex.content = StringHelper.removeMarkdownCharacter(dataIndex.content);
       }
 
@@ -171,7 +175,7 @@ export class PostSearchService {
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<ArticleResponseDto>> {
-    const { contentSearch, limit, offset } = searchPostsDto;
+    const { contentSearch, limit, offset, groupId } = searchPostsDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleResponseDto>([], {
@@ -180,7 +184,23 @@ export class PostSearchService {
         offset,
       });
     }
-    const groupIds = user.groups;
+
+    let groupIds = user.groups;
+    if (groupId) {
+      const group = await this.groupService.get(groupId);
+      if (!group) {
+        throw new BadRequestException(`Group ${groupId} not found`);
+      }
+      groupIds = this.groupService.getGroupIdsCanAccess(group, authUser);
+      if (groupIds.length === 0) {
+        return new PageDto<ArticleResponseDto>([], {
+          limit,
+          offset,
+          hasNextPage: false,
+        });
+      }
+    }
+
     const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
@@ -188,7 +208,7 @@ export class PostSearchService {
       const source: IPostResponseElasticsearch = {
         id: item._source.id,
         audience: item._source.audience,
-        isArticle: item._source.isArticle,
+        type: item._source.type,
         media: item._source.media,
         content: item._source.content.text,
         title: item._source.title?.text || null,

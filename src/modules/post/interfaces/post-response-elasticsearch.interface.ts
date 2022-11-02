@@ -1,3 +1,4 @@
+import { PostType } from '../../../database/models/post.model';
 import { UserDto } from '../../auth';
 import { MediaDto } from '../../media/dto';
 import { UserMentionDto } from '../../mention/dto';
@@ -6,7 +7,7 @@ import { AudienceRequestDto } from '../dto/requests/audience.request.dto';
 
 export interface IPostElasticsearch {
   id: string;
-  isArticle: boolean;
+  type: PostType;
   media: MediaDto;
   audience: AudienceRequestDto;
   title?: {
@@ -29,7 +30,7 @@ export interface IPostElasticsearch {
 
 export interface IPostResponseElasticsearch {
   id: string;
-  isArticle: boolean;
+  type: PostType;
   media: MediaDto;
   audience: AudienceRequestDto;
   title?: string;

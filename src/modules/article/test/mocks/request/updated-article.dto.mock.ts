@@ -21,6 +21,9 @@ export const mockedUpdateArticleDto: UpdateArticleDto = {
     files: [],
   },
   mentions: ['855bedeb-b708-4e13-8c68-131d92cd79b2'],
+  coverMedia: {
+    id: '855bedeb-b708-4e13-8c68-131d92cd7911',
+  },
   setting: {
     canReact: true,
     canComment: true,

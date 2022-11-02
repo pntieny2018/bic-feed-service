@@ -2,6 +2,7 @@ import { SentryService } from '@app/sentry';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
+import { PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -147,7 +148,7 @@ describe('PostListener', () => {
         content: '',
         createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
-        isArticle: false,
+        type: PostType.POST,
         isDraft: false,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',

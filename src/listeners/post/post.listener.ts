@@ -15,7 +15,7 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { FeedService } from '../../modules/feed/feed.service';
-import { PostPrivacy } from '../../database/models/post.model';
+import { PostPrivacy, PostType } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostSearchService } from '../../modules/post/post-search.service';
 import { PostHistoryService } from '../../modules/post/post-history.service';
@@ -67,7 +67,7 @@ export class PostListener {
           users: [],
           groups: (post?.groups ?? []).map((g) => g.groupId) as any,
         },
-        isArticle: false,
+        type: PostType.POST,
         privacy: PostPrivacy.PUBLIC,
       });
 
@@ -102,7 +102,7 @@ export class PostListener {
       setting,
       audience,
       createdAt,
-      isArticle,
+      type,
     } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -134,7 +134,7 @@ export class PostListener {
     this._postSearchService.addPostsToSearch([
       {
         id,
-        isArticle,
+        type,
         commentsCount,
         totalUsersSeen,
         content,
@@ -174,7 +174,7 @@ export class PostListener {
       mentions,
       setting,
       audience,
-      isArticle,
+      type,
       lang,
       createdAt,
     } = newPost;
@@ -222,7 +222,7 @@ export class PostListener {
     this._postSearchService.updatePostsToSearch([
       {
         id,
-        isArticle,
+        type,
         commentsCount,
         totalUsersSeen,
         content,
@@ -285,13 +285,13 @@ export class PostListener {
         setting,
         audience,
         createdAt,
-        isArticle,
+        type,
       } = post;
 
       this._postSearchService.addPostsToSearch([
         {
           id,
-          isArticle,
+          type,
           commentsCount,
           totalUsersSeen,
           content,

@@ -13,6 +13,7 @@ import {
 import { GroupSharedDto } from '../../shared/group/dto';
 import { AuthorityFactory } from './authority.factory';
 import { PostResponseDto } from '../post/dto/responses';
+import { SeriesResponseDto } from '../series/dto/responses';
 
 @Injectable()
 export class AuthorityService {
@@ -99,8 +100,25 @@ export class AuthorityService {
     this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
-  public async checkPostOwner(
+  public async checkCanUpdateArticle(
+    user: UserDto,
     post: PostResponseDto | PostModel | IPost,
+    groupAudienceIds: string[]
+  ): Promise<void> {
+    return this.checkCanUpdatePost(user, post, groupAudienceIds);
+  }
+
+  public async checkCanUpdateSeries(
+    user: UserDto,
+    post: SeriesResponseDto | PostModel | IPost,
+    groupAudienceIds: string[]
+  ): Promise<void> {
+    await this.checkPostOwner(post, user.id);
+    this._checkUserInSomeGroups(user, groupAudienceIds);
+  }
+
+  public async checkPostOwner(
+    post: PostResponseDto | SeriesResponseDto | PostModel | IPost,
     authUserId: string
   ): Promise<void> {
     if (!post) {
@@ -110,7 +128,6 @@ export class AuthorityService {
     if (post.createdBy !== authUserId) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
-    return;
   }
 
   public async checkCanDeletePost(
@@ -170,6 +187,14 @@ export class AuthorityService {
   }
 
   public async checkIsPublicArticle(post: IPost): Promise<void> {
+    return this.checkIsPublicPost(post);
+  }
+
+  public async checkCanReadSeries(user: UserDto, post: IPost): Promise<void> {
+    return this.checkCanReadPost(user, post);
+  }
+
+  public async checkIsPublicSeries(post: IPost): Promise<void> {
     return this.checkIsPublicPost(post);
   }
 
