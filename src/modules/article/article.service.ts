@@ -385,7 +385,7 @@ export class ArticleService extends PostService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = this.groupService.getGroupIdsCanAccessArticle(group, authUser);
+    const groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
 
     return groupIds;
   }

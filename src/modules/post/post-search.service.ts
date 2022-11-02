@@ -169,7 +169,7 @@ export class PostSearchService {
   }
 
   /*
-    Search posts and articles
+    Search posts, articles, series
   */
   public async searchPosts(
     authUser: UserDto,
@@ -191,7 +191,7 @@ export class PostSearchService {
       if (!group) {
         throw new BadRequestException(`Group ${groupId} not found`);
       }
-      groupIds = this.groupService.getGroupIdsCanAccess(group, authUser);
+      groupIds = this.groupService.getGroupIdAndChildIdsUserCanReadPost(group, authUser);
       if (groupIds.length === 0) {
         return new PageDto<ArticleResponseDto>([], {
           limit,
@@ -269,7 +269,7 @@ export class PostSearchService {
   }
 
   public async getPayloadSearch(
-    { startTime, endTime, contentSearch, actors, limit, offset }: SearchPostsDto,
+    { startTime, endTime, contentSearch, actors, limit, offset, type }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
     index: string;
@@ -281,19 +281,20 @@ export class PostSearchService {
       query: {
         bool: {
           must: [],
-          filter: [],
-          should: [],
+          filter: [
+            ...this._getActorFilter(actors),
+            ...this._getTypeFilter(type),
+            ...this._getAudienceFilter(groupIds),
+            ...this._getFilterTime(startTime, endTime),
+          ],
+          should: [...this._getMatchKeyword(contentSearch)],
         },
       },
     };
 
-    this._applyActorFilter(actors, body);
-
-    this._applyAudienceFilter(groupIds, body);
-
-    this._applyFilterKeyword(contentSearch, body);
-    this._applySort(contentSearch, body);
-    this._applyFilterTime(startTime, endTime, body);
+    body['highlight'] = this._getHighlight();
+    body['sort'] = [...this._getSort(contentSearch)];
+    console.log('object', JSON.stringify(body, null, 4));
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
       body,
@@ -302,79 +303,9 @@ export class PostSearchService {
     };
   }
 
-  private _applyFilterTime(startTime: string, endTime: string, body: BodyES): void {
-    if (startTime || endTime) {
-      const filterTime = {
-        range: {
-          createdAt: {},
-        },
-      };
-
-      if (startTime) filterTime.range.createdAt['gte'] = startTime;
-      if (endTime) filterTime.range.createdAt['lte'] = endTime;
-      body.query.bool.must.push(filterTime);
-    }
-  }
-
-  private _applyActorFilter(actors: string[], body: BodyES): void {
-    const { actor } = ELASTIC_POST_MAPPING_PATH;
-    if (actors && actors.length) {
-      body.query.bool.filter.push({
-        terms: {
-          [actor.id]: actors,
-        },
-      });
-    }
-  }
-  private _applyAudienceFilter(groupIds: string[], body: BodyES): void {
-    const { audience } = ELASTIC_POST_MAPPING_PATH;
-    if (groupIds.length) {
-      body.query.bool.filter.push({
-        terms: {
-          [audience.groups.id]: groupIds,
-        },
-      });
-    }
-  }
-
-  private _applyImportantFilter(important: boolean, body: BodyES): void {
-    const { setting } = ELASTIC_POST_MAPPING_PATH;
-    if (important) {
-      body.query.bool.must.push({
-        term: {
-          [setting.isImportant]: true,
-        },
-      });
-      body.query.bool.must.push({
-        range: {
-          [setting.importantExpiredAt]: { gt: new Date().toISOString() },
-        },
-      });
-    }
-  }
-  private _applyFilterKeyword(keyword: string, body: BodyES): void {
-    if (keyword) {
-      const { content, title, summary } = ELASTIC_POST_MAPPING_PATH;
-      const queryContent = this._getQueryMatchKeyword(content, keyword);
-      const queryTitle = this._getQueryMatchKeyword(title, keyword);
-      const querySummary = this._getQueryMatchKeyword(summary, keyword);
-      body.query.bool.should = [...queryContent, ...querySummary, ...queryTitle];
-      body.query.bool['minimum_should_match'] = 1;
-      this._bindHighlight(body);
-    }
-  }
-
-  private _applySort(textSearch: string, body: BodyES): void {
-    if (textSearch) {
-      body['sort'] = [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
-    } else {
-      body['sort'] = [{ createdAt: 'desc' }];
-    }
-  }
-
-  private _bindHighlight(body: BodyES): void {
+  private _getHighlight(): any {
     const { content, summary, title } = ELASTIC_POST_MAPPING_PATH;
-    body['highlight'] = {
+    return {
       ['pre_tags']: ['=='],
       ['post_tags']: ['=='],
       fields: {
@@ -399,6 +330,85 @@ export class PostSearchService {
       },
     };
   }
+
+  private _getFilterTime(startTime: string, endTime: string): any {
+    if (startTime || endTime) {
+      const filterTime = {
+        range: {
+          createdAt: {},
+        },
+      };
+
+      if (startTime) filterTime.range.createdAt['gte'] = startTime;
+      if (endTime) filterTime.range.createdAt['lte'] = endTime;
+      return [filterTime];
+    }
+    return [];
+  }
+
+  private _getActorFilter(actors: string[]): any {
+    const { actor } = ELASTIC_POST_MAPPING_PATH;
+    if (actors && actors.length) {
+      return [
+        {
+          terms: {
+            [actor.id]: actors,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getTypeFilter(postType: PostType): any {
+    const { type } = ELASTIC_POST_MAPPING_PATH;
+    if (postType) {
+      return [
+        {
+          term: {
+            [type]: postType,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getAudienceFilter(groupIds: string[]): any {
+    const { audience } = ELASTIC_POST_MAPPING_PATH;
+    if (groupIds.length) {
+      return [
+        {
+          terms: {
+            [audience.groups.id]: groupIds,
+          },
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  private _getMatchKeyword(keyword: string): any {
+    if (keyword) {
+      const { content, title, summary } = ELASTIC_POST_MAPPING_PATH;
+      const queryContent = this._getQueryMatchKeyword(content, keyword);
+      const queryTitle = this._getQueryMatchKeyword(title, keyword);
+      const querySummary = this._getQueryMatchKeyword(summary, keyword);
+
+      return [...queryContent, ...querySummary, ...queryTitle];
+    }
+    return [];
+  }
+
+  private _getSort(textSearch: string): any {
+    if (textSearch) {
+      return [{ ['_score']: 'desc' }, { createdAt: 'desc' }];
+    } else {
+      return [{ createdAt: 'desc' }];
+    }
+  }
+
   private _getQueryMatchKeyword(field: FieldSearch, keyword: string): any[] {
     let queries;
     const isASCII = this._isASCIIKeyword(keyword);
@@ -409,22 +419,15 @@ export class PostSearchService {
           multi_match: {
             query: keyword,
             fields: [field.text.default, field.text.ascii],
-            type: 'phrase', //Match pharse with high priority
-            boost: 2,
+            type: 'phrase',
           },
         },
         {
-          match: {
-            [field.text.default]: {
-              query: keyword,
-            },
-          },
-        },
-        {
-          match: {
-            [field.text.ascii]: {
-              query: keyword,
-            },
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields: [field.text.default, field.text.ascii],
+            type: 'most_fields',
           },
         },
       ];
@@ -432,11 +435,10 @@ export class PostSearchService {
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          multi_match: {
-            query: keyword,
-            fields: [field.text.default],
-            type: 'phrase',
-            boost: 2,
+          match_phrase: {
+            [field.text.default]: {
+              query: keyword,
+            },
           },
         },
         {
