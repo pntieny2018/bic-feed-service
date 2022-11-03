@@ -41,14 +41,14 @@ export class UploadService {
           config: this._s3Config
         })
       );
-      // await this._storage.send(
-      //   new PutObjectCommand({
-      //     Bucket: bucket,
-      //     Body: file.buffer,
-      //     Key: key,
-      //     ACL: alc,
-      //   })
-      // );
+      await this._storage.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Body: file.buffer,
+          Key: key,
+          ACL: alc,
+        })
+      );
       return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
     } catch (e) {
       this.logger.debug(e);
