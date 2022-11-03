@@ -296,7 +296,6 @@ export class PostSearchService {
 
     body['highlight'] = this._getHighlight();
     body['sort'] = [...this._getSort(contentSearch)];
-    console.log('object', JSON.stringify(body, null, 4));
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
       body,
