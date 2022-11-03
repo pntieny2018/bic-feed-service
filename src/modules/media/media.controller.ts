@@ -43,7 +43,7 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File,
     @Body('upload_type') uploadType: UploadType
   ): Promise<any> {
-    const url = 'test';//await this._uploadService.upload(file, uploadType);
+    const url = await this._uploadService.upload(file, uploadType);
 
     let width = 0;
     let height = 0;
