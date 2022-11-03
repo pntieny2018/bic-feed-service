@@ -90,7 +90,7 @@ export class FeedService {
     });
   }
 
-  public async getUsersSeenPots(
+  public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
   ): Promise<PageDto<UserDataShareDto>> {
