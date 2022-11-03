@@ -35,15 +35,20 @@ export class UploadService {
         extension: path.extname(file.originalname),
       });
       const bucket = this._s3Config.userSharingAssetsBucket;
-
-      await this._storage.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Body: file.buffer,
-          Key: key,
-          ACL: alc,
+      this.logger.debug(
+        '==S3Debug==',
+        JSON.stringify({
+          config: this._s3Config
         })
       );
+      // await this._storage.send(
+      //   new PutObjectCommand({
+      //     Bucket: bucket,
+      //     Body: file.buffer,
+      //     Key: key,
+      //     ACL: alc,
+      //   })
+      // );
       return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
     } catch (e) {
       this.logger.debug(e);
