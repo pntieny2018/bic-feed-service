@@ -70,20 +70,21 @@ export class RecentSearchService {
     try {
       createRecentSearchDto.target = createRecentSearchDto.target?.toLowerCase();
       createRecentSearchDto.keyword = createRecentSearchDto.keyword.toLowerCase();
-      const [recentSearch, isCreated] = await this._recentSearchModel.findOrCreate({
+      let recentSearch = await this._recentSearchModel.findOne({
         where: {
           keyword: createRecentSearchDto.keyword,
           createdBy,
           target: createRecentSearchDto.target,
         },
-        defaults: {
-          createdBy,
-          updatedBy: createdBy,
-          ...createRecentSearchDto,
-        },
       });
-
-      if (!isCreated) {
+      if (!recentSearch) {
+        recentSearch = await this._recentSearchModel.create({
+          keyword: createRecentSearchDto.keyword,
+          createdBy,
+          target: createRecentSearchDto.target,
+          totalSearched: 1,
+        });
+      } else {
         recentSearch.changed('updatedAt', true);
         recentSearch.set({ totalSearched: recentSearch.totalSearched + 1 });
         await recentSearch.save();

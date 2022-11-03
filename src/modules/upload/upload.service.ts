@@ -1,16 +1,15 @@
 import * as uuid from 'uuid';
 import * as path from 'path';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { IS3Config } from '../../config/s3';
 import { ConfigService } from '@nestjs/config';
 import { UploadPrefix } from './dto/requests/upload.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-
 @Injectable()
 export class UploadService {
   private _storage: S3Client;
   private _s3Config: IS3Config;
-
+  protected logger = new Logger(UploadService.name);
   public constructor(private _configService: ConfigService) {
     const s3Config = this._configService.get<IS3Config>('s3');
     this._s3Config = s3Config;
@@ -30,20 +29,24 @@ export class UploadService {
     uploadType: string,
     alc = 'public-read'
   ): Promise<string> {
-    const key = this.getKey(uploadType, {
-      extension: path.extname(file.originalname),
-    });
-    const bucket = this._s3Config.userSharingAssetsBucket;
-
-    await this._storage.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Body: file.buffer,
-        Key: key,
-        ACL: alc,
-      })
-    );
-    return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
+    try {
+      const key = this.getKey(uploadType, {
+        extension: path.extname(file.originalname),
+      });
+      const bucket = this._s3Config.userSharingAssetsBucket;
+      await this._storage.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Body: file.buffer,
+          Key: key,
+          ACL: alc,
+        })
+      );
+      return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
+    } catch (e) {
+      this.logger.debug(e);
+      throw e;
+    }
   }
 
   /**
