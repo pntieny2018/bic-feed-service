@@ -4,8 +4,6 @@ describe('UploadService', () => {
   let service: UploadService;
   const configMock = {
     region: 'string',
-    accessKeyId: 'string',
-    secretAccessKey: 'string',
     bucket: 'string',
     publicBucket: 'string',
     entityAttributeBucket: 'string',

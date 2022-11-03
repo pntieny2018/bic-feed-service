@@ -43,11 +43,12 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { isImportant, limit, offset } = getNewsFeedDto;
+    const { isImportant, type, limit, offset } = getNewsFeedDto;
     const postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
       limit: limit + 1, //1 is next row
       offset,
       isImportant,
+      type,
     });
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {
@@ -89,7 +90,7 @@ export class FeedService {
     });
   }
 
-  public async getUsersSeenPots(
+  public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
   ): Promise<PageDto<UserDataShareDto>> {
