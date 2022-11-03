@@ -69,6 +69,6 @@ export class FeedController {
     @AuthUser() user: UserDto,
     @Query() getUserSeenPostDto: GetUserSeenPostDto
   ): Promise<PageDto<UserDataShareDto>> {
-    return this._feedService.getUsersSeenPots(user, getUserSeenPostDto);
+    return this._feedService.getUsersSeenPosts(user, getUserSeenPostDto);
   }
 }
