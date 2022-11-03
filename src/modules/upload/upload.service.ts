@@ -5,7 +5,7 @@ import { IS3Config } from '../../config/s3';
 import { ConfigService } from '@nestjs/config';
 import { UploadPrefix } from './dto/requests/upload.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-
+import { fromContainerMetadata } from '@aws-sdk/credential-providers';
 @Injectable()
 export class UploadService {
   private _storage: S3Client;
@@ -16,6 +16,10 @@ export class UploadService {
     this._s3Config = s3Config;
     this._storage = new S3Client({
       region: s3Config.region,
+      credentials: fromContainerMetadata({
+        timeout: 1000,
+        maxRetries: 0,
+      }),
     });
   }
 
@@ -38,17 +42,17 @@ export class UploadService {
       this.logger.debug(
         '==S3Debug==',
         JSON.stringify({
-          config: this._s3Config
+          config: this._s3Config,
         })
       );
-      // await this._storage.send(
-      //   new PutObjectCommand({
-      //     Bucket: bucket,
-      //     Body: file.buffer,
-      //     Key: key,
-      //     ACL: alc,
-      //   })
-      // );
+      await this._storage.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Body: file.buffer,
+          Key: key,
+          ACL: alc,
+        })
+      );
       return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
     } catch (e) {
       this.logger.debug(e);
