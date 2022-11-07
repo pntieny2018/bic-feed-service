@@ -109,9 +109,22 @@ describe('GroupService', () => {
     });
   });
 
-  describe('GroupService.getGroupIdAndChildIdsUserJoined', () => {
+  describe.skip('GroupService.getGroupIdAndChildIdsUserJoined', () => {
     it('return list access', () => {
       const listAccess = service.getGroupIdAndChildIdsUserJoined(sharedGroupMock[0], mockedUserAuth);
+      expect(listAccess).toEqual(
+        []
+      );
+    });
+    it('return list access group secret', () => {
+      const listAccess = service.getGroupIdAndChildIdsUserJoined(sharedGroupMock[3], mockedUserAuth);
+      expect(listAccess).toEqual([]);
+    });
+  });
+
+  describe('GroupService.getGroupIdsCanAccessArticle', () => {
+    it('return list access', () => {
+      const listAccess = service.getGroupIdAndChildIdsUserJoined(sharedGroupMock[2], mockedUserAuth);
       expect(listAccess).toEqual(
         []
       );
