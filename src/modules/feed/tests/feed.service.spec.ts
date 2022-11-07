@@ -132,7 +132,7 @@ describe('FeedService', () => {
   describe('getTimeline', () => {
     it('Should get successfully with predefined timeline', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest
+      groupService.getGroupIdAndChildIdsUserJoined = jest
         .fn()
         .mockResolvedValue([
           '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
@@ -152,14 +152,14 @@ describe('FeedService', () => {
       await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
 
       expect(groupService.get).toBeCalledTimes(1);
-      expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
+      expect(groupService.getGroupIdAndChildIdsUserJoined).toBeCalledTimes(1);
       expect(postService.getPostIdsInGroupIds).toBeCalledTimes(1);
       expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
 
     it('Should get successfully with predefined timeline and null user', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest
+      groupService.getGroupIdAndChildIdsUserJoined = jest
         .fn()
         .mockResolvedValue([
           '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
@@ -178,7 +178,7 @@ describe('FeedService', () => {
       await feedService.getTimeline(null, mockedGetTimeLineDto);
 
       expect(groupService.get).toBeCalledTimes(1);
-      expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
+      expect(groupService.getGroupIdAndChildIdsUserJoined).toBeCalledTimes(1);
       expect(postService.getPostIdsInGroupIds).toBeCalledTimes(1);
       expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
