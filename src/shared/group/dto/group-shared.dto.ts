@@ -43,7 +43,7 @@ export class GroupSharedDto {
   public isCommunity?: boolean;
 
   public privacy: GroupPrivacy;
-
+  public rootGroupId: string;
   public child?: ChildGroup = {
     public: [],
     open: [],
