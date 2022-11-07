@@ -155,6 +155,18 @@ export class PostController {
     return this._postAppService.markReadPost(user, postId);
   }
 
+  @ApiOperation({ summary: 'Get total draft' })
+  @ApiOkResponse({
+    type: Number,
+  })
+  @Get('/total-draft')
+  public async getTotalDraft(
+    @AuthUser() user: UserDto,
+    @Body() createPostDto: CreatePostDto
+  ): Promise<any> {
+    return this._postAppService.createPost(user, createPostDto);
+  }
+
   @UseGuards(WebhookGuard)
   @Post('/bot')
   public async deployNewVersionApp(

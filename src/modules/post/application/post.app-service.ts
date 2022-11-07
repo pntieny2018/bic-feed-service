@@ -72,6 +72,10 @@ export class PostAppService {
     }
   }
 
+  public async getTotalDraft(user: UserDto): Promise<any> {
+    return this._postService.getTotalDraft(user);
+  }
+
   public async updatePost(
     user: UserDto,
     postId: string,
