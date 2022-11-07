@@ -22,6 +22,7 @@ export const mockGroup: GroupSharedDto = {
   name: 'group 1',
   icon: 'icon 1',
   privacy: GroupPrivacy.PUBLIC,
+  rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
   child: {
     public: ['7251dac7-5088-4a33-b900-d1b058edaf98', '7251dac7-5088-4a33-b900-d1b058edaf99'],
     open: [],
