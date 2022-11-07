@@ -276,6 +276,23 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
+  public static loadImportant(authUserId: string, alias?: string): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    if (!authUserId) {
+      return [Sequelize.literal(`(false)`), alias ? alias : 'isImportant'];
+    }
+    return [
+      Sequelize.literal(`(
+        CASE WHEN is_important = TRUE AND COALESCE((SELECT TRUE FROM ${schema}.${userMarkReadPostTable} as r
+          WHERE r.post_id = "PostModel".id AND r.user_id = ${this.sequelize.escape(
+            authUserId
+          )}), FALSE) = FALSE THEN 1 ELSE 0 END
+               )`),
+      alias ? alias : 'isImportant',
+    ];
+  }
+
   public static loadContent(alias?: string): [Literal, string] {
     return [
       Sequelize.literal(`(CASE WHEN is_article = false THEN content ELSE null END)`),
