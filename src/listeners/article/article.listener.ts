@@ -64,6 +64,7 @@ export class ArticleListener {
       type,
       title,
       summary,
+      coverMedia,
     } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -94,6 +95,7 @@ export class ArticleListener {
         actor,
         title,
         summary,
+        coverMedia,
       },
     ]);
 
@@ -130,7 +132,8 @@ export class ArticleListener {
       lang,
       summary,
       title,
-    } = oldArticle;
+      coverMedia,
+    } = newArticle;
 
     if (oldArticle.isDraft === false) {
       const mediaIds = media.videos
@@ -172,6 +175,7 @@ export class ArticleListener {
         lang,
         summary,
         title,
+        coverMedia,
       },
     ]);
 
@@ -220,6 +224,7 @@ export class ArticleListener {
         type,
         summary,
         title,
+        coverMedia,
       } = article;
 
       this._postSearchService.addPostsToSearch([
@@ -237,6 +242,7 @@ export class ArticleListener {
           actor,
           summary,
           title,
+          coverMedia,
         },
       ]);
 
