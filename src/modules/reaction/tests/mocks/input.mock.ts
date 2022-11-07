@@ -101,6 +101,7 @@ export const mockPostResponseDto: PostResponseDto = {
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
         privacy: GroupPrivacy.OPEN,
+        rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
   },
