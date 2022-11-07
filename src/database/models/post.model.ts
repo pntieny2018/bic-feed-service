@@ -278,6 +278,23 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     ];
   }
 
+  public static loadImportant(authUserId: string, alias?: string): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+    const userMarkReadPostTable = UserMarkReadPostModel.tableName;
+    if (!authUserId) {
+      return [Sequelize.literal(`(false)`), alias ? alias : 'isImportant'];
+    }
+    return [
+      Sequelize.literal(`(
+        CASE WHEN is_important = TRUE AND COALESCE((SELECT TRUE FROM ${schema}.${userMarkReadPostTable} as r
+          WHERE r.post_id = "PostModel".id AND r.user_id = ${this.sequelize.escape(
+            authUserId
+          )}), FALSE) = FALSE THEN 1 ELSE 0 END
+               )`),
+      alias ? alias : 'isImportant',
+    ];
+  }
+
   public static loadContent(alias?: string): [Literal, string] {
     return [
       Sequelize.literal(`(CASE WHEN is_article = false THEN content ELSE null END)`),
@@ -334,13 +351,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         `(SELECT COUNT(*) FROM ${schema}.comments WHERE ${schema}.comments.post_id="PostModel"."id")`
       ),
       alias ?? 'commentsCount',
-    ];
-  }
-
-  public static importantPostsFirstCondition(alias?: string): [Literal, string] {
-    return [
-      sequelize.literal(`CASE WHEN "PostModel"."important_expired_at" > NOW() THEN 1 ELSE 0 END`),
-      alias ?? 'isNowImportant',
     ];
   }
 
