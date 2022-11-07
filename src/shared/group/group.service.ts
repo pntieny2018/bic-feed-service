@@ -71,9 +71,12 @@ export class GroupService {
     if (group.privacy === GroupPrivacy.PUBLIC) {
       filterGroupIdsUserJoined.push(group.id);
     }
-    // if (group.privacy === GroupPrivacy.OPEN && this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupid)) {
-    //   filterGroupIdsUserJoined.push(group.id);
-    // }
+    if (
+      group.privacy === GroupPrivacy.OPEN &&
+      this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupId)
+    ) {
+      filterGroupIdsUserJoined.push(group.id);
+    }
     return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
   }
 
