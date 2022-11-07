@@ -1245,4 +1245,13 @@ export class PostService {
 
     return posts.map((post) => post.id);
   }
+
+  public async getTotalDraft(user: UserDto): Promise<number> {
+    return this.postModel.count({
+      where: {
+        isDraft: true,
+        createdBy: user.id,
+      },
+    });
+  }
 }
