@@ -6,6 +6,7 @@ export const sharedGroupMock: GroupSharedDto[] = [
     name: 'Love TS',
     icon: 'ts',
     privacy: GroupPrivacy.PUBLIC,
+    rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     child: {
       public: ['d3a2e019-1dba-485d-a8cf-ec037e9f25af', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7eb'],
       open: [],
@@ -18,6 +19,7 @@ export const sharedGroupMock: GroupSharedDto[] = [
     name: 'Love Golang',
     icon: 'gl',
     privacy: GroupPrivacy.OPEN,
+    rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     child: {
       public: ['aac7a9ee-1432-4420-86d0-64a663e61123', '3e4822ee-063f-4029-86ca-2e98fae3c708'],
       open: [],
@@ -30,6 +32,7 @@ export const sharedGroupMock: GroupSharedDto[] = [
     name: 'Love Golang',
     icon: 'gl',
     privacy: GroupPrivacy.PRIVATE,
+    rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     child: {
       public: ['9d3468c0-4b35-49ad-b569-21f0f6e32a32', 'f8ff0be9-fd98-482e-a20c-0af26f37b4cf'],
       open: [],
@@ -42,6 +45,7 @@ export const sharedGroupMock: GroupSharedDto[] = [
     name: 'Love Golang',
     icon: 'gl',
     privacy: GroupPrivacy.SECRET,
+    rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     child: {
       public: [],
       open: [],
