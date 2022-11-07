@@ -2,7 +2,7 @@ import { PageDto } from '../../common/dto';
 import { SearchPostsDto } from './dto/requests';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
-import { AudienceResponseDto, PostResponseDto } from './dto/responses';
+import { AudienceResponseDto } from './dto/responses';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { ClassTransformer } from 'class-transformer';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -12,7 +12,7 @@ import { PostService } from './post.service';
 import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { ReactionService } from '../reaction';
-import { MediaFilterResponseDto } from '../media/dto/response';
+import { MediaFilterResponseDto, MediaResponseDto } from '../media/dto/response';
 import { UserMentionDto } from '../mention/dto';
 import { PostSettingDto } from './dto/common/post-setting.dto';
 import { UserSharedDto } from '../../shared/user/dto';
@@ -39,6 +39,7 @@ export type DataPostToAdd = {
   type: PostType;
   title?: string;
   summary?: string;
+  coverMedia?: MediaResponseDto;
 };
 type DataPostToUpdate = DataPostToAdd & {
   lang: string;
@@ -99,7 +100,7 @@ export class PostSearchService {
           maxRetries: 5,
         }
       );
-      this.logger.debug(`[Add post to ES] ${JSON.stringify(res)}`);
+
       await this._updateLangAfterIndexToES(res?.items || [], index);
     } catch (e) {
       this.logger.debug(e);
