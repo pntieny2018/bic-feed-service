@@ -197,27 +197,12 @@ export class FeedService {
 
     const authUserId = authUser?.id || null;
 
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(groupIds);
-    const postIdsAndSorted = [];
-    if (offset < totalImportantPosts) {
-      const postImportantIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
-        offset,
-        limit: limit + 1,
-        isImportant: true,
-        authUserId,
-      });
-      postIdsAndSorted.push(...postImportantIdsAndSorted);
-    }
+    const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+      offset,
+      limit: limit + 1,
+      authUserId,
+    });
 
-    if (offset + limit >= totalImportantPosts) {
-      const postNormalIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
-        isImportant: false,
-        authUserId,
-      });
-      postIdsAndSorted.push(...postNormalIdsAndSorted);
-    }
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {
       postIdsAndSorted.pop();

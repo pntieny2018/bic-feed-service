@@ -25,8 +25,8 @@ export enum UploadFileType {
 }
 
 export const UploadPrefix = {
-  [UploadType.POST_IMAGE]: 'post/images/original',
-  [UploadType.COMMENT_IMAGE]: 'comment/images/original',
+  [UploadType.POST_IMAGE]: 'post/original',
+  [UploadType.COMMENT_IMAGE]: 'comment/original',
 };
 
 export class UploadQueryDto {
