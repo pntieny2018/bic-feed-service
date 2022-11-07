@@ -134,6 +134,11 @@ export class PostResponseDto {
     },
   })
   @Expose()
+  @Transform(({ value }) => {
+    if (Array.isArray(value) && value.length === 0) {
+      return {};
+    }
+  })
   public mentions?: UserMentionDto;
 
   @ApiProperty({
