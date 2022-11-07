@@ -220,6 +220,7 @@ export class PostSearchService {
         createdAt: item._source.createdAt,
         totalUsersSeen: item._source.totalUsersSeen,
         commentsCount: item._source.commentsCount,
+        coverMedia: item._source.coverMedia ?? null,
       };
       if (
         contentSearch &&
