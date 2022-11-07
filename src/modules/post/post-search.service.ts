@@ -191,7 +191,7 @@ export class PostSearchService {
       if (!group) {
         throw new BadRequestException(`Group ${groupId} not found`);
       }
-      groupIds = this.groupService.getGroupIdAndChildIdsUserCanReadPost(group, authUser);
+      groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
       if (groupIds.length === 0) {
         return new PageDto<ArticleResponseDto>([], {
           limit,
