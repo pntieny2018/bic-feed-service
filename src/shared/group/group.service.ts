@@ -50,6 +50,34 @@ export class GroupService {
   }
 
   /**
+   * Get groupId and childIds(user joinned) to show posts in timeline
+   */
+  public getGroupIdAndChildIdsUserJoined(group: GroupSharedDto, authUser: UserDto): string[] {
+    if (!authUser) {
+      return this._getGroupIdsGuestCanSeePost(group);
+    }
+
+    const groupIdsUserJoined = authUser.profile.groups;
+    const childIds = [
+      ...group.child.public,
+      ...group.child.open,
+      ...group.child.private,
+      ...group.child.secret,
+    ];
+    const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
+      groupIdsUserJoined.includes(groupId)
+    );
+
+    if (group.privacy === GroupPrivacy.PUBLIC) {
+      filterGroupIdsUserJoined.push(group.id);
+    }
+    // if (group.privacy === GroupPrivacy.OPEN && this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupid)) {
+    //   filterGroupIdsUserJoined.push(group.id);
+    // }
+    return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
+  }
+
+  /**
    * Get all groupIds(include all child) that user can acess to SEE posts (allow public, open)
    *
    * @param group
