@@ -16,6 +16,7 @@ import { CleanDraftPostCommand } from './clean-draft-posts.command';
 import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ConfigModule } from '@nestjs/config';
 import { configs } from '../config/configuration';
+import { MoveMediaBucketCommand } from './move-media-bucket.command';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { configs } from '../config/configuration';
     CleanArticleCommand,
     CleanDraftPostCommand,
     IndexPostCommand,
+    MoveMediaBucketCommand,
   ],
 })
 export class CommandModule {}
