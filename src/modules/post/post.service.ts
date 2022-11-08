@@ -1165,6 +1165,7 @@ export class PostService {
       subQuery: false,
       where: conditions,
       order,
+      group: '"PostModel"."id"',
       offset,
       limit,
     });
@@ -1214,9 +1215,6 @@ export class PostService {
     }
   ): Promise<string[]> {
     const { offset, limit, authUserId } = filters;
-
-    let importantCondition;
-
     const posts = await this.postModel.findAll({
       attributes: ['id', this.postModel.loadImportant(authUserId)],
       include: [
@@ -1233,12 +1231,12 @@ export class PostService {
       subQuery: false,
       where: {
         isDraft: false,
-        ...importantCondition,
       },
       order: [
         [this.sequelizeConnection.literal('"isImportant"'), 'desc'],
         ['createdAt', 'desc'],
       ],
+      group: 'id',
       offset,
       limit,
     });
