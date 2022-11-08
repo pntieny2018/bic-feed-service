@@ -184,7 +184,6 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-
     const groupIds = this._groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
@@ -195,7 +194,6 @@ export class FeedService {
     }
 
     const authUserId = authUser?.id || null;
-
     const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
       offset,
       limit: limit + 1,
