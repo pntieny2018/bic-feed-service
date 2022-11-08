@@ -13,7 +13,7 @@ export class MoveMediaBucketCommand implements CommandRunner {
 
   public async run(passedParam: string[]): Promise<any> {
     try {
-      const mediaFix = await this._mediaModel.findAll({ limit: 20 });
+      const mediaFix = await this._mediaModel.findAll();
       let total = 0;
       for (const record of mediaFix) {
         if (record.url && record.url.includes('/post/images/original')) {
