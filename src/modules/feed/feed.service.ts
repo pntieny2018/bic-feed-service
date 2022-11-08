@@ -205,10 +205,7 @@ export class FeedService {
       postIdsAndSorted.pop();
       hasNextPage = true;
     }
-    this._logger.debug('[GET TIMELINE GROUPIDS]', groupIds.join('***'));
-    this._logger.debug('[GET TIMELINE BEFORE]', postIdsAndSorted.join('***'));
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUserId);
-    this._logger.debug('[GET TIMELINE AFTER]', posts.map((p) => p.id).join('***'));
     const postsBindedData = await this._bindAndTransformData({
       posts,
       authUser,
