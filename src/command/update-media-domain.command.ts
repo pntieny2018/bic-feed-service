@@ -1,9 +1,11 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel } from '../database/models/media.model';
 import { Op } from 'sequelize';
 import { ConfigService } from '@nestjs/config';
-
+interface ICommandOptions {
+  updateThumbnail: boolean;
+}
 @Command({ name: 'fix:media:domain', description: 'Update domain of media url' })
 export class UpdateMediaDomainCommand implements CommandRunner {
   public constructor(
@@ -11,7 +13,13 @@ export class UpdateMediaDomainCommand implements CommandRunner {
     private _configService: ConfigService
   ) {}
 
-  public async run(passedParam: string[]): Promise<any> {
+  @Option({
+    flags: '-s, --update-thumbnail [boolean]',
+  })
+  public parseBoolean(val: string): boolean {
+    return JSON.parse(val);
+  }
+  public async run(passedParam: string[], options?: ICommandOptions): Promise<any> {
     if (passedParam.length < 2) {
       console.log('Incorrect command, please run with :fix:media:domain {oldDomain} {newDomain}');
       process.exit();
@@ -19,14 +27,39 @@ export class UpdateMediaDomainCommand implements CommandRunner {
     try {
       const oldDomain = passedParam[0];
       const newDomain = passedParam[1];
-      const mediaFix = await this._mediaModel.findAll({
-        where: { url: { [Op.like]: '%' + oldDomain + '%' } },
-      });
-      console.log('Number of updating records: ', mediaFix.length);
-      for (const record of mediaFix) {
-        await record.update({ url: record.url.replace(oldDomain, newDomain) });
+      const isUpdateThumbnail = options.updateThumbnail ?? false;
+
+      let condition;
+      if (isUpdateThumbnail) {
+        condition = {
+          where: { type: 'video' },
+          limit: 1,
+        };
+      } else {
+        condition = {
+          where: { url: { [Op.like]: '%' + oldDomain + '%' } },
+        };
       }
-      console.log('Update done!');
+      const mediaFix = await this._mediaModel.findAll(condition);
+      let count = 0;
+      for (const record of mediaFix) {
+        let thumbnails = null;
+        if (record.type === 'video' && record.thumbnails) {
+          thumbnails = record.thumbnails.map((thumbnail) => {
+            if (thumbnail.url.includes(oldDomain)) {
+              thumbnail.url = thumbnail.url.replace(oldDomain, newDomain);
+            }
+            return thumbnail;
+          });
+          count++;
+          console.log('thumbnails', JSON.stringify(thumbnails, null, 4));
+          await record.update(thumbnails);
+        }
+        if (!isUpdateThumbnail) {
+          await record.update({ url: record.url.replace(oldDomain, newDomain) });
+        }
+      }
+      console.log(`Updated ${count} done!`);
       process.exit();
     } catch (e) {
       console.log(e);
