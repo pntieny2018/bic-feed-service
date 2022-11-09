@@ -33,7 +33,6 @@ export class UpdateMediaDomainCommand implements CommandRunner {
       if (isUpdateThumbnail) {
         condition = {
           where: { type: 'video' },
-          limit: 1,
         };
       } else {
         condition = {
