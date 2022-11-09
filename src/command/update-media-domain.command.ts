@@ -51,11 +51,29 @@ export class UpdateMediaDomainCommand implements CommandRunner {
             return thumbnail;
           });
           count++;
-          console.log('thumbnails', JSON.stringify(thumbnails, null, 4));
-          await record.update(thumbnails);
+          await this._mediaModel.update(
+            {
+              thumbnails,
+            },
+            {
+              where: {
+                id: record.id,
+              },
+            }
+          );
         }
         if (!isUpdateThumbnail) {
-          await record.update({ url: record.url.replace(oldDomain, newDomain) });
+          await this._mediaModel.update(
+            {
+              url: record.url.replace(oldDomain, newDomain),
+              thumbnails,
+            },
+            {
+              where: {
+                id: record.id,
+              },
+            }
+          );
         }
       }
       console.log(`Updated ${count} done!`);
