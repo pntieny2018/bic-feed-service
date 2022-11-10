@@ -43,11 +43,12 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { isImportant, limit, offset } = getNewsFeedDto;
+    const { isImportant, type, limit, offset } = getNewsFeedDto;
     const postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
       limit: limit + 1, //1 is next row
       offset,
       isImportant,
+      type,
     });
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {
@@ -89,7 +90,7 @@ export class FeedService {
     });
   }
 
-  public async getUsersSeenPots(
+  public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
   ): Promise<PageDto<UserDataShareDto>> {
@@ -184,14 +185,7 @@ export class FeedService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    if (!authUser && group.privacy !== GroupPrivacy.PUBLIC) {
-      return new PageDto<PostResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
-    const groupIds = this._groupService.getGroupIdsCanAccess(group, authUser);
+    const groupIds = this._groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,
@@ -201,28 +195,12 @@ export class FeedService {
     }
 
     const authUserId = authUser?.id || null;
+    const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+      offset,
+      limit: limit + 1,
+      authUserId,
+    });
 
-    const totalImportantPosts = await PostModel.getTotalImportantPostInGroups(groupIds);
-    const postIdsAndSorted = [];
-    if (offset < totalImportantPosts) {
-      const postImportantIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
-        offset,
-        limit: limit + 1,
-        isImportant: true,
-        authUserId,
-      });
-      postIdsAndSorted.push(...postImportantIdsAndSorted);
-    }
-
-    if (offset + limit >= totalImportantPosts) {
-      const postNormalIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
-        offset: Math.max(0, offset - totalImportantPosts),
-        limit: Math.min(limit + 1, limit + offset - totalImportantPosts + 1),
-        isImportant: false,
-        authUserId,
-      });
-      postIdsAndSorted.push(...postNormalIdsAndSorted);
-    }
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {
       postIdsAndSorted.pop();

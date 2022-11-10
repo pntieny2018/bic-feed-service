@@ -72,7 +72,6 @@ export class AuthService {
     try {
       payload = await jwt.verify(token, pem);
     } catch (e) {
-      this._logger.error(e, e.stack);
       if (e instanceof TokenExpiredError) {
         throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
       }

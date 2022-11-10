@@ -132,7 +132,7 @@ describe('FeedService', () => {
   describe('getTimeline', () => {
     it('Should get successfully with predefined timeline', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest
+      groupService.getGroupIdAndChildIdsUserJoined = jest
         .fn()
         .mockResolvedValue([
           '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
@@ -152,14 +152,14 @@ describe('FeedService', () => {
       await feedService.getTimeline(mockedUserAuth, mockedGetTimeLineDto);
 
       expect(groupService.get).toBeCalledTimes(1);
-      expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
+      expect(groupService.getGroupIdAndChildIdsUserJoined).toBeCalledTimes(1);
       expect(postService.getPostIdsInGroupIds).toBeCalledTimes(1);
       expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
 
     it('Should get successfully with predefined timeline and null user', async () => {
       groupService.get = jest.fn().mockResolvedValue(mockGroup);
-      groupService.getGroupIdsCanAccess = jest
+      groupService.getGroupIdAndChildIdsUserJoined = jest
         .fn()
         .mockResolvedValue([
           '73b8af34-af5e-4de9-9c6d-31c49db9c7a8',
@@ -178,7 +178,7 @@ describe('FeedService', () => {
       await feedService.getTimeline(null, mockedGetTimeLineDto);
 
       expect(groupService.get).toBeCalledTimes(1);
-      expect(groupService.getGroupIdsCanAccess).toBeCalledTimes(1);
+      expect(groupService.getGroupIdAndChildIdsUserJoined).toBeCalledTimes(1);
       expect(postService.getPostIdsInGroupIds).toBeCalledTimes(1);
       expect(postService.getPostsByIds).toBeCalledTimes(1);
     });
@@ -265,7 +265,7 @@ describe('FeedService', () => {
     });
   });
 
-  describe('FeedServices.getUsersSeenPots', () => {
+  describe('FeedServices.getUsersSeenPosts', () => {
     it.skip('should success', async () => {
       postService.findPost = jest.fn().mockResolvedValue(mockIPost);
       userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels);
@@ -277,7 +277,7 @@ describe('FeedService', () => {
         username: 'bret.josh',
         avatar: 'https://bein.group/josh.png',
       });
-      const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, {
+      const userInfo = await feedService.getUsersSeenPosts(mockedUserAuth, {
         limit: 25,
         offset: 0,
         postId: '8548c944-91f3-4577-99e2-18a541186c18',
@@ -314,7 +314,7 @@ describe('FeedService', () => {
       });
       sentryService.captureException = jest.fn();
       try {
-        await feedService.getUsersSeenPots(mockedUserAuth, {
+        await feedService.getUsersSeenPosts(mockedUserAuth, {
           limit: 25,
           offset: 0,
           postId: '8548c944-91f3-4577-99e2-18a541186c18',
