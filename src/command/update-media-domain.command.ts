@@ -38,8 +38,9 @@ export class UpdateMediaDomainCommand implements CommandRunner {
             }
             return thumbnail;
           });
-          count++;
         }
+
+        count++;
         await this._mediaModel.update(
           {
             url: record.url.replace(oldDomain, newDomain),
