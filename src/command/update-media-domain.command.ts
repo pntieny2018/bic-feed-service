@@ -3,9 +3,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel } from '../database/models/media.model';
 import { Op } from 'sequelize';
 import { ConfigService } from '@nestjs/config';
-interface ICommandOptions {
-  updateThumbnail: boolean;
-}
 @Command({ name: 'fix:media:domain', description: 'Update domain of media url' })
 export class UpdateMediaDomainCommand implements CommandRunner {
   public constructor(
@@ -19,7 +16,7 @@ export class UpdateMediaDomainCommand implements CommandRunner {
   public parseBoolean(val: string): boolean {
     return JSON.parse(val);
   }
-  public async run(passedParam: string[], options?: ICommandOptions): Promise<any> {
+  public async run(passedParam: string[]): Promise<any> {
     if (passedParam.length < 2) {
       console.log('Incorrect command, please run with :fix:media:domain {oldDomain} {newDomain}');
       process.exit();
@@ -27,19 +24,10 @@ export class UpdateMediaDomainCommand implements CommandRunner {
     try {
       const oldDomain = passedParam[0];
       const newDomain = passedParam[1];
-      const isUpdateThumbnail = options.updateThumbnail ?? false;
 
-      let condition;
-      if (isUpdateThumbnail) {
-        condition = {
-          where: { type: 'video' },
-        };
-      } else {
-        condition = {
-          where: { url: { [Op.like]: '%' + oldDomain + '%' } },
-        };
-      }
-      const mediaFix = await this._mediaModel.findAll(condition);
+      const mediaFix = await this._mediaModel.findAll({
+        where: { url: { [Op.like]: '%' + oldDomain + '%' } },
+      });
       let count = 0;
       for (const record of mediaFix) {
         let thumbnails = null;
@@ -50,31 +38,20 @@ export class UpdateMediaDomainCommand implements CommandRunner {
             }
             return thumbnail;
           });
-          count++;
-          await this._mediaModel.update(
-            {
-              thumbnails,
-            },
-            {
-              where: {
-                id: record.id,
-              },
-            }
-          );
         }
-        if (!isUpdateThumbnail) {
-          await this._mediaModel.update(
-            {
-              url: record.url.replace(oldDomain, newDomain),
-              thumbnails,
+
+        count++;
+        await this._mediaModel.update(
+          {
+            url: record.url.replace(oldDomain, newDomain),
+            thumbnails,
+          },
+          {
+            where: {
+              id: record.id,
             },
-            {
-              where: {
-                id: record.id,
-              },
-            }
-          );
-        }
+          }
+        );
       }
       console.log(`Updated ${count} done!`);
       process.exit();
