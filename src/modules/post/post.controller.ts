@@ -26,6 +26,7 @@ import {
   UpdatePostDto,
 } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { GetPostsSavedDto } from './dto/requests/get-posts-saved.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 
@@ -37,6 +38,42 @@ import { GetPostPipe } from './pipes';
 })
 export class PostController {
   public constructor(private _postAppService: PostAppService) {}
+
+  @ApiOperation({ summary: 'Save post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Post('/:postId/save')
+  public async save(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.savePost(user, postId);
+  }
+
+  @ApiOperation({ summary: 'unsave post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Delete('/:postId/unsave')
+  public async unSave(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.unSavePost(user, postId);
+  }
+
+  @ApiOperation({ summary: 'Get posts saved' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Get('/list-saved')
+  public async getPostsSavedByUserId(
+    @AuthUser() user: UserDto,
+    @Query() getPostsSavedDto: GetPostsSavedDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._postAppService.getPostsSavedByUserId(user, getPostsSavedDto);
+  }
 
   @ApiOperation({ summary: 'Search posts' })
   @ApiOkResponse({
@@ -73,6 +110,15 @@ export class PostController {
     @Query() getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
+  }
+
+  @ApiOperation({ summary: 'Get total draft' })
+  @ApiOkResponse({
+    type: Number,
+  })
+  @Get('/total-draft')
+  public async getTotalDraft(@AuthUser() user: UserDto): Promise<any> {
+    return this._postAppService.getTotalDraft(user);
   }
 
   @ApiOperation({ summary: 'Get post detail' })

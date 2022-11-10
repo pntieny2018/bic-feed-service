@@ -48,6 +48,7 @@ import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
+import { UserSavePostModel } from '../../database/models/user-save-post.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -88,6 +89,8 @@ export class ArticleService extends PostService {
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
+    @InjectModel(UserSavePostModel)
+    protected userSavePostModel: typeof UserSavePostModel,
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
@@ -103,6 +106,7 @@ export class ArticleService extends PostService {
       postCategoryModel,
       postHashtagModel,
       userMarkReadPostModel,
+      userSavePostModel,
       userService,
       groupService,
       mediaService,
@@ -385,7 +389,7 @@ export class ArticleService extends PostService {
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = this.groupService.getGroupIdsCanAccessArticle(group, authUser);
+    const groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
 
     return groupIds;
   }
