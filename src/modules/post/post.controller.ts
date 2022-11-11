@@ -68,11 +68,11 @@ export class PostController {
     type: Boolean,
   })
   @Get('/list-saved')
-  public async getPostsSavedByUserId(
+  public async getListSavedByUserId(
     @AuthUser() user: UserDto,
     @Query() getPostsSavedDto: GetPostsSavedDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postAppService.getPostsSavedByUserId(user, getPostsSavedDto);
+    return this._postAppService.getListSavedByUserId(user, getPostsSavedDto);
   }
 
   @ApiOperation({ summary: 'Search posts' })

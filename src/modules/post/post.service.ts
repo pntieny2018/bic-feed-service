@@ -906,7 +906,7 @@ export class PostService {
     }
   }
 
-  public async getPostsSavedByUserId(
+  public async getListSavedByUserId(
     userId: string,
     search: GetPostsSavedDto
   ): Promise<PageDto<PostResponseDto>> {
@@ -919,6 +919,7 @@ export class PostService {
           attributes: [],
           where: {
             isDraft: false,
+            type: PostType.POST,
           },
         },
       ],
@@ -953,15 +954,6 @@ export class PostService {
   }
 
   public async savePostToUserCollection(postId: string, userId: string): Promise<void> {
-    const post = await this.postModel.findOne({
-      where: {
-        id: postId,
-        isDraft: false,
-      },
-    });
-    if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
     const savePost = await this.userSavePostModel.findOne({
       where: {
         postId,
@@ -979,15 +971,6 @@ export class PostService {
   }
 
   public async unSavePostToUserCollection(postId: string, userId: string): Promise<void> {
-    const post = await this.postModel.findOne({
-      where: {
-        id: postId,
-        isDraft: false,
-      },
-    });
-    if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
     const checkExist = await this.userSavePostModel.findOne({
       where: {
         postId,
@@ -1003,6 +986,19 @@ export class PostService {
           },
         });
       } catch (e) {}
+    }
+  }
+
+  public async checkExistAndPublished(id: string): Promise<void> {
+    const post = await this.postModel.findOne({
+      where: {
+        id,
+        isDraft: false,
+        type: PostType.POST,
+      },
+    });
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
   }
 

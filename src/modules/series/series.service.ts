@@ -22,6 +22,10 @@ import { PostBindingService } from '../post/post-binding.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { FeedService } from '../feed/feed.service';
 import { ReactionService } from '../reaction';
+import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { GetSeriesSavedDto } from './dto/requests/get-series-saved.dto';
+import { PageDto } from '../../common/dto';
+import { PostResponseDto } from '../post/dto/responses';
 
 @Injectable()
 export class SeriesService {
@@ -51,6 +55,10 @@ export class SeriesService {
 
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
+
+    @InjectModel(UserSavePostModel)
+    private _userSavePostModel: typeof UserSavePostModel,
+
     private _authorityService: AuthorityService,
     private readonly _sentryService: SentryService,
     private readonly _commentService: CommentService,
@@ -130,7 +138,7 @@ export class SeriesService {
       );
     }
     const jsonArticle = series.toJSON();
-    const articlesBindedData = await this._postBinding.bindRelatedData([jsonArticle], {
+    const seriesBindedData = await this._postBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindAudience: true,
@@ -138,7 +146,7 @@ export class SeriesService {
       authUser,
     });
 
-    const result = this._classTransformer.plainToInstance(SeriesResponseDto, articlesBindedData, {
+    const result = this._classTransformer.plainToInstance(SeriesResponseDto, seriesBindedData, {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
@@ -390,5 +398,110 @@ export class SeriesService {
         { transaction }
       );
     }
+  }
+
+  public async checkExistAndPublished(id: string): Promise<void> {
+    const post = await this._postModel.findOne({
+      where: {
+        id,
+        isDraft: false,
+        type: PostType.SERIES,
+      },
+    });
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    }
+  }
+
+  public async getListSavedByUserId(
+    userId: string,
+    search: GetSeriesSavedDto
+  ): Promise<PageDto<SeriesResponseDto>> {
+    const { offset, limit } = search;
+    const posts = await this._userSavePostModel.findAll({
+      include: [
+        {
+          model: PostModel,
+          required: true,
+          attributes: [],
+          where: {
+            isDraft: false,
+            type: PostType.SERIES,
+          },
+        },
+      ],
+      where: {
+        userId,
+      },
+      order: [['createdAt', 'desc']],
+      offset,
+      limit: limit + 1,
+    });
+
+    const postIds = posts.map((post) => post.id);
+    let hasNextPage = false;
+    if (postIds.length > limit) {
+      postIds.pop();
+      hasNextPage = true;
+    }
+
+    const dataPosts = await this.getSeriesByIds(postIds, userId);
+
+    const seriesBindedData = await this._postBinding.bindRelatedData(dataPosts, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
+
+    const result = this._classTransformer.plainToInstance(SeriesResponseDto, seriesBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<SeriesResponseDto>(result, {
+      limit,
+      offset,
+      hasNextPage,
+    });
+  }
+
+  public async getSeriesByIds(ids: string[], userId: string): Promise<IPost[]> {
+    if (ids.length === 0) return [];
+    const attributes = {
+      include: [PostModel.loadMarkReadPost(userId)],
+    };
+    const rows = await this._postModel.findAll({
+      attributes,
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: userId,
+          },
+        },
+        {
+          model: MediaModel,
+          as: 'coverMedia',
+          required: false,
+        },
+      ],
+      where: {
+        id: ids,
+      },
+    });
+
+    const mappedPosts = ids.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return mappedPosts;
   }
 }

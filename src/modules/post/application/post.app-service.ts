@@ -153,20 +153,22 @@ export class PostAppService {
   }
 
   public async savePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._postService.checkExistAndPublished(postId);
     await this._postService.savePostToUserCollection(postId, user.id);
     return true;
   }
 
   public async unSavePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._postService.checkExistAndPublished(postId);
     await this._postService.unSavePostToUserCollection(postId, user.id);
     return true;
   }
 
-  public async getPostsSavedByUserId(
+  public async getListSavedByUserId(
     user: UserDto,
     search: GetPostsSavedDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.getPostsSavedByUserId(user.id, search);
+    return this._postService.getListSavedByUserId(user.id, search);
   }
 
   public async searchPosts(

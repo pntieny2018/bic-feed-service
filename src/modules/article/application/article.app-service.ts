@@ -13,6 +13,7 @@ import { ArticleService } from '../article.service';
 import { GetListArticlesDto } from '../dto/requests';
 import { CreateArticleDto } from '../dto/requests/create-article.dto';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
+import { GetArticlesSavedDto } from '../dto/requests/get-articles-saved.dto';
 import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
@@ -129,5 +130,24 @@ export class ArticleAppService {
       return true;
     }
     return false;
+  }
+
+  public async savePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._articleService.checkExistAndPublished(postId);
+    await this._articleService.savePostToUserCollection(postId, user.id);
+    return true;
+  }
+
+  public async unSavePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._articleService.checkExistAndPublished(postId);
+    await this._articleService.unSavePostToUserCollection(postId, user.id);
+    return true;
+  }
+
+  public async getListSavedByUserId(
+    user: UserDto,
+    search: GetArticlesSavedDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleService.getListSavedByUserId(user.id, search);
   }
 }

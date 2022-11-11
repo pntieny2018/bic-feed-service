@@ -20,6 +20,7 @@ import { ArticleAppService } from './application/article.app-service';
 import { GetListArticlesDto } from './dto/requests';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
+import { GetArticlesSavedDto } from './dto/requests/get-articles-saved.dto';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
@@ -33,6 +34,42 @@ import { ArticleResponseDto } from './dto/responses/article.response.dto';
 })
 export class ArticleController {
   public constructor(private _articleAppService: ArticleAppService) {}
+
+  @ApiOperation({ summary: 'Save series' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Post('/:id/save')
+  public async save(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<boolean> {
+    return this._articleAppService.savePost(user, id);
+  }
+
+  @ApiOperation({ summary: 'unsave series' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Delete('/:id/unsave')
+  public async unSave(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<boolean> {
+    return this._articleAppService.unSavePost(user, id);
+  }
+
+  @ApiOperation({ summary: 'Get series saved' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Get('/list-saved')
+  public async getListSavedByUserId(
+    @AuthUser() user: UserDto,
+    @Query() getPostsSavedDto: GetArticlesSavedDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    return this._articleAppService.getListSavedByUserId(user, getPostsSavedDto);
+  }
 
   @ApiOperation({ summary: 'Get related article' })
   @ApiOkResponse({
