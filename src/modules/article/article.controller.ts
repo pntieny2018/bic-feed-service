@@ -20,6 +20,7 @@ import { ArticleAppService } from './application/article.app-service';
 import { GetListArticlesDto } from './dto/requests';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
+import { GetArticlesSavedDto } from './dto/requests/get-articles-saved.dto';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
