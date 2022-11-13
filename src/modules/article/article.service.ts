@@ -408,6 +408,7 @@ export class ArticleService extends PostService {
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
+      loadSaved: true,
       loadMarkRead: true,
       authUserId: authUser?.id || null,
     });
@@ -481,6 +482,7 @@ export class ArticleService extends PostService {
 
   protected getAttributesObj(options?: {
     loadMarkRead?: boolean;
+    loadSaved?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
@@ -846,53 +848,6 @@ export class ArticleService extends PostService {
     for (const article of articles) {
       if (article.isLocked) article.content = null;
     }
-  }
-
-  public async getListSavedByUserId(
-    userId: string,
-    search: GetArticlesSavedDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    const { offset, limit } = search;
-    const posts = await this.userSavePostModel.findAll({
-      include: [
-        {
-          model: PostModel,
-          required: true,
-          attributes: [],
-          where: {
-            isDraft: false,
-            type: PostType.ARTICLE,
-          },
-        },
-      ],
-      where: {
-        userId,
-      },
-      order: [['createdAt', 'desc']],
-      offset,
-      limit: limit + 1,
-    });
-
-    const postIds = posts.map((post) => post.id);
-    let hasNextPage = false;
-    if (postIds.length > limit) {
-      postIds.pop();
-      hasNextPage = true;
-    }
-
-    const dataPosts = await this.getPostsByIds(postIds, userId);
-    const rowsBindedData = await this.articleBinding.bindRelatedData(dataPosts, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    return new PageDto<ArticleResponseDto>(rowsBindedData, {
-      limit,
-      offset,
-      hasNextPage,
-    });
   }
 
   public async checkExistAndPublished(id: string): Promise<void> {

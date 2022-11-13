@@ -156,7 +156,11 @@ export class PostService {
     user: UserDto,
     getPostDto?: GetPostDto
   ): Promise<PostResponseDto> {
-    const attributes = this.getAttributesObj({ loadMarkRead: true, authUserId: user?.id || null });
+    const attributes = this.getAttributesObj({
+      loadMarkRead: true,
+      loadSaved: true,
+      authUserId: user?.id || null,
+    });
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
@@ -224,13 +228,18 @@ export class PostService {
 
   protected getAttributesObj(options?: {
     loadMarkRead?: boolean;
+    loadSaved?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = { exclude: ['updatedBy'] };
+    const include = [];
     if (options?.authUserId && options?.loadMarkRead) {
-      attributes.include = [PostModel.loadMarkReadPost(options.authUserId)];
+      include.push(PostModel.loadMarkReadPost(options.authUserId));
     }
-
+    if (options?.authUserId && options?.loadSaved) {
+      include.push(PostModel.loadSaved(options.authUserId));
+    }
+    attributes.include = include;
     return attributes;
   }
 
@@ -908,19 +917,35 @@ export class PostService {
 
   public async getListSavedByUserId(
     userId: string,
-    search: GetPostsSavedDto
-  ): Promise<PageDto<PostResponseDto>> {
-    const { offset, limit } = search;
+    search: {
+      offset: number;
+      limit: number;
+      isImportant?: boolean;
+      type?: PostType;
+    }
+  ): Promise<string[]> {
+    const { type, isImportant, offset, limit } = search;
+    const condition = {
+      isDraft: false,
+    };
+
+    const include = [];
+    if (type) {
+      condition['type'] = type;
+    }
+
+    if (isImportant) {
+      condition['isImportant'] = true;
+    }
+
     const posts = await this.userSavePostModel.findAll({
+      attributes: ['postId'],
       include: [
         {
           model: PostModel,
           required: true,
           attributes: [],
-          where: {
-            isDraft: false,
-            type: PostType.POST,
-          },
+          where: condition,
         },
       ],
       where: {
@@ -931,26 +956,7 @@ export class PostService {
       limit: limit + 1,
     });
 
-    const postIds = posts.map((post) => post.id);
-    let hasNextPage = false;
-    if (postIds.length > limit) {
-      postIds.pop();
-      hasNextPage = true;
-    }
-
-    const dataPosts = await this.getPostsByIds(postIds, userId);
-    const postsBindedData = await this.postBinding.bindRelatedData(dataPosts, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    return new PageDto<PostResponseDto>(postsBindedData, {
-      limit,
-      offset,
-      hasNextPage,
-    });
+    return posts.map((post) => post.id);
   }
 
   public async savePostToUserCollection(postId: string, userId: string): Promise<void> {
@@ -1202,7 +1208,7 @@ export class PostService {
     });
 
     const attributes = {
-      include: [PostModel.loadMarkReadPost(userId)],
+      include: [PostModel.loadMarkReadPost(userId), PostModel.loadSaved(userId)],
     };
     const rows = await this.postModel.findAll({
       attributes,

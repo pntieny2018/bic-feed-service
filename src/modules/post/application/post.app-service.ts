@@ -164,13 +164,6 @@ export class PostAppService {
     return true;
   }
 
-  public async getListSavedByUserId(
-    user: UserDto,
-    search: GetPostsSavedDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postService.getListSavedByUserId(user.id, search);
-  }
-
   public async searchPosts(
     user: UserDto,
     searchPostsDto: SearchPostsDto

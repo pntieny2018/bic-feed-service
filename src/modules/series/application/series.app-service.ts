@@ -110,23 +110,4 @@ export class SeriesAppService {
     }
     return false;
   }
-
-  public async savePost(user: UserDto, postId: string): Promise<boolean> {
-    await this._seriesService.checkExistAndPublished(postId);
-    await this._postService.savePostToUserCollection(postId, user.id);
-    return true;
-  }
-
-  public async unSavePost(user: UserDto, postId: string): Promise<boolean> {
-    await this._seriesService.checkExistAndPublished(postId);
-    await this._postService.unSavePostToUserCollection(postId, user.id);
-    return true;
-  }
-
-  public async getListSavedByUserId(
-    user: UserDto,
-    search: GetSeriesSavedDto
-  ): Promise<PageDto<SeriesResponseDto>> {
-    return this._seriesService.getListSavedByUserId(user.id, search);
-  }
 }

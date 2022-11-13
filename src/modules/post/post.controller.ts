@@ -63,18 +63,6 @@ export class PostController {
     return this._postAppService.unSavePost(user, postId);
   }
 
-  @ApiOperation({ summary: 'Get posts saved' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Get('/list-saved')
-  public async getListSavedByUserId(
-    @AuthUser() user: UserDto,
-    @Query() getPostsSavedDto: GetPostsSavedDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postAppService.getListSavedByUserId(user, getPostsSavedDto);
-  }
-
   @ApiOperation({ summary: 'Search posts' })
   @ApiOkResponse({
     type: PostResponseDto,

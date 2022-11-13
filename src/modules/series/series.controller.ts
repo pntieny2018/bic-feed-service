@@ -30,42 +30,6 @@ import { GetSeriesPipe } from './pipes';
 export class SeriesController {
   public constructor(private _seriesAppService: SeriesAppService) {}
 
-  @ApiOperation({ summary: 'Save series' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Post('/:id/save')
-  public async save(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
-  ): Promise<boolean> {
-    return this._seriesAppService.savePost(user, id);
-  }
-
-  @ApiOperation({ summary: 'unsave series' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Delete('/:id/unsave')
-  public async unSave(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string
-  ): Promise<boolean> {
-    return this._seriesAppService.unSavePost(user, id);
-  }
-
-  @ApiOperation({ summary: 'Get series saved' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Get('/list-saved')
-  public async getListSavedByUserId(
-    @AuthUser() user: UserDto,
-    @Query() getPostsSavedDto: GetSeriesSavedDto
-  ): Promise<PageDto<SeriesResponseDto>> {
-    return this._seriesAppService.getListSavedByUserId(user, getPostsSavedDto);
-  }
-
   @ApiOperation({ summary: 'Get series detail' })
   @ApiOkResponse({
     type: SeriesResponseDto,

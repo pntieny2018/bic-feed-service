@@ -88,7 +88,7 @@ export class SeriesService {
 
     const series = await this._postModel.findOne({
       attributes: {
-        include: [PostModel.loadMarkReadPost(authUser.id)],
+        include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
       },
       where: condition,
       include: [
@@ -411,58 +411,6 @@ export class SeriesService {
     if (!post) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
     }
-  }
-
-  public async getListSavedByUserId(
-    userId: string,
-    search: GetSeriesSavedDto
-  ): Promise<PageDto<SeriesResponseDto>> {
-    const { offset, limit } = search;
-    const posts = await this._userSavePostModel.findAll({
-      include: [
-        {
-          model: PostModel,
-          required: true,
-          attributes: [],
-          where: {
-            isDraft: false,
-            type: PostType.SERIES,
-          },
-        },
-      ],
-      where: {
-        userId,
-      },
-      order: [['createdAt', 'desc']],
-      offset,
-      limit: limit + 1,
-    });
-
-    const postIds = posts.map((post) => post.id);
-    let hasNextPage = false;
-    if (postIds.length > limit) {
-      postIds.pop();
-      hasNextPage = true;
-    }
-
-    const dataPosts = await this.getSeriesByIds(postIds, userId);
-
-    const seriesBindedData = await this._postBinding.bindRelatedData(dataPosts, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    const result = this._classTransformer.plainToInstance(SeriesResponseDto, seriesBindedData, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PageDto<SeriesResponseDto>(result, {
-      limit,
-      offset,
-      hasNextPage,
-    });
   }
 
   public async getSeriesByIds(ids: string[], userId: string): Promise<IPost[]> {
