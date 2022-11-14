@@ -968,7 +968,7 @@ export class PostService {
       limit: limit + 1,
     });
 
-    return posts.map((post) => post.id);
+    return posts.map((post) => post.postId);
   }
 
   public async savePostToUserCollection(postId: string, userId: string): Promise<void> {
