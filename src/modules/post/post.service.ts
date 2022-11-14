@@ -253,6 +253,7 @@ export class PostService {
     shouldIncludeMedia,
     shouldIncludePreviewLink,
     shouldIncludeCover,
+    shouldIncludeArticlesInSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -267,6 +268,7 @@ export class PostService {
     shouldIncludeMedia?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
+    shouldIncludeArticlesInSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -295,7 +297,17 @@ export class PostService {
         required: false,
       });
     }
-
+    if (shouldIncludeArticlesInSeries) {
+      includes.push({
+        model: PostModel,
+        as: 'articles',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'title'],
+      });
+    }
     if (shouldIncludeMedia || mustIncludeMedia) {
       const obj = {
         model: MediaModel,
@@ -1204,6 +1216,7 @@ export class PostService {
       shouldIncludeOwnerReaction: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
+      shouldIncludeArticlesInSeries: true,
       authUserId: userId,
     });
 
