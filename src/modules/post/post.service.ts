@@ -1012,7 +1012,6 @@ export class PostService {
       where: {
         id,
         isDraft: false,
-        type: PostType.POST,
       },
     });
     if (!post) {
