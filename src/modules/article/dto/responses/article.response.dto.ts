@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { PostResponseDto } from '../../../post/dto/responses';
+import { AudienceResponseDto, PostResponseDto } from '../../../post/dto/responses';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 import { MediaResponseDto } from '../../../media/dto/response';
 
@@ -27,7 +27,13 @@ class SeriesResponseDto {
     type: String,
   })
   @Expose()
-  public name: string;
+  public title: string;
+
+  @ApiProperty({
+    type: AudienceResponseDto,
+  })
+  @Expose()
+  public audience: AudienceResponseDto;
 }
 
 class HashtagResponseDto {
