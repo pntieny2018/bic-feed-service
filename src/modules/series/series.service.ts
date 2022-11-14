@@ -22,10 +22,6 @@ import { PostBindingService } from '../post/post-binding.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { FeedService } from '../feed/feed.service';
 import { ReactionService } from '../reaction';
-import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { GetSeriesSavedDto } from './dto/requests/get-series-saved.dto';
-import { PageDto } from '../../common/dto';
-import { PostResponseDto } from '../post/dto/responses';
 
 @Injectable()
 export class SeriesService {
@@ -55,10 +51,6 @@ export class SeriesService {
 
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
-
-    @InjectModel(UserSavePostModel)
-    private _userSavePostModel: typeof UserSavePostModel,
-
     private _authorityService: AuthorityService,
     private readonly _sentryService: SentryService,
     private readonly _commentService: CommentService,
