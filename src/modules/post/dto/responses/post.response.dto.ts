@@ -274,6 +274,12 @@ export class PostResponseDto {
   @Expose()
   public linkPreview?: LinkPreviewDto;
 
+  @ApiProperty({
+    type: PostResponseDto,
+  })
+  @Expose()
+  public articles?: PostResponseDto[];
+
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
   }

@@ -93,6 +93,7 @@ export interface IPost {
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
+  articles?: Partial<IPost>[];
 }
 
 @Table({
@@ -220,6 +221,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => PostSeriesModel)
   public postSeries?: PostSeriesModel[];
+
+  @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
+  public articles?: PostModel[];
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',
