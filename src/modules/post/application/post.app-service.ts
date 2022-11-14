@@ -86,6 +86,8 @@ export class PostAppService {
   ): Promise<PostResponseDto> {
     const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
+    if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    await this._authorityService.checkPostOwner(postBefore, user.id);
 
     if (postBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
@@ -146,7 +148,22 @@ export class PostAppService {
   }
 
   public async deletePost(user: UserDto, postId: string): Promise<boolean> {
-    const postDeleted = await this._postService.delete(postId, user);
+    const posts = await this._postService.getListWithGroupsByIds([postId]);
+
+    if (posts.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+    await this._authorityService.checkPostOwner(posts[0], user.id);
+
+    if (posts[0].isDraft === false) {
+      await this._authorityService.checkCanDeletePost(
+        user,
+        posts[0].groups.map((g) => g.groupId),
+        posts[0].createdBy
+      );
+    }
+
+    const postDeleted = await this._postService.delete(posts[0], user);
     if (postDeleted) {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({

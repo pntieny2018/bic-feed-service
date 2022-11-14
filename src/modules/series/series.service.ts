@@ -294,6 +294,7 @@ export class SeriesService {
       if (!series) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
+      await this._authorityService.checkPostOwner(series, authUser.id);
       if (series.isDraft === false) {
         await this._authorityService.checkCanDeletePost(
           authUser,

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -80,20 +80,34 @@ export class ArticleAppService {
   ): Promise<ArticleResponseDto> {
     const { audience, series } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (articleBefore.isDraft === false && audience.groupIds.length === 0) {
-      throw new BadRequestException('Audience is required');
-    }
+    if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
-    const groupIdsOfSeries = await this._postService.getGroupIdsByIds(series);
-    await this._authorityService.checkCanUpdateArticle(
-      user,
-      articleBefore,
-      ArrayHelper.arrayUnique([...audience.groupIds, ...groupIdsOfSeries])
-    );
-    if (articleBefore.isDraft === false) {
-      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
-    }
     await this._authorityService.checkPostOwner(articleBefore, user.id);
+
+    if (articleBefore.isDraft === false) {
+      if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
+      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
+
+      const seriesGroups = await this._postService.getListWithGroupsByIds(series);
+      const invalidSeries = [];
+      seriesGroups.forEach((item) => {
+        const seriesGroupIds = item.groups.map((group) => group.groupId);
+        const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, audience.groupIds);
+        if (elmDiff.length) {
+          invalidSeries.push(item);
+        }
+      });
+      if (invalidSeries.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `You don't have create article permission at series permission at group ${invalidSeries
+            .map((e) => e.title)
+            .join(', ')}`,
+          errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+        });
+      }
+    }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
     if (isUpdated) {
@@ -121,14 +135,29 @@ export class ArticleAppService {
 
     const groupIds = audience.groups.map((group) => group.id);
 
-    const groupIdsOfSeries = await this._postService.getGroupIdsByIds(
+    await this._authorityService.checkCanCreatePost(user, groupIds, article.setting.isImportant);
+
+    const seriesGroups = await this._postService.getListWithGroupsByIds(
       article.series.map((item) => item.id)
     );
-    await this._authorityService.checkCanCreatePost(
-      user,
-      ArrayHelper.arrayUnique([...groupIds, ...groupIdsOfSeries]),
-      article.setting.isImportant
-    );
+
+    const invalidSeries = [];
+    seriesGroups.forEach((item) => {
+      const seriesGroupIds = item.groups.map((group) => group.groupId);
+      const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, groupIds);
+      if (elmDiff.length) {
+        invalidSeries.push(item);
+      }
+    });
+    if (invalidSeries.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have create article permission at series permission at group ${invalidSeries
+          .map((e) => e.title)
+          .join(', ')}`,
+        errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+      });
+    }
 
     this._postService.checkContent(article.content, article.media);
 
@@ -147,7 +176,23 @@ export class ArticleAppService {
   }
 
   public async delete(user: UserDto, articleId: string): Promise<boolean> {
-    const articleDeleted = await this._articleService.delete(articleId, user);
+    const articles = await this._postService.getListWithGroupsByIds([articleId]);
+
+    if (articles.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+    const article = articles[0];
+    await this._authorityService.checkPostOwner(article, user.id);
+
+    if (article.isDraft === false) {
+      await this._authorityService.checkCanDeletePost(
+        user,
+        article.groups.map((g) => g.groupId),
+        article.createdBy
+      );
+    }
+
+    const articleDeleted = await this._articleService.delete(article, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
         new ArticleHasBeenDeletedEvent({

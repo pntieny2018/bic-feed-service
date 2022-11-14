@@ -243,15 +243,23 @@ export class PostService {
     return attributes;
   }
 
-  public async getGroupIdsByIds(postIds: string[]): Promise<string[]> {
-    const postGroups = await this.postGroupModel.findAll({
-      attributes: ['groupId'],
+  public async getListWithGroupsByIds(postIds: string[]): Promise<IPost[]> {
+    const postGroups = await this.postModel.findAll({
+      attributes: ['id', 'title'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId'],
+        },
+      ],
       where: {
-        postId: postIds,
+        id: postIds,
       },
     });
 
-    return postGroups.map((postGroup) => postGroup.postId);
+    return postGroups;
   }
 
   public getIncludeObj({
@@ -636,35 +644,12 @@ export class PostService {
   }
 
   /**
-   * Delete post by id
+   * Delete post
    */
-  public async delete(postId: string, authUser: UserDto): Promise<IPost> {
+  public async delete(post: IPost, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
     try {
-      const post = await this.postModel.findOne({
-        where: {
-          id: postId,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
-
-      if (!post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-      if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(
-          authUser,
-          post.groups.map((g) => g.groupId),
-          post.createdBy
-        );
-      }
-
+      const postId = post.id;
       if (post.isDraft) {
         await this.cleanRelationship(postId, transaction, true);
         await this.postModel.destroy({

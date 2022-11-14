@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { ExceptionHelper } from '../../../common/helpers';
 import {
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
@@ -67,6 +69,10 @@ export class SeriesAppService {
   ): Promise<SeriesResponseDto> {
     const { audience } = updateSeriesDto;
     const seriesBefore = await this._seriesService.get(postId, user, new GetSeriesDto());
+
+    if (!seriesBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    await this._authorityService.checkPostOwner(seriesBefore, user.id);
+
     if (audience.groupIds.length === 0) {
       throw new BadRequestException('Audience is required');
     }
