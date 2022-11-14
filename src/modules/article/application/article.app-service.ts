@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { ArrayHelper, ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
@@ -76,13 +78,18 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience } = updateArticleDto;
+    const { audience, series } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (articleBefore.isDraft === false && audience.groupIds.length === 0) {
       throw new BadRequestException('Audience is required');
     }
 
-    await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
+    const groupIdsOfSeries = await this._postService.getGroupIdsByIds(series);
+    await this._authorityService.checkCanUpdateArticle(
+      user,
+      articleBefore,
+      ArrayHelper.arrayUnique([...audience.groupIds, ...groupIdsOfSeries])
+    );
     if (articleBefore.isDraft === false) {
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
     }
@@ -104,17 +111,39 @@ export class ArticleAppService {
   }
 
   public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
-    const isPublished = await this._articleService.publish(articleId, user);
-    if (isPublished) {
-      const article = await this._articleService.get(articleId, user, new GetArticleDto());
-      this._eventEmitter.emit(
-        new ArticleHasBeenPublishedEvent({
-          article,
-          actor: user.profile,
-        })
-      );
-      return article;
+    const article = await this._articleService.get(articleId, user, new GetArticleDto());
+    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (article.isDraft === false) return article;
+
+    await this._authorityService.checkPostOwner(article, user.id);
+    const { audience } = article;
+    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
+
+    const groupIds = audience.groups.map((group) => group.id);
+
+    const groupIdsOfSeries = await this._postService.getGroupIdsByIds(
+      article.series.map((item) => item.id)
+    );
+    await this._authorityService.checkCanCreatePost(
+      user,
+      ArrayHelper.arrayUnique([...groupIds, ...groupIdsOfSeries]),
+      article.setting.isImportant
+    );
+
+    this._postService.checkContent(article.content, article.media);
+
+    if (article.categories.length === 0) {
+      throw new BadRequestException('Category is required');
     }
+    article.isDraft = false;
+    const articleUpdated = await this._articleService.publish(article, user);
+    this._eventEmitter.emit(
+      new ArticleHasBeenPublishedEvent({
+        article: articleUpdated,
+        actor: user.profile,
+      })
+    );
+    return article;
   }
 
   public async delete(user: UserDto, articleId: string): Promise<boolean> {

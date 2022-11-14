@@ -243,6 +243,17 @@ export class PostService {
     return attributes;
   }
 
+  public async getGroupIdsByIds(postIds: string[]): Promise<string[]> {
+    const postGroups = await this.postGroupModel.findAll({
+      attributes: ['groupId'],
+      where: {
+        postId: postIds,
+      },
+    });
+
+    return postGroups.map((postGroup) => postGroup.postId);
+  }
+
   public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
@@ -583,57 +594,15 @@ export class PostService {
   /**
    * Publish Post
    */
-  public async publish(postId: string, authUser: UserDto): Promise<boolean> {
+  public async publish(post: PostResponseDto, authUser: UserDto): Promise<PostResponseDto> {
     try {
-      const post = await this.postModel.findOne({
-        where: {
-          id: postId,
-        },
-        include: [
-          {
-            model: MediaModel,
-            as: 'media',
-            through: {
-              attributes: [],
-            },
-            attributes: [
-              'id',
-              'url',
-              'type',
-              'name',
-              'width',
-              'height',
-              'status',
-              'mimeType',
-              'thumbnails',
-              'createdAt',
-            ],
-            required: false,
-          },
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
       const authUserId = authUser.id;
-      await this.authorityService.checkPostOwner(post, authUserId);
-      const groupIds = post.groups.map((g) => g.groupId);
-      if (groupIds.length === 0) {
-        throw new BadRequestException('Audience is required.');
-      }
-      await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
-      if (!post.content && post.media.length === 0) {
-        throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
-      }
-
-      if (post.isDraft === false) return false;
+      const groupIds = post.audience.groups.map((g) => g.id);
 
       let isDraft = false;
       let isProcessing = false;
       if (
-        post.media.filter(
+        post.media.videos.filter(
           (m) =>
             m.status === MediaStatus.WAITING_PROCESS ||
             m.status === MediaStatus.PROCESSING ||
@@ -653,12 +622,13 @@ export class PostService {
         },
         {
           where: {
-            id: postId,
+            id: post.id,
             createdBy: authUserId,
           },
         }
       );
-      return true;
+      post.isDraft = isDraft;
+      return post;
     } catch (error) {
       this.logger.error(error, error?.stack);
       throw error;

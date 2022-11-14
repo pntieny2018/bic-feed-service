@@ -419,7 +419,7 @@ export class ArticleService extends PostService {
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
-      shouldIncludeArticlesInSeries: true,
+      shouldIncludeSeries: true,
       authUserId: authUser?.id || null,
     });
 
@@ -476,6 +476,7 @@ export class ArticleService extends PostService {
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
+
     result[0]['comments'] = comments;
     return result[0];
   }
@@ -504,10 +505,10 @@ export class ArticleService extends PostService {
     shouldIncludeMedia,
     shouldIncludePreviewLink,
     shouldIncludeArticlesInSeries,
-    filterMediaIds,
     shouldIncludeCategory,
-    shouldIncludeSeries,
     shouldIncludeCover,
+    shouldIncludeSeries,
+    filterMediaIds,
     filterCategoryIds,
     filterGroupIds,
     authUserId,
@@ -519,9 +520,9 @@ export class ArticleService extends PostService {
     shouldIncludeMention?: boolean;
     shouldIncludeMedia?: boolean;
     shouldIncludeCategory?: boolean;
-    shouldIncludeSeries?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
+    shouldIncludeSeries?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     filterCategoryIds?: string[];
     filterMediaIds?: string[];
@@ -553,9 +554,10 @@ export class ArticleService extends PostService {
         through: {
           attributes: [],
         },
-        attributes: ['id', 'name'],
+        attributes: ['id', 'title'],
       });
     }
+
     return includes;
   }
 
@@ -665,21 +667,48 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publish(articleId: string, authUser: UserDto): Promise<boolean> {
-    const include = this.getIncludeObj({ shouldIncludeCategory: true });
-    const article = await this.postModel.findOne({
-      where: {
-        id: articleId,
-      },
-      include,
-    });
-    if (!article) {
-      throw new NotFoundException('Article is not found.');
+  public async publish(
+    article: ArticleResponseDto,
+    authUser: UserDto
+  ): Promise<ArticleResponseDto> {
+    try {
+      const authUserId = authUser.id;
+      const groupIds = article.audience.groups.map((g) => g.id);
+
+      let isDraft = false;
+      let isProcessing = false;
+      if (
+        article.media.videos.filter(
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
+        ).length > 0
+      ) {
+        isDraft = true;
+        isProcessing = true;
+      }
+      const postPrivacy = await this.getPrivacy(groupIds);
+      await this.postModel.update(
+        {
+          isDraft,
+          isProcessing,
+          privacy: postPrivacy,
+          createdAt: new Date(),
+        },
+        {
+          where: {
+            id: article.id,
+            createdBy: authUserId,
+          },
+        }
+      );
+      article.isDraft = isDraft;
+      return article;
+    } catch (error) {
+      this.logger.error(error, error?.stack);
+      throw error;
     }
-    if (article.categories.length === 0) {
-      throw new BadRequestException('Category is required');
-    }
-    return super.publish(articleId, authUser);
   }
 
   /**
