@@ -19,6 +19,7 @@ import {
   UpdatePostDto,
 } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
+import { GetPostsSavedDto } from '../dto/requests/get-posts-saved.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostSearchService } from '../post-search.service';
@@ -148,6 +149,18 @@ export class PostAppService {
 
   public async markReadPost(user: UserDto, postId: string): Promise<boolean> {
     await this._postService.markRead(postId, user.id);
+    return true;
+  }
+
+  public async savePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._postService.checkExistAndPublished(postId);
+    await this._postService.savePostToUserCollection(postId, user.id);
+    return true;
+  }
+
+  public async unSavePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._postService.checkExistAndPublished(postId);
+    await this._postService.unSavePostToUserCollection(postId, user.id);
     return true;
   }
 

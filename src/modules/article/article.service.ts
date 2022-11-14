@@ -48,6 +48,8 @@ import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
+import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { GetArticlesSavedDto } from './dto/requests/get-articles-saved.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -88,6 +90,8 @@ export class ArticleService extends PostService {
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
+    @InjectModel(UserSavePostModel)
+    protected userSavePostModel: typeof UserSavePostModel,
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
@@ -103,6 +107,7 @@ export class ArticleService extends PostService {
       postCategoryModel,
       postHashtagModel,
       userMarkReadPostModel,
+      userSavePostModel,
       userService,
       groupService,
       mediaService,
@@ -403,6 +408,7 @@ export class ArticleService extends PostService {
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
+      loadSaved: true,
       loadMarkRead: true,
       authUserId: authUser?.id || null,
     });
@@ -476,6 +482,7 @@ export class ArticleService extends PostService {
 
   protected getAttributesObj(options?: {
     loadMarkRead?: boolean;
+    loadSaved?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
@@ -840,6 +847,19 @@ export class ArticleService extends PostService {
   public async maskArticleContent(articles: any[]): Promise<void> {
     for (const article of articles) {
       if (article.isLocked) article.content = null;
+    }
+  }
+
+  public async checkExistAndPublished(id: string): Promise<void> {
+    const post = await this.postModel.findOne({
+      where: {
+        id,
+        isDraft: false,
+        type: PostType.ARTICLE,
+      },
+    });
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
   }
 }

@@ -204,6 +204,13 @@ export class PostResponseDto {
   public markedReadPost?: boolean;
 
   @ApiProperty({
+    type: Boolean,
+    name: 'isSaved',
+  })
+  @Expose()
+  public isSaved?: boolean;
+
+  @ApiProperty({
     type: Date,
     name: 'created_at',
   })

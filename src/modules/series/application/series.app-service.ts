@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { PageDto } from '../../../common/dto';
 import {
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
@@ -8,7 +9,9 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
+import { PostService } from '../../post/post.service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests';
+import { GetSeriesSavedDto } from '../dto/requests/get-series-saved.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
 
@@ -19,7 +22,8 @@ export class SeriesAppService {
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _feedService: FeedService
+    private _feedService: FeedService,
+    private _postService: PostService
   ) {}
 
   public async getSeriesDetail(

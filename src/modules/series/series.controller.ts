@@ -12,9 +12,11 @@ import {
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
+import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { GetSeriesSavedDto } from './dto/requests/get-series-saved.dto';
 
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';

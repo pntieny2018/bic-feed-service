@@ -18,6 +18,19 @@ export class GetNewsFeedDto extends PageOptionsDto {
   })
   public isImportant?: boolean;
 
+  @ApiProperty({ name: 'is_saved', example: true })
+  @IsOptional()
+  @Expose({
+    name: 'is_saved',
+  })
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
+  })
+  public isSaved?: boolean;
+
   @ApiProperty({
     description: 'Type',
     required: false,
