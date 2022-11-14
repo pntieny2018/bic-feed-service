@@ -849,17 +849,4 @@ export class ArticleService extends PostService {
       if (article.isLocked) article.content = null;
     }
   }
-
-  public async checkExistAndPublished(id: string): Promise<void> {
-    const post = await this.postModel.findOne({
-      where: {
-        id,
-        isDraft: false,
-        type: PostType.ARTICLE,
-      },
-    });
-    if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-  }
 }

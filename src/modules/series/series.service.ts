@@ -400,19 +400,6 @@ export class SeriesService {
     }
   }
 
-  public async checkExistAndPublished(id: string): Promise<void> {
-    const post = await this._postModel.findOne({
-      where: {
-        id,
-        isDraft: false,
-        type: PostType.SERIES,
-      },
-    });
-    if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
-    }
-  }
-
   public async getSeriesByIds(ids: string[], userId: string): Promise<IPost[]> {
     if (ids.length === 0) return [];
     const attributes = {
