@@ -49,7 +49,6 @@ import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { GetArticlesSavedDto } from './dto/requests/get-articles-saved.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -86,7 +85,6 @@ export class ArticleService extends PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    protected authorityService: AuthorityService,
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
@@ -97,6 +95,7 @@ export class ArticleService extends PostService {
     private readonly _hashtagService: HashtagService,
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
+    protected readonly authorityService: AuthorityService,
     private readonly _linkPreviewService: LinkPreviewService
   ) {
     super(
@@ -851,19 +850,6 @@ export class ArticleService extends PostService {
   public async maskArticleContent(articles: any[]): Promise<void> {
     for (const article of articles) {
       if (article.isLocked) article.content = null;
-    }
-  }
-
-  public async checkExistAndPublished(id: string): Promise<void> {
-    const post = await this.postModel.findOne({
-      where: {
-        id,
-        isDraft: false,
-        type: PostType.ARTICLE,
-      },
-    });
-    if (!post) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
   }
 }
