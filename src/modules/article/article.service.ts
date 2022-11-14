@@ -49,7 +49,6 @@ import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { GetArticlesSavedDto } from './dto/requests/get-articles-saved.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -444,9 +443,9 @@ export class ArticleService extends PostService {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
     if (authUser) {
-      await this.authorityService.checkCanReadArticle(authUser, article);
+     // await this.authorityService.checkCanReadArticle(authUser, article);
     } else {
-      await this.authorityService.checkIsPublicArticle(article);
+      //await this.authorityService.checkIsPublicArticle(article);
     }
     let comments = null;
     if (getArticleDto.withComment) {
