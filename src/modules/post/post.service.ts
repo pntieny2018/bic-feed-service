@@ -941,7 +941,6 @@ export class PostService {
       isDraft: false,
     };
 
-    const include = [];
     if (type) {
       condition['type'] = type;
     }

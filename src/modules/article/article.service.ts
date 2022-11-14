@@ -420,6 +420,7 @@ export class ArticleService extends PostService {
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
+      shouldIncludeArticlesInSeries: true,
       authUserId: authUser?.id || null,
     });
 
@@ -503,6 +504,7 @@ export class ArticleService extends PostService {
     shouldIncludeMention,
     shouldIncludeMedia,
     shouldIncludePreviewLink,
+    shouldIncludeArticlesInSeries,
     filterMediaIds,
     shouldIncludeCategory,
     shouldIncludeSeries,
@@ -521,6 +523,7 @@ export class ArticleService extends PostService {
     shouldIncludeSeries?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
+    shouldIncludeArticlesInSeries?: boolean;
     filterCategoryIds?: string[];
     filterMediaIds?: string[];
     filterGroupIds?: string[];
@@ -536,6 +539,7 @@ export class ArticleService extends PostService {
       shouldIncludePreviewLink,
       shouldIncludeCategory,
       shouldIncludeCover,
+      shouldIncludeArticlesInSeries,
       filterMediaIds,
       filterCategoryIds,
       filterGroupIds,
