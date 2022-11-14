@@ -41,6 +41,7 @@ import { LinkPreviewService } from '../../link-preview/link-preview.service';
 import { PostSeriesModel } from '../../../database/models/post-series.model';
 import { PostHashtagModel } from '../../../database/models/post-hashtag.model';
 import { PostCategoryModel } from '../../../database/models/post-category.model';
+import { UserSavePostModel } from '../../../database/models/user-save-post.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -167,6 +168,14 @@ describe('PostService', () => {
         },
         {
           provide: getModelToken(UserMarkReadPostModel),
+          useValue: {
+            findOne: jest.fn(),
+            create: jest.fn(),
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(UserSavePostModel),
           useValue: {
             findOne: jest.fn(),
             create: jest.fn(),
@@ -775,12 +784,6 @@ describe('PostService', () => {
       expect(postModelMock.findOne).toBeCalled();
       expect(groupService.getMany).toBeCalled();
       expect(postModelMock.update).toBeCalled();
-    });
-  });
-
-  describe('groupPosts', () => {
-    it('should success', async () => {
-      const groupResult = postService.group([mockedPostResponse]);
     });
   });
 
