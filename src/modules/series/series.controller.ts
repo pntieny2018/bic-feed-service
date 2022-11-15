@@ -14,10 +14,10 @@ import { APP_VERSION } from '../../common/constants';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
+import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
-import { GetSeriesSavedDto } from './dto/requests/get-series-saved.dto';
-
+import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 
@@ -29,6 +29,18 @@ import { GetSeriesPipe } from './pipes';
 })
 export class SeriesController {
   public constructor(private _seriesAppService: SeriesAppService) {}
+
+  @ApiOperation({ summary: 'Search series' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Get('/')
+  public searchPosts(
+    @AuthUser() user: UserDto,
+    @Query() searchDto: SearchSeriesDto
+  ): Promise<PageDto<SeriesResponseDto>> {
+    return this._seriesAppService.searchSeries(user, searchDto);
+  }
 
   @ApiOperation({ summary: 'Get series detail' })
   @ApiOkResponse({

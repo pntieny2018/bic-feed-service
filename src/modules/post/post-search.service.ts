@@ -22,8 +22,11 @@ import { IPost, PostType } from '../../database/models/post.model';
 import {
   IPostResponseElasticsearch,
   IPostElasticsearch,
+  ISeriesResponseElasticsearch,
 } from './interfaces/post-response-elasticsearch.interface';
 import { GroupService } from '../../shared/group';
+import { SeriesResponseDto } from '../series/dto/responses';
+import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 
 export type DataPostToAdd = {
   id: string;
@@ -202,7 +205,7 @@ export class PostSearchService {
       }
     }
 
-    const payload = await this.getPayloadSearch(searchPostsDto, groupIds);
+    const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const posts = hits.map((item) => {
@@ -270,7 +273,61 @@ export class PostSearchService {
     });
   }
 
-  public async getPayloadSearch(
+  /*
+    Search posts, articles, series
+  */
+  public async searchSeries(
+    authUser: UserDto,
+    searchDto: SearchSeriesDto
+  ): Promise<PageDto<SeriesResponseDto>> {
+    const { limit, offset, groupIds, contentSearch } = searchDto;
+    const user = authUser.profile;
+    if (!user || user.groups.length === 0) {
+      return new PageDto<SeriesResponseDto>([], {
+        total: 0,
+        limit,
+        offset,
+      });
+    }
+    if (!groupIds || groupIds?.length === 0) {
+      return new PageDto<SeriesResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
+
+    const payload = await this.getPayloadSearchForSeries({
+      contentSearch,
+      groupIds,
+      limit,
+      offset,
+    });
+    const response = await this.searchService.search<IPostElasticsearch>(payload);
+    const hits = response.hits.hits;
+    const posts = hits.map((item) => {
+      const source: ISeriesResponseElasticsearch = {
+        id: item._source.id,
+        audience: item._source.audience,
+        title: item._source.title?.text || null,
+      };
+      return source;
+    });
+
+    await this.postBindingService.bindAudience(posts);
+
+    const result = this.classTransformer.plainToInstance(SeriesResponseDto, posts, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<SeriesResponseDto>(result, {
+      total: response.hits.total['value'],
+      limit,
+      offset,
+    });
+  }
+
+  public async getPayloadSearchForPost(
     { startTime, endTime, contentSearch, actors, limit, offset, type }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
@@ -292,6 +349,40 @@ export class PostSearchService {
           should: [...this._getMatchKeyword(contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
           minimum_should_match: 1,
+        },
+      },
+    };
+
+    body['highlight'] = this._getHighlight();
+    body['sort'] = [...this._getSort(contentSearch)];
+    return {
+      index: ElasticsearchHelper.ALIAS.POST.all.name,
+      body,
+      from: offset,
+      size: limit,
+    };
+  }
+
+  public async getPayloadSearchForSeries(props: {
+    contentSearch: string;
+    groupIds: string[];
+    limit: number;
+    offset: number;
+  }): Promise<{
+    index: string;
+    body: any;
+    from: number;
+    size: number;
+  }> {
+    const { contentSearch, groupIds, limit, offset } = props;
+    const body: BodyES = {
+      query: {
+        bool: {
+          must: [...this._getMatchPrefixKeyword(contentSearch)],
+          filter: [
+            ...this._getTypeFilter('SERIES' as PostType),
+            ...this._getAudienceFilter(groupIds),
+          ],
         },
       },
     };
@@ -389,6 +480,22 @@ export class PostSearchService {
       ];
     }
 
+    return [];
+  }
+
+  private _getMatchPrefixKeyword(keyword: string): any {
+    if (keyword) {
+      return [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          match_phrase_prefix: {
+            ['title.text']: {
+              query: keyword,
+            },
+          },
+        },
+      ];
+    }
     return [];
   }
 

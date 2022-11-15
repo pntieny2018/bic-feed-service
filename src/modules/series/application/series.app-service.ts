@@ -11,9 +11,9 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
-import { PostService } from '../../post/post.service';
+import { PostSearchService } from '../../post/post-search.service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests';
-import { GetSeriesSavedDto } from '../dto/requests/get-series-saved.dto';
+import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
 
@@ -25,8 +25,15 @@ export class SeriesAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
-    private _postService: PostService
+    private _postSearchService: PostSearchService
   ) {}
+
+  public async searchSeries(
+    user: UserDto,
+    searchDto: SearchSeriesDto
+  ): Promise<PageDto<SeriesResponseDto>> {
+    return this._postSearchService.searchSeries(user, searchDto);
+  }
 
   public async getSeriesDetail(
     user: UserDto,
