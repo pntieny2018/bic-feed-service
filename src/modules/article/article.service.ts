@@ -19,7 +19,7 @@ import { FindAttributeOptions, Includeable, Op } from 'sequelize';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { SentryService } from '@app/sentry';
-import { ArticleResponseDto } from './dto/responses';
+import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 import {
   CreateArticleDto,
   UpdateArticleDto,
@@ -167,6 +167,7 @@ export class ArticleService extends PostService {
     };
     if (authUser) {
       attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
+      attributes.include.push(PostModel.loadSaved(authUser.id));
     }
     const rows = await this.postModel.findAll({
       attributes,
@@ -182,6 +183,40 @@ export class ArticleService extends PostService {
     });
 
     return this.classTransformer.plainToInstance(ArticleResponseDto, mappedPosts, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  public async getArticlesInSeries(
+    seriesId: string,
+    authUser: UserDto
+  ): Promise<ArticleInSeriesResponseDto[]> {
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeCover: true,
+      authUserId: authUser.id,
+      mustInSeriesIds: [seriesId],
+    });
+
+    const attributes = {
+      include: [],
+      exclude: ['content'],
+    };
+    if (authUser) {
+      attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
+      attributes.include.push(PostModel.loadSaved(authUser.id));
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        isDraft: false,
+      },
+    });
+
+    const jsonPosts = rows.map((row) => row.toJSON());
+
+    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
   }
@@ -499,6 +534,7 @@ export class ArticleService extends PostService {
   public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
+    mustInSeriesIds,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
     shouldIncludeMention,
@@ -515,6 +551,7 @@ export class ArticleService extends PostService {
   }: {
     mustIncludeGroup?: boolean;
     mustIncludeMedia?: boolean;
+    mustInSeriesIds?: string[];
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
@@ -555,6 +592,20 @@ export class ArticleService extends PostService {
           attributes: [],
         },
         attributes: ['id', 'title'],
+      });
+    }
+    if (mustInSeriesIds) {
+      includes.push({
+        model: PostSeriesModel,
+        required: true,
+        where: {
+          seriesId: mustInSeriesIds,
+        },
+        attributes: ['seriesId'],
+        order: [
+          ['zindex', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
       });
     }
 

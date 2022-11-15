@@ -65,7 +65,8 @@ export class PostListener {
         id: post.id,
         audience: {
           users: [],
-          groups: (post?.groups ?? []).map((g) => g.groupId) as any,
+          //groups: (post?.groups ?? []).map((g) => g.groupId) as any,
+          groups: post?.groups ?? ([] as any),
         },
         type: PostType.POST,
         privacy: PostPrivacy.PUBLIC,
