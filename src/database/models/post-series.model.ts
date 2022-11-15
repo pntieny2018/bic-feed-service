@@ -14,6 +14,7 @@ import { PostModel } from './post.model';
 export interface IPostSeries {
   postId: string;
   seriesId: string;
+  zindex: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -33,6 +34,9 @@ export class PostSeriesModel extends Model implements IPostSeries {
   @IsUUID()
   @Column
   public seriesId: string;
+
+  @Column
+  public zindex: number;
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;

@@ -85,6 +85,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
   hashtags: [
     {
       id: 'h1',
+      slug: 'h1',
       name: '#Vietnam',
     },
   ],
