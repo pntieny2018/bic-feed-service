@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { UpdatePostDto } from '../../../post/dto/requests';
 import { Expose, Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';
@@ -26,13 +26,8 @@ export class UpdateArticleDto extends UpdatePostDto {
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
-    }
-    return value;
-  })
   @IsUUID('4', { each: true })
+  @IsArray()
   @CanUseCategory()
   public categories?: string[];
 
@@ -42,12 +37,7 @@ export class UpdateArticleDto extends UpdatePostDto {
   })
   @IsOptional()
   @IsUUID('4', { each: true })
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
-    }
-    return value;
-  })
+  @IsArray()
   //@CanUseSeries()
   public series?: string[];
 
@@ -56,12 +46,8 @@ export class UpdateArticleDto extends UpdatePostDto {
     example: ['Beincomm', 'Seagame31'],
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
-    }
-    return value;
-  })
+  @IsUUID('4', { each: true })
+  @IsArray()
   public hashtags?: string[];
 
   @ApiProperty({
