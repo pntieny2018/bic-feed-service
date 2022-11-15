@@ -23,6 +23,23 @@ export class GroupService {
   }
 
   public async getMany(groupIds: string[]): Promise<GroupSharedDto[]> {
+    return [
+      {
+        isCommunity: true,
+        communityId: '010a9acb-92e1-46e6-9558-0a08e80cfb1c',
+        id: '7462673a-8078-4ec3-a82c-0d1a81796618',
+        icon: 'https://bic-dev-entity-attribute-s3-bucket.s3.ap-southeast-1.amazonaws.com/static/group/default-avatar.png',
+        name: 'Thế giới Wibu',
+        privacy: 'PUBLIC' as GroupPrivacy,
+        rootGroupId: '7462673a-8078-4ec3-a82c-0d1a81796618',
+        child: {
+          public: ['1eceeefc-fd93-454a-ba38-100c31690a16', '48b9ed03-af3b-4ec7-ab60-2c68ef728a26'],
+          open: [],
+          private: [],
+          secret: [],
+        },
+      },
+    ]
     const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
     if (keys.length) {
       const groups = await this._store.mget(keys);
