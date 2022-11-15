@@ -49,3 +49,9 @@ export interface IPostResponseElasticsearch {
   mentions: UserMentionDto;
   coverMedia?: MediaResponseDto;
 }
+
+export interface ISeriesResponseElasticsearch {
+  id: string;
+  audience: AudienceRequestDto;
+  title: string;
+}

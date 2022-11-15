@@ -48,7 +48,7 @@ export class UpdateArticleDto extends UpdatePostDto {
     }
     return value;
   })
-  @CanUseSeries()
+  //@CanUseSeries()
   public series?: string[];
 
   @ApiProperty({
