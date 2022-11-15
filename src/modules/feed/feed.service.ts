@@ -61,6 +61,14 @@ export class FeedService {
       });
     }
 
+    if (postIdsAndSorted.length === 0) {
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
+
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {
       postIdsAndSorted.pop();
