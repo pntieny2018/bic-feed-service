@@ -243,6 +243,25 @@ export class PostService {
     return attributes;
   }
 
+  public async getListWithGroupsByIds(postIds: string[]): Promise<IPost[]> {
+    const postGroups = await this.postModel.findAll({
+      attributes: ['id', 'title'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId'],
+        },
+      ],
+      where: {
+        id: postIds,
+      },
+    });
+
+    return postGroups;
+  }
+
   public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
@@ -583,57 +602,15 @@ export class PostService {
   /**
    * Publish Post
    */
-  public async publish(postId: string, authUser: UserDto): Promise<boolean> {
+  public async publish(post: PostResponseDto, authUser: UserDto): Promise<PostResponseDto> {
     try {
-      const post = await this.postModel.findOne({
-        where: {
-          id: postId,
-        },
-        include: [
-          {
-            model: MediaModel,
-            as: 'media',
-            through: {
-              attributes: [],
-            },
-            attributes: [
-              'id',
-              'url',
-              'type',
-              'name',
-              'width',
-              'height',
-              'status',
-              'mimeType',
-              'thumbnails',
-              'createdAt',
-            ],
-            required: false,
-          },
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
       const authUserId = authUser.id;
-      await this.authorityService.checkPostOwner(post, authUserId);
-      const groupIds = post.groups.map((g) => g.groupId);
-      if (groupIds.length === 0) {
-        throw new BadRequestException('Audience is required.');
-      }
-      await this.authorityService.checkCanCreatePost(authUser, groupIds, post.isImportant);
-      if (!post.content && post.media.length === 0) {
-        throw new LogicException(HTTP_STATUS_ID.APP_POST_PUBLISH_CONTENT_EMPTY);
-      }
-
-      if (post.isDraft === false) return false;
+      const groupIds = post.audience.groups.map((g) => g.id);
 
       let isDraft = false;
       let isProcessing = false;
       if (
-        post.media.filter(
+        post.media.videos.filter(
           (m) =>
             m.status === MediaStatus.WAITING_PROCESS ||
             m.status === MediaStatus.PROCESSING ||
@@ -653,12 +630,13 @@ export class PostService {
         },
         {
           where: {
-            id: postId,
+            id: post.id,
             createdBy: authUserId,
           },
         }
       );
-      return true;
+      post.isDraft = isDraft;
+      return post;
     } catch (error) {
       this.logger.error(error, error?.stack);
       throw error;
@@ -666,35 +644,12 @@ export class PostService {
   }
 
   /**
-   * Delete post by id
+   * Delete post
    */
-  public async delete(postId: string, authUser: UserDto): Promise<IPost> {
+  public async delete(post: IPost, authUser: UserDto): Promise<IPost> {
     const transaction = await this.sequelizeConnection.transaction();
     try {
-      const post = await this.postModel.findOne({
-        where: {
-          id: postId,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
-
-      if (!post) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-      if (post.isDraft === false) {
-        await this.authorityService.checkCanDeletePost(
-          authUser,
-          post.groups.map((g) => g.groupId),
-          post.createdBy
-        );
-      }
-
+      const postId = post.id;
       if (post.isDraft) {
         await this.cleanRelationship(postId, transaction, true);
         await this.postModel.destroy({
@@ -941,7 +896,6 @@ export class PostService {
       isDraft: false,
     };
 
-    const include = [];
     if (type) {
       condition['type'] = type;
     }

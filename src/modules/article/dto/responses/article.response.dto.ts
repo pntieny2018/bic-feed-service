@@ -17,7 +17,7 @@ class CategoryResponseDto {
   public name: string;
 }
 
-class SeriesResponseDto {
+class SeriesSimpleResponseDto {
   @ApiProperty({
     type: String,
   })
@@ -28,12 +28,6 @@ class SeriesResponseDto {
   })
   @Expose()
   public title: string;
-
-  @ApiProperty({
-    type: AudienceResponseDto,
-  })
-  @Expose()
-  public audience: AudienceResponseDto;
 }
 
 class HashtagResponseDto {
@@ -75,10 +69,10 @@ export class ArticleResponseDto extends PostResponseDto {
 
   @ApiProperty({
     description: 'Series',
-    type: [SeriesResponseDto],
+    type: [SeriesSimpleResponseDto],
   })
   @Expose()
-  public series: SeriesResponseDto[];
+  public series: SeriesSimpleResponseDto[];
 
   @ApiProperty({
     description: 'Hashtags',

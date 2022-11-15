@@ -216,7 +216,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @HasMany(() => PostHashtagModel)
   public postHashtags?: PostHashtagModel[];
 
-  @BelongsToMany(() => PostModel, () => PostSeriesModel)
+  @BelongsToMany(() => PostModel, () => PostSeriesModel, 'postId', 'seriesId')
   public series?: PostModel[];
 
   @HasMany(() => PostSeriesModel)

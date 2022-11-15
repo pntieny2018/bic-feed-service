@@ -80,17 +80,6 @@ export const mockedArticleResponse: ArticleResponseDto = {
     {
       id: 'aaa',
       title: 'Technical',
-      audience: {
-        groups: [
-          {
-            id: '855bedeb-b708-4e13-8c68-131d92cd79b3',
-            name: 'EVOL Community',
-            icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
-            privacy: GroupPrivacy.PUBLIC,
-            rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
-          },
-        ],
-      },
     },
   ],
   hashtags: [
