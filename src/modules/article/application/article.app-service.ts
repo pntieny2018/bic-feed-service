@@ -89,23 +89,25 @@ export class ArticleAppService {
       await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
-      const seriesGroups = await this._postService.getListWithGroupsByIds(series);
-      const invalidSeries = [];
-      seriesGroups.forEach((item) => {
-        const seriesGroupIds = item.groups.map((group) => group.groupId);
-        const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, audience.groupIds);
-        if (elmDiff.length) {
-          invalidSeries.push(item);
-        }
-      });
-      if (invalidSeries.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: `You don't have create article permission at series permission at group ${invalidSeries
-            .map((e) => e.title)
-            .join(', ')}`,
-          errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+      if (series?.length) {
+        const seriesGroups = await this._postService.getListWithGroupsByIds(series);
+        const invalidSeries = [];
+        seriesGroups.forEach((item) => {
+          const seriesGroupIds = item.groups.map((group) => group.groupId);
+          const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, audience.groupIds);
+          if (elmDiff.length) {
+            invalidSeries.push(item);
+          }
         });
+        if (invalidSeries.length) {
+          throw new ForbiddenException({
+            code: HTTP_STATUS_ID.API_FORBIDDEN,
+            message: `You don't have create article permission at series permission at group ${invalidSeries
+              .map((e) => e.title)
+              .join(', ')}`,
+            errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+          });
+        }
       }
     }
 
