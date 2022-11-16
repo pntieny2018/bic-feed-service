@@ -214,10 +214,12 @@ export class ArticleService extends PostService {
         isDraft: false,
       },
     });
+    const jsonArticles = rows.map((row) => row.toJSON());
 
-    const jsonPosts = rows.map((row) => row.toJSON());
-
-    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, jsonPosts, {
+    const articlesBindedData = await this.articleBinding.bindRelatedData(jsonArticles, {
+      shouldBindActor: true,
+    });
+    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
   }
