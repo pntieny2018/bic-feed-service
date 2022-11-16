@@ -1241,11 +1241,16 @@ export class PostService {
 
   public async getTotalPostByGroupIds(
     groupIds: string[]
-  ): Promise<{ groupId: string; total: number }[]> {
+  ): Promise<{ groupId: string; totalPost: number; totalArticle: number; totalSeries: number }[]> {
     const sequelize = this.sequelizeConnection;
     const countByGroups: IPostGroup[] = await this.postGroupModel.findAll({
       raw: true,
-      attributes: ['groupId', [sequelize.fn('COUNT', sequelize.col('"post"."id"')), 'total']],
+      attributes: [
+        'groupId',
+        [sequelize.literal(`SUM(CASE WHEN type = 'POST' THEN 1 ELSE 0 END)`), 'totalPost'],
+        [sequelize.literal(`SUM(CASE WHEN type = 'ARTICLE' THEN 1 ELSE 0 END)`), 'totalArticle'],
+        [sequelize.literal(`SUM(CASE WHEN type = 'SERIES' THEN 1 ELSE 0 END)`), 'totalSeries'],
+      ],
       include: [
         {
           model: PostModel,
@@ -1267,11 +1272,15 @@ export class PostService {
       if (findGroup)
         return {
           groupId,
-          total: findGroup.total || 0,
+          totalPost: findGroup.totalPost || 0,
+          totalArticle: findGroup.totalArticle || 0,
+          totalSeries: findGroup.totalSeries || 0,
         };
       return {
         groupId,
-        total: 0,
+        totalPost: 0,
+        totalArticle: 0,
+        totalSeries: 0,
       };
     });
   }

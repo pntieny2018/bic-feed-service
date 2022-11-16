@@ -14,5 +14,19 @@ export class TotalPostInGroupsDto {
     description: 'Total Posts',
   })
   @Expose()
-  public total: number;
+  public totalPost: number;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Total Articles',
+  })
+  @Expose()
+  public totalArticle: number;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Total Series',
+  })
+  @Expose()
+  public totalSeries: number;
 }
