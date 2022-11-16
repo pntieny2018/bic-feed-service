@@ -1,7 +1,7 @@
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserDto } from '../auth';
 import { Sequelize } from 'sequelize-typescript';
 import { SeriesResponseDto } from './dto/responses';
@@ -22,6 +22,7 @@ import { PostBindingService } from '../post/post-binding.service';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { FeedService } from '../feed/feed.service';
 import { ReactionService } from '../reaction';
+import { ArticleService } from '../article/article.service';
 
 @Injectable()
 export class SeriesService {
@@ -56,7 +57,9 @@ export class SeriesService {
     private readonly _commentService: CommentService,
     private readonly _postBinding: PostBindingService,
     private readonly _feedService: FeedService,
-    private readonly _reactionService: ReactionService
+    private readonly _reactionService: ReactionService,
+    @Inject(forwardRef(() => ArticleService))
+    private readonly _articleService: ArticleService
   ) {}
 
   /**
@@ -142,6 +145,7 @@ export class SeriesService {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
+    result[0].articles = await this._articleService.getArticlesInSeries(id, authUser);
     return result[0];
   }
   /**
