@@ -123,4 +123,20 @@ export class SeriesAppService {
     }
     return false;
   }
+
+  public async reorderArticles(
+    seriesId: string,
+    articleIds: string[],
+    user: UserDto
+  ): Promise<void> {
+    const series = await this._seriesService.findSeriesById(seriesId, {
+      withGroups: true,
+    });
+    if (!series) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    await this._authorityService.checkPostOwner(series, user.id);
+
+    const groupIds = series.groups.map((group) => group.groupId);
+    await this._authorityService.checkCanUpdateSeries(user, series, groupIds);
+    return this._seriesService.reorderArticles(seriesId, articleIds);
+  }
 }

@@ -8,7 +8,7 @@ import { IsUUID } from 'class-validator';
 import { AudienceResponseDto } from '../../../post/dto/responses';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { PostType } from '../../../../database/models/post.model';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from '../../../article/dto/responses';
+import { ArticleInSeriesResponseDto } from '../../../article/dto/responses';
 export class SeriesResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -169,12 +169,12 @@ export class SeriesResponseDto {
   @Expose()
   public coverMedia?: MediaResponseDto;
 
-  // @ApiProperty({
-  //   type: [ArticleInSeriesResponseDto],
-  //   name: 'articles',
-  // })
-  // @Expose()
-  // public articles?: ArticleInSeriesResponseDto[];
+  @ApiProperty({
+    type: [ArticleInSeriesResponseDto],
+    name: 'articles',
+  })
+  @Expose()
+  public articles?: ArticleInSeriesResponseDto[];
 
   public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);
