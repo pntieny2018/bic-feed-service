@@ -59,9 +59,6 @@ jobs:
       - image: circleci/buildpack-deps:stretch
     environment:
       IMAGE_NAME: beingroup/bein-stream-backend-api-stg
-      BASE: bein-base
-      ENVIRONMENT_BASE: bein-staging-base
-      LIVE: bein-staging-live-stream
       ENVIRONMENT: "stg"
       SERVICE: "feed"
     working_directory: ~/app
@@ -86,31 +83,6 @@ jobs:
           command: |
             sudo apt-get update && sudo apt-get -y install gettext-base
       - run:
-          name: Install kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod u+x ./kubectl
-      - run:
-          name: Pull Kustomize resources
-          command: |
-            mkdir ~/app/$BASE
-            cd ~/app/$BASE
-            git clone -b $BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$ENVIRONMENT_BASE
-            cd ~/app/$ENVIRONMENT_BASE
-            git clone -b $ENVIRONMENT_BASE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-
-            mkdir ~/app/$LIVE
-            cd ~/app/$LIVE
-            git clone -b $LIVE https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
-            cp -r bic-kube/* .
-            rm -rf bic-kube
-      - run:
           name: Update image version
           command: |
             git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
@@ -125,20 +97,6 @@ jobs:
             git add -A
             git commit -m "Updated version to $IMAGE_NAME:$CIRCLE_SHA1 by CICD"
             git push
-      - run:
-          name: Run Kustomize
-          command: |
-            cd ~/app/$LIVE
-            ~/app/kubectl kustomize ./ > ~/app/result.yaml
-      - run:
-          name: Deploy Code
-          command: |
-            chmod +x ./$BASE/ci-deploy.sh
-            ./$BASE/ci-deploy.sh
-      - run:
-          name: View live configuration
-          command: |
-            cat ~/app/result.yaml
   pro:
     docker:
       - image: circleci/buildpack-deps:stretch
