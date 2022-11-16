@@ -93,6 +93,7 @@ export class ArticleService extends PostService {
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
+    @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
     protected readonly authorityService: AuthorityService,

@@ -1,11 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsUUID } from 'class-validator';
-import { CategoryResponseDto, HashtagResponseDto } from '.';
+import { CategoryResponseDto } from '.';
 import { MediaResponseDto } from '../../../media/dto/response';
-import { PostResponseDto } from '../../../post/dto/responses';
 
-export class ArticleInSeriesResponseDto extends PostResponseDto {
+export class ArticleInSeriesResponseDto {
   @ApiProperty({
     description: 'Post ID',
     type: String,
@@ -39,13 +38,6 @@ export class ArticleInSeriesResponseDto extends PostResponseDto {
   public categories: CategoryResponseDto[];
 
   @ApiProperty({
-    description: 'Hashtags',
-    type: [HashtagResponseDto],
-  })
-  @Expose()
-  public hashtags: HashtagResponseDto;
-
-  @ApiProperty({
     type: MediaResponseDto,
     name: 'cover_media',
   })
@@ -53,6 +45,6 @@ export class ArticleInSeriesResponseDto extends PostResponseDto {
   public coverMedia?: MediaResponseDto;
 
   public constructor(data: Partial<ArticleInSeriesResponseDto>) {
-    super(data);
+    Object.assign(this, data);
   }
 }

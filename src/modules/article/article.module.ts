@@ -28,11 +28,11 @@ import { ArticleAppService } from './application/article.app-service';
     MentionModule,
     CategoryModule,
     HashtagModule,
-    SeriesModule,
     forwardRef(() => ReactionModule),
     AuthorityModule,
     forwardRef(() => CommentModule),
     forwardRef(() => LinkPreviewModule),
+    forwardRef(() => SeriesModule),
   ],
   controllers: [ArticleController],
   providers: [
