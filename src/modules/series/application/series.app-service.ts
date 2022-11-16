@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
+import { PageDto } from '../../../common/dto';
+import { ExceptionHelper } from '../../../common/helpers';
 import {
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
@@ -8,7 +11,9 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
+import { PostSearchService } from '../../post/post-search.service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests';
+import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
 
@@ -19,8 +24,16 @@ export class SeriesAppService {
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _feedService: FeedService
+    private _feedService: FeedService,
+    private _postSearchService: PostSearchService
   ) {}
+
+  public async searchSeries(
+    user: UserDto,
+    searchDto: SearchSeriesDto
+  ): Promise<PageDto<SeriesResponseDto>> {
+    return this._postSearchService.searchSeries(user, searchDto);
+  }
 
   public async getSeriesDetail(
     user: UserDto,
@@ -63,6 +76,10 @@ export class SeriesAppService {
   ): Promise<SeriesResponseDto> {
     const { audience } = updateSeriesDto;
     const seriesBefore = await this._seriesService.get(postId, user, new GetSeriesDto());
+
+    if (!seriesBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    await this._authorityService.checkPostOwner(seriesBefore, user.id);
+
     if (audience.groupIds.length === 0) {
       throw new BadRequestException('Audience is required');
     }

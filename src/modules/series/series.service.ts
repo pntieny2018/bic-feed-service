@@ -80,7 +80,7 @@ export class SeriesService {
 
     const series = await this._postModel.findOne({
       attributes: {
-        include: [PostModel.loadMarkReadPost(authUser.id)],
+        include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
       },
       where: condition,
       include: [
@@ -130,7 +130,7 @@ export class SeriesService {
       );
     }
     const jsonArticle = series.toJSON();
-    const articlesBindedData = await this._postBinding.bindRelatedData([jsonArticle], {
+    const seriesBindedData = await this._postBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindAudience: true,
@@ -138,7 +138,7 @@ export class SeriesService {
       authUser,
     });
 
-    const result = this._classTransformer.plainToInstance(SeriesResponseDto, articlesBindedData, {
+    const result = this._classTransformer.plainToInstance(SeriesResponseDto, seriesBindedData, {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
@@ -294,6 +294,7 @@ export class SeriesService {
       if (!series) {
         ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
       }
+      await this._authorityService.checkPostOwner(series, authUser.id);
       if (series.isDraft === false) {
         await this._authorityService.checkCanDeletePost(
           authUser,
@@ -390,5 +391,45 @@ export class SeriesService {
         { transaction }
       );
     }
+  }
+
+  public async getSeriesByIds(ids: string[], userId: string): Promise<IPost[]> {
+    if (ids.length === 0) return [];
+    const attributes = {
+      include: [PostModel.loadMarkReadPost(userId)],
+    };
+    const rows = await this._postModel.findAll({
+      attributes,
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+        },
+        {
+          model: PostReactionModel,
+          as: 'ownerReactions',
+          required: false,
+          where: {
+            createdBy: userId,
+          },
+        },
+        {
+          model: MediaModel,
+          as: 'coverMedia',
+          required: false,
+        },
+      ],
+      where: {
+        id: ids,
+      },
+    });
+
+    const mappedPosts = ids.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return mappedPosts;
   }
 }

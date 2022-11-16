@@ -19,7 +19,7 @@ import { FindAttributeOptions, Includeable, Op } from 'sequelize';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { ReactionService } from '../reaction';
 import { SentryService } from '@app/sentry';
-import { ArticleResponseDto } from './dto/responses';
+import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 import {
   CreateArticleDto,
   UpdateArticleDto,
@@ -48,6 +48,7 @@ import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
+import { UserSavePostModel } from '../../database/models/user-save-post.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -84,15 +85,17 @@ export class ArticleService extends PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    protected authorityService: AuthorityService,
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
+    @InjectModel(UserSavePostModel)
+    protected userSavePostModel: typeof UserSavePostModel,
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
+    protected readonly authorityService: AuthorityService,
     private readonly _linkPreviewService: LinkPreviewService
   ) {
     super(
@@ -103,6 +106,7 @@ export class ArticleService extends PostService {
       postCategoryModel,
       postHashtagModel,
       userMarkReadPostModel,
+      userSavePostModel,
       userService,
       groupService,
       mediaService,
@@ -163,6 +167,7 @@ export class ArticleService extends PostService {
     };
     if (authUser) {
       attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
+      attributes.include.push(PostModel.loadSaved(authUser.id));
     }
     const rows = await this.postModel.findAll({
       attributes,
@@ -178,6 +183,40 @@ export class ArticleService extends PostService {
     });
 
     return this.classTransformer.plainToInstance(ArticleResponseDto, mappedPosts, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  public async getArticlesInSeries(
+    seriesId: string,
+    authUser: UserDto
+  ): Promise<ArticleInSeriesResponseDto[]> {
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeCover: true,
+      authUserId: authUser.id,
+      mustInSeriesIds: [seriesId],
+    });
+
+    const attributes = {
+      include: [],
+      exclude: ['content'],
+    };
+    if (authUser) {
+      attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
+      attributes.include.push(PostModel.loadSaved(authUser.id));
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        isDraft: false,
+      },
+    });
+
+    const jsonPosts = rows.map((row) => row.toJSON());
+
+    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, jsonPosts, {
       excludeExtraneousValues: true,
     });
   }
@@ -403,6 +442,7 @@ export class ArticleService extends PostService {
     getArticleDto?: GetArticleDto
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
+      loadSaved: true,
       loadMarkRead: true,
       authUserId: authUser?.id || null,
     });
@@ -414,6 +454,7 @@ export class ArticleService extends PostService {
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
+      shouldIncludeSeries: true,
       authUserId: authUser?.id || null,
     });
 
@@ -470,12 +511,14 @@ export class ArticleService extends PostService {
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
+
     result[0]['comments'] = comments;
     return result[0];
   }
 
   protected getAttributesObj(options?: {
     loadMarkRead?: boolean;
+    loadSaved?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
@@ -491,29 +534,33 @@ export class ArticleService extends PostService {
   public getIncludeObj({
     mustIncludeGroup,
     mustIncludeMedia,
+    mustInSeriesIds,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
     shouldIncludeMention,
     shouldIncludeMedia,
     shouldIncludePreviewLink,
-    filterMediaIds,
+    shouldIncludeArticlesInSeries,
     shouldIncludeCategory,
-    shouldIncludeSeries,
     shouldIncludeCover,
+    shouldIncludeSeries,
+    filterMediaIds,
     filterCategoryIds,
     filterGroupIds,
     authUserId,
   }: {
     mustIncludeGroup?: boolean;
     mustIncludeMedia?: boolean;
+    mustInSeriesIds?: string[];
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
     shouldIncludeMedia?: boolean;
     shouldIncludeCategory?: boolean;
-    shouldIncludeSeries?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
+    shouldIncludeSeries?: boolean;
+    shouldIncludeArticlesInSeries?: boolean;
     filterCategoryIds?: string[];
     filterMediaIds?: string[];
     filterGroupIds?: string[];
@@ -529,6 +576,7 @@ export class ArticleService extends PostService {
       shouldIncludePreviewLink,
       shouldIncludeCategory,
       shouldIncludeCover,
+      shouldIncludeArticlesInSeries,
       filterMediaIds,
       filterCategoryIds,
       filterGroupIds,
@@ -543,9 +591,24 @@ export class ArticleService extends PostService {
         through: {
           attributes: [],
         },
-        attributes: ['id', 'name'],
+        attributes: ['id', 'title'],
       });
     }
+    if (mustInSeriesIds) {
+      includes.push({
+        model: PostSeriesModel,
+        required: true,
+        where: {
+          seriesId: mustInSeriesIds,
+        },
+        attributes: ['seriesId'],
+        order: [
+          ['zindex', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
+      });
+    }
+
     return includes;
   }
 
@@ -655,21 +718,48 @@ export class ArticleService extends PostService {
    * @returns Promise resolve boolean
    * @throws HttpException
    */
-  public async publish(articleId: string, authUser: UserDto): Promise<boolean> {
-    const include = this.getIncludeObj({ shouldIncludeCategory: true });
-    const article = await this.postModel.findOne({
-      where: {
-        id: articleId,
-      },
-      include,
-    });
-    if (!article) {
-      throw new NotFoundException('Article is not found.');
+  public async publish(
+    article: ArticleResponseDto,
+    authUser: UserDto
+  ): Promise<ArticleResponseDto> {
+    try {
+      const authUserId = authUser.id;
+      const groupIds = article.audience.groups.map((g) => g.id);
+
+      let isDraft = false;
+      let isProcessing = false;
+      if (
+        article.media.videos.filter(
+          (m) =>
+            m.status === MediaStatus.WAITING_PROCESS ||
+            m.status === MediaStatus.PROCESSING ||
+            m.status === MediaStatus.FAILED
+        ).length > 0
+      ) {
+        isDraft = true;
+        isProcessing = true;
+      }
+      const postPrivacy = await this.getPrivacy(groupIds);
+      await this.postModel.update(
+        {
+          isDraft,
+          isProcessing,
+          privacy: postPrivacy,
+          createdAt: new Date(),
+        },
+        {
+          where: {
+            id: article.id,
+            createdBy: authUserId,
+          },
+        }
+      );
+      article.isDraft = isDraft;
+      return article;
+    } catch (error) {
+      this.logger.error(error, error?.stack);
+      throw error;
     }
-    if (article.categories.length === 0) {
-      throw new BadRequestException('Category is required');
-    }
-    return super.publish(articleId, authUser);
   }
 
   /**

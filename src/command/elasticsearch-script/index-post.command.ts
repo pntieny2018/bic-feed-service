@@ -19,7 +19,6 @@ import { POST_JA_MAPPING } from './post_ja_mapping';
 import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
-import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
 interface ICommandOptions {

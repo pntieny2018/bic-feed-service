@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { ArrayHelper, ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
@@ -76,17 +78,38 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience } = updateArticleDto;
+    const { audience, series } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (articleBefore.isDraft === false && audience.groupIds.length === 0) {
-      throw new BadRequestException('Audience is required');
-    }
+    if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
-    await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
-    if (articleBefore.isDraft === false) {
-      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
-    }
     await this._authorityService.checkPostOwner(articleBefore, user.id);
+
+    if (articleBefore.isDraft === false) {
+      if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
+      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
+
+      if (series?.length) {
+        const seriesGroups = await this._postService.getListWithGroupsByIds(series);
+        const invalidSeries = [];
+        seriesGroups.forEach((item) => {
+          const seriesGroupIds = item.groups.map((group) => group.groupId);
+          const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, audience.groupIds);
+          if (elmDiff.length) {
+            invalidSeries.push(item);
+          }
+        });
+        if (invalidSeries.length) {
+          throw new ForbiddenException({
+            code: HTTP_STATUS_ID.API_FORBIDDEN,
+            message: `You don't have create article permission at series ${invalidSeries
+              .map((e) => e.title)
+              .join(', ')}`,
+            errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+          });
+        }
+      }
+    }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
     if (isUpdated) {
@@ -104,21 +127,74 @@ export class ArticleAppService {
   }
 
   public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
-    const isPublished = await this._articleService.publish(articleId, user);
-    if (isPublished) {
-      const article = await this._articleService.get(articleId, user, new GetArticleDto());
-      this._eventEmitter.emit(
-        new ArticleHasBeenPublishedEvent({
-          article,
-          actor: user.profile,
-        })
-      );
-      return article;
+    const article = await this._articleService.get(articleId, user, new GetArticleDto());
+    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (article.isDraft === false) return article;
+
+    await this._authorityService.checkPostOwner(article, user.id);
+    const { audience } = article;
+    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
+
+    const groupIds = audience.groups.map((group) => group.id);
+
+    await this._authorityService.checkCanCreatePost(user, groupIds, article.setting.isImportant);
+
+    const seriesGroups = await this._postService.getListWithGroupsByIds(
+      article.series.map((item) => item.id)
+    );
+
+    const invalidSeries = [];
+    seriesGroups.forEach((item) => {
+      const seriesGroupIds = item.groups.map((group) => group.groupId);
+      const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, groupIds);
+      if (elmDiff.length) {
+        invalidSeries.push(item);
+      }
+    });
+    if (invalidSeries.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have create article permission at series ${invalidSeries
+          .map((e) => e.title)
+          .join(', ')}`,
+        errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+      });
     }
+
+    this._postService.checkContent(article.content, article.media);
+
+    if (article.categories.length === 0) {
+      throw new BadRequestException('Category is required');
+    }
+    article.isDraft = false;
+    const articleUpdated = await this._articleService.publish(article, user);
+    this._eventEmitter.emit(
+      new ArticleHasBeenPublishedEvent({
+        article: articleUpdated,
+        actor: user.profile,
+      })
+    );
+    return article;
   }
 
   public async delete(user: UserDto, articleId: string): Promise<boolean> {
-    const articleDeleted = await this._articleService.delete(articleId, user);
+    const articles = await this._postService.getListWithGroupsByIds([articleId]);
+
+    if (articles.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+    const article = articles[0];
+    await this._authorityService.checkPostOwner(article, user.id);
+
+    if (article.isDraft === false) {
+      await this._authorityService.checkCanDeletePost(
+        user,
+        article.groups.map((g) => g.groupId),
+        article.createdBy
+      );
+    }
+
+    const articleDeleted = await this._articleService.delete(article, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
         new ArticleHasBeenDeletedEvent({

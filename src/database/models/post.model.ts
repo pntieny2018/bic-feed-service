@@ -40,6 +40,7 @@ import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
+import { UserSavePostModel } from './user-save-post.model';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
@@ -92,6 +93,7 @@ export interface IPost {
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
+  articles?: Partial<IPost>[];
 }
 
 @Table({
@@ -214,11 +216,14 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @HasMany(() => PostHashtagModel)
   public postHashtags?: PostHashtagModel[];
 
-  @BelongsToMany(() => PostModel, () => PostSeriesModel)
+  @BelongsToMany(() => PostModel, () => PostSeriesModel, 'postId', 'seriesId')
   public series?: PostModel[];
 
   @HasMany(() => PostSeriesModel)
   public postSeries?: PostSeriesModel[];
+
+  @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
+  public articles?: PostModel[];
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',
@@ -275,6 +280,23 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
           )}), false)
                )`),
       alias ? alias : 'markedReadPost',
+    ];
+  }
+
+  public static loadSaved(authUserId: string, alias?: string): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+    const userSavePostTable = UserSavePostModel.tableName;
+    if (!authUserId) {
+      return [Sequelize.literal(`(false)`), alias ? alias : 'isSaved'];
+    }
+    return [
+      Sequelize.literal(`(
+        COALESCE((SELECT true FROM ${schema}.${userSavePostTable} as r
+          WHERE r.post_id = "PostModel".id AND r.user_id = ${this.sequelize.escape(
+            authUserId
+          )}), false)
+               )`),
+      alias ? alias : 'isSaved',
     ];
   }
 

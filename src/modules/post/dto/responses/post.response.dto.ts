@@ -204,6 +204,13 @@ export class PostResponseDto {
   public markedReadPost?: boolean;
 
   @ApiProperty({
+    type: Boolean,
+    name: 'isSaved',
+  })
+  @Expose()
+  public isSaved?: boolean;
+
+  @ApiProperty({
     type: Date,
     name: 'created_at',
   })
@@ -266,6 +273,12 @@ export class PostResponseDto {
   })
   @Expose()
   public linkPreview?: LinkPreviewDto;
+
+  @ApiProperty({
+    type: PostResponseDto,
+  })
+  @Expose()
+  public articles?: PostResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

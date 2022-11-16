@@ -58,13 +58,13 @@ export class GroupService {
     }
 
     const groupIdsUserJoined = authUser.profile.groups;
-    const childIds = [
+    const childGroupIds = [
       ...group.child.public,
       ...group.child.open,
       ...group.child.private,
       ...group.child.secret,
     ];
-    const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
+    const filterGroupIdsUserJoined = [group.id, ...childGroupIds].filter((groupId) =>
       groupIdsUserJoined.includes(groupId)
     );
 
@@ -78,30 +78,6 @@ export class GroupService {
       filterGroupIdsUserJoined.push(group.id);
     }
     return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
-  }
-
-  /**
-   * Get groupId and childIds(user joinned or open or public) to show posts in timeline
-   */
-  public getGroupIdAndChildIdsUserCanReadPost(group: GroupSharedDto, authUser: UserDto): string[] {
-    if (!authUser) {
-      return this._getGroupIdsGuestCanSeePost(group);
-    }
-
-    const groupIdsUserJoined = authUser.profile.groups;
-    const childIds = [...group.child.private, ...group.child.secret];
-    const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
-      groupIdsUserJoined.includes(groupId)
-    );
-
-    const publicOrOpenGroupIds = [...group.child.public, ...group.child.open];
-    if (group.privacy === GroupPrivacy.PUBLIC) {
-      publicOrOpenGroupIds.push(group.id);
-    }
-    // if (group.privacy === GroupPrivacy.OPEN && this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupid)) {
-    //   filterGroupIdsUserJoined.push(group.id);
-    // }
-    return ArrayHelper.arrayUnique([...filterGroupIdsUserJoined, ...publicOrOpenGroupIds]);
   }
 
   private _hasJoinedCommunity(groupIdsUserJoined: string[], rootGroupId: string): boolean {

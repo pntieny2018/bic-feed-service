@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { ExceptionHelper } from '../../../common/helpers';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -19,6 +21,7 @@ import {
   UpdatePostDto,
 } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
+import { GetPostsSavedDto } from '../dto/requests/get-posts-saved.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostSearchService } from '../post-search.service';
@@ -83,18 +86,20 @@ export class PostAppService {
   ): Promise<PostResponseDto> {
     const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
-    if (postBefore.isDraft === false && audience.groupIds.length === 0) {
-      throw new BadRequestException('Audience is required');
-    }
-    await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
+    if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    await this._authorityService.checkPostOwner(postBefore, user.id);
 
-    const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
-    const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
-    if (newAudienceIds.length) {
-      const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
-      await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
-    }
     if (postBefore.isDraft === false) {
+      if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      await this._authorityService.checkCanUpdatePost(user, postBefore, audience.groupIds);
+      const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
+
+      const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+      if (newAudienceIds.length) {
+        const isImportant = setting?.isImportant ?? postBefore.setting.isImportant;
+        await this._authorityService.checkCanCreatePost(user, newAudienceIds, isImportant);
+      }
+
       this._postService.checkContent(updatePostDto.content, updatePostDto.media);
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
@@ -118,22 +123,47 @@ export class PostAppService {
   }
 
   public async publishPost(user: UserDto, postId: string): Promise<PostResponseDto> {
-    const isPublished = await this._postService.publish(postId, user);
     const post = await this._postService.get(postId, user, new GetPostDto());
-    if (isPublished) {
-      this._eventEmitter.emit(
-        new PostHasBeenPublishedEvent({
-          post: post,
-          actor: user.profile,
-        })
-      );
-    }
+    if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    if (post.isDraft === false) return post;
+
+    await this._authorityService.checkPostOwner(post, user.id);
+    const { audience } = post;
+    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
+
+    const groupIds = audience.groups.map((group) => group.id);
+    await this._authorityService.checkCanCreatePost(user, groupIds, post.setting.isImportant);
+
+    this._postService.checkContent(post.content, post.media);
+
+    const postUpdated = await this._postService.publish(post, user);
+    this._eventEmitter.emit(
+      new PostHasBeenPublishedEvent({
+        post: postUpdated,
+        actor: user.profile,
+      })
+    );
 
     return post;
   }
 
   public async deletePost(user: UserDto, postId: string): Promise<boolean> {
-    const postDeleted = await this._postService.delete(postId, user);
+    const posts = await this._postService.getListWithGroupsByIds([postId]);
+
+    if (posts.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+    await this._authorityService.checkPostOwner(posts[0], user.id);
+
+    if (posts[0].isDraft === false) {
+      await this._authorityService.checkCanDeletePost(
+        user,
+        posts[0].groups.map((g) => g.groupId),
+        posts[0].createdBy
+      );
+    }
+
+    const postDeleted = await this._postService.delete(posts[0], user);
     if (postDeleted) {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
@@ -148,6 +178,18 @@ export class PostAppService {
 
   public async markReadPost(user: UserDto, postId: string): Promise<boolean> {
     await this._postService.markRead(postId, user.id);
+    return true;
+  }
+
+  public async savePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._postService.checkExistAndPublished(postId);
+    await this._postService.savePostToUserCollection(postId, user.id);
+    return true;
+  }
+
+  public async unSavePost(user: UserDto, postId: string): Promise<boolean> {
+    await this._postService.checkExistAndPublished(postId);
+    await this._postService.unSavePostToUserCollection(postId, user.id);
     return true;
   }
 
