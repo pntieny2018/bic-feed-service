@@ -17,6 +17,7 @@ import { AuthUser, UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { ReorderArticlesDto } from './dto/requests/reorder-articles.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
@@ -95,5 +96,20 @@ export class SeriesController {
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<boolean> {
     return this._seriesAppService.deleteSeries(user, id);
+  }
+
+  @ApiOperation({ summary: 'Reorder articles in series' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Put('/:id/reorder')
+  public async reorder(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() reorderArticlesDto: ReorderArticlesDto
+  ): Promise<boolean> {
+    const { articleIds } = reorderArticlesDto;
+    await this._seriesAppService.reorderArticles(id, articleIds, user);
+    return true;
   }
 }
