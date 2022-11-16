@@ -436,4 +436,46 @@ export class SeriesService {
 
     return mappedPosts;
   }
+
+  public async reorderArticles(id: string, articleIds: string[]): Promise<void> {
+    let zindex = 0;
+    for (const articleId of articleIds) {
+      await this._postSeriesModel.update(
+        {
+          zindex,
+        },
+        {
+          where: {
+            postId: articleId,
+            seriesId: id,
+          },
+        }
+      );
+      zindex++;
+    }
+  }
+
+  public async findSeriesById(
+    id: string,
+    options: {
+      withGroups: boolean;
+    }
+  ): Promise<IPost> {
+    const include = [];
+    if (options.withGroups) {
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        attributes: ['groupId'],
+      });
+    }
+    const result = await this._postModel.findOne({
+      include,
+      where: {
+        id,
+      },
+    });
+
+    return result;
+  }
 }
