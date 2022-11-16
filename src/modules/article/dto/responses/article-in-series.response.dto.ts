@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { IsUUID } from 'class-validator';
 import { CategoryResponseDto } from '.';
+import { UserSharedDto } from '../../../../shared/user/dto';
 import { MediaResponseDto } from '../../../media/dto/response';
 
 export class ArticleInSeriesResponseDto {
@@ -43,6 +44,14 @@ export class ArticleInSeriesResponseDto {
   })
   @Expose()
   public coverMedia?: MediaResponseDto;
+
+  @ApiProperty({
+    description: 'Post creator information',
+    type: UserSharedDto,
+  })
+  @Expose()
+  @Type(() => UserSharedDto)
+  public actor: UserSharedDto;
 
   public constructor(data: Partial<ArticleInSeriesResponseDto>) {
     Object.assign(this, data);
