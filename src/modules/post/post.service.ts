@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, Post } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
@@ -17,7 +17,7 @@ import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
+import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -1236,6 +1236,52 @@ export class PostService {
         isDraft: true,
         createdBy: user.id,
       },
+    });
+  }
+
+  public async getTotalPostByGroupIds(
+    groupIds: string[]
+  ): Promise<{ groupId: string; totalPost: number; totalArticle: number; totalSeries: number }[]> {
+    const sequelize = this.sequelizeConnection;
+    const countByGroups: IPostGroup[] = await this.postGroupModel.findAll({
+      raw: true,
+      attributes: [
+        'groupId',
+        [sequelize.literal(`SUM(CASE WHEN type = 'POST' THEN 1 ELSE 0 END)`), 'totalPost'],
+        [sequelize.literal(`SUM(CASE WHEN type = 'ARTICLE' THEN 1 ELSE 0 END)`), 'totalArticle'],
+        [sequelize.literal(`SUM(CASE WHEN type = 'SERIES' THEN 1 ELSE 0 END)`), 'totalSeries'],
+      ],
+      include: [
+        {
+          model: PostModel,
+          attributes: [],
+          required: false,
+          where: {
+            isDraft: false,
+          },
+        },
+      ],
+      where: {
+        groupId: groupIds,
+      },
+      group: [`"PostGroupModel"."group_id"`],
+    });
+
+    return groupIds.map((groupId) => {
+      const findGroup = countByGroups.find((group) => group.groupId === groupId);
+      if (findGroup)
+        return {
+          groupId,
+          totalPost: findGroup.totalPost || 0,
+          totalArticle: findGroup.totalArticle || 0,
+          totalSeries: findGroup.totalSeries || 0,
+        };
+      return {
+        groupId,
+        totalPost: 0,
+        totalArticle: 0,
+        totalSeries: 0,
+      };
     });
   }
 }
