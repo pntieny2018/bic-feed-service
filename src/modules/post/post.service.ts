@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, Post } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
@@ -17,7 +17,7 @@ import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
-import { PostGroupModel } from '../../database/models/post-group.model';
+import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
@@ -1236,6 +1236,43 @@ export class PostService {
         isDraft: true,
         createdBy: user.id,
       },
+    });
+  }
+
+  public async getTotalPostByGroupIds(
+    groupIds: string[]
+  ): Promise<{ groupId: string; total: number }[]> {
+    const sequelize = this.sequelizeConnection;
+    const countByGroups: IPostGroup[] = await this.postGroupModel.findAll({
+      raw: true,
+      attributes: ['groupId', [sequelize.fn('COUNT', sequelize.col('"post"."id"')), 'total']],
+      include: [
+        {
+          model: PostModel,
+          attributes: [],
+          required: false,
+          where: {
+            isDraft: false,
+          },
+        },
+      ],
+      where: {
+        groupId: groupIds,
+      },
+      group: [`"PostGroupModel"."group_id"`],
+    });
+
+    return groupIds.map((groupId) => {
+      const findGroup = countByGroups.find((group) => group.groupId === groupId);
+      if (findGroup)
+        return {
+          groupId,
+          total: findGroup.total || 0,
+        };
+      return {
+        groupId,
+        total: 0,
+      };
     });
   }
 }

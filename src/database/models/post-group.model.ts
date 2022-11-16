@@ -14,6 +14,7 @@ import { PostModel } from './post.model';
 export interface IPostGroup {
   postId: string;
   groupId: string;
+  total?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
