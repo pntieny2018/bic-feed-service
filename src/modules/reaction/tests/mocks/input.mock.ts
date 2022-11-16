@@ -6,7 +6,7 @@ import { CommentResponseDto } from '../../../comment/dto/response';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionEnum } from '../../reaction.enum';
 import { NIL as NIL_UUID } from 'uuid';
-import { PostPrivacy } from '../../../../database/models/post.model';
+import { PostPrivacy, PostType } from '../../../../database/models/post.model';
 
 export const mockCreateReactionDto = {
   post: {
@@ -71,7 +71,7 @@ export const mockPostResponseDto: PostResponseDto = {
   id: mockCreateReactionDto.post.targetId,
   content: 'hello world',
   highlight: 'nothing',
-  isArticle: false,
+  type: PostType.POST,
   media: {
     files: [],
     videos: [],
@@ -101,6 +101,7 @@ export const mockPostResponseDto: PostResponseDto = {
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
         privacy: GroupPrivacy.OPEN,
+        rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
   },

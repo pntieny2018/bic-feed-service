@@ -1,15 +1,46 @@
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional, MaxLength, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { AudienceRequestDto } from '../../../post/dto/requests/audience.request.dto';
+import { CoverMediaDto } from '../../../article/dto/requests';
 
 export class CreateSeriesDto {
+  @ApiProperty({
+    description: 'Audience',
+    type: AudienceRequestDto,
+    example: {
+      ['user_ids']: [],
+      ['group_ids']: [1],
+    },
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => AudienceRequestDto)
+  public audience?: AudienceRequestDto = {
+    groupIds: [],
+  };
+
   @ApiProperty({ type: String })
   @Type(() => String)
   @IsNotEmpty()
-  public name: string;
+  @MaxLength(64)
+  public title: string;
 
-  @ApiProperty({ type: Boolean })
-  @Type(() => Boolean)
+  @ApiProperty({ type: String })
+  @Type(() => String)
+  @MaxLength(255)
   @IsOptional()
-  public isActive: boolean;
+  public summary: string;
+
+  @ApiProperty({
+    type: CoverMediaDto,
+    example: {
+      id: '9322c384-fd8e-4a13-80cd-1cbd1ef95ba8',
+    },
+  })
+  @IsNotEmpty()
+  @Expose({
+    name: 'cover_media',
+  })
+  public coverMedia: CoverMediaDto;
 }

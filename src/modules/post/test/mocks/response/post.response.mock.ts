@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy, PostType } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { PostResponseDto } from '../../../dto/responses';
 
@@ -7,7 +7,7 @@ export const mockedPostResponse: PostResponseDto = {
   ownerReactions: [],
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
-  isArticle: false,
+  type: PostType.POST,
   media: {
     files: [],
     videos: [],
@@ -54,6 +54,7 @@ export const mockedPostResponse: PostResponseDto = {
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
         privacy: GroupPrivacy.PUBLIC,
+        rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
   },

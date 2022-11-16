@@ -1,6 +1,6 @@
 import { MentionableType } from '../../../common/constants';
 import { ObjectHelper } from '../../../common/helpers';
-import { PostPrivacy } from '../../../database/models/post.model';
+import { PostPrivacy, PostType } from '../../../database/models/post.model';
 import { UserDto } from '../../../modules/auth';
 import { PostResponseDto } from '../../../modules/post/dto/responses';
 import { GroupPrivacy } from '../../../shared/group/dto';
@@ -32,7 +32,7 @@ export const mockPostResponseDto: PostResponseDto = {
   id: '40dc4093-1bd0-4105-469f-8504e1986145',
   content: 'hello world',
   highlight: 'nothing',
-  isArticle: false,
+  type: PostType.POST,
   media: {
     files: [],
     videos: [],
@@ -67,6 +67,7 @@ export const mockPostResponseDto: PostResponseDto = {
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
         privacy: GroupPrivacy.OPEN,
+        rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
   },

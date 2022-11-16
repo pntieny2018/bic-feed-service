@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost, PostPrivacy } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy, PostType } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { ArticleResponseDto } from '../../../dto/responses';
 
@@ -9,7 +9,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
   summary: 'bbb',
   id: '40dc4093-1bd0-4105-869f-8504e1986141',
   content: 'bbbbbb',
-  isArticle: true,
+  type: PostType.ARTICLE,
   isLocked: true,
   media: {
     files: [],
@@ -57,6 +57,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
         privacy: GroupPrivacy.PUBLIC,
+        rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
   },
@@ -94,7 +95,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
 export const mockedArticleData = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
   commentsCount: 3,
-  isArticle: true,
+  type: PostType.ARTICLE,
   isImportant: false,
   importantExpiredAt: null,
   isDraft: true,

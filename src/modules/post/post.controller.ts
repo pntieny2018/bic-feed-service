@@ -75,6 +75,15 @@ export class PostController {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 
+  @ApiOperation({ summary: 'Get total draft' })
+  @ApiOkResponse({
+    type: Number,
+  })
+  @Get('/total-draft')
+  public async getTotalDraft(@AuthUser() user: UserDto): Promise<any> {
+    return this._postAppService.getTotalDraft(user);
+  }
+
   @ApiOperation({ summary: 'Get post detail' })
   @ApiOkResponse({
     type: PostResponseDto,

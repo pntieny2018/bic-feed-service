@@ -133,8 +133,8 @@ export const POST_ES_MAPPING = {
           },
         },
       },
-      isArticle: {
-        type: 'boolean',
+      type: {
+        type: 'keyword',
       },
       createdAt: {
         type: 'date',

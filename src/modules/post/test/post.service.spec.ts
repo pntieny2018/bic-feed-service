@@ -13,7 +13,7 @@ import { PageDto } from '../../../common/dto/pagination/page.dto';
 import { LogicException } from '../../../common/exceptions';
 import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PostModel, PostPrivacy } from '../../../database/models/post.model';
+import { PostModel, PostPrivacy, PostType } from '../../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../../database/models/user-mark-read-post.model';
 import { GroupService } from '../../../shared/group';
 import { UserService } from '../../../shared/user';
@@ -253,7 +253,7 @@ describe('PostService', () => {
       expect(postService.addGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
         isDraft: true,
-        isArticle: false,
+        type: PostType.POST,
         content: mockedCreatePostDto.content,
         createdBy: mockedUserAuth.id,
         updatedBy: mockedUserAuth.id,

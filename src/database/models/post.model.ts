@@ -33,24 +33,25 @@ import { MentionableType } from '../../common/constants';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
-import { UserDto } from '../../modules/auth';
-import { OrderEnum, PageOptionsDto } from '../../common/dto';
 import { CategoryModel, ICategory } from './category.model';
-import { ISeries, SeriesModel } from './series.model';
 import { HashtagModel, IHashtag } from './hashtag.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
-import { GetListArticlesDto } from '../../modules/article/dto/requests';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
-import { GetTimelineDto } from '../../modules/feed/dto/request';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
   OPEN = 'OPEN',
   PRIVATE = 'PRIVATE',
   SECRET = 'SECRET',
+}
+
+export enum PostType {
+  POST = 'POST',
+  ARTICLE = 'ARTICLE',
+  SERIES = 'SERIES',
 }
 export interface IPost {
   id: string;
@@ -79,12 +80,12 @@ export interface IPost {
   reactionsCount?: string;
   giphyId?: string;
   markedReadPost?: boolean;
-  isArticle: boolean;
+  type: PostType;
   title?: string;
   summary?: string;
   views: number;
   categories?: ICategory[];
-  series?: ISeries[];
+  series?: IPost[];
   hashtags?: IHashtag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
@@ -132,9 +133,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public canShare: boolean;
 
-  @Column
-  public isArticle: boolean;
-
   @AllowNull(true)
   @Column
   public content: string;
@@ -142,6 +140,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public title: string;
+
+  @AllowNull(false)
+  @Column
+  public type: PostType;
 
   @AllowNull(true)
   @Column
@@ -212,8 +214,8 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @HasMany(() => PostHashtagModel)
   public postHashtags?: PostHashtagModel[];
 
-  @BelongsToMany(() => SeriesModel, () => PostSeriesModel)
-  public series?: SeriesModel[];
+  @BelongsToMany(() => PostModel, () => PostSeriesModel)
+  public series?: PostModel[];
 
   @HasMany(() => PostSeriesModel)
   public postSeries?: PostSeriesModel[];
@@ -349,13 +351,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
         `(SELECT COUNT(*) FROM ${schema}.comments WHERE ${schema}.comments.post_id="PostModel"."id")`
       ),
       alias ?? 'commentsCount',
-    ];
-  }
-
-  public static importantPostsFirstCondition(alias?: string): [Literal, string] {
-    return [
-      sequelize.literal(`CASE WHEN "PostModel"."important_expired_at" > NOW() THEN 1 ELSE 0 END`),
-      alias ?? 'isNowImportant',
     ];
   }
 

@@ -265,7 +265,7 @@ describe('FeedService', () => {
     });
   });
 
-  describe('FeedServices.getUsersSeenPots', () => {
+  describe('FeedServices.getUsersSeenPosts', () => {
     it.skip('should success', async () => {
       postService.findPost = jest.fn().mockResolvedValue(mockIPost);
       userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels);
@@ -277,7 +277,7 @@ describe('FeedService', () => {
         username: 'bret.josh',
         avatar: 'https://bein.group/josh.png',
       });
-      const userInfo = await feedService.getUsersSeenPots(mockedUserAuth, {
+      const userInfo = await feedService.getUsersSeenPosts(mockedUserAuth, {
         limit: 25,
         offset: 0,
         postId: '8548c944-91f3-4577-99e2-18a541186c18',
@@ -314,7 +314,7 @@ describe('FeedService', () => {
       });
       sentryService.captureException = jest.fn();
       try {
-        await feedService.getUsersSeenPots(mockedUserAuth, {
+        await feedService.getUsersSeenPosts(mockedUserAuth, {
           limit: 25,
           offset: 0,
           postId: '8548c944-91f3-4577-99e2-18a541186c18',

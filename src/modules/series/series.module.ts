@@ -1,11 +1,27 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SeriesService } from './series.service';
 import { SeriesController } from './series.controller';
+import { AuthorityModule } from '../authority';
+import { CommentModule } from '../comment';
+import { ReactionModule } from '../reaction';
+import { FeedModule } from '../feed';
+import { PostModule } from '../post';
+import { UserModule } from '../../shared/user';
+import { GroupModule } from '../../shared/group';
+import { SeriesAppService } from './application/series.app-service';
 
 @Module({
-  imports: [],
+  imports: [
+    AuthorityModule,
+    PostModule,
+    UserModule,
+    GroupModule,
+    forwardRef(() => ReactionModule),
+    forwardRef(() => CommentModule),
+    forwardRef(() => FeedModule),
+  ],
   controllers: [SeriesController],
-  providers: [SeriesService],
+  providers: [SeriesService, SeriesAppService],
   exports: [SeriesService],
 })
 export class SeriesModule {}

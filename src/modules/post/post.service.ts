@@ -25,8 +25,7 @@ import { PostEditedHistoryModel } from '../../database/models/post-edited-histor
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
-import { SeriesModel } from '../../database/models/series.model';
+import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
@@ -103,7 +102,7 @@ export class PostService {
     const condition = {
       createdBy: authUserId,
       isDraft: true,
-      isArticle: false,
+      type: PostType.POST,
     };
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
@@ -349,18 +348,11 @@ export class PostService {
     }
 
     if (shouldIncludePreviewLink) {
-      const obj = {
+      includes.push({
         model: LinkPreviewModel,
         as: 'linkPreview',
         required: false,
-      };
-      if (filterCategoryIds) {
-        obj['where'] = {
-          id: filterCategoryIds,
-        };
-      }
-
-      includes.push(obj);
+      });
     }
 
     if (shouldIncludeCover) {
@@ -390,13 +382,12 @@ export class PostService {
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-      const linkPreview = await this.linkPreviewService.upsert(createPostDto.linkPreview);
 
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
           isDraft: true,
-          isArticle: false,
+          type: PostType.POST,
           content,
           createdBy: authUserId,
           updatedBy: authUserId,
@@ -406,8 +397,6 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           isProcessing: false,
-          hashtagsJson: [],
-          linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
       );
@@ -462,12 +451,7 @@ export class PostService {
   }
 
   /**
-   * Update Post except isDraft
-   * @param post
-   * @param authUser UserDto
-   * @param updatePostDto UpdatePostDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
+   * Update Post
    */
   public async update(
     post: PostResponseDto,
@@ -680,15 +664,6 @@ export class PostService {
             as: 'groups',
             attributes: ['groupId'],
           },
-          {
-            model: SeriesModel,
-            as: 'series',
-            through: {
-              attributes: [],
-            },
-            required: false,
-            attributes: ['id'],
-          },
         ],
       });
 
@@ -776,11 +751,6 @@ export class PostService {
 
   /**
    * Delete/Insert group by post
-   * @param groupIds Array of Group ID
-   * @param postId PostID
-   * @param transaction Transaction
-   * @returns Promise resolve boolean
-   * @throws HttpException
    */
   public async setGroupByPost(
     groupIds: string[],
@@ -1162,10 +1132,10 @@ export class PostService {
       offset: number;
       limit: number;
       isImportant: boolean;
-      isArticle?: boolean;
+      type?: PostType;
     }
   ): Promise<string[]> {
-    const { offset, limit, isImportant } = filters;
+    const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
     };
@@ -1173,6 +1143,9 @@ export class PostService {
     if (isImportant) {
       conditions['isImportant'] = true;
       order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
+    }
+    if (type) {
+      conditions['type'] = type;
     }
     order.push(['createdAt', 'desc']);
 
@@ -1269,5 +1242,14 @@ export class PostService {
     });
 
     return posts.map((post) => post.id);
+  }
+
+  public async getTotalDraft(user: UserDto): Promise<number> {
+    return this.postModel.count({
+      where: {
+        isDraft: true,
+        createdBy: user.id,
+      },
+    });
   }
 }
