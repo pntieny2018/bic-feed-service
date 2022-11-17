@@ -5,6 +5,7 @@ import { CategoryResponseDto } from '.';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { AudienceResponseDto } from '../../../post/dto/responses';
 
 export class ArticleInSeriesResponseDto {
   @ApiProperty({
@@ -31,6 +32,12 @@ export class ArticleInSeriesResponseDto {
 
   @Expose()
   public lang?: string;
+
+  @ApiProperty({
+    type: AudienceResponseDto,
+  })
+  @Expose()
+  public audience: AudienceResponseDto;
 
   @ApiProperty({
     description: 'Categories',
