@@ -6,6 +6,8 @@ import { UserSharedDto } from '../../../../shared/user/dto';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceResponseDto } from '../../../post/dto/responses';
+import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
 
 export class ArticleInSeriesResponseDto {
   @ApiProperty({
@@ -105,6 +107,25 @@ export class ArticleInSeriesResponseDto {
   })
   @Expose()
   public reactionsCount?: Record<string, Record<string, number>>;
+
+  @ApiProperty({
+    description: 'Setting post',
+    type: PostSettingResponseDto,
+  })
+  @Expose()
+  @Transform(({ obj, value }) => {
+    if (!value) {
+      return {
+        canReact: obj.canReact,
+        canComment: obj.canComment,
+        canShare: obj.canShare,
+        isImportant: obj.isImportant,
+        importantExpiredAt: obj.importantExpiredAt,
+      };
+    }
+    return value;
+  })
+  public setting: PostSettingDto;
 
   public constructor(data: Partial<ArticleInSeriesResponseDto>) {
     Object.assign(this, data);
