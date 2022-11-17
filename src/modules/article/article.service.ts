@@ -221,6 +221,7 @@ export class ArticleService extends PostService {
     const articlesBindedData = await this.articleBinding.bindRelatedData(jsonArticles, {
       shouldBindActor: true,
       shouldBindAudience: true,
+      shouldBindReaction: true,
     });
     return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
