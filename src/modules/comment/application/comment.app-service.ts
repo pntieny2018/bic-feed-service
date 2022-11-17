@@ -79,8 +79,12 @@ export class CommentAppService {
     return commentResponse;
   }
 
-  public get(user: UserDto, commentId: string, getCommentLinkDto: GetCommentLinkDto): Promise<any> {
-    return this._commentService.getCommentLink(commentId, user, getCommentLinkDto);
+  public getCommentsArroundId(
+    commentId: string,
+    getCommentsArroundIdDto: GetCommentLinkDto,
+    user: UserDto
+  ): Promise<any> {
+    return this._commentService.getCommentsArroundId(commentId, user, getCommentsArroundIdDto);
   }
 
   public getCommentEditedHistory(

@@ -245,7 +245,7 @@ export class PostService {
 
   public async getListWithGroupsByIds(postIds: string[]): Promise<IPost[]> {
     const postGroups = await this.postModel.findAll({
-      attributes: ['id', 'title'],
+      attributes: ['id', 'title', 'createdBy'],
       include: [
         {
           model: PostGroupModel,
