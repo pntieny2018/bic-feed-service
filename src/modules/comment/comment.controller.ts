@@ -90,21 +90,17 @@ export class CommentController {
     return this._commentAppService.reply(user, commentId, createReplyCommentDto);
   }
 
-  @ApiOperation({ summary: 'Get comment detail' })
+  @ApiOperation({ summary: 'Get comments arround comment ID' })
   @ApiOkResponse({
     type: CommentDetailResponseDto,
-    description: 'Get comment successfully',
-  })
-  @ResponseMessages({
-    success: 'Get comment successfully',
   })
   @Get('/:commentId')
-  public get(
-    @AuthUser(false) user: UserDto,
+  public getCommentsArroundId(
     @Param('commentId', ParseUUIDPipe) commentId: string,
-    @Query(GetCommentLinkPipe) getCommentLinkDto: GetCommentLinkDto
+    @Query(GetCommentLinkPipe) getCommentsArroundIdDto: GetCommentLinkDto,
+    @AuthUser(false) user: UserDto
   ): Promise<any> {
-    return this._commentAppService.get(user, commentId, getCommentLinkDto);
+    return this._commentAppService.getCommentsArroundId(commentId, getCommentsArroundIdDto, user);
   }
 
   @ApiOperation({ summary: 'Get comment edited history' })
