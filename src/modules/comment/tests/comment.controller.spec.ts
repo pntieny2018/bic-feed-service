@@ -30,7 +30,7 @@ describe.skip('CommentController', () => {
             destroy: jest.fn(),
             getComment: jest.fn(),
             getComments: jest.fn(),
-            getCommentLink: jest.fn()
+            getCommentsArroundId: jest.fn()
           },
         },
         {
@@ -117,10 +117,10 @@ describe.skip('CommentController', () => {
       expect(logSpy).toBeCalled();
     });
 
-    it('CommentService.getCommentLink should be called', async () => {
-      commentService.getCommentLink.mockResolvedValue([]);
+    it('CommentService.getCommentsArroundId should be called', async () => {
+      commentService.getCommentsArroundId.mockResolvedValue([]);
       await controller.get(authUserMock, createdComment.id, {});
-      expect(commentService.getCommentLink).toBeCalled();
+      expect(commentService.getCommentsArroundId).toBeCalled();
     });
   });
 

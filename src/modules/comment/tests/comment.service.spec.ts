@@ -1034,7 +1034,7 @@ describe('CommentService', () => {
     });
   });
 
-  describe('CommentService.getCommentLinkForWeb', () => {
+  describe('CommentService.getCommentsArroundIdForWeb', () => {
     it('Should be successfully', async () => {
       commentModel.findByPk.mockResolvedValue(getCommentMock);
       postService.findPost.mockResolvedValue({
@@ -1048,7 +1048,7 @@ describe('CommentService', () => {
       });
       commentService.bindChildrenToComment = jest.fn();
       jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
-      await commentService.getCommentLink('57dc4093-1bd0-4105-869f-8504e1986145', authUserMock, {});
+      await commentService.getCommentsArroundId('57dc4093-1bd0-4105-869f-8504e1986145', authUserMock, {});
       expect(commentModel.findByPk).toBeCalled();
       expect(postService.findPost).toBeCalled();
     });
@@ -1115,15 +1115,6 @@ describe('CommentService', () => {
 
         expect(commentNoActorResponse[1]['actor']).toBeUndefined();
       });
-    });
-  });
-
-  describe('CommentService.getPostIdOfComment', () => {
-    it('Should successfully', async () => {
-      commentModel.findOne.mockResolvedValue(getCommentMock);
-      const result = await commentService.getPostIdOfComment(getCommentMock.id);
-      expect(commentModel.findOne).toBeCalled();
-      expect(result).toEqual(getCommentMock.postId);
     });
   });
 
