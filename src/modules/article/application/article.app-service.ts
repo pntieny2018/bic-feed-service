@@ -144,9 +144,8 @@ export class ArticleAppService {
 
     const invalidSeries = [];
     seriesGroups.forEach((item) => {
-      const seriesGroupIds = item.groups.map((group) => group.groupId);
-      const elmDiff = ArrayHelper.arrDifferenceElements(seriesGroupIds, groupIds);
-      if (elmDiff.length) {
+      const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
+      if (!isValid) {
         invalidSeries.push(item);
       }
     });
