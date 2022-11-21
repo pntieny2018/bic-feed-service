@@ -1,5 +1,8 @@
 version: 2.1
 parameters:
+  run_workflow_itn:
+    default: true
+    type: boolean
   run_workflow_dev:
     default: true
     type: boolean
@@ -11,6 +14,45 @@ parameters:
     type: boolean
 
 jobs:
+  itn:
+    docker:
+      - image: cimg/base:2022.09
+    working_directory: ~/app
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.12
+          docker_layer_caching: true
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t $ITN_IMAGE_NAME:latest .
+      - run:
+          name: Push Docker Image
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker tag $ITN_IMAGE_NAME:latest $ITN_IMAGE_NAME:$CIRCLE_SHA1
+            docker push $ITN_IMAGE_NAME:latest
+            docker push $ITN_IMAGE_NAME:$CIRCLE_SHA1
+      - run:
+          name: Install envsubst
+          command: |
+            sudo apt-get update && sudo apt-get -y install gettext-base
+      - run:
+          name: Update image version
+          command: |
+            git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
+            cd bic-kube
+            set -e
+            COMMIT_SHA1=$CIRCLE_SHA1
+            export COMMIT_SHA1=$COMMIT_SHA1
+            envsubst <apps/$SERVICE/$ITN_ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$ITN_ENVIRONMENT/version.yaml.out
+            mv apps/$SERVICE/$ITN_ENVIRONMENT/version.yaml.out apps/$SERVICE/$ITN_ENVIRONMENT/version.yaml
+            git config --global user.email "cicd@evol.vn"
+            git config --global user.name "CICD"
+            git add -A
+            git commit -m "Updated version to $ITN_IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git push
   dev:
     docker:
       - image: cimg/base:2022.09
@@ -130,6 +172,13 @@ jobs:
             git push
 workflows:
   version: 2
+  Internal:
+    when: << pipeline.parameters.run_workflow_itn >>
+    jobs:
+      - itn:
+          filters:
+            branches:
+              only: /^internal\-\d+/
   Develop:
     when: << pipeline.parameters.run_workflow_dev >>
     jobs:
