@@ -185,7 +185,7 @@ workflows:
       - dev:
           filters:
             branches:
-              only: sandbox
+              only: develop
   Staging:
     when: << pipeline.parameters.run_workflow_stg >>
     jobs:
