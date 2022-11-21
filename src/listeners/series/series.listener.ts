@@ -73,9 +73,9 @@ export class SeriesListener {
 
   @On(SeriesHasBeenUpdatedEvent)
   public async onSeriesUpdated(event: SeriesHasBeenUpdatedEvent): Promise<void> {
-    const { oldSeries, actor } = event.payload;
+    const { newSeries, oldSeries, actor } = event.payload;
     const { id, commentsCount, totalUsersSeen, audience, createdAt, lang, summary, title } =
-      oldSeries;
+      newSeries;
 
     //TODO:: send noti
 
