@@ -148,7 +148,7 @@ export class PostAppService {
   }
 
   public async deletePost(user: UserDto, postId: string): Promise<boolean> {
-    const posts = await this._postService.getListWithGroupsByIds([postId]);
+    const posts = await this._postService.getListWithGroupsByIds([postId], false);
 
     if (posts.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
