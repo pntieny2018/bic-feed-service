@@ -90,7 +90,7 @@ export class ArticleAppService {
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
       if (series?.length) {
-        const seriesGroups = await this._postService.getListWithGroupsByIds(series);
+        const seriesGroups = await this._postService.getListWithGroupsByIds(series, true);
         const invalidSeries = [];
         seriesGroups.forEach((item) => {
           const isValid = item.groups.some((group) => audience.groupIds.includes(group.groupId));
@@ -139,7 +139,8 @@ export class ArticleAppService {
     await this._authorityService.checkCanCreatePost(user, groupIds, article.setting.isImportant);
 
     const seriesGroups = await this._postService.getListWithGroupsByIds(
-      article.series.map((item) => item.id)
+      article.series.map((item) => item.id),
+      true
     );
 
     const invalidSeries = [];
@@ -176,7 +177,7 @@ export class ArticleAppService {
   }
 
   public async delete(user: UserDto, articleId: string): Promise<boolean> {
-    const articles = await this._postService.getListWithGroupsByIds([articleId]);
+    const articles = await this._postService.getListWithGroupsByIds([articleId], false);
 
     if (articles.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
