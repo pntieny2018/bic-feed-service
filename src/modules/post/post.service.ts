@@ -325,6 +325,10 @@ export class PostService {
           attributes: [],
         },
         attributes: ['id', 'title'],
+        order: [
+          ['zindex', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
       });
     }
     if (shouldIncludeMedia || mustIncludeMedia) {
