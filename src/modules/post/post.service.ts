@@ -250,7 +250,7 @@ export class PostService {
         {
           model: PostGroupModel,
           as: 'groups',
-          required: true,
+          required: false,
           attributes: ['groupId'],
         },
       ],
