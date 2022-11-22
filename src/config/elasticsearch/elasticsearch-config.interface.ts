@@ -3,4 +3,5 @@ export interface IElasticsearchConfig {
   namespace: string;
   username: string;
   password: string;
+  tls: boolean;
 }

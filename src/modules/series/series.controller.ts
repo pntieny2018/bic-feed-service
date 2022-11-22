@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
+import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
@@ -102,6 +103,7 @@ export class SeriesController {
   @ApiOkResponse({
     type: Boolean,
   })
+  @ResponseMessages({ success: 'Reorder successful.' })
   @Put('/:id/reorder')
   public async reorder(
     @AuthUser() user: UserDto,
