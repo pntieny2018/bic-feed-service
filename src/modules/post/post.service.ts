@@ -322,13 +322,9 @@ export class PostService {
         as: 'articles',
         required: false,
         through: {
-          attributes: [],
+          attributes: ['zindex', 'createdAt'],
         },
         attributes: ['id', 'title'],
-        order: [
-          ['zindex', 'ASC'],
-          ['createdAt', 'ASC'],
-        ],
       });
     }
     if (shouldIncludeMedia || mustIncludeMedia) {

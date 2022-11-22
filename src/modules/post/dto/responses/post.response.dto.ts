@@ -278,6 +278,22 @@ export class PostResponseDto {
     type: PostResponseDto,
   })
   @Expose()
+  @Transform(({ value }) => {
+    if (value && value.length) {
+      return value
+        .sort((a, b) => {
+          return (
+            a.PostSeriesModel.zindex - b.PostSeriesModel.zindex ||
+            a.PostSeriesModel.createdAt.getTime() - b.PostSeriesModel.createdAt.getTime()
+          );
+        })
+        .map((item) => {
+          delete item.PostSeriesModel;
+          return item;
+        });
+    }
+    return [];
+  })
   public articles?: PostResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
