@@ -608,11 +608,7 @@ export class ArticleService extends PostService {
         where: {
           seriesId: mustInSeriesIds,
         },
-        attributes: ['seriesId'],
-        order: [
-          ['zindex', 'ASC'],
-          ['createdAt', 'ASC'],
-        ],
+        attributes: ['seriesId', 'zindex', 'createdAt'],
       });
     }
 
