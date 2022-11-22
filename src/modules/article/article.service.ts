@@ -211,8 +211,9 @@ export class ArticleService extends PostService {
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
-
-    return articlesBindedData;
+    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   private async _getArticleIdsWithFilter(
