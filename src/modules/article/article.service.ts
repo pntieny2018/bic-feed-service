@@ -204,7 +204,16 @@ export class ArticleService extends PostService {
     const articleIdsSorted = articlesInSeries.map((article) => article.postId);
 
     const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
-    return articles;
+
+    const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
+    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   private async _getArticleIdsWithFilter(
