@@ -192,40 +192,19 @@ export class ArticleService extends PostService {
     seriesId: string,
     authUser: UserDto
   ): Promise<ArticleInSeriesResponseDto[]> {
-    const include = this.getIncludeObj({
-      shouldIncludeCategory: true,
-      shouldIncludeCover: true,
-      shouldIncludeOwnerReaction: true,
-      shouldIncludeGroup: true,
-      authUserId: authUser.id,
-      mustInSeriesIds: [seriesId],
-    });
-
-    const attributes = {
-      include: [],
-      exclude: ['content'],
-    };
-    if (authUser) {
-      attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
-      attributes.include.push(PostModel.loadSaved(authUser.id));
-    }
-    const rows = await this.postModel.findAll({
-      attributes,
-      include,
+    const articlesInSeries = await this.postSeriesModel.findAll({
       where: {
-        isDraft: false,
+        seriesId,
       },
+      order: [
+        ['zindex', 'ASC'],
+        ['createdAt', 'ASC'],
+      ],
     });
-    const jsonArticles = rows.map((row) => row.toJSON());
+    const articleIdsSorted = articlesInSeries.map((article) => article.postId);
 
-    const articlesBindedData = await this.articleBinding.bindRelatedData(jsonArticles, {
-      shouldBindActor: true,
-      shouldBindAudience: true,
-      shouldBindReaction: true,
-    });
-    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
-      excludeExtraneousValues: true,
-    });
+    const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
+    return articles;
   }
 
   private async _getArticleIdsWithFilter(
