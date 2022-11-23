@@ -1035,6 +1035,7 @@ export class PostService {
 
   public async updatePrivacy(postId: string): Promise<void> {
     const post = await this.findPost({ postId });
+    if (post.groups.length === 0) return;
     const groupIds = post.groups.map((g) => g.groupId);
     const privacy = await this.getPrivacy(groupIds);
     await this.postModel.update(
