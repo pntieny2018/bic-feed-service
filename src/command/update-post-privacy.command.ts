@@ -15,12 +15,19 @@ export class UpdatePrivacyPostCommand implements CommandRunner {
       const posts = await this._postModel.findAll({
         attributes: ['id'],
         raw: true,
+        where: {
+          privacy: null,
+          isDraft: false,
+        },
       });
       for (const post of posts) {
         await this._postService.updatePrivacy(post.id);
+        console.log(`Updated ${post.id}`);
       }
+      console.log(`Total ${posts.length}. DONE!`);
     } catch (e) {
       console.log(e);
     }
+    process.exit();
   }
 }
