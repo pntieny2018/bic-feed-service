@@ -13,6 +13,7 @@ import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostPrivacy, PostType } from '../../../../database/models/post.model';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
+import { ArticleInSeriesResponseDto, ArticleResponseDto } from '../../../article/dto/responses';
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -294,7 +295,7 @@ export class PostResponseDto {
     }
     return [];
   })
-  public articles?: PostResponseDto[];
+  public articles?: ArticleResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
