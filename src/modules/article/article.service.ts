@@ -142,8 +142,10 @@ export class ArticleService extends PostService {
     const hasNextPage = articleIdsAndSorted.length === limit + 1;
     articleIdsAndSorted.pop();
 
-    const articles = await this._getArticlesByIds(articleIdsAndSorted, authUser);
-
+    const jsonarticles = await this._getArticlesByIds(articleIdsAndSorted, authUser);
+    const articles = this.classTransformer.plainToInstance(ArticleResponseDto, jsonarticles, {
+      excludeExtraneousValues: true,
+    });
     return new PageDto<ArticleResponseDto>(articles, {
       hasNextPage,
       limit,
@@ -151,7 +153,7 @@ export class ArticleService extends PostService {
     });
   }
 
-  private async _getArticlesByIds(ids: string[], authUser): Promise<ArticleResponseDto[]> {
+  private async _getArticlesByIds(ids: string[], authUser): Promise<IPost[]> {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
@@ -178,14 +180,13 @@ export class ArticleService extends PostService {
       },
     });
 
-    const mappedPosts = ids.map((postId) => {
-      const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
-    });
+    const mappedPosts = [];
+    for (const id of ids) {
+      const post = rows.find((row) => row.id === id);
+      if (post) mappedPosts.push(post.toJSON());
+    }
 
-    return this.classTransformer.plainToInstance(ArticleResponseDto, mappedPosts, {
-      excludeExtraneousValues: true,
-    });
+    return mappedPosts;
   }
 
   public async getArticlesInSeries(
@@ -202,15 +203,14 @@ export class ArticleService extends PostService {
       ],
     });
     const articleIdsSorted = articlesInSeries.map((article) => article.postId);
-
     const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
-
     const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
+
     return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
@@ -838,6 +838,7 @@ export class ArticleService extends PostService {
       }
 
       const oldGroupIds = post.audience?.groups.map((group) => group.id) ?? [];
+
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }

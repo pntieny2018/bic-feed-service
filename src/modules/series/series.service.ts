@@ -157,6 +157,7 @@ export class SeriesService {
       const { title, summary, audience, coverMedia } = createPostDto;
       const authUserId = authUser.id;
       transaction = await this._sequelizeConnection.transaction();
+      const privacy = await this._articleService.getPrivacy(audience.groupIds);
       const post = await this._postModel.create(
         {
           title,
@@ -167,6 +168,7 @@ export class SeriesService {
           isProcessing: false,
           cover: coverMedia.id,
           type: PostType.SERIES,
+          privacy,
         },
         { transaction }
       );
@@ -212,12 +214,14 @@ export class SeriesService {
     try {
       const { audience, title, summary, coverMedia } = updateSeriesDto;
       transaction = await this._sequelizeConnection.transaction();
+      const privacy = await this._articleService.getPrivacy(audience.groupIds);
       await this._postModel.update(
         {
           updatedBy: authUserId,
           title,
           summary,
           cover: coverMedia.id,
+          privacy,
         },
         {
           where: {
