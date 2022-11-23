@@ -324,7 +324,14 @@ export class PostService {
         through: {
           attributes: ['zindex', 'createdAt'],
         },
-        attributes: ['id', 'title'],
+        attributes: ['id', 'title', 'summary', 'createdBy'],
+        include: [
+          {
+            model: MediaModel,
+            as: 'coverMedia',
+            required: false,
+          },
+        ],
       });
     }
     if (shouldIncludeMedia || mustIncludeMedia) {

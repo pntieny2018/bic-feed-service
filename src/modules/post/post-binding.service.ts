@@ -155,6 +155,9 @@ export class PostBindingService {
       } else {
         userIds.push(post.createdBy);
       }
+      if (post.articles?.length) {
+        userIds.push(...post.articles.map((article) => article.createdBy));
+      }
     }
     const users = await this.userService.getMany(userIds);
     for (const post of posts) {
@@ -162,6 +165,14 @@ export class PostBindingService {
         post.actor = users.find((i) => i.id === post.actor.id);
       } else {
         post.actor = users.find((i) => i.id === post.createdBy);
+      }
+
+      if (post.articles?.length) {
+        post.articles = post.articles.map((article) => {
+          article.actor = users.find((i) => i.id === article.createdBy);
+          delete article.actor.groups;
+          return article;
+        });
       }
     }
   }
