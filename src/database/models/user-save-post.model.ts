@@ -1,10 +1,22 @@
 import { IsUUID } from 'class-validator';
-import { BelongsTo, Column, CreatedAt, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  CreatedAt,
+  ForeignKey,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Table,
+} from 'sequelize-typescript';
+import { IPostGroup, PostGroupModel } from './post-group.model';
 import { PostModel } from './post.model';
 
 export interface IUserSavePost {
   postId: string;
   userId: string;
+  postGroups?: IPostGroup[];
   createdAt?: Date;
 }
 
@@ -30,4 +42,7 @@ export class UserSavePostModel extends Model implements IUserSavePost {
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;
+
+  @HasMany(() => PostGroupModel, 'postId')
+  public postGroups?: PostGroupModel[];
 }

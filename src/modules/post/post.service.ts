@@ -896,9 +896,10 @@ export class PostService {
       limit: number;
       isImportant?: boolean;
       type?: PostType;
+      groupIds?: string[];
     }
   ): Promise<string[]> {
-    const { type, isImportant, offset, limit } = search;
+    const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
       isDraft: false,
     };
@@ -911,19 +912,28 @@ export class PostService {
       condition['isImportant'] = true;
     }
 
+    const include: any = [
+      {
+        model: PostModel,
+        required: true,
+        attributes: [],
+        where: condition,
+      },
+    ];
+
+    if (groupIds) {
+      include.push({
+        model: PostGroupModel,
+        required: true,
+        attributes: [],
+        where: {
+          groupId: groupIds,
+        },
+      });
+    }
     const posts = await this.userSavePostModel.findAll({
       attributes: ['postId'],
-      include: [
-        {
-          model: PostModel,
-          required: true,
-          attributes: [],
-          where: condition,
-        },
-      ],
-      where: {
-        userId,
-      },
+      include,
       order: [['createdAt', 'desc']],
       offset,
       limit: limit + 1,
@@ -1124,7 +1134,7 @@ export class PostService {
     filters: {
       offset: number;
       limit: number;
-      isImportant: boolean;
+      isImportant?: boolean;
       type?: PostType;
     }
   ): Promise<string[]> {
@@ -1137,10 +1147,11 @@ export class PostService {
       conditions['isImportant'] = true;
       order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
     }
+    order.push(['createdAt', 'desc']);
+
     if (type) {
       conditions['type'] = type;
     }
-    order.push(['createdAt', 'desc']);
 
     const posts = await this.postModel.findAll({
       attributes: ['id', PostModel.loadMarkReadPost(userId)],
@@ -1206,9 +1217,28 @@ export class PostService {
       offset: number;
       limit: number;
       authUserId: string;
+      isImportant?: boolean;
+      type?: PostType;
     }
   ): Promise<string[]> {
-    const { offset, limit, authUserId } = filters;
+    const { offset, limit, authUserId, isImportant, type } = filters;
+    const conditions = {
+      isDraft: false,
+    };
+
+    const order = [];
+    if (isImportant) {
+      conditions['isImportant'] = true;
+      order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
+    } else {
+      order.push([this.sequelizeConnection.literal('"isImportant"'), 'desc']);
+    }
+    order.push(['createdAt', 'desc']);
+
+    if (type) {
+      conditions['type'] = type;
+    }
+
     const posts = await this.postModel.findAll({
       attributes: ['id', this.postModel.loadImportant(authUserId)],
       include: [
@@ -1223,13 +1253,8 @@ export class PostService {
         },
       ],
       subQuery: false,
-      where: {
-        isDraft: false,
-      },
-      order: [
-        [this.sequelizeConnection.literal('"isImportant"'), 'desc'],
-        ['createdAt', 'desc'],
-      ],
+      where: conditions,
+      order,
       group: 'id',
       offset,
       limit,

@@ -37,7 +37,7 @@ export class SeriesController {
     type: PostResponseDto,
   })
   @Get('/')
-  public searchPosts(
+  public searchSeries(
     @AuthUser() user: UserDto,
     @Query() searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesResponseDto>> {

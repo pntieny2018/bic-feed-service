@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
-import { IsNotEmpty, IsInt, IsUUID } from 'class-validator';
+import { Expose, Transform } from 'class-transformer';
 import { PageOptionsDto } from '../../../../common/dto';
-
+import { IsNotEmpty, IsUUID, IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import { PostType } from '../../../../database/models/post.model';
 export class GetTimelineDto extends PageOptionsDto {
   @ApiProperty({ name: 'group_id', example: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d' })
   @IsUUID()
@@ -11,4 +11,42 @@ export class GetTimelineDto extends PageOptionsDto {
     name: 'group_id',
   })
   public groupId: string;
+
+  @ApiProperty({ name: 'is_important', example: true })
+  @IsOptional()
+  @Expose({
+    name: 'is_important',
+  })
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
+  })
+  public isImportant?: boolean;
+
+  @ApiProperty({ name: 'is_saved', example: true })
+  @IsOptional()
+  @Expose({
+    name: 'is_saved',
+  })
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
+  })
+  public isSaved?: boolean;
+
+  @ApiProperty({
+    description: 'Type',
+    required: false,
+    default: '',
+    enum: PostType,
+  })
+  @Expose()
+  @IsOptional()
+  @IsEnum(PostType)
+  @ValidateIf((i) => i.type !== '')
+  public type?: PostType;
 }
