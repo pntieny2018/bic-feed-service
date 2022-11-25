@@ -353,6 +353,100 @@ export class SeriesService {
   }
 
   /**
+   * Add Article to Series
+   */
+  public async addArticles(seriesId: string, articleIds: string[], authUser: UserDto): Promise<IPost> {
+    try {
+      const series = await this._postModel.findOne({
+        where: {
+          id: seriesId,
+        },
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
+        ],
+      });
+
+      if (!series) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      }
+      await this._authorityService.checkPostOwner(series, authUser.id);
+
+      const dataInsert = [];
+      const totalArticlesInSeries = await this._postSeriesModel.count({
+        where: {
+          seriesId,
+        },
+      });
+      let zIndex = totalArticlesInSeries;
+      for (const articleId of articleIds) {
+        dataInsert.push({
+          seriesId,
+          postId: articleId,
+          zIndex,
+        });
+        zIndex += 1;
+      }
+      await this._postSeriesModel.bulkCreate(dataInsert, { ignoreDuplicates: true });
+
+      return series;
+    } catch (error) {
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove articles From Series
+   */
+  public async removeArticles(seriesId: string, articleIds: string[], authUser: UserDto): Promise<IPost> {
+    try {
+      const series = await this._postModel.findOne({
+        where: {
+          id: seriesId,
+        },
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            attributes: ['groupId'],
+          },
+        ],
+      });
+
+      if (!series) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      }
+      await this._authorityService.checkPostOwner(series, authUser.id);
+
+      const dataInsert = [];
+      const totalArticlesInSeries = await this._postSeriesModel.count({
+        where: {
+          seriesId,
+        },
+      });
+      let zIndex = totalArticlesInSeries;
+      for (const articleId of articleIds) {
+        dataInsert.push({
+          seriesId,
+          postId: articleId,
+          zIndex,
+        });
+        zIndex += 1;
+      }
+      await this._postSeriesModel.bulkCreate(dataInsert, { ignoreDuplicates: true });
+
+      return series;
+    } catch (error) {
+      this._logger.error(error, error?.stack);
+      throw error;
+    }
+  }
+
+  /**
    * Add post to series
    */
   public async addToPost(

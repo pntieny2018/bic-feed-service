@@ -124,6 +124,10 @@ export class SeriesAppService {
     return false;
   }
 
+  public async removeArticles(id, articleIds: string[], user: UserDto): Promise<boolean> {
+    const seriesDeleted = await this._seriesService.delete(user, seriesId);
+  }
+
   public async reorderArticles(
     seriesId: string,
     articleIds: string[],
