@@ -43,6 +43,11 @@ export class UserSavePostModel extends Model implements IUserSavePost {
   @BelongsTo(() => PostModel)
   public post?: PostModel;
 
-  @HasMany(() => PostGroupModel, 'postId')
+  @HasMany(() => PostGroupModel, {
+    foreignKey: 'postId',
+    sourceKey: 'postId',
+    as: 'postGroups',
+    constraints: false,
+  })
   public postGroups?: PostGroupModel[];
 }

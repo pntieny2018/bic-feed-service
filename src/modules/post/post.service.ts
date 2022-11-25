@@ -914,16 +914,16 @@ export class PostService {
 
     const include: any = [
       {
-        model: PostModel,
+        model: UserSavePostModel,
         required: true,
         attributes: [],
-        where: condition,
       },
     ];
 
     if (groupIds) {
       include.push({
         model: PostGroupModel,
+        as: 'groups',
         required: true,
         attributes: [],
         where: {
@@ -931,15 +931,17 @@ export class PostService {
         },
       });
     }
-    const posts = await this.userSavePostModel.findAll({
-      attributes: ['postId'],
+    const posts = await this.postModel.findAll({
+      attributes: ['id'],
+      subQuery: false,
       include,
-      order: [['createdAt', 'desc']],
+      where: condition,
+      order: [[this.sequelizeConnection.literal('"userSavePosts".created_at'), 'DESC']],
       offset,
       limit: limit + 1,
     });
 
-    return posts.map((post) => post.postId);
+    return posts.map((post) => post.id);
   }
 
   public async savePostToUserCollection(postId: string, userId: string): Promise<void> {
