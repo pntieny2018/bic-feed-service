@@ -40,7 +40,7 @@ import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
-import { UserSavePostModel } from './user-save-post.model';
+import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 
 export enum PostPrivacy {
   PUBLIC = 'PUBLIC',
@@ -94,6 +94,7 @@ export interface IPost {
   linkPreview?: ILinkPreview;
   cover?: string;
   articles?: Partial<IPost>[];
+  userSavePosts?: IUserSavePost[];
 }
 
 @Table({
@@ -247,6 +248,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => UserNewsFeedModel)
   public userNewsFeeds: UserNewsFeedModel[];
+
+  @HasMany(() => UserSavePostModel)
+  public userSavePosts?: UserSavePostModel[];
 
   @BelongsTo(() => LinkPreviewModel, {
     foreignKey: 'linkPreviewId',
