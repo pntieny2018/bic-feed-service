@@ -70,4 +70,6 @@ export const HTTP_STATUS_ID = {
   APP_CATEGORY_NOT_ALLOW: 'app.category.not_allow',
 
   APP_CATEGORY_INVALID_PARAMETER: 'app.category.invalid_parameter',
+
+  APP_NOT_OWNER: 'app.not_owner',
 };
