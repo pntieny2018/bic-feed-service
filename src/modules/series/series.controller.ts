@@ -18,6 +18,7 @@ import { AuthUser, UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { DeleteArticlesInSeriesDto } from './dto/requests/delete-articles-in-series.dto';
 import { ReorderArticlesDto } from './dto/requests/reorder-articles.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
@@ -113,5 +114,20 @@ export class SeriesController {
     const { articleIds } = reorderArticlesDto;
     await this._seriesAppService.reorderArticles(id, articleIds, user);
     return true;
+  }
+
+  @ApiOperation({ summary: 'Remove article from series' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Remove article successfully',
+  })
+  @Delete('/:id/remove-articles')
+  public async removeArticleFromSeries(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() deleteArticlesInSeriesDto: DeleteArticlesInSeriesDto,
+    @AuthUser() user: UserDto
+  ): Promise<void> {
+    const { articleIds } = deleteArticlesInSeriesDto;
+    await this._seriesAppService.removeArticles(id, articleIds, user);
   }
 }

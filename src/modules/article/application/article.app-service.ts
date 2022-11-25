@@ -153,7 +153,7 @@ export class ArticleAppService {
     if (invalidSeries.length) {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `The following series were removed from this article: ${invalidSeries
+        message: `You don't have create article permission at series: ${invalidSeries
           .map((e) => e.title)
           .join(', ')}`,
         errors: { seriesDenied: invalidSeries.map((e) => e.id) },
