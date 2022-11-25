@@ -283,26 +283,10 @@ export class SeriesService {
   /**
    * Delete Series
    */
-  public async delete(authUser: UserDto, seriesId: string): Promise<IPost> {
+  public async delete(authUser: UserDto, series: IPost): Promise<IPost> {
     const transaction = await this._sequelizeConnection.transaction();
+    const seriesId = series.id;
     try {
-      const series = await this._postModel.findOne({
-        where: {
-          id: seriesId,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
-
-      if (!series) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-      await this._authorityService.checkPostOwner(series, authUser.id);
       if (series.isDraft === false) {
         await this._authorityService.checkCanDeletePost(
           authUser,
@@ -355,40 +339,22 @@ export class SeriesService {
   /**
    * Add Article to Series
    */
-  public async addArticles(seriesId: string, articleIds: string[], authUser: UserDto): Promise<IPost> {
+  public async addArticles(series: IPost, articleIds: string[]): Promise<IPost> {
     try {
-      const series = await this._postModel.findOne({
-        where: {
-          id: seriesId,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
-
-      if (!series) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-      await this._authorityService.checkPostOwner(series, authUser.id);
-
       const dataInsert = [];
       const totalArticlesInSeries = await this._postSeriesModel.count({
         where: {
-          seriesId,
+          seriesId: series.id,
         },
       });
-      let zIndex = totalArticlesInSeries;
+      let zindex = totalArticlesInSeries;
       for (const articleId of articleIds) {
         dataInsert.push({
-          seriesId,
+          seriesId: series.id,
           postId: articleId,
-          zIndex,
+          zindex,
         });
-        zIndex += 1;
+        zindex += 1;
       }
       await this._postSeriesModel.bulkCreate(dataInsert, { ignoreDuplicates: true });
 
@@ -402,44 +368,16 @@ export class SeriesService {
   /**
    * Remove articles From Series
    */
-  public async removeArticles(seriesId: string, articleIds: string[], authUser: UserDto): Promise<IPost> {
+  public async removeArticles(series: IPost, articleIds: string[]): Promise<void> {
     try {
-      const series = await this._postModel.findOne({
-        where: {
-          id: seriesId,
-        },
-        include: [
-          {
-            model: PostGroupModel,
-            as: 'groups',
-            attributes: ['groupId'],
-          },
-        ],
-      });
-
-      if (!series) {
-        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-      await this._authorityService.checkPostOwner(series, authUser.id);
-
-      const dataInsert = [];
-      const totalArticlesInSeries = await this._postSeriesModel.count({
-        where: {
-          seriesId,
-        },
-      });
-      let zIndex = totalArticlesInSeries;
       for (const articleId of articleIds) {
-        dataInsert.push({
-          seriesId,
-          postId: articleId,
-          zIndex,
+        await this._postSeriesModel.destroy({
+          where: {
+            seriesId: series.id,
+            postId: articleId,
+          },
         });
-        zIndex += 1;
       }
-      await this._postSeriesModel.bulkCreate(dataInsert, { ignoreDuplicates: true });
-
-      return series;
     } catch (error) {
       this._logger.error(error, error?.stack);
       throw error;
@@ -487,7 +425,7 @@ export class SeriesService {
     if (addSeriesIds.length) {
       const dataInsert = [];
       for (const seriesId of addSeriesIds) {
-        const totalArticlesInSeries = await this._postSeriesModel.count({
+        const maxIndexArticlesInSeries: number = await this._postSeriesModel.max('zindex', {
           where: {
             seriesId,
           },
@@ -495,7 +433,7 @@ export class SeriesService {
         dataInsert.push({
           postId,
           seriesId,
-          zindex: totalArticlesInSeries,
+          zindex: maxIndexArticlesInSeries + 1,
         });
       }
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -12,6 +12,7 @@ import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { PostSearchService } from '../../post/post-search.service';
+import { PostService } from '../../post/post.service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests';
 import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
@@ -25,7 +26,8 @@ export class SeriesAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
-    private _postSearchService: PostSearchService
+    private _postSearchService: PostSearchService,
+    private _postService: PostService
   ) {}
 
   public async searchSeries(
@@ -111,7 +113,21 @@ export class SeriesAppService {
   }
 
   public async deleteSeries(user: UserDto, seriesId: string): Promise<boolean> {
-    const seriesDeleted = await this._seriesService.delete(user, seriesId);
+    const series = await this._postService.getListWithGroupsByIds([seriesId], false);
+    if (series.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    }
+    await this._authorityService.checkPostOwner(series[0], user.id);
+
+    if (series[0].isDraft === false) {
+      await this._authorityService.checkCanDeletePost(
+        user,
+        series[0].groups.map((g) => g.groupId),
+        series[0].createdBy
+      );
+    }
+
+    const seriesDeleted = await this._seriesService.delete(user, series[0]);
     if (seriesDeleted) {
       this._eventEmitter.emit(
         new SeriesHasBeenDeletedEvent({
@@ -124,8 +140,57 @@ export class SeriesAppService {
     return false;
   }
 
-  public async removeArticles(id, articleIds: string[], user: UserDto): Promise<boolean> {
-    const seriesDeleted = await this._seriesService.delete(user, seriesId);
+  public async removeArticles(
+    seriesId: string,
+    articleIds: string[],
+    user: UserDto
+  ): Promise<void> {
+    const series = await this._postService.getListWithGroupsByIds([seriesId], false);
+    if (series.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    }
+    await this._authorityService.checkPostOwner(series[0], user.id);
+
+    await this._seriesService.removeArticles(series[0], articleIds);
+  }
+
+  public async addArticles(seriesId: string, articleIds: string[], user: UserDto): Promise<void> {
+    const series = await this._postService.getListWithGroupsByIds([seriesId], false);
+
+    if (series.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    }
+
+    if (series[0].groups.length === 0) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+    }
+
+    await this._authorityService.checkPostOwner(series[0], user.id);
+
+    const seriesGroupIds = series[0].groups.map((group) => group.groupId);
+    const articles = await this._postService.getListWithGroupsByIds(articleIds, false);
+
+    const invalidArticles = [];
+
+    for (const article of articles) {
+      if (article.groups.length === 0) {
+        ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
+      }
+
+      const isValid = article.groups.some((group) => seriesGroupIds.includes(group.groupId));
+      if (!isValid) {
+        invalidArticles.push(article);
+      }
+    }
+    if (invalidArticles.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You can not add articles: ${invalidArticles.map((e) => e.title).join(', ')}`,
+        errors: { seriesDenied: invalidArticles.map((e) => e.id) },
+      });
+    }
+
+    await this._seriesService.addArticles(series[0], articleIds);
   }
 
   public async reorderArticles(

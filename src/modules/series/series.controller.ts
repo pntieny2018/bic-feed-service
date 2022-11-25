@@ -126,8 +126,8 @@ export class SeriesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() deleteArticlesInSeriesDto: DeleteArticlesInSeriesDto,
     @AuthUser() user: UserDto
-  ): Promise<boolean> {
+  ): Promise<void> {
     const { articleIds } = deleteArticlesInSeriesDto;
-    return this._seriesAppService.removeArticles(id, articleIds, user);
+    await this._seriesAppService.removeArticles(id, articleIds, user);
   }
 }
