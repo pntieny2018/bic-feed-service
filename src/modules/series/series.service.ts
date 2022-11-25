@@ -485,13 +485,21 @@ export class SeriesService {
 
     const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
     if (addSeriesIds.length) {
-      await this._postSeriesModel.bulkCreate(
-        addSeriesIds.map((seriesId) => ({
+      const dataInsert = [];
+      for (const seriesId of addSeriesIds) {
+        const totalArticlesInSeries = await this._postSeriesModel.count({
+          where: {
+            seriesId,
+          },
+        });
+        dataInsert.push({
           postId,
           seriesId,
-        })),
-        { transaction }
-      );
+          zindex: totalArticlesInSeries,
+        });
+      }
+
+      await this._postSeriesModel.bulkCreate(dataInsert, { transaction });
     }
   }
 
