@@ -14,10 +14,12 @@ import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
+import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
 import { AuthUser, UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { AddArticlesInSeriesDto } from './dto/requests/add-articles-in-series.dto';
 import { DeleteArticlesInSeriesDto } from './dto/requests/delete-articles-in-series.dto';
 import { ReorderArticlesDto } from './dto/requests/reorder-articles.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
@@ -41,7 +43,7 @@ export class SeriesController {
   public searchSeries(
     @AuthUser() user: UserDto,
     @Query() searchDto: SearchSeriesDto
-  ): Promise<PageDto<SeriesResponseDto>> {
+  ): Promise<PageDto<SeriesSearchResponseDto>> {
     return this._seriesAppService.searchSeries(user, searchDto);
   }
 
@@ -118,16 +120,29 @@ export class SeriesController {
 
   @ApiOperation({ summary: 'Remove article from series' })
   @ApiOkResponse({
-    type: Boolean,
     description: 'Remove article successfully',
   })
   @Delete('/:id/remove-articles')
-  public async removeArticleFromSeries(
+  public async removeArticle(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() deleteArticlesInSeriesDto: DeleteArticlesInSeriesDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
     const { articleIds } = deleteArticlesInSeriesDto;
     await this._seriesAppService.removeArticles(id, articleIds, user);
+  }
+
+  @ApiOperation({ summary: 'Add article into series' })
+  @ApiOkResponse({
+    description: 'Add article successfully',
+  })
+  @Put('/:id/add-articles')
+  public async addArticle(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() addArticlesInSeriesDto: AddArticlesInSeriesDto,
+    @AuthUser() user: UserDto
+  ): Promise<void> {
+    const { articleIds } = addArticlesInSeriesDto;
+    await this._seriesAppService.addArticles(id, articleIds, user);
   }
 }

@@ -21,5 +21,6 @@ export class SearchSeriesDto extends PageOptionsDto {
   })
   @IsArray()
   @IsOptional()
+  @IsUUID('4', { each: true })
   public groupIds?: string[];
 }

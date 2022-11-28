@@ -8,6 +8,7 @@ import {
   SeriesHasBeenPublishedEvent,
   SeriesHasBeenUpdatedEvent,
 } from '../../../events/series';
+import { SeriesSearchResponseDto } from '../../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
@@ -33,7 +34,7 @@ export class SeriesAppService {
   public async searchSeries(
     user: UserDto,
     searchDto: SearchSeriesDto
-  ): Promise<PageDto<SeriesResponseDto>> {
+  ): Promise<PageDto<SeriesSearchResponseDto>> {
     return this._postSearchService.searchSeries(user, searchDto);
   }
 
@@ -169,6 +170,13 @@ export class SeriesAppService {
 
     const seriesGroupIds = series[0].groups.map((group) => group.groupId);
     const articles = await this._postService.getListWithGroupsByIds(articleIds, false);
+
+    if (articles.length < articleIds.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
+        message: `Articles parameter is invalid`,
+      });
+    }
 
     const invalidArticles = [];
 

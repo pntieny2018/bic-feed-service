@@ -1,5 +1,5 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
@@ -48,5 +48,18 @@ export class CategoryController {
     @Body() createCategoryDto: CreateCategoryDto
   ): Promise<CategoryResponseDto> {
     return this._categoryService.create(user, createCategoryDto);
+  }
+
+  @ApiOperation({ summary: 'Get category' })
+  @ApiOkResponse({
+    type: CategoryResponseDto,
+    description: 'Get category successfully',
+  })
+  @ResponseMessages({
+    success: 'Get category successfully',
+  })
+  @Get('/:id')
+  public async getDetail(@Param('id', ParseUUIDPipe) id: string): Promise<CategoryResponseDto> {
+    return this._categoryService.getDetail(id);
   }
 }

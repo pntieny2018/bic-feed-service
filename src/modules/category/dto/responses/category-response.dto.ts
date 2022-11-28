@@ -12,11 +12,9 @@ export class CategoryResponseDto {
     name: 'parent_id',
   })
   @IsUUID()
-  @Expose()
   public parentId: string;
 
   @ApiProperty()
-  @Expose()
   public active: boolean;
 
   @ApiProperty()
@@ -24,7 +22,6 @@ export class CategoryResponseDto {
   public name: string;
 
   @ApiProperty()
-  @Expose()
   public level: number;
 
   @ApiProperty()
@@ -34,7 +31,6 @@ export class CategoryResponseDto {
   @ApiProperty({
     name: 'created_by',
   })
-  @Expose()
   public createdBy: string;
 
   @ApiProperty({
@@ -46,7 +42,6 @@ export class CategoryResponseDto {
   @ApiProperty({
     name: 'updated_at',
   })
-  @Expose()
   public updatedAt?: Date;
 
   public constructor(data: Partial<CategoryResponseDto>) {
