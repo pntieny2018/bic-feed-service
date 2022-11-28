@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
-import { ArrayHelper, ExceptionHelper } from '../../../common/helpers';
+import { ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
@@ -10,14 +10,16 @@ import {
 } from '../../../events/article';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
+import { PostSearchService } from '../../post/post-search.service';
 import { PostService } from '../../post/post.service';
 import { ArticleService } from '../article.service';
-import { GetListArticlesDto } from '../dto/requests';
+import { GetListArticlesDto, SearchArticlesDto } from '../dto/requests';
 import { CreateArticleDto } from '../dto/requests/create-article.dto';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
 import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
+import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 
 @Injectable()
@@ -26,7 +28,8 @@ export class ArticleAppService {
     private _articleService: ArticleService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _postService: PostService
+    private _postService: PostService,
+    private _postSearchService: PostSearchService
   ) {}
 
   public async getRelatedById(
@@ -91,6 +94,12 @@ export class ArticleAppService {
 
       if (series?.length) {
         const seriesGroups = await this._postService.getListWithGroupsByIds(series, true);
+        if (seriesGroups.length < series.length) {
+          throw new ForbiddenException({
+            code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
+            message: `Series parameter is invalid`,
+          });
+        }
         const invalidSeries = [];
         seriesGroups.forEach((item) => {
           const isValid = item.groups.some((group) => audience.groupIds.includes(group.groupId));
@@ -204,5 +213,12 @@ export class ArticleAppService {
       return true;
     }
     return false;
+  }
+
+  public async searchArticles(
+    user: UserDto,
+    searchDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleSearchResponseDto>> {
+    return this._postSearchService.searchArticles(user, searchDto);
   }
 }

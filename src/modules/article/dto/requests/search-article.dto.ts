@@ -1,17 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional } from 'class-validator';
-import { SearchPostsDto } from '../../../post/dto/requests';
-
-export class SearchArticlesDto extends SearchPostsDto {
-  @ApiProperty({
-    type: [String],
-  })
-  @IsNotEmpty()
-  public categories: string[] = [];
-
-  @ApiProperty({
-    type: [String],
-  })
+import { Expose } from 'class-transformer';
+import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
+export class SearchArticlesDto extends PageOptionsDto {
+  @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
   @IsOptional()
-  public series?: string[] = [];
+  @IsString()
+  @Expose({
+    name: 'content_search',
+  })
+  public contentSearch?: string;
+
+  @ApiProperty({
+    description: 'Group IDs',
+    required: false,
+    name: 'group_ids',
+  })
+  @Expose({
+    name: 'group_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public groupIds?: string[];
+
+  @ApiProperty({
+    description: 'Category IDs',
+    required: false,
+    name: 'category_ids',
+  })
+  @Expose({
+    name: 'category_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public categoryIds?: string[];
 }

@@ -342,19 +342,19 @@ export class SeriesService {
   public async addArticles(series: IPost, articleIds: string[]): Promise<IPost> {
     try {
       const dataInsert = [];
-      const totalArticlesInSeries = await this._postSeriesModel.count({
+      const maxIndex: number = await this._postSeriesModel.max('zindex', {
         where: {
           seriesId: series.id,
         },
       });
-      let zindex = totalArticlesInSeries;
+      let zindex = maxIndex || 0;
       for (const articleId of articleIds) {
+        zindex += 1;
         dataInsert.push({
           seriesId: series.id,
           postId: articleId,
           zindex,
         });
-        zindex += 1;
       }
       await this._postSeriesModel.bulkCreate(dataInsert, { ignoreDuplicates: true });
 
