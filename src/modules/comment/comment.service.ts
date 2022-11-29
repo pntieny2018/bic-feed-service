@@ -383,6 +383,8 @@ export class CommentService {
 
   /**
    * Get comment list
+   * If comment id is child: load arround parent and arround child comments
+   * If comment id is parent: load arround parent and child comments in parent
    */
   public async getCommentsArroundId(
     commentId: string,
@@ -419,47 +421,65 @@ export class CommentService {
     }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
-    const parentId = checkComment.parentId !== NIL_UUID ? checkComment.parentId : commentId;
-    const comments = await this._getCommentsArroundCommentId(
-      parentId,
+
+    const isParentComment = checkComment.parentId === NIL_UUID;
+
+    const arroundParentCommentId = isParentComment ? commentId : checkComment.parentId;
+    const commentsLevelRoot = await this._getCommentsArroundCommentId(
+      arroundParentCommentId,
       {
         limit,
         postId,
       },
       userId
     );
-    //get child comment
-    if (comments.list.length && limit > 1 && childLimit) {
-      await this.bindChildrenToComment(comments.list, userId, childLimit);
+
+    //get child comment except arroundParentCommentId
+    if (commentsLevelRoot.list.length && limit > 1 && childLimit) {
+      await this.bindChildrenToComment(commentsLevelRoot.list, userId, childLimit);
     }
 
     //get child for target comment
     if (targetChildLimit > 0) {
-      const aroundChildId = checkComment.parentId !== NIL_UUID ? commentId : NIL_UUID;
-      const child = await this._getCommentsArroundCommentId(
-        aroundChildId,
-        {
-          limit: targetChildLimit,
-          parentId,
-          postId,
-        },
-        userId
-      );
-      comments.list.forEach((cm) => {
-        if (cm.id === parentId) {
-          cm.child = child;
+      let childOfArroundId;
+      //Load child comments by parent sort created desc
+      if (isParentComment) {
+        childOfArroundId = await this._getComments(
+          {
+            limit: targetChildLimit,
+            parentId: arroundParentCommentId,
+            postId,
+          },
+          userId
+        );
+      } else {
+        //Load arround child
+        childOfArroundId = await this._getCommentsArroundCommentId(
+          commentId,
+          {
+            limit: targetChildLimit,
+            parentId: arroundParentCommentId,
+            postId,
+          },
+          userId
+        );
+      }
+
+      commentsLevelRoot.list.forEach((cm) => {
+        if (cm.id === arroundParentCommentId) {
+          cm.child = childOfArroundId;
         }
       });
     }
 
     await Promise.all([
-      this._reactionService.bindToComments(comments.list),
-      this._mentionService.bindToComment(comments.list),
-      this._giphyService.bindUrlToComment(comments.list),
-      this.bindUserToComment(comments.list),
+      this._reactionService.bindToComments(commentsLevelRoot.list),
+      this._mentionService.bindToComment(commentsLevelRoot.list),
+      this._giphyService.bindUrlToComment(commentsLevelRoot.list),
+      this.bindUserToComment(commentsLevelRoot.list),
     ]);
-    comments['actor'] = actor;
-    return comments;
+    commentsLevelRoot['actor'] = actor;
+    return commentsLevelRoot;
   }
 
   private async _getComments(
