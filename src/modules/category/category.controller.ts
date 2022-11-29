@@ -50,14 +50,14 @@ export class CategoryController {
     return this._categoryService.create(user, createCategoryDto);
   }
 
-  // @ApiOperation({ summary: 'Get category' })
-  // @ApiOkResponse({
-  //   type: CategoryResponseDto,
-  //   description: 'Get category successfully',
-  // })
-  // @ResponseMessages({
-  //   success: 'Get category successfully',
-  // })
+  @ApiOperation({ summary: 'Get category' })
+  @ApiOkResponse({
+    type: CategoryResponseDto,
+    description: 'Get category successfully',
+  })
+  @ResponseMessages({
+    success: 'Get category successfully',
+  })
   @Get('/:id')
   public async getDetail(@Param('id', ParseUUIDPipe) id: string): Promise<CategoryResponseDto> {
     return this._categoryService.getDetail(id);

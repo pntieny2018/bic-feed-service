@@ -10,7 +10,7 @@ import { IPost, PostType } from '../../database/models/post.model';
 import { GroupService } from '../../shared/group';
 import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
-import { ArticleResponseDto } from '../article/dto/responses';
+import { ArticleResponseDto, CategoryResponseDto } from '../article/dto/responses';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../auth';
@@ -43,6 +43,9 @@ export type DataPostToAdd = {
   type: PostType;
   title?: string;
   summary?: string;
+  community?: { id: string; name: string };
+  categories?: { id: string; name: string }[];
+  articleIds?: string[];
   coverMedia?: MediaResponseDto;
 };
 type DataPostToUpdate = DataPostToAdd & {
@@ -345,21 +348,26 @@ export class PostSearchService {
         offset,
       });
     }
-    if (!groupIds || groupIds?.length === 0) {
+    if (!groupIds && !categoryIds) {
       return new PageDto<ArticleSearchResponseDto>([], {
         limit,
         offset,
         hasNextPage: false,
       });
     }
-    const filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
-    const payload = await this.getPayloadSearchForArticles({
+
+    let filterGroupIds = authUser.profile.groups;
+    if (groupIds) {
+      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+    }
+    const context: any = {
       contentSearch,
       groupIds: filterGroupIds,
-      categoryIds,
       limit,
       offset,
-    });
+    };
+    if (categoryIds) context.categoryIds = categoryIds;
+    const payload = await this.getPayloadSearchForArticles(context);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articles = hits.map((item) => {
@@ -470,7 +478,6 @@ export class PostSearchService {
       query: {
         bool: {
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          minimum_should_match: 1,
           filter: [...this._getTypeFilter(PostType.ARTICLE)],
         },
       },
@@ -480,6 +487,7 @@ export class PostSearchService {
         ...this._getMatchPrefixKeyword('title.text', contentSearch),
         ...this._getMatchPrefixKeyword('summary.text', contentSearch),
       ];
+      body.query.bool.minimum_should_match = 1;
     }
 
     if (categoryIds && categoryIds.length) {
@@ -575,7 +583,7 @@ export class PostSearchService {
       return [
         {
           terms: {
-            [categories]: categoryIds,
+            [categories.id]: categoryIds,
           },
         },
       ];

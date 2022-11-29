@@ -65,6 +65,7 @@ export class ArticleListener {
       title,
       summary,
       coverMedia,
+      categories,
     } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -96,6 +97,7 @@ export class ArticleListener {
         title,
         summary,
         coverMedia,
+        categories: categories.map((category) => ({ id: category.id, name: category.name })),
       },
     ]);
 
@@ -133,6 +135,7 @@ export class ArticleListener {
       summary,
       title,
       coverMedia,
+      categories,
     } = newArticle;
 
     if (oldArticle.isDraft === false) {
@@ -176,6 +179,7 @@ export class ArticleListener {
         summary,
         title,
         coverMedia,
+        categories: categories.map((category) => ({ id: category.id, name: category.name })),
       },
     ]);
 
