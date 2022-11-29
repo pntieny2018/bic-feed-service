@@ -917,6 +917,9 @@ export class PostService {
         model: UserSavePostModel,
         required: true,
         attributes: [],
+        where: {
+          userId,
+        },
       },
     ];
 
