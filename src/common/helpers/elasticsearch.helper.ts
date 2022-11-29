@@ -93,7 +93,7 @@ export class ElasticsearchHelper {
     return this.LANGUAGES_SUPPORTED.includes(lang) ? lang : null;
   }
   public static getIndexOfPostByLang(lang: string): string {
-    if (lang === null) return this.ALIAS.POST.default.name;
+    if (!lang) return this.ALIAS.POST.default.name;
     const indexName = this.ALIAS.POST.default.name + '_' + lang;
     return indexName;
   }
