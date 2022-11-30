@@ -6,6 +6,10 @@ export const ELASTIC_POST_MAPPING_PATH = {
     groups: 'actor.groups',
     username: 'actor.username',
   },
+  categories: {
+    id: 'categories.id',
+    name: 'categories.name',
+  },
   audience: {
     groups: {
       id: 'audience.groups.id',

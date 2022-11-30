@@ -1,12 +1,12 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../../database/models/post.model';
+import { PostModel, PostType } from '../../database/models/post.model';
 import { plainToInstance } from 'class-transformer';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { PostSearchService } from '../../modules/post/post-search.service';
+import { DataPostToAdd, PostSearchService } from '../../modules/post/post-search.service';
 import { PostService } from '../../modules/post/post.service';
 import { PostBindingService } from '../../modules/post/post-binding.service';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
@@ -26,7 +26,7 @@ interface ICommandOptions {
   updateIndex: boolean;
 }
 
-//npx ts-node -r tsconfig-paths/register src/command/cli.ts es:index-post --update-index --old-index=18-08-2022
+//npx ts-node -r tsconfig-paths/register src/command/cli.ts es:index-post --update-index --old-index=24-10-2022
 //node dist/src/command/cli.js es:index-post --update-index --old-index=001
 @Command({ name: 'es:index-post', description: 'Reindex post in elasticsearch' })
 export class IndexPostCommand implements CommandRunner {
@@ -173,7 +173,43 @@ export class IndexPostCommand implements CommandRunner {
       if (posts.length === 0) {
         hasMore = false;
       } else {
-        await this.postSearchService.addPostsToSearch(posts, index);
+        const insertDataPosts = [];
+        for (const post of posts) {
+          const item: DataPostToAdd = {
+            id: post.id,
+            type: post.type,
+            commentsCount: post.commentsCount,
+            totalUsersSeen: post.totalUsersSeen,
+            audience: post.audience,
+            createdAt: post.createdAt,
+            actor: post.actor,
+            setting: post.setting,
+          };
+          if (post.type === PostType.POST) {
+            item.content = post.content;
+            item.media = post.media;
+            item.mentions = post.mentions;
+          }
+          if (post.type === PostType.ARTICLE) {
+            item.title = post.title;
+            item.summary = post.summary;
+            item.content = post.content;
+            item.media = post.media;
+            item.coverMedia = post.coverMedia;
+            item.categories = post.categories.map((category) => ({
+              id: category.id,
+              name: category.name,
+            }));
+          }
+          if (post.type === PostType.SERIES) {
+            item.title = post.title;
+            item.summary = post.summary;
+            item.articleIds = post.articles.map((article) => article.id);
+            item.coverMedia = post.coverMedia;
+          }
+          insertDataPosts.push(item);
+        }
+        await this.postSearchService.addPostsToSearch(insertDataPosts, index);
         offset = offset + limitEach;
         total += posts.length;
         console.log(`Indexed ${posts.length}`);

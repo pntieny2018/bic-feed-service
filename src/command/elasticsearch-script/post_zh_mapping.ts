@@ -63,6 +63,30 @@ export const POST_ZH_MAPPING = {
           },
         },
       },
+      community: {
+        properties: {
+          id: {
+            type: 'keyword',
+          },
+          name: {
+            type: 'text',
+            index: false,
+          },
+        },
+      },
+      categories: {
+        properties: {
+          id: {
+            type: 'keyword',
+          },
+          name: {
+            type: 'text',
+          },
+        },
+      },
+      articleIds: {
+        type: 'keyword',
+      },
       commentsCount: {
         type: 'long',
       },

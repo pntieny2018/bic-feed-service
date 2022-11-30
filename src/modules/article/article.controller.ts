@@ -17,12 +17,13 @@ import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
 import { GetPostPipe } from '../post/pipes';
 import { ArticleAppService } from './application/article.app-service';
-import { GetListArticlesDto } from './dto/requests';
+import { SearchArticlesDto } from './dto/requests';
 import { CreateArticleDto } from './dto/requests/create-article.dto';
 import { GetArticleDto } from './dto/requests/get-article.dto';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
+import { ArticleSearchResponseDto } from './dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 
 @ApiSecurity('authorization')
@@ -33,6 +34,18 @@ import { ArticleResponseDto } from './dto/responses/article.response.dto';
 })
 export class ArticleController {
   public constructor(private _articleAppService: ArticleAppService) {}
+
+  @ApiOperation({ summary: 'Search articles' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+  })
+  @Get('/')
+  public searchSeries(
+    @AuthUser() user: UserDto,
+    @Query() searchDto: SearchArticlesDto
+  ): Promise<PageDto<ArticleSearchResponseDto>> {
+    return this._articleAppService.searchArticles(user, searchDto);
+  }
 
   @ApiOperation({ summary: 'Get related article' })
   @ApiOkResponse({
@@ -59,17 +72,17 @@ export class ArticleController {
     return this._articleAppService.getDrafts(user, getDraftDto);
   }
 
-  @ApiOperation({ summary: 'Get list article' })
-  @ApiOkResponse({
-    type: ArticleResponseDto,
-  })
-  @Get('/')
-  public getList(
-    @AuthUser() user: UserDto,
-    @Query() getArticleListDto: GetListArticlesDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleAppService.getList(user, getArticleListDto);
-  }
+  // @ApiOperation({ summary: 'Get list article' })
+  // @ApiOkResponse({
+  //   type: ArticleResponseDto,
+  // })
+  // @Get('/')
+  // public getList(
+  //   @AuthUser() user: UserDto,
+  //   @Query() getArticleListDto: GetListArticlesDto
+  // ): Promise<PageDto<ArticleResponseDto>> {
+  //   return this._articleAppService.getList(user, getArticleListDto);
+  // }
 
   @ApiOperation({ summary: 'Get article detail' })
   @ApiOkResponse({

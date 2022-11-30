@@ -104,6 +104,7 @@ export class FeedService {
       authUser,
     });
 
+    await this._postBindingService.bindCommunity(posts);
     return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });

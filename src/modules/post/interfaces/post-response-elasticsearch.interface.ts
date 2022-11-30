@@ -1,16 +1,18 @@
 import { PostType } from '../../../database/models/post.model';
+import { CategoryResponseDto } from '../../article/dto/responses';
 import { UserDto } from '../../auth';
 import { MediaDto } from '../../media/dto';
 import { MediaResponseDto } from '../../media/dto/response';
 import { UserMentionDto } from '../../mention/dto';
 import { PostSettingDto } from '../dto/common/post-setting.dto';
-import { AudienceRequestDto } from '../dto/requests/audience.request.dto';
+import { AudienceResponseDto } from '../dto/responses';
 
 export interface IPostElasticsearch {
   id: string;
   type: PostType;
   media: MediaDto;
-  audience: AudienceRequestDto;
+  audience: AudienceResponseDto;
+  categories?: CategoryResponseDto[];
   title?: {
     text: string;
   };
@@ -34,7 +36,8 @@ export interface IPostResponseElasticsearch {
   id: string;
   type: PostType;
   media: MediaDto;
-  audience: AudienceRequestDto;
+  audience: AudienceResponseDto;
+  categories?: CategoryResponseDto[];
   title?: string;
   titleHighlight?: string;
   summary?: string;
@@ -48,10 +51,4 @@ export interface IPostResponseElasticsearch {
   commentsCount: number;
   mentions: UserMentionDto;
   coverMedia?: MediaResponseDto;
-}
-
-export interface ISeriesResponseElasticsearch {
-  id: string;
-  audience: AudienceRequestDto;
-  title: string;
 }

@@ -89,4 +89,9 @@ export class GroupService {
     }
     return [];
   }
+
+  public filterGroupIdsUsersJoined(groupIds: string[], user: UserDto): string[] {
+    const groupIdsUserJoined = user.profile.groups || [];
+    return groupIds.filter((groupId) => groupIdsUserJoined.includes(groupId));
+  }
 }

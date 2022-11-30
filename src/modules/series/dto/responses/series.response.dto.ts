@@ -5,7 +5,7 @@ import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
-import { AudienceResponseDto } from '../../../post/dto/responses';
+import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { PostType } from '../../../../database/models/post.model';
 import { ArticleInSeriesResponseDto } from '../../../article/dto/responses';
@@ -196,6 +196,14 @@ export class SeriesResponseDto {
     return value;
   })
   public setting: PostSettingDto;
+
+  @ApiProperty({
+    type: [CommunityResponseDto],
+    name: 'communities',
+  })
+  @Expose()
+  public communities?: CommunityResponseDto[];
+
   public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);
   }

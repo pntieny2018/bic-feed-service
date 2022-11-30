@@ -12,6 +12,7 @@ import { ReactionService } from '../reaction';
 import { MentionService } from '../mention';
 import { PostResponseDto } from './dto/responses';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class PostBindingService {
@@ -117,6 +118,18 @@ export class PostBindingService {
     }
   }
 
+  public async bindCommunity(posts: any[]): Promise<void> {
+    const communities = await this._getCommunitiesByPosts(posts);
+    if (communities.length) {
+      for (const post of posts) {
+        const postCommunityIds = this._getRootGroupIdsByGroups(post.audience.groups);
+        post.communities = communities.filter((community) =>
+          postCommunityIds.includes(community.id)
+        );
+      }
+    }
+  }
+
   private _getGroupIdsByPost(post: any): string[] {
     let postGroups = post.groups;
     if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
@@ -142,6 +155,35 @@ export class PostBindingService {
     }
     const dataGroups = await this.groupService.getMany(groupIds);
     return dataGroups;
+  }
+
+  private async _getCommunitiesByPosts(
+    posts: any[]
+  ): Promise<Pick<GroupSharedDto, 'id' | 'icon' | 'name' | 'privacy'>[]> {
+    const rootGroupIds = [];
+    for (const post of posts) {
+      let groups = [];
+      if (post.audience?.groups) groups = post.audience?.groups; //bind for elasticsearch
+
+      rootGroupIds.push(...this._getRootGroupIdsByGroups(groups));
+    }
+    const communities = await this.groupService.getMany(ArrayHelper.arrayUnique(rootGroupIds));
+    return communities.map((community) => ({
+      id: community.id,
+      icon: community.icon,
+      name: community.name,
+      privacy: community.privacy,
+    }));
+  }
+
+  private _getRootGroupIdsByGroups(groups: GroupSharedDto[]): string[] {
+    const rootGroupIds = [];
+    for (const group of groups) {
+      if (!rootGroupIds.includes(group.rootGroupId)) {
+        rootGroupIds.push(group.rootGroupId);
+      }
+    }
+    return rootGroupIds;
   }
 
   /**

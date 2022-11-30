@@ -326,6 +326,8 @@ export class ArticleService extends PostService {
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
+    await this.articleBinding.bindCommunity(articlesBindedData);
+
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
@@ -502,7 +504,7 @@ export class ArticleService extends PostService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
-
+    await this.articleBinding.bindCommunity(articlesBindedData);
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });

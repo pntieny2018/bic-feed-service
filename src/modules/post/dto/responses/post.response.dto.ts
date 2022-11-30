@@ -13,7 +13,23 @@ import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostPrivacy, PostType } from '../../../../database/models/post.model';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from '../../../article/dto/responses';
+import { ArticleResponseDto } from '../../../article/dto/responses';
+
+export class CommunityResponseDto {
+  @ApiProperty({
+    description: 'Root Group ID',
+    type: String,
+  })
+  @Expose()
+  public id: string;
+
+  @ApiProperty({
+    description: 'Name',
+    type: String,
+  })
+  @Expose()
+  public name: string;
+}
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -296,6 +312,13 @@ export class PostResponseDto {
     return [];
   })
   public articles?: ArticleResponseDto[];
+
+  @ApiProperty({
+    type: [CommunityResponseDto],
+    name: 'communities',
+  })
+  @Expose()
+  public communities?: CommunityResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

@@ -40,7 +40,8 @@ export class SeriesListener {
   @On(SeriesHasBeenPublishedEvent)
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
     const { series, actor } = event.payload;
-    const { id, commentsCount, totalUsersSeen, audience, createdAt, title, summary } = series;
+    const { id, commentsCount, totalUsersSeen, audience, createdAt, title, summary, coverMedia } =
+      series;
 
     this._postSearchService.addPostsToSearch([
       {
@@ -53,6 +54,8 @@ export class SeriesListener {
         summary,
         audience,
         type: PostType.SERIES,
+        articleIds: series.articles.map((article) => article.id),
+        coverMedia,
       },
     ]);
 
@@ -74,8 +77,17 @@ export class SeriesListener {
   @On(SeriesHasBeenUpdatedEvent)
   public async onSeriesUpdated(event: SeriesHasBeenUpdatedEvent): Promise<void> {
     const { newSeries, oldSeries, actor } = event.payload;
-    const { id, commentsCount, totalUsersSeen, audience, createdAt, lang, summary, title } =
-      newSeries;
+    const {
+      id,
+      commentsCount,
+      totalUsersSeen,
+      audience,
+      createdAt,
+      lang,
+      summary,
+      title,
+      coverMedia,
+    } = newSeries;
 
     //TODO:: send noti
 
@@ -91,6 +103,8 @@ export class SeriesListener {
         summary,
         title,
         type: PostType.SERIES,
+        articleIds: newSeries.articles.map((article) => article.id),
+        coverMedia,
       },
     ]);
 

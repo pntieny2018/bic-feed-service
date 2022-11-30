@@ -163,4 +163,18 @@ export class CategoryService {
       throw new LogicException(HTTP_STATUS_ID.APP_CATEGORY_INVALID_PARAMETER);
     }
   }
+
+  public async getDetail(id: string): Promise<CategoryResponseDto> {
+    const data = await this._categoryModel.findOne({
+      attributes: ['id', 'name'],
+      where: {
+        id,
+      },
+    });
+
+    const result = this._classTransformer.plainToInstance(CategoryResponseDto, data, {
+      excludeExtraneousValues: true,
+    });
+    return result;
+  }
 }
