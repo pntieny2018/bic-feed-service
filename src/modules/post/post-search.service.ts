@@ -265,7 +265,7 @@ export class PostSearchService {
       ]),
       this.linkPreviewService.bindToPosts(posts),
     ]);
-
+    await this.postBindingService.bindCommunity(posts);
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, posts, {
       excludeExtraneousValues: true,
     });

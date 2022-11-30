@@ -127,6 +127,7 @@ export class PostService {
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
+    await this.postBinding.bindCommunity(postsBindedData);
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
@@ -217,7 +218,7 @@ export class PostService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });
-
+    await this.postBinding.bindCommunity(postsBindedData);
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });

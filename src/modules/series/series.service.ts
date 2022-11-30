@@ -133,6 +133,7 @@ export class SeriesService {
       );
     }
     const jsonArticle = series.toJSON();
+
     const seriesBindedData = await this._postBinding.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -140,7 +141,7 @@ export class SeriesService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser,
     });
-
+    await this._postBinding.bindCommunity(seriesBindedData);
     const result = this._classTransformer.plainToInstance(SeriesResponseDto, seriesBindedData, {
       excludeExtraneousValues: true,
     });
