@@ -72,10 +72,8 @@ type DataPostToUpdate = DataPostToAdd & {
   lang: string;
 };
 type FieldSearch = {
-  text: {
-    default: string;
-    ascii: string;
-  };
+  default: string;
+  ascii: string;
 };
 @Injectable()
 export class PostSearchService {
@@ -101,7 +99,7 @@ export class PostSearchService {
     protected readonly groupService: GroupService
   ) {}
 
-  public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<void> {
+  public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<number> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
@@ -127,7 +125,13 @@ export class PostSearchService {
         }
       );
 
+      if (res.errors === true) {
+        const errorItems = res.items.filter((item) => item.index.error);
+        console.log('errorItems', JSON.stringify(errorItems));
+        this.logger.debug(`[ERROR index posts] ${errorItems}`);
+      }
       await this._updateLangAfterIndexToES(res?.items || [], index);
+      return res.items.filter((item) => !item.index.error).length;
     } catch (e) {
       this.logger.debug(e);
       this.sentryService.captureException(e);
@@ -240,37 +244,27 @@ export class PostSearchService {
         id: item._source.id,
         groupIds: item._source.groupIds,
         type: item._source.type,
-        media: item._source.media,
-        content: item._source.content.text,
-        title: item._source.title?.text || null,
-        summary: item._source.summary?.text || null,
-        mentions: item._source.mentions,
+        media: item._source.media || [],
+        content: item._source.content || null,
+        title: item._source.title || null,
+        summary: item._source.summary || null,
+        mentions: item._source.mentions || [],
         createdAt: item._source.createdAt,
         createdBy: item._source.createdBy,
         coverMedia: item._source.coverMedia ?? null,
-        categories: item._source.categories,
-        articles: item._source.articles,
+        categories: item._source.categories || [],
+        articles: item._source.articles || [],
       };
-      if (
-        contentSearch &&
-        item.highlight &&
-        item.highlight['content.text']?.length &&
-        source.content
-      ) {
-        source.highlight = item.highlight['content.text'][0];
+      if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
+        source.highlight = item.highlight['content'][0];
       }
 
-      if (contentSearch && item.highlight && item.highlight['title.text']?.length && source.title) {
-        source.titleHighlight = item.highlight['title.text'][0];
+      if (contentSearch && item.highlight && item.highlight['title']?.length && source.title) {
+        source.titleHighlight = item.highlight['title'][0];
       }
 
-      if (
-        contentSearch &&
-        item.highlight &&
-        item.highlight['summary.text']?.length &&
-        source.summary
-      ) {
-        source.summaryHighlight = item.highlight['summary.text'][0];
+      if (contentSearch && item.highlight && item.highlight['summary']?.length && source.summary) {
+        source.summaryHighlight = item.highlight['summary'][0];
       }
       return source;
     });
@@ -296,12 +290,14 @@ export class PostSearchService {
       shouldBindActor: true,
     });
 
-    console.log('articles=', JSON.stringify(articles, null, 4));
+    console.log('posts=', JSON.stringify(posts, null, 4));
     for (const post of posts) {
-      post.articles = post.articles.map((article) =>
-        articles.find((item) => item.id === article.id)
-      );
-      delete post.articleIds;
+      console.log('post.articles=', post.articles);
+      if (post.articles) {
+        post.articles = post.articles.map((article) =>
+          articles.find((item) => item.id === article.id)
+        );
+      }
     }
 
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, posts, {
@@ -315,9 +311,7 @@ export class PostSearchService {
     });
   }
 
-  private _mapESToInterface(posts) {
-
-  }
+  private _mapESToInterface(posts) {}
 
   /*
     Search series in article detail
@@ -356,7 +350,7 @@ export class PostSearchService {
       const source = {
         id: item._source.id,
         groupIds: item._source.groupIds,
-        title: item._source.title?.text || null,
+        title: item._source.title,
       };
       return source;
     });
@@ -415,11 +409,11 @@ export class PostSearchService {
     const articles = hits.map((item) => {
       const source = {
         id: item._source.id,
-        summary: item._source.summary.text,
+        summary: item._source.summary,
         coverMedia: item._source.coverMedia,
         createdBy: item._source.createdBy,
         categories: item._source.categories,
-        title: item._source.title?.text || null,
+        title: item._source.title,
       };
       return source;
     });
@@ -488,7 +482,7 @@ export class PostSearchService {
     const body: BodyES = {
       query: {
         bool: {
-          must: [...this._getMatchPrefixKeyword('title.text', contentSearch)],
+          must: [...this._getMatchPrefixKeyword('title', contentSearch)],
           filter: [...this._getTypeFilter(PostType.SERIES), ...this._getAudienceFilter(groupIds)],
         },
       },
@@ -526,8 +520,8 @@ export class PostSearchService {
     };
     if (contentSearch) {
       body.query.bool.should = [
-        ...this._getMatchPrefixKeyword('title.text', contentSearch),
-        ...this._getMatchPrefixKeyword('summary.text', contentSearch),
+        ...this._getMatchPrefixKeyword('title', contentSearch),
+        ...this._getMatchPrefixKeyword('summary', contentSearch),
       ];
       body.query.bool.minimum_should_match = 1;
     }
@@ -555,20 +549,20 @@ export class PostSearchService {
       ['post_tags']: ['=='],
       fields: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        'content.text': {
-          ['matched_fields']: [content.text.default, content.text.ascii],
+        content: {
+          ['matched_fields']: [content.default, content.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        'summary.text': {
-          ['matched_fields']: [summary.text.default, summary.text.ascii],
+        summary: {
+          ['matched_fields']: [summary.default, summary.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        'title.text': {
-          ['matched_fields']: [title.text.default, title.text.ascii],
+        title: {
+          ['matched_fields']: [title.default, title.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
@@ -693,20 +687,20 @@ export class PostSearchService {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.text.default, field.text.ascii],
+            fields: [field.default, field.ascii],
             type: 'phrase', //Match pharse with high priority
           },
         },
         {
           match: {
-            [field.text.default]: {
+            [field.default]: {
               query: keyword,
             },
           },
         },
         {
           match: {
-            [field.text.ascii]: {
+            [field.ascii]: {
               query: keyword,
             },
           },
@@ -718,13 +712,13 @@ export class PostSearchService {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.text.default],
+            fields: [field.default],
             type: 'phrase',
           },
         },
         {
           match: {
-            [field.text.default]: {
+            [field.default]: {
               query: keyword,
             },
           },

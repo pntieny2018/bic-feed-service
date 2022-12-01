@@ -67,7 +67,7 @@ export class IndexPostCommand implements CommandRunner {
 
     const prevVersionDate = options.oldIndex ?? null;
     const today = new Date();
-    const currentDate = `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
+    const currentDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
     if (shouldUpdateIndex) {
       console.log('updating index...');
@@ -167,11 +167,11 @@ export class IndexPostCommand implements CommandRunner {
     let offset = 0;
     let hasMore = true;
     let total = 0;
+    let successNumber = 0;
     const index =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
     while (hasMore) {
       const posts = await this._getPostsToSync(offset, limitEach);
-      console.log('posts=', JSON.stringify(posts, null, 4));
       if (posts.length === 0) {
         hasMore = false;
       } else {
@@ -212,22 +212,23 @@ export class IndexPostCommand implements CommandRunner {
             item.title = post.title;
             item.summary = post.summary;
             item.content = post.content;
-            item.coverMedia = {
-              id: post['coverMedia'].id,
-              createdBy: post['coverMedia'].createdBy,
-              url: post['coverMedia'].url,
-              createdAt: post['coverMedia'].createdAt,
-              name: post['coverMedia'].name,
-              originName: post['coverMedia'].originName,
-              width: post['coverMedia'].width,
-              height: post['coverMedia'].height,
-              extension: post['coverMedia'].extension,
-            };
+            if (post['coverMedia']) {
+              item.coverMedia = {
+                id: post['coverMedia'].id,
+                createdBy: post['coverMedia'].createdBy,
+                url: post['coverMedia'].url,
+                createdAt: post['coverMedia'].createdAt,
+                name: post['coverMedia'].name,
+                originName: post['coverMedia'].originName,
+                width: post['coverMedia'].width,
+                height: post['coverMedia'].height,
+                extension: post['coverMedia'].extension,
+              };
+            }
             item.categories = post.categories.map((category) => ({
               id: category.id,
               name: category.name,
             }));
-            console.log('ARTICLE==', item);
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
@@ -236,32 +237,36 @@ export class IndexPostCommand implements CommandRunner {
               id: article.id,
               zindex: article['PostSeriesModel'].zindex,
             }));
-            item.coverMedia = {
-              id: post['coverMedia'].id,
-              createdBy: post['coverMedia'].createdBy,
-              url: post['coverMedia'].url,
-              createdAt: post['coverMedia'].createdAt,
-              name: post['coverMedia'].name,
-              originName: post['coverMedia'].originName,
-              width: post['coverMedia'].width,
-              height: post['coverMedia'].height,
-              extension: post['coverMedia'].extension,
-            };
+            if (post['coverMedia']) {
+              item.coverMedia = {
+                id: post['coverMedia'].id,
+                createdBy: post['coverMedia'].createdBy,
+                url: post['coverMedia'].url,
+                createdAt: post['coverMedia'].createdAt,
+                name: post['coverMedia'].name,
+                originName: post['coverMedia'].originName,
+                width: post['coverMedia'].width,
+                height: post['coverMedia'].height,
+                extension: post['coverMedia'].extension,
+              };
+            }
           }
           insertDataPosts.push(item);
         }
-        process.exit();
-        await this.postSearchService.addPostsToSearch(insertDataPosts, index);
+        const totalItemsIndexed = await this.postSearchService.addPostsToSearch(
+          insertDataPosts,
+          index
+        );
+        successNumber += totalItemsIndexed;
         offset = offset + limitEach;
         total += posts.length;
         console.log(`Indexed ${posts.length}`);
         console.log('-----------------------------------');
         await this.delay(1000);
-        //process.exit();
       }
     }
 
-    console.log('DONE - total:', total);
+    console.log(`DONE - index: ${successNumber} / ${total}`);
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
@@ -283,14 +288,10 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
-        type: 'SERIES',
       },
       offset,
-      limit: 1,
+      limit,
     });
-    console.log('xxxxxxxxxxxxxxxxxxxxx');
-    //const jsonPosts = rows.map((r) => r.toJSON());
-    //console.log('object', JSON.stringify(rows, null, 4));
     return rows;
   }
 

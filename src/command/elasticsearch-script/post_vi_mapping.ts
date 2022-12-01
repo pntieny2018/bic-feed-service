@@ -38,6 +38,7 @@ export const POST_VI_MAPPING = {
           },
           name: {
             type: 'text',
+            index: false,
           },
         },
       },
@@ -52,71 +53,50 @@ export const POST_VI_MAPPING = {
         },
       },
       content: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_no_ascii',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_no_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-              ascii: {
-                type: 'text',
-                analyzer: 'ma_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-            },
+          },
+          ascii: {
+            type: 'text',
+            analyzer: 'ma_ascii',
+            term_vector: 'with_positions_offsets',
           },
         },
       },
       summary: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_no_ascii',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_no_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-              ascii: {
-                type: 'text',
-                analyzer: 'ma_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-            },
+          },
+          ascii: {
+            type: 'text',
+            analyzer: 'ma_ascii',
+            term_vector: 'with_positions_offsets',
           },
         },
       },
       title: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_no_ascii',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_no_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-              ascii: {
-                type: 'text',
-                analyzer: 'ma_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-            },
+          },
+          ascii: {
+            type: 'text',
+            analyzer: 'ma_ascii',
+            term_vector: 'with_positions_offsets',
           },
         },
       },

@@ -37,7 +37,7 @@ export const POST_DEFAULT_MAPPING = {
             type: 'keyword',
           },
           name: {
-            type: 'integer',
+            type: 'text',
             index: false,
           },
         },
@@ -52,78 +52,51 @@ export const POST_DEFAULT_MAPPING = {
           },
         },
       },
-      commentsCount: {
-        type: 'long',
-      },
-      totalUsersSeen: {
-        type: 'long',
-      },
       content: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_no_ascii',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_no_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-              ascii: {
-                type: 'text',
-                analyzer: 'ma_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-            },
+          },
+          ascii: {
+            type: 'text',
+            analyzer: 'ma_ascii',
+            term_vector: 'with_positions_offsets',
           },
         },
       },
       title: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_no_ascii',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_no_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-              ascii: {
-                type: 'text',
-                analyzer: 'ma_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-            },
+          },
+          ascii: {
+            type: 'text',
+            analyzer: 'ma_ascii',
+            term_vector: 'with_positions_offsets',
           },
         },
       },
       summary: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_no_ascii',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_no_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-              ascii: {
-                type: 'text',
-                analyzer: 'ma_ascii',
-                term_vector: 'with_positions_offsets',
-              },
-            },
+          },
+          ascii: {
+            type: 'text',
+            analyzer: 'ma_ascii',
+            term_vector: 'with_positions_offsets',
           },
         },
       },

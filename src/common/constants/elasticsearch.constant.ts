@@ -9,28 +9,23 @@ export const ELASTIC_POST_MAPPING_PATH = {
   },
   groupIds: 'groupIds',
   title: {
-    text: {
-      default: 'title.text.default',
-      ascii: 'title.text.ascii',
-    },
+    default: 'title.default',
+    ascii: 'title.ascii',
   },
   summary: {
-    text: {
-      default: 'summary.text.default',
-      ascii: 'summary.text.ascii',
-    },
+    default: 'summary.default',
+    ascii: 'summary.ascii',
   },
   content: {
-    language: 'content.language',
-    text: {
-      default: 'content.text.default',
-      ascii: 'content.text.ascii',
-    },
+    default: 'content.default',
+    ascii: 'content.ascii',
   },
   id: 'id',
   type: 'type',
   createdAt: 'createdAt',
   createdBy: 'createdBy',
   media: 'media',
-  mentions: 'mentions',
+  coverMedia: 'coverMedia',
+  linkPreview: 'linkPreview',
+  mentionUserIds: 'mentionUserIds',
 };

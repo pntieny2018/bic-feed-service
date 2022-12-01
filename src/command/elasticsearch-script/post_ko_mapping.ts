@@ -33,6 +33,7 @@ export const POST_KO_MAPPING = {
           },
           name: {
             type: 'text',
+            index: false,
           },
         },
       },
@@ -47,56 +48,35 @@ export const POST_KO_MAPPING = {
         },
       },
       content: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_nori',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_nori',
-                term_vector: 'with_positions_offsets',
-              },
-            },
           },
         },
       },
       summary: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_nori',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_nori',
-                term_vector: 'with_positions_offsets',
-              },
-            },
           },
         },
       },
       title: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_nori',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_nori',
-                term_vector: 'with_positions_offsets',
-              },
-            },
           },
         },
       },

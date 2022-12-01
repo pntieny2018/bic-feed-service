@@ -13,16 +13,9 @@ export interface IPostElasticsearch {
   createdBy: string;
   mentions: UserMentionDto;
   categories?: CategoryResponseDto[];
-  title?: {
-    text: string;
-  };
-  summary?: {
-    text: string;
-  };
-  content?: {
-    lang: string;
-    text: string;
-  };
+  title?: string;
+  summary?: string;
+  content?: string;
   coverMedia?: MediaResponseDto;
   articles?: {
     id: string;
