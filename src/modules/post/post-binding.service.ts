@@ -208,6 +208,7 @@ export class PostBindingService {
             delete article.actor.groups;
             return article;
           }
+          return article;
         });
       }
     }

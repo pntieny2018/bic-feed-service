@@ -1227,7 +1227,6 @@ export class PostService {
 
   public async getSimpleArticlessByIds(ids: string[]): Promise<IPost[]> {
     if (ids.length === 0) return [];
-    console.log('1111111111111');
     const rows = await this.postModel.findAll({
       attributes: [
         'id',
@@ -1240,11 +1239,6 @@ export class PostService {
         'importantExpiredAt',
       ],
       include: [
-        {
-          model: PostSeriesModel,
-          required: true,
-          attributes: ['zindex'],
-        },
         {
           model: MediaModel,
           as: 'coverMedia',

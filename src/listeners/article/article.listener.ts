@@ -15,7 +15,7 @@ import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
 import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
-import { PostSearchService } from '../../modules/post/post-search.service';
+import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
@@ -30,7 +30,7 @@ export class ArticleListener {
     private readonly _seriesService: SeriesService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: PostSearchService
+    private readonly _postSearchService: SearchService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)

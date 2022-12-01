@@ -5,9 +5,9 @@ import { IKafkaConfig } from '../../config/kafka';
 import { GroupModule } from '../../shared/group';
 import { UserModule } from '../../shared/user';
 import { PostModule } from '../post';
-import { PostSearchService } from './search.service';
-import { PostService } from './post.service';
+import { ReactionModule } from '../reaction';
 import { SearchController } from './search.controller';
+import { SearchService } from './search.service';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -16,9 +16,9 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
   };
 };
 @Module({
-  imports: [UserModule, GroupModule, PostModule],
+  imports: [UserModule, GroupModule, PostModule, ReactionModule],
   controllers: [SearchController],
-  providers: [PostService, PostSearchService],
-  exports: [PostService, PostSearchService],
+  providers: [SearchService],
+  exports: [SearchService],
 })
 export class SearchModule {}

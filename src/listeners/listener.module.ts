@@ -14,6 +14,7 @@ import { SeriesModule } from '../modules/series';
 import { ArticleListener } from './article';
 import { ArticleModule } from '../modules/article';
 import { SeriesListener } from './series';
+import { SearchModule } from '../modules/search';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SeriesListener } from './series';
     FeedModule,
     SeriesModule,
     ArticleModule,
+    SearchModule,
   ],
   providers: [
     PostListener,

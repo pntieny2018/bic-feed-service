@@ -9,8 +9,8 @@ import { Injectable, Logger, Post } from '@nestjs/common';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostHistoryService } from '../../modules/post/post-history.service';
-import { PostSearchService } from '../../modules/post/post-search.service';
 import { PostType } from '../../database/models/post.model';
+import { SearchService } from '../../modules/search/search.service';
 
 @Injectable()
 export class SeriesListener {
@@ -20,7 +20,7 @@ export class SeriesListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: PostSearchService
+    private readonly _postSearchService: SearchService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)

@@ -6,7 +6,6 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { DataPostToAdd, PostSearchService } from '../../modules/post/post-search.service';
 import { PostService } from '../../modules/post/post.service';
 import { PostBindingService } from '../../modules/post/post-binding.service';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
@@ -20,7 +19,8 @@ import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
 import { Sequelize } from 'sequelize-typescript';
-import { exit } from 'process';
+import { SearchService } from '../../modules/search/search.service';
+import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -33,7 +33,7 @@ interface ICommandOptions {
 export class IndexPostCommand implements CommandRunner {
   private _logger = new Logger(IndexPostCommand.name);
   public constructor(
-    public readonly postSearchService: PostSearchService,
+    public readonly postSearchService: SearchService,
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
@@ -177,7 +177,7 @@ export class IndexPostCommand implements CommandRunner {
       } else {
         const insertDataPosts = [];
         for (const post of posts) {
-          const item: DataPostToAdd = {
+          const item: IDataPostToAdd = {
             id: post.id,
             type: post.type,
             groupIds: post.groups.map((group) => group.groupId),

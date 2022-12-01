@@ -21,10 +21,8 @@ import {
   UpdatePostDto,
 } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
-import { GetPostsSavedDto } from '../dto/requests/get-posts-saved.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
-import { PostSearchService } from '../post-search.service';
 import { PostService } from '../post.service';
 
 @Injectable()
@@ -32,7 +30,6 @@ export class PostAppService {
   private _logger = new Logger(PostAppService.name);
   public constructor(
     private _postService: PostService,
-    private _postSearchService: PostSearchService,
     private _postHistoryService: PostHistoryService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
@@ -191,13 +188,6 @@ export class PostAppService {
     await this._postService.checkExistAndPublished(postId);
     await this._postService.unSavePostToUserCollection(postId, user.id);
     return true;
-  }
-
-  public async searchPosts(
-    user: UserDto,
-    searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postSearchService.searchPosts(user, searchPostsDto);
   }
 
   public getEditedHistory(

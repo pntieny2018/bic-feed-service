@@ -27,6 +27,7 @@ import { HashtagModule } from '../modules/hashtag';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from '../modules/health/health.module';
 import { InternalModule } from '../modules/internal';
+import { SearchModule } from '../modules/search';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { InternalModule } from '../modules/internal';
     HealthModule,
     SeriesModule,
     InternalModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [],

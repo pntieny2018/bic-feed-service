@@ -10,8 +10,8 @@ import {
 } from '../../../events/article';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
-import { PostSearchService } from '../../post/post-search.service';
 import { PostService } from '../../post/post.service';
+import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
 import { GetListArticlesDto, SearchArticlesDto } from '../dto/requests';
 import { CreateArticleDto } from '../dto/requests/create-article.dto';
@@ -29,7 +29,7 @@ export class ArticleAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
-    private _postSearchService: PostSearchService
+    private _postSearchService: SearchService
   ) {}
 
   public async getRelatedById(

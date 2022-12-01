@@ -97,23 +97,6 @@ export interface IPostElasticsearch {
     zindex: number;
   }[];
 }
-export interface ISearchResponse {
-  id: string,
-  audience: {
-    groups: GroupSharedDto[],
-  },
-  type: PostType,
-  media: MediaRespon,
-  content: item._source.content.text,
-  title: item._source.title?.text || null,
-  summary: item._source.summary?.text || null,
-  mentions: item._source.mentions,
-  createdAt: item._source.createdAt,
-  createdBy: item._source.createdBy,
-  coverMedia: item._source.coverMedia ?? null,
-  categories: item._source.categories,
-  articles: item._source.articles,
-}
 
 export interface IDataPostToAdd {
   id: string;

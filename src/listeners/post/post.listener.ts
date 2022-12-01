@@ -17,7 +17,7 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 import { FeedService } from '../../modules/feed/feed.service';
 import { PostPrivacy, PostType } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
-import { PostSearchService } from '../../modules/post/post-search.service';
+import { SearchService } from '../../modules/search/search.service';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 @Injectable()
 export class PostListener {
@@ -27,7 +27,7 @@ export class PostListener {
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _postService: PostService,
-    private readonly _postSearchService: PostSearchService,
+    private readonly _postSearchService: SearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
