@@ -140,9 +140,9 @@ describe.skip('PostController', () => {
     it('Create post successfully', async () => {
       postService.create = jest.fn().mockResolvedValue({ id: mockedPostResponse.id });
       postService.get = jest.fn().mockResolvedValue(mockedPostResponse);
-      authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
+      authorityService.checkCanCRUDPost = jest.fn().mockReturnThis();
       const result = await postController.create(userDto, mockedCreatePostDto);
-      expect(authorityService.checkCanCreatePost).toBeCalledTimes(1);
+      expect(authorityService.checkCanCRUDPost).toBeCalledTimes(1);
       expect(postService.create).toBeCalledTimes(1);
       expect(postService.create).toBeCalledWith(userDto, mockedCreatePostDto);
       expect(postService.get).toBeCalledTimes(1);
@@ -153,9 +153,7 @@ describe.skip('PostController', () => {
 
   describe('update', () => {
     it('Update post successfully', async () => {
-      authorityService.checkCanUpdatePost = jest.fn().mockReturnThis();
-      authorityService.checkCanCreatePost = jest.fn().mockReturnThis();
-      authorityService.checkCanDeletePost = jest.fn().mockReturnThis();
+      authorityService.checkCanCRUDPost = jest.fn().mockReturnThis();
       postService.update = jest.fn().mockResolvedValue(true);
       postService.get = jest.fn().mockResolvedValue(mockedPostResponse);
 
@@ -164,8 +162,7 @@ describe.skip('PostController', () => {
         mockedPostResponse.id,
         mockedUpdatePostDto
       );
-      expect(authorityService.checkCanUpdatePost).toBeCalledTimes(1);
-      expect(authorityService.checkCanCreatePost).toBeCalledTimes(1);
+      expect(authorityService.checkCanCRUDPost).toBeCalledTimes(1);
       expect(postService.update).toBeCalledTimes(1);
       expect(postService.update).toBeCalledWith(
         mockedPostResponse,
