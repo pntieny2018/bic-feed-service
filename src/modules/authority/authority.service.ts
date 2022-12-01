@@ -38,83 +38,56 @@ export class AuthorityService {
     }
   }
 
-  public async checkCanCreatePost(
-    user: UserDto,
-    groupAudienceIds: string[],
-    isImportant = false
-  ): Promise<void> {
+  public async checkCanCRUDPost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableGroupInfos: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
-    if (isImportant) {
-      for (const group of groups) {
-        const canCreateImportantPost = await this._can(
-          user,
-          PERMISSION_KEY.CREATE_IMPORTANT_POST,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canCreateImportantPost) {
-          notCreatableGroupInfos.push(group);
-        }
-      }
-      if (notCreatableGroupInfos.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: `You don't have ${permissionToCommonName(
-            PERMISSION_KEY.CREATE_IMPORTANT_POST
-          )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
-          errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
-        });
-      }
-    } else {
-      for (const group of groups) {
-        const canCreatePost = await this._can(
-          user,
-          PERMISSION_KEY.CREATE_POST_ARTICLE,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canCreatePost) {
-          notCreatableGroupInfos.push(group);
-        }
-      }
-      if (notCreatableGroupInfos.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: `You don't have ${permissionToCommonName(
-            PERMISSION_KEY.CREATE_POST_ARTICLE
-          )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
-          errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
-        });
+
+    for (const group of groups) {
+      const canCreatePost = await this._can(
+        user,
+        PERMISSION_KEY.CRUD_POST_ARTICLE,
+        subject(SUBJECT.GROUP, { id: group.id })
+      );
+      if (!canCreatePost) {
+        notCreatableGroupInfos.push(group);
       }
     }
 
-    this._checkUserInGroups(user, groupAudienceIds);
+    if (notCreatableGroupInfos.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have ${permissionToCommonName(
+          PERMISSION_KEY.CRUD_POST_ARTICLE
+        )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
+      });
+    }
   }
 
-  public async checkCanUpdatePost(
-    user: UserDto,
-    post: PostResponseDto | PostModel | IPost,
-    groupAudienceIds: string[]
-  ): Promise<void> {
-    await this.checkPostOwner(post, user.id);
-    if (post.isDraft === true) return;
-    this._checkUserInSomeGroups(user, groupAudienceIds);
-  }
+  public async checkCanCRUDSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
+    const notCreatableGroupInfos: GroupSharedDto[] = [];
+    const groups = await this._groupService.getMany(groupAudienceIds);
 
-  public async checkCanUpdateArticle(
-    user: UserDto,
-    post: PostResponseDto | PostModel | IPost,
-    groupAudienceIds: string[]
-  ): Promise<void> {
-    return this.checkCanUpdatePost(user, post, groupAudienceIds);
-  }
+    for (const group of groups) {
+      const canCreatePost = await this._can(
+        user,
+        PERMISSION_KEY.CRUD_SERIES,
+        subject(SUBJECT.GROUP, { id: group.id })
+      );
+      if (!canCreatePost) {
+        notCreatableGroupInfos.push(group);
+      }
+    }
 
-  public async checkCanUpdateSeries(
-    user: UserDto,
-    post: SeriesResponseDto | PostModel | IPost,
-    groupAudienceIds: string[]
-  ): Promise<void> {
-    await this.checkPostOwner(post, user.id);
-    this._checkUserInSomeGroups(user, groupAudienceIds);
+    if (notCreatableGroupInfos.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have ${permissionToCommonName(
+          PERMISSION_KEY.CRUD_SERIES
+        )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
+      });
+    }
   }
 
   public async checkPostOwner(
@@ -128,58 +101,6 @@ export class AuthorityService {
     if (post.createdBy !== authUserId) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
-  }
-
-  public async checkCanDeletePost(
-    user: UserDto,
-    groupAudienceIds: string[],
-    createBy: string
-  ): Promise<void> {
-    const isOwner = user.id === createBy;
-    const groups = await this._groupService.getMany(groupAudienceIds);
-    const notDeletableGroupInfos: GroupSharedDto[] = [];
-    if (isOwner) {
-      for (const group of groups) {
-        const canDeletOwnPost = await this._can(
-          user,
-          PERMISSION_KEY.DELETE_OWN_POST,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canDeletOwnPost) {
-          notDeletableGroupInfos.push(group);
-        }
-      }
-      if (notDeletableGroupInfos.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: `You don't have ${permissionToCommonName(
-            PERMISSION_KEY.DELETE_OWN_POST
-          )} permission at group ${notDeletableGroupInfos.map((e) => e.name).join(', ')}`,
-          errors: { groupsDenied: notDeletableGroupInfos.map((e) => e.id) },
-        });
-      }
-    } else {
-      for (const group of groups) {
-        const canDeleteOtherPost = await this._can(
-          user,
-          PERMISSION_KEY.DELETE_OTHERS_POST,
-          subject(SUBJECT.GROUP, { id: group.id })
-        );
-        if (!canDeleteOtherPost) {
-          notDeletableGroupInfos.push(group);
-        }
-      }
-      if (notDeletableGroupInfos.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: `You don't have ${permissionToCommonName(
-            PERMISSION_KEY.DELETE_OTHERS_POST
-          )} permission at group ${notDeletableGroupInfos.map((e) => e.name).join(', ')}`,
-          errors: { groupsDenied: notDeletableGroupInfos.map((e) => e.id) },
-        });
-      }
-    }
-    this._checkUserInSomeGroups(user, groupAudienceIds);
   }
 
   public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
@@ -196,24 +117,6 @@ export class AuthorityService {
 
   public async checkIsPublicSeries(post: IPost): Promise<void> {
     return this.checkIsPublicPost(post);
-  }
-
-  private _checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
-    const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
-
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-  }
-
-  private _checkUserInGroups(user: UserDto, groupAudienceIds: string[]): void {
-    const userJoinedGroupIds = user.profile?.groups ?? [];
-    const canAccess = this._groupService.isMemberOfGroups(groupAudienceIds, userJoinedGroupIds);
-
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
   }
 
   private async _can(user: UserDto, action: string, subject: Subject = null): Promise<boolean> {

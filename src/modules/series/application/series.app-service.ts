@@ -57,7 +57,7 @@ export class SeriesAppService {
   public async createSeries(user: UserDto, createSeriesDto: CreateSeriesDto): Promise<any> {
     const { audience } = createSeriesDto;
     if (audience.groupIds?.length > 0) {
-      await this._authorityService.checkCanCreatePost(user, audience.groupIds, false);
+      await this._authorityService.checkCanCRUDSeries(user, audience.groupIds);
     }
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
@@ -86,16 +86,11 @@ export class SeriesAppService {
     if (audience.groupIds.length === 0) {
       throw new BadRequestException('Audience is required');
     }
-    await this._authorityService.checkCanUpdateSeries(user, seriesBefore, audience.groupIds);
 
     const oldGroupIds = seriesBefore.audience.groups.map((group) => group.id);
     const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     if (newAudienceIds.length) {
-      await this._authorityService.checkCanCreatePost(user, newAudienceIds, false);
-    }
-    const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
-    if (removeGroupIds.length) {
-      await this._authorityService.checkCanDeletePost(user, removeGroupIds, seriesBefore.createdBy);
+      await this._authorityService.checkCanCRUDSeries(user, newAudienceIds);
     }
 
     const isUpdated = await this._seriesService.update(seriesBefore, user, updateSeriesDto);
@@ -121,10 +116,9 @@ export class SeriesAppService {
     await this._authorityService.checkPostOwner(series[0], user.id);
 
     if (series[0].isDraft === false) {
-      await this._authorityService.checkCanDeletePost(
+      await this._authorityService.checkCanCRUDSeries(
         user,
-        series[0].groups.map((g) => g.groupId),
-        series[0].createdBy
+        series[0].groups.map((g) => g.groupId)
       );
     }
 
@@ -211,9 +205,6 @@ export class SeriesAppService {
     });
     if (!series) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
     await this._authorityService.checkPostOwner(series, user.id);
-
-    const groupIds = series.groups.map((group) => group.groupId);
-    await this._authorityService.checkCanUpdateSeries(user, series, groupIds);
     return this._seriesService.reorderArticles(seriesId, articleIds);
   }
 }

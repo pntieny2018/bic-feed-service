@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Ability } from '@casl/ability';
 import { SentryService } from '@app/sentry';
-import { BASIC_PERMISSIONS, SUBJECT } from '../../common/constants/casl.constant';
+import { SUBJECT } from '../../common/constants/casl.constant';
 import { UserPermissionDto } from '../../shared/user/dto/user-permission.dto';
 import { UserDto } from '../auth';
 @Injectable()
@@ -25,7 +25,6 @@ export class AuthorityFactory {
 
   public static extractAbilitiesFromPermission(userPermission: UserPermissionDto): any[] {
     const abilities = [];
-    const noSubjectAbilities = [];
     for (const communityId in userPermission.communities) {
       const commPermissions = userPermission.communities[communityId];
       commPermissions.forEach((permission) => {
@@ -48,16 +47,6 @@ export class AuthorityFactory {
       });
     }
 
-    this.bindBasicAbilitiesForBeinUser(noSubjectAbilities);
-
-    return abilities.concat(noSubjectAbilities);
-  }
-
-  public static bindBasicAbilitiesForBeinUser(noSubjectAbilities: any[]): void {
-    Object.keys(BASIC_PERMISSIONS).forEach((permission) =>
-      noSubjectAbilities.push({
-        action: permission,
-      })
-    );
+    return abilities;
   }
 }

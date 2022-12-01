@@ -291,8 +291,7 @@ export class SeriesService {
       if (series.isDraft === false) {
         await this._authorityService.checkCanDeletePost(
           authUser,
-          series.groups.map((g) => g.groupId),
-          series.createdBy
+          series.groups.map((g) => g.groupId)
         );
       }
 
