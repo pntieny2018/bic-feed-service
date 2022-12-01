@@ -288,14 +288,6 @@ export class SeriesService {
     const transaction = await this._sequelizeConnection.transaction();
     const seriesId = series.id;
     try {
-      if (series.isDraft === false) {
-        await this._authorityService.checkCanDeletePost(
-          authUser,
-          series.groups.map((g) => g.groupId),
-          series.createdBy
-        );
-      }
-
       if (series.isDraft) {
         await Promise.all([
           this._postGroupModel.destroy({

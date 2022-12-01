@@ -89,7 +89,13 @@ export class ArticleAppService {
 
     if (articleBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
-      await this._authorityService.checkCanUpdateArticle(user, articleBefore, audience.groupIds);
+      const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
+
+      const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+      if (newAudienceIds.length) {
+        await this._authorityService.checkCanCRUDPost(user, newAudienceIds);
+      }
+
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
       if (series?.length) {
@@ -145,7 +151,7 @@ export class ArticleAppService {
 
     const groupIds = audience.groups.map((group) => group.id);
 
-    await this._authorityService.checkCanCreatePost(user, groupIds, article.setting.isImportant);
+    await this._authorityService.checkCanCRUDPost(user, groupIds);
 
     const seriesGroups = await this._postService.getListWithGroupsByIds(
       article.series.map((item) => item.id),
@@ -195,10 +201,9 @@ export class ArticleAppService {
     await this._authorityService.checkPostOwner(article, user.id);
 
     if (article.isDraft === false) {
-      await this._authorityService.checkCanDeletePost(
+      await this._authorityService.checkCanCRUDPost(
         user,
-        article.groups.map((g) => g.groupId),
-        article.createdBy
+        article.groups.map((g) => g.groupId)
       );
     }
 
