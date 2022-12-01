@@ -92,19 +92,7 @@ export class PostListener {
   @On(PostHasBeenPublishedEvent)
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
     const { post, actor } = event.payload;
-    const {
-      isDraft,
-      id,
-      content,
-      commentsCount,
-      totalUsersSeen,
-      media,
-      mentions,
-      setting,
-      audience,
-      createdAt,
-      type,
-    } = post;
+    const { isDraft, id, content, media, mentions, createdBy, audience, createdAt, type } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
@@ -131,20 +119,40 @@ export class PostListener {
         data: activity,
       },
     });
-
+    const mentionUserIds = [];
+    for (const key in mentions) {
+      mentionUserIds.push(mentions[key].id);
+    }
+    const mediaList = [];
+    for (const mediaType in media) {
+      for (const mediaItem of media[mediaType]) {
+        mediaList.push({
+          id: mediaItem.id,
+          status: mediaItem.status,
+          name: mediaItem.name,
+          url: mediaItem.url,
+          size: mediaItem.size,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          originName: mediaItem.originName,
+          extension: mediaItem.extension,
+          mimeType: mediaItem.mimeType,
+          thumbnails: mediaItem.thumbnails,
+          createdAt: mediaItem.createdAt,
+          createdBy: mediaItem.createdBy,
+        });
+      }
+    }
     this._postSearchService.addPostsToSearch([
       {
         id,
         type,
-        commentsCount,
-        totalUsersSeen,
         content,
-        media,
-        mentions,
-        audience,
-        setting,
+        media: mediaList,
+        mentionUserIds,
+        groupIds: audience.groups.map((group) => group.id),
+        createdBy,
         createdAt,
-        actor,
       },
     ]);
 
@@ -165,20 +173,8 @@ export class PostListener {
   @On(PostHasBeenUpdatedEvent)
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     const { oldPost, newPost, actor } = event.payload;
-    const {
-      isDraft,
-      id,
-      content,
-      commentsCount,
-      totalUsersSeen,
-      media,
-      mentions,
-      setting,
-      audience,
-      type,
-      lang,
-      createdAt,
-    } = newPost;
+    const { isDraft, id, content, media, mentions, createdBy, audience, type, lang, createdAt } =
+      newPost;
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
@@ -219,20 +215,40 @@ export class PostListener {
         },
       },
     });
-
+    const mentionUserIds = [];
+    for (const key in mentions) {
+      mentionUserIds.push(mentions[key].id);
+    }
+    const mediaList = [];
+    for (const mediaType in media) {
+      for (const mediaItem of media[mediaType]) {
+        mediaList.push({
+          id: mediaItem.id,
+          status: mediaItem.status,
+          name: mediaItem.name,
+          url: mediaItem.url,
+          size: mediaItem.size,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          originName: mediaItem.originName,
+          extension: mediaItem.extension,
+          mimeType: mediaItem.mimeType,
+          thumbnails: mediaItem.thumbnails,
+          createdAt: mediaItem.createdAt,
+          createdBy: mediaItem.createdBy,
+        });
+      }
+    }
     this._postSearchService.updatePostsToSearch([
       {
         id,
         type,
-        commentsCount,
-        totalUsersSeen,
         content,
-        media,
-        mentions,
-        audience,
-        setting,
+        media: mediaList,
+        mentionUserIds,
+        groupIds: audience.groups.map((group) => group.id),
+        createdBy,
         createdAt,
-        actor,
         lang,
       },
     ]);
@@ -275,33 +291,42 @@ export class PostListener {
         },
       });
 
-      const {
-        actor,
-        id,
-        content,
-        commentsCount,
-        totalUsersSeen,
-        media,
-        mentions,
-        setting,
-        audience,
-        createdAt,
-        type,
-      } = post;
+      const { actor, id, content, media, mentions, createdBy, audience, createdAt, type } = post;
 
+      const mentionUserIds = [];
+      for (const key in mentions) {
+        mentionUserIds.push(mentions[key].id);
+      }
+      const mediaList = [];
+      for (const mediaType in media) {
+        for (const mediaItem of media[mediaType]) {
+          mediaList.push({
+            id: mediaItem.id,
+            status: mediaItem.status,
+            name: mediaItem.name,
+            url: mediaItem.url,
+            size: mediaItem.size,
+            width: mediaItem.width,
+            height: mediaItem.height,
+            originName: mediaItem.originName,
+            extension: mediaItem.extension,
+            mimeType: mediaItem.mimeType,
+            thumbnails: mediaItem.thumbnails,
+            createdAt: mediaItem.createdAt,
+            createdBy: mediaItem.createdBy,
+          });
+        }
+      }
       this._postSearchService.addPostsToSearch([
         {
           id,
           type,
-          commentsCount,
-          totalUsersSeen,
           content,
-          media,
-          mentions,
-          audience,
-          setting,
+          media: mediaList,
+          mentionUserIds,
+          groupIds: audience.groups.map((group) => group.id),
+          createdBy,
           createdAt,
-          actor,
         },
       ]);
       try {

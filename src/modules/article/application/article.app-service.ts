@@ -46,13 +46,6 @@ export class ArticleAppService {
     return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
-  public getList(
-    user: UserDto,
-    getArticleListDto: GetListArticlesDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    return this._articleService.getList(user, getArticleListDto);
-  }
-
   public get(
     user: UserDto,
     articleId: string,

@@ -36,7 +36,7 @@ export class MediaFilterResponseDto {
 
 export class MediaResponseDto {
   @ApiProperty()
-  public id: number;
+  public id: string;
 
   @ApiProperty()
   public createdBy: string;

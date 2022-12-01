@@ -1,6 +1,6 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { plainToInstance } from 'class-transformer';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +20,7 @@ import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
 import { Sequelize } from 'sequelize-typescript';
+import { exit } from 'process';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -170,6 +171,7 @@ export class IndexPostCommand implements CommandRunner {
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
     while (hasMore) {
       const posts = await this._getPostsToSync(offset, limitEach);
+      console.log('posts=', JSON.stringify(posts, null, 4));
       if (posts.length === 0) {
         hasMore = false;
       } else {
@@ -178,37 +180,77 @@ export class IndexPostCommand implements CommandRunner {
           const item: DataPostToAdd = {
             id: post.id,
             type: post.type,
-            commentsCount: post.commentsCount,
-            totalUsersSeen: post.totalUsersSeen,
-            audience: post.audience,
+            groupIds: post.groups.map((group) => group.groupId),
             createdAt: post.createdAt,
-            actor: post.actor,
-            setting: post.setting,
+            createdBy: post.createdBy,
           };
           if (post.type === PostType.POST) {
+            const mentionUserIds = [];
+            for (const key in post.mentions) {
+              mentionUserIds.push(post.mentions[key].id);
+            }
+
             item.content = post.content;
-            item.media = post.media;
-            item.mentions = post.mentions;
+            item.media = post.media.map((mediaItem) => ({
+              id: mediaItem.id,
+              status: mediaItem.status,
+              name: mediaItem.name,
+              url: mediaItem.url,
+              size: mediaItem.size,
+              width: mediaItem.width,
+              height: mediaItem.height,
+              originName: mediaItem.originName,
+              extension: mediaItem.extension,
+              mimeType: mediaItem.mimeType,
+              thumbnails: mediaItem.thumbnails,
+              createdAt: mediaItem.createdAt,
+              createdBy: mediaItem.createdBy,
+            }));
+            item.mentionUserIds = mentionUserIds;
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;
             item.summary = post.summary;
             item.content = post.content;
-            item.media = post.media;
-            item.coverMedia = post.coverMedia;
+            item.coverMedia = {
+              id: post['coverMedia'].id,
+              createdBy: post['coverMedia'].createdBy,
+              url: post['coverMedia'].url,
+              createdAt: post['coverMedia'].createdAt,
+              name: post['coverMedia'].name,
+              originName: post['coverMedia'].originName,
+              width: post['coverMedia'].width,
+              height: post['coverMedia'].height,
+              extension: post['coverMedia'].extension,
+            };
             item.categories = post.categories.map((category) => ({
               id: category.id,
               name: category.name,
             }));
+            console.log('ARTICLE==', item);
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.articleIds = post.articles.map((article) => article.id);
-            item.coverMedia = post.coverMedia;
+            item.articles = post.articles.map((article) => ({
+              id: article.id,
+              zindex: article['PostSeriesModel'].zindex,
+            }));
+            item.coverMedia = {
+              id: post['coverMedia'].id,
+              createdBy: post['coverMedia'].createdBy,
+              url: post['coverMedia'].url,
+              createdAt: post['coverMedia'].createdAt,
+              name: post['coverMedia'].name,
+              originName: post['coverMedia'].originName,
+              width: post['coverMedia'].width,
+              height: post['coverMedia'].height,
+              extension: post['coverMedia'].extension,
+            };
           }
           insertDataPosts.push(item);
         }
+        process.exit();
         await this.postSearchService.addPostsToSearch(insertDataPosts, index);
         offset = offset + limitEach;
         total += posts.length;
@@ -222,7 +264,7 @@ export class IndexPostCommand implements CommandRunner {
     console.log('DONE - total:', total);
   }
 
-  private async _getPostsToSync(offset: number, limit: number): Promise<any> {
+  private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
     const include = this.postService.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
@@ -230,6 +272,7 @@ export class IndexPostCommand implements CommandRunner {
       shouldIncludeMention: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
+      shouldIncludeArticlesInSeries: true,
     });
 
     const attributes = {
@@ -240,19 +283,15 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
+        type: 'SERIES',
       },
       offset,
-      limit,
+      limit: 1,
     });
-    const jsonPosts = rows.map((r) => r.toJSON());
-    const result = this.postBingdingService.bindRelatedData(jsonPosts, {
-      shouldBindActor: true,
-      shouldBindAudience: true,
-      shouldBindMention: true,
-    });
-    return plainToInstance(ArticleResponseDto, result, {
-      excludeExtraneousValues: true,
-    });
+    console.log('xxxxxxxxxxxxxxxxxxxxx');
+    //const jsonPosts = rows.map((r) => r.toJSON());
+    //console.log('object', JSON.stringify(rows, null, 4));
+    return rows;
   }
 
   private async _deleteAllDocuments(): Promise<void> {

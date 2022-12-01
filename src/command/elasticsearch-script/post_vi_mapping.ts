@@ -17,58 +17,10 @@ export const POST_VI_MAPPING = {
   },
   mappings: {
     properties: {
-      actor: {
-        properties: {
-          avatar: {
-            type: 'keyword',
-          },
-          email: {
-            type: 'keyword',
-          },
-          fullname: {
-            type: 'text',
-          },
-          groups: {
-            type: 'keyword',
-          },
-          id: {
-            type: 'keyword',
-          },
-          username: {
-            type: 'keyword',
-          },
-        },
+      groupIds: {
+        type: 'keyword',
       },
-      audience: {
-        properties: {
-          groups: {
-            properties: {
-              child: {
-                type: 'keyword',
-              },
-              icon: {
-                type: 'keyword',
-              },
-              id: {
-                type: 'keyword',
-              },
-              isCommunity: {
-                type: 'boolean',
-              },
-              name: {
-                type: 'text',
-              },
-              privacy: {
-                type: 'keyword',
-              },
-              communityId: {
-                type: 'keyword',
-              },
-            },
-          },
-        },
-      },
-      community: {
+      communities: {
         properties: {
           id: {
             type: 'keyword',
@@ -89,14 +41,15 @@ export const POST_VI_MAPPING = {
           },
         },
       },
-      articleIds: {
-        type: 'keyword',
-      },
-      commentsCount: {
-        type: 'long',
-      },
-      totalUsersSeen: {
-        type: 'long',
+      articles: {
+        properties: {
+          id: {
+            type: 'keyword',
+          },
+          zindex: {
+            type: 'integer',
+          },
+        },
       },
       content: {
         properties: {
@@ -173,6 +126,9 @@ export const POST_VI_MAPPING = {
       createdAt: {
         type: 'date',
       },
+      createdBy: {
+        type: 'keyword',
+      },
       id: {
         type: 'keyword',
       },
@@ -188,28 +144,8 @@ export const POST_VI_MAPPING = {
         type: 'object',
         enabled: false,
       },
-      mentions: {
-        type: 'object',
-        enabled: false,
-      },
-      setting: {
-        properties: {
-          canComment: {
-            type: 'boolean',
-          },
-          canReact: {
-            type: 'boolean',
-          },
-          canShare: {
-            type: 'boolean',
-          },
-          importantExpiredAt: {
-            type: 'date',
-          },
-          isImportant: {
-            type: 'boolean',
-          },
-        },
+      mentionUserIds: {
+        type: 'keyword',
       },
     },
   },

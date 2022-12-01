@@ -1,28 +1,13 @@
 export const ELASTIC_POST_MAPPING_PATH = {
-  actor: {
-    id: 'actor.id',
-    email: 'actor.email',
-    fullname: 'actor.fullname',
-    groups: 'actor.groups',
-    username: 'actor.username',
-  },
   categories: {
     id: 'categories.id',
     name: 'categories.name',
   },
-  audience: {
-    groups: {
-      id: 'audience.groups.id',
-      child: 'audience.groups.child',
-      icon: 'audience.groups.icon',
-      isCommunity: 'audience.groups.isCommunity',
-      name: 'audience.groups.name',
-      privacy: 'audience.groups.privacy',
-      communityId: 'audience.groups.communityId',
-    },
+  articles: {
+    id: 'articles.id',
+    zindex: 'articles.zindex',
   },
-  commentsCount: 'commentsCount',
-  totalUsersSeen: 'totalUsersSeen',
+  groupIds: 'groupIds',
   title: {
     text: {
       default: 'title.text.default',
@@ -45,13 +30,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
   id: 'id',
   type: 'type',
   createdAt: 'createdAt',
+  createdBy: 'createdBy',
   media: 'media',
   mentions: 'mentions',
-  setting: {
-    canComment: 'setting.canComment',
-    canReact: 'setting.canReact',
-    canShare: 'setting.canShare',
-    importantExpiredAt: 'setting.importantExpiredAt',
-    isImportant: 'setting.isImportant',
-  },
 };

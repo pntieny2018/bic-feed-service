@@ -1,22 +1,22 @@
+import { SentryService } from '@app/sentry';
+import { Injectable, Logger } from '@nestjs/common';
+import { NIL as NIL_UUID } from 'uuid';
+import { On } from '../../common/decorators';
+import { MediaStatus } from '../../database/models/media.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
-import { SentryService } from '@app/sentry';
-import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
-import { FeedPublisherService } from '../../modules/feed-publisher';
-import { MediaStatus } from '../../database/models/media.model';
-import { MediaService } from '../../modules/media';
-import { FeedService } from '../../modules/feed/feed.service';
-import { SeriesService } from '../../modules/series/series.service';
-import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
+import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
 import { ArticleService } from '../../modules/article/article.service';
-import { NIL as NIL_UUID } from 'uuid';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+import { FeedService } from '../../modules/feed/feed.service';
+import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostSearchService } from '../../modules/post/post-search.service';
+import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
 export class ArticleListener {
@@ -54,11 +54,7 @@ export class ArticleListener {
       isDraft,
       id,
       content,
-      commentsCount,
-      totalUsersSeen,
       media,
-      mentions,
-      setting,
       audience,
       createdAt,
       type,
@@ -66,6 +62,7 @@ export class ArticleListener {
       summary,
       coverMedia,
       categories,
+      createdBy,
     } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -85,18 +82,23 @@ export class ArticleListener {
       {
         id,
         type,
-        commentsCount,
-        totalUsersSeen,
         content,
-        media,
-        mentions,
-        audience,
-        setting,
+        groupIds: audience.groups.map((group) => group.id),
+        createdBy,
         createdAt,
-        actor,
         title,
         summary,
-        coverMedia,
+        coverMedia: {
+          id: coverMedia.id,
+          createdBy: coverMedia.createdBy,
+          url: coverMedia.url,
+          createdAt: coverMedia.createdAt,
+          name: coverMedia.name,
+          originName: coverMedia.originName,
+          width: coverMedia.width,
+          height: coverMedia.height,
+          extension: coverMedia.extension,
+        },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
       },
     ]);
@@ -123,11 +125,8 @@ export class ArticleListener {
       isDraft,
       id,
       content,
-      commentsCount,
-      totalUsersSeen,
       media,
-      mentions,
-      setting,
+      createdBy,
       audience,
       type,
       createdAt,
@@ -166,19 +165,24 @@ export class ArticleListener {
       {
         id,
         type,
-        commentsCount,
-        totalUsersSeen,
         content,
-        media,
-        mentions,
-        audience,
-        setting,
+        groupIds: audience.groups.map((group) => group.id),
         createdAt,
-        actor,
+        createdBy,
         lang,
         summary,
         title,
-        coverMedia,
+        coverMedia: {
+          id: coverMedia.id,
+          createdBy: coverMedia.createdBy,
+          url: coverMedia.url,
+          createdAt: coverMedia.createdAt,
+          name: coverMedia.name,
+          originName: coverMedia.originName,
+          width: coverMedia.width,
+          height: coverMedia.height,
+          extension: coverMedia.extension,
+        },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
       },
     ]);
@@ -218,35 +222,37 @@ export class ArticleListener {
         actor,
         id,
         content,
-        commentsCount,
-        totalUsersSeen,
         media,
-        mentions,
-        setting,
         audience,
         createdAt,
         type,
         summary,
         title,
         coverMedia,
+        createdBy,
       } = article;
 
       this._postSearchService.addPostsToSearch([
         {
           id,
           type,
-          commentsCount,
-          totalUsersSeen,
           content,
-          media,
-          mentions,
-          audience,
-          setting,
+          groupIds: audience.groups.map((group) => group.id),
           createdAt,
-          actor,
+          createdBy,
           summary,
           title,
-          coverMedia,
+          coverMedia: {
+            id: coverMedia.id,
+            createdBy: coverMedia.createdBy,
+            url: coverMedia.url,
+            createdAt: coverMedia.createdAt,
+            name: coverMedia.name,
+            originName: coverMedia.originName,
+            width: coverMedia.width,
+            height: coverMedia.height,
+            extension: coverMedia.extension,
+          },
         },
       ]);
 

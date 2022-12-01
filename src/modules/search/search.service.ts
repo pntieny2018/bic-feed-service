@@ -7,7 +7,7 @@ import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
-import { IMedia, MediaStatus } from '../../database/models/media.model';
+import { MediaStatus } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { GroupService } from '../../shared/group';
 import { SearchArticlesDto } from '../article/dto/requests';
@@ -15,62 +15,17 @@ import { ArticleResponseDto } from '../article/dto/responses';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../auth';
-import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 import { SearchPostsDto } from './dto/requests';
 import { ThumbnailDto } from './dto/responses/process-video-response.dto';
-import { IPostElasticsearch } from './interfaces/post-response-elasticsearch.interface';
-import { PostBindingService } from './post-binding.service';
-import { PostService } from './post.service';
+import {
+  IDataPostToAdd,
+  IDataPostToUpdate,
+  IPostElasticsearch,
+} from './interfaces/post-elasticsearch.interface';
 
-type CoverMedia = {
-  id: string;
-  createdBy: string;
-  url: string;
-  createdAt: Date;
-  name: string;
-  originName: string;
-  width?: number;
-  height?: number;
-  extension?: string;
-};
-
-type Media = {
-  id: string;
-  createdBy: string;
-  url: string;
-  createdAt: Date;
-  name: string;
-  originName: string;
-  status: MediaStatus;
-  type?: MediaType;
-  width?: number;
-  height?: number;
-  extension?: string;
-  size?: number;
-  mimeType?: string;
-  thumbnails?: ThumbnailDto[];
-};
-
-export type DataPostToAdd = {
-  id: string;
-  groupIds: string[];
-  createdAt: Date;
-  createdBy: string;
-  type: PostType;
-  title?: string;
-  summary?: string;
-  content?: string;
-  media?: Media[];
-  mentionUserIds?: string[];
-  categories?: { id: string; name: string }[];
-  articles?: { id: string; zindex: number }[];
-  coverMedia?: CoverMedia;
-};
-type DataPostToUpdate = DataPostToAdd & {
-  lang: string;
-};
 type FieldSearch = {
   text: {
     default: string;
@@ -78,12 +33,12 @@ type FieldSearch = {
   };
 };
 @Injectable()
-export class PostSearchService {
+export class SearchService {
   /**
    * Logger
    * @protected
    */
-  protected logger = new Logger(PostSearchService.name);
+  protected logger = new Logger(SearchService.name);
 
   /**
    *  ClassTransformer
@@ -97,11 +52,10 @@ export class PostSearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly postBindingService: PostBindingService,
     protected readonly groupService: GroupService
   ) {}
 
-  public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<void> {
+  public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<void> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
@@ -157,7 +111,7 @@ export class PostSearchService {
     }
   }
 
-  public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
+  public async updatePostsToSearch(posts: IDataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
       if (dataIndex.type === PostType.ARTICLE) {
@@ -277,16 +231,16 @@ export class PostSearchService {
 
     await Promise.all([
       this.reactionService.bindToPosts(posts),
-      this.postBindingService.bindActor(posts),
-      this.postBindingService.bindAudience(posts),
-      this.postBindingService.bindAttributes(posts, [
-        'content',
-        'commentsCount',
-        'totalUsersSeen',
-        'setting',
-      ]),
+      // this.postBindingService.bindActor(posts),
+      // this.postBindingService.bindAudience(posts),
+      // this.postBindingService.bindAttributes(posts, [
+      //   'content',
+      //   'commentsCount',
+      //   'totalUsersSeen',
+      //   'setting',
+      // ]),
     ]);
-    await this.postBindingService.bindCommunity(posts);
+    //await this.postBindingService.bindCommunity(posts);
 
     const articles = await this.postService.getSimpleArticlessByIds(
       ArrayHelper.arrayUnique(articleIds)
@@ -315,9 +269,7 @@ export class PostSearchService {
     });
   }
 
-  private _mapESToInterface(posts) {
-
-  }
+  private _mapESToInterface(posts) {}
 
   /*
     Search series in article detail

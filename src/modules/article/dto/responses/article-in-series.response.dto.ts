@@ -26,6 +26,13 @@ export class ArticleInSeriesResponseDto {
   public title: string;
 
   @ApiProperty({
+    description: 'zindex',
+    type: Number,
+  })
+  @Expose()
+  public zindex: number;
+
+  @ApiProperty({
     description: 'Summary',
     type: String,
   })
