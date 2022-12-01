@@ -173,6 +173,7 @@ export class PostBindingService {
       icon: community.icon,
       name: community.name,
       privacy: community.privacy,
+      communityId: community.communityId,
     }));
   }
 
@@ -236,20 +237,22 @@ export class PostBindingService {
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      if (attributes.includes('content')) post.content = findPost?.content || '';
-      if (attributes.includes('commentsCount')) {
-        post.commentsCount = findPost?.commentsCount || 0;
-      }
-      if (attributes.includes('totalUsersSeen'))
-        post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (attributes.includes('setting')) {
-        post.setting = {
-          importantExpiredAt: findPost.importantExpiredAt,
-          isImportant: findPost.isImportant,
-          canReact: findPost.canReact,
-          canShare: findPost.canShare,
-          canComment: findPost.canComment,
-        };
+      if (findPost) {
+        if (attributes.includes('content')) post.content = findPost?.content || '';
+        if (attributes.includes('commentsCount')) {
+          post.commentsCount = findPost?.commentsCount || 0;
+        }
+        if (attributes.includes('totalUsersSeen'))
+          post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+        if (attributes.includes('setting')) {
+          post.setting = {
+            importantExpiredAt: findPost.importantExpiredAt,
+            isImportant: findPost.isImportant,
+            canReact: findPost.canReact,
+            canShare: findPost.canShare,
+            canComment: findPost.canComment,
+          };
+        }
       }
     }
   }
