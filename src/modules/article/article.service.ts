@@ -666,15 +666,6 @@ export class ArticleService extends PostService {
         },
         { transaction }
       );
-      if (setting.isImportant) {
-        await this.userMarkReadPostModel.create(
-          {
-            postId: post.id,
-            userId: authUser.id,
-          },
-          { transaction }
-        );
-      }
       if (uniqueMediaIds.length) {
         await this.mediaService.createIfNotExist(media, authUserId);
         await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
@@ -757,6 +748,13 @@ export class ArticleService extends PostService {
         }
       );
       article.isDraft = isDraft;
+      if (article.setting.isImportant) {
+        await this.userMarkReadPostModel.create({
+          postId: article.id,
+          userId: authUserId,
+        });
+        article.markedReadPost = true;
+      }
       return article;
     } catch (error) {
       this.logger.error(error, error?.stack);
