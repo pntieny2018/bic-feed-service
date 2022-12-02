@@ -65,6 +65,15 @@ export class ArticleAppService {
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
+    const { audience, setting } = createArticleDto;
+    if (audience.groupIds) {
+      const isEnableSetting =
+        setting.isImportant ||
+        setting.canComment === false ||
+        setting.canReact === false ||
+        setting.canShare === false;
+      await this._authorityService.checkCanCRUDPost(user, audience.groupIds, isEnableSetting);
+    }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
       const article = await this._articleService.get(created.id, user, new GetArticleDto());
@@ -81,7 +90,7 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, series } = updateArticleDto;
+    const { audience, series, setting } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -93,7 +102,17 @@ export class ArticleAppService {
 
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
-        await this._authorityService.checkCanCRUDPost(user, newAudienceIds);
+        let isEnableSetting = false;
+        if (
+          setting &&
+          (setting.isImportant ||
+            setting.canComment === false ||
+            setting.canReact === false ||
+            setting.canShare === false)
+        ) {
+          isEnableSetting = true;
+        }
+        await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
       }
 
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
@@ -146,12 +165,17 @@ export class ArticleAppService {
     if (article.isDraft === false) return article;
 
     await this._authorityService.checkPostOwner(article, user.id);
-    const { audience } = article;
+    const { audience, setting } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
 
     const groupIds = audience.groups.map((group) => group.id);
 
-    await this._authorityService.checkCanCRUDPost(user, groupIds);
+    const isEnableSetting =
+      setting.isImportant ||
+      setting.canComment === false ||
+      setting.canReact === false ||
+      setting.canShare === false;
+    await this._authorityService.checkCanCRUDPost(user, groupIds, isEnableSetting);
 
     const seriesGroups = await this._postService.getListWithGroupsByIds(
       article.series.map((item) => item.id),
@@ -203,7 +227,8 @@ export class ArticleAppService {
     if (article.isDraft === false) {
       await this._authorityService.checkCanCRUDPost(
         user,
-        article.groups.map((g) => g.groupId)
+        article.groups.map((g) => g.groupId),
+        false
       );
     }
 

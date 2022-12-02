@@ -38,8 +38,13 @@ export class AuthorityService {
     }
   }
 
-  public async checkCanCRUDPost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
-    const notCreatableGroupInfos: GroupSharedDto[] = [];
+  public async checkCanCRUDPost(
+    user: UserDto,
+    groupAudienceIds: string[],
+    needEnableSetting: boolean
+  ): Promise<void> {
+    const notCreatableInGroups: GroupSharedDto[] = [];
+    const notEditSettingInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
 
     for (const group of groups) {
@@ -49,17 +54,38 @@ export class AuthorityService {
         subject(SUBJECT.GROUP, { id: group.id })
       );
       if (!canCreatePost) {
-        notCreatableGroupInfos.push(group);
+        notCreatableInGroups.push(group);
+      }
+
+      if (canCreatePost && needEnableSetting) {
+        const canEditPostSetting = await this._can(
+          user,
+          PERMISSION_KEY.EDIT_POST_SETTING,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canEditPostSetting) {
+          notEditSettingInGroups.push(group);
+        }
       }
     }
 
-    if (notCreatableGroupInfos.length) {
+    if (notCreatableInGroups.length) {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
           PERMISSION_KEY.CRUD_POST_ARTICLE
-        )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
+        )} permission at group ${notCreatableInGroups.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notCreatableInGroups.map((e) => e.id) },
+      });
+    }
+
+    if (notEditSettingInGroups.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have ${permissionToCommonName(
+          PERMISSION_KEY.EDIT_POST_SETTING
+        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
     }
   }
