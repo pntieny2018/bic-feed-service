@@ -175,7 +175,7 @@ describe.skip('AuthorityService', () => {
       groupService.getMany.mockResolvedValue([{id: 1, name: 'BIC to the moon'}])
       authorityFactory.createForUser.mockResolvedValue(ability)
       ability.can.mockResolvedValue(true)
-      await service.checkCanCRUDPost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3']);
+      await service.checkCanCRUDPost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'], false);
       expect(groupService.isMemberOfGroups).toBeCalled();
       expect(groupService.getMany).toBeCalled();
       expect(authorityFactory.createForUser).toBeCalled();
