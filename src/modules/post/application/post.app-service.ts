@@ -92,24 +92,18 @@ export class PostAppService {
     await this._authorityService.checkPostOwner(postBefore, user.id);
     if (postBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
-      const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
 
-      const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
-
-      if (newAudienceIds.length) {
-        let isEnableSetting = false;
-        if (
-          setting &&
-          (setting.isImportant ||
-            setting.canComment === false ||
-            setting.canReact === false ||
-            setting.canShare === false)
-        ) {
-          isEnableSetting = true;
-        }
-        await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
+      let isEnableSetting = false;
+      if (
+        setting &&
+        (setting.isImportant ||
+          setting.canComment === false ||
+          setting.canReact === false ||
+          setting.canShare === false)
+      ) {
+        isEnableSetting = true;
       }
-
+      await this._authorityService.checkCanCRUDPost(user, audience.groupIds, isEnableSetting);
       this._postService.checkContent(updatePostDto.content, updatePostDto.media);
     }
 
