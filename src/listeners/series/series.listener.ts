@@ -50,6 +50,7 @@ export class SeriesListener {
         title,
         summary,
         groupIds: audience.groups.map((group) => group.id),
+        communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
         articles: series.articles.map((article) => ({ id: article.id, zindex: article.zindex })),
         coverMedia: {
@@ -93,6 +94,7 @@ export class SeriesListener {
       {
         id,
         groupIds: audience.groups.map((group) => group.id),
+        communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
         createdBy,
         lang,

@@ -15,16 +15,8 @@ export const POST_KO_MAPPING = {
       groupIds: {
         type: 'keyword',
       },
-      communities: {
-        properties: {
-          id: {
-            type: 'keyword',
-          },
-          name: {
-            type: 'text',
-            index: false,
-          },
-        },
+      communityIds: {
+        type: 'keyword',
       },
       categories: {
         properties: {

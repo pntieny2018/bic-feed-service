@@ -147,7 +147,7 @@ export class PostBindingService {
   private async _getGroupsByPosts(posts: any[]): Promise<GroupSharedDto[]> {
     const groupIds = [];
     for (const post of posts) {
-      if (post.groupIds) groupIds.push([...groupIds]);
+      if (post.groupIds) groupIds.push(...post.groupIds);
       if (post.groups && post.groups.length) {
         groupIds.push(...post.groups.map((m) => m.groupId || m.id));
       }

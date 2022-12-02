@@ -17,6 +17,7 @@ import { IndexPostCommand } from './elasticsearch-script/index-post.command';
 import { ConfigModule } from '@nestjs/config';
 import { configs } from '../config/configuration';
 import { MoveMediaBucketCommand } from './move-media-bucket.command';
+import { SearchModule } from '../modules/search';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MoveMediaBucketCommand } from './move-media-bucket.command';
     PostModule,
     MentionModule,
     MediaModule,
+    SearchModule,
   ],
   providers: [
     SequelizeTinkerCommand,

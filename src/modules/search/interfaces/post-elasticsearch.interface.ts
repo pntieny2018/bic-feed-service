@@ -45,52 +45,17 @@ export interface IPostElasticsearch {
   type: PostType;
   media: IMedia[];
   groupIds: string[];
+  communityIds: string[];
   createdAt: string;
   createdBy: string;
-  mentions: UserMentionDto;
+  mentionUserIds: string[];
   categories?: {
     id: string;
     name: string;
   }[];
-  title?: {
-    text: string;
-  };
-  summary?: {
-    text: string;
-  };
-  content?: {
-    lang: string;
-    text: string;
-  };
-  coverMedia?: ICoverMedia;
-  articles?: {
-    id: string;
-    zindex: number;
-  }[];
-}
-
-export interface IPostElasticsearch {
-  id: string;
-  type: PostType;
-  media: IMedia[];
-  groupIds: string[];
-  createdAt: string;
-  createdBy: string;
-  mentions: UserMentionDto;
-  categories?: {
-    id: string;
-    name: string;
-  }[];
-  title?: {
-    text: string;
-  };
-  summary?: {
-    text: string;
-  };
-  content?: {
-    lang: string;
-    text: string;
-  };
+  title?: string;
+  summary?: string;
+  content?: string;
   coverMedia?: ICoverMedia;
   articles?: {
     id: string;
@@ -101,6 +66,7 @@ export interface IPostElasticsearch {
 export interface IDataPostToAdd {
   id: string;
   groupIds: string[];
+  communityIds: string[];
   createdAt: Date;
   createdBy: string;
   type: PostType;
