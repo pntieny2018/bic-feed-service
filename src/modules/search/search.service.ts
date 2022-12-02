@@ -210,6 +210,7 @@ export class SearchService {
         id: source.id,
         groupIds: source.groupIds,
         communityIds: source.communityIds,
+        mentionUserIds: source.mentionUserIds,
         type: source.type,
         createdAt: source.createdAt,
         createdBy: source.createdBy,
@@ -316,7 +317,13 @@ export class SearchService {
           };
         }
         if (post.mentionUserIds && post.mentionUserIds.includes(user.id)) {
-          mentionList.push(user);
+          mentionList.push({
+            id: user.id,
+            fullname: user.fullname,
+            email: user.email,
+            username: user.username,
+            avatar: user.avatar,
+          });
         }
         mentions = mentionList.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
       }
