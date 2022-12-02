@@ -348,6 +348,7 @@ export class SearchService {
       delete post.communityIds;
       delete post.zindex;
     }
+    return posts;
   }
   /*
     Search series in article detail
