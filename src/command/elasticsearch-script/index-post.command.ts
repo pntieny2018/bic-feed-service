@@ -1,12 +1,11 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { plainToInstance } from 'class-transformer';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { DataPostToAdd, PostSearchService } from '../../modules/post/post-search.service';
 import { PostService } from '../../modules/post/post.service';
 import { PostBindingService } from '../../modules/post/post-binding.service';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
@@ -20,6 +19,9 @@ import { POST_KO_MAPPING } from './post_ko_mapping';
 import { POST_ZH_MAPPING } from './post_zh_mapping';
 import { POST_RU_MAPPING } from './post_ru_mapping';
 import { Sequelize } from 'sequelize-typescript';
+import { SearchService } from '../../modules/search/search.service';
+import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
+import { GroupService } from '../../shared/group';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -32,7 +34,8 @@ interface ICommandOptions {
 export class IndexPostCommand implements CommandRunner {
   private _logger = new Logger(IndexPostCommand.name);
   public constructor(
-    public readonly postSearchService: PostSearchService,
+    public readonly groupService: GroupService,
+    public readonly postSearchService: SearchService,
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
@@ -66,7 +69,7 @@ export class IndexPostCommand implements CommandRunner {
 
     const prevVersionDate = options.oldIndex ?? null;
     const today = new Date();
-    const currentDate = `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
+    const currentDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
     if (shouldUpdateIndex) {
       console.log('updating index...');
@@ -166,6 +169,7 @@ export class IndexPostCommand implements CommandRunner {
     let offset = 0;
     let hasMore = true;
     let total = 0;
+    let successNumber = 0;
     const index =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
     while (hasMore) {
@@ -175,27 +179,59 @@ export class IndexPostCommand implements CommandRunner {
       } else {
         const insertDataPosts = [];
         for (const post of posts) {
-          const item: DataPostToAdd = {
+          const groupIds = post.groups.map((group) => group.groupId);
+          const groups = await this.groupService.getMany(groupIds);
+          const communityIds = groups.map((group) => group.rootGroupId);
+          const item: IDataPostToAdd = {
             id: post.id,
             type: post.type,
-            commentsCount: post.commentsCount,
-            totalUsersSeen: post.totalUsersSeen,
-            audience: post.audience,
+            groupIds,
+            communityIds,
             createdAt: post.createdAt,
-            actor: post.actor,
-            setting: post.setting,
+            createdBy: post.createdBy,
           };
           if (post.type === PostType.POST) {
+            const mentionUserIds = [];
+            for (const key in post.mentions) {
+              mentionUserIds.push(post.mentions[key].id);
+            }
+
             item.content = post.content;
-            item.media = post.media;
-            item.mentions = post.mentions;
+            item.media = post.media.map((mediaItem) => ({
+              id: mediaItem.id,
+              type: mediaItem.type,
+              name: mediaItem.name,
+              url: mediaItem.url,
+              size: mediaItem.size,
+              width: mediaItem.width,
+              height: mediaItem.height,
+              originName: mediaItem.originName,
+              extension: mediaItem.extension,
+              mimeType: mediaItem.mimeType,
+              thumbnails: mediaItem.thumbnails ?? [],
+              createdAt: mediaItem.createdAt,
+              createdBy: mediaItem.createdBy,
+            }));
+            item.mentionUserIds = mentionUserIds;
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;
             item.summary = post.summary;
             item.content = post.content;
-            item.media = post.media;
-            item.coverMedia = post.coverMedia;
+            if (post['coverMedia']) {
+              item.coverMedia = {
+                id: post['coverMedia'].id,
+                createdBy: post['coverMedia'].createdBy,
+                url: post['coverMedia'].url,
+                type: post['coverMedia'].type,
+                createdAt: post['coverMedia'].createdAt,
+                name: post['coverMedia'].name,
+                originName: post['coverMedia'].originName,
+                width: post['coverMedia'].width,
+                height: post['coverMedia'].height,
+                extension: post['coverMedia'].extension,
+              };
+            }
             item.categories = post.categories.map((category) => ({
               id: category.id,
               name: category.name,
@@ -204,25 +240,44 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.articleIds = post.articles.map((article) => article.id);
-            item.coverMedia = post.coverMedia;
+            item.articles = post.articles.map((article) => ({
+              id: article.id,
+              zindex: article['PostSeriesModel'].zindex,
+            }));
+            if (post['coverMedia']) {
+              item.coverMedia = {
+                id: post['coverMedia'].id,
+                createdBy: post['coverMedia'].createdBy,
+                url: post['coverMedia'].url,
+                type: post['coverMedia'].type,
+                createdAt: post['coverMedia'].createdAt,
+                name: post['coverMedia'].name,
+                originName: post['coverMedia'].originName,
+                width: post['coverMedia'].width,
+                height: post['coverMedia'].height,
+                extension: post['coverMedia'].extension,
+              };
+            }
           }
           insertDataPosts.push(item);
         }
-        await this.postSearchService.addPostsToSearch(insertDataPosts, index);
+        const totalItemsIndexed = await this.postSearchService.addPostsToSearch(
+          insertDataPosts,
+          index
+        );
+        successNumber += totalItemsIndexed;
         offset = offset + limitEach;
         total += posts.length;
         console.log(`Indexed ${posts.length}`);
         console.log('-----------------------------------');
         await this.delay(1000);
-        //process.exit();
       }
     }
 
-    console.log('DONE - total:', total);
+    console.log(`DONE - index: ${successNumber} / ${total}`);
   }
 
-  private async _getPostsToSync(offset: number, limit: number): Promise<any> {
+  private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
     const include = this.postService.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
@@ -230,6 +285,7 @@ export class IndexPostCommand implements CommandRunner {
       shouldIncludeMention: true,
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
+      shouldIncludeArticlesInSeries: true,
     });
 
     const attributes = {
@@ -244,15 +300,7 @@ export class IndexPostCommand implements CommandRunner {
       offset,
       limit,
     });
-    const jsonPosts = rows.map((r) => r.toJSON());
-    const result = this.postBingdingService.bindRelatedData(jsonPosts, {
-      shouldBindActor: true,
-      shouldBindAudience: true,
-      shouldBindMention: true,
-    });
-    return plainToInstance(ArticleResponseDto, result, {
-      excludeExtraneousValues: true,
-    });
+    return rows;
   }
 
   private async _deleteAllDocuments(): Promise<void> {

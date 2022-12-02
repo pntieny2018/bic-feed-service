@@ -1,69 +1,45 @@
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { User } from '@sentry/node';
 import { ClassTransformer } from 'class-transformer';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
-import { ElasticsearchHelper, StringHelper } from '../../common/helpers';
+import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
+import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { GroupService } from '../../shared/group';
+import { GroupSharedDto } from '../../shared/group/dto';
+import { UserService } from '../../shared/user';
 import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
-import { ArticleResponseDto, CategoryResponseDto } from '../article/dto/responses';
+import { ArticleResponseDto } from '../article/dto/responses';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../auth';
-import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { MediaFilterResponseDto, MediaResponseDto } from '../media/dto/response';
-import { UserMentionDto } from '../mention/dto';
+import { PostBindingService } from '../post/post-binding.service';
+import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
-import { PostSettingDto } from './dto/common/post-setting.dto';
 import { SearchPostsDto } from './dto/requests';
-import { AudienceResponseDto } from './dto/responses';
 import {
+  IDataPostToAdd,
+  IDataPostToUpdate,
   IPostElasticsearch,
-  IPostResponseElasticsearch,
-} from './interfaces/post-response-elasticsearch.interface';
-import { PostBindingService } from './post-binding.service';
-import { PostService } from './post.service';
+} from './interfaces/post-elasticsearch.interface';
 
-export type DataPostToAdd = {
-  id: string;
-  commentsCount: number;
-  totalUsersSeen: number;
-  content?: string;
-  media?: MediaFilterResponseDto;
-  mentions?: UserMentionDto;
-  audience: AudienceResponseDto;
-  setting?: PostSettingDto;
-  createdAt: Date;
-  actor: UserSharedDto;
-  type: PostType;
-  title?: string;
-  summary?: string;
-  community?: { id: string; name: string };
-  categories?: { id: string; name: string }[];
-  articleIds?: string[];
-  coverMedia?: MediaResponseDto;
-};
-type DataPostToUpdate = DataPostToAdd & {
-  lang: string;
-};
 type FieldSearch = {
-  text: {
-    default: string;
-    ascii: string;
-  };
+  default: string;
+  ascii: string;
 };
 @Injectable()
-export class PostSearchService {
+export class SearchService {
   /**
    * Logger
    * @protected
    */
-  protected logger = new Logger(PostSearchService.name);
+  protected logger = new Logger(SearchService.name);
 
   /**
    *  ClassTransformer
@@ -77,12 +53,12 @@ export class PostSearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly postBindingService: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService,
-    protected readonly groupService: GroupService
+    protected readonly groupService: GroupService,
+    protected readonly userService: UserService,
+    protected readonly postBindingService: PostBindingService
   ) {}
 
-  public async addPostsToSearch(posts: DataPostToAdd[], defaultIndex?: string): Promise<void> {
+  public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
@@ -107,8 +83,13 @@ export class PostSearchService {
           maxRetries: 5,
         }
       );
-
+      if (res.errors === true) {
+        const errorItems = res.items.filter((item) => item.index.error);
+        console.log('errorItems', JSON.stringify(errorItems));
+        this.logger.debug(`[ERROR index posts] ${errorItems}`);
+      }
       await this._updateLangAfterIndexToES(res?.items || [], index);
+      return res.items.filter((item) => !item.index.error).length;
     } catch (e) {
       this.logger.debug(e);
       this.sentryService.captureException(e);
@@ -138,7 +119,7 @@ export class PostSearchService {
     }
   }
 
-  public async updatePostsToSearch(posts: DataPostToUpdate[]): Promise<void> {
+  public async updatePostsToSearch(posts: IDataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
       if (dataIndex.type === PostType.ARTICLE) {
@@ -182,11 +163,11 @@ export class PostSearchService {
   public async searchPosts(
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<ArticleResponseDto>> {
+  ): Promise<PageDto<any>> {
     const { contentSearch, limit, offset, groupId } = searchPostsDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
+      return new PageDto<any>([], {
         total: 0,
         limit,
         offset,
@@ -201,7 +182,7 @@ export class PostSearchService {
       }
       groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
       if (groupIds.length === 0) {
-        return new PageDto<ArticleResponseDto>([], {
+        return new PageDto<any>([], {
           limit,
           offset,
           hasNextPage: false,
@@ -212,71 +193,181 @@ export class PostSearchService {
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
+    const articleIds = [];
+    const attrUserIds = [];
+    const attrGroupIds = [];
     const posts = hits.map((item) => {
-      const source: IPostResponseElasticsearch = {
-        id: item._source.id,
-        audience: item._source.audience,
-        type: item._source.type,
-        media: item._source.media,
-        content: item._source.content.text,
-        title: item._source.title?.text || null,
-        summary: item._source.summary?.text || null,
-        setting: item._source.setting,
-        actor: item._source.actor,
-        mentions: item._source.mentions,
-        createdAt: item._source.createdAt,
-        totalUsersSeen: item._source.totalUsersSeen,
-        commentsCount: item._source.commentsCount,
-        coverMedia: item._source.coverMedia ?? null,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const { _source: source } = item;
+      if (source.articles && source.articles.length) {
+        articleIds.push(...source.articles.map((article) => article.id));
+      }
+      attrUserIds.push(source.createdBy);
+      if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
+      attrGroupIds.push(...source.groupIds);
+      attrGroupIds.push(...source.communityIds);
+      const data: any = {
+        id: source.id,
+        groupIds: source.groupIds,
+        communityIds: source.communityIds,
+        mentionUserIds: source.mentionUserIds,
+        type: source.type,
+        createdAt: source.createdAt,
+        createdBy: source.createdBy,
+        coverMedia: source.coverMedia ?? null,
+        media: source.media || [],
+        content: source.content || null,
+        title: source.title || null,
+        summary: source.summary || null,
+        categories: source.categories || [],
+        articles: source.articles || [],
       };
-      if (
-        contentSearch &&
-        item.highlight &&
-        item.highlight['content.text']?.length &&
-        source.content
-      ) {
-        source.highlight = item.highlight['content.text'][0];
+
+      if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
+        data.highlight = item.highlight['content'][0];
       }
 
-      if (contentSearch && item.highlight && item.highlight['title.text']?.length && source.title) {
-        source.titleHighlight = item.highlight['title.text'][0];
+      if (contentSearch && item.highlight && item.highlight['title']?.length && source.title) {
+        data.titleHighlight = item.highlight['title'][0];
       }
 
-      if (
-        contentSearch &&
-        item.highlight &&
-        item.highlight['summary.text']?.length &&
-        source.summary
-      ) {
-        source.summaryHighlight = item.highlight['summary.text'][0];
+      if (contentSearch && item.highlight && item.highlight['summary']?.length && source.summary) {
+        data.summaryHighlight = item.highlight['summary'][0];
       }
-      return source;
+      return data;
     });
-
+    const users = await this.userService.getMany(attrUserIds);
+    const groups = await this.groupService.getMany(attrGroupIds);
     await Promise.all([
       this.reactionService.bindToPosts(posts),
-      this.postBindingService.bindActor(posts),
-      this.postBindingService.bindAudience(posts),
       this.postBindingService.bindAttributes(posts, [
         'content',
         'commentsCount',
         'totalUsersSeen',
         'setting',
       ]),
-      this.linkPreviewService.bindToPosts(posts),
     ]);
-    await this.postBindingService.bindCommunity(posts);
-    const result = this.classTransformer.plainToInstance(ArticleResponseDto, posts, {
-      excludeExtraneousValues: true,
-    });
 
-    return new PageDto<ArticleResponseDto>(result, {
+    const articles = await this.postService.getSimpleArticlessByIds(
+      ArrayHelper.arrayUnique(articleIds)
+    );
+
+    const result = this.bindResponseSearch(posts, {
+      groups,
+      users,
+      articles,
+    });
+    return new PageDto<any>(result, {
       total: response.hits.total['value'],
       limit,
       offset,
     });
   }
 
+  public bindResponseSearch(
+    posts: any,
+    dataBinding: {
+      groups: GroupSharedDto[];
+      users: UserSharedDto[];
+      articles: any;
+    }
+  ): any {
+    const { groups, users, articles } = dataBinding;
+    for (const post of posts) {
+      let actor = null;
+      const audienceGroups = [];
+      const communities = [];
+      let mentions = {};
+      const media = {
+        files: [],
+        videos: [],
+        images: [],
+      };
+      const reactionsCount = {};
+      for (const group of groups) {
+        if (post.groupIds && post.groupIds.includes(group.id)) {
+          audienceGroups.push({
+            id: group.id,
+            name: group.name,
+            communityId: group.communityId,
+            icon: group.icon,
+            privacy: group.privacy,
+          });
+        }
+        if (post.communityIds && post.communityIds.includes(group.id)) {
+          communities.push({
+            id: group.id,
+            name: group.name,
+            communityId: group.communityId,
+            icon: group.icon,
+            privacy: group.privacy,
+          });
+        }
+      }
+
+      const mentionList = [];
+      for (const user of users) {
+        if (user.id === post.createdBy) {
+          actor = {
+            id: user.id,
+            fullname: user.fullname,
+            email: user.email,
+            username: user.username,
+            avatar: user.avatar,
+          };
+        }
+        if (post.mentionUserIds && post.mentionUserIds.includes(user.id)) {
+          mentionList.push({
+            id: user.id,
+            fullname: user.fullname,
+            email: user.email,
+            username: user.username,
+            avatar: user.avatar,
+          });
+        }
+        mentions = mentionList.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
+      }
+
+      if (post.articles) {
+        post.articles = post.articles.map((article) => {
+          const findArticle = articles.find((item) => item.id === article.id);
+          if (!findArticle) return article;
+          return {
+            ...article,
+            ...findArticle,
+          };
+        });
+      }
+      if (post.reactionsCount) {
+        post.reactionsCount.forEach(
+          (v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) })
+        );
+      }
+
+      if (post.media) {
+        post.media
+          .sort((a, b) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          })
+          .forEach((item) => {
+            if (item.type === MediaType.VIDEO) media.videos.push(item);
+            if (item.type === MediaType.IMAGE) media.images.push(item);
+            if (item.type === MediaType.FILE) media.files.push(item);
+          });
+      }
+      post.media = media;
+      post.reactionsCount = reactionsCount;
+      post.audience = { groups: audienceGroups };
+      post.communities = communities;
+      post.actor = actor;
+      post.mentions = mentions;
+      delete post.groupIds;
+      delete post.mentionUserIds;
+      delete post.communityIds;
+      delete post.zindex;
+    }
+    return posts;
+  }
   /*
     Search series in article detail
   */
@@ -311,10 +402,10 @@ export class PostSearchService {
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const series = hits.map((item) => {
-      const source: SeriesSearchResponseDto = {
+      const source = {
         id: item._source.id,
-        audience: item._source.audience,
-        title: item._source.title?.text || null,
+        groupIds: item._source.groupIds,
+        title: item._source.title || null,
       };
       return source;
     });
@@ -332,6 +423,7 @@ export class PostSearchService {
     });
   }
 
+  private async _getAttrFromResponseSearch(hits: any) {}
   /*
     Search articles in series detail
   */
@@ -371,13 +463,13 @@ export class PostSearchService {
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articles = hits.map((item) => {
-      const source: ArticleSearchResponseDto = {
+      const source = {
         id: item._source.id,
-        summary: item._source.summary.text,
+        summary: item._source.summary,
         coverMedia: item._source.coverMedia,
-        actor: item._source.actor,
+        createdBy: item._source.createdBy,
         categories: item._source.categories,
-        title: item._source.title?.text || null,
+        title: item._source.title || null,
       };
       return source;
     });
@@ -446,7 +538,7 @@ export class PostSearchService {
     const body: BodyES = {
       query: {
         bool: {
-          must: [...this._getMatchPrefixKeyword('title.text', contentSearch)],
+          must: [...this._getMatchPrefixKeyword('title', contentSearch)],
           filter: [...this._getTypeFilter(PostType.SERIES), ...this._getAudienceFilter(groupIds)],
         },
       },
@@ -484,8 +576,8 @@ export class PostSearchService {
     };
     if (contentSearch) {
       body.query.bool.should = [
-        ...this._getMatchPrefixKeyword('title.text', contentSearch),
-        ...this._getMatchPrefixKeyword('summary.text', contentSearch),
+        ...this._getMatchPrefixKeyword('title', contentSearch),
+        ...this._getMatchPrefixKeyword('summary', contentSearch),
       ];
       body.query.bool.minimum_should_match = 1;
     }
@@ -513,20 +605,20 @@ export class PostSearchService {
       ['post_tags']: ['=='],
       fields: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        'content.text': {
-          ['matched_fields']: [content.text.default, content.text.ascii],
+        content: {
+          ['matched_fields']: [content.default, content.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        'summary.text': {
-          ['matched_fields']: [summary.text.default, summary.text.ascii],
+        summary: {
+          ['matched_fields']: [summary.default, summary.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        'title.text': {
-          ['matched_fields']: [title.text.default, title.text.ascii],
+        title: {
+          ['matched_fields']: [title.default, title.ascii],
           type: 'fvh',
           ['number_of_fragments']: 0,
         },
@@ -550,12 +642,12 @@ export class PostSearchService {
   }
 
   private _getActorFilter(actors: string[]): any {
-    const { actor } = ELASTIC_POST_MAPPING_PATH;
+    const { createdBy } = ELASTIC_POST_MAPPING_PATH;
     if (actors && actors.length) {
       return [
         {
           terms: {
-            [actor.id]: actors,
+            [createdBy]: actors,
           },
         },
       ];
@@ -591,13 +683,13 @@ export class PostSearchService {
     return [];
   }
 
-  private _getAudienceFilter(groupIds: string[]): any {
-    const { audience } = ELASTIC_POST_MAPPING_PATH;
+  private _getAudienceFilter(filterGroupIds: string[]): any {
+    const { groupIds } = ELASTIC_POST_MAPPING_PATH;
     if (groupIds.length) {
       return [
         {
           terms: {
-            [audience.groups.id]: groupIds,
+            [groupIds]: filterGroupIds,
           },
         },
       ];
@@ -651,20 +743,20 @@ export class PostSearchService {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.text.default, field.text.ascii],
+            fields: [field.default, field.ascii],
             type: 'phrase', //Match pharse with high priority
           },
         },
         {
           match: {
-            [field.text.default]: {
+            [field.default]: {
               query: keyword,
             },
           },
         },
         {
           match: {
-            [field.text.ascii]: {
+            [field.ascii]: {
               query: keyword,
             },
           },
@@ -676,13 +768,13 @@ export class PostSearchService {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.text.default],
+            fields: [field.default],
             type: 'phrase',
           },
         },
         {
           match: {
-            [field.text.default]: {
+            [field.default]: {
               query: keyword,
             },
           },

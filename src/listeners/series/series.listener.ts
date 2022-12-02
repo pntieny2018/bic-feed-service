@@ -9,8 +9,9 @@ import { Injectable, Logger, Post } from '@nestjs/common';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostHistoryService } from '../../modules/post/post-history.service';
-import { PostSearchService } from '../../modules/post/post-search.service';
 import { PostType } from '../../database/models/post.model';
+import { SearchService } from '../../modules/search/search.service';
+import { MediaType } from '../../database/models/media.model';
 
 @Injectable()
 export class SeriesListener {
@@ -20,7 +21,7 @@ export class SeriesListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: PostSearchService
+    private readonly _postSearchService: SearchService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
@@ -40,22 +41,31 @@ export class SeriesListener {
   @On(SeriesHasBeenPublishedEvent)
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
     const { series, actor } = event.payload;
-    const { id, commentsCount, totalUsersSeen, audience, createdAt, title, summary, coverMedia } =
-      series;
+    const { id, createdBy, audience, createdAt, title, summary, coverMedia } = series;
 
     this._postSearchService.addPostsToSearch([
       {
         id,
-        commentsCount,
-        totalUsersSeen,
         createdAt,
-        actor,
+        createdBy,
         title,
         summary,
-        audience,
+        groupIds: audience.groups.map((group) => group.id),
+        communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
-        articleIds: series.articles.map((article) => article.id),
-        coverMedia,
+        articles: series.articles.map((article) => ({ id: article.id, zindex: article.zindex })),
+        coverMedia: {
+          id: coverMedia.id,
+          createdBy: coverMedia.createdBy,
+          url: coverMedia.url,
+          type: coverMedia.type as MediaType,
+          createdAt: coverMedia.createdAt,
+          name: coverMedia.name,
+          originName: coverMedia.originName,
+          width: coverMedia.width,
+          height: coverMedia.height,
+          extension: coverMedia.extension,
+        },
       },
     ]);
 
@@ -77,34 +87,35 @@ export class SeriesListener {
   @On(SeriesHasBeenUpdatedEvent)
   public async onSeriesUpdated(event: SeriesHasBeenUpdatedEvent): Promise<void> {
     const { newSeries, oldSeries, actor } = event.payload;
-    const {
-      id,
-      commentsCount,
-      totalUsersSeen,
-      audience,
-      createdAt,
-      lang,
-      summary,
-      title,
-      coverMedia,
-    } = newSeries;
+    const { id, createdBy, audience, createdAt, lang, summary, title, coverMedia, articles } =
+      newSeries;
 
     //TODO:: send noti
 
     this._postSearchService.updatePostsToSearch([
       {
         id,
-        commentsCount,
-        totalUsersSeen,
-        audience,
+        groupIds: audience.groups.map((group) => group.id),
+        communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
-        actor,
+        createdBy,
         lang,
         summary,
         title,
         type: PostType.SERIES,
-        articleIds: newSeries.articles.map((article) => article.id),
-        coverMedia,
+        articles: articles.map((article) => ({ id: article.id, zindex: article.zindex })),
+        coverMedia: {
+          id: coverMedia.id,
+          url: coverMedia.url,
+          type: coverMedia.type as MediaType,
+          createdBy: coverMedia.createdBy,
+          createdAt: coverMedia.createdAt,
+          name: coverMedia.name,
+          originName: coverMedia.originName,
+          width: coverMedia.width,
+          height: coverMedia.height,
+          extension: coverMedia.extension,
+        },
       },
     ]);
 

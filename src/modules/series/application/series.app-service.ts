@@ -12,8 +12,8 @@ import { SeriesSearchResponseDto } from '../../article/dto/responses/series-sear
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
-import { PostSearchService } from '../../post/post-search.service';
 import { PostService } from '../../post/post.service';
+import { SearchService } from '../../search/search.service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests';
 import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
@@ -27,7 +27,7 @@ export class SeriesAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
-    private _postSearchService: PostSearchService,
+    private _postSearchService: SearchService,
     private _postService: PostService
   ) {}
 

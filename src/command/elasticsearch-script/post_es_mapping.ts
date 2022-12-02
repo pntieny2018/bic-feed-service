@@ -22,58 +22,13 @@ export const POST_ES_MAPPING = {
   },
   mappings: {
     properties: {
-      actor: {
-        properties: {
-          avatar: {
-            type: 'keyword',
-          },
-          email: {
-            type: 'keyword',
-          },
-          fullname: {
-            type: 'text',
-          },
-          groups: {
-            type: 'keyword',
-          },
-          id: {
-            type: 'keyword',
-          },
-          username: {
-            type: 'keyword',
-          },
-        },
+      groupIds: {
+        type: 'keyword',
       },
-      audience: {
-        properties: {
-          groups: {
-            properties: {
-              child: {
-                type: 'keyword',
-              },
-              icon: {
-                type: 'keyword',
-              },
-              id: {
-                type: 'keyword',
-              },
-              isCommunity: {
-                type: 'boolean',
-              },
-              name: {
-                type: 'text',
-              },
-              privacy: {
-                type: 'keyword',
-              },
-              communityId: {
-                type: 'keyword',
-              },
-            },
-          },
-        },
+      communityIds: {
+        type: 'keyword',
       },
-      community: {
+      categories: {
         properties: {
           id: {
             type: 'keyword',
@@ -84,76 +39,46 @@ export const POST_ES_MAPPING = {
           },
         },
       },
-      categories: {
+      articles: {
         properties: {
           id: {
             type: 'keyword',
           },
-          name: {
-            type: 'text',
+          zindex: {
+            type: 'integer',
           },
         },
       },
-      articleIds: {
-        type: 'keyword',
-      },
-      commentsCount: {
-        type: 'long',
-      },
-      totalUsersSeen: {
-        type: 'long',
-      },
       content: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_spanish',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_spanish',
-                term_vector: 'with_positions_offsets',
-              },
-            },
           },
         },
       },
       summary: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_spanish',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_spanish',
-                term_vector: 'with_positions_offsets',
-              },
-            },
           },
         },
       },
       title: {
-        properties: {
-          language: {
-            type: 'keyword',
-          },
-          text: {
+        type: 'text',
+        term_vector: 'with_positions_offsets',
+        fields: {
+          default: {
             type: 'text',
+            analyzer: 'ma_spanish',
             term_vector: 'with_positions_offsets',
-            fields: {
-              default: {
-                type: 'text',
-                analyzer: 'ma_spanish',
-                term_vector: 'with_positions_offsets',
-              },
-            },
           },
         },
       },
@@ -162,6 +87,9 @@ export const POST_ES_MAPPING = {
       },
       createdAt: {
         type: 'date',
+      },
+      createdBy: {
+        type: 'keyword',
       },
       id: {
         type: 'keyword',
@@ -178,28 +106,8 @@ export const POST_ES_MAPPING = {
         type: 'object',
         enabled: false,
       },
-      mentions: {
-        type: 'object',
-        enabled: false,
-      },
-      setting: {
-        properties: {
-          canComment: {
-            type: 'boolean',
-          },
-          canReact: {
-            type: 'boolean',
-          },
-          canShare: {
-            type: 'boolean',
-          },
-          importantExpiredAt: {
-            type: 'date',
-          },
-          isImportant: {
-            type: 'boolean',
-          },
-        },
+      mentionUserIds: {
+        type: 'keyword',
       },
     },
   },

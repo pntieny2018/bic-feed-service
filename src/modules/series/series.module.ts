@@ -10,6 +10,7 @@ import { UserModule } from '../../shared/user';
 import { GroupModule } from '../../shared/group';
 import { SeriesAppService } from './application/series.app-service';
 import { ArticleModule } from '../article';
+import { SearchModule } from '../search';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ArticleModule } from '../article';
     PostModule,
     UserModule,
     GroupModule,
+    SearchModule,
     forwardRef(() => ReactionModule),
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),

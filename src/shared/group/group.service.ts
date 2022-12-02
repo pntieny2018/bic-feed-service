@@ -23,7 +23,9 @@ export class GroupService {
   }
 
   public async getMany(groupIds: string[]): Promise<GroupSharedDto[]> {
-    const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
+    const keys = [...new Set(ArrayHelper.arrayUnique(groupIds))].map(
+      (groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`
+    );
     if (keys.length) {
       const groups = await this._store.mget(keys);
       return groups.filter((g) => g !== null);

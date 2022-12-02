@@ -323,7 +323,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   public static loadContent(alias?: string): [Literal, string] {
     return [
-      Sequelize.literal(`(CASE WHEN is_article = false THEN content ELSE null END)`),
+      Sequelize.literal(`(CASE WHEN type = ARTICLE THEN content ELSE null END)`),
       alias ? alias : 'content',
     ];
   }

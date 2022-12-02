@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger, Post } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
@@ -41,7 +41,6 @@ import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
 import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { GetPostsSavedDto } from './dto/requests/get-posts-saved.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 @Injectable()
@@ -246,7 +245,7 @@ export class PostService {
 
   public async getListWithGroupsByIds(postIds: string[], must: boolean): Promise<IPost[]> {
     const postGroups = await this.postModel.findAll({
-      attributes: ['id', 'title', 'lang', 'createdBy'],
+      attributes: ['id', 'title', 'lang', 'isDraft', 'createdBy'],
       include: [
         {
           model: PostGroupModel,
@@ -325,7 +324,16 @@ export class PostService {
         through: {
           attributes: ['zindex', 'createdAt'],
         },
-        attributes: ['id', 'title', 'summary', 'createdBy'],
+        attributes: [
+          'id',
+          'title',
+          'summary',
+          'createdBy',
+          'canShare',
+          'canComment',
+          'canReact',
+          'importantExpiredAt',
+        ],
         include: [
           {
             model: MediaModel,
@@ -1212,6 +1220,39 @@ export class PostService {
     const rows = await this.postModel.findAll({
       attributes,
       include,
+      where: {
+        id: ids,
+      },
+    });
+
+    const mappedPosts = ids.map((postId) => {
+      const post = rows.find((row) => row.id === postId);
+      if (post) return post.toJSON();
+    });
+
+    return mappedPosts;
+  }
+
+  public async getSimpleArticlessByIds(ids: string[]): Promise<IPost[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.postModel.findAll({
+      attributes: [
+        'id',
+        'title',
+        'summary',
+        'createdBy',
+        'canShare',
+        'canComment',
+        'canReact',
+        'importantExpiredAt',
+      ],
+      include: [
+        {
+          model: MediaModel,
+          as: 'coverMedia',
+          required: false,
+        },
+      ],
       where: {
         id: ids,
       },
