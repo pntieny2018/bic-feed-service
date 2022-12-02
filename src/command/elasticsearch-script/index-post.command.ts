@@ -199,7 +199,7 @@ export class IndexPostCommand implements CommandRunner {
             item.content = post.content;
             item.media = post.media.map((mediaItem) => ({
               id: mediaItem.id,
-              status: mediaItem.status,
+              type: mediaItem.type,
               name: mediaItem.name,
               url: mediaItem.url,
               size: mediaItem.size,
@@ -212,6 +212,7 @@ export class IndexPostCommand implements CommandRunner {
               createdAt: mediaItem.createdAt,
               createdBy: mediaItem.createdBy,
             }));
+            console.log('object', item.media);
             item.mentionUserIds = mentionUserIds;
           }
           if (post.type === PostType.ARTICLE) {
@@ -223,6 +224,7 @@ export class IndexPostCommand implements CommandRunner {
                 id: post['coverMedia'].id,
                 createdBy: post['coverMedia'].createdBy,
                 url: post['coverMedia'].url,
+                type: post['coverMedia'].type,
                 createdAt: post['coverMedia'].createdAt,
                 name: post['coverMedia'].name,
                 originName: post['coverMedia'].originName,
@@ -248,6 +250,7 @@ export class IndexPostCommand implements CommandRunner {
                 id: post['coverMedia'].id,
                 createdBy: post['coverMedia'].createdBy,
                 url: post['coverMedia'].url,
+                type: post['coverMedia'].type,
                 createdAt: post['coverMedia'].createdAt,
                 name: post['coverMedia'].name,
                 originName: post['coverMedia'].originName,

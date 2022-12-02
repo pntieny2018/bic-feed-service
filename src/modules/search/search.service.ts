@@ -3,11 +3,11 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { User } from '@sentry/node';
 import { ClassTransformer } from 'class-transformer';
-import { MediaType } from 'express';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
+import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { GroupService } from '../../shared/group';
 import { GroupSharedDto } from '../../shared/group/dto';
@@ -277,6 +277,11 @@ export class SearchService {
       const audienceGroups = [];
       const communities = [];
       let mentions = {};
+      const media = {
+        files: [],
+        videos: [],
+        images: [],
+      };
       const reactionsCount = {};
       for (const group of groups) {
         if (post.groupIds && post.groupIds.includes(group.id)) {
@@ -331,13 +336,20 @@ export class SearchService {
           (v, i) => (reactionsCount[i] = { [v.reactionName]: parseInt(v.total) })
         );
       }
-      post.setting = {
-        canReact: post.canReact,
-        canComment: post.canComment,
-        canShare: post.canShare,
-        isImportant: post.isImportant,
-        importantExpiredAt: post.importantExpiredAt,
-      };
+
+      if (post.media) {
+        console.log('object', post.media);
+        post.media
+          .sort((a, b) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          })
+          .forEach((item) => {
+            if (item.type === MediaType.VIDEO) media.videos.push(item);
+            if (item.type === MediaType.IMAGE) media.images.push(item);
+            if (item.type === MediaType.FILE) media.files.push(item);
+          });
+      }
+      post.media = media;
       post.reactionsCount = reactionsCount;
       post.audience = audienceGroups;
       post.communities = communities;

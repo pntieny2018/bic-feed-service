@@ -129,6 +129,7 @@ export class PostListener {
         mediaList.push({
           id: mediaItem.id,
           status: mediaItem.status,
+          type: mediaItem.type,
           name: mediaItem.name,
           url: mediaItem.url,
           size: mediaItem.size,
@@ -227,6 +228,7 @@ export class PostListener {
           id: mediaItem.id,
           status: mediaItem.status,
           name: mediaItem.name,
+          type: mediaItem.type,
           url: mediaItem.url,
           size: mediaItem.size,
           width: mediaItem.width,
@@ -306,6 +308,7 @@ export class PostListener {
             id: mediaItem.id,
             status: mediaItem.status,
             name: mediaItem.name,
+            type: mediaItem.type,
             url: mediaItem.url,
             size: mediaItem.size,
             width: mediaItem.width,

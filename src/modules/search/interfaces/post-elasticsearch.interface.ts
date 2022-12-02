@@ -1,11 +1,5 @@
-import { MediaType } from 'express';
-import { MediaStatus } from '../../../database/models/media.model';
+import { MediaStatus, MediaType } from '../../../database/models/media.model';
 import { PostType } from '../../../database/models/post.model';
-import { GroupSharedDto } from '../../../shared/group/dto';
-import { CategoryResponseDto } from '../../article/dto/responses';
-import { MediaDto } from '../../media/dto';
-import { MediaResponseDto } from '../../media/dto/response';
-import { UserMentionDto } from '../../mention/dto';
 
 export interface ICoverMedia {
   id: string;
@@ -14,6 +8,7 @@ export interface ICoverMedia {
   createdAt: Date;
   name: string;
   originName: string;
+  type: MediaType;
   width?: number;
   height?: number;
   extension?: string;
@@ -26,8 +21,8 @@ export interface IMedia {
   createdAt: Date;
   name: string;
   originName: string;
-  status: MediaStatus;
-  type?: MediaType;
+  status?: MediaStatus;
+  type: MediaType;
   width?: number;
   height?: number;
   extension?: string;
