@@ -444,15 +444,6 @@ export class PostService {
         },
         { transaction }
       );
-      if (setting.isImportant) {
-        await this.userMarkReadPostModel.create(
-          {
-            postId: post.id,
-            userId: authUser.id,
-          },
-          { transaction }
-        );
-      }
 
       if (uniqueMediaIds.length) {
         await this.mediaService.createIfNotExist(media, authUserId);
@@ -654,6 +645,13 @@ export class PostService {
         }
       );
       post.isDraft = isDraft;
+      if (post.setting.isImportant) {
+        await this.userMarkReadPostModel.create({
+          postId: post.id,
+          userId: authUserId,
+        });
+        post.markedReadPost = true;
+      }
       return post;
     } catch (error) {
       this.logger.error(error, error?.stack);
