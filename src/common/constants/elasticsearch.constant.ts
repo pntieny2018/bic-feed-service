@@ -1,57 +1,31 @@
 export const ELASTIC_POST_MAPPING_PATH = {
-  actor: {
-    id: 'actor.id',
-    email: 'actor.email',
-    fullname: 'actor.fullname',
-    groups: 'actor.groups',
-    username: 'actor.username',
-  },
   categories: {
     id: 'categories.id',
     name: 'categories.name',
   },
-  audience: {
-    groups: {
-      id: 'audience.groups.id',
-      child: 'audience.groups.child',
-      icon: 'audience.groups.icon',
-      isCommunity: 'audience.groups.isCommunity',
-      name: 'audience.groups.name',
-      privacy: 'audience.groups.privacy',
-      communityId: 'audience.groups.communityId',
-    },
+  articles: {
+    id: 'articles.id',
+    zindex: 'articles.zindex',
   },
-  commentsCount: 'commentsCount',
-  totalUsersSeen: 'totalUsersSeen',
+  groupIds: 'groupIds',
   title: {
-    text: {
-      default: 'title.text.default',
-      ascii: 'title.text.ascii',
-    },
+    default: 'title.default',
+    ascii: 'title.ascii',
   },
   summary: {
-    text: {
-      default: 'summary.text.default',
-      ascii: 'summary.text.ascii',
-    },
+    default: 'summary.default',
+    ascii: 'summary.ascii',
   },
   content: {
-    language: 'content.language',
-    text: {
-      default: 'content.text.default',
-      ascii: 'content.text.ascii',
-    },
+    default: 'content.default',
+    ascii: 'content.ascii',
   },
   id: 'id',
   type: 'type',
   createdAt: 'createdAt',
+  createdBy: 'createdBy',
   media: 'media',
-  mentions: 'mentions',
-  setting: {
-    canComment: 'setting.canComment',
-    canReact: 'setting.canReact',
-    canShare: 'setting.canShare',
-    importantExpiredAt: 'setting.importantExpiredAt',
-    isImportant: 'setting.isImportant',
-  },
+  coverMedia: 'coverMedia',
+  linkPreview: 'linkPreview',
+  mentionUserIds: 'mentionUserIds',
 };

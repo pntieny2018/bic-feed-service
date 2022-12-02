@@ -63,18 +63,6 @@ export class PostController {
     return this._postAppService.unSavePost(user, postId);
   }
 
-  @ApiOperation({ summary: 'Search posts' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-  })
-  @Get('/')
-  public searchPosts(
-    @AuthUser() user: UserDto,
-    @Query() searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postAppService.searchPosts(user, searchPostsDto);
-  }
-
   @ApiOperation({ summary: 'Get post edited history' })
   @ApiOkResponse({
     type: PostEditedHistoryDto,

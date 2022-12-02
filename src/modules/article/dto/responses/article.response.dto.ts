@@ -73,6 +73,13 @@ export class ArticleResponseDto extends PostResponseDto {
   public views: number;
 
   @ApiProperty({
+    description: 'zindex',
+    type: Number,
+  })
+  @Expose()
+  public zindex?: number;
+
+  @ApiProperty({
     type: LinkPreviewDto,
     example: {
       url: 'https://beincomm.com',

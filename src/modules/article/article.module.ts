@@ -18,6 +18,7 @@ import { FeedModule } from '../feed';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { ArticleBindingService } from './article-binding.service';
 import { ArticleAppService } from './application/article.app-service';
+import { SearchModule } from '../search';
 @Module({
   imports: [
     PostModule,
@@ -28,6 +29,7 @@ import { ArticleAppService } from './application/article.app-service';
     MentionModule,
     CategoryModule,
     HashtagModule,
+    SearchModule,
     forwardRef(() => ReactionModule),
     AuthorityModule,
     forwardRef(() => CommentModule),
