@@ -10,7 +10,6 @@ import { mockedCreatePostDto } from './mocks/request/create-post.dto.mock';
 import { mockedUpdatePostDto } from './mocks/request/update-post.dto.mock';
 import { mockedPostData, mockedPostResponse } from './mocks/response/post.response.mock';
 import { mockedUserAuth } from './mocks/user.mock';
-import { PostSearchService } from '../post-search.service';
 import { FeedService } from '../../feed/feed.service';
 import { UserService } from '../../../shared/user';
 import { GroupService } from '../../../shared/group';
@@ -20,7 +19,6 @@ describe.skip('PostController', () => {
   let postService: PostService;
   let postHistoryService: PostHistoryService;
   let postController: PostController;
-  let postSearchService: PostSearchService;
   let eventEmitter: InternalEventEmitterService;
   let mentionService: MentionService;
   let authorityService: AuthorityService;
@@ -37,10 +35,6 @@ describe.skip('PostController', () => {
         },
         {
           provide: PostHistoryService,
-          useClass: jest.fn(),
-        },
-        {
-          provide: PostSearchService,
           useClass: jest.fn(),
         },
         {
@@ -76,7 +70,6 @@ describe.skip('PostController', () => {
 
     postService = moduleRef.get<PostService>(PostService);
     postHistoryService = moduleRef.get<PostHistoryService>(PostHistoryService);
-    postSearchService = moduleRef.get<PostSearchService>(PostSearchService);
     authorityService = moduleRef.get<AuthorityService>(AuthorityService);
     mentionService = moduleRef.get<MentionService>(MentionService);
     postController = moduleRef.get<PostController>(PostController);
@@ -87,18 +80,6 @@ describe.skip('PostController', () => {
   afterEach(async () => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-  });
-
-  describe('searchPosts', () => {
-    it('Should call searchPosts', async () => {
-      postSearchService.searchPosts = jest.fn().mockResolvedValue(true);
-      const searchPostsDto: SearchPostsDto = {
-        contentSearch: 'a',
-      };
-      const result = await postController.searchPosts(userDto, searchPostsDto);
-      expect(postSearchService.searchPosts).toBeCalledTimes(1);
-      expect(postSearchService.searchPosts).toBeCalledWith(userDto, searchPostsDto);
-    });
   });
 
   describe('getDrafts', () => {
