@@ -82,7 +82,6 @@ export class FileMetadataDto implements IDocumentMetadata {
   public mimeType?: string;
 
   @ApiProperty({ required: false, type: Date })
-  @IsDate()
   @IsOptional()
   @Expose({
     name: 'created_at',

@@ -121,7 +121,6 @@ export class VideoMetadataDto implements IDocumentMetadata {
   public thumbnails?: ThumbnailDto[] = [];
 
   @ApiProperty({ required: false, type: Date })
-  @IsDate()
   @IsOptional()
   @Expose({
     name: 'created_at',

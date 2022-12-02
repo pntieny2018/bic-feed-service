@@ -338,7 +338,6 @@ export class SearchService {
       }
 
       if (post.media) {
-        console.log('object', post.media);
         post.media
           .sort((a, b) => {
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -351,7 +350,7 @@ export class SearchService {
       }
       post.media = media;
       post.reactionsCount = reactionsCount;
-      post.audience = audienceGroups;
+      post.audience = { groups: audienceGroups };
       post.communities = communities;
       post.actor = actor;
       post.mentions = mentions;
@@ -468,7 +467,7 @@ export class SearchService {
       return source;
     });
 
-    // await this.postBindingService.bindActor(articles);
+    await this.postBindingService.bindActor(articles);
 
     const result = this.classTransformer.plainToInstance(ArticleSearchResponseDto, articles, {
       excludeExtraneousValues: true,

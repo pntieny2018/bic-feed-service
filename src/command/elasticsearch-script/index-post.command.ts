@@ -208,11 +208,10 @@ export class IndexPostCommand implements CommandRunner {
               originName: mediaItem.originName,
               extension: mediaItem.extension,
               mimeType: mediaItem.mimeType,
-              thumbnails: mediaItem.thumbnails,
+              thumbnails: mediaItem.thumbnails ?? [],
               createdAt: mediaItem.createdAt,
               createdBy: mediaItem.createdBy,
             }));
-            console.log('object', item.media);
             item.mentionUserIds = mentionUserIds;
           }
           if (post.type === PostType.ARTICLE) {
