@@ -25,11 +25,11 @@ export class BasicPermissionDto {
 export const permissionToCommonName = (permission: string): string => {
   switch (permission) {
     case PERMISSION_KEY.CRUD_POST_ARTICLE:
-      return 'create post';
+      return 'CRUD post';
     case PERMISSION_KEY.CRUD_SERIES:
-      return 'create series';
+      return 'CRUD series';
     case PERMISSION_KEY.EDIT_POST_SETTING:
-      return 'edit post setting';
+      return 'post setting';
     default:
       return 'undefined';
   }
