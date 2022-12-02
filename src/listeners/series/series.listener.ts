@@ -11,6 +11,7 @@ import { NIL as NIL_UUID } from 'uuid';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostType } from '../../database/models/post.model';
 import { SearchService } from '../../modules/search/search.service';
+import { MediaType } from '../../database/models/media.model';
 
 @Injectable()
 export class SeriesListener {
@@ -57,6 +58,7 @@ export class SeriesListener {
           id: coverMedia.id,
           createdBy: coverMedia.createdBy,
           url: coverMedia.url,
+          type: coverMedia.type as MediaType,
           createdAt: coverMedia.createdAt,
           name: coverMedia.name,
           originName: coverMedia.originName,
@@ -105,6 +107,7 @@ export class SeriesListener {
         coverMedia: {
           id: coverMedia.id,
           url: coverMedia.url,
+          type: coverMedia.type as MediaType,
           createdBy: coverMedia.createdBy,
           createdAt: coverMedia.createdAt,
           name: coverMedia.name,

@@ -2,7 +2,7 @@ import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
-import { MediaStatus } from '../../database/models/media.model';
+import { MediaStatus, MediaType } from '../../database/models/media.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
@@ -95,6 +95,7 @@ export class ArticleListener {
           url: coverMedia.url,
           createdAt: coverMedia.createdAt,
           name: coverMedia.name,
+          type: coverMedia.type as MediaType,
           originName: coverMedia.originName,
           width: coverMedia.width,
           height: coverMedia.height,
@@ -179,6 +180,7 @@ export class ArticleListener {
           createdBy: coverMedia.createdBy,
           url: coverMedia.url,
           createdAt: coverMedia.createdAt,
+          type: coverMedia.type as MediaType,
           name: coverMedia.name,
           originName: coverMedia.originName,
           width: coverMedia.width,
@@ -249,6 +251,7 @@ export class ArticleListener {
             id: coverMedia.id,
             createdBy: coverMedia.createdBy,
             url: coverMedia.url,
+            type: coverMedia.type as MediaType,
             createdAt: coverMedia.createdAt,
             name: coverMedia.name,
             originName: coverMedia.originName,
