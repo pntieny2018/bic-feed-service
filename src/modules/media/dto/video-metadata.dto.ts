@@ -120,6 +120,14 @@ export class VideoMetadataDto implements IDocumentMetadata {
   @Transform(({ value }) => value ?? [])
   public thumbnails?: ThumbnailDto[] = [];
 
+  @ApiProperty({
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  @Expose()
+  public type?: string;
+
   @ApiProperty({ required: false, type: Date })
   @IsOptional()
   @Expose({
