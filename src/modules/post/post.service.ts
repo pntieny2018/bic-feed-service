@@ -1282,11 +1282,14 @@ export class PostService {
     };
 
     const order = [];
+    const attributes: any = ['id'];
     if (isImportant) {
       conditions['isImportant'] = true;
       order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
+      attributes.push(PostModel.loadMarkReadPost(authUserId));
     } else {
       order.push([this.sequelizeConnection.literal('"isImportant"'), 'desc']);
+      attributes.push(PostModel.loadImportant(authUserId));
     }
     order.push(['createdAt', 'desc']);
 
@@ -1295,7 +1298,7 @@ export class PostService {
     }
 
     const posts = await this.postModel.findAll({
-      attributes: ['id', this.postModel.loadImportant(authUserId)],
+      attributes,
       include: [
         {
           model: PostGroupModel,
