@@ -40,6 +40,7 @@ dev.env
 sbx.env
 stg.env
 local.env
+internal.env
 data
 .scannerwork
 yarn.lock
