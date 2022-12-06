@@ -19,6 +19,15 @@ export class UserService {
     return this._store.get<UserSharedDto>(`${AppHelper.getRedisEnv()}SU:${userId}`);
   }
 
+  public async getByValue(username: string): Promise<UserSharedDto> {
+    const keys = await this._store.keys('*SU:*');
+    if (keys.length) {
+      const users: UserSharedDto[] = await this._store.mget(keys);
+      return users.find((user) => user.username === username);
+    }
+    return null;
+  }
+
   public async getPermissions(userId: string, payload: string): Promise<any> {
     const cacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${userId}`;
     const permissionCached = await this._store.get(cacheKey);
