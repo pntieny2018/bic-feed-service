@@ -87,7 +87,15 @@ export class SeriesAppService {
       throw new BadRequestException('Audience is required');
     }
 
-    await this._authorityService.checkCanCRUDSeries(user, audience.groupIds);
+    const oldGroupIds = seriesBefore.audience.groups.map((group) => group.id);
+    const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+    if (newAudienceIds.length) {
+      await this._authorityService.checkCanCRUDPost(user, newAudienceIds, false);
+    }
+    const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+    if (removeGroupIds.length) {
+      await this._authorityService.checkCanCRUDPost(user, removeGroupIds, false);
+    }
 
     const isUpdated = await this._seriesService.update(seriesBefore, user, updateSeriesDto);
     if (isUpdated) {

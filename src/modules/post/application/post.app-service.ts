@@ -89,6 +89,7 @@ export class PostAppService {
     const { audience, setting } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+
     await this._authorityService.checkPostOwner(postBefore, user.id);
     if (postBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
@@ -103,8 +104,17 @@ export class PostAppService {
       ) {
         isEnableSetting = true;
       }
-      await this._authorityService.checkCanCRUDPost(user, audience.groupIds, isEnableSetting);
       this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+
+      const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
+      const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+      if (newAudienceIds.length) {
+        await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
+      }
+      const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+      if (removeGroupIds.length) {
+        await this._authorityService.checkCanCRUDPost(user, removeGroupIds, false);
+      }
     }
 
     const isUpdated = await this._postService.update(postBefore, user, updatePostDto);
