@@ -45,6 +45,7 @@ export class AuthService {
     });
 
     user.profile = await this._userService.getByValue(user.username);
+    user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
     if (!user.profile) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
