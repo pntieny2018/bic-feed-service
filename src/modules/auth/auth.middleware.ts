@@ -18,7 +18,7 @@ export class AuthMiddleware implements NestMiddleware {
       req.user = await this._authService.getUser({
         email: 'bicbot@maildrop.cc',
         ['cognito:username']: 'bot',
-        ['custom:username']: req.headers.bot_id,
+        ['custom:user_uuid']: req.headers.bot_id,
         ['custom:bein_staff_role']: 'BOT',
       });
     } else {
