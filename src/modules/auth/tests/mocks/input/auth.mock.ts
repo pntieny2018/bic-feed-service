@@ -32,10 +32,9 @@ export const cognitoKeys = [
 export const payLoad = {
   sub: '62436e56-9a91-49e8-951b-03b1299212cb',
   email_verified: true,
-  'custom:user_uuid': '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
+  'custom:username': '42d8ea55-8f73-44b4-9f7d-3434e1dd0de0',
   'custom:bein_staff_role': 'ADMINISTRATOR',
   iss: 'https://cognito-idp.ap-southeast-1.amazonaws.com/ap-southeast-1_wCKCkEdVr',
-  'custom:username': 'tronghm',
   origin_jti: 'b3a155a8-11a1-4065-82fb-8370bd8e33ce',
   aud: '5vn1978e1vuogeorbravhq2q82',
   event_id: '5889e575-6595-4b95-a5f0-65acbeb92f47',

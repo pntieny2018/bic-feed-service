@@ -27,7 +27,7 @@ export class AuthService {
     const user = this._classTransformer.plainToInstance(UserDto, {
       email: payload['email'],
       username: payload['cognito:username'],
-      id: payload['custom:user_uuid'],
+      id: payload['custom:username'],
       staffRole: payload['custom:bein_staff_role'],
     });
     user.profile = await this._userService.get(user.id);
@@ -39,49 +39,49 @@ export class AuthService {
     return user;
   }
 
-  public async login(token: string): Promise<UserDto> {
-    const decodedJwt = jwt.decode(token, { complete: true });
-    if (!decodedJwt) {
-      throw new UnauthorizedException('Unauthorized');
-    }
+  // public async login(token: string): Promise<UserDto> {
+  //   const decodedJwt = jwt.decode(token, { complete: true });
+  //   if (!decodedJwt) {
+  //     throw new UnauthorizedException('Unauthorized');
+  //   }
 
-    const cognitoConfig = this._configService.get<ICognitoConfig>('cognito');
-    const tokenValidationUrl = `https://cognito-idp.${cognitoConfig.region}.amazonaws.com/${cognitoConfig.poolId}/.well-known/jwks.json`;
-    const response = await lastValueFrom(this._httpService.get(tokenValidationUrl));
-    const keys = response['data']['keys'];
-    const pems = keys
-      .map((key) => {
-        const keyId = key.kid;
-        const modulus = key.n;
-        const exponent = key.e;
-        const keyType = key.kty;
-        const jwk = { kty: keyType, n: modulus, e: exponent };
-        return {
-          [keyId]: jwkToPem(jwk),
-        };
-      })
-      .reduce((obj, item) => ({ ...obj, ...item }), {});
+  //   const cognitoConfig = this._configService.get<ICognitoConfig>('cognito');
+  //   const tokenValidationUrl = `https://cognito-idp.${cognitoConfig.region}.amazonaws.com/${cognitoConfig.poolId}/.well-known/jwks.json`;
+  //   const response = await lastValueFrom(this._httpService.get(tokenValidationUrl));
+  //   const keys = response['data']['keys'];
+  //   const pems = keys
+  //     .map((key) => {
+  //       const keyId = key.kid;
+  //       const modulus = key.n;
+  //       const exponent = key.e;
+  //       const keyType = key.kty;
+  //       const jwk = { kty: keyType, n: modulus, e: exponent };
+  //       return {
+  //         [keyId]: jwkToPem(jwk),
+  //       };
+  //     })
+  //     .reduce((obj, item) => ({ ...obj, ...item }), {});
 
-    const kid = decodedJwt['header']['kid'];
-    const pem = pems[kid];
-    if (!pem) {
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
-    }
-    let payload;
+  //   const kid = decodedJwt['header']['kid'];
+  //   const pem = pems[kid];
+  //   if (!pem) {
+  //     throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+  //   }
+  //   let payload;
 
-    try {
-      payload = await jwt.verify(token, pem);
-    } catch (e) {
-      if (e instanceof TokenExpiredError) {
-        throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
-      }
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
-    }
+  //   try {
+  //     payload = await jwt.verify(token, pem);
+  //   } catch (e) {
+  //     if (e instanceof TokenExpiredError) {
+  //       throw new LogicException(HTTP_STATUS_ID.APP_AUTH_TOKEN_EXPIRED);
+  //     }
+  //     throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+  //   }
 
-    if (!payload) {
-      throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
-    }
+  //   if (!payload) {
+  //     throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+  //   }
 
-    return this.getUser(payload);
-  }
+  //   return this.getUser(payload);
+  // }
 }
