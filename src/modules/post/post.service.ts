@@ -653,6 +653,7 @@ export class PostService {
         }
       );
       post.isDraft = isDraft;
+      post.isProcessing = isProcessing;
       if (post.setting.isImportant) {
         await this.userMarkReadPostModel.create({
           postId: post.id,

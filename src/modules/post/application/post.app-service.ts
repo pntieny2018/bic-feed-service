@@ -159,7 +159,7 @@ export class PostAppService {
       })
     );
 
-    return post;
+    return postUpdated;
   }
 
   public async deletePost(user: UserDto, postId: string): Promise<boolean> {
