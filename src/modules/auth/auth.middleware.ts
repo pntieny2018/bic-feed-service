@@ -18,7 +18,7 @@ export class AuthMiddleware implements NestMiddleware {
       req.user = await this._authService.getUser({
         email: 'bicbot@maildrop.cc',
         ['cognito:username']: 'bot',
-        ['custom:user_uuid']: req.headers.bot_id,
+        ['custom:username']: req.headers.bot_id,
         ['custom:bein_staff_role']: 'BOT',
       });
     } else {
@@ -32,7 +32,7 @@ export class AuthMiddleware implements NestMiddleware {
       ) {
         throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
       }
-      req.user = token ? await this._authService.login(token) : null;
+      //req.user = token ? await this._authService.login(token) : null;
     }
     next();
   }

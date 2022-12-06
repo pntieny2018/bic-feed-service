@@ -91,6 +91,8 @@ export class ArticleAppService {
 
     if (articleBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
+
       let isEnableSetting = false;
       if (
         setting &&
@@ -101,9 +103,16 @@ export class ArticleAppService {
       ) {
         isEnableSetting = true;
       }
-      await this._authorityService.checkCanCRUDPost(user, audience.groupIds, isEnableSetting);
 
-      this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
+      const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
+      const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+      if (newAudienceIds.length) {
+        await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
+      }
+      const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
+      if (removeGroupIds.length) {
+        await this._authorityService.checkCanCRUDPost(user, removeGroupIds, false);
+      }
 
       if (series?.length) {
         const seriesGroups = await this._postService.getListWithGroupsByIds(series, true);
