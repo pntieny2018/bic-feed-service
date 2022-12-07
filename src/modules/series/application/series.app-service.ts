@@ -57,7 +57,7 @@ export class SeriesAppService {
   public async createSeries(user: UserDto, createSeriesDto: CreateSeriesDto): Promise<any> {
     const { audience } = createSeriesDto;
     if (audience.groupIds?.length > 0) {
-      await this._authorityService.checkCanCRUDSeries(user, audience.groupIds);
+      await this._authorityService.checkCanCreateSeries(user, audience.groupIds);
     }
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
@@ -88,14 +88,15 @@ export class SeriesAppService {
     }
 
     const oldGroupIds = seriesBefore.audience.groups.map((group) => group.id);
+    await this._authorityService.checkCanUpdateSeries(user, oldGroupIds);
     this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
     const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     if (newAudienceIds.length) {
-      await this._authorityService.checkCanCRUDPost(user, newAudienceIds, false);
+      await this._authorityService.checkCanCreateSeries(user, newAudienceIds);
     }
     const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
     if (removeGroupIds.length) {
-      await this._authorityService.checkCanCRUDPost(user, removeGroupIds, false);
+      await this._authorityService.checkCanDeleteSeries(user, removeGroupIds);
     }
 
     const isUpdated = await this._seriesService.update(seriesBefore, user, updateSeriesDto);
@@ -121,7 +122,7 @@ export class SeriesAppService {
     await this._authorityService.checkPostOwner(series[0], user.id);
 
     if (series[0].isDraft === false) {
-      await this._authorityService.checkCanCRUDSeries(
+      await this._authorityService.checkCanDeleteSeries(
         user,
         series[0].groups.map((g) => g.groupId)
       );
@@ -150,7 +151,10 @@ export class SeriesAppService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
     }
     await this._authorityService.checkPostOwner(series[0], user.id);
-
+    await this._authorityService.checkCanUpdateSeries(
+      user,
+      series[0].groups.map((group) => group.groupId)
+    );
     await this._seriesService.removeArticles(series[0], articleIds);
   }
 
@@ -176,6 +180,11 @@ export class SeriesAppService {
         message: `Articles parameter is invalid`,
       });
     }
+
+    await this._authorityService.checkCanUpdateSeries(
+      user,
+      series[0].groups.map((group) => group.groupId)
+    );
 
     const invalidArticles = [];
 
@@ -210,6 +219,10 @@ export class SeriesAppService {
     });
     if (!series) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
     await this._authorityService.checkPostOwner(series, user.id);
+    await this._authorityService.checkCanUpdateSeries(
+      user,
+      series[0].groups.map((group) => group.groupId)
+    );
     return this._seriesService.reorderArticles(seriesId, articleIds);
   }
 }
