@@ -69,7 +69,7 @@ export class PostAppService {
         setting.canComment === false ||
         setting.canReact === false ||
         setting.canShare === false;
-      await this._authorityService.checkCanCRUDPost(user, audience.groupIds, isEnableSetting);
+      await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._postService.create(user, createPostDto);
     if (created) {
@@ -106,14 +106,15 @@ export class PostAppService {
       }
       this._postService.checkContent(updatePostDto.content, updatePostDto.media);
       const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, isEnableSetting);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
-        await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
+        await this._authorityService.checkCanCreatePost(user, newAudienceIds, isEnableSetting);
       }
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
-        await this._authorityService.checkCanCRUDPost(user, removeGroupIds, false);
+        await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
     }
 
@@ -147,7 +148,7 @@ export class PostAppService {
       setting.canComment === false ||
       setting.canReact === false ||
       setting.canShare === false;
-    await this._authorityService.checkCanCRUDPost(user, groupIds, isEnableSetting);
+    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
 
     this._postService.checkContent(post.content, post.media);
 
@@ -171,10 +172,9 @@ export class PostAppService {
     await this._authorityService.checkPostOwner(posts[0], user.id);
 
     if (posts[0].isDraft === false) {
-      await this._authorityService.checkCanCRUDPost(
+      await this._authorityService.checkCanDeletePost(
         user,
-        posts[0].groups.map((g) => g.groupId),
-        false
+        posts[0].groups.map((g) => g.groupId)
       );
     }
 

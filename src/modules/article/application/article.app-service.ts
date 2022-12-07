@@ -65,7 +65,7 @@ export class ArticleAppService {
         setting.canComment === false ||
         setting.canReact === false ||
         setting.canShare === false;
-      await this._authorityService.checkCanCRUDPost(user, audience.groupIds, isEnableSetting);
+      await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
@@ -105,14 +105,15 @@ export class ArticleAppService {
       }
 
       const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, isEnableSetting);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
-        await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
+        await this._authorityService.checkCanCreatePost(user, newAudienceIds, isEnableSetting);
       }
       const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
       if (removeGroupIds.length) {
-        await this._authorityService.checkCanCRUDPost(user, removeGroupIds, false);
+        await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
 
       if (series?.length) {
@@ -173,7 +174,7 @@ export class ArticleAppService {
       setting.canComment === false ||
       setting.canReact === false ||
       setting.canShare === false;
-    await this._authorityService.checkCanCRUDPost(user, groupIds, isEnableSetting);
+    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
 
     const seriesGroups = await this._postService.getListWithGroupsByIds(
       article.series.map((item) => item.id),
@@ -223,10 +224,9 @@ export class ArticleAppService {
     await this._authorityService.checkPostOwner(article, user.id);
 
     if (article.isDraft === false) {
-      await this._authorityService.checkCanCRUDPost(
+      await this._authorityService.checkCanDeletePost(
         user,
-        article.groups.map((g) => g.groupId),
-        false
+        article.groups.map((g) => g.groupId)
       );
     }
 

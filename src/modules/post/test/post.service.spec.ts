@@ -382,7 +382,7 @@ describe('PostService', () => {
     it('Should return result successfully', async () => {
       postModelMock.findOne = jest.fn().mockResolvedValue(mockedDataUpdatePost);
 
-      authorityService.checkCanCRUDPost = jest.fn().mockReturnThis();
+      authorityService.checkCanUpdatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
       postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
       mockedUserAuth.id = mockedDataUpdatePost.createdBy;
@@ -436,7 +436,7 @@ describe('PostService', () => {
     const mockedDataDeletePost = createMock<PostModel>(mockedPostData);
 
     it('Delete post successfully', async () => {
-      authorityService.checkCanCRUDPost = jest.fn().mockReturnThis();
+      authorityService.checkCanUpdatePost = jest.fn().mockReturnThis();
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());

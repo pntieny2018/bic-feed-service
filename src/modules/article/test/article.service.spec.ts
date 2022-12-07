@@ -273,7 +273,7 @@ describe.skip('ArticleService', () => {
 
   describe.skip('create', () => {
     it('Create article successfully', async () => {
-      authorityService.checkCanCRUDPost = jest.fn().mockResolvedValue(Promise.resolve());
+      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
@@ -321,7 +321,7 @@ describe.skip('ArticleService', () => {
     });
 
     it('Should rollback if have an exception when insert data into DB', async () => {
-      authorityService.checkCanCRUDPost = jest.fn().mockResolvedValue(Promise.resolve());
+      authorityService.checkCanUpdatePost = jest.fn().mockResolvedValue(Promise.resolve());
 
       mediaService.isValid = jest.fn().mockResolvedValue(Promise.resolve());
       categoryService.checkValidCategory = jest.fn().mockResolvedValue(Promise.resolve());
