@@ -46,7 +46,6 @@ export class AuthorityService {
     const notCreatableInGroups: GroupSharedDto[] = [];
     const notEditSettingInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
-
     for (const group of groups) {
       const canCreatePost = await this._can(
         user,
@@ -148,5 +147,13 @@ export class AuthorityService {
   private async _can(user: UserDto, action: string, subject: Subject = null): Promise<boolean> {
     const ability = await this._authorityFactory.createForUser(user);
     return ability.can(action, subject);
+  }
+
+  public checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
+    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
+    if (!canAccess) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
   }
 }

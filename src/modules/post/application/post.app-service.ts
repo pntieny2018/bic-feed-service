@@ -105,8 +105,8 @@ export class PostAppService {
         isEnableSetting = true;
       }
       this._postService.checkContent(updatePostDto.content, updatePostDto.media);
-
       const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
+      this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
         await this._authorityService.checkCanCRUDPost(user, newAudienceIds, isEnableSetting);
