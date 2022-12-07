@@ -8,7 +8,7 @@ import { UserDto } from '../auth';
 export class AuthorityFactory {
   public constructor(private _sentryService: SentryService) {}
 
-  public async createForUser(user: UserDto): Promise<Ability> {
+  public async buildAbility(user: UserDto): Promise<Ability> {
     try {
       const cachedPermissions = user.permissions ?? null;
       if (!cachedPermissions) {

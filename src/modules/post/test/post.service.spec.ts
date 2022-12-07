@@ -75,7 +75,7 @@ describe('PostService', () => {
         {
           provide: AuthorityFactory,
           useValue: {
-            createForUser: jest.fn(),
+            buildAbility: jest.fn(),
           },
         },
         {
