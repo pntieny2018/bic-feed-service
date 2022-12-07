@@ -18,7 +18,7 @@ describe.skip('AuthorityService', () => {
         {
           provide: AuthorityFactory,
           useValue: {
-            buildAbility: jest.fn()
+            createForUser: jest.fn()
           },
         },
         {
@@ -173,12 +173,12 @@ describe.skip('AuthorityService', () => {
     it('', async () => {
       groupService.isMemberOfGroups.mockReturnValue(true);
       groupService.getMany.mockResolvedValue([{id: 1, name: 'BIC to the moon'}])
-      authorityFactory.buildAbility.mockResolvedValue(ability)
+      authorityFactory.createForUser.mockResolvedValue(ability)
       ability.can.mockResolvedValue(true)
       await service.checkCanCRUDPost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'], false);
       expect(groupService.isMemberOfGroups).toBeCalled();
       expect(groupService.getMany).toBeCalled();
-      expect(authorityFactory.buildAbility).toBeCalled();
+      expect(authorityFactory.createForUser).toBeCalled();
       expect(ability.can).toBeCalled();
     });
   });

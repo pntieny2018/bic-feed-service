@@ -1,25 +1,26 @@
 import { UserDto } from '../auth';
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { GroupService } from '../../shared/group';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { Ability, subject } from '@casl/ability';
+import { subject, Subject } from '@casl/ability';
 import {
   PERMISSION_KEY,
   permissionToCommonName,
   SUBJECT,
 } from '../../common/constants/casl.constant';
 import { GroupSharedDto } from '../../shared/group/dto';
+import { AuthorityFactory } from './authority.factory';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesResponseDto } from '../series/dto/responses';
 
 @Injectable()
 export class AuthorityService {
-  protected ability;
-  public constructor(private _groupService: GroupService, @Inject('CaslAbility') ability: Ability) {
-    this.ability = ability;
-  }
+  public constructor(
+    private _groupService: GroupService,
+    private _authorityFactory: AuthorityFactory
+  ) {}
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
     if (post.privacy === PostPrivacy.PUBLIC) return;
@@ -46,7 +47,8 @@ export class AuthorityService {
     const notEditSettingInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
     for (const group of groups) {
-      const canCreatePost = await this.ability.can(
+      const canCreatePost = await this._can(
+        user,
         PERMISSION_KEY.CRUD_POST_ARTICLE,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -55,7 +57,8 @@ export class AuthorityService {
       }
 
       if (canCreatePost && needEnableSetting) {
-        const canEditPostSetting = await this.ability.can(
+        const canEditPostSetting = await this._can(
+          user,
           PERMISSION_KEY.EDIT_POST_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
@@ -91,7 +94,8 @@ export class AuthorityService {
     const groups = await this._groupService.getMany(groupAudienceIds);
 
     for (const group of groups) {
-      const canCreatePost = await this.ability.can(
+      const canCreatePost = await this._can(
+        user,
         PERMISSION_KEY.CRUD_SERIES,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -138,6 +142,11 @@ export class AuthorityService {
 
   public async checkIsPublicSeries(post: IPost): Promise<void> {
     return this.checkIsPublicPost(post);
+  }
+
+  private async _can(user: UserDto, action: string, subject: Subject = null): Promise<boolean> {
+    const ability = await this._authorityFactory.createForUser(user);
+    return ability.can(action, subject);
   }
 
   public checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
