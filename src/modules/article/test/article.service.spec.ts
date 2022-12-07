@@ -71,7 +71,7 @@ describe.skip('ArticleService', () => {
         {
           provide: AuthorityFactory,
           useValue: {
-            buildAbility: jest.fn()
+            createForUser: jest.fn()
           },
         },
         {
