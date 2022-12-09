@@ -24,13 +24,13 @@ export class AuthorityService {
   ) {}
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
-    if (post.privacy === PostPrivacy.PUBLIC) return;
+    if (post.privacy === PostPrivacy.OPEN) return;
     throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
   }
 
   public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
     if (post.isDraft && post.createdBy === user.id) return;
-    if (post.privacy === PostPrivacy.PUBLIC || post.privacy === PostPrivacy.OPEN) return;
+    if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);

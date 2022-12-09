@@ -249,7 +249,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.addGroup = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.OPEN);
       postModelMock.create = jest.fn().mockResolvedValue(mockedPostCreated);
 
       await postService.create(mockedUserAuth, mockedCreatePostDto);
@@ -272,7 +272,7 @@ describe('PostService', () => {
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
         isProcessing: false,
-        // privacy: PostPrivacy.PUBLIC,
+        // privacy: PostPrivacy.OPEN,
         hashtagsJson: [],
       });
     });
@@ -299,7 +299,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.OPEN);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
           id: mockedUpdatePostDto.media.images[0].id,
@@ -334,7 +334,7 @@ describe('PostService', () => {
         canShare: mockedCreatePostDto.setting.canShare,
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
-        privacy: PostPrivacy.PUBLIC,
+        privacy: PostPrivacy.OPEN,
         linkPreviewId: null
       });
     });
@@ -345,7 +345,7 @@ describe('PostService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.OPEN);
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {
           id: mockedUpdatePostDto.media.images[0].id,
@@ -384,7 +384,7 @@ describe('PostService', () => {
 
       authorityService.checkCanUpdatePost = jest.fn().mockReturnThis();
       postModelMock.update = jest.fn().mockResolvedValue(mockedDataUpdatePost);
-      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.PUBLIC);
+      postService.getPrivacy = jest.fn().mockResolvedValueOnce(PostPrivacy.OPEN);
       mockedUserAuth.id = mockedDataUpdatePost.createdBy;
      // const result = await postService.publish(mockedDataUpdatePost.id, mockedUserAuth);
      // expect(result).toBe(true);

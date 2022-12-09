@@ -50,7 +50,7 @@ export const mockPostResponseDto: PostResponseDto = {
   mentions: {},
   commentsCount: 0,
   totalUsersSeen: 0,
-  privacy: PostPrivacy.PUBLIC,
+  privacy: PostPrivacy.OPEN,
   reactionsCount: {
     [1]: {
       haha: 100,
@@ -66,7 +66,7 @@ export const mockPostResponseDto: PostResponseDto = {
         id: '36d66fb6-5a24-4fb4-892e-1c38760da777',
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
-        privacy: GroupPrivacy.OPEN,
+        privacy: GroupPrivacy.CLOSED,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],

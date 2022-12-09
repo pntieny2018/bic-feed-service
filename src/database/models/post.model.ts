@@ -43,8 +43,8 @@ import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 
 export enum PostPrivacy {
-  PUBLIC = 'PUBLIC',
   OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
   PRIVATE = 'PRIVATE',
   SECRET = 'SECRET',
 }

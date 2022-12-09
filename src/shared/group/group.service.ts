@@ -14,7 +14,7 @@ export class GroupService {
     if (group && !group?.child) {
       group.child = {
         open: [],
-        public: [],
+        closed: [],
         private: [],
         secret: [],
       };
@@ -52,17 +52,19 @@ export class GroupService {
   }
 
   /**
-   * Get groupId and childIds(user joinned) to show posts in timeline
+   * Get groupId and childIds(user joinned) to show posts in timeline and in search
+   * Anonymous: can not see posts
+   * Guest can see post in current group(joinned or close) and child group(joined)
    */
   public getGroupIdAndChildIdsUserJoined(group: GroupSharedDto, authUser: UserDto): string[] {
     if (!authUser) {
-      return this._getGroupIdsGuestCanSeePost(group);
+      return [];
     }
 
     const groupIdsUserJoined = authUser.profile.groups;
     const childGroupIds = [
-      ...group.child.public,
       ...group.child.open,
+      ...group.child.closed,
       ...group.child.private,
       ...group.child.secret,
     ];
@@ -70,11 +72,11 @@ export class GroupService {
       groupIdsUserJoined.includes(groupId)
     );
 
-    if (group.privacy === GroupPrivacy.PUBLIC) {
+    if (group.privacy === GroupPrivacy.OPEN) {
       filterGroupIdsUserJoined.push(group.id);
     }
     if (
-      group.privacy === GroupPrivacy.OPEN &&
+      group.privacy === GroupPrivacy.CLOSED &&
       this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupId)
     ) {
       filterGroupIdsUserJoined.push(group.id);
@@ -86,7 +88,7 @@ export class GroupService {
     return groupIdsUserJoined.includes(rootGroupId);
   }
   private _getGroupIdsGuestCanSeePost(group: GroupSharedDto): string[] {
-    if (group.privacy === GroupPrivacy.PUBLIC) {
+    if (group.privacy === GroupPrivacy.OPEN) {
       return [group.id];
     }
     return [];
