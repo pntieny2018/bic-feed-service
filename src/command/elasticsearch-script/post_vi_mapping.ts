@@ -98,6 +98,9 @@ export const POST_VI_MAPPING = {
       createdAt: {
         type: 'date',
       },
+      updatedAt: {
+        type: 'date',
+      },
       createdBy: {
         type: 'keyword',
       },

@@ -13,7 +13,12 @@ import { FeedModule } from '../modules/feed';
 import { SeriesModule } from '../modules/series';
 import { ArticleListener } from './article';
 import { ArticleModule } from '../modules/article';
-import { SeriesListener } from './series';
+import {
+  SeriesAddedArticlesListener,
+  SeriesListener,
+  SeriesRemovedArticlesListener,
+  SeriesReorderArticlesListener,
+} from './series';
 import { SearchModule } from '../modules/search';
 
 @Module({
@@ -36,6 +41,9 @@ import { SearchModule } from '../modules/search';
     FollowListener,
     ArticleListener,
     SeriesListener,
+    SeriesAddedArticlesListener,
+    SeriesRemovedArticlesListener,
+    SeriesReorderArticlesListener,
   ],
 })
 export class ListenerModule {}

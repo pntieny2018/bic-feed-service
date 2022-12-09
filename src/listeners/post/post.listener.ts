@@ -92,7 +92,18 @@ export class PostListener {
   @On(PostHasBeenPublishedEvent)
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
     const { post, actor } = event.payload;
-    const { isDraft, id, content, media, mentions, createdBy, audience, createdAt, type } = post;
+    const {
+      isDraft,
+      id,
+      content,
+      media,
+      mentions,
+      createdBy,
+      audience,
+      createdAt,
+      updatedAt,
+      type,
+    } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
@@ -155,6 +166,7 @@ export class PostListener {
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdBy,
         createdAt,
+        updatedAt,
       },
     ]);
 
@@ -175,8 +187,19 @@ export class PostListener {
   @On(PostHasBeenUpdatedEvent)
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     const { oldPost, newPost, actor } = event.payload;
-    const { isDraft, id, content, media, mentions, createdBy, audience, type, lang, createdAt } =
-      newPost;
+    const {
+      isDraft,
+      id,
+      content,
+      media,
+      mentions,
+      createdBy,
+      audience,
+      type,
+      lang,
+      createdAt,
+      updatedAt,
+    } = newPost;
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
@@ -253,6 +276,7 @@ export class PostListener {
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdBy,
         createdAt,
+        updatedAt,
         lang,
       },
     ]);
@@ -295,7 +319,18 @@ export class PostListener {
         },
       });
 
-      const { actor, id, content, media, mentions, createdBy, audience, createdAt, type } = post;
+      const {
+        actor,
+        id,
+        content,
+        media,
+        mentions,
+        createdBy,
+        audience,
+        createdAt,
+        updatedAt,
+        type,
+      } = post;
 
       const mentionUserIds = [];
       for (const key in mentions) {
@@ -333,6 +368,7 @@ export class PostListener {
           communityIds: audience.groups.map((group) => group.rootGroupId),
           createdBy,
           createdAt,
+          updatedAt,
         },
       ]);
       try {
