@@ -83,7 +83,7 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, series, setting } = updateArticleDto;
+    const { audience, series, setting, coverMedia } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -91,6 +91,7 @@ export class ArticleAppService {
 
     if (articleBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
 
       let isEnableSetting = false;
@@ -166,7 +167,7 @@ export class ArticleAppService {
     await this._authorityService.checkPostOwner(article, user.id);
     const { audience, setting } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
-
+    if (article.coverMedia === null) throw new BadRequestException('Cover is required');
     const groupIds = audience.groups.map((group) => group.id);
 
     const isEnableSetting =

@@ -78,6 +78,9 @@ export const POST_ZH_MAPPING = {
       createdAt: {
         type: 'date',
       },
+      updatedAt: {
+        type: 'date',
+      },
       createdBy: {
         type: 'keyword',
       },

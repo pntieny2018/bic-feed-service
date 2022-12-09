@@ -98,6 +98,9 @@ export const POST_DEFAULT_MAPPING = {
       createdAt: {
         type: 'date',
       },
+      updatedAt: {
+        type: 'date',
+      },
       createdBy: {
         type: 'keyword',
       },
