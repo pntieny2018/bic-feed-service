@@ -288,7 +288,7 @@ describe.skip('ArticleService', () => {
       mentionService.checkValid = jest.fn();
 
       articleService.addGroup = jest.fn().mockResolvedValue(Promise.resolve());
-      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.OPEN);
 
       postModelMock.create = jest.fn().mockResolvedValue(mockedArticleCreated);
 
@@ -315,7 +315,7 @@ describe.skip('ArticleService', () => {
         hashtagsJson: mockedCreateArticleDto.hashtags,
         title: mockedCreateArticleDto.title,
         summary: mockedCreateArticleDto.summary,
-        privacy: PostPrivacy.PUBLIC,
+        privacy: PostPrivacy.OPEN,
         views: 0,
       });
     });
@@ -353,7 +353,7 @@ describe.skip('ArticleService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
       mentionService.setMention = jest.fn().mockResolvedValue(Promise.resolve());
 
-      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.OPEN);
 
       categoryService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
       seriesService.updateToPost = jest.fn().mockResolvedValue(Promise.resolve());
@@ -400,7 +400,7 @@ describe.skip('ArticleService', () => {
         canReact: mockedCreateArticleDto.setting.canReact,
         title: mockedUpdateArticleDto.title,
         summary: mockedUpdateArticleDto.summary,
-        privacy: PostPrivacy.PUBLIC,
+        privacy: PostPrivacy.OPEN,
         hashtagsJson: [],
       });
     });
@@ -411,7 +411,7 @@ describe.skip('ArticleService', () => {
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
 
       postService.setGroupByPost = jest.fn().mockResolvedValue(Promise.resolve());
-      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.PUBLIC);
+      articleService.getPrivacy = jest.fn().mockResolvedValue(PostPrivacy.OPEN);
 
       mediaService.createIfNotExist = jest.fn().mockResolvedValueOnce([
         {

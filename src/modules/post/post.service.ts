@@ -491,14 +491,14 @@ export class PostService {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.PUBLIC) {
-        return PostPrivacy.PUBLIC;
+      if (group.privacy === GroupPrivacy.OPEN) {
+        return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.OPEN) totalOpen++;
+      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
       if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
     }
 
-    if (totalOpen > 0) return PostPrivacy.OPEN;
+    if (totalOpen > 0) return PostPrivacy.CLOSED;
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
   }
@@ -1092,11 +1092,11 @@ export class PostService {
     groupPrivacy: GroupPrivacy,
     postPrivacy: PostPrivacy
   ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.PUBLIC || postPrivacy === PostPrivacy.PUBLIC) {
-      return PostPrivacy.PUBLIC;
-    }
     if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
       return PostPrivacy.OPEN;
+    }
+    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
+      return PostPrivacy.CLOSED;
     }
     if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
       return PostPrivacy.PRIVATE;

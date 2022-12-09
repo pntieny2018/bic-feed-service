@@ -126,7 +126,7 @@ export class FeedService {
 
       const privacy = groupInfos.map((g) => g.privacy);
 
-      if (privacy.every((p) => p !== GroupPrivacy.OPEN && p !== GroupPrivacy.PUBLIC)) {
+      if (privacy.every((p) => p !== GroupPrivacy.CLOSED && p !== GroupPrivacy.OPEN)) {
         if (!this._groupService.isMemberOfSomeGroups(groupIds, groupsOfUser)) {
           ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
         }
