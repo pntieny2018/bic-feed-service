@@ -1376,4 +1376,28 @@ export class PostService {
       };
     });
   }
+
+  public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
+    const conditions = {
+      id: id,
+      isDraft: false,
+      isProcessing: false,
+    };
+
+    if (returning) {
+      const post = await this.postModel.findOne({
+        include: ['groups'],
+        where: conditions,
+      });
+      if (post) {
+        return [true, post];
+      }
+      return [false, null];
+    }
+
+    const postCount = await this.postModel.count({
+      where: conditions,
+    });
+    return [postCount > 1, null];
+  }
 }
