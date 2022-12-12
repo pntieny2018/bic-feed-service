@@ -70,11 +70,11 @@ export class TagController {
     description: 'Update tag successfully',
   })
   @ResponseMessages({ success: 'tag has been published successfully' })
-  @Put('/:tagId')
+  @Put('/:id')
   @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
-    @Param('tagId', ParseUUIDPipe) tagId: string,
+    @Param('id', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagDto
   ): Promise<TagResponseDto> {
     return this._tagService.update(tagId, updateTagDto, user);

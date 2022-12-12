@@ -173,4 +173,13 @@ export class TagService {
       );
     }
   }
+
+  public async getTagsByIds(ids: string[]): Promise<TagResponseDto[]> {
+    const tags = await this._tagModel.findAll({ where: { id: { [Op.in]: ids } } });
+    return tags.map((tag) =>
+      this._classTransformer.plainToInstance(TagResponseDto, tag, {
+        excludeExtraneousValues: true,
+      })
+    );
+  }
 }
