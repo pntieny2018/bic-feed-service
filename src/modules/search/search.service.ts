@@ -157,6 +157,22 @@ export class SearchService {
     }
   }
 
+  public async updateAttributePostToSearch(post: IPost, dataUpdate: any): Promise<void> {
+    const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
+    try {
+      await this.elasticsearchService.update({
+        index,
+        id: post.id,
+        body: {
+          doc: dataUpdate,
+        },
+      });
+    } catch (e) {
+      this.logger.debug(e);
+      this.sentryService.captureException(e);
+    }
+  }
+
   /*
     Search posts, articles, series
   */

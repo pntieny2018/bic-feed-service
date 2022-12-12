@@ -81,7 +81,7 @@ export const mockedGroups = [
     id: 1,
     name: 'Name of group',
     icon: 'icon link',
-    privacy: GroupPrivacy.PUBLIC,
+    privacy: GroupPrivacy.OPEN,
     child: {
       public: [],
       open: [],

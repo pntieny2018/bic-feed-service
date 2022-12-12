@@ -63,6 +63,7 @@ export interface IDataPostToAdd {
   groupIds: string[];
   communityIds: string[];
   createdAt: Date;
+  updatedAt: Date;
   createdBy: string;
   type: PostType;
   title?: string;

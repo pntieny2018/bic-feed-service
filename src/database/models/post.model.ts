@@ -46,8 +46,8 @@ import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto
 import { PostTagModel } from './post-tag.model';
 
 export enum PostPrivacy {
-  PUBLIC = 'PUBLIC',
   OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
   PRIVATE = 'PRIVATE',
   SECRET = 'SECRET',
 }

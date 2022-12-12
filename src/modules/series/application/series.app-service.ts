@@ -4,10 +4,13 @@ import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
 import { ExceptionHelper } from '../../../common/helpers';
 import {
+  SeriesAddedArticlesEvent,
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
   SeriesHasBeenUpdatedEvent,
+  SeriesReoderArticlesEvent,
 } from '../../../events/series';
+import { SeriesRemovedArticlesEvent } from '../../../events/series/series-removed-articles.event';
 import { SeriesSearchResponseDto } from '../../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
@@ -156,6 +159,13 @@ export class SeriesAppService {
       series[0].groups.map((group) => group.groupId)
     );
     await this._seriesService.removeArticles(series[0], articleIds);
+
+    this._eventEmitter.emit(
+      new SeriesRemovedArticlesEvent({
+        seriesId,
+        articleIds,
+      })
+    );
   }
 
   public async addArticles(seriesId: string, articleIds: string[], user: UserDto): Promise<void> {
@@ -207,6 +217,12 @@ export class SeriesAppService {
     }
 
     await this._seriesService.addArticles(series[0], articleIds);
+    this._eventEmitter.emit(
+      new SeriesAddedArticlesEvent({
+        seriesId,
+        articleIds,
+      })
+    );
   }
 
   public async reorderArticles(
@@ -223,6 +239,13 @@ export class SeriesAppService {
       user,
       series[0].groups.map((group) => group.groupId)
     );
-    return this._seriesService.reorderArticles(seriesId, articleIds);
+    await this._seriesService.reorderArticles(seriesId, articleIds);
+    await this._seriesService.addArticles(series[0], articleIds);
+    this._eventEmitter.emit(
+      new SeriesReoderArticlesEvent({
+        seriesId,
+        articleIds,
+      })
+    );
   }
 }

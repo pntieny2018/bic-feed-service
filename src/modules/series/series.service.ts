@@ -495,7 +495,8 @@ export class SeriesService {
   public async findSeriesById(
     id: string,
     options: {
-      withGroups: boolean;
+      withGroups?: boolean;
+      withArticleId?: boolean;
     }
   ): Promise<IPost> {
     const include = [];
@@ -504,6 +505,26 @@ export class SeriesService {
         model: PostGroupModel,
         as: 'groups',
         attributes: ['groupId'],
+      });
+    }
+    if (options.withArticleId) {
+      include.push({
+        model: PostModel,
+        as: 'articles',
+        required: false,
+        through: {
+          attributes: ['zindex', 'createdAt'],
+        },
+        attributes: [
+          'id',
+          'title',
+          'summary',
+          'createdBy',
+          'canShare',
+          'canComment',
+          'canReact',
+          'importantExpiredAt',
+        ],
       });
     }
     const result = await this._postModel.findOne({

@@ -1,14 +1,12 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostType } from '../../database/models/post.model';
-import { plainToInstance } from 'class-transformer';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { PostService } from '../../modules/post/post.service';
 import { PostBindingService } from '../../modules/post/post-binding.service';
-import { ArticleResponseDto } from '../../modules/article/dto/responses';
 import { ElasticsearchHelper } from '../../common/helpers';
 import { POST_DEFAULT_MAPPING } from './post_default_mapping';
 import { POST_VI_MAPPING } from './post_vi_mapping';
@@ -188,6 +186,7 @@ export class IndexPostCommand implements CommandRunner {
             groupIds,
             communityIds,
             createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
             createdBy: post.createdBy,
           };
           if (post.type === PostType.POST) {
