@@ -44,6 +44,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
         const elasticsearchConfig = configService.get<IElasticsearchConfig>('elasticsearch');
         return {
           node: elasticsearchConfig.node,
+          tls: { rejectUnauthorized: elasticsearchConfig.tls, ca: elasticsearchConfig.ca },
           auth: {
             username: elasticsearchConfig.username,
             password: elasticsearchConfig.password,

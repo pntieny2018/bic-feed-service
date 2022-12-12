@@ -5,4 +5,6 @@ export const getElasticsearchConfig = (): IElasticsearchConfig => ({
   node: process.env.ELASTICSEARCH_NODE,
   username: process.env.ELASTICSEARCH_USERNAME,
   password: process.env.ELASTICSEARCH_PASSWORD,
+  tls: process.env.ELASTICSEARCH_TLS === 'false' ? false : true,
+  ca: process.env.ELASTICSEARCH_CA,
 });

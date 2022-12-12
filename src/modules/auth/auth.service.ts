@@ -24,18 +24,33 @@ export class AuthService {
   ) {}
 
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
+    // const user = this._classTransformer.plainToInstance(UserDto, {
+    //   email: payload['email'],
+    //   username: payload['cognito:username'],
+    //   id: payload['custom:user_uuid'],
+    //   staffRole: payload['custom:bein_staff_role'],
+    // });
+    // user.profile = await this._userService.get(user.id);
+    // user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
+    // if (!user.profile) {
+    //   throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
+    // }
+    // user.avatar = user.profile.avatar;
+
     const user = this._classTransformer.plainToInstance(UserDto, {
       email: payload['email'],
       username: payload['cognito:username'],
-      id: payload['custom:user_uuid'],
+      id: '',
       staffRole: payload['custom:bein_staff_role'],
     });
-    user.profile = await this._userService.get(user.id);
-    user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
+
+    user.profile = await this._userService.getByValue(user.username);
     if (!user.profile) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
+    user.id = user.profile.id;
     user.avatar = user.profile.avatar;
+    user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
     return user;
   }
 

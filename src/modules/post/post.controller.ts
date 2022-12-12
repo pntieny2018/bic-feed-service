@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
+import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { AuthUser, UserDto } from '../auth';
@@ -26,6 +27,7 @@ import {
   UpdatePostDto,
 } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { GetPostsSavedDto } from './dto/requests/get-posts-saved.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 
@@ -38,16 +40,28 @@ import { GetPostPipe } from './pipes';
 export class PostController {
   public constructor(private _postAppService: PostAppService) {}
 
-  @ApiOperation({ summary: 'Search posts' })
+  @ApiOperation({ summary: 'Save post' })
   @ApiOkResponse({
-    type: PostResponseDto,
+    type: Boolean,
   })
-  @Get('/')
-  public searchPosts(
+  @Post('/:postId/save')
+  public async save(
     @AuthUser() user: UserDto,
-    @Query() searchPostsDto: SearchPostsDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postAppService.searchPosts(user, searchPostsDto);
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.savePost(user, postId);
+  }
+
+  @ApiOperation({ summary: 'unsave post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Delete('/:postId/unsave')
+  public async unSave(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.unSavePost(user, postId);
   }
 
   @ApiOperation({ summary: 'Get post edited history' })
@@ -116,6 +130,7 @@ export class PostController {
     type: PostResponseDto,
     description: 'Update post successfully',
   })
+  @ResponseMessages({ success: 'Post has been published successfully' })
   @Put('/:postId')
   @InjectUserToBody()
   public async update(

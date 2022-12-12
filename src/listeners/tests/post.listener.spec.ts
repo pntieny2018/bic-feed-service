@@ -17,7 +17,7 @@ import {
   VideoProcessingEndDto
 } from '../../modules/post/dto/responses/process-video-response.dto';
 import { PostHistoryService } from '../../modules/post/post-history.service';
-import { PostSearchService } from '../../modules/post/post-search.service';
+import { SearchService } from '../../modules/search/search.service';
 import { PostService } from '../../modules/post/post.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { NotificationService } from '../../notification';
@@ -61,7 +61,7 @@ describe('PostListener', () => {
           useValue: {},
         },
         {
-          provide: PostSearchService,
+          provide: SearchService,
           useValue: {},
         },
         {
@@ -131,7 +131,7 @@ describe('PostListener', () => {
     mediaService = module.get<MediaService>(MediaService);
     feedService = module.get<FeedService>(FeedService);
     seriesService = module.get<SeriesService>(SeriesService);
-    postSearchService = module.get<PostSearchService>(PostSearchService);
+    postSearchService = module.get<SearchService>(SearchService);
   });
 
   describe.skip('PostListener.onPostDeleted', () => {

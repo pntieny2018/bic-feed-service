@@ -49,18 +49,8 @@ describe('GroupService', () => {
   });
 
   describe('GroupService.getMany', () => {
-    it('param is undefined', async () => {
-      const data = await service.getMany(undefined);
-      expect(redisService.mget).not.toBeCalled();
-      expect(data).toEqual([]);
-    });
-    it('param is null', async () => {
-      const data = await service.getMany(null);
-      expect(redisService.mget).not.toBeCalled();
-      expect(data).toEqual([]);
-    });
     it('param is empty array', async () => {
-      const data = await service.getMany(null);
+      const data = await service.getMany([]);
       expect(redisService.mget).not.toBeCalled();
       expect(data).toEqual([]);
     });

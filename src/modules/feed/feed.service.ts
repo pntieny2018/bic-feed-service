@@ -43,13 +43,32 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { isImportant, type, limit, offset } = getNewsFeedDto;
-    const postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
-      limit: limit + 1, //1 is next row
-      offset,
-      isImportant,
-      type,
-    });
+    const { isImportant, type, isSaved, limit, offset } = getNewsFeedDto;
+    let postIdsAndSorted = [];
+    if (isSaved) {
+      postIdsAndSorted = await this._postService.getListSavedByUserId(authUser.id, {
+        limit: limit + 1, //1 is next row
+        offset,
+        isImportant,
+        type,
+      });
+    } else {
+      postIdsAndSorted = await this._postService.getPostIdsInNewsFeed(authUser.id, {
+        limit: limit + 1, //1 is next row
+        offset,
+        isImportant,
+        type,
+      });
+    }
+
+    if (postIdsAndSorted.length === 0) {
+      return new PageDto<PostResponseDto>([], {
+        limit,
+        offset,
+        hasNextPage: false,
+      });
+    }
+
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {
       postIdsAndSorted.pop();
@@ -85,6 +104,7 @@ export class FeedService {
       authUser,
     });
 
+    await this._postBindingService.bindCommunity(posts);
     return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
@@ -180,7 +200,7 @@ export class FeedService {
    * Get Timeline
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { limit, offset, groupId } = getTimelineDto;
+    const { limit, offset, groupId, isImportant, type, isSaved } = getTimelineDto;
     const group = await this._groupService.get(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -195,11 +215,24 @@ export class FeedService {
     }
 
     const authUserId = authUser?.id || null;
-    const postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
-      offset,
-      limit: limit + 1,
-      authUserId,
-    });
+    let postIdsAndSorted = [];
+    if (isSaved) {
+      postIdsAndSorted = await this._postService.getListSavedByUserId(authUser.id, {
+        limit: limit + 1, //1 is next row
+        offset,
+        isImportant,
+        type,
+        groupIds,
+      });
+    } else {
+      postIdsAndSorted = await this._postService.getPostIdsInGroupIds(groupIds, {
+        offset,
+        limit: limit + 1,
+        authUserId,
+        isImportant,
+        type,
+      });
+    }
 
     let hasNextPage = false;
     if (postIdsAndSorted.length > limit) {

@@ -281,7 +281,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     return condition;
   }
 
-  public static async getListData(
+  public static async getList(
     getCommentsDto: GetCommentsDto,
     authUserId?: string,
     aroundId = NIL_UUID
@@ -289,7 +289,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     const { limit } = getCommentsDto;
     const order = getCommentsDto.order ?? OrderEnum.DESC;
     const { schema } = getDatabaseConfig();
-    let query: string;
     const condition = await CommentModel._getCondition(getCommentsDto);
 
     let select = `SELECT "CommentModel".*,
@@ -320,14 +319,13 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     "c"."updated_by" AS "updatedBy", 
     "c"."created_at" AS "createdAt", 
     "c"."updated_at" AS "updatedAt"`;
-    if (aroundId === NIL_UUID) {
-      query = `${select}
+    const query = `${select}
       FROM (
         ${subSelect}
         FROM ${schema}."comments" AS "c"
         WHERE ${condition} 
         ORDER BY "c"."created_at" ${order}
-        OFFSET 0 LIMIT :limitTop
+        OFFSET 0 LIMIT :limit
       ) AS "CommentModel" 
       LEFT OUTER JOIN ( 
         ${schema}."comments_media" AS "media->CommentMediaModel" 
@@ -342,39 +340,88 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
           : ``
       }
       ORDER BY "CommentModel"."createdAt" ${order}`;
-    } else {
-      query = `${select}
-      FROM (
-        (
+    const rows: any[] = await this.sequelize.query(query, {
+      replacements: {
+        aroundId,
+        authUserId,
+        limit: limit + 1,
+      },
+      type: QueryTypes.SELECT,
+    });
+
+    return rows;
+  }
+
+  public static async getListArroundId(
+    aroundId: string,
+    getCommentsDto: GetCommentsDto,
+    authUserId?: string
+  ): Promise<any[]> {
+    const { limit } = getCommentsDto;
+    const order = getCommentsDto.order ?? OrderEnum.DESC;
+    const { schema } = getDatabaseConfig();
+    const condition = await CommentModel._getCondition(getCommentsDto);
+
+    let select = `SELECT "CommentModel".*,
+    "media"."id" AS "mediaId",
+    "media"."url" AS "mediaUrl", 
+    "media"."type" AS "mediaType",
+    "media"."name" AS "mediaName",
+    "media"."width" AS "mediaWidth", 
+    "media"."height" AS "mediaHeight", 
+    "media"."extension" AS "mediaExtension",
+    "mentions"."user_id" AS "mentionUserId"`;
+
+    if (authUserId) {
+      select += `,"ownerReactions"."id" AS "commentReactionId", 
+      "ownerReactions"."reaction_name" AS "reactionName",
+      "ownerReactions"."created_at" AS "reactCreatedAt"`;
+    }
+
+    const subSelect = `SELECT 
+    "c"."id",
+    "c"."parent_id" AS "parentId", 
+    "c"."post_id" AS "postId",
+    "c"."content", 
+    "c"."edited", 
+    "c"."giphy_id" as "giphyId",
+    "c"."total_reply" AS "totalReply", 
+    "c"."created_by" AS "createdBy", 
+    "c"."updated_by" AS "updatedBy", 
+    "c"."created_at" AS "createdAt", 
+    "c"."updated_at" AS "updatedAt"`;
+
+    const query = `${select}
+    FROM (
+      (
+      ${subSelect}
+      FROM ${schema}."comments" AS "c"
+      WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
+      ORDER BY "c"."created_at" DESC
+      OFFSET 0 LIMIT :limitTop
+      )
+      UNION ALL 
+      (
         ${subSelect}
         FROM ${schema}."comments" AS "c"
-        WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
-        ORDER BY "c"."created_at" DESC
-        OFFSET 0 LIMIT :limitTop
-        )
-        UNION ALL 
-        (
-          ${subSelect}
-          FROM ${schema}."comments" AS "c"
-          WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
-          ORDER BY "c"."created_at" ASC
-          OFFSET 0 LIMIT :limitBottom
-        )
-      ) AS "CommentModel" 
-      LEFT OUTER JOIN ( 
-        ${schema}."comments_media" AS "media->CommentMediaModel" 
-       INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
-      ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
-      LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
-        "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
+        WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
+        ORDER BY "c"."created_at" ASC
+        OFFSET 0 LIMIT :limitBottom
       )
-      ${
-        authUserId
-          ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId `
-          : ``
-      }
-      ORDER BY "CommentModel"."createdAt" ${order}`;
+    ) AS "CommentModel" 
+    LEFT OUTER JOIN ( 
+      ${schema}."comments_media" AS "media->CommentMediaModel" 
+      INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
+    ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+    LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
+      "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
+    )
+    ${
+      authUserId
+        ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId `
+        : ``
     }
+    ORDER BY "CommentModel"."createdAt" ${order}`;
     const rows: any[] = await this.sequelize.query(query, {
       replacements: {
         aroundId,

@@ -14,7 +14,6 @@ import { KafkaOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { IKafkaConfig } from '../../config/kafka';
 import { PostConsumerController } from './post-consummer.controller';
-import { PostSearchService } from './post-search.service';
 import { PostBindingService } from './post-binding.service';
 import { PostHistoryService } from './post-history.service';
 import { PostCronService } from './post-cron.service';
@@ -43,18 +42,11 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
   providers: [
     PostService,
     PostBindingService,
-    PostSearchService,
     PostPolicyService,
     PostHistoryService,
     PostCronService,
     PostAppService,
   ],
-  exports: [
-    PostService,
-    PostSearchService,
-    PostBindingService,
-    PostPolicyService,
-    PostHistoryService,
-  ],
+  exports: [PostService, PostBindingService, PostPolicyService, PostHistoryService],
 })
 export class PostModule {}

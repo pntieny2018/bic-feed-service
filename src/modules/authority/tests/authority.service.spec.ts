@@ -169,39 +169,17 @@ describe.skip('AuthorityService', () => {
   const ability = {
     can: jest.fn()
   }
-  describe('AuthorityService.checkCanReadPost', () => {
+  describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
       groupService.isMemberOfGroups.mockReturnValue(true);
       groupService.getMany.mockResolvedValue([{id: 1, name: 'BIC to the moon'}])
       authorityFactory.createForUser.mockResolvedValue(ability)
       ability.can.mockResolvedValue(true)
-      await service.checkCanCreatePost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3']);
+      await service.checkCanUpdatePost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'], false);
       expect(groupService.isMemberOfGroups).toBeCalled();
       expect(groupService.getMany).toBeCalled();
       expect(authorityFactory.createForUser).toBeCalled();
       expect(ability.can).toBeCalled();
-    });
-  });
-
-  describe('AuthorityService.checkCanUpdatePost', () => {
-    it('', async () => {
-      groupService.isMemberOfSomeGroups.mockReturnValue(true);
-      await service.checkCanUpdatePost(userDtoMock, {
-        canComment: false,
-        canReact: false,
-        canShare: false,
-        commentsCount: 0,
-        content: '',
-        createdBy: '853ab699-ee44-42ab-b98d-d190c4af66ee',
-        id: '',
-        type: PostType.POST,
-        isDraft: false,
-        isImportant: false,
-        totalUsersSeen: 0,
-        updatedBy: '00000000-0000-0000-0000-000000000000',
-        views: 0
-      }, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3']);
-      expect(groupService.isMemberOfSomeGroups).toBeCalled();
     });
   });
 });

@@ -13,6 +13,23 @@ import { IsUUID } from 'class-validator';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostPrivacy, PostType } from '../../../../database/models/post.model';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
+import { ArticleResponseDto } from '../../../article/dto/responses';
+
+export class CommunityResponseDto {
+  @ApiProperty({
+    description: 'Root Group ID',
+    type: String,
+  })
+  @Expose()
+  public id: string;
+
+  @ApiProperty({
+    description: 'Name',
+    type: String,
+  })
+  @Expose()
+  public name: string;
+}
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -204,6 +221,13 @@ export class PostResponseDto {
   public markedReadPost?: boolean;
 
   @ApiProperty({
+    type: Boolean,
+    name: 'isSaved',
+  })
+  @Expose()
+  public isSaved?: boolean;
+
+  @ApiProperty({
     type: Date,
     name: 'created_at',
   })
@@ -266,6 +290,35 @@ export class PostResponseDto {
   })
   @Expose()
   public linkPreview?: LinkPreviewDto;
+
+  @ApiProperty({
+    type: PostResponseDto,
+  })
+  @Expose()
+  @Transform(({ value }) => {
+    if (value && value.length) {
+      return value
+        .sort((a, b) => {
+          return (
+            a.PostSeriesModel.zindex - b.PostSeriesModel.zindex ||
+            a.PostSeriesModel.createdAt.getTime() - b.PostSeriesModel.createdAt.getTime()
+          );
+        })
+        .map((item) => {
+          delete item.PostSeriesModel;
+          return item;
+        });
+    }
+    return [];
+  })
+  public articles?: ArticleResponseDto[];
+
+  @ApiProperty({
+    type: [CommunityResponseDto],
+    name: 'communities',
+  })
+  @Expose()
+  public communities?: CommunityResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

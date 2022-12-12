@@ -383,17 +383,19 @@ export class CommentService {
 
   /**
    * Get comment list
+   * If comment id is child: load arround parent and arround child comments
+   * If comment id is parent: load arround parent and child comments in parent
    */
-  public async getCommentLink(
+  public async getCommentsArroundId(
     commentId: string,
     user: UserDto,
-    getCommentLinkDto: GetCommentLinkDto
+    getCommentsArroundIdDto: GetCommentLinkDto
   ): Promise<any> {
-    const { limit, targetChildLimit, childLimit } = getCommentLinkDto;
+    const { limit, targetChildLimit, childLimit } = getCommentsArroundIdDto;
     //check post exist
-    if (getCommentLinkDto.postId) {
+    if (getCommentsArroundIdDto.postId) {
       await this._postService.findPost({
-        postId: getCommentLinkDto.postId,
+        postId: getCommentsArroundIdDto.postId,
       });
     }
     const checkComment = await this._commentModel.findByPk(commentId);
@@ -419,80 +421,114 @@ export class CommentService {
     }
     const userId = user ? user.id : null;
     const actor = await this._userService.get(post.createdBy);
-    const parentId = checkComment.parentId !== NIL_UUID ? checkComment.parentId : commentId;
-    const comments = await this._getComments(
+
+    const isParentComment = checkComment.parentId === NIL_UUID;
+
+    const arroundParentCommentId = isParentComment ? commentId : checkComment.parentId;
+    const commentsLevelRoot = await this._getCommentsArroundCommentId(
+      arroundParentCommentId,
       {
         limit,
         postId,
       },
-      userId,
-      parentId
+      userId
     );
-    //get child comment
-    if (comments.list.length && limit > 1 && childLimit) {
-      await this.bindChildrenToComment(comments.list, userId, childLimit);
+
+    //get child comment except arroundParentCommentId
+    if (commentsLevelRoot.list.length && limit > 1 && childLimit) {
+      await this.bindChildrenToComment(commentsLevelRoot.list, userId, childLimit);
     }
 
     //get child for target comment
     if (targetChildLimit > 0) {
-      const aroundChildId = checkComment.parentId !== NIL_UUID ? commentId : NIL_UUID;
-      const child = await this._getComments(
-        {
-          limit: targetChildLimit,
-          parentId,
-          postId,
-        },
-        userId,
-        aroundChildId
-      );
-      comments.list.forEach((cm) => {
-        if (cm.id === parentId) {
-          cm.child = child;
+      let childOfArroundId;
+      //Load child comments by parent sort created desc
+      if (isParentComment) {
+        childOfArroundId = await this._getComments(
+          {
+            limit: targetChildLimit,
+            parentId: arroundParentCommentId,
+            postId,
+          },
+          userId
+        );
+      } else {
+        //Load arround child
+        childOfArroundId = await this._getCommentsArroundCommentId(
+          commentId,
+          {
+            limit: targetChildLimit,
+            parentId: arroundParentCommentId,
+            postId,
+          },
+          userId
+        );
+      }
+
+      commentsLevelRoot.list.forEach((cm) => {
+        if (cm.id === arroundParentCommentId) {
+          cm.child = childOfArroundId;
         }
       });
     }
 
     await Promise.all([
-      this._reactionService.bindToComments(comments.list),
-      this._mentionService.bindToComment(comments.list),
-      this._giphyService.bindUrlToComment(comments.list),
-      this.bindUserToComment(comments.list),
+      this._reactionService.bindToComments(commentsLevelRoot.list),
+      this._mentionService.bindToComment(commentsLevelRoot.list),
+      this._giphyService.bindUrlToComment(commentsLevelRoot.list),
+      this.bindUserToComment(commentsLevelRoot.list),
     ]);
-    comments['actor'] = actor;
-    return comments;
+    commentsLevelRoot['actor'] = actor;
+    return commentsLevelRoot;
   }
 
   private async _getComments(
     getCommentsDto: GetCommentsDto,
-    authUserId?: string,
-    aroundId = NIL_UUID
+    authUserId?: string
   ): Promise<PageDto<CommentResponseDto>> {
     const { limit } = getCommentsDto;
-    const rows: any[] = await CommentModel.getListData(getCommentsDto, authUserId, aroundId);
+    const rows: any[] = await CommentModel.getList(getCommentsDto, authUserId);
     const childGrouped = this._groupComments(rows);
-    let hasNextPage: boolean;
+    const hasNextPage = childGrouped.length === limit + 1;
+    if (hasNextPage) childGrouped.pop();
+    const commentsFiltered = childGrouped;
+
+    const result = this._classTransformer.plainToInstance(CommentResponseDto, commentsFiltered, {
+      excludeExtraneousValues: true,
+    });
+    return new PageDto<CommentResponseDto>(result, {
+      limit,
+      offset: 0,
+      hasNextPage,
+      hasPreviousPage: false,
+    });
+  }
+
+  private async _getCommentsArroundCommentId(
+    aroundId: string,
+    getCommentsDto: GetCommentsDto,
+    authUserId?: string
+  ): Promise<PageDto<CommentResponseDto>> {
+    const { limit } = getCommentsDto;
+    const rows: any[] = await CommentModel.getListArroundId(aroundId, getCommentsDto, authUserId);
+
+    const childGrouped = this._groupComments(rows);
     let hasPreviousPage = false;
-    let commentsFiltered: any[];
-    if (aroundId !== NIL_UUID) {
-      const indexOfAroundCommentId = childGrouped.findIndex((i) => i.id === aroundId);
-      const numerOfComments = Math.min(limit, childGrouped.length);
-      let startIndex =
-        limit >= childGrouped.length
-          ? 0
-          : Math.max(0, indexOfAroundCommentId + 1 - Math.round(numerOfComments / 2));
-      let endIndex = startIndex + numerOfComments;
-      if (endIndex >= childGrouped.length) {
-        endIndex = childGrouped.length;
-        startIndex = endIndex - numerOfComments;
-      }
-      commentsFiltered = childGrouped.slice(startIndex, endIndex);
-      hasPreviousPage = startIndex >= 1;
-      hasNextPage = !!childGrouped[endIndex];
-    } else {
-      hasNextPage = childGrouped.length === limit + 1;
-      if (hasNextPage) childGrouped.pop();
-      commentsFiltered = childGrouped;
+
+    const indexOfAroundCommentId = childGrouped.findIndex((i) => i.id === aroundId);
+    const numerOfComments = Math.min(limit, childGrouped.length);
+    let startIndex =
+      limit >= childGrouped.length
+        ? 0
+        : Math.max(0, indexOfAroundCommentId + 1 - Math.round(numerOfComments / 2));
+    let endIndex = startIndex + numerOfComments;
+    if (endIndex >= childGrouped.length) {
+      endIndex = childGrouped.length;
+      startIndex = endIndex - numerOfComments;
     }
+    const commentsFiltered = childGrouped.slice(startIndex, endIndex);
+    hasPreviousPage = startIndex >= 1;
+    const hasNextPage = !!childGrouped[endIndex];
 
     const result = this._classTransformer.plainToInstance(CommentResponseDto, commentsFiltered, {
       excludeExtraneousValues: true,
@@ -722,23 +758,6 @@ export class CommentService {
     return this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
-  }
-
-  /**
-   * Get post ID of a comment
-   */
-  public async getPostIdOfComment(commentId: string): Promise<string> {
-    const comment = await this._commentModel.findOne({
-      where: {
-        id: commentId,
-      },
-    });
-
-    if (!comment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
-    }
-
-    return comment.postId;
   }
 
   private _groupComments(comments: any[]): any[] {

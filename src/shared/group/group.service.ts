@@ -23,7 +23,9 @@ export class GroupService {
   }
 
   public async getMany(groupIds: string[]): Promise<GroupSharedDto[]> {
-    const keys = [...new Set(groupIds)].map((groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`);
+    const keys = [...new Set(ArrayHelper.arrayUnique(groupIds))].map(
+      (groupId) => `${AppHelper.getRedisEnv()}SG:${groupId}`
+    );
     if (keys.length) {
       const groups = await this._store.mget(keys);
       return groups.filter((g) => g !== null);
@@ -58,13 +60,13 @@ export class GroupService {
     }
 
     const groupIdsUserJoined = authUser.profile.groups;
-    const childIds = [
+    const childGroupIds = [
       ...group.child.public,
       ...group.child.open,
       ...group.child.private,
       ...group.child.secret,
     ];
-    const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
+    const filterGroupIdsUserJoined = [group.id, ...childGroupIds].filter((groupId) =>
       groupIdsUserJoined.includes(groupId)
     );
 
@@ -80,30 +82,6 @@ export class GroupService {
     return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
   }
 
-  /**
-   * Get groupId and childIds(user joinned or open or public) to show posts in timeline
-   */
-  public getGroupIdAndChildIdsUserCanReadPost(group: GroupSharedDto, authUser: UserDto): string[] {
-    if (!authUser) {
-      return this._getGroupIdsGuestCanSeePost(group);
-    }
-
-    const groupIdsUserJoined = authUser.profile.groups;
-    const childIds = [...group.child.private, ...group.child.secret];
-    const filterGroupIdsUserJoined = [group.id, ...childIds].filter((groupId) =>
-      groupIdsUserJoined.includes(groupId)
-    );
-
-    const publicOrOpenGroupIds = [...group.child.public, ...group.child.open];
-    if (group.privacy === GroupPrivacy.PUBLIC) {
-      publicOrOpenGroupIds.push(group.id);
-    }
-    // if (group.privacy === GroupPrivacy.OPEN && this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupid)) {
-    //   filterGroupIdsUserJoined.push(group.id);
-    // }
-    return ArrayHelper.arrayUnique([...filterGroupIdsUserJoined, ...publicOrOpenGroupIds]);
-  }
-
   private _hasJoinedCommunity(groupIdsUserJoined: string[], rootGroupId: string): boolean {
     return groupIdsUserJoined.includes(rootGroupId);
   }
@@ -112,5 +90,10 @@ export class GroupService {
       return [group.id];
     }
     return [];
+  }
+
+  public filterGroupIdsUsersJoined(groupIds: string[], user: UserDto): string[] {
+    const groupIdsUserJoined = user.profile.groups || [];
+    return groupIds.filter((groupId) => groupIdsUserJoined.includes(groupId));
   }
 }

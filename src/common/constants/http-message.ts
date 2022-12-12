@@ -16,4 +16,7 @@ export const HTTP_MESSAGES = {
   [HTTP_STATUS_ID.APP_POST_NOT_EXISTING]: 'Unable to find the post',
   [HTTP_STATUS_ID.APP_USER_NOT_EXISTING]: 'Unable to find the user',
   [HTTP_STATUS_ID.APP_REACTION_UNIQUE]: 'Duplicate reaction kind',
+  [HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING]: 'Unable to find the series',
+  [HTTP_STATUS_ID.APP_NOT_OWNER]: 'You are not owner',
+  [HTTP_STATUS_ID.API_POST_USER_IS_NOT_MEMBER_OF_GROUP]: 'You are not a member of group',
 };

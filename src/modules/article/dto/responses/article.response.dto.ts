@@ -3,8 +3,10 @@ import { Expose } from 'class-transformer';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 import { MediaResponseDto } from '../../../media/dto/response';
+import { CategoryResponseDto } from './category.response.dto';
+import { HashtagResponseDto } from '../../../hashtag/dto/responses/hashtag-response.dto';
 
-class CategoryResponseDto {
+class SeriesSimpleResponseDto {
   @ApiProperty({
     type: String,
   })
@@ -14,34 +16,9 @@ class CategoryResponseDto {
     type: String,
   })
   @Expose()
-  public name: string;
+  public title: string;
 }
 
-class SeriesResponseDto {
-  @ApiProperty({
-    type: String,
-  })
-  @Expose()
-  public id: string;
-  @ApiProperty({
-    type: String,
-  })
-  @Expose()
-  public name: string;
-}
-
-class HashtagResponseDto {
-  @ApiProperty({
-    type: String,
-  })
-  @Expose()
-  public id: string;
-  @ApiProperty({
-    type: String,
-  })
-  @Expose()
-  public name: string;
-}
 export class ArticleResponseDto extends PostResponseDto {
   @ApiProperty({
     description: 'Title',
@@ -69,10 +46,10 @@ export class ArticleResponseDto extends PostResponseDto {
 
   @ApiProperty({
     description: 'Series',
-    type: [SeriesResponseDto],
+    type: [SeriesSimpleResponseDto],
   })
   @Expose()
-  public series: SeriesResponseDto[];
+  public series: SeriesSimpleResponseDto[];
 
   @ApiProperty({
     description: 'Hashtags',
@@ -94,6 +71,13 @@ export class ArticleResponseDto extends PostResponseDto {
   })
   @Expose()
   public views: number;
+
+  @ApiProperty({
+    description: 'zindex',
+    type: Number,
+  })
+  @Expose()
+  public zindex?: number;
 
   @ApiProperty({
     type: LinkPreviewDto,

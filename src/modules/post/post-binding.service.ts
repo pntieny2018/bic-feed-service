@@ -12,6 +12,7 @@ import { ReactionService } from '../reaction';
 import { MentionService } from '../mention';
 import { PostResponseDto } from './dto/responses';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class PostBindingService {
@@ -117,7 +118,20 @@ export class PostBindingService {
     }
   }
 
+  public async bindCommunity(posts: any[]): Promise<void> {
+    const communities = await this._getCommunitiesByPosts(posts);
+    if (communities.length) {
+      for (const post of posts) {
+        const postCommunityIds = this._getRootGroupIdsByGroups(post.audience.groups);
+        post.communities = communities.filter((community) =>
+          postCommunityIds.includes(community.id)
+        );
+      }
+    }
+  }
+
   private _getGroupIdsByPost(post: any): string[] {
+    if (post.groupIds) return post.groupIds;
     let postGroups = post.groups;
     if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
     if (postGroups && postGroups.length) {
@@ -133,15 +147,43 @@ export class PostBindingService {
   private async _getGroupsByPosts(posts: any[]): Promise<GroupSharedDto[]> {
     const groupIds = [];
     for (const post of posts) {
-      let postGroups = post.groups;
-      if (post.audience?.groups) postGroups = post.audience?.groups; //bind for elasticsearch
-
-      if (postGroups && postGroups.length) {
-        groupIds.push(...postGroups.map((m) => m.groupId || m.id));
+      if (post.groupIds) groupIds.push(...post.groupIds);
+      if (post.groups && post.groups.length) {
+        groupIds.push(...post.groups.map((m) => m.groupId || m.id));
       }
     }
     const dataGroups = await this.groupService.getMany(groupIds);
     return dataGroups;
+  }
+
+  private async _getCommunitiesByPosts(
+    posts: any[]
+  ): Promise<Pick<GroupSharedDto, 'id' | 'icon' | 'name' | 'privacy'>[]> {
+    const rootGroupIds = [];
+    for (const post of posts) {
+      let groups = [];
+      if (post.audience?.groups) groups = post.audience?.groups; //bind for elasticsearch
+
+      rootGroupIds.push(...this._getRootGroupIdsByGroups(groups));
+    }
+    const communities = await this.groupService.getMany(ArrayHelper.arrayUnique(rootGroupIds));
+    return communities.map((community) => ({
+      id: community.id,
+      icon: community.icon,
+      name: community.name,
+      privacy: community.privacy,
+      communityId: community.communityId,
+    }));
+  }
+
+  private _getRootGroupIdsByGroups(groups: GroupSharedDto[]): string[] {
+    const rootGroupIds = [];
+    for (const group of groups) {
+      if (!rootGroupIds.includes(group.rootGroupId)) {
+        rootGroupIds.push(group.rootGroupId);
+      }
+    }
+    return rootGroupIds;
   }
 
   /**
@@ -150,18 +192,24 @@ export class PostBindingService {
   public async bindActor(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
-      if (post.actor?.id) {
-        userIds.push(post.actor.id);
-      } else {
-        userIds.push(post.createdBy);
+      userIds.push(post.createdBy);
+      if (post.articles?.length) {
+        userIds.push(...post.articles.map((article) => article.createdBy));
       }
     }
     const users = await this.userService.getMany(userIds);
     for (const post of posts) {
-      if (post.actor?.id) {
-        post.actor = users.find((i) => i.id === post.actor.id);
-      } else {
-        post.actor = users.find((i) => i.id === post.createdBy);
+      post.actor = users.find((i) => i.id === post.createdBy);
+
+      if (post.articles?.length) {
+        post.articles = post.articles.map((article) => {
+          if (article.createdBy) {
+            article.actor = users.find((i) => i.id === article.createdBy);
+            delete article.actor.groups;
+            return article;
+          }
+          return article;
+        });
       }
     }
   }
@@ -183,20 +231,22 @@ export class PostBindingService {
     });
     for (const post of posts) {
       const findPost = result.find((i) => i.id == post.id);
-      if (attributes.includes('content')) post.content = findPost?.content || '';
-      if (attributes.includes('commentsCount')) {
-        post.commentsCount = findPost?.commentsCount || 0;
-      }
-      if (attributes.includes('totalUsersSeen'))
-        post.totalUsersSeen = findPost?.totalUsersSeen || 0;
-      if (attributes.includes('setting')) {
-        post.setting = {
-          importantExpiredAt: findPost.importantExpiredAt,
-          isImportant: findPost.isImportant,
-          canReact: findPost.canReact,
-          canShare: findPost.canShare,
-          canComment: findPost.canComment,
-        };
+      if (findPost) {
+        if (attributes.includes('content')) post.content = findPost?.content || '';
+        if (attributes.includes('commentsCount')) {
+          post.commentsCount = findPost?.commentsCount || 0;
+        }
+        if (attributes.includes('totalUsersSeen'))
+          post.totalUsersSeen = findPost?.totalUsersSeen || 0;
+        if (attributes.includes('setting')) {
+          post.setting = {
+            importantExpiredAt: findPost.importantExpiredAt,
+            isImportant: findPost.isImportant,
+            canReact: findPost.canReact,
+            canShare: findPost.canShare,
+            canComment: findPost.canComment,
+          };
+        }
       }
     }
   }

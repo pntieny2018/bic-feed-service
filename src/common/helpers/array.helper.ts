@@ -57,4 +57,14 @@ export class ArrayHelper {
       return self.indexOf(value) === index;
     });
   }
+
+  public static convertArrayToObject(array, key): any {
+    const initialValue = {};
+    return array.reduce((obj, item) => {
+      return {
+        ...obj,
+        [item[key]]: item,
+      };
+    }, initialValue);
+  }
 }

@@ -22,6 +22,7 @@ export const HTTP_STATUS_ID = {
   API_POST_UPDATE_ERROR: 'api.posts.update.app_error',
   API_POST_DELETE_ERROR: 'api.posts.delete.app_error',
   API_POST_MARK_READ_ERROR: 'api.posts.mark_as_read.app_error',
+  API_POST_USER_IS_NOT_MEMBER_OF_GROUP: 'api.posts.not_member',
 
   //MEDIA
   API_MEDIA_CREATE_ERROR: 'api.media.create.app_error',
@@ -70,4 +71,6 @@ export const HTTP_STATUS_ID = {
   APP_CATEGORY_NOT_ALLOW: 'app.category.not_allow',
 
   APP_CATEGORY_INVALID_PARAMETER: 'app.category.invalid_parameter',
+
+  APP_NOT_OWNER: 'app.not_owner',
 };

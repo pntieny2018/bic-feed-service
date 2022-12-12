@@ -1,0 +1,20 @@
+import { IEvent } from '../../common/interfaces';
+
+export class SeriesAddedArticlesEvent implements IEvent<ISeriesAddArticlesPayload> {
+  public payload: ISeriesAddArticlesPayload;
+  protected static event = SeriesAddedArticlesEvent.name;
+  public constructor(payload: ISeriesAddArticlesPayload) {
+    Object.assign(this, {
+      payload: payload,
+    });
+  }
+
+  public getEventName(): string {
+    return SeriesAddedArticlesEvent.event;
+  }
+}
+
+export interface ISeriesAddArticlesPayload {
+  seriesId: string;
+  articleIds: string[];
+}

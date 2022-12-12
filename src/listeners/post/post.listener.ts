@@ -17,7 +17,7 @@ import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event'
 import { FeedService } from '../../modules/feed/feed.service';
 import { PostPrivacy, PostType } from '../../database/models/post.model';
 import { NIL as NIL_UUID } from 'uuid';
-import { PostSearchService } from '../../modules/post/post-search.service';
+import { SearchService } from '../../modules/search/search.service';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 @Injectable()
 export class PostListener {
@@ -27,7 +27,7 @@ export class PostListener {
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _postService: PostService,
-    private readonly _postSearchService: PostSearchService,
+    private readonly _postSearchService: SearchService,
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
@@ -65,7 +65,8 @@ export class PostListener {
         id: post.id,
         audience: {
           users: [],
-          groups: (post?.groups ?? []).map((g) => g.groupId) as any,
+          //groups: (post?.groups ?? []).map((g) => g.groupId) as any,
+          groups: post?.groups ?? ([] as any),
         },
         type: PostType.POST,
         privacy: PostPrivacy.PUBLIC,
@@ -95,13 +96,12 @@ export class PostListener {
       isDraft,
       id,
       content,
-      commentsCount,
-      totalUsersSeen,
       media,
       mentions,
-      setting,
+      createdBy,
       audience,
       createdAt,
+      updatedAt,
       type,
     } = post;
     const mediaIds = media.videos
@@ -130,20 +130,43 @@ export class PostListener {
         data: activity,
       },
     });
-
+    const mentionUserIds = [];
+    for (const key in mentions) {
+      mentionUserIds.push(mentions[key].id);
+    }
+    const mediaList = [];
+    for (const mediaType in media) {
+      for (const mediaItem of media[mediaType]) {
+        mediaList.push({
+          id: mediaItem.id,
+          status: mediaItem.status,
+          type: mediaItem.type,
+          name: mediaItem.name,
+          url: mediaItem.url,
+          size: mediaItem.size,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          originName: mediaItem.originName,
+          extension: mediaItem.extension,
+          mimeType: mediaItem.mimeType,
+          thumbnails: mediaItem.thumbnails,
+          createdAt: mediaItem.createdAt,
+          createdBy: mediaItem.createdBy,
+        });
+      }
+    }
     this._postSearchService.addPostsToSearch([
       {
         id,
         type,
-        commentsCount,
-        totalUsersSeen,
         content,
-        media,
-        mentions,
-        audience,
-        setting,
+        media: mediaList,
+        mentionUserIds,
+        groupIds: audience.groups.map((group) => group.id),
+        communityIds: audience.groups.map((group) => group.rootGroupId),
+        createdBy,
         createdAt,
-        actor,
+        updatedAt,
       },
     ]);
 
@@ -168,15 +191,14 @@ export class PostListener {
       isDraft,
       id,
       content,
-      commentsCount,
-      totalUsersSeen,
       media,
       mentions,
-      setting,
+      createdBy,
       audience,
       type,
       lang,
       createdAt,
+      updatedAt,
     } = newPost;
 
     if (oldPost.isDraft === false) {
@@ -218,20 +240,43 @@ export class PostListener {
         },
       },
     });
-
+    const mentionUserIds = [];
+    for (const key in mentions) {
+      mentionUserIds.push(mentions[key].id);
+    }
+    const mediaList = [];
+    for (const mediaType in media) {
+      for (const mediaItem of media[mediaType]) {
+        mediaList.push({
+          id: mediaItem.id,
+          status: mediaItem.status,
+          name: mediaItem.name,
+          type: mediaItem.type,
+          url: mediaItem.url,
+          size: mediaItem.size,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          originName: mediaItem.originName,
+          extension: mediaItem.extension,
+          mimeType: mediaItem.mimeType,
+          thumbnails: mediaItem.thumbnails,
+          createdAt: mediaItem.createdAt,
+          createdBy: mediaItem.createdBy,
+        });
+      }
+    }
     this._postSearchService.updatePostsToSearch([
       {
         id,
         type,
-        commentsCount,
-        totalUsersSeen,
         content,
-        media,
-        mentions,
-        audience,
-        setting,
+        media: mediaList,
+        mentionUserIds,
+        groupIds: audience.groups.map((group) => group.id),
+        communityIds: audience.groups.map((group) => group.rootGroupId),
+        createdBy,
         createdAt,
-        actor,
+        updatedAt,
         lang,
       },
     ]);
@@ -278,29 +323,52 @@ export class PostListener {
         actor,
         id,
         content,
-        commentsCount,
-        totalUsersSeen,
         media,
         mentions,
-        setting,
+        createdBy,
         audience,
         createdAt,
+        updatedAt,
         type,
       } = post;
 
+      const mentionUserIds = [];
+      for (const key in mentions) {
+        mentionUserIds.push(mentions[key].id);
+      }
+      const mediaList = [];
+      for (const mediaType in media) {
+        for (const mediaItem of media[mediaType]) {
+          mediaList.push({
+            id: mediaItem.id,
+            status: mediaItem.status,
+            name: mediaItem.name,
+            type: mediaItem.type,
+            url: mediaItem.url,
+            size: mediaItem.size,
+            width: mediaItem.width,
+            height: mediaItem.height,
+            originName: mediaItem.originName,
+            extension: mediaItem.extension,
+            mimeType: mediaItem.mimeType,
+            thumbnails: mediaItem.thumbnails,
+            createdAt: mediaItem.createdAt,
+            createdBy: mediaItem.createdBy,
+          });
+        }
+      }
       this._postSearchService.addPostsToSearch([
         {
           id,
           type,
-          commentsCount,
-          totalUsersSeen,
           content,
-          media,
-          mentions,
-          audience,
-          setting,
+          media: mediaList,
+          mentionUserIds,
+          groupIds: audience.groups.map((group) => group.id),
+          communityIds: audience.groups.map((group) => group.rootGroupId),
+          createdBy,
           createdAt,
-          actor,
+          updatedAt,
         },
       ]);
       try {

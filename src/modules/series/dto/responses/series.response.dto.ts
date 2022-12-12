@@ -5,9 +5,12 @@ import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
-import { AudienceResponseDto } from '../../../post/dto/responses';
+import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { PostType } from '../../../../database/models/post.model';
+import { ArticleInSeriesResponseDto } from '../../../article/dto/responses';
+import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+
 export class SeriesResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -167,6 +170,39 @@ export class SeriesResponseDto {
   })
   @Expose()
   public coverMedia?: MediaResponseDto;
+
+  @ApiProperty({
+    type: [ArticleInSeriesResponseDto],
+    name: 'articles',
+  })
+  @Expose()
+  public articles?: ArticleInSeriesResponseDto[];
+
+  @ApiProperty({
+    description: 'Setting post',
+    type: PostSettingDto,
+  })
+  @Expose()
+  @Transform(({ obj, value }) => {
+    if (!value) {
+      return {
+        canReact: obj.canReact,
+        canComment: obj.canComment,
+        canShare: obj.canShare,
+        isImportant: obj.isImportant,
+        importantExpiredAt: obj.importantExpiredAt,
+      };
+    }
+    return value;
+  })
+  public setting: PostSettingDto;
+
+  @ApiProperty({
+    type: [CommunityResponseDto],
+    name: 'communities',
+  })
+  @Expose()
+  public communities?: CommunityResponseDto[];
 
   public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);

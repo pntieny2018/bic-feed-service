@@ -79,12 +79,13 @@ export const mockedArticleResponse: ArticleResponseDto = {
   series: [
     {
       id: 'aaa',
-      name: 'Technical',
+      title: 'Technical',
     },
   ],
   hashtags: [
     {
       id: 'h1',
+      slug: 'h1',
       name: '#Vietnam',
     },
   ],
