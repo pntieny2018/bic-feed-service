@@ -4,6 +4,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { PostTagModel } from '../../database/models/post-tag.model';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { EntityIdDto, PageDto } from '../../common/dto';
@@ -66,6 +67,8 @@ export class PostService {
     protected postCategoryModel: typeof PostCategoryModel,
     @InjectModel(PostHashtagModel)
     protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(PostTagModel)
+    protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
@@ -722,6 +725,7 @@ export class PostService {
       this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
       this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
       this.postHashtagModel.destroy({ where: { postId: postId }, transaction }),
+      this.postTagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }

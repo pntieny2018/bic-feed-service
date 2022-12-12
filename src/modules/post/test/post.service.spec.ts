@@ -42,6 +42,7 @@ import { PostSeriesModel } from '../../../database/models/post-series.model';
 import { PostHashtagModel } from '../../../database/models/post-hashtag.model';
 import { PostCategoryModel } from '../../../database/models/post-category.model';
 import { UserSavePostModel } from '../../../database/models/user-save-post.model';
+import { PostTagModel } from '../../../database/models/post-tag.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -196,6 +197,12 @@ describe('PostService', () => {
         },
         {
           provide: getModelToken(PostHashtagModel),
+          useValue: {
+            destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(PostTagModel),
           useValue: {
             destroy: jest.fn(),
           },

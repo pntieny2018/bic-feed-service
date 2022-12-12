@@ -35,6 +35,15 @@ export class GetListArticlesDto extends PageOptionsDto {
   public hashtags?: string[] = [];
 
   @ApiProperty({
+    type: [String],
+    required: false,
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
+  })
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public tags?: string[] = [];
+
+  @ApiProperty({
     type: [Number],
     required: false,
     example: 1,

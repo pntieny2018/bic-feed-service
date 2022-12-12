@@ -90,6 +90,14 @@ export const mockedArticleResponse: ArticleResponseDto = {
     },
   ],
   privacy: PostPrivacy.OPEN,
+  tags: [
+    {
+      id: 'h1',
+      slug: 'h1',
+      name: '#Vietnam',
+      groupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
+    },
+  ],
   views: 0,
 };
 

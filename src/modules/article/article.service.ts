@@ -49,6 +49,8 @@ import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { TagService } from '../tag/tag.service';
+import { PostTagModel } from '../../database/models/post-tag.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -77,6 +79,8 @@ export class ArticleService extends PostService {
     protected postCategoryModel: typeof PostCategoryModel,
     @InjectModel(PostHashtagModel)
     protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(PostTagModel)
+    protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     protected userService: UserService,
@@ -93,6 +97,7 @@ export class ArticleService extends PostService {
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
+    private readonly _tagService: TagService,
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
@@ -106,6 +111,7 @@ export class ArticleService extends PostService {
       postSeriesModel,
       postCategoryModel,
       postHashtagModel,
+      postTagModel,
       userMarkReadPostModel,
       userSavePostModel,
       userService,
@@ -220,7 +226,7 @@ export class ArticleService extends PostService {
     getListArticleDto: GetListArticlesDto,
     authUser: UserDto
   ): Promise<string[]> {
-    const { groupId, categories, hashtags, series, offset, limit } = getListArticleDto;
+    const { groupId, categories, hashtags, series, offset, limit, tags } = getListArticleDto;
     const include = [];
     if (groupId) {
       const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
@@ -265,6 +271,17 @@ export class ArticleService extends PostService {
         attributes: [],
         where: {
           hashtagId: hashtags,
+        },
+      });
+    }
+
+    if (tags && tags.length > 0) {
+      include.push({
+        model: PostTagModel,
+        required: true,
+        attributes: [],
+        where: {
+          tagId: tags,
         },
       });
     }
@@ -522,8 +539,12 @@ export class ArticleService extends PostService {
 
     if (attributes['includes'] && Array.isArray(attributes['includes'])) {
       attributes['include'].push([['hashtags_json', 'hashtags']]);
+      attributes['include'].push([['tags_json', 'tags']]);
     } else {
-      attributes['include'] = [['hashtags_json', 'hashtags']];
+      attributes['include'] = [
+        ['hashtags_json', 'hashtags'],
+        ['tags_json', 'tags'],
+      ];
     }
     return attributes;
   }
@@ -624,6 +645,7 @@ export class ArticleService extends PostService {
         mentions,
         audience,
         categories,
+        tags,
         hashtags,
         series,
       } = createArticleDto;
@@ -644,6 +666,10 @@ export class ArticleService extends PostService {
       if (hashtags) {
         hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
       }
+      let tagList = [];
+      if (tags) {
+        tagList = await this._tagService.getTagsByIds(tags);
+      }
       const post = await this.postModel.create(
         {
           title,
@@ -661,6 +687,7 @@ export class ArticleService extends PostService {
           isProcessing: false,
           privacy: null,
           hashtagsJson: hashtagArr,
+          tagsJson: tagList,
           views: 0,
           linkPreviewId: linkPreview?.id || null,
         },
@@ -678,6 +705,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
+        this._tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -807,7 +835,7 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags } = updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -858,7 +886,6 @@ export class ArticleService extends PostService {
       if (series) {
         await this._seriesService.updateToPost(series, post.id, transaction);
       }
-
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
         await this._hashtagService.updateToPost(
@@ -867,6 +894,11 @@ export class ArticleService extends PostService {
           transaction
         );
         dataUpdate['hashtagsJson'] = hashtagArr;
+      }
+      if (tags) {
+        const tagList = await this._tagService.getTagsByIds(tags);
+        await this._tagService.updateToPost(tags, post.id, transaction);
+        dataUpdate['tagsJson'] = tagList;
       }
 
       //if post is draft, isProcessing alway is true
