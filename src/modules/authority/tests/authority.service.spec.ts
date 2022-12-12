@@ -48,7 +48,7 @@ describe.skip('AuthorityService', () => {
     privacy: GroupPrivacy.PRIVATE,
     rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     child: {
-      public: ['54366eb1-b428-4265-a71b-1b923a311506', '55a19f0a-4209-4fbd-8c44-f1c2fd350b10'],
+      closed: ['54366eb1-b428-4265-a71b-1b923a311506', '55a19f0a-4209-4fbd-8c44-f1c2fd350b10'],
       open: [],
       private: [],
       secret: [],
