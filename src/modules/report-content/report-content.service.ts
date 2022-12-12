@@ -5,15 +5,14 @@ import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { ReportStatus, TargetType } from './contstants';
-import { ArticleService } from '../article/article.service';
-import { ValidatorException } from '../../common/exceptions';
-import { CreateReportDto, UpdateStatusReportDto } from './dto';
 import {
   IReportContentGenealogy,
   ReportContentModel,
 } from '../../database/models/report-content.model';
-import { NIL } from 'uuid';
+import { ReportStatus, TargetType } from './contstants';
+import { ArticleService } from '../article/article.service';
+import { ValidatorException } from '../../common/exceptions';
+import { CreateReportDto, UpdateStatusReportDto } from './dto';
 
 @Injectable()
 export class ReportContentService {
@@ -25,7 +24,9 @@ export class ReportContentService {
     @InjectModel(ReportContentModel) private readonly _reportContentModel: typeof ReportContentModel
   ) {}
 
-  public async getListReport(): Promise<any> {}
+  public async getListReport(): Promise<any> {
+    const list = await this._reportContentModel.findAll({});
+  }
 
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
     const createdBy = user.id;

@@ -10,3 +10,8 @@ export enum ReportStatus {
   IGNORED = 'ignored',
   HIDED = 'hided',
 }
+
+export enum ReportTo {
+  GROUP = 'GROUP',
+  COMMUNITY = 'COMMUNITY',
+}

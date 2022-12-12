@@ -8,7 +8,10 @@ const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
-      tableName,
+      {
+        tableName: tableName,
+        schema: schemaName,
+      },
       {
         id: {
           type: Sequelize.UUID,
@@ -36,8 +39,16 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
         },
-        in: {
-          type: Sequelize.JSONB,
+        community_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+        },
+        group_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+        },
+        report_to: {
+          type: Sequelize.STRING(30),
           allowNull: false,
         },
         reason_type: {
@@ -63,9 +74,6 @@ module.exports = {
           allowNull: true,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
         },
-      },
-      {
-        schema: schemaName,
       }
     );
     await queryInterface.addIndex(tableName, ['created_by']);

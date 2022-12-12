@@ -1,4 +1,4 @@
-import { DataTypes, Optional } from 'sequelize';
+import { Optional } from 'sequelize';
 import { Column, CreatedAt, Model, PrimaryKey, Table, UpdatedAt } from 'sequelize-typescript';
 
 export interface IReportContentAttribute {
@@ -8,19 +8,14 @@ export interface IReportContentAttribute {
   targetId: string;
   targetType: string;
   authorId: string;
-  in: IReportContentGenealogy[];
+  communityId: string;
+  groupId: string;
+  reportTo: string;
   reasonType: string;
   reason?: string;
   status?: string;
   createdAt: Date;
   updatedAt?: Date;
-}
-
-export interface IReportContentGenealogy {
-  communityId: string;
-  postId: string;
-  commentId?: string;
-  parentCommentId?: string;
 }
 
 @Table({
@@ -50,8 +45,14 @@ export class ReportContentModel
   @Column
   public authorId: string;
 
-  @Column(DataTypes.JSONB)
-  public in: IReportContentGenealogy[];
+  @Column
+  public communityId: string;
+
+  @Column
+  public groupId: string;
+
+  @Column
+  public reportTo: string;
 
   @Column
   public reasonType: string;

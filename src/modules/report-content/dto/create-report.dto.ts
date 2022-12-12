@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TargetType } from '../contstants';
+import { ReportTo, TargetType } from '../contstants';
 
 export class CreateReportDto {
   @ApiProperty()
@@ -9,6 +9,11 @@ export class CreateReportDto {
     enum: [TargetType],
   })
   public targetType: TargetType;
+
+  @ApiProperty({
+    enum: [ReportTo],
+  })
+  public reportTo: ReportTo;
 
   @ApiProperty()
   public reasonType: string;
