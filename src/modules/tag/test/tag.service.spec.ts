@@ -71,7 +71,7 @@ describe('TagService', () => {
 
       tagModel.findAll.mockResolvedValue(modelGetResult);
 
-      const tag = await tagService.get(authUserMock, {offset: 0, limit: 10})
+      const tag = await tagService.get(authUserMock, {groupIds: ["c8ddd4d4-9a5e-4d93-940b-e332a8d0422d"],offset: 0, limit: 10})
 
       expect(logSpy).toBeCalled();
       expect(tagModel.findAll).toBeCalled();

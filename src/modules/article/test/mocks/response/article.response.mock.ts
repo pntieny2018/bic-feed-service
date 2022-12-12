@@ -96,8 +96,6 @@ export const mockedArticleResponse: ArticleResponseDto = {
       slug: 'h1',
       name: '#Vietnam',
       groupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
-      createdBy: '855bedeb-b708-4e13-8c68-131d92cd7911',
-      updatedBy: '855bedeb-b708-4e13-8c68-131d92cd7911',
     },
   ],
   views: 0,

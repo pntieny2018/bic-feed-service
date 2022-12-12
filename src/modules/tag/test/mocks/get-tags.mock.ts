@@ -4,8 +4,6 @@ export const modelGetResult = [
     name: 'bein',
     groupId: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d',
     slug: 'bein',
-    createdBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
-    updatedBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
     createdAt: new Date('2022-05-26T10:45:53.056Z'),
     updatedAt: new Date('2022-05-26T10:45:53.056Z'),
   },
@@ -15,7 +13,6 @@ export const modelGetResult = [
     slug: 'toai-nguyet',
     createdAt: new Date('2022-05-26T11:12:58.205Z'),
     groupId: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d',
-    createdBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
     updatedAt: new Date('2022-05-26T10:45:53.056Z'),
   },
   {
@@ -24,7 +21,6 @@ export const modelGetResult = [
     slug: 'toai-nguyet-2',
     createdAt: new Date('2022-05-26T11:15:01.384Z'),
     groupId: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d',
-    createdBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
     updatedAt: new Date('2022-05-26T10:45:53.056Z'),
   },
   {
@@ -42,7 +38,6 @@ export const modelGetResult = [
     slug: 'toai-nguyet-4',
     createdAt: new Date('2022-05-26T13:26:58.797Z'),
     groupId: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d',
-    createdBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
     updatedAt: new Date('2022-05-26T10:45:53.056Z'),
   },
 ];

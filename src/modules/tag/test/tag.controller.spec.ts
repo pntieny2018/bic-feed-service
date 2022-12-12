@@ -32,7 +32,7 @@ describe('TagController', () => {
     it('CommentService.getComments should be called', async () => {
       tagService.get.mockResolvedValue([]);
       await controller.get(authUserMock, {
-        groupId: 'c8ddd4d4-9a5e-4d93-940b-e332a8d0422d',
+        groupIds: ['c8ddd4d4-9a5e-4d93-940b-e332a8d0422d'],
         limit: 10,
       });
       expect(tagService.get).toBeCalled();

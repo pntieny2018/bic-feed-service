@@ -23,16 +23,6 @@ export class TagResponseDto {
   public slug: string;
 
   @ApiProperty({
-    name: 'created_by',
-  })
-  public createdBy: string;
-
-  @ApiProperty({
-    name: 'updated_by',
-  })
-  public updatedBy: string;
-
-  @ApiProperty({
     name: 'created_at',
   })
   public createdAt?: Date;

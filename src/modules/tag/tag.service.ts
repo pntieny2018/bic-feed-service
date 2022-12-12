@@ -26,7 +26,7 @@ export class TagService {
   public async get(getTagDto: GetTagDto): Promise<PageDto<TagResponseDto>> {
     const { offset, limit } = getTagDto;
     const conditions = {
-      groupId: getTagDto.groupId,
+      groupId: getTagDto.groupIds,
     };
     if (getTagDto.name) {
       conditions['name'] = { [Op.iLike]: '%' + getTagDto.name + '%' };
