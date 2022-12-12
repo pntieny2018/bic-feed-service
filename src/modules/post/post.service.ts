@@ -4,7 +4,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { PostTagModel } from 'src/database/models/post-tag.model';
+import { PostTagModel } from '../../database/models/post-tag.model';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { EntityIdDto, PageDto } from '../../common/dto';
