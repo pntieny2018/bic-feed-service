@@ -39,10 +39,6 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
         },
-        community_id: {
-          type: Sequelize.UUID,
-          allowNull: false,
-        },
         group_id: {
           type: Sequelize.UUID,
           allowNull: false,
@@ -76,11 +72,9 @@ module.exports = {
         },
       }
     );
-    await queryInterface.addIndex(tableName, ['created_by']);
-    await queryInterface.addIndex(tableName, ['updated_by']);
+    await queryInterface.addIndex(tableName, ['created_by', 'group_id']);
     await queryInterface.addIndex(tableName, ['target_id']);
     await queryInterface.addIndex(tableName, ['target_type']);
-    await queryInterface.addIndex(tableName, ['author_id']);
     await queryInterface.addIndex(tableName, ['created_by', 'target_id'], {
       unique: true,
     });

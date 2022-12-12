@@ -28,6 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from '../modules/health/health.module';
 import { InternalModule } from '../modules/internal';
 import { SearchModule } from '../modules/search';
+import { ReportContentModule } from '../modules/report-content/report-content.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { SearchModule } from '../modules/search';
     SeriesModule,
     InternalModule,
     SearchModule,
+    ReportContentModule,
   ],
   controllers: [AppController],
   providers: [],

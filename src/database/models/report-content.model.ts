@@ -1,6 +1,15 @@
+import { IsUUID } from 'class-validator';
 import { Optional } from 'sequelize';
-import { Column, CreatedAt, Model, PrimaryKey, Table, UpdatedAt } from 'sequelize-typescript';
-
+import {
+  Column,
+  CreatedAt,
+  Default,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
+import { v4 as uuid_v4 } from 'uuid';
 export interface IReportContentAttribute {
   id: string;
   createdBy: string;
@@ -8,7 +17,6 @@ export interface IReportContentAttribute {
   targetId: string;
   targetType: string;
   authorId: string;
-  communityId: string;
   groupId: string;
   reportTo: string;
   reasonType: string;
@@ -27,6 +35,8 @@ export class ReportContentModel
   implements IReportContentAttribute
 {
   @PrimaryKey
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
   public id: string;
 
@@ -44,9 +54,6 @@ export class ReportContentModel
 
   @Column
   public authorId: string;
-
-  @Column
-  public communityId: string;
 
   @Column
   public groupId: string;
