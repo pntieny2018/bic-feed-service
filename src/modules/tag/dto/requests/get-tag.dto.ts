@@ -13,12 +13,13 @@ export class GetTagDto extends PageOptionsDto {
     type: [String],
     name: 'group_ids',
   })
+  @Type(() => Array)
   @IsUUID(4, { each: true })
   @Transform(({ value }) => {
     if (typeof value === 'string' && !value.includes(',')) {
       return [value];
     }
-    return value.split(',');
+    return value;
   })
   @Expose({
     name: 'group_ids',
