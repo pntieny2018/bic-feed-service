@@ -1,20 +1,22 @@
 import { Optional } from 'sequelize';
+import { ReportTo, TargetType } from '../../modules/report-content/contstants';
 import { Column, CreatedAt, Model, PrimaryKey, Table, UpdatedAt } from 'sequelize-typescript';
 
 export interface IReportContentAttribute {
-  id: string;
+  id?: string;
   createdBy: string;
-  updatedBy: string;
+  updatedBy?: string;
   targetId: string;
-  targetType: string;
+  targetType: TargetType;
   authorId: string;
   communityId: string;
   groupId: string;
-  reportTo: string;
+  reportTo: ReportTo;
   reasonType: string;
   reason?: string;
   status?: string;
-  createdAt: Date;
+
+  createdAt?: Date;
   updatedAt?: Date;
 }
 
@@ -40,7 +42,7 @@ export class ReportContentModel
   public targetId: string;
 
   @Column
-  public targetType: string;
+  public targetType: TargetType;
 
   @Column
   public authorId: string;
@@ -52,7 +54,7 @@ export class ReportContentModel
   public groupId: string;
 
   @Column
-  public reportTo: string;
+  public reportTo: ReportTo;
 
   @Column
   public reasonType: string;
@@ -65,7 +67,7 @@ export class ReportContentModel
 
   @CreatedAt
   @Column
-  public createdAt: Date;
+  public createdAt?: Date;
 
   @UpdatedAt
   @Column

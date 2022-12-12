@@ -5,75 +5,111 @@ import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import {
-  IReportContentGenealogy,
-  ReportContentModel,
-} from '../../database/models/report-content.model';
 import { ReportStatus, TargetType } from './contstants';
 import { ArticleService } from '../article/article.service';
-import { ValidatorException } from '../../common/exceptions';
-import { CreateReportDto, UpdateStatusReportDto } from './dto';
+import { LogicException, ValidatorException } from '../../common/exceptions';
+import {
+  CreateReportDto,
+  GetReportDto,
+  StatisticsReportResponseDto,
+  StatisticsReportResponsesDto,
+  UpdateStatusReportDto,
+} from './dto';
+import {
+  IReportContentAttribute,
+  ReportContentModel,
+} from '../../database/models/report-content.model';
+import { GroupSharedDto } from '../../shared/group/dto';
+import { UserService } from '../../shared/user';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class ReportContentService {
   public constructor(
-    private readonly _groupService: GroupService,
+    private readonly _userService: UserService,
     private readonly _postService: PostService,
+    private readonly _groupService: GroupService,
     private readonly _articleService: ArticleService,
     private readonly _commentService: CommentService,
     @InjectModel(ReportContentModel) private readonly _reportContentModel: typeof ReportContentModel
   ) {}
 
-  public async getListReport(): Promise<any> {
+  public async getReports(getReportDto: GetReportDto): Promise<any> {
     const list = await this._reportContentModel.findAll({});
+  }
+
+  public async countInfo() {
+    const response = await this._reportContentModel;
+  }
+  public async getStatistics(targetId: string): Promise<StatisticsReportResponsesDto> {
+    const { rows: reportModels, count: total } = await this._reportContentModel.findAndCountAll({
+      where: {
+        targetId: targetId,
+      },
+    });
+
+    const reportResponses = new StatisticsReportResponsesDto([], total);
+
+    const reporterIdByTypeMap = new Map<
+      string,
+      Omit<StatisticsReportResponseDto, 'reporters'> & { reporters: string[] }
+    >();
+    for (const reportModel of reportModels) {
+      const report = reportModel.toJSON();
+
+      if (reporterIdByTypeMap.has(report.reasonType)) {
+        const statisticsReport = reporterIdByTypeMap.get(report.reasonType);
+        statisticsReport.reporters.push(report.createdBy);
+        statisticsReport.total += 1;
+        reporterIdByTypeMap.set(report.reasonType, statisticsReport);
+      } else {
+        reporterIdByTypeMap.set(report.reasonType, {
+          reason: report.reason,
+          reasonType: report.reasonType,
+          targetType: report.targetType,
+          total: 0,
+          reporters: [],
+        });
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
+    for (const [_, statisticsReport] of reporterIdByTypeMap) {
+      const { reporters, ...data } = statisticsReport;
+      const reporterInfos = await this._userService.getMany(reporters);
+
+      reportResponses.reports.push(
+        new StatisticsReportResponseDto({
+          ...data,
+          reporters: reporterInfos,
+        })
+      );
+    }
+
+    return reportResponses;
   }
 
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
     const createdBy = user.id;
-    const { targetType, targetId, reason, reasonType } = createReportDto;
+    const { targetType, targetId, reason, reasonType, reportTo } = createReportDto;
 
     let authorId = '';
-    const genealogies: IReportContentGenealogy[] = [];
     let post,
       comment = null;
     let audienceIds = [];
-    let groupInfos = [];
+    let groupInfos: GroupSharedDto[] = [];
     let isExisted = false;
     switch (targetType) {
       case TargetType.POST:
       case TargetType.ARTICLE:
-        //eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
         [isExisted, post] = await this._postService.isExisted(targetId, true);
         authorId = post?.createdBy;
-        audienceIds = post?.groups.map((g) => g.groupId) ?? [];
-        groupInfos = await this._groupService.getMany(audienceIds);
-
-        for (const groupInfo of groupInfos) {
-          const { communityId } = groupInfo;
-          genealogies.push({
-            communityId: communityId,
-            postId: post.id,
-          });
-        }
-
         break;
       case TargetType.COMMENT:
       case TargetType.CHILD_COMMENT:
-        // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
-        audienceIds = post.groups.map((g) => g.groupId);
-        groupInfos = await this._groupService.getMany(audienceIds);
-        for (const groupInfo of groupInfos) {
-          const { communityId } = groupInfo;
-          genealogies.push({
-            communityId: communityId,
-            commentId: comment.id,
-            postId: post.id,
-            parentCommentId: comment.parentId,
-          });
-        }
         break;
       default:
         throw new ValidatorException('Unknown resource');
@@ -83,21 +119,25 @@ export class ReportContentService {
       throw new ValidatorException('Unknown resource');
     }
 
-    await this._reportContentModel.create(
-      {
-        createdBy: createdBy,
-        targetId: targetId,
-        targetType: targetType,
-        status: ReportStatus.CREATED,
-        in: genealogies,
-        authorId: authorId,
-        reason: reason,
-        reasonType: reasonType,
-      },
-      {
-        ignoreDuplicates: true,
-      }
-    );
+    audienceIds = post.groups.map((g) => g.groupId);
+    groupInfos = await this._groupService.getMany(audienceIds);
+
+    const insertData: IReportContentAttribute[] = groupInfos.map((group) => ({
+      reason: reason,
+      groupId: group.id,
+      authorId: authorId,
+      reportTo: reportTo,
+      targetId: targetId,
+      createdBy: createdBy,
+      reasonType: reasonType,
+      targetType: targetType,
+      status: ReportStatus.CREATED,
+      communityId: group.communityId,
+    }));
+
+    await this._reportContentModel.bulkCreate(insertData, {
+      ignoreDuplicates: true,
+    });
 
     return true;
   }
@@ -117,7 +157,7 @@ export class ReportContentService {
             reportId: updateStatusReport.reportIds,
           },
           status: {
-            [Op.not]: ReportStatus.HIDED,
+            [Op.not]: ReportStatus.HID,
           },
         },
         returning: true,

@@ -1,29 +1,32 @@
+import { GetReportDto } from './dto';
 import { AuthUser, UserDto } from '../auth';
 import { CreateReportDto, UpdateStatusReportDto } from './dto';
 import { ReportContentService } from './report-content.service';
-import { Body, Controller, Param, Post, Patch, Get } from '@nestjs/common';
+import { Body, Controller, Post, Patch, Get } from '@nestjs/common';
 
 @Controller('reports')
 export class ReportContentController {
   public constructor(private readonly _reportContentService: ReportContentService) {}
 
-  @Get('/')
+  @Get('/content')
   public async getContentsReported(
     @AuthUser() user: UserDto,
-    @Body() createReportDto: CreateReportDto
+    @Body() getReportDto: GetReportDto
   ): Promise<boolean> {
-    return this._reportContentService.report(user, createReportDto);
+    // TODO check permission
+    return this._reportContentService.getReports(getReportDto);
   }
 
-  @Get('/me')
+  @Get('/me/content')
   public async getContentsBlockedOfMe(
     @AuthUser() user: UserDto,
-    @Body() createReportDto: CreateReportDto
+    @Body() getReportDto: GetReportDto
   ): Promise<any> {
-    return this._reportContentService.report(user, createReportDto);
+    getReportDto.authorId = user.id;
+    return this._reportContentService.getReports(getReportDto);
   }
 
-  @Post()
+  @Post('/content')
   public async report(
     @AuthUser() user: UserDto,
     @Body() createReportDto: CreateReportDto
@@ -31,10 +34,9 @@ export class ReportContentController {
     return this._reportContentService.report(user, createReportDto);
   }
 
-  @Patch('/:id')
+  @Patch('/content')
   public async update(
     @AuthUser() user: UserDto,
-    @Param('id') reportId: string,
     @Body() updateStatusReportDto: UpdateStatusReportDto
   ): Promise<any> {
     return this._reportContentService.update(user, updateStatusReportDto);
