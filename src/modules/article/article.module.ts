@@ -19,6 +19,7 @@ import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { ArticleBindingService } from './article-binding.service';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchModule } from '../search';
+import { TagModule } from '../tag';
 @Module({
   imports: [
     PostModule,
@@ -29,6 +30,7 @@ import { SearchModule } from '../search';
     MentionModule,
     CategoryModule,
     HashtagModule,
+    TagModule,
     SearchModule,
     forwardRef(() => ReactionModule),
     AuthorityModule,

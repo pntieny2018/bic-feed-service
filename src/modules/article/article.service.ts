@@ -49,6 +49,8 @@ import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { TagService } from '../tag/tag.service';
+import { PostTagModel } from '../../database/models/post-tag.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -77,6 +79,8 @@ export class ArticleService extends PostService {
     protected postCategoryModel: typeof PostCategoryModel,
     @InjectModel(PostHashtagModel)
     protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(PostTagModel)
+    protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     protected userService: UserService,
@@ -93,6 +97,7 @@ export class ArticleService extends PostService {
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
+    private readonly _tagService: TagService,
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
@@ -106,6 +111,7 @@ export class ArticleService extends PostService {
       postSeriesModel,
       postCategoryModel,
       postHashtagModel,
+      postTagModel,
       userMarkReadPostModel,
       userSavePostModel,
       userService,
@@ -624,6 +630,7 @@ export class ArticleService extends PostService {
         mentions,
         audience,
         categories,
+        tags,
         hashtags,
         series,
       } = createArticleDto;
@@ -678,6 +685,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
+        this._tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -807,7 +815,7 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags } = updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -857,6 +865,9 @@ export class ArticleService extends PostService {
       }
       if (series) {
         await this._seriesService.updateToPost(series, post.id, transaction);
+      }
+      if (tags) {
+        await this._tagService.updateToPost(tags, post.id, transaction);
       }
 
       if (hashtags) {

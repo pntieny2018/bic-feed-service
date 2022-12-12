@@ -4,10 +4,10 @@ import { PostTagModel } from '../../database/models/post-tag.model';
 import { TagModel } from '../../database/models/tag.model';
 import { ClassTransformer } from 'class-transformer';
 import { PageDto } from '../../common/dto';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import { GetTagDto } from './dto/requests/get-tag.dto';
 import { TagResponseDto } from './dto/responses/tag-response.dto';
-import { ExceptionHelper, StringHelper } from '../../common/helpers';
+import { ArrayHelper, ExceptionHelper, StringHelper } from '../../common/helpers';
 import { CreateTagDto } from './dto/requests/create-tag.dto';
 import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
@@ -129,5 +129,48 @@ export class TagService {
     }
     await tag.destroy();
     return true;
+  }
+
+  public async addToPost(
+    tagIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    if (tagIds.length === 0) return;
+    const dataCreate = tagIds.map((tagId) => ({
+      postId,
+      tagId,
+    }));
+    await this._postTagModel.bulkCreate(dataCreate, { transaction });
+  }
+
+  public async updateToPost(
+    tagIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    const currentTags = await this._postTagModel.findAll({
+      where: { postId },
+    });
+    const currentTagIds = currentTags.map((i) => i.tagId);
+
+    const deleteIds = ArrayHelper.arrDifferenceElements(currentTagIds, tagIds);
+    if (deleteIds.length) {
+      await this._postTagModel.destroy({
+        where: { tagId: deleteIds, postId },
+        transaction,
+      });
+    }
+
+    const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
+    if (addIds.length) {
+      await this._postTagModel.bulkCreate(
+        addIds.map((tagId) => ({
+          postId,
+          tagId,
+        })),
+        { transaction }
+      );
+    }
   }
 }

@@ -61,4 +61,16 @@ export class CreateArticleDto extends CreatePostDto {
     return value;
   })
   public hashtags?: string[] = [];
+
+  @ApiProperty({
+    type: [String],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  public tags?: string[] = [];
 }
