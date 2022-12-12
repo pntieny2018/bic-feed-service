@@ -1,13 +1,13 @@
 import { Op } from 'sequelize';
 import { UserDto } from '../auth';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { ReportStatus, TargetType } from './contstants';
+import { ReportStatus, TargetType, ReportTo } from './contstants';
 import { ArticleService } from '../article/article.service';
-import { LogicException, ValidatorException } from '../../common/exceptions';
+import { ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
   GetReportDto,
@@ -21,7 +21,6 @@ import {
 } from '../../database/models/report-content.model';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
-import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class ReportContentService {
@@ -41,6 +40,7 @@ export class ReportContentService {
   public async countInfo() {
     const response = await this._reportContentModel;
   }
+
   public async getStatistics(targetId: string): Promise<StatisticsReportResponsesDto> {
     const { rows: reportModels, count: total } = await this._reportContentModel.findAndCountAll({
       where: {
@@ -91,8 +91,7 @@ export class ReportContentService {
 
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
     const createdBy = user.id;
-    const { targetType, targetId, reason, reasonType, reportTo } = createReportDto;
-
+    const { groupIds, reportTo, targetType, targetId, reason, reasonType } = createReportDto;
     let authorId = '';
     let post,
       comment = null;
@@ -104,12 +103,16 @@ export class ReportContentService {
       case TargetType.ARTICLE:
         [isExisted, post] = await this._postService.isExisted(targetId, true);
         authorId = post?.createdBy;
+        audienceIds = post?.groups.map((g) => g.groupId) ?? [];
+        await this._validateGroupIds(audienceIds, groupIds, reportTo);
         break;
       case TargetType.COMMENT:
       case TargetType.CHILD_COMMENT:
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
+        audienceIds = post.groups.map((g) => g.groupId);
+        await this._validateGroupIds(audienceIds, groupIds, reportTo);
         break;
       default:
         throw new ValidatorException('Unknown resource');
@@ -173,5 +176,20 @@ export class ReportContentService {
       }
     }
     return true;
+  }
+
+  private async _validateGroupIds(
+    audienceIds: string[],
+    groupIdsNeedValidate: string[],
+    type: ReportTo
+  ): Promise<void> {
+    const groups = await this._groupService.getMany(audienceIds);
+    const existGroups = groups.filter((group) => {
+      const isCommunity = type === ReportTo.COMMUNITY;
+      return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
+    });
+    if (existGroups.length < groupIdsNeedValidate.length) {
+      throw new BadRequestException('Invalid group_ids');
+    }
   }
 }

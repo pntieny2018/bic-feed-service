@@ -1,6 +1,16 @@
+import {
+  Column,
+  CreatedAt,
+  Default,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 import { Optional } from 'sequelize';
+import { v4 as uuid_v4 } from 'uuid';
+import { IsUUID } from 'class-validator';
 import { ReportTo, TargetType } from '../../modules/report-content/contstants';
-import { Column, CreatedAt, Model, PrimaryKey, Table, UpdatedAt } from 'sequelize-typescript';
 
 export interface IReportContentAttribute {
   id?: string;
@@ -9,7 +19,6 @@ export interface IReportContentAttribute {
   targetId: string;
   targetType: TargetType;
   authorId: string;
-  communityId: string;
   groupId: string;
   reportTo: ReportTo;
   reasonType: string;
@@ -29,6 +38,8 @@ export class ReportContentModel
   implements IReportContentAttribute
 {
   @PrimaryKey
+  @IsUUID()
+  @Default(() => uuid_v4())
   @Column
   public id: string;
 
@@ -46,9 +57,6 @@ export class ReportContentModel
 
   @Column
   public authorId: string;
-
-  @Column
-  public communityId: string;
 
   @Column
   public groupId: string;

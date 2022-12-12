@@ -41,6 +41,7 @@ import { PostHashtagModel } from './post-hashtag.model';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
+import { ReportContentModel } from './report-content.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -326,6 +327,17 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       Sequelize.literal(`(CASE WHEN type = ARTICLE THEN content ELSE null END)`),
       alias ? alias : 'content',
     ];
+  }
+  public static notIncludePostsReported(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const reportContentTable = ReportContentModel.tableName;
+    const condition = `WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this.sequelize.escape(
+      userId
+    )}`;
+    return Sequelize.literal(`NOT EXISTS ( 
+      SELECT user_id FROM  ${schema}.${reportContentTable} rp
+        ${condition}
+    )`);
   }
 
   public static loadLock(groupIds: string[], alias?: string): [Literal, string] {

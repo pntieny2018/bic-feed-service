@@ -23,6 +23,7 @@ import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
+import { ReportContentModel } from '../../database/models/report-content.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
@@ -83,7 +84,9 @@ export class PostService {
     protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService
+    protected readonly linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentModel)
+    protected readonly reportContentModel: typeof ReportContentModel
   ) {}
 
   /**
@@ -1164,6 +1167,7 @@ export class PostService {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      [Op.and]: [this.postModel.notIncludePostsReported(userId)],
     };
     const order = [];
     if (isImportant) {
@@ -1280,6 +1284,7 @@ export class PostService {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      [Op.and]: [this.postModel.notIncludePostsReported(authUserId)],
     };
 
     const order = [];
