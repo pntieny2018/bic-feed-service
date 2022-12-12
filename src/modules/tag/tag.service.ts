@@ -88,7 +88,7 @@ export class TagService {
       },
     });
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
 
     const postTag = await this._postTagModel.findOne({
@@ -97,7 +97,7 @@ export class TagService {
       },
     });
     if (postTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_TAG_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
 
     const name = updateTagDto.name.trim();
