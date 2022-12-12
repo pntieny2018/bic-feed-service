@@ -14,6 +14,10 @@ module.exports = {
           type: Sequelize.UUID,
           defaultValue: Sequelize.literal(genRandomUUID)
         },
+        group_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+        },
         name: {
           type: Sequelize.STRING(32),
           allowNull: false,
@@ -26,7 +30,7 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
         },
-        update_by: {
+        updated_by: {
           type: Sequelize.UUID,
           allowNull: false,
         },
@@ -35,7 +39,7 @@ module.exports = {
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
         },
-        update_at: {
+        updated_at: {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),

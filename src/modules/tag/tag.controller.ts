@@ -22,11 +22,11 @@ import { GetTagDto } from './dto/requests/get-tag.dto';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
 
-@ApiTags('Tag')
+@ApiTags('Tags')
 @ApiSecurity('authorization')
 @Controller({
   version: APP_VERSION,
-  path: 'tag',
+  path: 'tags',
 })
 export class TagController {
   public constructor(private _tagService: TagService) {}

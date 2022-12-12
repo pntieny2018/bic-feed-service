@@ -66,6 +66,7 @@ export class TagService {
 
     const createResult = await this._tagModel.create({
       name: name,
+      groupId: createTagDto.groupId,
       slug: slug,
       createdBy: authUser.id,
       updatedBy: authUser.id,
