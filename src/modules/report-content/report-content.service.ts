@@ -1,6 +1,5 @@
 import { Op, QueryTypes } from 'sequelize';
 import { UserDto } from '../auth';
-import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
 import { GroupService } from '../../shared/group';
@@ -17,6 +16,7 @@ import {
   StatisticsReportResponsesDto,
   UpdateStatusReportDto,
 } from './dto';
+import { Injectable } from '@nestjs/common';
 import {
   IReportContentAttribute,
   ReportContentModel,
@@ -31,6 +31,7 @@ import {
 } from '../../database/models/report-content-detail.model';
 import { CreateReportEvent } from '../../events/report/create-report.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { ApproveReportEvent } from '../../events/report/approve-report.event';
 
 @Injectable()
 export class ReportContentService {
@@ -270,7 +271,6 @@ export class ReportContentService {
     groupInfos = await this._groupService.getMany(audienceIds);
 
     const existedReport = await this._reportContentModel.findOne({
-      attributes: ['id'],
       where: {
         targetId: targetId,
       },
@@ -291,6 +291,10 @@ export class ReportContentService {
       await this._reportContentDetailModel.bulkCreate(details, {
         ignoreDuplicates: true,
       });
+
+      const report = existedReport.toJSON();
+      report.details = details;
+      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report }));
 
       return true;
     }
@@ -326,7 +330,7 @@ export class ReportContentService {
         ],
       });
       await transaction.commit();
-      this._eventEmitter.emit(new CreateReportEvent(report.toJSON()));
+      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report.toJSON() }));
     } catch (ex) {
       await transaction.rollback();
       throw ex;
@@ -362,7 +366,12 @@ export class ReportContentService {
         reportContentModel.targetType !== TargetType.COMMENT &&
         reportContentModel.targetType !== TargetType.CHILD_COMMENT
       ) {
-        this._eventEmitter.emit(new CreateReportEvent(reportContentModel.toJSON()));
+        this._eventEmitter.emit(
+          new ApproveReportEvent({
+            actor: admin,
+            ...reportContentModel.toJSON(),
+          })
+        );
       }
     }
     return true;
@@ -379,7 +388,7 @@ export class ReportContentService {
       return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
     });
     if (existGroups.length < groupIdsNeedValidate.length) {
-      throw new BadRequestException('Invalid group_ids');
+      throw new ValidatorException('Invalid group_ids');
     }
   }
 }
