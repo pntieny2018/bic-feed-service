@@ -4,6 +4,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { PostTagModel } from '../../database/models/post-tag.model';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { EntityIdDto, PageDto } from '../../common/dto';
@@ -66,6 +67,8 @@ export class PostService {
     protected postCategoryModel: typeof PostCategoryModel,
     @InjectModel(PostHashtagModel)
     protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(PostTagModel)
+    protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
@@ -491,14 +494,14 @@ export class PostService {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.PUBLIC) {
-        return PostPrivacy.PUBLIC;
+      if (group.privacy === GroupPrivacy.OPEN) {
+        return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.OPEN) totalOpen++;
+      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
       if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
     }
 
-    if (totalOpen > 0) return PostPrivacy.OPEN;
+    if (totalOpen > 0) return PostPrivacy.CLOSED;
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
   }
@@ -722,6 +725,7 @@ export class PostService {
       this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
       this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
       this.postHashtagModel.destroy({ where: { postId: postId }, transaction }),
+      this.postTagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
@@ -1092,11 +1096,11 @@ export class PostService {
     groupPrivacy: GroupPrivacy,
     postPrivacy: PostPrivacy
   ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.PUBLIC || postPrivacy === PostPrivacy.PUBLIC) {
-      return PostPrivacy.PUBLIC;
-    }
     if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
       return PostPrivacy.OPEN;
+    }
+    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
+      return PostPrivacy.CLOSED;
     }
     if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
       return PostPrivacy.PRIVATE;

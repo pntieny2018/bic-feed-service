@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 export enum GroupPrivacy {
-  PUBLIC = 'PUBLIC',
   OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
   PRIVATE = 'PRIVATE',
   SECRET = 'SECRET',
 }
 export class ChildGroup {
-  public public: string[] = [];
   public open: string[] = [];
+  public closed: string[] = [];
   public private: string[] = [];
   public secret: string[] = [];
 }
@@ -45,7 +45,7 @@ export class GroupSharedDto {
   public privacy: GroupPrivacy;
   public rootGroupId: string;
   public child?: ChildGroup = {
-    public: [],
+    closed: [],
     open: [],
     private: [],
     secret: [],

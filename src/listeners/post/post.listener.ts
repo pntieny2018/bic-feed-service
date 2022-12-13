@@ -69,7 +69,7 @@ export class PostListener {
           groups: post?.groups ?? ([] as any),
         },
         type: PostType.POST,
-        privacy: PostPrivacy.PUBLIC,
+        privacy: PostPrivacy.OPEN,
       });
 
       this._notificationService.publishPostNotification({

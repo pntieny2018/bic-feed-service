@@ -22,6 +22,8 @@ import { PostSeriesModel } from './post-series.model';
 import { PostHashtagModel } from './post-hashtag.model';
 import { LinkPreviewModel } from './link-preview.model';
 import { UserSavePostModel } from './user-save-post.model';
+import { PostTagModel } from './post-tag.model';
+import { TagModel } from './tag.model';
 
 export default [
   PostModel,
@@ -48,4 +50,6 @@ export default [
   PostHashtagModel,
   LinkPreviewModel,
   UserSavePostModel,
+  TagModel,
+  PostTagModel,
 ];
