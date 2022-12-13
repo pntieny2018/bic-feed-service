@@ -12,12 +12,14 @@ import { CreateTagDto } from './dto/requests/create-tag.dto';
 import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
+import { GroupService } from '../../shared/group';
 
 @Injectable()
 export class TagService {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
-    @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel
+    @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
+    private readonly _groupService: GroupService
   ) {}
 
   private _logger = new Logger(TagService.name);
@@ -37,11 +39,44 @@ export class TagService {
       limit,
       order: [['name', 'ASC']],
     });
+    const rootGroupIds = [];
+    const jsonSeries = rows.map((r) => {
+      rootGroupIds.push(r.groupId);
+      return r.toJSON();
+    });
 
-    const jsonSeries = rows.map((r) => r.toJSON());
     const result = this._classTransformer.plainToInstance(TagResponseDto, jsonSeries, {
       excludeExtraneousValues: true,
     });
+
+    const groups = {};
+    const groupIdMap = {};
+    const rootGroupInfos = await this._groupService.getMany(rootGroupIds);
+    const childGroupIds = rootGroupInfos.reduce<string[]>((ids, rootGroupInfo) => {
+      const childIds = [
+        ...rootGroupInfo.child.private,
+        ...rootGroupInfo.child.open,
+        ...rootGroupInfo.child.closed,
+        ...rootGroupInfo.child.secret,
+      ];
+      groupIdMap[rootGroupInfo.id] = childIds;
+      return ids.concat(childIds);
+    }, []);
+    const childGroupInfos = await this._groupService.getMany(childGroupIds);
+    for (const rootGroupInfo of rootGroupInfos) {
+      delete rootGroupInfo.child;
+      groups[rootGroupInfo.id] = [rootGroupInfo];
+      for (const childGroupId of groupIdMap[rootGroupInfo.id]) {
+        const thisChildGroupInfo = childGroupInfos.find((e) => e.id === childGroupId);
+        delete thisChildGroupInfo.child;
+        groups[rootGroupInfo.id].push(thisChildGroupInfo);
+      }
+    }
+
+    for (const tag of result) {
+      tag.groups = groups[tag.groupId];
+      tag.used = await this._postTagModel.count({ where: { tagId: tag.id } });
+    }
 
     return new PageDto<TagResponseDto>(result, {
       total: count,
