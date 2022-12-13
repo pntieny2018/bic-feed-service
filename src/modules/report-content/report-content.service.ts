@@ -124,4 +124,33 @@ export class ReportContentService {
     }
     return true;
   }
+
+  public async getPostIdsReportedByUser(
+    userId: string,
+    options?: {
+      reportTo?: ReportTo;
+      targetType?: TargetType;
+      groupIds?: string[];
+    }
+  ): Promise<string[]> {
+    const { groupIds } = options ?? {};
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy: userId,
+        },
+      ],
+    };
+
+    if (groupIds) {
+      condition['']
+    }
+    const rows = await this._reportContentModel.findAll({
+      where: {
+        createdBy: userId,
+      },
+    });
+
+    return rows.map((row) => row.id);
+  }
 }
