@@ -88,6 +88,10 @@ export class TagService {
   }
 
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
+    const group = await this._groupService.get(createTagDto.groupId);
+    if (!group) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_GROUP_NOT_EXIST);
+    }
     const name = createTagDto.name.trim();
     const tag = await this._tagModel.findOne({
       where: {
