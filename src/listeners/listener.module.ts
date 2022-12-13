@@ -20,6 +20,7 @@ import {
   SeriesReorderArticlesListener,
 } from './series';
 import { SearchModule } from '../modules/search';
+import { ReportContentListener } from './report/report-content.listener';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SearchModule } from '../modules/search';
     SeriesAddedArticlesListener,
     SeriesRemovedArticlesListener,
     SeriesReorderArticlesListener,
+    ReportContentListener,
   ],
 })
 export class ListenerModule {}
