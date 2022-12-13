@@ -37,7 +37,10 @@ export class TagService {
       where: conditions,
       offset,
       limit,
-      order: [['createdAt', 'DESC']],
+      order: [
+        ['totalUsed', 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
     });
     const rootGroupIds = [];
     const jsonSeries = rows.map((r) => {
@@ -75,17 +78,13 @@ export class TagService {
 
     for (const tag of result) {
       tag.groups = groups[tag.groupId];
-      tag.used = await this._postTagModel.count({ where: { tagId: tag.id } });
     }
 
-    return new PageDto<TagResponseDto>(
-      result.sort((tag1, tag2) => tag2.used - tag1.used),
-      {
-        total: count,
-        limit: getTagDto.limit,
-        offset: getTagDto.offset,
-      }
-    );
+    return new PageDto<TagResponseDto>(result, {
+      total: count,
+      limit: getTagDto.limit,
+      offset: getTagDto.offset,
+    });
   }
 
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
@@ -180,6 +179,10 @@ export class TagService {
       tagId,
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
+    const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+    effectTags.forEach((effectTag) =>
+      effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
+    );
   }
 
   public async updateToPost(
@@ -198,6 +201,10 @@ export class TagService {
         where: { tagId: deleteIds, postId },
         transaction,
       });
+      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+      effectTags.forEach((effectTag) =>
+        effectTag.update({ totalUsed: effectTag.totalUsed - 1 }, { transaction })
+      );
     }
 
     const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
@@ -208,6 +215,10 @@ export class TagService {
           tagId,
         })),
         { transaction }
+      );
+      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+      effectTags.forEach((effectTag) =>
+        effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
       );
     }
   }

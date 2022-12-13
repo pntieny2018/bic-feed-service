@@ -151,6 +151,7 @@ describe('TagService', () => {
 
   describe('TagService.addToPost', () => {
     it('should success', async () => {
+      tagModel.findAll.mockResolvedValue([tagModel])
       const tag = await tagService.addToPost(['1'], '1', null)
 
       expect(postTagModel.bulkCreate).toBeCalled();
@@ -160,6 +161,7 @@ describe('TagService', () => {
   describe('TagService.updateToPost', () => {
     it('should success', async () => {
       postTagModel.findAll.mockResolvedValue([{tagId: '1', postId: '1'}])
+      tagModel.findAll.mockResolvedValue([tagModel])
       const tag = await tagService.updateToPost(['2'], '1', null)
 
       expect(postTagModel.findAll).toBeCalled();
