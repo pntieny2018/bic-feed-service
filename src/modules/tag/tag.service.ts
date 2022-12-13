@@ -231,4 +231,11 @@ export class TagService {
       })
     );
   }
+
+  public async updateTotalUsedWhenDeleteArticle(ids: string[]): Promise<void> {
+    const tags = await this._tagModel.findAll({ where: { id: ids } });
+    for (const tag of tags) {
+      await tag.update({ totalUsed: tag.totalUsed - 1 });
+    }
+  }
 }
