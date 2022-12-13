@@ -851,4 +851,24 @@ export class CommentService {
     });
     return result;
   }
+
+  public async isExisted(id: string, returning = false): Promise<[boolean, IComment]> {
+    const conditions = {
+      id: id,
+    };
+    if (returning) {
+      const post = await this._commentModel.findOne({
+        where: conditions,
+      });
+      if (post) {
+        return [true, post];
+      }
+      return [false, null];
+    }
+
+    const commentCount = await this._commentModel.count({
+      where: conditions,
+    });
+    return [commentCount > 1, null];
+  }
 }

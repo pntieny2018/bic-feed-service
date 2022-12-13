@@ -1,48 +1,44 @@
-import { MentionModel, IMention } from './mention.model';
-import { IMedia, MediaModel } from './media.model';
-import sequelize, {
-  Optional,
-  BelongsToManyAddAssociationsMixin,
-  QueryTypes,
-  DataTypes,
-} from 'sequelize';
+import { IsUUID } from 'class-validator';
+import { BelongsToManyAddAssociationsMixin, DataTypes, Optional, QueryTypes } from 'sequelize';
 import {
   AllowNull,
+  BelongsTo,
   BelongsToMany,
   Column,
   CreatedAt,
   Default,
+  DeletedAt,
   HasMany,
   Model,
   PrimaryKey,
+  Sequelize,
   Table,
   UpdatedAt,
-  Sequelize,
-  DeletedAt,
-  BelongsTo,
 } from 'sequelize-typescript';
-import { CommentModel, IComment } from './comment.model';
-import { PostMediaModel } from './post-media.model';
-import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
-import { PostGroupModel, IPostGroup } from './post-group.model';
-import { PostReactionModel } from './post-reaction.model';
 import { Literal } from 'sequelize/types/utils';
+import { v4 as uuid_v4 } from 'uuid';
+import { MentionableType } from '../../common/constants';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { MentionableType } from '../../common/constants';
-import { UserMarkReadPostModel } from './user-mark-read-post.model';
-import { IsUUID } from 'class-validator';
-import { v4 as uuid_v4 } from 'uuid';
-import { CategoryModel, ICategory } from './category.model';
-import { HashtagModel, IHashtag } from './hashtag.model';
-import { PostCategoryModel } from './post-category.model';
-import { PostSeriesModel } from './post-series.model';
-import { PostHashtagModel } from './post-hashtag.model';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
+import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
+import { CategoryModel, ICategory } from './category.model';
+import { CommentModel, IComment } from './comment.model';
+import { HashtagModel, IHashtag } from './hashtag.model';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
+import { IMedia, MediaModel } from './media.model';
+import { IMention, MentionModel } from './mention.model';
+import { PostCategoryModel } from './post-category.model';
+import { IPostGroup, PostGroupModel } from './post-group.model';
+import { PostHashtagModel } from './post-hashtag.model';
+import { PostMediaModel } from './post-media.model';
+import { PostReactionModel } from './post-reaction.model';
+import { PostSeriesModel } from './post-series.model';
+import { ReportContentDetailModel } from './report-content-detail.model';
+import { UserMarkReadPostModel } from './user-mark-read-post.model';
+import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { ITag, TagModel } from './tag.model';
-import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { IPostTag, PostTagModel } from './post-tag.model';
 
 export enum PostPrivacy {
@@ -208,7 +204,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @DeletedAt
   @Column
-  deletedAt?: Date;
+  public deletedAt?: Date;
 
   @HasMany(() => CommentModel)
   public comments?: CommentModel[];
@@ -343,6 +339,17 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       Sequelize.literal(`(CASE WHEN type = ARTICLE THEN content ELSE null END)`),
       alias ? alias : 'content',
     ];
+  }
+  public static notIncludePostsReported(userId: string): Literal {
+    const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    const condition = `WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this.sequelize.escape(
+      userId
+    )}`;
+    return Sequelize.literal(`NOT EXISTS ( 
+      SELECT user_id FROM  ${schema}.${reportContentDetailTable} rp
+        ${condition}
+    )`);
   }
 
   public static loadLock(groupIds: string[], alias?: string): [Literal, string] {

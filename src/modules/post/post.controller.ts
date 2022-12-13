@@ -23,11 +23,9 @@ import {
   CreatePostDto,
   GetPostDto,
   GetPostEditedHistoryDto,
-  SearchPostsDto,
   UpdatePostDto,
 } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
-import { GetPostsSavedDto } from './dto/requests/get-posts-saved.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 

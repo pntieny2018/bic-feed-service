@@ -24,6 +24,7 @@ import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
+import { ReportContentModel } from '../../database/models/report-content.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
@@ -44,6 +45,8 @@ import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+import { ReportTo, TargetType } from '../report-content/contstants';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 @Injectable()
 export class PostService {
   /**
@@ -86,7 +89,9 @@ export class PostService {
     protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService
+    protected readonly linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentModel)
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   /**
@@ -181,6 +186,7 @@ export class PostService {
     } else {
       condition = { id: postId };
     }
+    condition[Op.and] = [this.postModel.notIncludePostsReported(user.id)];
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
@@ -1174,6 +1180,7 @@ export class PostService {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      [Op.and]: [this.postModel.notIncludePostsReported(userId)],
     };
     const order = [];
     if (isImportant) {
@@ -1290,6 +1297,7 @@ export class PostService {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      [Op.and]: [this.postModel.notIncludePostsReported(authUserId)],
     };
 
     const order = [];
@@ -1385,5 +1393,56 @@ export class PostService {
         totalSeries: 0,
       };
     });
+  }
+
+  public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
+    const conditions = {
+      id: id,
+      isDraft: false,
+      isProcessing: false,
+    };
+
+    if (returning) {
+      const post = await this.postModel.findOne({
+        include: ['groups'],
+        where: conditions,
+      });
+      if (post) {
+        return [true, post];
+      }
+      return [false, null];
+    }
+
+    const postCount = await this.postModel.count({
+      where: conditions,
+    });
+    return [postCount > 1, null];
+  }
+
+  public async getPostIdsReportedByUser(
+    userId: string,
+    options?: {
+      reportTo?: ReportTo;
+      targetType?: TargetType;
+      groupIds?: string[];
+    }
+  ): Promise<string[]> {
+    const { groupIds } = options ?? {};
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy: userId,
+        },
+      ],
+    };
+
+    if (groupIds) {
+      //condition[''] improve later
+    }
+    const rows = await this.reportContentDetailModel.findAll({
+      where: condition,
+    });
+
+    return rows.map((row) => row.id);
   }
 }

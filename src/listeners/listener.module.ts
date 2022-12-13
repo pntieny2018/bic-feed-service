@@ -20,10 +20,13 @@ import {
   SeriesReorderArticlesListener,
 } from './series';
 import { SearchModule } from '../modules/search';
+import { ReportContentListener } from './report';
+import { GroupModule } from '../shared/group';
 import { TagModule } from '../modules/tag';
 
 @Module({
   imports: [
+    GroupModule,
     PostModule,
     CommentModule,
     NotificationModule,
@@ -46,6 +49,7 @@ import { TagModule } from '../modules/tag';
     SeriesAddedArticlesListener,
     SeriesRemovedArticlesListener,
     SeriesReorderArticlesListener,
+    ReportContentListener,
   ],
 })
 export class ListenerModule {}

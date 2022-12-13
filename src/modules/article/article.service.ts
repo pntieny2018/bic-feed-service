@@ -49,8 +49,10 @@ import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { MediaStatus } from '../../database/models/media.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { ReportContentModel } from '../../database/models/report-content.model';
 import { TagService } from '../tag/tag.service';
 import { PostTagModel } from '../../database/models/post-tag.model';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -102,7 +104,9 @@ export class ArticleService extends PostService {
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
     protected readonly authorityService: AuthorityService,
-    private readonly _linkPreviewService: LinkPreviewService
+    private readonly _linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentModel)
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {
     super(
       sequelizeConnection,
@@ -124,7 +128,8 @@ export class ArticleService extends PostService {
       feedService,
       sentryService,
       articleBinding,
-      _linkPreviewService
+      _linkPreviewService,
+      reportContentDetailModel
     );
   }
 
