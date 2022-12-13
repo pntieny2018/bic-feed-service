@@ -14,13 +14,8 @@ import { UserService } from '../../../shared/user';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
-import {
-  CreatePostDto,
-  GetPostDto,
-  GetPostEditedHistoryDto,
-  SearchPostsDto,
-  UpdatePostDto,
-} from '../dto/requests';
+import { TargetType } from '../../report-content/contstants';
+import { CreatePostDto, GetPostDto, GetPostEditedHistoryDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
@@ -52,7 +47,9 @@ export class PostAppService {
     getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
-    const postIdsReported = await this._postService.getPostIdsReportedByUser(user.id);
+    const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.POST,
+    ]);
     if (postIdsReported.includes(postId)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
