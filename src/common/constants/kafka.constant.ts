@@ -19,5 +19,6 @@ export const KAFKA_TOPIC = {
     POST: `${process.env.KAFKA_ENV}.bein_stream.post`,
     COMMENT: `${process.env.KAFKA_ENV}.bein_stream.comment`,
     REACTION: `${process.env.KAFKA_ENV}.bein_stream.reaction`,
+    REPORT: `${process.env.KAFKA_ENV}.bein_stream.report`,
   },
 };

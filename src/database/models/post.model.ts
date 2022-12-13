@@ -42,6 +42,9 @@ import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { ReportContentModel } from './report-content.model';
+import { ITag, TagModel } from './tag.model';
+import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
+import { PostTagModel } from './post-tag.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -89,8 +92,10 @@ export interface IPost {
   categories?: ICategory[];
   series?: IPost[];
   hashtags?: IHashtag[];
+  tags?: ITag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
+  tagsJson?: HashtagResponseDto[];
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
@@ -172,6 +177,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   })
   public hashtagsJson: HashtagResponseDto[];
 
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public tagsJson: TagResponseDto[];
+
   @AllowNull(false)
   @Column
   public createdBy: string;
@@ -217,6 +227,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => PostHashtagModel)
   public postHashtags?: PostHashtagModel[];
+
+  @BelongsToMany(() => TagModel, () => PostTagModel)
+  public tags?: TagModel[];
+
+  @HasMany(() => PostTagModel)
+  public postTags?: PostTagModel[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'postId', 'seriesId')
   public series?: PostModel[];

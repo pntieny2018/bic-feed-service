@@ -5,9 +5,10 @@ import { CommentModule } from '../comment';
 import { PostModule } from '../post';
 import { ReportContentController } from './report-content.controller';
 import { ReportContentService } from './report-content.service';
+import { UserModule } from '../../shared/user';
 
 @Module({
-  imports: [GroupModule, PostModule, ArticleModule, CommentModule],
+  imports: [UserModule, GroupModule, PostModule, ArticleModule, CommentModule],
   controllers: [ReportContentController],
   providers: [ReportContentService],
 })

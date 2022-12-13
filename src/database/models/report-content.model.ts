@@ -1,5 +1,3 @@
-import { IsUUID } from 'class-validator';
-import { Optional } from 'sequelize';
 import {
   Column,
   CreatedAt,
@@ -9,20 +7,25 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
+import { Optional } from 'sequelize';
 import { v4 as uuid_v4 } from 'uuid';
+import { IsUUID } from 'class-validator';
+import { ReportTo, TargetType } from '../../modules/report-content/contstants';
+
 export interface IReportContentAttribute {
-  id: string;
+  id?: string;
   createdBy: string;
-  updatedBy: string;
+  updatedBy?: string;
   targetId: string;
-  targetType: string;
+  targetType: TargetType;
   authorId: string;
   groupId: string;
-  reportTo: string;
+  reportTo: ReportTo;
   reasonType: string;
   reason?: string;
   status?: string;
-  createdAt: Date;
+
+  createdAt?: Date;
   updatedAt?: Date;
 }
 
@@ -50,7 +53,7 @@ export class ReportContentModel
   public targetId: string;
 
   @Column
-  public targetType: string;
+  public targetType: TargetType;
 
   @Column
   public authorId: string;
@@ -59,7 +62,7 @@ export class ReportContentModel
   public groupId: string;
 
   @Column
-  public reportTo: string;
+  public reportTo: ReportTo;
 
   @Column
   public reasonType: string;
@@ -72,7 +75,7 @@ export class ReportContentModel
 
   @CreatedAt
   @Column
-  public createdAt: Date;
+  public createdAt?: Date;
 
   @UpdatedAt
   @Column

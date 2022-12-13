@@ -2,6 +2,13 @@ import { UserSharedDto } from '../../../shared/user/dto';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../response';
 
 export class NotificationMetaPayloadDto<T> {
+  public report?: {
+    adminInfos?: {
+      [rootGroupId: string]: string[];
+    };
+    creatorId?: string;
+  };
+
   public post?: {
     oldData?: T;
   };

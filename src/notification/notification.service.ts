@@ -29,4 +29,11 @@ export class NotificationService {
       value: payload.value,
     });
   }
+
+  public publishReportNotification<T>(payload: NotificationPayloadDto<T>): any {
+    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REPORT, {
+      key: payload.key,
+      value: payload.value,
+    });
+  }
 }

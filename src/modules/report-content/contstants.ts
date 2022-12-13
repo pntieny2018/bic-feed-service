@@ -6,9 +6,9 @@ export enum TargetType {
 }
 
 export enum ReportStatus {
-  CREATED = 'created',
-  IGNORED = 'ignored',
-  HIDED = 'hided',
+  CREATED = 'CREATED',
+  IGNORED = 'IGNORED',
+  HID = 'HID',
 }
 
 export enum ReportTo {
