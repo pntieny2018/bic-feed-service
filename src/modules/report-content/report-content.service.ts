@@ -1,11 +1,11 @@
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { UserDto } from '../auth';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
 import { GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { ReportStatus, TargetType, ReportTo } from './contstants';
+import { ReportStatus, ReportTo, TargetType } from './contstants';
 import { ArticleService } from '../article/article.service';
 import { ValidatorException } from '../../common/exceptions';
 import {
@@ -21,6 +21,7 @@ import {
 } from '../../database/models/report-content.model';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
+import { getDatabaseConfig } from '../../config/database';
 
 @Injectable()
 export class ReportContentService {
@@ -37,56 +38,79 @@ export class ReportContentService {
     const list = await this._reportContentModel.findAll({});
   }
 
-  public async countInfo() {
-    const response = await this._reportContentModel;
-  }
+  public async getStatistics(
+    targetId: string,
+    fetchReporter = 5
+  ): Promise<StatisticsReportResponsesDto> {
+    if (fetchReporter > 10) {
+      fetchReporter = 10;
+    }
+    const dbConfig = getDatabaseConfig();
 
-  public async getStatistics(targetId: string): Promise<StatisticsReportResponsesDto> {
-    const { rows: reportModels, count: total } = await this._reportContentModel.findAndCountAll({
-      where: {
-        targetId: targetId,
-      },
+    const reportCount = await this._reportContentModel.sequelize.query<{
+      reasonType: string;
+      total: number;
+    }>(
+      `SELECT reason_type as reasonType,count(*) as total
+           FROM ${dbConfig.schema}.report_contents WHERE target_id = $id 
+           GROUP BY reason_type;`,
+      {
+        type: QueryTypes.SELECT,
+        bind: {
+          id: targetId,
+        },
+      }
+    );
+
+    const totalReportType = reportCount.length;
+
+    const queries: string[] = [];
+    let totalReport = 0;
+
+    for (let i = 0; i < totalReportType; i++) {
+      totalReport += reportCount[i].total;
+      queries.push(`
+          ( SELECT * FROM  ${dbConfig.schema}.report_contents 
+            WHERE target_id = '${reportCount[i].reasonType}' AND target_id = '${targetId}'
+            ORDER BY created_at DESC
+            LIMIT ${fetchReporter} )
+      `);
+    }
+    const queryStr = queries.join(' UNION ALL ');
+
+    const reports = await this._reportContentModel.sequelize.query(queryStr, {
+      mapToModel: true,
+      model: ReportContentModel,
+      type: QueryTypes.SELECT,
     });
 
-    const reportResponses = new StatisticsReportResponsesDto([], total);
+    const reporterIds = reports.map((report) => report.createdBy);
 
-    const reporterIdByTypeMap = new Map<
-      string,
-      Omit<StatisticsReportResponseDto, 'reporters'> & { reporters: string[] }
-    >();
-    for (const reportModel of reportModels) {
-      const report = reportModel.toJSON();
+    const userInfos = await this._userService.getMany(reporterIds);
 
-      if (reporterIdByTypeMap.has(report.reasonType)) {
-        const statisticsReport = reporterIdByTypeMap.get(report.reasonType);
-        statisticsReport.reporters.push(report.createdBy);
-        statisticsReport.total += 1;
-        reporterIdByTypeMap.set(report.reasonType, statisticsReport);
+    const reportByReasonTypeMap = new Map<string, StatisticsReportResponseDto>();
+
+    for (const report of reports) {
+      if (reportByReasonTypeMap.has(report.reasonType)) {
+        const userInfo = userInfos.find((u) => u.id === report.createdBy) ?? null;
+        reportByReasonTypeMap.get(report.reasonType).reporters.push(userInfo);
       } else {
-        reporterIdByTypeMap.set(report.reasonType, {
-          reason: report.reason,
-          reasonType: report.reasonType,
-          targetType: report.targetType,
-          total: 0,
-          reporters: [],
-        });
+        reportByReasonTypeMap.set(
+          report.reasonType,
+          new StatisticsReportResponseDto({
+            reporters: [],
+            reason: report.reason,
+            reasonType: report.reasonType,
+            total: reportCount.find((rc) => rc.reasonType === report.reasonType).total,
+          })
+        );
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
-    for (const [_, statisticsReport] of reporterIdByTypeMap) {
-      const { reporters, ...data } = statisticsReport;
-      const reporterInfos = await this._userService.getMany(reporters);
-
-      reportResponses.reports.push(
-        new StatisticsReportResponseDto({
-          ...data,
-          reporters: reporterInfos,
-        })
-      );
-    }
-
-    return reportResponses;
+    return new StatisticsReportResponsesDto(
+      Object.values(reportByReasonTypeMap).flat(),
+      totalReport
+    );
   }
 
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {

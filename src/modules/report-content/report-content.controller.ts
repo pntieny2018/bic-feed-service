@@ -1,8 +1,8 @@
-import { GetReportDto } from './dto';
+import { GetReportDto, StatisticsReportResponsesDto } from './dto';
 import { AuthUser, UserDto } from '../auth';
 import { CreateReportDto, UpdateStatusReportDto } from './dto';
 import { ReportContentService } from './report-content.service';
-import { Body, Controller, Post, Patch, Get } from '@nestjs/common';
+import { Body, Controller, Post, Patch, Get, Param, Query } from '@nestjs/common';
 
 @Controller('reports')
 export class ReportContentController {
@@ -24,6 +24,16 @@ export class ReportContentController {
   ): Promise<any> {
     getReportDto.authorId = user.id;
     return this._reportContentService.getReports(getReportDto);
+  }
+
+  @Get('/:targetId')
+  public async getStatistics(
+    @AuthUser() user: UserDto,
+    @Param('targetId') targetId: string,
+    @Query('count_reporter') countReporter?: number
+  ): Promise<StatisticsReportResponsesDto> {
+    // TODO check permission
+    return this._reportContentService.getStatistics(targetId, countReporter);
   }
 
   @Post('/content')
