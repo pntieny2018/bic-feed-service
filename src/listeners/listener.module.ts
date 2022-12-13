@@ -20,6 +20,7 @@ import {
   SeriesReorderArticlesListener,
 } from './series';
 import { SearchModule } from '../modules/search';
+import { TagModule } from '../modules/tag';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SearchModule } from '../modules/search';
     SeriesModule,
     ArticleModule,
     SearchModule,
+    TagModule,
   ],
   providers: [
     PostListener,

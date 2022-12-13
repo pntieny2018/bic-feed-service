@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { TagModel } from '../../database/models/tag.model';
@@ -37,7 +37,10 @@ export class TagService {
       where: conditions,
       offset,
       limit,
-      order: [['name', 'ASC']],
+      order: [
+        ['totalUsed', 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
     });
     const rootGroupIds = [];
     const jsonSeries = rows.map((r) => {
@@ -75,7 +78,6 @@ export class TagService {
 
     for (const tag of result) {
       tag.groups = groups[tag.groupId];
-      tag.used = await this._postTagModel.count({ where: { tagId: tag.id } });
     }
 
     return new PageDto<TagResponseDto>(result, {
@@ -94,7 +96,7 @@ export class TagService {
       },
     });
     if (tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
     const slug = StringHelper.convertToSlug(name);
@@ -177,6 +179,10 @@ export class TagService {
       tagId,
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
+    const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+    effectTags.forEach((effectTag) =>
+      effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
+    );
   }
 
   public async updateToPost(
@@ -195,6 +201,10 @@ export class TagService {
         where: { tagId: deleteIds, postId },
         transaction,
       });
+      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+      effectTags.forEach((effectTag) =>
+        effectTag.update({ totalUsed: effectTag.totalUsed - 1 }, { transaction })
+      );
     }
 
     const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
@@ -206,6 +216,10 @@ export class TagService {
         })),
         { transaction }
       );
+      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+      effectTags.forEach((effectTag) =>
+        effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
+      );
     }
   }
 
@@ -216,5 +230,12 @@ export class TagService {
         excludeExtraneousValues: true,
       })
     );
+  }
+
+  public async updateTotalUsedWhenDeleteArticle(ids: string[]): Promise<void> {
+    const tags = await this._tagModel.findAll({ where: { id: ids } });
+    for (const tag of tags) {
+      await tag.update({ totalUsed: tag.totalUsed - 1 });
+    }
   }
 }

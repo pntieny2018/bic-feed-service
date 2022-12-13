@@ -256,6 +256,12 @@ export class PostService {
           required: must,
           attributes: ['groupId'],
         },
+        {
+          model: PostTagModel,
+          as: 'postTags',
+          required: must,
+          attributes: ['tagId'],
+        },
       ],
       where: {
         id: postIds,

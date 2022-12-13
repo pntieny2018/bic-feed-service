@@ -23,13 +23,11 @@ export class TagResponseDto {
   @Expose()
   public slug: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'total_used',
+  })
   @Expose()
-  public groups?: GroupSharedDto[];
-
-  @ApiProperty()
-  @Expose()
-  public used?: number;
+  public totalUsed: number;
 
   @ApiProperty({
     name: 'created_at',
@@ -40,6 +38,10 @@ export class TagResponseDto {
     name: 'updated_at',
   })
   public updateAt?: Date;
+
+  @ApiProperty()
+  @Expose()
+  public groups?: GroupSharedDto[];
 
   public constructor(data: Partial<TagResponseDto>) {
     Object.assign(this, data);

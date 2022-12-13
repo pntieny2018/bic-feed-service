@@ -17,6 +17,7 @@ import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
+import { TagService } from '../../modules/tag/tag.service';
 
 @Injectable()
 export class ArticleListener {
@@ -28,6 +29,7 @@ export class ArticleListener {
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
+    private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService
@@ -44,6 +46,7 @@ export class ArticleListener {
     });
 
     this._postSearchService.deletePostsToSearch([article]);
+    this._tagService.updateTotalUsedWhenDeleteArticle(article.postTags.map((e) => e.tagId));
     //TODO:: send noti
   }
 

@@ -43,7 +43,7 @@ import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 import { ITag, TagModel } from './tag.model';
 import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
-import { PostTagModel } from './post-tag.model';
+import { IPostTag, PostTagModel } from './post-tag.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -92,6 +92,7 @@ export interface IPost {
   series?: IPost[];
   hashtags?: IHashtag[];
   tags?: ITag[];
+  postTags?: IPostTag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
   tagsJson?: HashtagResponseDto[];
