@@ -50,20 +50,31 @@ export class TagService {
     });
 
     const groups = {};
-    for (const rootGroupId of rootGroupIds) {
-      const rootGroupInfo = await this._groupService.get(rootGroupId);
-      const childGroupIds: string[] = [
+    const rootGroupInfos = await this._groupService.getMany(rootGroupIds);
+    const childGroupIds = rootGroupInfos.reduce<string[]>(
+      (ids, rootGroupInfo) =>
+        ids.concat([
+          ...rootGroupInfo.child.private,
+          ...rootGroupInfo.child.open,
+          ...rootGroupInfo.child.closed,
+          ...rootGroupInfo.child.secret,
+        ]),
+      []
+    );
+    const childGroupInfos = await this._groupService.getMany(childGroupIds);
+    for (const rootGroupInfo of rootGroupInfos) {
+      const thisChildGroupIds: string[] = [
         ...rootGroupInfo.child.private,
         ...rootGroupInfo.child.open,
         ...rootGroupInfo.child.closed,
         ...rootGroupInfo.child.secret,
       ];
       delete rootGroupInfo.child;
-      groups[rootGroupId] = [rootGroupInfo];
-      for (const childGroupId of childGroupIds) {
-        const childGroupInfo = await this._groupService.get(childGroupId);
-        delete childGroupInfo.child;
-        groups[rootGroupId].push(childGroupInfo);
+      groups[rootGroupInfo.id] = [rootGroupInfo];
+      for (const childGroupId of thisChildGroupIds) {
+        const thisChildGroupInfo = childGroupInfos.find((e) => e.id === childGroupId);
+        delete thisChildGroupInfo.child;
+        groups[rootGroupInfo.id].push(thisChildGroupInfo);
       }
     }
 
