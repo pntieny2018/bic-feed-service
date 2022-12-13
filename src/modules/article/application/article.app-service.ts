@@ -12,9 +12,10 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
+import { TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
-import { GetListArticlesDto, SearchArticlesDto } from '../dto/requests';
+import { SearchArticlesDto } from '../dto/requests';
 import { CreateArticleDto } from '../dto/requests/create-article.dto';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
 import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
@@ -52,7 +53,9 @@ export class ArticleAppService {
     articleId: string,
     getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const articleIdsReported = await this._postService.getPostIdsReportedByUser(user.id);
+    const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.ARTICLE,
+    ]);
     if (articleIdsReported.includes(articleId)) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }

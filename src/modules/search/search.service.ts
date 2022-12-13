@@ -19,6 +19,7 @@ import { UserDto } from '../auth';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
+import { TargetType } from '../report-content/contstants';
 import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 import { SearchPostsDto } from './dto/requests';
 import {
@@ -204,7 +205,9 @@ export class SearchService {
       }
     }
 
-    const notIncludeIds = await this.postService.getPostIdsReportedByUser(authUser.id);
+    const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.POST,
+    ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
@@ -466,7 +469,9 @@ export class SearchService {
     if (groupIds) {
       filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
     }
-    const notIncludeIds = await this.postService.getPostIdsReportedByUser(authUser.id);
+    const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+    ]);
     const context: any = {
       contentSearch,
       groupIds: filterGroupIds,

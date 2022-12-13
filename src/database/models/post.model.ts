@@ -360,7 +360,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     )}`;
 
     if (type.length) {
-      condition += ` AND target_type IN (${type.join(',')})`;
+      condition += ` AND target_type IN (${type.map((item) => `'${item}'`).join(',')})`;
     }
 
     return Sequelize.literal(`NOT EXISTS ( 

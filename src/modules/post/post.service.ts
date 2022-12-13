@@ -1434,11 +1434,11 @@ export class PostService {
     return [postCount > 1, null];
   }
 
-  public async getPostIdsReportedByUser(
+  public async getEntityIdsReportedByUser(
     userId: string,
+    targetTypes: TargetType[],
     options?: {
       reportTo?: ReportTo;
-      targetType?: TargetType;
       groupIds?: string[];
     }
   ): Promise<string[]> {
@@ -1447,6 +1447,7 @@ export class PostService {
       [Op.and]: [
         {
           createdBy: userId,
+          TargetType: targetTypes,
         },
       ],
     };

@@ -29,6 +29,7 @@ import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { CommentResponseDto } from './dto/response';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { TargetType } from '../report-content/contstants';
 
 @Injectable()
 export class CommentService {
@@ -399,9 +400,13 @@ export class CommentService {
       });
     }
     const checkComment = await this._commentModel.findByPk(commentId);
+    const commentIdsReportedByUser = this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.COMMENT,
+    ]);
     if (!checkComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
+
     const { postId } = checkComment;
     const post = await this._postService.findPost({
       postId,
