@@ -23,6 +23,8 @@ import { PostHashtagModel } from './post-hashtag.model';
 import { LinkPreviewModel } from './link-preview.model';
 import { UserSavePostModel } from './user-save-post.model';
 import { ReportContentModel } from './report-content.model';
+import { PostTagModel } from './post-tag.model';
+import { TagModel } from './tag.model';
 
 export default [
   PostModel,
@@ -50,4 +52,6 @@ export default [
   LinkPreviewModel,
   UserSavePostModel,
   ReportContentModel,
+  TagModel,
+  PostTagModel,
 ];

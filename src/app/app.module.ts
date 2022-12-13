@@ -29,6 +29,7 @@ import { HealthModule } from '../modules/health/health.module';
 import { InternalModule } from '../modules/internal';
 import { SearchModule } from '../modules/search';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
+import { TagModule } from '../modules/tag';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ReportContentModule } from '../modules/report-content/report-content.mo
     SeriesModule,
     CategoryModule,
     HashtagModule,
+    TagModule,
     ScheduleModule.forRoot(),
     HealthModule,
     SeriesModule,
