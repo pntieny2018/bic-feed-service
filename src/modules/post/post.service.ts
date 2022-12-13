@@ -181,10 +181,11 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
+        isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
       };
     } else {
-      condition = { id: postId };
+      condition = { id: postId, isHidden: false };
     }
     condition[Op.and] = [
       this.postModel.notIncludePostsReported(user.id, {
@@ -270,7 +271,7 @@ export class PostService {
         {
           model: PostTagModel,
           as: 'postTags',
-          required: must,
+          required: false,
           attributes: ['tagId'],
         },
       ],
@@ -354,6 +355,10 @@ export class PostService {
           'canReact',
           'importantExpiredAt',
         ],
+        where: {
+          isDraft: false,
+          isHidden: false,
+        },
         include: [
           {
             model: MediaModel,
@@ -889,6 +894,15 @@ export class PostService {
     return post.toJSON();
   }
 
+  public async findPostByIds(ids: string[]): Promise<IPost[]> {
+    const posts = await this.postModel.findAll({
+      where: {
+        id: ids,
+      },
+    });
+    return posts;
+  }
+
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
@@ -941,6 +955,7 @@ export class PostService {
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
       isDraft: false,
+      isHidden: false,
     };
 
     if (type) {
@@ -1185,6 +1200,7 @@ export class PostService {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      isHidden: false,
       [Op.and]: [
         this.postModel.notIncludePostsReported(userId, {
           mainTableAlias: '"PostModel"',
@@ -1283,6 +1299,7 @@ export class PostService {
       ],
       where: {
         id: ids,
+        isHidden: false,
       },
     });
 
@@ -1307,6 +1324,7 @@ export class PostService {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      isHidden: false,
       [Op.and]: [
         this.postModel.notIncludePostsReported(authUserId, {
           mainTableAlias: '"PostModel"',

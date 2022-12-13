@@ -14,7 +14,7 @@ import { UserService } from '../../../shared/user';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
-import { TargetType } from '../../report-content/contstants';
+import { ReportStatus, TargetType } from '../../report-content/contstants';
 import { CreatePostDto, GetPostDto, GetPostEditedHistoryDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';

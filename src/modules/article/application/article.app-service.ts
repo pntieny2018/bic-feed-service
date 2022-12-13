@@ -12,7 +12,7 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
-import { TargetType } from '../../report-content/contstants';
+import { ReportStatus, TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
@@ -60,7 +60,9 @@ export class ArticleAppService {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
 
-    return this._articleService.get(articleId, user, getArticleDto);
+    const article = await this._articleService.get(articleId, user, getArticleDto);
+
+    return article;
   }
 
   public async create(

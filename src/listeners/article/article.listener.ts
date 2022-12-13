@@ -1,6 +1,7 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
+import { ReportContentHasBeenCreated } from '../../common/constants';
 import { On } from '../../common/decorators';
 import { MediaStatus, MediaType } from '../../database/models/media.model';
 import {
@@ -10,6 +11,7 @@ import {
 } from '../../events/article';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
+import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';

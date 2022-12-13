@@ -1,19 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MediaService } from '../../../media';
-import { PageDto } from '../../../../common/dto';
-import { UserMentionDto } from '../../../mention/dto';
-import { PostSettingDto } from '../common/post-setting.dto';
 import { Expose, Transform, Type } from 'class-transformer';
-import { UserSharedDto } from '../../../../shared/user/dto';
-import { AudienceResponseDto } from './audience.response.dto';
-import { CommentResponseDto } from '../../../comment/dto/response';
-import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
-import { PostSettingResponseDto } from './post-setting-response.dto';
+import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostType } from '../../../../database/models/post.model';
-import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
+import { UserSharedDto } from '../../../../shared/user/dto';
 import { ArticleResponseDto } from '../../../article/dto/responses';
+import { CommentResponseDto } from '../../../comment/dto/response';
+import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
+import { MediaService } from '../../../media';
+import { MediaFilterResponseDto } from '../../../media/dto/response';
+import { UserMentionDto } from '../../../mention/dto';
+import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { PostSettingDto } from '../common/post-setting.dto';
+import { AudienceResponseDto } from './audience.response.dto';
+import { PostSettingResponseDto } from './post-setting-response.dto';
 
 export class CommunityResponseDto {
   @ApiProperty({
@@ -319,6 +319,16 @@ export class PostResponseDto {
   })
   @Expose()
   public communities?: CommunityResponseDto[];
+
+  @ApiProperty({
+    type: Boolean,
+  })
+  @Expose({
+    name: 'is_reported',
+  })
+  public isReported?: boolean;
+
+  public isHidden?: boolean;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
