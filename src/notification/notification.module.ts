@@ -4,12 +4,13 @@ import { CommentNotificationService } from './services';
 import { CommentDissociationService } from './dissociations';
 import { NotificationService } from './notification.service';
 import { CommentModule } from '../modules/comment';
-import { ReportActivityService } from './activities/report-activity.service';
+import { ReportActivityService } from './activities';
 import { CommentActivityService, PostActivityService, ReactionActivityService } from './activities';
 
 @Module({
   imports: [forwardRef(() => PostModule), forwardRef(() => CommentModule)],
   providers: [
+    ReportActivityService,
     NotificationService,
     PostActivityService,
     ReactionActivityService,

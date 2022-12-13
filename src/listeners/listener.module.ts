@@ -21,9 +21,11 @@ import {
 } from './series';
 import { SearchModule } from '../modules/search';
 import { ReportContentListener } from './report/report-content.listener';
+import { GroupModule } from '../shared/group';
 
 @Module({
   imports: [
+    GroupModule,
     PostModule,
     CommentModule,
     NotificationModule,

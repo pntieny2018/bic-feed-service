@@ -7,8 +7,6 @@ import { NotificationService, TypeActivity, VerbActivity } from '../../notificat
 import { ReportActivityService } from '../../notification/activities';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
-import { TargetType } from '../../modules/report-content/contstants';
-import { UserDto } from '../../modules/auth';
 
 @Injectable()
 export class ReportContentListener {
