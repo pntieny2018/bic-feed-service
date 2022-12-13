@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const schemaName = process.env.DB_SCHEMA;
-const tableName = 'report_contents';
+const tableName = 'report_content_details';
 const dbVersion = parseInt(process.env.DB_VER) ?? 14;
 const genRandomUUID = dbVersion < 14 ? 'public.gen_random_uuid()' : 'gen_random_uuid()';
 
@@ -19,9 +19,15 @@ module.exports = {
           primaryKey: true,
           defaultValue: Sequelize.literal(genRandomUUID),
         },
-        updated_by: {
+        report_id: {
           type: Sequelize.UUID,
-          allowNull: true,
+          allowNull: false,
+          references: { model: 'report_contents', key: 'id' },
+          onDelete: 'CASCADE',
+        },
+        report_to: {
+          type: Sequelize.STRING(30),
+          allowNull: false,
         },
         target_id: {
           type: Sequelize.UUID,
@@ -31,14 +37,21 @@ module.exports = {
           type: Sequelize.STRING(30),
           allowNull: false,
         },
-        author_id: {
+        group_id: {
+          type: Sequelize.UUID,
+          allowNull: true,
+        },
+        created_by: {
           type: Sequelize.UUID,
           allowNull: false,
         },
-        status: {
-          type: Sequelize.STRING(30),
-          defaultValue: 'CREATED',
+        reason_type: {
+          type: Sequelize.STRING(60),
           allowNull: false,
+        },
+        reason: {
+          type: Sequelize.STRING(512),
+          allowNull: true,
         },
         created_at: {
           type: Sequelize.DATE,
@@ -52,8 +65,15 @@ module.exports = {
         },
       }
     );
-    await queryInterface.addIndex(tableName, ['target_id']);
-    await queryInterface.addIndex(tableName, ['target_type']);
+    await queryInterface.addIndex(tableName, ['created_by', 'group_id']);
+
+    await queryInterface.addIndex(tableName, ['report_id']);
+
+    await queryInterface.addIndex(tableName, ['report_id', 'reason_type']);
+
+    await queryInterface.addIndex(tableName, ['created_by', 'target_id'], {
+      unique: true,
+    });
   },
 
   down: async (queryInterface) => {

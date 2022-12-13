@@ -4,14 +4,18 @@ import { ReportTo, TargetType } from '../contstants';
 import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateReportDto {
-  @ApiProperty()
+  @ApiProperty({
+    name: 'target_id',
+  })
   @Expose({
     name: 'target_id',
   })
   @IsNotEmpty()
   public targetId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'group_ids',
+  })
   @ApiProperty({
     type: [String],
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
@@ -25,7 +29,8 @@ export class CreateReportDto {
   public groupIds: string[];
 
   @ApiProperty({
-    enum: [TargetType],
+    example: Object.values(TargetType).join(','),
+    name: 'target_type',
   })
   @Expose({
     name: 'target_type',
@@ -34,7 +39,8 @@ export class CreateReportDto {
   public targetType: TargetType;
 
   @ApiProperty({
-    enum: [ReportTo],
+    example: Object.values(ReportTo).join(','),
+    name: 'report_to',
   })
   @Expose({
     name: 'report_to',
@@ -42,7 +48,9 @@ export class CreateReportDto {
   @IsNotEmpty()
   public reportTo: ReportTo;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'reason_type',
+  })
   @Expose({
     name: 'reason_type',
   })
