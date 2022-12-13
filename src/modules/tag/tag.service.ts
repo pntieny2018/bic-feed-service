@@ -12,12 +12,14 @@ import { CreateTagDto } from './dto/requests/create-tag.dto';
 import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
+import { GroupService } from '../../shared/group';
 
 @Injectable()
 export class TagService {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
-    @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel
+    @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
+    private readonly _groupService: GroupService
   ) {}
 
   private _logger = new Logger(TagService.name);
@@ -37,11 +39,35 @@ export class TagService {
       limit,
       order: [['name', 'ASC']],
     });
+    const rootGroupIds = [];
+    const jsonSeries = rows.map((r) => {
+      rootGroupIds.push(r.groupId);
+      return r.toJSON();
+    });
 
-    const jsonSeries = rows.map((r) => r.toJSON());
     const result = this._classTransformer.plainToInstance(TagResponseDto, jsonSeries, {
       excludeExtraneousValues: true,
     });
+
+    const groups = {};
+    for (const rootGroupId of rootGroupIds) {
+      const rootGroupInfo = await this._groupService.get(rootGroupId);
+      groups[rootGroupId] = [rootGroupInfo];
+      const childGroupIds: string[] = [
+        ...rootGroupInfo.child.private,
+        ...rootGroupInfo.child.open,
+        ...rootGroupInfo.child.closed,
+        ...rootGroupInfo.child.secret,
+      ];
+      for (const childGroupId of childGroupIds) {
+        groups[rootGroupId].push(await this._groupService.get(childGroupId));
+      }
+    }
+
+    for (const tag of result) {
+      tag.groups = groups[tag.groupId];
+      tag.used = await this._postTagModel.count({ where: { tagId: tag.id } });
+    }
 
     return new PageDto<TagResponseDto>(result, {
       total: count,

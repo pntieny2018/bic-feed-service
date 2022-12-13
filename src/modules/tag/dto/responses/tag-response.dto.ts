@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
+import { GroupSharedDto } from '../../../../shared/group/dto';
 
 export class TagResponseDto {
   @ApiProperty()
@@ -21,6 +22,14 @@ export class TagResponseDto {
   @ApiProperty()
   @Expose()
   public slug: string;
+
+  @ApiProperty()
+  @Expose()
+  public groups?: GroupSharedDto[];
+
+  @ApiProperty()
+  @Expose()
+  public used?: number;
 
   @ApiProperty({
     name: 'created_at',
