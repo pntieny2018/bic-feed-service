@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
@@ -46,11 +47,16 @@ export class ArticleAppService {
     return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
-  public get(
+  public async get(
     user: UserDto,
     articleId: string,
     getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
+    const articleIdsReported = await this._postService.getPostIdsReportedByUser(user.id);
+    if (articleIdsReported.includes(articleId)) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
+
     return this._articleService.get(articleId, user, getArticleDto);
   }
 

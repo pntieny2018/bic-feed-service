@@ -24,7 +24,7 @@ import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
   IDataPostToUpdate,
-  IPostElasticsearch
+  IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
 
 type FieldSearch = {
@@ -207,7 +207,6 @@ export class SearchService {
     const notIncludeIds = await this.postService.getPostIdsReportedByUser(authUser.id);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
-    console.log('payload', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articleIds = [];
@@ -467,9 +466,11 @@ export class SearchService {
     if (groupIds) {
       filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
     }
+    const notIncludeIds = await this.postService.getPostIdsReportedByUser(authUser.id);
     const context: any = {
       contentSearch,
       groupIds: filterGroupIds,
+      notIncludeIds: notIncludeIds,
       limit,
       offset,
     };
@@ -582,6 +583,7 @@ export class SearchService {
     contentSearch: string;
     groupIds: string[];
     categoryIds?: string[];
+    notIncludeIds?: string[];
     limit: number;
     offset: number;
   }): Promise<{
@@ -590,7 +592,7 @@ export class SearchService {
     from: number;
     size: number;
   }> {
-    const { contentSearch, groupIds, categoryIds, limit, offset } = props;
+    const { contentSearch, groupIds, categoryIds, limit, offset, notIncludeIds } = props;
     const body: BodyES = {
       query: {
         bool: {
@@ -599,6 +601,9 @@ export class SearchService {
         },
       },
     };
+    if (notIncludeIds) {
+      body.query.bool.must_not = [...this._getNotIncludeIds(notIncludeIds)];
+    }
     if (contentSearch) {
       body.query.bool.should = [
         ...this._getMatchPrefixKeyword('title', contentSearch),
