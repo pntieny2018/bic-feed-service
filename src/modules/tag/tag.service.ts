@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { TagModel } from '../../database/models/tag.model';
@@ -12,12 +12,14 @@ import { CreateTagDto } from './dto/requests/create-tag.dto';
 import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
+import { GroupService } from '../../shared/group';
 
 @Injectable()
 export class TagService {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
-    @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel
+    @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
+    private readonly _groupService: GroupService
   ) {}
 
   private _logger = new Logger(TagService.name);
@@ -35,13 +37,48 @@ export class TagService {
       where: conditions,
       offset,
       limit,
-      order: [['name', 'ASC']],
+      order: [
+        ['totalUsed', 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
+    });
+    const rootGroupIds = [];
+    const jsonSeries = rows.map((r) => {
+      rootGroupIds.push(r.groupId);
+      return r.toJSON();
     });
 
-    const jsonSeries = rows.map((r) => r.toJSON());
     const result = this._classTransformer.plainToInstance(TagResponseDto, jsonSeries, {
       excludeExtraneousValues: true,
     });
+
+    const groups = {};
+    const groupIdMap = {};
+    const rootGroupInfos = await this._groupService.getMany(rootGroupIds);
+    const childGroupIds = rootGroupInfos.reduce<string[]>((ids, rootGroupInfo) => {
+      const childIds = [
+        ...rootGroupInfo.child.private,
+        ...rootGroupInfo.child.open,
+        ...rootGroupInfo.child.closed,
+        ...rootGroupInfo.child.secret,
+      ];
+      groupIdMap[rootGroupInfo.id] = childIds;
+      return ids.concat(childIds);
+    }, []);
+    const childGroupInfos = await this._groupService.getMany(childGroupIds);
+    for (const rootGroupInfo of rootGroupInfos) {
+      delete rootGroupInfo.child;
+      groups[rootGroupInfo.id] = [rootGroupInfo];
+      for (const childGroupId of groupIdMap[rootGroupInfo.id]) {
+        const thisChildGroupInfo = childGroupInfos.find((e) => e.id === childGroupId);
+        delete thisChildGroupInfo.child;
+        groups[rootGroupInfo.id].push(thisChildGroupInfo);
+      }
+    }
+
+    for (const tag of result) {
+      tag.groups = groups[tag.groupId];
+    }
 
     return new PageDto<TagResponseDto>(result, {
       total: count,
@@ -51,6 +88,10 @@ export class TagService {
   }
 
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
+    const group = await this._groupService.get(createTagDto.groupId);
+    if (!group) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_GROUP_NOT_EXIST);
+    }
     const name = createTagDto.name.trim();
     const tag = await this._tagModel.findOne({
       where: {
@@ -59,7 +100,7 @@ export class TagService {
       },
     });
     if (tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
     const slug = StringHelper.convertToSlug(name);
@@ -142,6 +183,10 @@ export class TagService {
       tagId,
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
+    const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+    effectTags.forEach((effectTag) =>
+      effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
+    );
   }
 
   public async updateToPost(
@@ -160,6 +205,10 @@ export class TagService {
         where: { tagId: deleteIds, postId },
         transaction,
       });
+      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+      effectTags.forEach((effectTag) =>
+        effectTag.update({ totalUsed: effectTag.totalUsed - 1 }, { transaction })
+      );
     }
 
     const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
@@ -171,6 +220,10 @@ export class TagService {
         })),
         { transaction }
       );
+      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
+      effectTags.forEach((effectTag) =>
+        effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
+      );
     }
   }
 
@@ -181,5 +234,12 @@ export class TagService {
         excludeExtraneousValues: true,
       })
     );
+  }
+
+  public async updateTotalUsedWhenDeleteArticle(ids: string[]): Promise<void> {
+    const tags = await this._tagModel.findAll({ where: { id: ids } });
+    for (const tag of tags) {
+      await tag.update({ totalUsed: tag.totalUsed - 1 });
+    }
   }
 }

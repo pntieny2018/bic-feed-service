@@ -8,6 +8,7 @@ import { modelGetResult } from './mocks/get-tags.mock';
 import { TagResponseDto } from '../dto/responses/tag-response.dto';
 import { createTagDto } from './mocks/create-tag-dto.mock';
 import { PostTagModel } from '../../../database/models/post-tag.model';
+import { GroupService } from '../../../shared/group';
 
 describe('TagService', () => {
   let tagService;
@@ -55,6 +56,15 @@ describe('TagService', () => {
             findByPk: jest.fn(),
             findOrCreate: jest.fn(),
             bulkCreate: jest.fn(),
+          },
+        },
+        {
+          provide: GroupService,
+          useValue: {
+            get: jest.fn(),
+            getMany: jest.fn(),
+            isMemberOfGroups: jest.fn(),
+            getGroupIdsCanAccess: jest.fn(),
           },
         },
       ],
@@ -141,6 +151,7 @@ describe('TagService', () => {
 
   describe('TagService.addToPost', () => {
     it('should success', async () => {
+      tagModel.findAll.mockResolvedValue([tagModel])
       const tag = await tagService.addToPost(['1'], '1', null)
 
       expect(postTagModel.bulkCreate).toBeCalled();
@@ -150,6 +161,7 @@ describe('TagService', () => {
   describe('TagService.updateToPost', () => {
     it('should success', async () => {
       postTagModel.findAll.mockResolvedValue([{tagId: '1', postId: '1'}])
+      tagModel.findAll.mockResolvedValue([tagModel])
       const tag = await tagService.updateToPost(['2'], '1', null)
 
       expect(postTagModel.findAll).toBeCalled();
