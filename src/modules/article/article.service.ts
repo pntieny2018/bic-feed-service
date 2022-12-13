@@ -52,6 +52,7 @@ import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { ReportContentModel } from '../../database/models/report-content.model';
 import { TagService } from '../tag/tag.service';
 import { PostTagModel } from '../../database/models/post-tag.model';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -105,7 +106,7 @@ export class ArticleService extends PostService {
     protected readonly authorityService: AuthorityService,
     private readonly _linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentModel)
-    protected readonly reportContentModel: typeof ReportContentModel
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {
     super(
       sequelizeConnection,
@@ -128,7 +129,7 @@ export class ArticleService extends PostService {
       sentryService,
       articleBinding,
       _linkPreviewService,
-      reportContentModel
+      reportContentDetailModel
     );
   }
 

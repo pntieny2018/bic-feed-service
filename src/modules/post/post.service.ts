@@ -46,6 +46,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { ReportTo, TargetType } from '../report-content/contstants';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 @Injectable()
 export class PostService {
   /**
@@ -90,7 +91,7 @@ export class PostService {
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentModel)
-    protected readonly reportContentModel: typeof ReportContentModel
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   /**
@@ -1432,7 +1433,7 @@ export class PostService {
     if (groupIds) {
       //condition[''] improve later
     }
-    const rows = await this.reportContentModel.findAll({
+    const rows = await this.reportContentDetailModel.findAll({
       where: condition,
     });
 
