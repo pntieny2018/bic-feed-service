@@ -12,7 +12,7 @@ module.exports = {
         id: {
           primaryKey: true,
           type: Sequelize.UUID,
-          defaultValue: Sequelize.literal(genRandomUUID)
+          defaultValue: Sequelize.literal('gen_random_uuid()')
         },
         group_id: {
           type: Sequelize.UUID,
