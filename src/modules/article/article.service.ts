@@ -105,7 +105,7 @@ export class ArticleService extends PostService {
     private readonly _categoryService: CategoryService,
     protected readonly authorityService: AuthorityService,
     private readonly _linkPreviewService: LinkPreviewService,
-    @InjectModel(ReportContentModel)
+    @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {
     super(

@@ -21,6 +21,7 @@ import { MentionableType } from '../../common/constants';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
+import { TargetType } from '../../modules/report-content/contstants';
 import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
@@ -339,14 +340,30 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       alias ? alias : 'content',
     ];
   }
-  public static notIncludePostsReported(userId: string): Literal {
+  public static notIncludePostsReported(
+    userId: string,
+    options?: {
+      mainTableAlias?: string;
+      type?: TargetType[];
+    }
+  ): Literal {
+    //TODO limit scope in group
+    const { mainTableAlias, type } = options ?? {
+      mainTableAlias: 'PostModel',
+      type: [],
+    };
     const { schema } = getDatabaseConfig();
     const reportContentDetailTable = ReportContentDetailModel.tableName;
-    const condition = `WHERE rp.target_id = "PostModel".id AND rp.created_by = ${this.sequelize.escape(
+    let condition = `WHERE rp.target_id = ${mainTableAlias}.id AND rp.created_by = ${this.sequelize.escape(
       userId
     )}`;
+
+    if (type.length) {
+      condition += ` AND target_type IN (${type.join(',')})`;
+    }
+
     return Sequelize.literal(`NOT EXISTS ( 
-      SELECT user_id FROM  ${schema}.${reportContentDetailTable} rp
+      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
         ${condition}
     )`);
   }

@@ -90,7 +90,7 @@ export class PostService {
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
-    @InjectModel(ReportContentModel)
+    @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
@@ -186,7 +186,12 @@ export class PostService {
     } else {
       condition = { id: postId };
     }
-    condition[Op.and] = [this.postModel.notIncludePostsReported(user.id)];
+    condition[Op.and] = [
+      this.postModel.notIncludePostsReported(user.id, {
+        mainTableAlias: '"PostModel"',
+        type: [TargetType.ARTICLE, TargetType.POST],
+      }),
+    ];
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
@@ -1174,7 +1179,12 @@ export class PostService {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
-      [Op.and]: [this.postModel.notIncludePostsReported(userId)],
+      [Op.and]: [
+        this.postModel.notIncludePostsReported(userId, {
+          mainTableAlias: '"PostModel"',
+          type: [TargetType.ARTICLE, TargetType.POST],
+        }),
+      ],
     };
     const order = [];
     if (isImportant) {
@@ -1291,7 +1301,12 @@ export class PostService {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
-      [Op.and]: [this.postModel.notIncludePostsReported(authUserId)],
+      [Op.and]: [
+        this.postModel.notIncludePostsReported(authUserId, {
+          mainTableAlias: '"PostModel"',
+          type: [TargetType.ARTICLE, TargetType.POST],
+        }),
+      ],
     };
 
     const order = [];
@@ -1437,6 +1452,6 @@ export class PostService {
       where: condition,
     });
 
-    return rows.map((row) => row.id);
+    return rows.map((row) => row.targetId);
   }
 }

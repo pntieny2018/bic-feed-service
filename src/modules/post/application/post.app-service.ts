@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import {
   PostHasBeenDeletedEvent,
@@ -51,6 +52,10 @@ export class PostAppService {
     getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
+    const postIdsReported = await this._postService.getPostIdsReportedByUser(user.id);
+    if (postIdsReported.includes(postId)) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
     const post = await this._postService.get(postId, user, getPostDto);
     if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
