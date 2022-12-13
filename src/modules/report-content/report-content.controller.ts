@@ -2,8 +2,11 @@ import { GetReportDto, StatisticsReportResponsesDto } from './dto';
 import { AuthUser, UserDto } from '../auth';
 import { CreateReportDto, UpdateStatusReportDto } from './dto';
 import { ReportContentService } from './report-content.service';
-import { Body, Controller, Post, Patch, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Post, Patch, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
+@ApiSecurity('authorization')
+@ApiTags('Reports')
 @Controller('reports')
 export class ReportContentController {
   public constructor(private readonly _reportContentService: ReportContentService) {}
@@ -26,14 +29,14 @@ export class ReportContentController {
     return this._reportContentService.getReports(getReportDto);
   }
 
-  @Get('/:targetId')
+  @Get(':id/statistics')
   public async getStatistics(
     @AuthUser() user: UserDto,
-    @Param('targetId') targetId: string,
-    @Query('count_reporter') countReporter?: number
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('count_reporter') countReporter = 5
   ): Promise<StatisticsReportResponsesDto> {
     // TODO check permission
-    return this._reportContentService.getStatistics(targetId, countReporter);
+    return this._reportContentService.getStatistics(id, countReporter);
   }
 
   @Post('/content')

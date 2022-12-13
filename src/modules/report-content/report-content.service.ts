@@ -40,7 +40,7 @@ export class ReportContentService {
 
   public async getStatistics(
     targetId: string,
-    fetchReporter = 5
+    fetchReporter: number
   ): Promise<StatisticsReportResponsesDto> {
     if (fetchReporter > 10) {
       fetchReporter = 10;
@@ -49,16 +49,16 @@ export class ReportContentService {
 
     const reportCount = await this._reportContentModel.sequelize.query<{
       reasonType: string;
-      total: number;
+      total: string;
     }>(
-      `SELECT reason_type as reasonType,count(*) as total
-           FROM ${dbConfig.schema}.report_contents WHERE target_id = $id 
+      `SELECT reason_type as "reasonType",count(*) as total
+           FROM ${dbConfig.schema}.report_contents WHERE target_id = :targetId
            GROUP BY reason_type;`,
       {
-        type: QueryTypes.SELECT,
-        bind: {
-          id: targetId,
+        replacements: {
+          targetId: targetId,
         },
+        type: QueryTypes.SELECT,
       }
     );
 
@@ -68,10 +68,10 @@ export class ReportContentService {
     let totalReport = 0;
 
     for (let i = 0; i < totalReportType; i++) {
-      totalReport += reportCount[i].total;
+      totalReport += parseInt(reportCount[i].total ?? '0');
       queries.push(`
           ( SELECT * FROM  ${dbConfig.schema}.report_contents 
-            WHERE target_id = '${reportCount[i].reasonType}' AND target_id = '${targetId}'
+            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = '${targetId}'
             ORDER BY created_at DESC
             LIMIT ${fetchReporter} )
       `);
@@ -87,35 +87,44 @@ export class ReportContentService {
     const reporterIds = reports.map((report) => report.createdBy);
 
     const userInfos = await this._userService.getMany(reporterIds);
-
     const reportByReasonTypeMap = new Map<string, StatisticsReportResponseDto>();
 
     for (const report of reports) {
+      const userInfo = userInfos.find((u) => u.id === report.createdBy) ?? null;
+      // clean group;
+      delete userInfo.groups;
       if (reportByReasonTypeMap.has(report.reasonType)) {
-        const userInfo = userInfos.find((u) => u.id === report.createdBy) ?? null;
         reportByReasonTypeMap.get(report.reasonType).reporters.push(userInfo);
       } else {
+        const total = reportCount.find((rc) => rc.reasonType === report.reasonType).total;
+
         reportByReasonTypeMap.set(
           report.reasonType,
           new StatisticsReportResponseDto({
-            reporters: [],
+            reporters: [userInfo],
             reason: report.reason,
             reasonType: report.reasonType,
-            total: reportCount.find((rc) => rc.reasonType === report.reasonType).total,
+            total: parseInt(total ?? '0'),
           })
         );
       }
     }
 
-    return new StatisticsReportResponsesDto(
-      Object.values(reportByReasonTypeMap).flat(),
-      totalReport
-    );
+    return new StatisticsReportResponsesDto([...reportByReasonTypeMap.values()], totalReport);
   }
 
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
     const createdBy = user.id;
     const { groupIds, reportTo, targetType, targetId, reason, reasonType } = createReportDto;
+
+    const reasonTypes = await this._groupService.getReasonType();
+
+    const isValidReasonType = reasonTypes.some((r) => r.id === reasonType);
+
+    if (!isValidReasonType) {
+      throw new ValidatorException('Unknown reason type');
+    }
+
     let authorId = '';
     let post,
       comment = null;

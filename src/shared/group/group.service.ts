@@ -98,4 +98,12 @@ export class GroupService {
     const groupIdsUserJoined = user.profile.groups || [];
     return groupIds.filter((groupId) => groupIdsUserJoined.includes(groupId));
   }
+
+  public async getReasonType(): Promise<{ id: string; description: string }[]> {
+    const raws: unknown[] = await this._store.get(`${AppHelper.getRedisEnv()}report_reason_type`);
+    return raws.map((raw) => ({
+      id: raw['id'],
+      description: raw['value'],
+    }));
+  }
 }

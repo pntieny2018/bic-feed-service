@@ -433,7 +433,7 @@ export class SearchService {
     });
 
     return new PageDto<SeriesSearchResponseDto>(result, {
-      total: response.hits.total['value'],
+      total: response['hits'].total['value'],
       limit,
       offset,
     });
@@ -477,7 +477,7 @@ export class SearchService {
     if (categoryIds) context.categoryIds = categoryIds;
     const payload = await this.getPayloadSearchForArticles(context);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
+    const hits = response['hits'].hits;
     const articles = hits.map((item) => {
       const source = {
         id: item._source.id,
@@ -497,7 +497,7 @@ export class SearchService {
     });
 
     return new PageDto<ArticleSearchResponseDto>(result, {
-      total: response.hits.total['value'],
+      total: response['hits'].total['value'],
       limit,
       offset,
     });
