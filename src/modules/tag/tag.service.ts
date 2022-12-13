@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { TagModel } from '../../database/models/tag.model';
@@ -37,7 +37,7 @@ export class TagService {
       where: conditions,
       offset,
       limit,
-      order: [['name', 'ASC']],
+      order: [['createdAt', 'DESC']],
     });
     const rootGroupIds = [];
     const jsonSeries = rows.map((r) => {
@@ -78,11 +78,14 @@ export class TagService {
       tag.used = await this._postTagModel.count({ where: { tagId: tag.id } });
     }
 
-    return new PageDto<TagResponseDto>(result, {
-      total: count,
-      limit: getTagDto.limit,
-      offset: getTagDto.offset,
-    });
+    return new PageDto<TagResponseDto>(
+      result.sort((tag1, tag2) => tag2.used - tag1.used),
+      {
+        total: count,
+        limit: getTagDto.limit,
+        offset: getTagDto.offset,
+      }
+    );
   }
 
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
@@ -94,7 +97,7 @@ export class TagService {
       },
     });
     if (tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
     const slug = StringHelper.convertToSlug(name);
