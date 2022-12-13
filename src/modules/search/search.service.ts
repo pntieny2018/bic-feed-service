@@ -271,10 +271,17 @@ export class SearchService {
       ArrayHelper.arrayUnique(articleIds)
     );
 
+    const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+    ]);
+
+    const articlesFilterReport = articles.filter(
+      (article) => !articleIdsReported.includes(article.id)
+    );
     const result = this.bindResponseSearch(posts, {
       groups,
       users,
-      articles,
+      articles: articlesFilterReport,
     });
     return new PageDto<any>(result, {
       total: response.hits.total['value'],

@@ -1447,7 +1447,7 @@ export class PostService {
       [Op.and]: [
         {
           createdBy: userId,
-          TargetType: targetTypes,
+          targetType: targetTypes,
         },
       ],
     };
