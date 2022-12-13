@@ -91,4 +91,6 @@ export class SearchPostsDto extends PageOptionsDto {
   @IsEnum(PostType)
   @ValidateIf((i) => i.type !== '')
   public type?: PostType;
+
+  public notIncludeIds?: string[];
 }

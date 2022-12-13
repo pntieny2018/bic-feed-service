@@ -45,6 +45,7 @@ import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+import { ReportTo, TargetType } from '../report-content/contstants';
 @Injectable()
 export class PostService {
   /**
@@ -184,6 +185,7 @@ export class PostService {
     } else {
       condition = { id: postId };
     }
+    condition[Op.and] = [this.postModel.notIncludePostsReported(user.id)];
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
@@ -1408,5 +1410,32 @@ export class PostService {
       where: conditions,
     });
     return [postCount > 1, null];
+  }
+
+  public async getPostIdsReportedByUser(
+    userId: string,
+    options?: {
+      reportTo?: ReportTo;
+      targetType?: TargetType;
+      groupIds?: string[];
+    }
+  ): Promise<string[]> {
+    const { groupIds } = options ?? {};
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy: userId,
+        },
+      ],
+    };
+
+    if (groupIds) {
+      //condition[''] improve later
+    }
+    const rows = await this.reportContentModel.findAll({
+      where: condition,
+    });
+
+    return rows.map((row) => row.id);
   }
 }

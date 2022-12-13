@@ -1,7 +1,6 @@
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { User } from '@sentry/node';
 import { ClassTransformer } from 'class-transformer';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
@@ -14,7 +13,6 @@ import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
-import { ArticleResponseDto } from '../article/dto/responses';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../auth';
@@ -26,7 +24,7 @@ import { SearchPostsDto } from './dto/requests';
 import {
   IDataPostToAdd,
   IDataPostToUpdate,
-  IPostElasticsearch,
+  IPostElasticsearch
 } from './interfaces/post-elasticsearch.interface';
 
 type FieldSearch = {
@@ -206,7 +204,10 @@ export class SearchService {
       }
     }
 
+    const notIncludeIds = await this.postService.getPostIdsReportedByUser(authUser.id);
+    searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
+    console.log('payload', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articleIds = [];
@@ -438,8 +439,6 @@ export class SearchService {
       offset,
     });
   }
-
-  private async _getAttrFromResponseSearch(hits: any) {}
   /*
     Search articles in series detail
   */
@@ -504,7 +503,16 @@ export class SearchService {
   }
 
   public async getPayloadSearchForPost(
-    { startTime, endTime, contentSearch, actors, limit, offset, type }: SearchPostsDto,
+    {
+      startTime,
+      endTime,
+      contentSearch,
+      actors,
+      limit,
+      offset,
+      type,
+      notIncludeIds,
+    }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
     index: string;
@@ -516,6 +524,7 @@ export class SearchService {
       query: {
         bool: {
           must: [],
+          must_not: [...this._getNotIncludeIds(notIncludeIds)],
           filter: [
             ...this._getActorFilter(actors),
             ...this._getTypeFilter(type),
@@ -664,6 +673,20 @@ export class SearchService {
         {
           terms: {
             [createdBy]: actors,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getNotIncludeIds(ids: string[]): any {
+    const { id } = ELASTIC_POST_MAPPING_PATH;
+    if (ids && ids.length) {
+      return [
+        {
+          terms: {
+            [id]: ids,
           },
         },
       ];
