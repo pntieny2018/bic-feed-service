@@ -34,12 +34,12 @@ import { PostHashtagModel } from './post-hashtag.model';
 import { PostMediaModel } from './post-media.model';
 import { PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
-import { PostTagModel } from './post-tag.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
-import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
+import { ITag, TagModel } from './tag.model';
+import { IPostTag, PostTagModel } from './post-tag.model';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -88,6 +88,7 @@ export interface IPost {
   series?: IPost[];
   hashtags?: IHashtag[];
   tags?: ITag[];
+  postTags?: IPostTag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
   tagsJson?: HashtagResponseDto[];
@@ -203,7 +204,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @DeletedAt
   @Column
-  deletedAt?: Date;
+  public deletedAt?: Date;
 
   @HasMany(() => CommentModel)
   public comments?: CommentModel[];

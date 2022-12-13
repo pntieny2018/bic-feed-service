@@ -64,7 +64,7 @@ export class GroupService {
     const groupIdsUserJoined = authUser.profile.groups;
     const childGroupIds = [
       ...group.child.open,
-      //...group.child.closed,
+      ...group.child.closed,
       ...group.child.private,
       ...group.child.secret,
     ];

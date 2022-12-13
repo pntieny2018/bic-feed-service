@@ -20,8 +20,9 @@ import {
   SeriesReorderArticlesListener,
 } from './series';
 import { SearchModule } from '../modules/search';
-import { ReportContentListener } from './report/report-content.listener';
+import { ReportContentListener } from './report';
 import { GroupModule } from '../shared/group';
+import { TagModule } from '../modules/tag';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { GroupModule } from '../shared/group';
     SeriesModule,
     ArticleModule,
     SearchModule,
+    TagModule,
   ],
   providers: [
     PostListener,
