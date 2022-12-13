@@ -294,7 +294,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     let condition = await CommentModel._getCondition(getCommentsDto);
     condition += ` AND NOT EXISTS ( 
       SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-      WHERE rp.target_id = "CommentModel".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
+      WHERE rp.target_id = "c".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
         authUserId
       )}
     )`;
@@ -406,7 +406,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
       AND NOT EXISTS ( 
         SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-        WHERE rp.target_id = "CommentModel".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
+        WHERE rp.target_id = "c".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
           authUserId
         )}
       )
@@ -420,7 +420,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
         AND NOT EXISTS ( 
           SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
-          WHERE rp.target_id = "CommentModel".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
+          WHERE rp.target_id = "c".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
             authUserId
           )}
         )

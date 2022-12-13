@@ -188,6 +188,7 @@ export class ArticleService extends PostService {
       include,
       where: {
         id: ids,
+        isHidden: false,
       },
     });
 
@@ -489,10 +490,11 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
+        isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
-      condition = { id: articleId, type: PostType.ARTICLE };
+      condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
     }
 
     const article = await this.postModel.findOne({

@@ -7,13 +7,18 @@ import { NotificationService, TypeActivity, VerbActivity } from '../../notificat
 import { ReportActivityService } from '../../notification/activities';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
+import { PostService } from '../../modules/post/post.service';
+import { SearchService } from '../../modules/search/search.service';
+import { TargetType } from '../../modules/report-content/contstants';
 
 @Injectable()
 export class ReportContentListener {
   public constructor(
     private readonly _groupService: GroupHttpService,
     private readonly _reportActivityService: ReportActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _postService: PostService,
+    private readonly _searchService: SearchService
   ) {}
 
   @On(CreateReportEvent)
@@ -71,6 +76,12 @@ export class ReportContentListener {
       },
     };
     this._notificationService.publishReportNotification(notificationPayload);
+
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+      this._postService.updateData([payload.targetId], {
+        isReported: true,
+      });
+    }
   }
 
   @On(ApproveReportEvent)
@@ -106,5 +117,13 @@ export class ReportContentListener {
       },
     };
     this._notificationService.publishReportNotification(notificationPayload);
+
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+      this._postService.updateData([payload.targetId], {
+        isHidden: true,
+      });
+      const posts = await this._postService.findPostByIds([payload.targetId]);
+      this._searchService.deletePostsToSearch(posts);
+    }
   }
 }
