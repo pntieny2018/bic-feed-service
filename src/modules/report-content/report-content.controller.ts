@@ -1,22 +1,21 @@
-import { GetReportDto, StatisticsReportResponsesDto } from './dto';
 import { AuthUser, UserDto } from '../auth';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CreateReportDto, UpdateStatusReportDto } from './dto';
 import { ReportContentService } from './report-content.service';
+import { GetReportDto, ReportReviewResponsesDto, StatisticsReportResponsesDto } from './dto';
 import { Body, Controller, Post, Patch, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-@ApiSecurity('authorization')
 @ApiTags('Reports')
 @Controller('reports')
+@ApiSecurity('authorization')
 export class ReportContentController {
   public constructor(private readonly _reportContentService: ReportContentService) {}
 
-  @Get('/content')
+  @Get('/review')
   public async getContentsReported(
     @AuthUser() user: UserDto,
-    @Body() getReportDto: GetReportDto
-  ): Promise<boolean> {
-    // TODO check permission
+    @Query() getReportDto: GetReportDto
+  ): Promise<ReportReviewResponsesDto[]> {
     return this._reportContentService.getReports(getReportDto);
   }
 
@@ -25,7 +24,7 @@ export class ReportContentController {
     @AuthUser() user: UserDto,
     @Body() getReportDto: GetReportDto
   ): Promise<any> {
-    getReportDto.authorId = user.id;
+    // TODO check permission
     return this._reportContentService.getReports(getReportDto);
   }
 
@@ -44,14 +43,16 @@ export class ReportContentController {
     @AuthUser() user: UserDto,
     @Body() createReportDto: CreateReportDto
   ): Promise<any> {
+    // TODO check permission
     return this._reportContentService.report(user, createReportDto);
   }
 
-  @Patch('/content')
-  public async update(
+  @Patch('/status')
+  public async updateStatus(
     @AuthUser() user: UserDto,
     @Body() updateStatusReportDto: UpdateStatusReportDto
-  ): Promise<any> {
+  ): Promise<boolean> {
+    // TODO check permission
     return this._reportContentService.update(user, updateStatusReportDto);
   }
 }

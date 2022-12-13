@@ -25,6 +25,7 @@ import { UserSavePostModel } from './user-save-post.model';
 import { ReportContentModel } from './report-content.model';
 import { PostTagModel } from './post-tag.model';
 import { TagModel } from './tag.model';
+import { ReportContentDetailModel } from './report-content-detail.model';
 
 export default [
   PostModel,
@@ -54,4 +55,5 @@ export default [
   ReportContentModel,
   TagModel,
   PostTagModel,
+  ReportContentDetailModel,
 ];

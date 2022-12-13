@@ -11,6 +11,8 @@ import { ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
   GetReportDto,
+  GetReportType,
+  ReportReviewResponsesDto,
   StatisticsReportResponseDto,
   StatisticsReportResponsesDto,
   UpdateStatusReportDto,
@@ -22,6 +24,13 @@ import {
 import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { getDatabaseConfig } from '../../config/database';
+import { plainToInstance } from 'class-transformer';
+import {
+  IReportContentDetailAttribute,
+  ReportContentDetailModel,
+} from '../../database/models/report-content-detail.model';
+import { CreateReportEvent } from '../../events/report/create-report.event';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 
 @Injectable()
 export class ReportContentService {
@@ -31,11 +40,103 @@ export class ReportContentService {
     private readonly _groupService: GroupService,
     private readonly _articleService: ArticleService,
     private readonly _commentService: CommentService,
-    @InjectModel(ReportContentModel) private readonly _reportContentModel: typeof ReportContentModel
+    private readonly _eventEmitter: InternalEventEmitterService,
+    @InjectModel(ReportContentModel)
+    private readonly _reportContentModel: typeof ReportContentModel,
+    @InjectModel(ReportContentDetailModel)
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
-  public async getReports(getReportDto: GetReportDto): Promise<any> {
-    const list = await this._reportContentModel.findAll({});
+  public async getReports(getReportDto: GetReportDto): Promise<ReportReviewResponsesDto[]> {
+    const { targetType, limit, offset } = getReportDto;
+
+    let conditionStr = `WHERE rc.report_type = :targetType`;
+
+    if (targetType === GetReportType.ALL || !targetType) {
+      conditionStr = '';
+    }
+    let results: Record<string, any>[] = await this._reportContentModel.sequelize.query(
+      `
+      SELECT 
+        p.title as "article_title",
+        p.content as "post_content",
+        c.content as "comment_content",
+        rc.*
+      FROM bein_stream.report_contents rc 
+      LEFT JOIN bein_stream.posts p on rc.target_id = p.id
+      LEFT JOIN bein_stream.comments c on rc.target_id = c.id
+      ${conditionStr}
+      LIMIT :limit OFFSET :offset
+    `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          limit: limit,
+          offset: offset,
+        },
+      }
+    );
+
+    const authorIds = results.map((rs) => rs['author_id']);
+    const reportIds = results.map((rs) => rs['id']);
+
+    const reportStatistics = await this._reportContentDetailModel.sequelize.query<{
+      reportId: string;
+      total: string;
+      reasonType: string;
+    }>(
+      ` SELECT  report_id as "reportId",
+              count(*) as total,
+              reason_type as "reasonType"
+      FROM bein_stream.report_content_details
+      GROUP BY report_id,reason_type
+      HAVING report_id in (:reportIds)
+    `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          reportIds: reportIds,
+        },
+      }
+    );
+
+    const reportStatisticsMap = new Map<
+      string,
+      { total: number; reasonType: string; description: string; reason?: string }[]
+    >();
+
+    const reasonTypes = await this._groupService.getReasonType();
+
+    for (const reportStatistic of reportStatistics) {
+      const { reportId, reasonType, total } = reportStatistic;
+      if (reportStatisticsMap.has(reportId)) {
+        reportStatisticsMap.get(reportId).push({
+          total: parseInt(total ?? '0'),
+          reasonType: reasonType,
+          description: reasonTypes.find((r) => r.id === reasonType).description ?? '',
+        });
+      } else {
+        reportStatisticsMap.set(reportId, [
+          {
+            total: parseInt(total ?? '0'),
+            reasonType: reasonType,
+            description: reasonTypes.find((r) => r.id === reasonType).description ?? '',
+          },
+        ]);
+      }
+    }
+    const authors = await this._userService.getMany(authorIds);
+
+    results = results.map((rs) => {
+      const author = authors.find((a) => a.id === rs['author_id']);
+      const details = reportStatisticsMap.get(rs['id']);
+      delete author.groups;
+      // const reason ?
+      return { ...rs, author: new UserDto(author), details: details };
+    });
+    return plainToInstance(ReportReviewResponsesDto, results, {
+      excludeExtraneousValues: true,
+    });
   }
 
   public async getStatistics(
@@ -47,12 +148,12 @@ export class ReportContentService {
     }
     const dbConfig = getDatabaseConfig();
 
-    const reportCount = await this._reportContentModel.sequelize.query<{
+    const reportCount = await this._reportContentDetailModel.sequelize.query<{
       reasonType: string;
       total: string;
     }>(
       `SELECT reason_type as "reasonType",count(*) as total
-           FROM ${dbConfig.schema}.report_contents WHERE target_id = :targetId
+           FROM ${dbConfig.schema}.report_content_details WHERE target_id = :targetId
            GROUP BY reason_type;`,
       {
         replacements: {
@@ -70,7 +171,7 @@ export class ReportContentService {
     for (let i = 0; i < totalReportType; i++) {
       totalReport += parseInt(reportCount[i].total ?? '0');
       queries.push(`
-          ( SELECT * FROM  ${dbConfig.schema}.report_contents 
+          ( SELECT * FROM  ${dbConfig.schema}.report_content_details
             WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = '${targetId}'
             ORDER BY created_at DESC
             LIMIT ${fetchReporter} )
@@ -78,9 +179,9 @@ export class ReportContentService {
     }
     const queryStr = queries.join(' UNION ALL ');
 
-    const reports = await this._reportContentModel.sequelize.query(queryStr, {
+    const reports = await this._reportContentDetailModel.sequelize.query(queryStr, {
       mapToModel: true,
-      model: ReportContentModel,
+      model: ReportContentDetailModel,
       type: QueryTypes.SELECT,
     });
 
@@ -88,6 +189,7 @@ export class ReportContentService {
 
     const userInfos = await this._userService.getMany(reporterIds);
     const reportByReasonTypeMap = new Map<string, StatisticsReportResponseDto>();
+    const reasonTypes = await this._groupService.getReasonType();
 
     for (const report of reports) {
       const userInfo = userInfos.find((u) => u.id === report.createdBy) ?? null;
@@ -102,7 +204,9 @@ export class ReportContentService {
           report.reasonType,
           new StatisticsReportResponseDto({
             reporters: [userInfo],
-            reason: report.reason,
+            reason: report.reason
+              ? report.reason
+              : reasonTypes.find((r) => r.id === report.reasonType).description ?? '',
             reasonType: report.reasonType,
             total: parseInt(total ?? '0'),
           })
@@ -113,8 +217,14 @@ export class ReportContentService {
     return new StatisticsReportResponsesDto([...reportByReasonTypeMap.values()], totalReport);
   }
 
+  /**
+   * TODO: will optimize
+   * @param user
+   * @param createReportDto
+   */
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
     const createdBy = user.id;
+
     const { groupIds, reportTo, targetType, targetId, reason, reasonType } = createReportDto;
 
     const reasonTypes = await this._groupService.getReasonType();
@@ -156,24 +266,71 @@ export class ReportContentService {
     }
 
     audienceIds = post.groups.map((g) => g.groupId);
+
     groupInfos = await this._groupService.getMany(audienceIds);
 
-    const insertData: IReportContentAttribute[] = groupInfos.map((group) => ({
-      reason: reason,
-      groupId: group.id,
+    const existedReport = await this._reportContentModel.findOne({
+      attributes: ['id'],
+      where: {
+        targetId: targetId,
+      },
+    });
+
+    if (existedReport) {
+      const details: IReportContentDetailAttribute[] = groupInfos.map((group) => ({
+        reportId: existedReport.id,
+        groupId: group.id,
+        reportTo: reportTo,
+        targetId: targetId,
+        targetType: targetType,
+        createdBy: createdBy,
+        reasonType: reasonType,
+        reason: reason,
+      }));
+
+      await this._reportContentDetailModel.bulkCreate(details, {
+        ignoreDuplicates: true,
+      });
+
+      return true;
+    }
+
+    const reportData: IReportContentAttribute = {
+      targetId: targetId,
+      targetType: targetType,
+      details: [],
       authorId: authorId,
+      status: ReportStatus.CREATED,
+    };
+
+    reportData.details = groupInfos.map((group) => ({
+      groupId: group.id,
       reportTo: reportTo,
       targetId: targetId,
+      targetType: targetType,
       createdBy: createdBy,
       reasonType: reasonType,
-      targetType: targetType,
-      status: ReportStatus.CREATED,
-      communityId: group.communityId,
+      reason: reason,
     }));
 
-    await this._reportContentModel.bulkCreate(insertData, {
-      ignoreDuplicates: true,
-    });
+    const transaction = await this._reportContentModel.sequelize.transaction();
+    // insert to two table need transaction
+    try {
+      const report = await this._reportContentModel.create(reportData, {
+        returning: true,
+        include: [
+          {
+            model: ReportContentDetailModel,
+            as: 'details',
+          },
+        ],
+      });
+      await transaction.commit();
+      this._eventEmitter.emit(new CreateReportEvent(report.toJSON()));
+    } catch (ex) {
+      await transaction.rollback();
+      throw ex;
+    }
 
     return true;
   }
@@ -205,7 +362,7 @@ export class ReportContentService {
         reportContentModel.targetType !== TargetType.COMMENT &&
         reportContentModel.targetType !== TargetType.CHILD_COMMENT
       ) {
-        break;
+        this._eventEmitter.emit(new CreateReportEvent(reportContentModel.toJSON()));
       }
     }
     return true;

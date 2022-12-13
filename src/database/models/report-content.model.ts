@@ -2,6 +2,7 @@ import {
   Column,
   CreatedAt,
   Default,
+  HasMany,
   Model,
   PrimaryKey,
   Table,
@@ -10,21 +11,20 @@ import {
 import { Optional } from 'sequelize';
 import { v4 as uuid_v4 } from 'uuid';
 import { IsUUID } from 'class-validator';
-import { ReportTo, TargetType } from '../../modules/report-content/contstants';
+import { TargetType } from '../../modules/report-content/contstants';
+import {
+  IReportContentDetailAttribute,
+  ReportContentDetailModel,
+} from './report-content-detail.model';
 
 export interface IReportContentAttribute {
   id?: string;
-  createdBy: string;
-  updatedBy?: string;
   targetId: string;
-  targetType: TargetType;
   authorId: string;
-  groupId: string;
-  reportTo: ReportTo;
-  reasonType: string;
-  reason?: string;
+  targetType: TargetType;
   status?: string;
-
+  details: IReportContentDetailAttribute[];
+  updatedBy?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -44,12 +44,6 @@ export class ReportContentModel
   public id: string;
 
   @Column
-  public createdBy: string;
-
-  @Column
-  public updatedBy: string;
-
-  @Column
   public targetId: string;
 
   @Column
@@ -59,19 +53,10 @@ export class ReportContentModel
   public authorId: string;
 
   @Column
-  public groupId: string;
-
-  @Column
-  public reportTo: ReportTo;
-
-  @Column
-  public reasonType: string;
-
-  @Column
-  public reason?: string;
-
-  @Column
   public status?: string;
+
+  @Column
+  public updatedBy?: string;
 
   @CreatedAt
   @Column
@@ -80,4 +65,7 @@ export class ReportContentModel
   @UpdatedAt
   @Column
   public updatedAt?: Date;
+
+  @HasMany(() => ReportContentDetailModel)
+  public details: ReportContentDetailModel[];
 }
