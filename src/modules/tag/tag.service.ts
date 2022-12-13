@@ -52,15 +52,18 @@ export class TagService {
     const groups = {};
     for (const rootGroupId of rootGroupIds) {
       const rootGroupInfo = await this._groupService.get(rootGroupId);
-      groups[rootGroupId] = [rootGroupInfo];
       const childGroupIds: string[] = [
         ...rootGroupInfo.child.private,
         ...rootGroupInfo.child.open,
         ...rootGroupInfo.child.closed,
         ...rootGroupInfo.child.secret,
       ];
+      delete rootGroupInfo.child;
+      groups[rootGroupId] = [rootGroupInfo];
       for (const childGroupId of childGroupIds) {
-        groups[rootGroupId].push(await this._groupService.get(childGroupId));
+        const childGroupInfo = await this._groupService.get(childGroupId);
+        delete childGroupInfo.child;
+        groups[rootGroupId].push(childGroupInfo);
       }
     }
 
