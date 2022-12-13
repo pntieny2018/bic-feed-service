@@ -50,7 +50,7 @@ export class TagService {
     });
 
     const groups = {};
-    const groupIdMap = {}
+    const groupIdMap = {};
     const rootGroupInfos = await this._groupService.getMany(rootGroupIds);
     const childGroupIds = rootGroupInfos.reduce<string[]>((ids, rootGroupInfo) => {
       const childIds = [
@@ -58,7 +58,7 @@ export class TagService {
         ...rootGroupInfo.child.open,
         ...rootGroupInfo.child.closed,
         ...rootGroupInfo.child.secret,
-      ]
+      ];
       groupIdMap[rootGroupInfo.id] = childIds;
       return ids.concat(childIds);
     }, []);
