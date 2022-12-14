@@ -13,7 +13,7 @@ import {
   PrimaryKey,
   Sequelize,
   Table,
-  UpdatedAt
+  UpdatedAt,
 } from 'sequelize-typescript';
 import { Literal } from 'sequelize/types/utils';
 import { v4 as uuid_v4 } from 'uuid';
@@ -357,6 +357,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     }
   ): Literal {
     //TODO limit scope in group
+    if (!userId) return Sequelize.literal(`1 = 1`);
     const { mainTableAlias, type } = options ?? {
       mainTableAlias: 'PostModel',
       type: [],
