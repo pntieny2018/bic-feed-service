@@ -36,6 +36,24 @@ export class ReportReviewResponsesDto {
   public commentContent?: string;
 
   @ApiProperty({
+    name: 'comment_post_id',
+    required: false,
+  })
+  @Expose({
+    name: 'comment_post_id',
+  })
+  public commentPostId?: string;
+
+  @ApiProperty({
+    name: 'comment_parent_id',
+    required: false,
+  })
+  @Expose({
+    name: 'comment_parent_id',
+  })
+  public commentParentId?: string;
+
+  @ApiProperty({
     name: 'target_id',
   })
   @Expose({
