@@ -4,7 +4,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsOptional, IsUUID } from 'class-validator';
 
 export class GetTagDto extends PageOptionsDto {
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   @Type(() => String)
   @IsOptional()
   public name?: string;
