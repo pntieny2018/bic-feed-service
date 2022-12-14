@@ -32,7 +32,6 @@ import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
-import { AuthorityService } from '../authority';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -47,6 +46,7 @@ import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { ReportTo, TargetType } from '../report-content/contstants';
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
+
 @Injectable()
 export class PostService {
   /**
@@ -82,7 +82,6 @@ export class PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    protected authorityService: AuthorityService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
@@ -193,7 +192,7 @@ export class PostService {
         type: [TargetType.ARTICLE, TargetType.POST],
       }),
     ];
-    // TODO: move out logic
+
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
@@ -201,12 +200,6 @@ export class PostService {
     });
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
-
-    if (user) {
-      await this.authorityService.checkCanReadPost(user, post);
-    } else {
-      await this.authorityService.checkIsPublicPost(post);
     }
 
     let comments = null;

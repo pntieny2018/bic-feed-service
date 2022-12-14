@@ -123,7 +123,6 @@ export class ArticleService extends PostService {
       mediaService,
       mentionService,
       commentService,
-      authorityService,
       reactionService,
       feedService,
       sentryService,

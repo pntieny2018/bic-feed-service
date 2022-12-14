@@ -35,6 +35,7 @@ import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { FeedService } from '../feed/feed.service';
 import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
+import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 
 @Injectable()
 export class ReportContentService {
@@ -443,5 +444,35 @@ export class ReportContentService {
       }
     }
     return true;
+  }
+
+  public async getContent(targetId: string): Promise<DetailContentReportResponseDto> {
+    const reportStatus = await this._reportContentModel.findOne({
+      where: {
+        targetId: targetId,
+        status: ReportStatus.CREATED,
+      },
+    });
+    if (!reportStatus) {
+      throw new ValidatorException('Report not found or resolved');
+    }
+
+    const detailContentReportResponseDto = new DetailContentReportResponseDto();
+
+    if (reportStatus.targetType === TargetType.COMMENT) {
+      const comment = await this._commentService.getComment(
+        {
+          id: reportStatus.authorId,
+        },
+        targetId,
+        0
+      );
+      detailContentReportResponseDto.setComment(comment);
+    }
+    const post = await this._postService.get(targetId, null);
+
+    detailContentReportResponseDto.setPost(post);
+
+    return detailContentReportResponseDto;
   }
 }
