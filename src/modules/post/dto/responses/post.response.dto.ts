@@ -11,6 +11,7 @@ import { MediaService } from '../../../media';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
 import { UserMentionDto } from '../../../mention/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
+import { TagResponseDto } from '../../../tag/dto/responses/tag-response.dto';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { AudienceResponseDto } from './audience.response.dto';
 import { PostSettingResponseDto } from './post-setting-response.dto';
@@ -319,6 +320,16 @@ export class PostResponseDto {
   })
   @Expose()
   public communities?: CommunityResponseDto[];
+
+  @ApiProperty({
+    type: [TagResponseDto],
+  })
+  @Expose()
+  @Transform(({ obj }) => {
+    if (obj.tagsJson === null) return [];
+    return obj.tagsJson;
+  })
+  public tags?: TagResponseDto[];
 
   @ApiProperty({
     type: Boolean,
