@@ -78,6 +78,10 @@ export class ReportContentService {
       }
     );
 
+    if (!results.length) {
+      return [];
+    }
+
     const authorIds = results.map((rs) => rs['author_id']);
     const reportIds = results.map((rs) => rs['id']);
 
