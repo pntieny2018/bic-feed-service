@@ -192,6 +192,7 @@ export class PostBindingService {
   public async bindActor(posts: any[]): Promise<void> {
     const userIds = [];
     for (const post of posts) {
+      console.log(JSON.stringify(post, null, 4));
       userIds.push(post.createdBy);
       if (post.articles?.length) {
         userIds.push(...post.articles.map((article) => article.createdBy));

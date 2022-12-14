@@ -424,8 +424,8 @@ export class ReportContentService {
 
     const conditions = {
       [Op.or]: {
-        targetId: updateStatusReport.targetIds,
-        id: updateStatusReport.reportIds,
+        targetId: updateStatusReport.targetIds ?? [],
+        id: updateStatusReport.reportIds ?? [],
       },
       status: {
         [Op.not]: ReportStatus.HID,
