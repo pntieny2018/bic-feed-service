@@ -1269,11 +1269,18 @@ export class PostService {
       },
     });
 
+    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
+
     const mappedPosts = ids.map((postId) => {
       const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
+      if (post) {
+        const postJson = post.toJSON();
+        postJson.articles = postJson.articles.filter(
+          (article) => !articleIdsReported.includes(article.id)
+        );
+        return postJson;
+      }
     });
-
     return mappedPosts;
   }
 

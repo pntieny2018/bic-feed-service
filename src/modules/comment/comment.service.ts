@@ -349,6 +349,20 @@ export class CommentService {
     checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
     const { childLimit, postId, parentId, limit } = getCommentsDto;
+
+    const entityIdsReportedByUser = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.POST,
+      TargetType.ARTICLE,
+    ]);
+    if (entityIdsReportedByUser.includes(postId)) {
+      return new PageDto<CommentResponseDto>([], {
+        limit,
+        offset: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    }
+
     const post = await this._postService.findPost({
       postId,
     });
@@ -400,14 +414,26 @@ export class CommentService {
       });
     }
     const checkComment = await this._commentModel.findByPk(commentId);
-    const commentIdsReportedByUser = this._postService.getEntityIdsReportedByUser(user.id, [
-      TargetType.COMMENT,
-    ]);
     if (!checkComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
+    const entityIdsReportedByUser = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.COMMENT,
+      TargetType.POST,
+      TargetType.ARTICLE,
+    ]);
+
+    if (entityIdsReportedByUser.includes(commentId)) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+    }
+
     const { postId } = checkComment;
+
+    if (entityIdsReportedByUser.includes(postId)) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+
     const post = await this._postService.findPost({
       postId,
     });

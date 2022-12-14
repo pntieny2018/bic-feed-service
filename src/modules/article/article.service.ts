@@ -218,9 +218,8 @@ export class ArticleService extends PostService {
     const articleIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
       TargetType.ARTICLE,
     ]);
-
     const articleIdsSorted = articlesInSeries
-      .filter((article) => !articleIdsReported.includes(article.id))
+      .filter((article) => !articleIdsReported.includes(article.postId))
       .map((article) => article.postId);
     const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
     const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
