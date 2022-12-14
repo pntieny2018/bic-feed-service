@@ -323,9 +323,7 @@ export class PostResponseDto {
   @ApiProperty({
     type: Boolean,
   })
-  @Expose({
-    name: 'is_reported',
-  })
+  @Expose()
   public isReported?: boolean;
 
   public isHidden?: boolean;
