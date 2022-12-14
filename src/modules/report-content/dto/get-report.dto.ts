@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import { TargetType } from '../contstants';
 import { ApiProperty } from '@nestjs/swagger';
 import { PageOptionsDto } from '../../../common/dto';
 import { IsOptional } from 'class-validator';
@@ -20,5 +19,14 @@ export class GetReportDto extends PageOptionsDto {
   @Expose({
     name: 'target_type',
   })
-  public targetType: GetReportType;
+  public targetType?: GetReportType;
+
+  @ApiProperty({
+    name: 'group_id',
+  })
+  @IsOptional()
+  @Expose({
+    name: 'group_id',
+  })
+  public groupId: string;
 }

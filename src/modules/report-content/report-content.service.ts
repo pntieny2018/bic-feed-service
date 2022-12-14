@@ -49,9 +49,11 @@ export class ReportContentService {
   ) {}
 
   public async getReports(getReportDto: GetReportDto): Promise<ReportReviewResponsesDto[]> {
-    const { targetType, limit, offset } = getReportDto;
+    const dbConfig = getDatabaseConfig();
 
-    let conditionStr = `WHERE rc.report_type = :targetType`;
+    const { targetType, groupId, limit, offset } = getReportDto;
+
+    let conditionStr = `AND rc.report_type = :targetType`;
 
     if (targetType === GetReportType.ALL || !targetType) {
       conditionStr = '';
@@ -64,8 +66,9 @@ export class ReportContentService {
         c.content as "comment_content",
         rc.*
       FROM bein_stream.report_contents rc 
-      LEFT JOIN bein_stream.posts p on rc.target_id = p.id
-      LEFT JOIN bein_stream.comments c on rc.target_id = c.id
+      LEFT JOIN ${dbConfig.schema}.posts p on rc.target_id = p.id
+      LEFT JOIN ${dbConfig.schema}.comments c on rc.target_id = c.id
+      WHERE rc.id IN (SELECT rcd.report_id FROM ${dbConfig.schema}.report_content_details rcd WHERE rcd.group_id = :groupId )
       ${conditionStr}
       LIMIT :limit OFFSET :offset
     `,
@@ -74,6 +77,7 @@ export class ReportContentService {
         replacements: {
           limit: limit,
           offset: offset,
+          groupId: groupId,
         },
       }
     );
