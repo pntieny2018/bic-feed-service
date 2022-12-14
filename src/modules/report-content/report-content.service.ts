@@ -170,6 +170,7 @@ export class ReportContentService {
         targetType: {
           [Op.notIn]: [TargetType.COMMENT, TargetType.CHILD_COMMENT],
         },
+        status: ReportStatus.HID,
       },
       limit: limit,
       offset: offset,
