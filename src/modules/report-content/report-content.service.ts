@@ -175,7 +175,8 @@ export class ReportContentService {
     getOptions: GetBlockedContentOfMeDto
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order } = getOptions;
-    const targets = await this._reportContentModel.findAll({
+
+    const { rows, count } = await this._reportContentModel.findAndCountAll({
       attributes: ['id', 'targetId'],
       where: {
         authorId: author.id,
@@ -193,7 +194,7 @@ export class ReportContentService {
     const targetIds = [];
     const postReportMap = new Map<string, string>();
 
-    for (const item of targets) {
+    for (const item of rows) {
       targetIds.push(item.targetId);
       reportIds.push(item.id);
       postReportMap.set(item.targetId, item.id);
@@ -210,7 +211,11 @@ export class ReportContentService {
     if (!targetIds || !targetIds.length) {
       return new PageDto<PostResponseDto>([], meta(false));
     }
-    const responses = await this._feedService.getContentBlockedOfMe(author, targetIds, meta(true));
+    const responses = await this._feedService.getContentBlockedOfMe(
+      author,
+      targetIds,
+      meta(offset + limit + 1 <= count)
+    );
 
     responses.list = responses.list.map((post) => {
       const reportId = postReportMap.get(post.id);
