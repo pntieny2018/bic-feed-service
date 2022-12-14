@@ -9,6 +9,7 @@ import { ArticleService } from '../article/article.service';
 import { ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
+  GetBlockedContentOfMeDto,
   GetReportDto,
   GetReportType,
   ReportReviewResponsesDto,
@@ -157,7 +158,11 @@ export class ReportContentService {
     });
   }
 
-  public async getContentBlockedOfMe(author: UserDto): Promise<PageDto<PostResponseDto>> {
+  public async getContentBlockedOfMe(
+    author: UserDto,
+    getOptions: GetBlockedContentOfMeDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { limit, offset, order } = getOptions;
     const targets = await this._reportContentModel.findAll({
       attributes: ['target_id'],
       where: {
@@ -166,9 +171,9 @@ export class ReportContentService {
           [Op.notIn]: [TargetType.COMMENT, TargetType.CHILD_COMMENT],
         },
       },
-      limit: 10,
-      offset: 0,
-      order: [['created_at', 'DESC']],
+      limit: limit,
+      offset: offset,
+      order: [['created_at', order]],
     });
 
     const targetIds = targets.map((rp) => rp.targetId);
@@ -411,38 +416,61 @@ export class ReportContentService {
   ): Promise<boolean> {
     const { status } = updateStatusReport;
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
-    const [_, records] = await this._reportContentModel.update(
-      {
-        status: status,
+    const conditions = {
+      [Op.or]: {
+        targetId: updateStatusReport.targetIds,
+        id: updateStatusReport.reportIds,
       },
-      {
-        where: {
-          [Op.or]: {
-            targetId: updateStatusReport.targetIds,
-            id: updateStatusReport.reportIds,
-          },
-          status: {
-            [Op.not]: ReportStatus.HID,
-          },
-        },
-        returning: true,
-      }
-    );
+      status: {
+        [Op.not]: ReportStatus.HID,
+      },
+    };
 
-    for (const reportContentModel of records) {
-      if (
-        reportContentModel.targetType !== TargetType.COMMENT &&
-        reportContentModel.targetType !== TargetType.CHILD_COMMENT
-      ) {
-        this._eventEmitter.emit(
-          new ApproveReportEvent({
-            actor: admin,
-            ...reportContentModel.toJSON(),
-          })
-        );
+    const trx = await this._reportContentModel.sequelize.transaction();
+
+    try {
+      const [affectedCount] = await this._reportContentModel.update(
+        {
+          status: status,
+        },
+        {
+          where: conditions,
+        }
+      );
+      await trx.commit();
+
+      if (affectedCount > 0) {
+        const reports = await this._reportContentModel.findAll({
+          include: [
+            {
+              model: ReportContentDetailModel,
+              as: 'details',
+              order: [['createdAt', 'DESC']],
+              limit: 1,
+            },
+          ],
+          where: conditions,
+        });
+
+        for (const report of reports) {
+          if (
+            report.targetType !== TargetType.COMMENT &&
+            report.targetType !== TargetType.CHILD_COMMENT
+          ) {
+            this._eventEmitter.emit(
+              new ApproveReportEvent({
+                actor: admin,
+                ...report.toJSON(),
+              })
+            );
+          }
+        }
       }
+    } catch (ex) {
+      await trx.rollback();
+      throw ex;
     }
+
     return true;
   }
 

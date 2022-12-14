@@ -1,6 +1,6 @@
 import { AuthUser, UserDto } from '../auth';
 import { ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { CreateReportDto, UpdateStatusReportDto } from './dto';
+import { CreateReportDto, GetBlockedContentOfMeDto, UpdateStatusReportDto } from './dto';
 import { ReportContentService } from './report-content.service';
 import { GetReportDto, ReportReviewResponsesDto, StatisticsReportResponsesDto } from './dto';
 import { Body, Controller, Post, Patch, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
@@ -21,8 +21,11 @@ export class ReportContentController {
   }
 
   @Get('/me/content')
-  public async getContentsBlockedOfMe(@AuthUser() user: UserDto): Promise<any> {
-    return this._reportContentService.getContentBlockedOfMe(user);
+  public async getContentsBlockedOfMe(
+    @AuthUser() user: UserDto,
+    @Query() getOptions: GetBlockedContentOfMeDto
+  ): Promise<any> {
+    return this._reportContentService.getContentBlockedOfMe(user, getOptions);
   }
 
   @ApiParam({
