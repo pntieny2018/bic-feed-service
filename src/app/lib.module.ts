@@ -131,6 +131,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     InternalEventEmitterModule,
   ],
   providers: [ExternalService],
-  exports: [HttpModule, ElasticsearchModule, ClientsModule, ExternalService],
+  exports: [ElasticsearchModule, ClientsModule, ExternalService],
 })
 export class LibModule {}

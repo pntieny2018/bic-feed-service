@@ -21,6 +21,9 @@ export class StatisticsReportResponseDto {
   public reason?: string;
 
   @ApiProperty()
+  public description: string;
+
+  @ApiProperty()
   public total: number;
 
   @ApiProperty()
