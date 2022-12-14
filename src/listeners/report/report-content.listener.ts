@@ -50,9 +50,17 @@ export class ReportContentListener {
       adminInfos[groupId] = adminIds;
     }
 
+    const actor = {
+      id: payload.actor.id,
+      email: payload.actor.email,
+      username: payload.actor.username,
+      fullname: payload.actor.profile.fullname,
+      avatar: payload.actor.avatar,
+    };
+
     const activity = this._reportActivityService.createCreatedReportPayload({
       id: payload.id,
-      actor: payload.actor,
+      actor: actor,
       targetId: payload.targetId,
       targetType: payload.targetType,
       status: payload.status,
@@ -68,7 +76,7 @@ export class ReportContentListener {
     const notificationPayload: NotificationPayloadDto<NotificationActivity> = {
       key: payload.id,
       value: {
-        actor: payload.actor,
+        actor: actor,
         event: event.getEventName(),
         data: activity,
         meta: {
@@ -96,9 +104,17 @@ export class ReportContentListener {
 
     const { payload } = event;
 
+    const actor = {
+      id: payload.actor.id,
+      email: payload.actor.email,
+      username: payload.actor.username,
+      fullname: payload.actor.profile.fullname,
+      avatar: payload.actor.avatar,
+    };
+
     const activity = this._reportActivityService.createCreatedReportPayload({
       id: payload.id,
-      actor: payload.actor,
+      actor: actor,
       targetId: payload.targetId,
       targetType: payload.targetType,
       status: payload.status,
@@ -114,7 +130,7 @@ export class ReportContentListener {
     const notificationPayload: NotificationPayloadDto<NotificationActivity> = {
       key: payload.id,
       value: {
-        actor: payload.actor,
+        actor: actor,
         event: event.getEventName(),
         data: activity,
         meta: {

@@ -33,7 +33,7 @@ export class SettingObject {
   public importantExpiredAt?: Date;
 }
 export class ActorObject {
-  public id: number;
+  public id: string;
   public username: string;
   public avatar: string;
   public fullname: string;
