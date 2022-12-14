@@ -1,15 +1,18 @@
-import { UserDto } from '../../modules/auth';
 import { Injectable } from '@nestjs/common';
 import { ObjectHelper } from '../../common/helpers';
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { TargetType } from '../../modules/report-content/contstants';
-import { ActivityObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
+import {
+  ActivityObject,
+  ActorObject,
+  NotificationActivity,
+} from '../dto/requests/notification-activity.dto';
 
 @Injectable()
 export class ReportActivityService {
   public createCreatedReportPayload(reportData: {
     id: string;
-    actor: UserDto;
+    actor: ActorObject;
     targetId: string;
     targetType: TargetType;
     status: string;
