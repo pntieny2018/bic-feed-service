@@ -252,6 +252,23 @@ export class FeedService {
     });
   }
 
+  public async getContentBlockedOfMe(
+    authUser: UserDto,
+    postIdsAndSorted: string[],
+    paging: {
+      limit: number;
+      offset: number;
+      hasNextPage: boolean;
+    }
+  ): Promise<PageDto<PostResponseDto>> {
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+    const postsBindData = await this._bindAndTransformData({
+      posts,
+      authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindData, paging);
+  }
   /**
    * Delete newsfeed by post
    */

@@ -32,10 +32,14 @@ import {
 import { CreateReportEvent } from '../../events/report/create-report.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
+import { FeedService } from '../feed/feed.service';
+import { PageDto } from '../../common/dto';
+import { PostResponseDto } from '../post/dto/responses';
 
 @Injectable()
 export class ReportContentService {
   public constructor(
+    private readonly _feedService: FeedService,
     private readonly _userService: UserService,
     private readonly _postService: PostService,
     private readonly _groupService: GroupService,
@@ -152,6 +156,29 @@ export class ReportContentService {
     });
   }
 
+  public async getContentBlockedOfMe(author: UserDto): Promise<PageDto<PostResponseDto>> {
+    const targets = await this._reportContentModel.findAll({
+      attributes: ['target_id'],
+      where: {
+        authorId: author.id,
+        targetType: {
+          [Op.notIn]: [TargetType.COMMENT, TargetType.CHILD_COMMENT],
+        },
+      },
+      limit: 10,
+      offset: 0,
+      order: [['created_at', 'DESC']],
+    });
+
+    const targetIds = targets.map((rp) => rp.targetId);
+
+    return await this._feedService.getContentBlockedOfMe(author, targetIds, {
+      limit: 10,
+      offset: 0,
+      hasNextPage: true,
+    });
+  }
+
   public async getStatistics(
     targetId: string,
     fetchReporter: number
@@ -236,6 +263,21 @@ export class ReportContentService {
     }
 
     return new StatisticsReportResponsesDto([...reportByReasonTypeMap.values()], totalReport);
+  }
+
+  private async _validateGroupIds(
+    audienceIds: string[],
+    groupIdsNeedValidate: string[],
+    type: ReportTo
+  ): Promise<void> {
+    const groups = await this._groupService.getMany(audienceIds);
+    const existGroups = groups.filter((group) => {
+      const isCommunity = type === ReportTo.COMMUNITY;
+      return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
+    });
+    if (existGroups.length < groupIdsNeedValidate.length) {
+      throw new ValidatorException('Invalid group_ids');
+    }
   }
 
   /**
@@ -362,7 +404,10 @@ export class ReportContentService {
     return true;
   }
 
-  public async update(admin: UserDto, updateStatusReport: UpdateStatusReportDto): Promise<boolean> {
+  public async updateStatusReport(
+    admin: UserDto,
+    updateStatusReport: UpdateStatusReportDto
+  ): Promise<boolean> {
     const { status } = updateStatusReport;
 
     // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
@@ -374,7 +419,7 @@ export class ReportContentService {
         where: {
           [Op.or]: {
             targetId: updateStatusReport.targetIds,
-            reportId: updateStatusReport.reportIds,
+            id: updateStatusReport.reportIds,
           },
           status: {
             [Op.not]: ReportStatus.HID,
@@ -398,20 +443,5 @@ export class ReportContentService {
       }
     }
     return true;
-  }
-
-  private async _validateGroupIds(
-    audienceIds: string[],
-    groupIdsNeedValidate: string[],
-    type: ReportTo
-  ): Promise<void> {
-    const groups = await this._groupService.getMany(audienceIds);
-    const existGroups = groups.filter((group) => {
-      const isCommunity = type === ReportTo.COMMUNITY;
-      return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
-    });
-    if (existGroups.length < groupIdsNeedValidate.length) {
-      throw new ValidatorException('Invalid group_ids');
-    }
   }
 }

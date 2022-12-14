@@ -20,12 +20,13 @@ export class ReportContentController {
   }
 
   @Get('/me/content')
-  public async getContentsBlockedOfMe(
-    @AuthUser() user: UserDto,
-    @Body() getReportDto: GetReportDto
-  ): Promise<any> {
+  public async getContentsBlockedOfMe(@AuthUser() user: UserDto): Promise<any> {
+    return this._reportContentService.getContentBlockedOfMe(user);
+  }
+
+  @Get('/:id/content')
+  public async getDetailReportContent(@AuthUser() user: UserDto): Promise<any> {
     // TODO check permission
-    return this._reportContentService.getReports(getReportDto);
   }
 
   @Get(':id/statistics')
@@ -53,6 +54,6 @@ export class ReportContentController {
     @Body() updateStatusReportDto: UpdateStatusReportDto
   ): Promise<boolean> {
     // TODO check permission
-    return this._reportContentService.update(user, updateStatusReportDto);
+    return this._reportContentService.updateStatusReport(user, updateStatusReportDto);
   }
 }

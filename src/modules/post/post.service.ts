@@ -193,6 +193,7 @@ export class PostService {
         type: [TargetType.ARTICLE, TargetType.POST],
       }),
     ];
+    // TODO: move out logic
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
