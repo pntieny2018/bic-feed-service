@@ -109,6 +109,7 @@ export class TagService {
       name: name,
       groupId: createTagDto.groupId,
       slug: slug,
+      totalUsed: 0,
       createdBy: authUser.id,
       updatedBy: authUser.id,
     });
