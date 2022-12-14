@@ -161,6 +161,15 @@ export class ReportContentService {
     }
     const dbConfig = getDatabaseConfig();
 
+    const reportStatus = await this._reportContentModel.findOne({
+      where: {
+        targetId: targetId,
+        status: ReportStatus.CREATED,
+      },
+    });
+    if (!reportStatus) {
+      throw new ValidatorException('Report not found or resolved');
+    }
     const reportCount = await this._reportContentDetailModel.sequelize.query<{
       reasonType: string;
       total: string;
@@ -217,9 +226,8 @@ export class ReportContentService {
           report.reasonType,
           new StatisticsReportResponseDto({
             reporters: [userInfo],
-            reason: report.reason
-              ? report.reason
-              : reasonTypes.find((r) => r.id === report.reasonType).description ?? '',
+            description: reasonTypes.find((rt) => rt.id === report.reasonType)?.description ?? '',
+            reason: report.reason,
             reasonType: report.reasonType,
             total: parseInt(total ?? '0'),
           })
