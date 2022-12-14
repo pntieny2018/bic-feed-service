@@ -32,8 +32,7 @@ export class ArticleAppService {
     private _authorityService: AuthorityService,
     private _postService: PostService,
     private _postSearchService: SearchService,
-    private _tagServices: TagService,
-    private _groupServices: GroupService
+    private _tagServices: TagService
   ) {}
 
   public async getRelatedById(
@@ -62,7 +61,7 @@ export class ArticleAppService {
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting } = createArticleDto;
+    const { audience, setting, tags } = createArticleDto;
     if (audience.groupIds) {
       const isEnableSetting =
         setting.isImportant ||
@@ -70,6 +69,10 @@ export class ArticleAppService {
         setting.canReact === false ||
         setting.canShare === false;
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
+    }
+
+    if (tags?.length) {
+      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
     }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
@@ -149,21 +152,7 @@ export class ArticleAppService {
     }
 
     if (tags?.length) {
-      const tagsInfos = await this._tagServices.getTagsByIds(tags);
-      const audienceGroupInfos = await this._groupServices.getMany(audience.groupIds);
-      const audienceRootGroupIds = audienceGroupInfos.map((e) => e.rootGroupId);
-      const invalidTags = tagsInfos.filter(
-        (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)
-      );
-      if (invalidTags.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: `The following tags were removed from this article: ${invalidTags
-            .map((e) => e.name)
-            .join(', ')}`,
-          errors: { seriesDenied: invalidTags.map((e) => e.id) },
-        });
-      }
+      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);

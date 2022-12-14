@@ -243,4 +243,22 @@ export class TagService {
       await tag.update({ totalUsed: tag.totalUsed - 1 });
     }
   }
+
+  public async canCreateOrUpdate(tagIds: string[], audienceGroupIds: string[]): Promise<void> {
+    const tagsInfos = await this._tagModel.findAll({ where: { id: tagIds } });
+    const audienceGroupInfos = await this._groupService.getMany(audienceGroupIds);
+    const audienceRootGroupIds = audienceGroupInfos.map((e) => e.rootGroupId);
+    const invalidTags = tagsInfos.filter(
+      (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)
+    );
+    if (invalidTags.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `The following tags were removed from this article: ${invalidTags
+          .map((e) => e.name)
+          .join(', ')}`,
+        errors: { seriesDenied: invalidTags.map((e) => e.id) },
+      });
+    }
+  }
 }
