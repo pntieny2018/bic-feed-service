@@ -178,11 +178,16 @@ export class ReportContentService {
 
     const targetIds = targets.map((rp) => rp.targetId);
 
-    return await this._feedService.getContentBlockedOfMe(author, targetIds, {
-      limit: 10,
-      offset: 0,
-      hasNextPage: true,
+    const meta = (hasNextPage: boolean) => ({
+      limit: limit,
+      offset: offset,
+      hasNextPage: hasNextPage,
     });
+
+    if (!targetIds || !targetIds.length) {
+      return new PageDto<PostResponseDto>([], meta(false));
+    }
+    return await this._feedService.getContentBlockedOfMe(author, targetIds, meta(true));
   }
 
   public async getStatistics(
@@ -496,6 +501,8 @@ export class ReportContentService {
         0
       );
       detailContentReportResponseDto.setComment(comment);
+
+      return detailContentReportResponseDto;
     }
     const post = await this._postService.get(targetId, null);
 
