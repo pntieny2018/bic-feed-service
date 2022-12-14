@@ -142,14 +142,12 @@ export class ReportContentListener {
     };
     this._notificationService.publishReportNotification(notificationPayload);
 
-    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      this._postService
-        .updateData([payload.targetId], {
-          isHidden: true,
-        })
-        .catch((ex) => this._logger.error(ex));
-      const posts = await this._postService.findPostByIds([payload.targetId]);
-      this._searchService.deletePostsToSearch(posts).catch((ex) => this._logger.error(ex));
-    }
+    this._postService
+      .updateData([payload.targetId], {
+        isHidden: true,
+      })
+      .catch((ex) => this._logger.error(ex));
+    const posts = await this._postService.findPostByIds([payload.targetId]);
+    this._searchService.deletePostsToSearch(posts).catch((ex) => this._logger.error(ex));
   }
 }
