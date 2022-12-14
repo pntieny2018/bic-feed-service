@@ -28,6 +28,7 @@ export class ExternalService {
       const response = await lastValueFrom(
         this._httpService.post(`${this._uploadServiceEndpoint}/files/ids`, ids, {
           headers,
+          baseURL: '',
         })
       );
       return response.data.data

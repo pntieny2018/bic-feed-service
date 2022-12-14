@@ -64,6 +64,8 @@ export class ReportContentService {
         p.title as "article_title",
         p.content as "post_content",
         c.content as "comment_content",
+        c.parent_id as "comment_parent_id",
+        c.post_id as "comment_post_id"
         rc.*
       FROM bein_stream.report_contents rc 
       LEFT JOIN ${dbConfig.schema}.posts p on rc.target_id = p.id
