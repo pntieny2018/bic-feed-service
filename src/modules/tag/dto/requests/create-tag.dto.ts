@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, MaxLength } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 
 export class CreateTagDto {
@@ -7,6 +7,7 @@ export class CreateTagDto {
   @Type(() => String)
   @IsNotEmpty()
   @Expose()
+  @MaxLength(32)
   public name: string;
 
   @ApiProperty({ type: String })

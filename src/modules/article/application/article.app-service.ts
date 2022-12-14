@@ -21,6 +21,8 @@ import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto'
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
+import { TagService } from '../../tag/tag.service';
+import { GroupService } from '../../../shared/group';
 
 @Injectable()
 export class ArticleAppService {
@@ -29,7 +31,9 @@ export class ArticleAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
-    private _postSearchService: SearchService
+    private _postSearchService: SearchService,
+    private _tagServices: TagService,
+    private _groupServices: GroupService
   ) {}
 
   public async getRelatedById(
@@ -83,7 +87,7 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, series, setting, coverMedia } = updateArticleDto;
+    const { audience, series, setting, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -141,6 +145,24 @@ export class ArticleAppService {
             errors: { seriesDenied: invalidSeries.map((e) => e.id) },
           });
         }
+      }
+    }
+
+    if (tags?.length) {
+      const tagsInfos = await this._tagServices.getTagsByIds(tags);
+      const audienceGroupInfos = await this._groupServices.getMany(audience.groupIds);
+      const audienceRootGroupIds = audienceGroupInfos.map((e) => e.rootGroupId);
+      const invalidTags = tagsInfos.filter(
+        (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)
+      );
+      if (invalidTags.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: `The following tags were removed from this article: ${invalidTags
+            .map((e) => e.name)
+            .join(', ')}`,
+          errors: { seriesDenied: invalidTags.map((e) => e.id) },
+        });
       }
     }
 
