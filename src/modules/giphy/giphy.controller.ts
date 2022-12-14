@@ -39,7 +39,7 @@ export class GiphyController {
   public async getTrending(@Query() trendingDto: TrendingDto): Promise<GiphyResponseDto[]> {
     const trendingGiphyUrl = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=${trendingDto.limit}&rating=${trendingDto.rating}`;
     return this._httpService.axiosRef
-      .get(trendingGiphyUrl, { timeout: DEFAULT_REQUEST_TIME_OUT })
+      .get(trendingGiphyUrl, { baseURL: '', timeout: DEFAULT_REQUEST_TIME_OUT })
       .then((response) => this.transferGiphyResponseApi(response, trendingDto.type))
       .catch((e) => {
         this._sentryService.captureException(e);
@@ -52,7 +52,7 @@ export class GiphyController {
   public async search(@Query() searchDto: SearchDto): Promise<GiphyResponseDto[]> {
     const giphyUrl = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchDto.q}&limit=${searchDto.limit}&offset=${searchDto.offset}&rating=${searchDto.rating}&lang=${searchDto.lang}`;
     return this._httpService.axiosRef
-      .get(giphyUrl, { timeout: DEFAULT_REQUEST_TIME_OUT })
+      .get(giphyUrl, { baseURL: '', timeout: DEFAULT_REQUEST_TIME_OUT })
       .then((response) => this.transferGiphyResponseApi(response, searchDto.type))
       .catch((e) => {
         this._sentryService.captureException(e);
