@@ -274,6 +274,9 @@ export class ReportContentService {
       throw new ValidatorException('Unknown resource');
     }
 
+    if (authorId === createdBy) {
+      throw new ValidatorException('You cant not report yourself');
+    }
     audienceIds = post.groups.map((g) => g.groupId);
 
     groupInfos = await this._groupService.getMany(audienceIds);

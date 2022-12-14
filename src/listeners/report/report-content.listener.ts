@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
 import { GroupHttpService } from '../../shared/group';
 import { CreateReportEvent } from '../../events/report/create-report.event';
@@ -13,6 +13,7 @@ import { TargetType } from '../../modules/report-content/contstants';
 
 @Injectable()
 export class ReportContentListener {
+  private readonly _logger = new Logger(ReportContentListener.name);
   public constructor(
     private readonly _groupService: GroupHttpService,
     private readonly _reportActivityService: ReportActivityService,
@@ -23,6 +24,8 @@ export class ReportContentListener {
 
   @On(CreateReportEvent)
   public async onReportCreated(event: CreateReportEvent): Promise<void> {
+    this._logger.debug('[onReportCreated]');
+    this._logger.debug(JSON.stringify(event, null, 4));
     const { payload } = event;
 
     const adminIdsMap = new Map<string, string[]>();
@@ -78,14 +81,19 @@ export class ReportContentListener {
     this._notificationService.publishReportNotification(notificationPayload);
 
     if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      this._postService.updateData([payload.targetId], {
-        isReported: true,
-      });
+      this._postService
+        .updateData([payload.targetId], {
+          isReported: true,
+        })
+        .catch((ex) => this._logger.error(ex));
     }
   }
 
   @On(ApproveReportEvent)
   public async onReportApproved(event: ApproveReportEvent): Promise<void> {
+    this._logger.debug('[onReportApproved]');
+    this._logger.debug(JSON.stringify(event, null, 4));
+
     const { payload } = event;
 
     const activity = this._reportActivityService.createCreatedReportPayload({
@@ -119,11 +127,13 @@ export class ReportContentListener {
     this._notificationService.publishReportNotification(notificationPayload);
 
     if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      this._postService.updateData([payload.targetId], {
-        isHidden: true,
-      });
+      this._postService
+        .updateData([payload.targetId], {
+          isHidden: true,
+        })
+        .catch((ex) => this._logger.error(ex));
       const posts = await this._postService.findPostByIds([payload.targetId]);
-      this._searchService.deletePostsToSearch(posts);
+      this._searchService.deletePostsToSearch(posts).catch((ex) => this._logger.error(ex));
     }
   }
 }
