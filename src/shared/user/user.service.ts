@@ -20,7 +20,7 @@ export class UserService {
   }
 
   public async getByValue(username: string): Promise<UserSharedDto> {
-    const keys = await this._store.keys('*SU:*');
+    const keys = await this._store.keys(`${AppHelper.getRedisEnv()}SU:*`);
     if (keys.length) {
       const users: UserSharedDto[] = await this._store.mget(keys);
       return users.find((user) => user.username === username);
