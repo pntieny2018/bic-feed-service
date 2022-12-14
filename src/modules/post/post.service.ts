@@ -198,6 +198,7 @@ export class PostService {
       where: condition,
       include,
     });
+
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
