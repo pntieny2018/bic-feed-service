@@ -20,6 +20,7 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
+import { IPost } from '../../../database/models/post.model';
 
 @Injectable()
 export class PostAppService {
@@ -31,7 +32,8 @@ export class PostAppService {
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
     private _userService: UserService,
-    private _groupService: GroupService
+    private _groupService: GroupService,
+    protected authorityService: AuthorityService
   ) {}
 
   public getDraftPosts(
@@ -53,14 +55,27 @@ export class PostAppService {
     if (postIdsReported.includes(postId)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
-    const post = await this._postService.get(postId, user, getPostDto);
+    const postResponseDto = await this._postService.get(postId, user, getPostDto);
+
+    const post = {
+      privacy: postResponseDto.privacy,
+      createdBy: postResponseDto.createdBy,
+      isDraft: postResponseDto.isDraft,
+    } as IPost;
+
+    if (user) {
+      await this.authorityService.checkCanReadPost(user, post);
+    } else {
+      await this.authorityService.checkIsPublicPost(post);
+    }
+
     if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
         this._logger.error(ex, ex.stack);
       });
     }
 
-    return post;
+    return postResponseDto;
   }
 
   public async createPost(user: UserDto, createPostDto: CreatePostDto): Promise<any> {

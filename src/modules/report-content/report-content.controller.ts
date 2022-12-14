@@ -1,9 +1,10 @@
 import { AuthUser, UserDto } from '../auth';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { CreateReportDto, UpdateStatusReportDto } from './dto';
 import { ReportContentService } from './report-content.service';
 import { GetReportDto, ReportReviewResponsesDto, StatisticsReportResponsesDto } from './dto';
 import { Body, Controller, Post, Patch, Get, Param, Query, ParseUUIDPipe } from '@nestjs/common';
+import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 
 @ApiTags('Reports')
 @Controller('reports')
@@ -24,19 +25,31 @@ export class ReportContentController {
     return this._reportContentService.getContentBlockedOfMe(user);
   }
 
+  @ApiParam({
+    name: 'id',
+    description: 'Target id',
+  })
   @Get('/:id/content')
-  public async getDetailReportContent(@AuthUser() user: UserDto): Promise<any> {
+  public async getDetailReportContent(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) targetId: string
+  ): Promise<DetailContentReportResponseDto> {
     // TODO check permission
+    return this._reportContentService.getContent(targetId);
   }
 
+  @ApiParam({
+    name: 'id',
+    description: 'Target id',
+  })
   @Get(':id/statistics')
   public async getStatistics(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDPipe) targetId: string,
     @Query('count_reporter') countReporter = 5
   ): Promise<StatisticsReportResponsesDto> {
     // TODO check permission
-    return this._reportContentService.getStatistics(id, countReporter);
+    return this._reportContentService.getStatistics(targetId, countReporter);
   }
 
   @Post('/content')
