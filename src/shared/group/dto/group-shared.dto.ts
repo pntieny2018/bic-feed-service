@@ -42,6 +42,10 @@ export class GroupSharedDto {
   @IsOptional()
   public isCommunity?: boolean;
 
+  @ApiProperty()
+  @IsOptional()
+  public isReported?: boolean;
+
   public privacy: GroupPrivacy;
   public rootGroupId: string;
   public child?: ChildGroup = {

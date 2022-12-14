@@ -96,9 +96,32 @@ export class ReportContentService {
       return [];
     }
 
-    const authorIds = results.map((rs) => rs['author_id']);
     const reportIds = results.map((rs) => rs['id']);
 
+    const reportStatisticsMap = await this.getDetailsReport(reportIds);
+
+    const authorIds = results.map((rs) => rs['author_id']);
+
+    const authors = await this._userService.getMany(authorIds);
+
+    results = results.map((rs) => {
+      const author = authors.find((a) => a.id === rs['author_id']);
+      const details = reportStatisticsMap.get(rs['id']);
+      delete author.groups;
+      // const reason ?
+      return { ...rs, author: new UserDto(author), details: details };
+    });
+
+    return plainToInstance(ReportReviewResponsesDto, results, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  public async getDetailsReport(
+    reportIds: string[]
+  ): Promise<
+    Map<string, { total: number; reasonType: string; description: string; reason?: string }[]>
+  > {
     const reportStatistics = await this._reportContentDetailModel.sequelize.query<{
       reportId: string;
       total: string;
@@ -144,18 +167,7 @@ export class ReportContentService {
         ]);
       }
     }
-    const authors = await this._userService.getMany(authorIds);
-
-    results = results.map((rs) => {
-      const author = authors.find((a) => a.id === rs['author_id']);
-      const details = reportStatisticsMap.get(rs['id']);
-      delete author.groups;
-      // const reason ?
-      return { ...rs, author: new UserDto(author), details: details };
-    });
-    return plainToInstance(ReportReviewResponsesDto, results, {
-      excludeExtraneousValues: true,
-    });
+    return reportStatisticsMap;
   }
 
   public async getContentBlockedOfMe(
@@ -164,7 +176,7 @@ export class ReportContentService {
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order } = getOptions;
     const targets = await this._reportContentModel.findAll({
-      attributes: ['targetId'],
+      attributes: ['id', 'targetId'],
       where: {
         authorId: author.id,
         targetType: {
@@ -177,7 +189,17 @@ export class ReportContentService {
       order: [['createdAt', order]],
     });
 
-    const targetIds = targets.map((rp) => rp.targetId);
+    const reportIds = [];
+    const targetIds = [];
+    const postReportMap = new Map<string, string>();
+
+    for (const item of targets) {
+      targetIds.push(item.targetId);
+      reportIds.push(item.id);
+      postReportMap.set(item.targetId, item.id);
+    }
+
+    const reportStatisticsMap = await this.getDetailsReport(reportIds);
 
     const meta = (hasNextPage: boolean) => ({
       limit: limit,
@@ -188,7 +210,15 @@ export class ReportContentService {
     if (!targetIds || !targetIds.length) {
       return new PageDto<PostResponseDto>([], meta(false));
     }
-    return await this._feedService.getContentBlockedOfMe(author, targetIds, meta(true));
+    const responses = await this._feedService.getContentBlockedOfMe(author, targetIds, meta(true));
+
+    responses.list = responses.list.map((post) => {
+      const reportId = postReportMap.get(post.id);
+      const reportDetails = reportStatisticsMap.get(reportId);
+      return { ...post, reportDetails };
+    });
+
+    return responses;
   }
 
   public async getStatistics(

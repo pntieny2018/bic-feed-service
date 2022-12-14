@@ -1174,6 +1174,16 @@ export class PostService {
   }
 
   public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
+    await this.postGroupModel.update(
+      {
+        isReported: true,
+      },
+      {
+        where: {
+          postId: postIds,
+        },
+      }
+    );
     await this.postModel.update(data, {
       where: {
         id: {
