@@ -164,17 +164,17 @@ export class ReportContentService {
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order } = getOptions;
     const targets = await this._reportContentModel.findAll({
-      attributes: ['target_id'],
+      attributes: ['targetId'],
       where: {
         authorId: author.id,
         targetType: {
-          [Op.notIn]: [TargetType.COMMENT, TargetType.CHILD_COMMENT],
+          [Op.in]: [TargetType.POST, TargetType.ARTICLE],
         },
         status: ReportStatus.HID,
       },
       limit: limit,
       offset: offset,
-      order: [['created_at', order]],
+      order: [['createdAt', order]],
     });
 
     const targetIds = targets.map((rp) => rp.targetId);
@@ -438,6 +438,7 @@ export class ReportContentService {
       const [affectedCount] = await this._reportContentModel.update(
         {
           status: status,
+          updatedBy: admin.id,
         },
         {
           where: conditions,
