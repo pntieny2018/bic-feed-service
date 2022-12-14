@@ -71,6 +71,7 @@ export class ReportContentService {
       LEFT JOIN ${dbConfig.schema}.posts p on rc.target_id = p.id
       LEFT JOIN ${dbConfig.schema}.comments c on rc.target_id = c.id
       WHERE rc.id IN (SELECT rcd.report_id FROM ${dbConfig.schema}.report_content_details rcd WHERE rcd.group_id = :groupId )
+      AND rc.status = :status
       ${conditionStr}
       LIMIT :limit OFFSET :offset
     `,
@@ -80,6 +81,7 @@ export class ReportContentService {
           limit: limit,
           offset: offset,
           groupId: groupId,
+          status: ReportStatus.CREATED,
         },
       }
     );
