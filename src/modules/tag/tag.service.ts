@@ -257,7 +257,7 @@ export class TagService {
         message: `The following tags were removed from this article: ${invalidTags
           .map((e) => e.name)
           .join(', ')}`,
-        errors: { seriesDenied: invalidTags.map((e) => e.id) },
+        errors: { tagsDenied: invalidTags.map((e) => e.id) },
       });
     }
   }
