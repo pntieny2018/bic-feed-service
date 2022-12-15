@@ -104,6 +104,28 @@ export class ReportContentListener {
 
     const { payload } = event;
 
+    const adminIdsMap = new Map<string, string[]>();
+
+    await Promise.all(
+      payload.details.map(async (d) => {
+        const adminIds = await this._groupService.getAdminIds(
+          {
+            username: payload.actor.username,
+            email: payload.actor.email,
+          },
+          d.groupId
+        );
+        adminIdsMap.set(d.groupId, adminIds);
+        return null;
+      })
+    );
+
+    const adminInfos = {};
+
+    for (const [groupId, adminIds] of adminIdsMap.entries()) {
+      adminInfos[groupId] = adminIds;
+    }
+
     const actor = {
       id: payload.actor.id,
       email: payload.actor.email,
@@ -135,6 +157,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
+            adminInfos: adminInfos,
             creatorId: payload.authorId,
           },
         },
