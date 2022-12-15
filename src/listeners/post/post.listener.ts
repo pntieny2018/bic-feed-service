@@ -170,6 +170,8 @@ export class PostListener {
       },
     ]);
 
+    this._feedService.markSeenPosts(id, createdBy);
+    
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
