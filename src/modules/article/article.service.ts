@@ -1,6 +1,4 @@
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { SentryService } from '@app/sentry';
 import {
   BadRequestException,
   forwardRef,
@@ -9,48 +7,52 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { UserDto } from '../auth';
-import { MediaService } from '../media';
-import { MentionService } from '../mention';
-import { CommentService } from '../comment';
-import { AuthorityService } from '../authority';
-import { Sequelize } from 'sequelize-typescript';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { NIL } from 'uuid';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { PageDto } from '../../common/dto';
+import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
+import { MediaStatus } from '../../database/models/media.model';
+import { PostCategoryModel } from '../../database/models/post-category.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostHashtagModel } from '../../database/models/post-hashtag.model';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostTagModel } from '../../database/models/post-tag.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { GroupService } from '../../shared/group';
+import { UserService } from '../../shared/user';
+import { UserDto } from '../auth';
+import { AuthorityService } from '../authority';
+import { CategoryService } from '../category/category.service';
+import { CommentService } from '../comment';
+import { FeedService } from '../feed/feed.service';
+import { HashtagService } from '../hashtag/hashtag.service';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { MediaService } from '../media';
+import { EntityType } from '../media/media.constants';
+import { MentionService } from '../mention';
+import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
-import { SentryService } from '@app/sentry';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
+import { TargetType } from '../report-content/contstants';
+import { SeriesService } from '../series/series.service';
+import { TagService } from '../tag/tag.service';
+import { ArticleBindingService } from './article-binding.service';
 import {
   CreateArticleDto,
-  UpdateArticleDto,
-  GetListArticlesDto,
   GetArticleDto,
+  GetListArticlesDto,
+  UpdateArticleDto,
 } from './dto/requests';
-import { ClassTransformer } from 'class-transformer';
-import { PostService } from '../post/post.service';
-import { PageDto } from '../../common/dto';
-import { EntityType } from '../media/media.constants';
-import { CategoryService } from '../category/category.service';
-import { SeriesService } from '../series/series.service';
-import { HashtagService } from '../hashtag/hashtag.service';
-import { GroupService } from '../../shared/group';
-import { LogicException } from '../../common/exceptions';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { NIL } from 'uuid';
-import { FeedService } from '../feed/feed.service';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { UserService } from '../../shared/user';
-import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
-import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { ArticleBindingService } from './article-binding.service';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
-import { PostSeriesModel } from '../../database/models/post-series.model';
-import { PostCategoryModel } from '../../database/models/post-category.model';
-import { PostHashtagModel } from '../../database/models/post-hashtag.model';
-import { MediaStatus } from '../../database/models/media.model';
-import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { TagService } from '../tag/tag.service';
-import { PostTagModel } from '../../database/models/post-tag.model';
+import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -97,12 +99,14 @@ export class ArticleService extends PostService {
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
-    private readonly _tagService: TagService,
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
     protected readonly authorityService: AuthorityService,
-    private readonly _linkPreviewService: LinkPreviewService
+    private readonly _linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentDetailModel)
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
+    private readonly _tagService: TagService
   ) {
     super(
       sequelizeConnection,
@@ -119,12 +123,12 @@ export class ArticleService extends PostService {
       mediaService,
       mentionService,
       commentService,
-      authorityService,
       reactionService,
       feedService,
       sentryService,
       articleBinding,
-      _linkPreviewService
+      _linkPreviewService,
+      reportContentDetailModel
     );
   }
 
@@ -183,6 +187,7 @@ export class ArticleService extends PostService {
       include,
       where: {
         id: ids,
+        isHidden: false,
       },
     });
 
@@ -208,7 +213,13 @@ export class ArticleService extends PostService {
         ['createdAt', 'ASC'],
       ],
     });
-    const articleIdsSorted = articlesInSeries.map((article) => article.postId);
+
+    const articleIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+    ]);
+    const articleIdsSorted = articlesInSeries
+      .filter((article) => !articleIdsReported.includes(article.postId))
+      .map((article) => article.postId);
     const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
     const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindActor: true,
@@ -477,10 +488,11 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
+        isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
-      condition = { id: articleId, type: PostType.ARTICLE };
+      condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
     }
 
     const article = await this.postModel.findOne({

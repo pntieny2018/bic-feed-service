@@ -3,6 +3,11 @@ export const ELASTIC_POST_MAPPING_PATH = {
     id: 'categories.id',
     name: 'categories.name',
   },
+  tags: {
+    id: 'tags.id',
+    name: 'tags.name',
+    groupId: 'tags.groupId',
+  },
   articles: {
     id: 'articles.id',
     zindex: 'articles.zindex',

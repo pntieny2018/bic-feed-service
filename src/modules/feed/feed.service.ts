@@ -110,6 +110,28 @@ export class FeedService {
     });
   }
 
+  private async _bindAndTransformReportedData({
+    posts,
+    authUser,
+  }: {
+    posts: IPost[];
+    authUser: UserDto;
+  }): Promise<ArticleResponseDto[]> {
+    const postsBindData = await this._postBindingService.bindRelatedData(posts, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudienceReported: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
+    });
+
+    await this._postBindingService.bindCommunity(posts);
+    return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindData, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
@@ -252,6 +274,23 @@ export class FeedService {
     });
   }
 
+  public async getContentBlockedOfMe(
+    authUser: UserDto,
+    postIdsAndSorted: string[],
+    paging: {
+      limit: number;
+      offset: number;
+      hasNextPage: boolean;
+    }
+  ): Promise<PageDto<PostResponseDto>> {
+    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+    const postsBindData = await this._bindAndTransformReportedData({
+      posts,
+      authUser,
+    });
+
+    return new PageDto<PostResponseDto>(postsBindData, paging);
+  }
   /**
    * Delete newsfeed by post
    */

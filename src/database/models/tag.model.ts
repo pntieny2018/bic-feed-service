@@ -22,6 +22,7 @@ export interface ITag {
   updatedBy?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  totalUsed?: number;
 }
 
 @Table({
@@ -44,6 +45,10 @@ export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag 
   @Length({ max: 255 })
   @Column
   public slug: string;
+
+  @AllowNull(false)
+  @Column
+  public totalUsed: number;
 
   @AllowNull(false)
   @Column

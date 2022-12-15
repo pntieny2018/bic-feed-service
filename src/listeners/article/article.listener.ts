@@ -1,6 +1,7 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
+import { ReportContentHasBeenCreated } from '../../common/constants';
 import { On } from '../../common/decorators';
 import { MediaStatus, MediaType } from '../../database/models/media.model';
 import {
@@ -10,6 +11,7 @@ import {
 } from '../../events/article';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
+import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -17,6 +19,7 @@ import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
+import { TagService } from '../../modules/tag/tag.service';
 
 @Injectable()
 export class ArticleListener {
@@ -28,6 +31,7 @@ export class ArticleListener {
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
+    private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService
@@ -44,6 +48,7 @@ export class ArticleListener {
     });
 
     this._postSearchService.deletePostsToSearch([article]);
+    this._tagService.updateTotalUsedWhenDeleteArticle(article.postTags.map((e) => e.tagId));
     //TODO:: send noti
   }
 
@@ -63,6 +68,7 @@ export class ArticleListener {
       summary,
       coverMedia,
       categories,
+      tags,
       createdBy,
     } = article;
     const mediaIds = media.videos
@@ -104,6 +110,7 @@ export class ArticleListener {
           extension: coverMedia.extension,
         },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
     ]);
 
@@ -140,6 +147,7 @@ export class ArticleListener {
       title,
       coverMedia,
       categories,
+      tags,
     } = newArticle;
 
     if (oldArticle.isDraft === false) {
@@ -192,6 +200,7 @@ export class ArticleListener {
           extension: coverMedia.extension,
         },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
     ]);
 
@@ -238,6 +247,8 @@ export class ArticleListener {
         title,
         coverMedia,
         createdBy,
+        categories,
+        tags,
       } = article;
 
       this._postSearchService.addPostsToSearch([
@@ -247,23 +258,25 @@ export class ArticleListener {
           content,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
-          createdAt,
-          updatedAt,
           createdBy,
-          summary,
+          updatedAt,
+          createdAt,
           title,
+          summary,
           coverMedia: {
             id: coverMedia.id,
             createdBy: coverMedia.createdBy,
             url: coverMedia.url,
-            type: coverMedia.type as MediaType,
             createdAt: coverMedia.createdAt,
             name: coverMedia.name,
+            type: coverMedia.type as MediaType,
             originName: coverMedia.originName,
             width: coverMedia.width,
             height: coverMedia.height,
             extension: coverMedia.extension,
           },
+          categories: categories.map((category) => ({ id: category.id, name: category.name })),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         },
       ]);
 

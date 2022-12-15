@@ -10,11 +10,19 @@ export class ActivityObject {
   public mentions?: MentionObject;
   public reactionsOfActor?: ReactionObject[];
   public reactionsCount?: ReactionsCountObject;
-  public audience: AudienceObject;
+  public audience?: AudienceObject;
   public comment?: CommentObject;
   public reaction?: ReactionObject;
+  public report?: ReportObject;
   public createdAt: Date;
   public updatedAt: Date;
+}
+
+export class ReportObject {
+  public targetId: string;
+  public targetType: string;
+  public details: Record<string, any>[];
+  public status: string;
 }
 
 export class SettingObject {
@@ -25,7 +33,7 @@ export class SettingObject {
   public importantExpiredAt?: Date;
 }
 export class ActorObject {
-  public id: number;
+  public id: string;
   public username: string;
   public avatar: string;
   public fullname: string;

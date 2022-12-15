@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import {
   PostHasBeenDeletedEvent,
@@ -13,17 +14,14 @@ import { UserService } from '../../../shared/user';
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
-import {
-  CreatePostDto,
-  GetPostDto,
-  GetPostEditedHistoryDto,
-  SearchPostsDto,
-  UpdatePostDto,
-} from '../dto/requests';
+import { TargetType } from '../../report-content/contstants';
+import { CreatePostDto, GetPostDto, GetPostEditedHistoryDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
+import { IPost } from '../../../database/models/post.model';
+import { IPostGroup } from '../../../database/models/post-group.model';
 
 @Injectable()
 export class PostAppService {
@@ -35,7 +33,8 @@ export class PostAppService {
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
     private _userService: UserService,
-    private _groupService: GroupService
+    private _groupService: GroupService,
+    protected authorityService: AuthorityService
   ) {}
 
   public getDraftPosts(
@@ -51,14 +50,43 @@ export class PostAppService {
     getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
-    const post = await this._postService.get(postId, user, getPostDto);
+    let postIdsReported = [];
+    if (user) {
+      postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.POST,
+      ]);
+    }
+
+    if (postIdsReported.includes(postId)) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+    const postResponseDto = await this._postService.get(postId, user, getPostDto);
+
+    const post = {
+      privacy: postResponseDto.privacy,
+      createdBy: postResponseDto.createdBy,
+      isDraft: postResponseDto.isDraft,
+      groups: postResponseDto.audience.groups.map(
+        (g) =>
+          ({
+            groupId: g.id,
+          } as IPostGroup)
+      ),
+    } as IPost;
+
+    if (user) {
+      await this.authorityService.checkCanReadPost(user, post);
+    } else {
+      await this.authorityService.checkIsPublicPost(post);
+    }
+
     if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
         this._logger.error(ex, ex.stack);
       });
     }
 
-    return post;
+    return postResponseDto;
   }
 
   public async createPost(user: UserDto, createPostDto: CreatePostDto): Promise<any> {

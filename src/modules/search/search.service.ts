@@ -1,7 +1,6 @@
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { User } from '@sentry/node';
 import { ClassTransformer } from 'class-transformer';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
@@ -14,13 +13,13 @@ import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
-import { ArticleResponseDto } from '../article/dto/responses';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
 import { UserDto } from '../auth';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
+import { TargetType } from '../report-content/contstants';
 import { SearchSeriesDto } from '../series/dto/requests/search-series.dto';
 import { SearchPostsDto } from './dto/requests';
 import {
@@ -149,11 +148,20 @@ export class SearchService {
     }
   }
   public async deletePostsToSearch(posts: IPost[]): Promise<void> {
-    for (const post of posts) {
-      const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
-      this.elasticsearchService.delete({ index, id: post.id }).catch((e) => {
-        this.sentryService.captureException(e);
-      });
+    try {
+      for (const post of posts) {
+        await this.elasticsearchService.deleteByQuery({
+          index: ElasticsearchHelper.ALIAS.POST.all.name,
+          query: {
+            term: {
+              id: post.id,
+            },
+          },
+        });
+      }
+    } catch (e) {
+      this.logger.debug(e);
+      this.sentryService.captureException(e);
     }
   }
 
@@ -206,7 +214,12 @@ export class SearchService {
       }
     }
 
+    const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.POST,
+    ]);
+    searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
+    console.log('payload', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articleIds = [];
@@ -237,6 +250,7 @@ export class SearchService {
         summary: source.summary || null,
         categories: source.categories || [],
         articles: source.articles || [],
+        tags: source.tags || [],
       };
 
       if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
@@ -268,10 +282,17 @@ export class SearchService {
       ArrayHelper.arrayUnique(articleIds)
     );
 
+    const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+    ]);
+
+    const articlesFilterReport = articles.filter(
+      (article) => !articleIdsReported.includes(article.id)
+    );
     const result = this.bindResponseSearch(posts, {
       groups,
       users,
-      articles,
+      articles: articlesFilterReport,
     });
     return new PageDto<any>(result, {
       total: response.hits.total['value'],
@@ -433,13 +454,11 @@ export class SearchService {
     });
 
     return new PageDto<SeriesSearchResponseDto>(result, {
-      total: response.hits.total['value'],
+      total: response['hits'].total['value'],
       limit,
       offset,
     });
   }
-
-  private async _getAttrFromResponseSearch(hits: any) {}
   /*
     Search articles in series detail
   */
@@ -468,16 +487,20 @@ export class SearchService {
     if (groupIds) {
       filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
     }
+    const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+    ]);
     const context: any = {
       contentSearch,
       groupIds: filterGroupIds,
+      notIncludeIds: notIncludeIds,
       limit,
       offset,
     };
     if (categoryIds) context.categoryIds = categoryIds;
     const payload = await this.getPayloadSearchForArticles(context);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
-    const hits = response.hits.hits;
+    const hits = response['hits'].hits;
     const articles = hits.map((item) => {
       const source = {
         id: item._source.id,
@@ -497,14 +520,24 @@ export class SearchService {
     });
 
     return new PageDto<ArticleSearchResponseDto>(result, {
-      total: response.hits.total['value'],
+      total: response['hits'].total['value'],
       limit,
       offset,
     });
   }
 
   public async getPayloadSearchForPost(
-    { startTime, endTime, contentSearch, actors, limit, offset, type }: SearchPostsDto,
+    {
+      startTime,
+      endTime,
+      contentSearch,
+      actors,
+      limit,
+      offset,
+      type,
+      notIncludeIds,
+      tagName,
+    }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
     index: string;
@@ -516,20 +549,26 @@ export class SearchService {
       query: {
         bool: {
           must: [],
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          must_not: [...this._getNotIncludeIds(notIncludeIds)],
           filter: [
             ...this._getActorFilter(actors),
             ...this._getTypeFilter(type),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
+            ...this._getTagFilter(tagName),
           ],
           should: [...this._getMatchKeyword(contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          minimum_should_match: 1,
+          minimum_should_match: contentSearch ? 1 : 0,
         },
       },
     };
 
-    body['highlight'] = this._getHighlight();
+    if (contentSearch) {
+      body['highlight'] = this._getHighlight();
+    }
+
     body['sort'] = [...this._getSort(contentSearch)];
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
@@ -573,6 +612,7 @@ export class SearchService {
     contentSearch: string;
     groupIds: string[];
     categoryIds?: string[];
+    notIncludeIds?: string[];
     limit: number;
     offset: number;
   }): Promise<{
@@ -581,7 +621,7 @@ export class SearchService {
     from: number;
     size: number;
   }> {
-    const { contentSearch, groupIds, categoryIds, limit, offset } = props;
+    const { contentSearch, groupIds, categoryIds, limit, offset, notIncludeIds } = props;
     const body: BodyES = {
       query: {
         bool: {
@@ -590,6 +630,9 @@ export class SearchService {
         },
       },
     };
+    if (notIncludeIds) {
+      body.query.bool.must_not = [...this._getNotIncludeIds(notIncludeIds)];
+    }
     if (contentSearch) {
       body.query.bool.should = [
         ...this._getMatchPrefixKeyword('title', contentSearch),
@@ -671,6 +714,20 @@ export class SearchService {
     return [];
   }
 
+  private _getNotIncludeIds(ids: string[]): any {
+    const { id } = ELASTIC_POST_MAPPING_PATH;
+    if (ids && ids.length) {
+      return [
+        {
+          terms: {
+            [id]: ids,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
   private _getTypeFilter(postType: PostType): any {
     const { type } = ELASTIC_POST_MAPPING_PATH;
     if (postType) {
@@ -678,6 +735,20 @@ export class SearchService {
         {
           term: {
             [type]: postType,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getTagFilter(tagName: string): any {
+    const { tags } = ELASTIC_POST_MAPPING_PATH;
+    if (tagName) {
+      return [
+        {
+          term: {
+            [tags.name]: tagName,
           },
         },
       ];

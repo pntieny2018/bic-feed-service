@@ -1,5 +1,5 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
@@ -53,6 +53,7 @@ export class PostBindingService {
       shouldBindMention?: boolean;
       shouldBindAudience?: boolean;
       shouldBindReaction?: boolean;
+      shouldBindAudienceReported?: boolean;
       shouldHideSecretAudienceCanNotAccess?: boolean;
       authUser?: UserDto;
     }
@@ -64,6 +65,9 @@ export class PostBindingService {
     }
     if (options?.shouldBindMention) {
       processList.push(this.mentionService.bindToPosts(posts));
+    }
+    if (options?.shouldBindAudienceReported) {
+      processList.push(this.bindAudienceReported(posts));
     }
     if (options?.shouldBindAudience) {
       processList.push(
@@ -80,6 +84,20 @@ export class PostBindingService {
     if (processList.length === 0) return [];
     await Promise.all(processList);
     return posts;
+  }
+
+  public async bindAudienceReported(posts: any[]): Promise<void> {
+    //get all groups in onetime
+    const dataGroups = await this._getGroupsByPosts(posts);
+    for (const post of posts) {
+      const audiences = post.groups.map((group) => {
+        const { isReported, groupId } = group;
+        const groupInfo = dataGroups.find((g) => g.id === groupId);
+        delete groupInfo?.child;
+        return { ...groupInfo, isReported: isReported ?? false };
+      });
+      post.audience = { groups: audiences };
+    }
   }
 
   public async bindAudience(
@@ -152,8 +170,7 @@ export class PostBindingService {
         groupIds.push(...post.groups.map((m) => m.groupId || m.id));
       }
     }
-    const dataGroups = await this.groupService.getMany(groupIds);
-    return dataGroups;
+    return this.groupService.getMany(groupIds);
   }
 
   private async _getCommunitiesByPosts(

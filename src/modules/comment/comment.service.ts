@@ -29,6 +29,7 @@ import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { CommentResponseDto } from './dto/response';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { TargetType } from '../report-content/contstants';
 
 @Injectable()
 export class CommentService {
@@ -348,6 +349,22 @@ export class CommentService {
     checkAccess = true
   ): Promise<PageDto<CommentResponseDto>> {
     const { childLimit, postId, parentId, limit } = getCommentsDto;
+    let entityIdsReportedByUser = [];
+    if (user) {
+      entityIdsReportedByUser = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.POST,
+        TargetType.ARTICLE,
+      ]);
+    }
+    if (entityIdsReportedByUser.includes(postId)) {
+      return new PageDto<CommentResponseDto>([], {
+        limit,
+        offset: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      });
+    }
+
     const post = await this._postService.findPost({
       postId,
     });
@@ -402,7 +419,26 @@ export class CommentService {
     if (!checkComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
+
+    let entityIdsReportedByUser = [];
+    if (user) {
+      entityIdsReportedByUser = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.COMMENT,
+        TargetType.POST,
+        TargetType.ARTICLE,
+      ]);
+    }
+
+    if (entityIdsReportedByUser.includes(commentId)) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
+    }
+
     const { postId } = checkComment;
+
+    if (entityIdsReportedByUser.includes(postId)) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+
     const post = await this._postService.findPost({
       postId,
     });
@@ -850,5 +886,25 @@ export class CommentService {
       }
     });
     return result;
+  }
+
+  public async isExisted(id: string, returning = false): Promise<[boolean, IComment]> {
+    const conditions = {
+      id: id,
+    };
+    if (returning) {
+      const post = await this._commentModel.findOne({
+        where: conditions,
+      });
+      if (post) {
+        return [true, post];
+      }
+      return [false, null];
+    }
+
+    const commentCount = await this._commentModel.count({
+      where: conditions,
+    });
+    return [commentCount > 1, null];
   }
 }

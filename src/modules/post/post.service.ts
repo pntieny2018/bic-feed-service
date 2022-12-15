@@ -24,6 +24,7 @@ import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
+import { ReportContentModel } from '../../database/models/report-content.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
@@ -31,7 +32,6 @@ import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
-import { AuthorityService } from '../authority';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -44,6 +44,9 @@ import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+import { ReportTo, TargetType } from '../report-content/contstants';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
+
 @Injectable()
 export class PostService {
   /**
@@ -79,14 +82,15 @@ export class PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    protected authorityService: AuthorityService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService
+    protected readonly linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentDetailModel)
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   /**
@@ -176,28 +180,31 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
+        isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
+        [Op.and]: [
+          this.postModel.notIncludePostsReported(user.id, {
+            mainTableAlias: '"PostModel"',
+            type: [TargetType.ARTICLE, TargetType.POST],
+          }),
+        ],
       };
     } else {
-      condition = { id: postId };
+      condition = { id: postId, isHidden: false };
     }
+
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
       include,
     });
+
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    if (user) {
-      await this.authorityService.checkCanReadPost(user, post);
-    } else {
-      await this.authorityService.checkIsPublicPost(post);
-    }
-
     let comments = null;
-    if (getPostDto.withComment && post.canComment) {
+    if (getPostDto?.withComment && post.canComment) {
       comments = await this.commentService.getComments(
         {
           postId,
@@ -212,6 +219,7 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
+
     const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -220,12 +228,15 @@ export class PostService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });
+
     await this.postBinding.bindCommunity(postsBindedData);
+
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
 
     result[0]['comments'] = comments;
+
     return result[0];
   }
 
@@ -255,6 +266,12 @@ export class PostService {
           as: 'groups',
           required: must,
           attributes: ['groupId'],
+        },
+        {
+          model: PostTagModel,
+          as: 'postTags',
+          required: false,
+          attributes: ['tagId'],
         },
       ],
       where: {
@@ -337,6 +354,10 @@ export class PostService {
           'canReact',
           'importantExpiredAt',
         ],
+        where: {
+          isDraft: false,
+          isHidden: false,
+        },
         include: [
           {
             model: MediaModel,
@@ -872,6 +893,15 @@ export class PostService {
     return post.toJSON();
   }
 
+  public async findPostByIds(ids: string[]): Promise<IPost[]> {
+    const posts = await this.postModel.findAll({
+      where: {
+        id: ids,
+      },
+    });
+    return posts;
+  }
+
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
@@ -924,6 +954,7 @@ export class PostService {
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
       isDraft: false,
+      isHidden: false,
     };
 
     if (type) {
@@ -1147,6 +1178,16 @@ export class PostService {
   }
 
   public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
+    await this.postGroupModel.update(
+      {
+        isReported: true,
+      },
+      {
+        where: {
+          postId: postIds,
+        },
+      }
+    );
     await this.postModel.update(data, {
       where: {
         id: {
@@ -1168,6 +1209,13 @@ export class PostService {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      isHidden: false,
+      [Op.and]: [
+        this.postModel.notIncludePostsReported(userId, {
+          mainTableAlias: '"PostModel"',
+          type: [TargetType.ARTICLE, TargetType.POST],
+        }),
+      ],
     };
     const order = [];
     if (isImportant) {
@@ -1230,11 +1278,18 @@ export class PostService {
       },
     });
 
+    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
+
     const mappedPosts = ids.map((postId) => {
       const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
+      if (post) {
+        const postJson = post.toJSON();
+        postJson.articles = postJson.articles.filter(
+          (article) => !articleIdsReported.includes(article.id)
+        );
+        return postJson;
+      }
     });
-
     return mappedPosts;
   }
 
@@ -1260,6 +1315,7 @@ export class PostService {
       ],
       where: {
         id: ids,
+        isHidden: false,
       },
     });
 
@@ -1284,6 +1340,13 @@ export class PostService {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      isHidden: false,
+      [Op.and]: [
+        this.postModel.notIncludePostsReported(authUserId, {
+          mainTableAlias: '"PostModel"',
+          type: [TargetType.ARTICLE, TargetType.POST],
+        }),
+      ],
     };
 
     const order = [];
@@ -1379,5 +1442,57 @@ export class PostService {
         totalSeries: 0,
       };
     });
+  }
+
+  public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
+    const conditions = {
+      id: id,
+      isDraft: false,
+      isProcessing: false,
+    };
+
+    if (returning) {
+      const post = await this.postModel.findOne({
+        include: ['groups'],
+        where: conditions,
+      });
+      if (post) {
+        return [true, post];
+      }
+      return [false, null];
+    }
+
+    const postCount = await this.postModel.count({
+      where: conditions,
+    });
+    return [postCount > 1, null];
+  }
+
+  public async getEntityIdsReportedByUser(
+    userId: string,
+    targetTypes: TargetType[],
+    options?: {
+      reportTo?: ReportTo;
+      groupIds?: string[];
+    }
+  ): Promise<string[]> {
+    const { groupIds } = options ?? {};
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy: userId,
+          targetType: targetTypes,
+        },
+      ],
+    };
+
+    if (groupIds) {
+      //condition[''] improve later
+    }
+    const rows = await this.reportContentDetailModel.findAll({
+      where: condition,
+    });
+
+    return rows.map((row) => row.targetId);
   }
 }

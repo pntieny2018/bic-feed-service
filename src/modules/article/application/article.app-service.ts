@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
+import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import {
   ArticleHasBeenDeletedEvent,
@@ -11,9 +12,10 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
+import { ReportStatus, TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
-import { GetListArticlesDto, SearchArticlesDto } from '../dto/requests';
+import { SearchArticlesDto } from '../dto/requests';
 import { CreateArticleDto } from '../dto/requests/create-article.dto';
 import { GetArticleDto } from '../dto/requests/get-article.dto';
 import { GetDraftArticleDto } from '../dto/requests/get-draft-article.dto';
@@ -21,6 +23,8 @@ import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto'
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
+import { TagService } from '../../tag/tag.service';
+import { GroupService } from '../../../shared/group';
 
 @Injectable()
 export class ArticleAppService {
@@ -29,7 +33,8 @@ export class ArticleAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
-    private _postSearchService: SearchService
+    private _postSearchService: SearchService,
+    private _tagServices: TagService
   ) {}
 
   public async getRelatedById(
@@ -46,19 +51,32 @@ export class ArticleAppService {
     return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
-  public get(
+  public async get(
     user: UserDto,
     articleId: string,
     getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    return this._articleService.get(articleId, user, getArticleDto);
+    let articleIdsReported = [];
+    if (user) {
+      articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.ARTICLE,
+      ]);
+    }
+
+    if (articleIdsReported.includes(articleId)) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
+
+    const article = await this._articleService.get(articleId, user, getArticleDto);
+
+    return article;
   }
 
   public async create(
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting } = createArticleDto;
+    const { audience, setting, tags } = createArticleDto;
     if (audience.groupIds) {
       const isEnableSetting =
         setting.isImportant ||
@@ -66,6 +84,10 @@ export class ArticleAppService {
         setting.canReact === false ||
         setting.canShare === false;
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
+    }
+
+    if (tags?.length) {
+      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
     }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
@@ -83,7 +105,7 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, series, setting, coverMedia } = updateArticleDto;
+    const { audience, series, setting, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -142,6 +164,10 @@ export class ArticleAppService {
           });
         }
       }
+    }
+
+    if (tags?.length) {
+      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);

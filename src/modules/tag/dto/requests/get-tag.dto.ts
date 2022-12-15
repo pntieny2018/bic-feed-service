@@ -1,12 +1,13 @@
 import { PageOptionsDto } from '../../../../common/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsOptional, IsUUID, MaxLength } from 'class-validator';
 
 export class GetTagDto extends PageOptionsDto {
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   @Type(() => String)
   @IsOptional()
+  @MaxLength(32)
   public name?: string;
 
   @ApiProperty({
