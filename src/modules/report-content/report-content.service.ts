@@ -438,7 +438,7 @@ export class ReportContentService {
       reason: reason,
     }));
 
-    const transaction = await this._reportContentModel.sequelize.transaction();
+    const trx = await this._reportContentModel.sequelize.transaction();
     // insert to two table need transaction
     try {
       const report = await this._reportContentModel.create(reportData, {
@@ -449,11 +449,12 @@ export class ReportContentService {
             as: 'details',
           },
         ],
+        transaction: trx,
       });
-      await transaction.commit();
+      await trx.commit();
       this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report.toJSON() }));
     } catch (ex) {
-      await transaction.rollback();
+      await trx.rollback();
       throw ex;
     }
 
@@ -476,50 +477,42 @@ export class ReportContentService {
       },
     };
 
-    const trx = await this._reportContentModel.sequelize.transaction();
+    const [affectedCount] = await this._reportContentModel.update(
+      {
+        status: status,
+        updatedBy: admin.id,
+      },
+      {
+        where: conditions,
+      }
+    );
 
-    try {
-      const [affectedCount] = await this._reportContentModel.update(
-        {
-          status: status,
-          updatedBy: admin.id,
-        },
-        {
-          where: conditions,
-        }
-      );
-      await trx.commit();
+    if (affectedCount > 0) {
+      console.log('affectedCount', affectedCount);
+      const reports = await this._reportContentModel.findAll({
+        include: [
+          {
+            model: ReportContentDetailModel,
+            as: 'details',
+            order: [['createdAt', 'DESC']],
+            limit: 1,
+          },
+        ],
+        where: conditions,
+      });
 
-      if (affectedCount > 0) {
-        const reports = await this._reportContentModel.findAll({
-          include: [
-            {
-              model: ReportContentDetailModel,
-              as: 'details',
-              order: [['createdAt', 'DESC']],
-              limit: 1,
-            },
-          ],
-          where: conditions,
-        });
+      for (const report of reports) {
+        console.log('reports', JSON.stringify(report.toJSON(), null, 4));
 
-        for (const report of reports) {
-          if (
-            report.targetType !== TargetType.COMMENT &&
-            report.targetType !== TargetType.CHILD_COMMENT
-          ) {
-            this._eventEmitter.emit(
-              new ApproveReportEvent({
-                actor: admin,
-                ...report.toJSON(),
-              })
-            );
-          }
+        if ([TargetType.ARTICLE, TargetType.POST].includes(report.targetType)) {
+          this._eventEmitter.emit(
+            new ApproveReportEvent({
+              actor: admin,
+              ...report.toJSON(),
+            })
+          );
         }
       }
-    } catch (ex) {
-      await trx.rollback();
-      throw ex;
     }
 
     return true;
