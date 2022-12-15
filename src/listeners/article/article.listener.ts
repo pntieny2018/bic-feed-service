@@ -34,7 +34,7 @@ export class ArticleListener {
     private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService
+    private readonly _postSearchService: SearchService,
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -113,6 +113,8 @@ export class ArticleListener {
         tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
     ]);
+
+    this._feedService.markSeenPosts(id, createdBy);
 
     //TODO:: send noti
     try {
