@@ -472,9 +472,6 @@ export class ReportContentService {
         targetId: updateStatusReport.targetIds ?? [],
         id: updateStatusReport.reportIds ?? [],
       },
-      status: {
-        [Op.not]: ReportStatus.HID,
-      },
     };
 
     const [affectedCount] = await this._reportContentModel.update(
@@ -483,12 +480,16 @@ export class ReportContentService {
         updatedBy: admin.id,
       },
       {
-        where: conditions,
+        where: {
+          ...conditions,
+          status: {
+            [Op.not]: ReportStatus.HID,
+          },
+        },
       }
     );
 
     if (affectedCount > 0) {
-      console.log('affectedCount', affectedCount);
       const reports = await this._reportContentModel.findAll({
         include: [
           {
@@ -498,12 +499,13 @@ export class ReportContentService {
             limit: 1,
           },
         ],
-        where: conditions,
+        where: {
+          ...conditions,
+          status: ReportStatus.HID,
+        },
       });
 
       for (const report of reports) {
-        console.log('reports', JSON.stringify(report.toJSON(), null, 4));
-
         if ([TargetType.ARTICLE, TargetType.POST].includes(report.targetType)) {
           this._eventEmitter.emit(
             new ApproveReportEvent({
