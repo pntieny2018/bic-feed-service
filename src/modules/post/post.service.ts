@@ -219,6 +219,7 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
+
     const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -227,12 +228,15 @@ export class PostService {
       shouldHideSecretAudienceCanNotAccess: true,
       authUser: user,
     });
+
     await this.postBinding.bindCommunity(postsBindedData);
+
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
 
     result[0]['comments'] = comments;
+
     return result[0];
   }
 
