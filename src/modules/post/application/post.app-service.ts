@@ -50,9 +50,13 @@ export class PostAppService {
     getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
-    const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
-      TargetType.POST,
-    ]);
+    let postIdsReported = [];
+    if (user) {
+      postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.POST,
+      ]);
+    }
+
     if (postIdsReported.includes(postId)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
