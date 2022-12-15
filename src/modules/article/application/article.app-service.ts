@@ -56,9 +56,13 @@ export class ArticleAppService {
     articleId: string,
     getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
-      TargetType.ARTICLE,
-    ]);
+    let articleIdsReported = [];
+    if (user) {
+      articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.ARTICLE,
+      ]);
+    }
+
     if (articleIdsReported.includes(articleId)) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
