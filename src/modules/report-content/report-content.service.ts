@@ -541,7 +541,7 @@ export class ReportContentService {
 
       return detailContentReportResponseDto;
     }
-    const post = await this._postService.get(targetId, null);
+    const post = await this._postService.get(targetId, null, { withComment: false });
 
     detailContentReportResponseDto.setPost(post);
 

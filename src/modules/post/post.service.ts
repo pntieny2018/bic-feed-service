@@ -204,7 +204,7 @@ export class PostService {
     }
 
     let comments = null;
-    if (getPostDto.withComment && post.canComment) {
+    if (getPostDto?.withComment && post.canComment) {
       comments = await this.commentService.getComments(
         {
           postId,
