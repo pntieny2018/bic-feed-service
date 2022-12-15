@@ -68,7 +68,7 @@ export class ReportContentListener {
         delete rc.createdBy;
         return rc;
       }),
-      verb: VerbActivity.APPROVE_REPORT_CONTENT,
+      verb: VerbActivity.REPORT,
       target: TypeActivity.REPORT_CONTENT,
       createdAt: payload.details[0].createdAt,
     });
