@@ -99,14 +99,14 @@ export class ArticleService extends PostService {
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
-    private readonly _tagService: TagService,
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
     protected readonly authorityService: AuthorityService,
     private readonly _linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
+    private readonly _tagService: TagService
   ) {
     super(
       sequelizeConnection,
