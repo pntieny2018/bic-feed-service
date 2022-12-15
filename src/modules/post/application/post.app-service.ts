@@ -21,6 +21,7 @@ import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
 import { IPost } from '../../../database/models/post.model';
+import { IPostGroup } from '../../../database/models/post-group.model';
 
 @Injectable()
 export class PostAppService {
@@ -61,6 +62,12 @@ export class PostAppService {
       privacy: postResponseDto.privacy,
       createdBy: postResponseDto.createdBy,
       isDraft: postResponseDto.isDraft,
+      groups: postResponseDto.audience.groups.map(
+        (g) =>
+          ({
+            groupId: g.id,
+          } as IPostGroup)
+      ),
     } as IPost;
 
     if (user) {
