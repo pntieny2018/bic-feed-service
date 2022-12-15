@@ -44,6 +44,19 @@ export const POST_VI_MAPPING = {
           },
         },
       },
+      tags: {
+        properties: {
+          id: {
+            type: 'keyword',
+          },
+          groupId: {
+            type: 'keyword',
+          },
+          name: {
+            type: 'keyword',
+          },
+        },
+      },
       content: {
         type: 'text',
         term_vector: 'with_positions_offsets',

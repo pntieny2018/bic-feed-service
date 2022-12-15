@@ -34,6 +34,19 @@ export const POST_DEFAULT_MAPPING = {
           },
         },
       },
+      tags: {
+        properties: {
+          id: {
+            type: 'keyword',
+          },
+          groupId: {
+            type: 'keyword',
+          },
+          name: {
+            type: 'keyword',
+          },
+        },
+      },
       articles: {
         properties: {
           id: {

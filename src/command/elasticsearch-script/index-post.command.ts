@@ -235,6 +235,11 @@ export class IndexPostCommand implements CommandRunner {
               id: category.id,
               name: category.name,
             }));
+            item.tags = post.tags.map((tag) => ({
+              id: tag.id,
+              name: tag.name,
+              groupId: tag.groupId,
+            }));
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
