@@ -57,7 +57,7 @@ export class ReportContentService {
   public async getReports(getReportDto: GetReportDto): Promise<ReportReviewResponsesDto[]> {
     const dbConfig = getDatabaseConfig();
 
-    const { targetType, groupId, limit, offset } = getReportDto;
+    const { targetType, groupId, limit, offset, order } = getReportDto;
 
     let conditionStr = `AND rc.report_type = :targetType`;
 
@@ -79,15 +79,18 @@ export class ReportContentService {
       WHERE rc.id IN (SELECT rcd.report_id FROM ${dbConfig.schema}.report_content_details rcd WHERE rcd.group_id = :groupId )
       AND rc.status = :status
       ${conditionStr}
+      ORDER BY rc.created_at :order
       LIMIT :limit OFFSET :offset
     `,
       {
         type: QueryTypes.SELECT,
         replacements: {
+          targetType: targetType,
           limit: limit,
           offset: offset,
           groupId: groupId,
           status: ReportStatus.CREATED,
+          order: order,
         },
       }
     );
@@ -400,6 +403,11 @@ export class ReportContentService {
         reason: reason,
       }));
 
+      if (existedReport.status === ReportStatus.HID) {
+        await existedReport.update({
+          status: ReportStatus.CREATED,
+        });
+      }
       await this._reportContentDetailModel.bulkCreate(details, {
         ignoreDuplicates: true,
       });
