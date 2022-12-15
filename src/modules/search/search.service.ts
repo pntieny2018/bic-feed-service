@@ -210,6 +210,7 @@ export class SearchService {
     ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
+    console.log('payload', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articleIds = [];
@@ -240,6 +241,7 @@ export class SearchService {
         summary: source.summary || null,
         categories: source.categories || [],
         articles: source.articles || [],
+        tags: source.tags || [],
       };
 
       if (contentSearch && item.highlight && item.highlight['content']?.length && source.content) {
@@ -525,6 +527,7 @@ export class SearchService {
       offset,
       type,
       notIncludeIds,
+      tagName,
     }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
@@ -537,21 +540,26 @@ export class SearchService {
       query: {
         bool: {
           must: [],
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           must_not: [...this._getNotIncludeIds(notIncludeIds)],
           filter: [
             ...this._getActorFilter(actors),
             ...this._getTypeFilter(type),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
+            ...this._getTagFilter(tagName),
           ],
           should: [...this._getMatchKeyword(contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          minimum_should_match: 1,
+          minimum_should_match: contentSearch ? 1 : 0,
         },
       },
     };
 
-    body['highlight'] = this._getHighlight();
+    if (contentSearch) {
+      body['highlight'] = this._getHighlight();
+    }
+
     body['sort'] = [...this._getSort(contentSearch)];
     return {
       index: ElasticsearchHelper.ALIAS.POST.all.name,
@@ -718,6 +726,20 @@ export class SearchService {
         {
           term: {
             [type]: postType,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getTagFilter(tagName: string): any {
+    const { tags } = ELASTIC_POST_MAPPING_PATH;
+    if (tagName) {
+      return [
+        {
+          term: {
+            [tags.name]: tagName,
           },
         },
       ];

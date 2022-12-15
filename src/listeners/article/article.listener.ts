@@ -68,6 +68,7 @@ export class ArticleListener {
       summary,
       coverMedia,
       categories,
+      tags,
       createdBy,
     } = article;
     const mediaIds = media.videos
@@ -109,6 +110,7 @@ export class ArticleListener {
           extension: coverMedia.extension,
         },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
     ]);
 
@@ -145,6 +147,7 @@ export class ArticleListener {
       title,
       coverMedia,
       categories,
+      tags,
     } = newArticle;
 
     if (oldArticle.isDraft === false) {
@@ -197,6 +200,7 @@ export class ArticleListener {
           extension: coverMedia.extension,
         },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
     ]);
 
@@ -243,6 +247,8 @@ export class ArticleListener {
         title,
         coverMedia,
         createdBy,
+        categories,
+        tags,
       } = article;
 
       this._postSearchService.addPostsToSearch([
@@ -252,23 +258,25 @@ export class ArticleListener {
           content,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
-          createdAt,
-          updatedAt,
           createdBy,
-          summary,
+          updatedAt,
+          createdAt,
           title,
+          summary,
           coverMedia: {
             id: coverMedia.id,
             createdBy: coverMedia.createdBy,
             url: coverMedia.url,
-            type: coverMedia.type as MediaType,
             createdAt: coverMedia.createdAt,
             name: coverMedia.name,
+            type: coverMedia.type as MediaType,
             originName: coverMedia.originName,
             width: coverMedia.width,
             height: coverMedia.height,
             extension: coverMedia.extension,
           },
+          categories: categories.map((category) => ({ id: category.id, name: category.name })),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         },
       ]);
 

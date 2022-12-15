@@ -39,6 +39,19 @@ export const POST_ZH_MAPPING = {
           },
         },
       },
+      tags: {
+        properties: {
+          id: {
+            type: 'keyword',
+          },
+          groupId: {
+            type: 'keyword',
+          },
+          name: {
+            type: 'keyword',
+          },
+        },
+      },
       content: {
         type: 'text',
         term_vector: 'with_positions_offsets',
