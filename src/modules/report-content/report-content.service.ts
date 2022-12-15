@@ -73,24 +73,26 @@ export class ReportContentService {
         c.parent_id as "comment_parent_id",
         c.post_id as "comment_post_id",
         rc.*
-      FROM bein_stream.report_contents rc 
+      FROM  ${dbConfig.schema}.report_contents rc 
       LEFT JOIN ${dbConfig.schema}.posts p on rc.target_id = p.id
       LEFT JOIN ${dbConfig.schema}.comments c on rc.target_id = c.id
       WHERE rc.id IN (SELECT rcd.report_id FROM ${dbConfig.schema}.report_content_details rcd WHERE rcd.group_id = :groupId )
       AND rc.status = :status
       ${conditionStr}
-      ORDER BY rc.created_at :order
+      ORDER BY rc.created_at $order
       LIMIT :limit OFFSET :offset
     `,
       {
         type: QueryTypes.SELECT,
+        bind: {
+          order: order,
+        },
         replacements: {
           targetType: targetType,
           limit: limit,
           offset: offset,
           groupId: groupId,
           status: ReportStatus.CREATED,
-          order: order,
         },
       }
     );
