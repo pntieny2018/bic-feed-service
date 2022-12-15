@@ -23,6 +23,8 @@ import { GetRelatedArticlesDto } from '../dto/requests/get-related-articles.dto'
 import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
+import { TagService } from '../../tag/tag.service';
+import { GroupService } from '../../../shared/group';
 
 @Injectable()
 export class ArticleAppService {
@@ -31,7 +33,8 @@ export class ArticleAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
-    private _postSearchService: SearchService
+    private _postSearchService: SearchService,
+    private _tagServices: TagService
   ) {}
 
   public async getRelatedById(
@@ -69,7 +72,7 @@ export class ArticleAppService {
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting } = createArticleDto;
+    const { audience, setting, tags } = createArticleDto;
     if (audience.groupIds) {
       const isEnableSetting =
         setting.isImportant ||
@@ -77,6 +80,10 @@ export class ArticleAppService {
         setting.canReact === false ||
         setting.canShare === false;
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
+    }
+
+    if (tags?.length) {
+      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
     }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
@@ -94,7 +101,7 @@ export class ArticleAppService {
     articleId: string,
     updateArticleDto: UpdateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, series, setting, coverMedia } = updateArticleDto;
+    const { audience, series, setting, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -153,6 +160,10 @@ export class ArticleAppService {
           });
         }
       }
+    }
+
+    if (tags?.length) {
+      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
