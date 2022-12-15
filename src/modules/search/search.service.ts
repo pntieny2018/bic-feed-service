@@ -148,11 +148,20 @@ export class SearchService {
     }
   }
   public async deletePostsToSearch(posts: IPost[]): Promise<void> {
-    for (const post of posts) {
-      const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
-      this.elasticsearchService.delete({ index, id: post.id }).catch((e) => {
-        this.sentryService.captureException(e);
-      });
+    try {
+      for (const post of posts) {
+        await this.elasticsearchService.deleteByQuery({
+          index: ElasticsearchHelper.ALIAS.POST.all.name,
+          query: {
+            term: {
+              id: post.id,
+            },
+          },
+        });
+      }
+    } catch (e) {
+      this.logger.debug(e);
+      this.sentryService.captureException(e);
     }
   }
 

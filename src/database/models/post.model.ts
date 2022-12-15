@@ -94,7 +94,7 @@ export interface IPost {
   postTags?: IPostTag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
-  tagsJson?: HashtagResponseDto[];
+  tagsJson?: TagResponseDto[];
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
