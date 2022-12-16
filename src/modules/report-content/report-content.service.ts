@@ -334,12 +334,13 @@ export class ReportContentService {
     groupIdsNeedValidate: string[],
     type: ReportTo
   ): Promise<void> {
+    //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
-    const existGroups = groups.filter((group) => {
-      const isCommunity = type === ReportTo.COMMUNITY;
-      return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
+    const postRootGroupIds = groups.map((group) => group.rootGroupId);
+    const isExistGroups = groupIdsNeedValidate.every((rootGroupId) => {
+      return postRootGroupIds.includes(rootGroupId);
     });
-    if (existGroups.length < groupIdsNeedValidate.length) {
+    if (!isExistGroups) {
       throw new ValidatorException('Invalid group_ids');
     }
   }
