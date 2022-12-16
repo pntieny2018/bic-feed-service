@@ -466,9 +466,10 @@ export class ReportContentService {
         returning: true,
       });
       await trx.commit();
-
-      report.details = detailModels;
-      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report.toJSON() }));
+      const detailJson = detailModels.map((detail) => detail.toJSON());
+      const reportJson = report.toJSON();
+      reportJson.details = detailJson;
+      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...reportJson }));
     } catch (ex) {
       await trx.rollback();
       throw ex;
