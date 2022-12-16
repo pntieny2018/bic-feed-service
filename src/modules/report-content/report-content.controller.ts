@@ -14,7 +14,7 @@ export class ReportContentController {
 
   @Get('/review')
   public async getContentsReported(
-    @AuthUser() user: UserDto,
+    // @AuthUser() user: UserDto,
     @Query() getReportDto: GetReportDto
   ): Promise<ReportReviewResponsesDto[]> {
     return this._reportContentService.getReports(getReportDto);
