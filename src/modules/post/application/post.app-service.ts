@@ -181,6 +181,8 @@ export class PostAppService {
     this._postService.checkContent(post.content, post.media);
 
     const postUpdated = await this._postService.publish(post, user);
+    this._feedService.markSeenPosts(postUpdated.id, user.id);
+    postUpdated.totalUsersSeen = Math.max(postUpdated.totalUsersSeen, 1)
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
         post: postUpdated,
