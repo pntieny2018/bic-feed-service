@@ -377,7 +377,6 @@ export class ReportContentService {
         await this._validateGroupIds(audienceIds, groupIds, reportTo);
         break;
       case TargetType.COMMENT:
-      case TargetType.CHILD_COMMENT:
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
