@@ -69,7 +69,7 @@ export class TagController {
     type: TagResponseDto,
     description: 'Update tag successfully',
   })
-  @ResponseMessages({ success: 'tag has been published successfully' })
+  @ResponseMessages({ success: 'Tag updated' })
   @Put('/:id')
   @InjectUserToBody()
   public async update(

@@ -180,14 +180,7 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
-        isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
-        [Op.and]: [
-          this.postModel.notIncludePostsReported(user.id, {
-            mainTableAlias: '"PostModel"',
-            type: [TargetType.ARTICLE, TargetType.POST],
-          }),
-        ],
       };
     } else {
       condition = { id: postId, isHidden: false };
@@ -199,7 +192,7 @@ export class PostService {
       include,
     });
 
-    if (!post) {
+    if (!post || (post.isHidden === true && post.createdBy !== user?.id)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 

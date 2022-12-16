@@ -10,7 +10,7 @@ module.exports = {
         tableName: tableName,
         schema: schemaName,
       },
-      'created_by_target_id'
+      `${tableName}_created_by_target_id`
     );
   },
 

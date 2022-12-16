@@ -334,12 +334,13 @@ export class ReportContentService {
     groupIdsNeedValidate: string[],
     type: ReportTo
   ): Promise<void> {
+    //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
-    const existGroups = groups.filter((group) => {
-      const isCommunity = type === ReportTo.COMMUNITY;
-      return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
+    const postRootGroupIds = groups.map((group) => group.rootGroupId);
+    const isExistGroups = groupIdsNeedValidate.every((rootGroupId) => {
+      return postRootGroupIds.includes(rootGroupId);
     });
-    if (existGroups.length < groupIdsNeedValidate.length) {
+    if (!isExistGroups) {
       throw new ValidatorException('Invalid group_ids');
     }
   }
@@ -376,7 +377,6 @@ export class ReportContentService {
         await this._validateGroupIds(audienceIds, groupIds, reportTo);
         break;
       case TargetType.COMMENT:
-      case TargetType.CHILD_COMMENT:
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
@@ -438,6 +438,8 @@ export class ReportContentService {
     };
 
     // insert to two table need transaction
+    const trx = await this._reportContentModel.sequelize.transaction();
+
     try {
       const report = await this._reportContentModel.create(reportData, {
         returning: true,
@@ -459,9 +461,15 @@ export class ReportContentService {
         returning: true,
       });
 
-      report.details = detailModels;
-      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report.toJSON() }));
+      await trx.commit();
+      const detailJson = detailModels.map((detail) => detail.toJSON());
+
+      const reportJson = report.toJSON();
+      reportJson.details = detailJson;
+
+      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...reportJson }));
     } catch (ex) {
+      await trx.rollback();
       throw ex;
     }
 

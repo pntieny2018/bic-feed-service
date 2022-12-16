@@ -1,19 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { RecentSearchService } from '../recent-search.service';
-import { RecentSearchModel } from '../../../database/models/recent-search.model';
-import { getModelToken } from '@nestjs/sequelize';
-import {
-  DEFAULT_RECENT_SEARCH_ITEMS_NUMBER,
-  LIMIT_TOTAL_RECENT_SEARCH,
-  RecentSearchType,
-} from '..';
-import { plainToClass } from 'class-transformer';
-import { RecentSearchDto, RecentSearchesDto } from '../dto/responses';
-import { mockedRecentSearchList } from './mocks/recent-search-list.mock';
-import { HttpException } from '@nestjs/common';
-import { createMock } from '@golevelup/ts-jest';
 import { SentryService } from '@app/sentry';
+import { createMock } from '@golevelup/ts-jest';
+import { HttpException } from '@nestjs/common';
+import { getModelToken } from '@nestjs/sequelize';
+import { Test, TestingModule } from '@nestjs/testing';
+import { plainToClass } from 'class-transformer';
+import { LIMIT_TOTAL_RECENT_SEARCH, RecentSearchType } from '..';
 import { OrderEnum } from '../../../common/dto';
+import { RecentSearchModel } from '../../../database/models/recent-search.model';
+import { RecentSearchDto, RecentSearchesDto } from '../dto/responses';
+import { RecentSearchService } from '../recent-search.service';
+import { mockedRecentSearchList } from './mocks/recent-search-list.mock';
 
 describe('RecentSearchService', () => {
   let recentSearchService: RecentSearchService;
@@ -51,7 +47,7 @@ describe('RecentSearchService', () => {
     recentSearchModelMock = moduleRef.get<typeof RecentSearchModel>(
       getModelToken(RecentSearchModel)
     );
-    //sentryService = moduleRef.get<SentryService>(SentryService);
+    sentryService = moduleRef.get<SentryService>(SentryService);
   });
 
   it('should be defined', () => {
@@ -61,8 +57,8 @@ describe('RecentSearchService', () => {
   describe('Create recent search', () => {
     it('Should create new recent search if the keyword is not existed', async () => {
       const dataCreateMock = createMock<RecentSearchModel>(mockedRecentSearchList[0]);
-      const { keyword, target, createdBy, updatedBy } = dataCreateMock;
-      recentSearchModelMock.findOrCreate.mockResolvedValueOnce([dataCreateMock, true]);
+      const { keyword, target, createdBy } = dataCreateMock;
+      recentSearchModelMock.create.mockResolvedValueOnce(dataCreateMock);
 
       jest.spyOn(recentSearchService, 'needDeleteRecentSearchOverLimit');
 
@@ -74,25 +70,28 @@ describe('RecentSearchService', () => {
       expect(recentSearchModelMock.set).not.toHaveBeenCalled();
       expect(recentSearchModelMock.save).not.toHaveBeenCalled();
       expect(recentSearchService.needDeleteRecentSearchOverLimit).toHaveBeenCalledTimes(1);
-      // expect(result).toStrictEqual(
-      //   plainToClass(RecentSearchDto, dataCreateMock, {
-      //     excludeExtraneousValues: true,
-      //   })
-      // );
+      expect(result).toStrictEqual(
+        plainToClass(RecentSearchDto, dataCreateMock, {
+          excludeExtraneousValues: true,
+        })
+      );
 
-      // const queryArgFindUsers: any = recentSearchModelMock.findOrCreate.mock.calls[0][0];
-      // expect(queryArgFindUsers.where).toStrictEqual({
-      //   keyword,
-      //   createdBy,
-      //   target,
-      // });
-      // expect(queryArgFindUsers.defaults).toStrictEqual({
-      //   createdBy,
-      //   updatedBy,
-      //   keyword,
-      //   target,
-      // });
-      // recentSearchModelMock.findOrCreate.mockClear();
+      const queryArgFindUsers: any = recentSearchModelMock.findOne.mock.calls[0][0];
+      expect(queryArgFindUsers.where).toStrictEqual({
+        keyword,
+        createdBy,
+        target,
+      });
+
+      const argCreate: any = recentSearchModelMock.create.mock.calls[0][0];
+      expect(argCreate).toStrictEqual({
+        keyword,
+        createdBy,
+        target,
+        totalSearched: 1,
+      });
+      recentSearchModelMock.findOne.mockClear();
+      recentSearchModelMock.create.mockClear();
     });
     it('Should update recent search if the keyword already existed', async () => {
       const dataCreateMock = createMock<RecentSearchModel>({
@@ -102,51 +101,51 @@ describe('RecentSearchService', () => {
         save: jest.fn(),
       });
 
-      const { keyword, target, createdBy, updatedBy, totalSearched } = dataCreateMock;
-      recentSearchModelMock.findOrCreate.mockResolvedValueOnce([dataCreateMock, false]);
+      const { keyword, target, createdBy, totalSearched } = dataCreateMock;
+      recentSearchModelMock.findOne.mockResolvedValueOnce(dataCreateMock);
       jest.spyOn(recentSearchService, 'needDeleteRecentSearchOverLimit');
 
       const result = await recentSearchService.create(createdBy, {
         keyword,
         target,
       });
+
+      expect(recentSearchModelMock.create).not.toBeCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      //expect(dataCreateMock.changed).toHaveBeenCalled();
+      expect(dataCreateMock.changed).toHaveBeenCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      //expect(dataCreateMock.set).toBeCalledWith({
-      //  totalSearched: totalSearched + 1,
-      //});
+      expect(dataCreateMock.set).toBeCalledWith({
+        totalSearched: totalSearched + 1,
+      });
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      //expect(dataCreateMock.save).toHaveBeenCalled();
+      expect(dataCreateMock.save).toHaveBeenCalled();
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(recentSearchService.needDeleteRecentSearchOverLimit).toHaveBeenCalledTimes(1);
-      // expect(result).toStrictEqual(
-      //   plainToClass(RecentSearchDto, dataCreateMock, {
-      //     excludeExtraneousValues: true,
-      //   })
-      // );
+      expect(result).toStrictEqual(
+        plainToClass(RecentSearchDto, dataCreateMock, {
+          excludeExtraneousValues: true,
+        })
+      );
 
-      // const queryArgFindUsers: any = recentSearchModelMock.findOrCreate.mock.calls[0][0];
-      // expect(queryArgFindUsers.where).toStrictEqual({
-      //   keyword,
-      //   createdBy,
-      //   target,
-      // });
-      // expect(queryArgFindUsers.defaults).toStrictEqual({
-      //   createdBy,
-      //   updatedBy,
-      //   keyword,
-      //   target,
-      // });
-      // recentSearchModelMock.findOrCreate.mockClear();
+      const queryArgFindUsers: any = recentSearchModelMock.findOne.mock.calls[0][0];
+      expect(queryArgFindUsers.where).toStrictEqual({
+        keyword,
+        createdBy,
+        target,
+      });
+
+      recentSearchModelMock.findOne.mockClear();
     });
 
     it('Can catch exception.', async () => {
-      recentSearchModelMock.findOrCreate.mockRejectedValue(new Error('any error'));
+      recentSearchModelMock.create.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchService.create('85dfe22e-866d-49a5-bbef-3fbc72e4febf', mockedRecentSearchList[0]);
+        await recentSearchService.create(
+          '85dfe22e-866d-49a5-bbef-3fbc72e4febf',
+          mockedRecentSearchList[0]
+        );
       } catch (e) {
-        //expect(sentryService.captureException).toBeCalledTimes(1);
+        expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
       }
       recentSearchModelMock.findAll.mockClear();
@@ -201,7 +200,7 @@ describe('RecentSearchService', () => {
       try {
         await recentSearchService.delete(createdBy, id);
       } catch (e) {
-        //expect(sentryService.captureException).toBeCalledTimes(1);
+        expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
       }
     });
@@ -239,7 +238,7 @@ describe('RecentSearchService', () => {
     const sort = OrderEnum.DESC;
     it('Should be return empty list', async () => {
       const target = 'post' as RecentSearchType;
-      const order = OrderEnum.DESC
+      const order = OrderEnum.DESC;
       const limit = 2;
 
       recentSearchModelMock.findAll.mockResolvedValueOnce([]);
@@ -271,7 +270,7 @@ describe('RecentSearchService', () => {
       try {
         await recentSearchService.get(createdBy, {});
       } catch (e) {
-        //expect(sentryService.captureException).toBeCalledTimes(1);
+        expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
       }
 
