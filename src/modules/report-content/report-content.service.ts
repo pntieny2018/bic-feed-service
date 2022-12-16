@@ -334,12 +334,13 @@ export class ReportContentService {
     groupIdsNeedValidate: string[],
     type: ReportTo
   ): Promise<void> {
+    //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
-    const existGroups = groups.filter((group) => {
-      const isCommunity = type === ReportTo.COMMUNITY;
-      return groupIdsNeedValidate.includes(group.id) && group.isCommunity == isCommunity;
+    const postRootGroupIds = groups.map((group) => group.rootGroupId);
+    const isExistGroups = groupIdsNeedValidate.every((rootGroupId) => {
+      return postRootGroupIds.includes(rootGroupId);
     });
-    if (existGroups.length < groupIdsNeedValidate.length) {
+    if (!isExistGroups) {
       throw new ValidatorException('Invalid group_ids');
     }
   }
@@ -366,7 +367,6 @@ export class ReportContentService {
     let post,
       comment = null;
     let audienceIds = [];
-    let groupInfos: GroupSharedDto[] = [];
     let isExisted = false;
     switch (targetType) {
       case TargetType.POST:
@@ -394,9 +394,6 @@ export class ReportContentService {
     if (authorId === createdBy) {
       throw new ValidatorException('You cant not report yourself');
     }
-    audienceIds = post.groups.map((g) => g.groupId);
-
-    groupInfos = await this._groupService.getMany(audienceIds);
 
     const existedReport = await this._reportContentModel.findOne({
       where: {
@@ -405,9 +402,9 @@ export class ReportContentService {
     });
 
     if (existedReport) {
-      const details: IReportContentDetailAttribute[] = groupInfos.map((group) => ({
+      const details: IReportContentDetailAttribute[] = groupIds.map((groupId) => ({
         reportId: existedReport.id,
-        groupId: group.id,
+        groupId: groupId,
         reportTo: reportTo,
         targetId: targetId,
         targetType: targetType,
@@ -448,9 +445,9 @@ export class ReportContentService {
         transaction: trx,
       });
 
-      const details: IReportContentDetailAttribute[] = groupInfos.map((group) => ({
+      const details: IReportContentDetailAttribute[] = groupIds.map((groupId) => ({
         reportId: report.id,
-        groupId: group.id,
+        groupId: groupId,
         reportTo: reportTo,
         targetId: targetId,
         targetType: targetType,
