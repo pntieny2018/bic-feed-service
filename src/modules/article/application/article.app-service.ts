@@ -36,7 +36,7 @@ export class ArticleAppService {
     private _postService: PostService,
     private _postSearchService: SearchService,
     private _tagServices: TagService,
-    private _feedService: FeedService,
+    private _feedService: FeedService
   ) {}
 
   public async getRelatedById(
@@ -58,18 +58,15 @@ export class ArticleAppService {
     articleId: string,
     getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    let articleIdsReported = [];
+    const article = await this._articleService.get(articleId, user, getArticleDto);
     if (user) {
-      articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+      const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
         TargetType.ARTICLE,
       ]);
+      if (articleIdsReported.includes(articleId) && article.actor.id !== user.id) {
+        throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+      }
     }
-
-    if (articleIdsReported.includes(articleId)) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-
-    const article = await this._articleService.get(articleId, user, getArticleDto);
 
     return article;
   }
@@ -235,7 +232,7 @@ export class ArticleAppService {
     article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
-    articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1)
+    articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
         article: articleUpdated,

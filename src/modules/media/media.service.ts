@@ -182,6 +182,7 @@ export class MediaService {
         url: i.url ?? null,
         width: i.width ?? null,
         height: i.height ?? null,
+        mimeType: i.mimeType ?? null,
         status: i.status ?? MediaStatus.WAITING_PROCESS,
         thumbnails: i.thumbnails ?? [],
         createdAt: i.createdAt ? i.createdAt : new Date(),

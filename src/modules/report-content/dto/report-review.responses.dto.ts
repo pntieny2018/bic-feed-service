@@ -64,7 +64,6 @@ export class ReportReviewResponsesDto {
   @ApiProperty({
     name: 'target_type',
   })
-  @Transform(({ value }) => (value === TargetType.CHILD_COMMENT ? TargetType.COMMENT : value))
   @Expose({
     name: 'target_type',
   })

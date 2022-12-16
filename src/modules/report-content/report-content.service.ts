@@ -377,7 +377,6 @@ export class ReportContentService {
         await this._validateGroupIds(audienceIds, groupIds, reportTo);
         break;
       case TargetType.COMMENT:
-      case TargetType.CHILD_COMMENT:
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
@@ -466,9 +465,10 @@ export class ReportContentService {
         returning: true,
       });
       await trx.commit();
-
-      report.details = detailModels;
-      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report.toJSON() }));
+      const detailJson = detailModels.map((detail) => detail.toJSON());
+      const reportJson = report.toJSON();
+      reportJson.details = detailJson;
+      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...reportJson }));
     } catch (ex) {
       await trx.rollback();
       throw ex;
