@@ -182,12 +182,6 @@ export class PostService {
         id: postId,
         isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
-        [Op.and]: [
-          this.postModel.notIncludePostsReported(user.id, {
-            mainTableAlias: '"PostModel"',
-            type: [TargetType.ARTICLE, TargetType.POST],
-          }),
-        ],
       };
     } else {
       condition = { id: postId, isHidden: false };

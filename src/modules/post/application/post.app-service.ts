@@ -50,17 +50,17 @@ export class PostAppService {
     getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
-    let postIdsReported = [];
+
+    const postResponseDto = await this._postService.get(postId, user, getPostDto);
+
     if (user) {
-      postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+      const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
         TargetType.POST,
       ]);
+      if (postIdsReported.includes(postId) && postResponseDto.actor.id !== user.id) {
+        throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      }
     }
-
-    if (postIdsReported.includes(postId)) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
-    const postResponseDto = await this._postService.get(postId, user, getPostDto);
 
     const post = {
       privacy: postResponseDto.privacy,
@@ -182,7 +182,7 @@ export class PostAppService {
 
     const postUpdated = await this._postService.publish(post, user);
     this._feedService.markSeenPosts(postUpdated.id, user.id);
-    postUpdated.totalUsersSeen = Math.max(postUpdated.totalUsersSeen, 1)
+    postUpdated.totalUsersSeen = Math.max(postUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
         post: postUpdated,
