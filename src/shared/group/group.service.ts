@@ -101,6 +101,35 @@ export class GroupService {
 
   public async getReasonType(): Promise<{ id: string; description: string }[]> {
     const raws: unknown[] = await this._store.get(`${AppHelper.getRedisEnv()}report_reason_type`);
+    if (!raws || !raws?.length) {
+      //FIX ME : it was blocked by group service
+      return [
+        {
+          id: 'spam',
+          description: 'Spam',
+        },
+        {
+          id: 'bullying_threatening_or_harassing',
+          description: 'Bullying, threatening or harassing',
+        },
+        {
+          id: 'violent_or_porn',
+          description: 'Violent, pornographic, or sexually explicit',
+        },
+        {
+          id: 'pretending_someone',
+          description: 'Pretending to be someone else',
+        },
+        {
+          id: 'illegal',
+          description: 'Illegal',
+        },
+        {
+          id: 'others',
+          description: 'Others',
+        },
+      ];
+    }
     return raws.map((raw) => ({
       id: raw['id'],
       description: raw['value'],

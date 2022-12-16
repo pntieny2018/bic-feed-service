@@ -65,6 +65,8 @@ export class SeriesAppService {
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
       const series = await this._seriesService.get(created.id, user, new GetSeriesDto());
+      this._feedService.markSeenPosts(series.id, user.id);
+      series.totalUsersSeen = Math.max(series.totalUsersSeen, 1);
       this._eventEmitter.emit(
         new SeriesHasBeenPublishedEvent({
           series,

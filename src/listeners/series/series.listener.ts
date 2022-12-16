@@ -12,6 +12,7 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { PostType } from '../../database/models/post.model';
 import { SearchService } from '../../modules/search/search.service';
 import { MediaType } from '../../database/models/media.model';
+import { FeedService } from 'src/modules/feed/feed.service';
 
 @Injectable()
 export class SeriesListener {
@@ -21,7 +22,8 @@ export class SeriesListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService
+    private readonly _postSearchService: SearchService,
+    private readonly _feedService: FeedService,
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
@@ -69,7 +71,6 @@ export class SeriesListener {
         },
       },
     ]);
-
     //TODO:: send noti
     try {
       // Fanout to write post to all news feed of user follow group audience

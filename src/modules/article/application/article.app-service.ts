@@ -25,6 +25,7 @@ import { ArticleSearchResponseDto } from '../dto/responses/article-search.respon
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
 import { GroupService } from '../../../shared/group';
+import { FeedService } from 'src/modules/feed/feed.service';
 
 @Injectable()
 export class ArticleAppService {
@@ -34,7 +35,8 @@ export class ArticleAppService {
     private _authorityService: AuthorityService,
     private _postService: PostService,
     private _postSearchService: SearchService,
-    private _tagServices: TagService
+    private _tagServices: TagService,
+    private _feedService: FeedService,
   ) {}
 
   public async getRelatedById(
@@ -232,13 +234,15 @@ export class ArticleAppService {
     }
     article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
+    this._feedService.markSeenPosts(articleUpdated.id, user.id);
+    articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1)
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
         article: articleUpdated,
         actor: user.profile,
       })
     );
-    return article;
+    return articleUpdated;
   }
 
   public async delete(user: UserDto, articleId: string): Promise<boolean> {

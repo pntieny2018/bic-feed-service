@@ -178,7 +178,13 @@ export class ReportContentService {
     author: UserDto,
     getOptions: GetBlockedContentOfMeDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order } = getOptions;
+    const { limit, offset, order, specTargetIds } = getOptions;
+
+    const conditions = {};
+
+    if (specTargetIds && specTargetIds.length > 0) {
+      conditions['targetId'] = specTargetIds;
+    }
 
     const { rows, count } = await this._reportContentModel.findAndCountAll({
       attributes: ['id', 'targetId'],
@@ -187,6 +193,7 @@ export class ReportContentService {
         targetType: {
           [Op.in]: [TargetType.POST, TargetType.ARTICLE],
         },
+        ...conditions,
         status: ReportStatus.HID,
       },
       limit: limit,
@@ -194,8 +201,19 @@ export class ReportContentService {
       order: [['createdAt', order]],
     });
 
+    const meta = (hasNextPage: boolean) => ({
+      limit: limit,
+      offset: offset,
+      hasNextPage: hasNextPage,
+    });
+
+    if (!rows || !rows.length) {
+      return new PageDto<PostResponseDto>([], meta(false));
+    }
+
     const reportIds = [];
     const targetIds = [];
+
     const postReportMap = new Map<string, string>();
 
     for (const item of rows) {
@@ -204,17 +222,12 @@ export class ReportContentService {
       postReportMap.set(item.targetId, item.id);
     }
 
-    const reportStatisticsMap = await this.getDetailsReport(reportIds);
-
-    const meta = (hasNextPage: boolean) => ({
-      limit: limit,
-      offset: offset,
-      hasNextPage: hasNextPage,
-    });
-
     if (!targetIds || !targetIds.length) {
       return new PageDto<PostResponseDto>([], meta(false));
     }
+
+    const reportStatisticsMap = await this.getDetailsReport(reportIds);
+
     const responses = await this._feedService.getContentBlockedOfMe(
       author,
       targetIds,
@@ -428,30 +441,33 @@ export class ReportContentService {
       status: ReportStatus.CREATED,
     };
 
-    reportData.details = groupInfos.map((group) => ({
-      groupId: group.id,
-      reportTo: reportTo,
-      targetId: targetId,
-      targetType: targetType,
-      createdBy: createdBy,
-      reasonType: reasonType,
-      reason: reason,
-    }));
-
     const trx = await this._reportContentModel.sequelize.transaction();
     // insert to two table need transaction
     try {
       const report = await this._reportContentModel.create(reportData, {
         returning: true,
-        include: [
-          {
-            model: ReportContentDetailModel,
-            as: 'details',
-          },
-        ],
         transaction: trx,
       });
+
+      const details: IReportContentDetailAttribute[] = groupInfos.map((group) => ({
+        reportId: report.id,
+        groupId: group.id,
+        reportTo: reportTo,
+        targetId: targetId,
+        targetType: targetType,
+        createdBy: createdBy,
+        reasonType: reasonType,
+        reason: reason,
+      }));
+
+      const detailModels = await this._reportContentDetailModel.bulkCreate(details, {
+        ignoreDuplicates: true,
+        transaction: trx,
+        returning: true,
+      });
       await trx.commit();
+
+      report.details = detailModels;
       this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report.toJSON() }));
     } catch (ex) {
       await trx.rollback();

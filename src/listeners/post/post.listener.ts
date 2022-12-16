@@ -169,7 +169,7 @@ export class PostListener {
         updatedAt,
       },
     ]);
-
+    
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(

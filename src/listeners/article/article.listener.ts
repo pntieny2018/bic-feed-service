@@ -34,7 +34,7 @@ export class ArticleListener {
     private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService
+    private readonly _postSearchService: SearchService,
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
