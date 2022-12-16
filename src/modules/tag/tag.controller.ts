@@ -86,6 +86,7 @@ export class TagController {
     description: 'Delete tag successfully',
   })
   @Delete('/:id')
+  @ResponseMessages({ success: 'Tag deleted' })
   public async delete(
     @AuthUser() _user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string
