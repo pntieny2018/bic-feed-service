@@ -488,7 +488,6 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
-        isHidden: false,
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
@@ -501,7 +500,7 @@ export class ArticleService extends PostService {
       include,
     });
 
-    if (!article) {
+    if (!article || (article.isHidden === true && article.createdBy !== authUser?.id)) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
     if (authUser) {
