@@ -71,9 +71,6 @@ export class SeriesListener {
         },
       },
     ]);
-
-    this._feedService.markSeenPosts(id, createdBy);
-    
     //TODO:: send noti
     try {
       // Fanout to write post to all news feed of user follow group audience
