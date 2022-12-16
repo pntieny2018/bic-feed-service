@@ -54,7 +54,7 @@ export class TagController {
     description: 'Create tag successfully',
   })
   @ResponseMessages({
-    success: 'Create tag successfully',
+    success: 'Tag was created successfully',
   })
   @Post('/')
   public async create(

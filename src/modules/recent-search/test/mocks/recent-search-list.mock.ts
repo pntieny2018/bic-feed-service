@@ -1,5 +1,6 @@
 import { RecentSearchType } from '../..';
 import { CreateRecentSearchDto, GetRecentSearchPostDto } from '../../dto/requests';
+import { CleanRecentSearchesDto } from '../../dto/requests/clean-recent-searches.dto';
 
 export const getRecentSearchesDto: GetRecentSearchPostDto = {
   target: 'post' as RecentSearchType,
@@ -8,6 +9,10 @@ export const getRecentSearchesDto: GetRecentSearchPostDto = {
 export const createRecentSearchDto: CreateRecentSearchDto = {
   target: 'post',
   keyword: 'aaaaa',
+};
+
+export const cleanRecentSearchDto: CleanRecentSearchesDto = {
+  target: RecentSearchType.POST,
 };
 
 export const mockedRecentSearchList = [

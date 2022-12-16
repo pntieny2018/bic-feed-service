@@ -437,12 +437,12 @@ export class ReportContentService {
       status: ReportStatus.CREATED,
     };
 
-    const trx = await this._reportContentModel.sequelize.transaction();
     // insert to two table need transaction
+    const trx = await this._reportContentModel.sequelize.transaction();
+
     try {
       const report = await this._reportContentModel.create(reportData, {
         returning: true,
-        transaction: trx,
       });
 
       const details: IReportContentDetailAttribute[] = groupIds.map((groupId) => ({
@@ -458,13 +458,15 @@ export class ReportContentService {
 
       const detailModels = await this._reportContentDetailModel.bulkCreate(details, {
         ignoreDuplicates: true,
-        transaction: trx,
         returning: true,
       });
+
       await trx.commit();
       const detailJson = detailModels.map((detail) => detail.toJSON());
+
       const reportJson = report.toJSON();
       reportJson.details = detailJson;
+
       this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...reportJson }));
     } catch (ex) {
       await trx.rollback();
