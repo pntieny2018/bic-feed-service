@@ -179,7 +179,6 @@ export class PostListener {
         [NIL_UUID]
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
     }
   }
@@ -205,7 +204,9 @@ export class PostListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService
+        .processVideo(mediaIds)
+        .catch((e) => this._sentryService.captureException(e));
     }
 
     if (oldPost.isDraft === false && isDraft === true) {
@@ -220,7 +221,6 @@ export class PostListener {
     this._postHistoryService
       .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
       .catch((e) => {
-        this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
       });
 
@@ -289,7 +289,6 @@ export class PostListener {
         oldPost.audience.groups.map((g) => g.id)
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
     }
   }

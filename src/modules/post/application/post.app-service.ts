@@ -57,11 +57,10 @@ export class PostAppService {
       ]);
     }
 
-    if (postIdsReported.includes(postId)) {
+    const postResponseDto = await this._postService.get(postId, user, getPostDto);
+    if (postIdsReported.includes(postId) && postResponseDto.actor.id !== user.id) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
-    const postResponseDto = await this._postService.get(postId, user, getPostDto);
-
     const post = {
       privacy: postResponseDto.privacy,
       createdBy: postResponseDto.createdBy,

@@ -11,13 +11,13 @@ export class InternalFollowController {
 
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
   public async follow(@Payload('value') createFollowDto: CreateFollowDto): Promise<void> {
-    this._logger.debug(`[follow]: ${JSON.stringify(createFollowDto)}`);
+    this._logger.debug(`[Event follow]: ${JSON.stringify(createFollowDto)}`);
     await this._followService.follow(createFollowDto);
   }
 
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_UNFOLLOW_GROUP)
   public async unfollow(@Payload('value') unfollowDto: UnfollowDto): Promise<void> {
-    this._logger.debug(`[unfollow]: ${JSON.stringify(unfollowDto)}`);
+    this._logger.debug(`[Event unfollow]: ${JSON.stringify(unfollowDto)}`);
     await this._followService.unfollow(unfollowDto);
   }
 }
