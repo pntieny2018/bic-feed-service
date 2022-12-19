@@ -124,17 +124,17 @@ export class TagService {
     updateTagDto: UpdateTagDto,
     authUser: UserDto
   ): Promise<TagResponseDto> {
-    const tag = await this._tagModel.findOne({
+    const name = updateTagDto.name.trim();
+    const tags = await this._tagModel.findAll({
       where: {
-        id: tagId,
+        [Op.or]: [{ id: tagId }, { name: name }],
       },
     });
+    const tag = tags.find((e) => e.id === tagId);
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    const name = updateTagDto.name.trim();
-
-    if (tag.name === name) {
+    if (tags.find((e) => e.name === name)) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
