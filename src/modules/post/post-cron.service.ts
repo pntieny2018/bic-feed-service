@@ -125,11 +125,4 @@ export class PostCronService {
       this._sentryService.captureException(e);
     }
   }
-  @Cron(CronExpression.EVERY_5_SECONDS)
-  private async testLog() {
-    const error = new Error('Test');
-    this._logger.error('[test error]', JSON.stringify(error));
-    this._logger.debug('[test error debug]', JSON.stringify(error));
-    console.log('[test error]', JSON.stringify(error));
-  }
 }
