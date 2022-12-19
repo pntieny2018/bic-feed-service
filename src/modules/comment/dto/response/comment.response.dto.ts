@@ -81,7 +81,7 @@ export class CommentResponseDto {
     name: 'created_by',
   })
   @Expose()
-  public createdBy?: number;
+  public createdBy?: string;
 
   @ApiProperty({
     type: MediaFilterResponseDto,

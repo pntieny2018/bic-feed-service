@@ -25,8 +25,20 @@ export class ReportContentListener {
   @On(CreateReportEvent)
   public async onReportCreated(event: CreateReportEvent): Promise<void> {
     this._logger.debug('[onReportCreated]');
-    this._logger.debug(JSON.stringify(event, null, 4));
     const { payload } = event;
+
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+      this._postService
+        .updateData([payload.targetId], {
+          isReported: true,
+        })
+        .catch((ex) => this._logger.error(ex));
+      payload.details.forEach((dt) => {
+        this._postService
+          .unSavePostToUserCollection(dt.targetId, dt.createdBy)
+          .catch((ex) => this._logger.error(ex));
+      });
+    }
 
     const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
 
@@ -61,30 +73,17 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
           },
         },
       },
     };
     this._notificationService.publishReportNotification(notificationPayload);
-
-    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      this._postService
-        .updateData([payload.targetId], {
-          isReported: true,
-        })
-        .catch((ex) => this._logger.error(ex));
-      payload.details.forEach((dt) =>
-        this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
-      );
-    }
   }
 
   @On(ApproveReportEvent)
   public async onReportApproved(event: ApproveReportEvent): Promise<void> {
     this._logger.debug('[onReportApproved]');
-    this._logger.debug(JSON.stringify(event, null, 4));
-
     const { payload } = event;
 
     const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
@@ -120,7 +119,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
             creatorId: payload.authorId,
           },
         },

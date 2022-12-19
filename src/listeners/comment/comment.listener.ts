@@ -38,6 +38,7 @@ export class CommentListener {
         this._logger.error(ex, ex.stack);
         this._sentryService.captureException(ex);
       });
+
     this._feedService.markSeenPosts(commentResponse.postId, actor.id).catch((ex) => {
       this._logger.error(ex, ex.stack);
       this._sentryService.captureException(ex);
