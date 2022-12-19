@@ -555,7 +555,10 @@ export class ReportContentService {
           },
         ],
         where: {
-          ...conditions,
+          [Op.or]: {
+            targetId: updateStatusReport.targetIds ?? [],
+            id: updateStatusReport.reportIds ?? [],
+          },
           status: ReportStatus.HID,
         },
       });
