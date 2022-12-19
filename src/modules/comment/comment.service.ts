@@ -893,11 +893,11 @@ export class CommentService {
       id: id,
     };
     if (returning) {
-      const post = await this._commentModel.findOne({
+      const comment = await this._commentModel.findOne({
         where: conditions,
       });
-      if (post) {
-        return [true, post];
+      if (comment) {
+        return [true, comment];
       }
       return [false, null];
     }
