@@ -17,7 +17,7 @@ export class ReportContentController {
     @AuthUser() user: UserDto,
     @Query() getReportDto: GetReportDto
   ): Promise<ReportReviewResponsesDto[]> {
-    return this._reportContentService.getReports(getReportDto);
+    return this._reportContentService.getReports(user, getReportDto);
   }
 
   @Get('/me/content')
@@ -42,17 +42,22 @@ export class ReportContentController {
   }
 
   @ApiParam({
-    name: 'id',
+    name: 'reportId',
+    description: 'Report id',
+  })
+  @ApiParam({
+    name: 'targetId',
     description: 'Target id',
   })
-  @Get(':id/statistics')
+  @Get(':reportId/statistics/:targetId')
   public async getStatistics(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) targetId: string,
+    @Param('reportId', ParseUUIDPipe) reportId: string,
+    @Param('targetId', ParseUUIDPipe) targetId: string,
     @Query('count_reporter') countReporter = 5
   ): Promise<StatisticsReportResponsesDto> {
     // TODO check permission
-    return this._reportContentService.getStatistics(targetId, countReporter);
+    return this._reportContentService.getStatistics(reportId, targetId, countReporter);
   }
 
   @Post('/content')

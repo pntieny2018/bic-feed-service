@@ -54,7 +54,7 @@ export class TagController {
     description: 'Create tag successfully',
   })
   @ResponseMessages({
-    success: 'Create tag successfully',
+    success: 'Tag was created successfully',
   })
   @Post('/')
   public async create(
@@ -86,6 +86,7 @@ export class TagController {
     description: 'Delete tag successfully',
   })
   @Delete('/:id')
+  @ResponseMessages({ success: 'Tag deleted' })
   public async delete(
     @AuthUser() _user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string

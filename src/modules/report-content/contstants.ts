@@ -2,7 +2,6 @@ export enum TargetType {
   POST = 'POST',
   ARTICLE = 'ARTICLE',
   COMMENT = 'COMMENT',
-  CHILD_COMMENT = 'CHILD_COMMENT',
 }
 
 export enum ReportStatus {

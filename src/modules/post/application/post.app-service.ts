@@ -21,6 +21,7 @@ import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
 import { IPost } from '../../../database/models/post.model';
+import { IPostGroup } from '../../../database/models/post-group.model';
 
 @Injectable()
 export class PostAppService {
@@ -49,18 +50,28 @@ export class PostAppService {
     getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
     getPostDto.hideSecretAudienceCanNotAccess = true;
-    const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
-      TargetType.POST,
-    ]);
-    if (postIdsReported.includes(postId)) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
+
     const postResponseDto = await this._postService.get(postId, user, getPostDto);
+
+    if (user) {
+      const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+        TargetType.POST,
+      ]);
+      if (postIdsReported.includes(postId) && postResponseDto.actor.id !== user.id) {
+        throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+      }
+    }
 
     const post = {
       privacy: postResponseDto.privacy,
       createdBy: postResponseDto.createdBy,
       isDraft: postResponseDto.isDraft,
+      groups: postResponseDto.audience.groups.map(
+        (g) =>
+          ({
+            groupId: g.id,
+          } as IPostGroup)
+      ),
     } as IPost;
 
     if (user) {
@@ -170,6 +181,8 @@ export class PostAppService {
     this._postService.checkContent(post.content, post.media);
 
     const postUpdated = await this._postService.publish(post, user);
+    this._feedService.markSeenPosts(postUpdated.id, user.id);
+    postUpdated.totalUsersSeen = Math.max(postUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
         post: postUpdated,
