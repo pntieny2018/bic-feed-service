@@ -131,7 +131,6 @@ export class ReportContentListener {
         isHidden: true,
       })
       .catch((ex) => this._logger.error(ex));
-
     payload.details.forEach((dt) =>
       this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
     );

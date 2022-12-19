@@ -2,10 +2,9 @@ import { Op, QueryTypes } from 'sequelize';
 import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
-import { GroupHttpService, GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { ReportStatus, ReportTo, TargetType } from './contstants';
-import { ArticleService } from '../article/article.service';
+import { ReportStatus, TargetType } from './contstants';
+import { GroupHttpService, GroupService } from '../../shared/group';
 import { LogicException, ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
@@ -22,7 +21,6 @@ import {
   IReportContentAttribute,
   ReportContentModel,
 } from '../../database/models/report-content.model';
-import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { getDatabaseConfig } from '../../config/database';
 import { plainToInstance } from 'class-transformer';
@@ -38,6 +36,7 @@ import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class ReportContentService {
@@ -46,7 +45,6 @@ export class ReportContentService {
     private readonly _userService: UserService,
     private readonly _postService: PostService,
     private readonly _groupService: GroupService,
-    private readonly _articleService: ArticleService,
     private readonly _commentService: CommentService,
     private readonly _groupHttpService: GroupHttpService,
     private readonly _eventEmitter: InternalEventEmitterService,
@@ -251,6 +249,7 @@ export class ReportContentService {
   }
 
   public async getStatistics(
+    admin: UserDto,
     reportId: string,
     targetId: string,
     fetchReporter: number
@@ -259,6 +258,20 @@ export class ReportContentService {
       fetchReporter = 10;
     }
     const dbConfig = getDatabaseConfig();
+
+    const reportDetail = await this._reportContentDetailModel.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('groupId')), 'groupId']],
+      where: {
+        reportId: reportId,
+      },
+    });
+
+    const rdJson = reportDetail.map((rd) => rd.toJSON());
+
+    await this.isCommunityAdmin(
+      admin.id,
+      rdJson.map((rd) => rd.groupId)
+    );
 
     const reportStatus = await this._reportContentModel.findOne({
       where: {
@@ -344,8 +357,7 @@ export class ReportContentService {
 
   private async _validateGroupIds(
     audienceIds: string[],
-    groupIdsNeedValidate: string[],
-    type: ReportTo
+    groupIdsNeedValidate: string[]
   ): Promise<void> {
     //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
@@ -387,14 +399,14 @@ export class ReportContentService {
         [isExisted, post] = await this._postService.isExisted(targetId, true);
         authorId = post?.createdBy;
         audienceIds = post?.groups.map((g) => g.groupId) ?? [];
-        await this._validateGroupIds(audienceIds, groupIds, reportTo);
+        await this._validateGroupIds(audienceIds, groupIds);
         break;
       case TargetType.COMMENT:
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
         audienceIds = post.groups.map((g) => g.groupId);
-        await this._validateGroupIds(audienceIds, groupIds, reportTo);
+        await this._validateGroupIds(audienceIds, groupIds);
         break;
       default:
         throw new ValidatorException('Unknown resource');
@@ -561,7 +573,10 @@ export class ReportContentService {
     return true;
   }
 
-  public async getContent(targetId: string): Promise<DetailContentReportResponseDto> {
+  public async getContent(
+    admin: UserDto,
+    targetId: string
+  ): Promise<DetailContentReportResponseDto> {
     const reportStatus = await this._reportContentModel.findOne({
       where: {
         targetId: targetId,
