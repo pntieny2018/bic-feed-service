@@ -12,7 +12,7 @@ export class GroupHttpService {
   public async getAdminIds(rootGroupIds: string[]): Promise<Record<string, string[]>> {
     try {
       const params = {
-        ['root_group_ids']: rootGroupIds,
+        ['root_group_ids']: rootGroupIds.join(','),
         offset: 0,
         limit: 50,
       };
