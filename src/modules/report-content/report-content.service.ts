@@ -122,7 +122,7 @@ export class ReportContentService {
 
     results = results.map((rs) => {
       const author = authors.find((a) => a.id === rs['author_id']);
-      const details = reportStatisticsMap.get(`${rs['id']}:${groupId}`);
+      const details = reportStatisticsMap.get(`${rs['id']}`);
       delete author.groups;
       // const reason ?
       return { ...rs, author: new UserDataShareDto(author), details: details };
@@ -175,15 +175,14 @@ export class ReportContentService {
 
     for (const reportStatistic of reportStatistics) {
       const { reportId, reasonType, total } = reportStatistic;
-      const id = `${reportId}:${groupId}`;
       if (reportStatisticsMap.has(reportId)) {
-        reportStatisticsMap.get(id).push({
+        reportStatisticsMap.get(reportId).push({
           total: parseInt(total ?? '0'),
           reasonType: reasonType,
           description: reasonTypes.find((r) => r.id === reasonType).description ?? '',
         });
       } else {
-        reportStatisticsMap.set(id, [
+        reportStatisticsMap.set(reportId, [
           {
             total: parseInt(total ?? '0'),
             reasonType: reasonType,
