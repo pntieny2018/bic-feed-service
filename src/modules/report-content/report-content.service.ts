@@ -1,5 +1,5 @@
-import { Op, QueryTypes } from 'sequelize';
 import { UserDto } from '../auth';
+import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostService } from '../post/post.service';
@@ -62,7 +62,7 @@ export class ReportContentService {
 
     const { targetType, groupId, limit, offset, order } = getReportDto;
 
-    await this.isCommunityAdmin(admin.id, [groupId]);
+    await this.canPerform(admin.id, [groupId]);
 
     let conditionStr = `AND rc.target_type = $targetType`;
 
@@ -268,7 +268,7 @@ export class ReportContentService {
 
     const rdJson = reportDetail.map((rd) => rd.toJSON());
 
-    await this.isCommunityAdmin(
+    await this.canPerform(
       admin.id,
       rdJson.map((rd) => rd.groupId)
     );
@@ -525,7 +525,7 @@ export class ReportContentService {
 
     const groupIds = reportDetails.map((dt) => dt.groupId);
 
-    await this.isCommunityAdmin(admin.id, groupIds);
+    await this.canPerform(admin.id, groupIds);
 
     const [affectedCount] = await this._reportContentModel.update(
       {
@@ -608,13 +608,14 @@ export class ReportContentService {
     return detailContentReportResponseDto;
   }
 
-  public async isCommunityAdmin(userId: string, rootGroupIds: string[]): Promise<void> {
-    const adminInfo = this._groupHttpService.getAdminIds(rootGroupIds);
-    const isCommAdmin = Object.values(adminInfo)
+  public async canPerform(userId: string, rootGroupIds: string[]): Promise<void> {
+    const adminInfo = await this._groupHttpService.getAdminIds(rootGroupIds);
+
+    const canView = Object.values({ ...adminInfo.admins, ...adminInfo.owners })
       .flat()
       .some((id) => userId === id);
 
-    if (!isCommAdmin) {
+    if (!canView) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
   }

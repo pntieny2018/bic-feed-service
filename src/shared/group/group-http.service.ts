@@ -13,7 +13,10 @@ export class GroupHttpService {
     rootGroupIds: string[],
     offset = 0,
     limit = 50
-  ): Promise<Record<string, string[]>> {
+  ): Promise<{
+    admins: Record<string, string[]>;
+    owners: Record<string, string[]>;
+  }> {
     try {
       const params = `root_group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
 
@@ -21,13 +24,19 @@ export class GroupHttpService {
         this._httpService.get(`${COMMUNITY_ADMIN_PATH}?${params}`)
       );
       if (response.status !== HttpStatus.OK) {
-        return null;
+        return {
+          admins: {},
+          owners: {},
+        };
       }
       this._logger.debug(response.data);
       return response.data['data'];
     } catch (ex) {
       this._logger.error(ex);
-      return null;
+      return {
+        admins: {},
+        owners: {},
+      };
     }
   }
 }

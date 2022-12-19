@@ -25,7 +25,6 @@ export class ReportContentListener {
   @On(CreateReportEvent)
   public async onReportCreated(event: CreateReportEvent): Promise<void> {
     this._logger.debug('[onReportCreated]');
-    this._logger.debug(JSON.stringify(event, null, 4));
     const { payload } = event;
 
     if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
@@ -74,7 +73,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
           },
         },
       },
@@ -85,8 +84,6 @@ export class ReportContentListener {
   @On(ApproveReportEvent)
   public async onReportApproved(event: ApproveReportEvent): Promise<void> {
     this._logger.debug('[onReportApproved]');
-    this._logger.debug(JSON.stringify(event, null, 4));
-
     const { payload } = event;
 
     const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
@@ -122,7 +119,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
             creatorId: payload.authorId,
           },
         },
