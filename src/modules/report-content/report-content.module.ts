@@ -6,9 +6,10 @@ import { PostModule } from '../post';
 import { CommentModule } from '../comment';
 import { ReportContentService } from './report-content.service';
 import { ReportContentController } from './report-content.controller';
+import { ArticleModule } from '../article';
 
 @Module({
-  imports: [UserModule, GroupModule, PostModule, CommentModule, FeedModule],
+  imports: [UserModule, ArticleModule, GroupModule, PostModule, CommentModule, FeedModule],
   controllers: [ReportContentController],
   providers: [ReportContentService],
   exports: [ReportContentService],

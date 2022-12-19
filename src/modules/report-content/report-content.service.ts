@@ -36,7 +36,8 @@ import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { Sequelize } from 'sequelize-typescript';
+import { ArticleService } from '../article/article.service';
+import { UserDataShareDto } from '../../shared/user/dto';
 
 @Injectable()
 export class ReportContentService {
@@ -45,6 +46,7 @@ export class ReportContentService {
     private readonly _userService: UserService,
     private readonly _postService: PostService,
     private readonly _groupService: GroupService,
+    private readonly _articleService: ArticleService,
     private readonly _commentService: CommentService,
     private readonly _groupHttpService: GroupHttpService,
     private readonly _eventEmitter: InternalEventEmitterService,
@@ -54,6 +56,11 @@ export class ReportContentService {
     private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param getReportDto
+   */
   public async getReports(
     admin: UserDto,
     getReportDto: GetReportDto
@@ -118,7 +125,7 @@ export class ReportContentService {
       const details = reportStatisticsMap.get(`${rs['id']}:${groupId}`);
       delete author.groups;
       // const reason ?
-      return { ...rs, author: new UserDto(author), details: details };
+      return { ...rs, author: new UserDataShareDto(author), details: details };
     });
 
     return plainToInstance(ReportReviewResponsesDto, results, {
@@ -126,6 +133,10 @@ export class ReportContentService {
     });
   }
 
+  /**
+   * TODO: will optimize
+   * @param reportIds
+   */
   public async getDetailsReport(
     reportIds: string[]
   ): Promise<
@@ -182,6 +193,11 @@ export class ReportContentService {
     return reportStatisticsMap;
   }
 
+  /**
+   * TODO: will optimize
+   * @param author
+   * @param getOptions
+   */
   public async getContentBlockedOfMe(
     author: UserDto,
     getOptions: GetBlockedContentOfMeDto
@@ -251,30 +267,28 @@ export class ReportContentService {
     return responses;
   }
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param reportId
+   * @param targetId
+   * @param groupId
+   * @param fetchReporter
+   */
   public async getStatistics(
     admin: UserDto,
     reportId: string,
     targetId: string,
+    groupId: string,
     fetchReporter: number
   ): Promise<StatisticsReportResponsesDto> {
+    await this.canPerform(admin.id, [groupId]);
+
     if (fetchReporter > 10) {
       fetchReporter = 10;
     }
+
     const dbConfig = getDatabaseConfig();
-
-    const reportDetail = await this._reportContentDetailModel.findAll({
-      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId']],
-      where: {
-        reportId: reportId,
-      },
-    });
-
-    const rdJson = reportDetail.map((rd) => rd.toJSON());
-
-    await this.canPerform(
-      admin.id,
-      rdJson.map((rd) => rd.groupId)
-    );
 
     const reportStatus = await this._reportContentModel.findOne({
       where: {
@@ -282,20 +296,26 @@ export class ReportContentService {
         status: ReportStatus.CREATED,
       },
     });
+
     if (!reportStatus) {
       throw new ValidatorException('Report not found or resolved');
     }
+
     const reportCount = await this._reportContentDetailModel.sequelize.query<{
       reasonType: string;
       total: string;
     }>(
-      `SELECT reason_type as "reasonType",count(*) as total
-           FROM ${dbConfig.schema}.report_content_details WHERE target_id = :targetId AND report_id = :reportId
-           GROUP BY reason_type;`,
+      `SELECT reason_type as "reasonType",
+                  count(*) as total,
+                  group_id as "groupId"
+           FROM ${dbConfig.schema}.report_content_details
+           WHERE target_id = :targetId AND report_id = :reportId AND group_id =:groupId
+           GROUP BY reason_type, group_id`,
       {
         replacements: {
           reportId: reportId,
           targetId: targetId,
+          groupId: groupId,
         },
         type: QueryTypes.SELECT,
       }
@@ -310,7 +330,7 @@ export class ReportContentService {
       totalReport += parseInt(reportCount[i].total ?? '0');
       queries.push(`
           ( SELECT * FROM  ${dbConfig.schema}.report_content_details
-            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = :targetId AND report_id = :reportId
+            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = :targetId AND report_id = :reportId AND group_id =:groupId
             ORDER BY created_at DESC
             LIMIT ${fetchReporter} )
       `);
@@ -324,6 +344,7 @@ export class ReportContentService {
       replacements: {
         reportId: reportId,
         targetId: targetId,
+        groupId: groupId,
       },
     });
 
@@ -358,6 +379,12 @@ export class ReportContentService {
     return new StatisticsReportResponsesDto([...reportByReasonTypeMap.values()], totalReport);
   }
 
+  /**
+   * TODO: will optimize
+   * @param audienceIds
+   * @param groupIdsNeedValidate
+   * @private
+   */
   private async _validateGroupIds(
     audienceIds: string[],
     groupIdsNeedValidate: string[]
@@ -504,6 +531,11 @@ export class ReportContentService {
     return true;
   }
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param updateStatusReport
+   */
   public async updateStatusReport(
     admin: UserDto,
     updateStatusReport: UpdateStatusReportDto
@@ -578,10 +610,19 @@ export class ReportContentService {
     return true;
   }
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param rootGroupId
+   * @param targetId
+   */
   public async getContent(
     admin: UserDto,
+    rootGroupId: string,
     targetId: string
   ): Promise<DetailContentReportResponseDto> {
+    await this.canPerform(admin.id, [rootGroupId]);
+
     const reportStatus = await this._reportContentModel.findOne({
       where: {
         targetId: targetId,
@@ -606,11 +647,18 @@ export class ReportContentService {
 
       return detailContentReportResponseDto;
     }
-    const post = await this._postService.get(targetId, null, { withComment: false });
+    if (reportStatus.targetType === TargetType.POST) {
+      const post = await this._postService.get(targetId, null, { withComment: false });
+      detailContentReportResponseDto.setPost(post);
+      return detailContentReportResponseDto;
+    }
 
-    detailContentReportResponseDto.setPost(post);
-
-    return detailContentReportResponseDto;
+    if (reportStatus.targetType === TargetType.ARTICLE) {
+      const article = await this._articleService.get(targetId, null, { withComment: false });
+      detailContentReportResponseDto.setArticle(article);
+      return detailContentReportResponseDto;
+    }
+    throw new ValidatorException(`Unknown Target Type: ${reportStatus.targetType}`);
   }
 
   public async canPerform(userId: string, rootGroupIds: string[]): Promise<void> {
