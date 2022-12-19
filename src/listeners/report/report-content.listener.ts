@@ -28,27 +28,7 @@ export class ReportContentListener {
     this._logger.debug(JSON.stringify(event, null, 4));
     const { payload } = event;
 
-    const adminIdsMap = new Map<string, string[]>();
-
-    await Promise.all(
-      payload.details.map(async (d) => {
-        const adminIds = await this._groupService.getAdminIds(
-          {
-            username: payload.actor.username,
-            email: payload.actor.email,
-          },
-          d.groupId
-        );
-        adminIdsMap.set(d.groupId, adminIds);
-        return null;
-      })
-    );
-
-    const adminInfos = {};
-
-    for (const [groupId, adminIds] of adminIdsMap.entries()) {
-      adminInfos[groupId] = adminIds;
-    }
+    const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
 
     const actor = {
       id: payload.actor.id,
@@ -104,27 +84,7 @@ export class ReportContentListener {
 
     const { payload } = event;
 
-    const adminIdsMap = new Map<string, string[]>();
-
-    await Promise.all(
-      payload.details.map(async (d) => {
-        const adminIds = await this._groupService.getAdminIds(
-          {
-            username: payload.actor.username,
-            email: payload.actor.email,
-          },
-          d.groupId
-        );
-        adminIdsMap.set(d.groupId, adminIds);
-        return null;
-      })
-    );
-
-    const adminInfos = {};
-
-    for (const [groupId, adminIds] of adminIdsMap.entries()) {
-      adminInfos[groupId] = adminIds;
-    }
+    const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
 
     const actor = {
       id: payload.actor.id,
@@ -165,11 +125,17 @@ export class ReportContentListener {
     };
     this._notificationService.publishReportNotification(notificationPayload);
 
+    // Delete user save post
     this._postService
       .updateData([payload.targetId], {
         isHidden: true,
       })
       .catch((ex) => this._logger.error(ex));
+
+    payload.details.forEach((dt) =>
+      this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
+    );
+
     const posts = await this._postService.findPostByIds([payload.targetId]);
     this._searchService.deletePostsToSearch(posts).catch((ex) => this._logger.error(ex));
   }

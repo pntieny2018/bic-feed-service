@@ -1,45 +1,33 @@
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { GROUP_ADMIN_PATH } from '../../common/constants';
+import { COMMUNITY_ADMIN_PATH } from '../../common/constants';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class GroupHttpService {
+  private readonly _logger = new Logger(GroupHttpService.name);
+
   public constructor(private readonly _httpService: HttpService) {}
 
-  public async getAdminIds(
-    authInfo: {
-      username: string;
-      email: string;
-    },
-    groupId: string
-  ): Promise<string[]> {
+  public async getAdminIds(rootGroupIds: string[]): Promise<Record<string, string[]>> {
     try {
       const params = {
-        key: '',
+        rootGroupIds,
         offset: 0,
-        limit: 20,
+        limit: 50,
       };
       const response = await lastValueFrom(
-        this._httpService.get(GROUP_ADMIN_PATH.replace(':id', groupId), {
+        this._httpService.get(COMMUNITY_ADMIN_PATH, {
           params: params,
-          headers: {
-            user: JSON.stringify({
-              ['cognito:username']: authInfo.username,
-              email: authInfo.email,
-              ['token_use']: 'id',
-            }),
-          },
         })
       );
       if (response.status !== HttpStatus.OK) {
-        return [];
+        return null;
       }
-
-      const admins: { id: string }[] = response.data['data']['group_admin']['data'];
-      return admins.map((admin) => admin.id);
+      return response.data['data'];
     } catch (ex) {
-      return [];
+      this._logger.error(ex);
+      return null;
     }
   }
 }

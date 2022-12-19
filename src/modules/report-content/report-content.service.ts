@@ -2,11 +2,11 @@ import { Op, QueryTypes } from 'sequelize';
 import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
-import { GroupService } from '../../shared/group';
+import { GroupHttpService, GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
 import { ReportStatus, ReportTo, TargetType } from './contstants';
 import { ArticleService } from '../article/article.service';
-import { ValidatorException } from '../../common/exceptions';
+import { LogicException, ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
   GetBlockedContentOfMeDto,
@@ -37,6 +37,7 @@ import { FeedService } from '../feed/feed.service';
 import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
+import { HTTP_STATUS_ID } from '../../common/constants';
 
 @Injectable()
 export class ReportContentService {
@@ -47,6 +48,7 @@ export class ReportContentService {
     private readonly _groupService: GroupService,
     private readonly _articleService: ArticleService,
     private readonly _commentService: CommentService,
+    private readonly _groupHttpService: GroupHttpService,
     private readonly _eventEmitter: InternalEventEmitterService,
     @InjectModel(ReportContentModel)
     private readonly _reportContentModel: typeof ReportContentModel,
@@ -54,10 +56,15 @@ export class ReportContentService {
     private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
-  public async getReports(getReportDto: GetReportDto): Promise<ReportReviewResponsesDto[]> {
+  public async getReports(
+    admin: UserDto,
+    getReportDto: GetReportDto
+  ): Promise<ReportReviewResponsesDto[]> {
     const dbConfig = getDatabaseConfig();
 
     const { targetType, groupId, limit, offset, order } = getReportDto;
+
+    await this.isCommunityAdmin(admin.id, [groupId]);
 
     let conditionStr = `AND rc.target_type = $targetType`;
 
@@ -244,6 +251,7 @@ export class ReportContentService {
   }
 
   public async getStatistics(
+    reportId: string,
     targetId: string,
     fetchReporter: number
   ): Promise<StatisticsReportResponsesDto> {
@@ -254,7 +262,7 @@ export class ReportContentService {
 
     const reportStatus = await this._reportContentModel.findOne({
       where: {
-        targetId: targetId,
+        id: reportId,
         status: ReportStatus.CREATED,
       },
     });
@@ -266,10 +274,11 @@ export class ReportContentService {
       total: string;
     }>(
       `SELECT reason_type as "reasonType",count(*) as total
-           FROM ${dbConfig.schema}.report_content_details WHERE target_id = :targetId
+           FROM ${dbConfig.schema}.report_content_details WHERE target_id = :targetId AND report_id = :reportId
            GROUP BY reason_type;`,
       {
         replacements: {
+          reportId: reportId,
           targetId: targetId,
         },
         type: QueryTypes.SELECT,
@@ -285,7 +294,7 @@ export class ReportContentService {
       totalReport += parseInt(reportCount[i].total ?? '0');
       queries.push(`
           ( SELECT * FROM  ${dbConfig.schema}.report_content_details
-            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = '${targetId}'
+            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = :targetId AND report_id = :reportId
             ORDER BY created_at DESC
             LIMIT ${fetchReporter} )
       `);
@@ -296,6 +305,10 @@ export class ReportContentService {
       mapToModel: true,
       model: ReportContentDetailModel,
       type: QueryTypes.SELECT,
+      replacements: {
+        reportId: reportId,
+        targetId: targetId,
+      },
     });
 
     const reporterIds = reports.map((report) => report.createdBy);
@@ -489,6 +502,19 @@ export class ReportContentService {
       },
     };
 
+    const reportDetails = await this._reportContentDetailModel.findAll({
+      where: {
+        [Op.or]: {
+          targetId: updateStatusReport.targetIds ?? [],
+          id: updateStatusReport.reportIds ?? [],
+        },
+      },
+    });
+
+    const groupIds = reportDetails.map((dt) => dt.groupId);
+
+    await this.isCommunityAdmin(admin.id, groupIds);
+
     const [affectedCount] = await this._reportContentModel.update(
       {
         status: status,
@@ -565,5 +591,16 @@ export class ReportContentService {
     detailContentReportResponseDto.setPost(post);
 
     return detailContentReportResponseDto;
+  }
+
+  public async isCommunityAdmin(userId: string, rootGroupIds: string[]): Promise<void> {
+    const adminInfo = this._groupHttpService.getAdminIds(rootGroupIds);
+    const isCommAdmin = Object.values(adminInfo)
+      .flat()
+      .some((id) => userId === id);
+
+    if (!isCommAdmin) {
+      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    }
   }
 }
