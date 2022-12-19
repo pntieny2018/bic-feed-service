@@ -18,9 +18,7 @@ export class GroupHttpService {
       const params = `root_group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
 
       const response = await lastValueFrom(
-        this._httpService.get(`${COMMUNITY_ADMIN_PATH}?${params}`, {
-          params: params,
-        })
+        this._httpService.get(`${COMMUNITY_ADMIN_PATH}?${params}`)
       );
       if (response.status !== HttpStatus.OK) {
         return null;
