@@ -38,7 +38,7 @@ export class ReportContentController {
     @Param('id', ParseUUIDPipe) targetId: string
   ): Promise<DetailContentReportResponseDto> {
     // TODO check permission
-    return this._reportContentService.getContent(targetId);
+    return this._reportContentService.getContent(user, targetId);
   }
 
   @ApiParam({
@@ -57,7 +57,7 @@ export class ReportContentController {
     @Query('count_reporter') countReporter = 5
   ): Promise<StatisticsReportResponsesDto> {
     // TODO check permission
-    return this._reportContentService.getStatistics(reportId, targetId, countReporter);
+    return this._reportContentService.getStatistics(user, reportId, targetId, countReporter);
   }
 
   @Post('/content')
