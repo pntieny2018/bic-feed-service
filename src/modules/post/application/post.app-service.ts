@@ -4,6 +4,8 @@ import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
 import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
+import { IPostGroup } from '../../../database/models/post-group.model';
+import { IPost } from '../../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -20,8 +22,6 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
-import { IPost } from '../../../database/models/post.model';
-import { IPostGroup } from '../../../database/models/post-group.model';
 
 @Injectable()
 export class PostAppService {
@@ -82,7 +82,7 @@ export class PostAppService {
 
     if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
-        this._logger.error(ex, ex.stack);
+        this._logger.error(JSON.stringify(ex?.stack));
       });
     }
 

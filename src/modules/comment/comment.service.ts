@@ -1,35 +1,35 @@
-import { UserDto } from '../auth';
-import { Op, Transaction } from 'sequelize';
-import { PostAllow } from '../post';
-import { GiphyService } from '../giphy';
-import { MediaService } from '../media';
 import { SentryService } from '@app/sentry';
-import { NIL as NIL_UUID } from 'uuid';
-import { MentionService } from '../mention';
-import { ReactionService } from '../reaction';
-import { UserService } from '../../shared/user';
-import { AuthorityService } from '../authority';
-import { Sequelize } from 'sequelize-typescript';
-import { PostService } from '../post/post.service';
-import { createUrlFromId } from '../giphy/giphy.util';
-import { EntityType } from '../media/media.constants';
-import { PageDto } from '../../common/dto';
-import { ExceptionHelper } from '../../common/helpers';
-import { UserDataShareDto } from '../../shared/user/dto';
-import { LogicException } from '../../common/exceptions';
-import { MediaModel } from '../../database/models/media.model';
-import { PostPolicyService } from '../post/post-policy.service';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { MentionModel } from '../../database/models/mention.model';
-import { CreateCommentDto, GetCommentsDto, UpdateCommentDto } from './dto/requests';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer, plainToInstance } from 'class-transformer';
+import { Op, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { NIL as NIL_UUID } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { CommentModel, IComment } from '../../database/models/comment.model';
-import { CommentResponseDto } from './dto/response';
+import { PageDto } from '../../common/dto';
+import { LogicException } from '../../common/exceptions';
+import { ExceptionHelper } from '../../common/helpers';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
+import { CommentModel, IComment } from '../../database/models/comment.model';
+import { MediaModel } from '../../database/models/media.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { UserService } from '../../shared/user';
+import { UserDataShareDto } from '../../shared/user/dto';
+import { UserDto } from '../auth';
+import { AuthorityService } from '../authority';
+import { GiphyService } from '../giphy';
+import { createUrlFromId } from '../giphy/giphy.util';
+import { MediaService } from '../media';
+import { EntityType } from '../media/media.constants';
+import { MentionService } from '../mention';
+import { PostAllow } from '../post';
+import { PostPolicyService } from '../post/post-policy.service';
+import { PostService } from '../post/post.service';
+import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
+import { CreateCommentDto, GetCommentsDto, UpdateCommentDto } from './dto/requests';
+import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
+import { CommentResponseDto } from './dto/response';
 
 @Injectable()
 export class CommentService {
@@ -235,7 +235,7 @@ export class CommentService {
         oldComment: oldComment,
       };
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       await transaction.rollback();
       throw ex;
     }
@@ -635,7 +635,7 @@ export class CommentService {
 
       return comment;
     } catch (e) {
-      this._logger.error(e, e.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       await transaction.rollback();
       throw e;
     }
@@ -728,7 +728,7 @@ export class CommentService {
       this._mentionService.deleteByEntityIds(commentIds, MentionableType.COMMENT, transaction),
       this._reactionService.deleteByCommentIds(commentIds, transaction),
     ]).catch((ex) => {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     });
 

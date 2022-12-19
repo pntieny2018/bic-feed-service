@@ -1,16 +1,16 @@
-import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
-import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import { PostService } from '../../modules/post/post.service';
-import { FeedPublisherService } from '../../modules/feed-publisher';
 import { SentryService } from '@app/sentry';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/sequelize';
-import { UserService } from '../../shared/user';
-import { Sequelize } from 'sequelize-typescript';
-import { ExceptionHelper } from '../../common/helpers';
-import { HTTP_STATUS_ID } from '../../common/constants';
-import { getDatabaseConfig } from '../../config/database';
 import { QueryTypes } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { HTTP_STATUS_ID } from '../../common/constants';
+import { On } from '../../common/decorators';
+import { ExceptionHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
+import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
+import { FeedPublisherService } from '../../modules/feed-publisher';
+import { PostService } from '../../modules/post/post.service';
+import { UserService } from '../../shared/user';
 
 @Injectable()
 export class FollowListener {
@@ -49,7 +49,7 @@ export class FollowListener {
 
     userIds.forEach((userId: string) => {
       this.detachPosts(userId, groupIds).catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
     });

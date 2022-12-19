@@ -50,7 +50,7 @@ export class SeriesAppService {
     const post = await this._seriesService.get(postId, user, getSeriesDto);
     if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
-        this._logger.error(ex, ex.stack);
+        this._logger.error(JSON.stringify(ex?.stack));
       });
     }
 
