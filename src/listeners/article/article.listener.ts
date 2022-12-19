@@ -34,7 +34,7 @@ export class ArticleListener {
     private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService,
+    private readonly _postSearchService: SearchService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -48,7 +48,9 @@ export class ArticleListener {
     });
 
     this._postSearchService.deletePostsToSearch([article]);
-    this._tagService.updateTotalUsedWhenDeleteArticle(article.postTags.map((e) => e.tagId));
+    if (!article.isDraft) {
+      this._tagService.decreaseTotalUsed(article.postTags.map((e) => e.tagId));
+    }
     //TODO:: send noti
   }
 

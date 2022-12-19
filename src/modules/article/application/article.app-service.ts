@@ -232,6 +232,9 @@ export class ArticleAppService {
     article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
+    if (article.tags.length) {
+      this._tagServices.increaseTotalUsed(article.tags.map((e) => e.id));
+    }
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({

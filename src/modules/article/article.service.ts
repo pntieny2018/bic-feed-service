@@ -716,7 +716,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
-        this._tagService.addToPost(tags, post.id, transaction),
+        this._tagService.addToPost(tags, post.id, transaction, post.isDraft),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -908,7 +908,7 @@ export class ArticleService extends PostService {
       }
       if (tags) {
         const tagList = await this._tagService.getTagsByIds(tags);
-        await this._tagService.updateToPost(tags, post.id, transaction);
+        await this._tagService.updateToPost(tags, post.id, transaction, post.isDraft);
         dataUpdate['tagsJson'] = tagList;
       }
 

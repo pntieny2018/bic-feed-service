@@ -183,7 +183,8 @@ export class TagService {
   public async addToPost(
     tagIds: string[],
     postId: string,
-    transaction: Transaction
+    transaction: Transaction,
+    isDraft: boolean
   ): Promise<void> {
     if (tagIds.length === 0) return;
     const dataCreate = tagIds.map((tagId) => ({
@@ -191,16 +192,16 @@ export class TagService {
       tagId,
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
-    const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
-    effectTags.forEach((effectTag) =>
-      effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
-    );
+    if (!isDraft) {
+      await this.increaseTotalUsed(tagIds);
+    }
   }
 
   public async updateToPost(
     tagIds: string[],
     postId: string,
-    transaction: Transaction
+    transaction: Transaction,
+    isDraft: boolean
   ): Promise<void> {
     const currentTags = await this._postTagModel.findAll({
       where: { postId },
@@ -213,10 +214,10 @@ export class TagService {
         where: { tagId: deleteIds, postId },
         transaction,
       });
-      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
-      effectTags.forEach((effectTag) =>
-        effectTag.update({ totalUsed: effectTag.totalUsed - 1 }, { transaction })
-      );
+
+      if (!isDraft) {
+        await this.decreaseTotalUsed(tagIds);
+      }
     }
 
     const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
@@ -228,10 +229,10 @@ export class TagService {
         })),
         { transaction }
       );
-      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
-      effectTags.forEach((effectTag) =>
-        effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
-      );
+
+      if (!isDraft) {
+        await this.increaseTotalUsed(tagIds);
+      }
     }
   }
 
@@ -244,10 +245,25 @@ export class TagService {
     );
   }
 
-  public async updateTotalUsedWhenDeleteArticle(ids: string[]): Promise<void> {
+  public async increaseTotalUsed(ids: string[], transaction?: Transaction): Promise<void> {
     const tags = await this._tagModel.findAll({ where: { id: ids } });
     for (const tag of tags) {
-      await tag.update({ totalUsed: tag.totalUsed - 1 });
+      if (transaction) {
+        await tag.update({ totalUsed: tag.totalUsed + 1 }, { transaction });
+      } else {
+        await tag.update({ totalUsed: tag.totalUsed + 1 });
+      }
+    }
+  }
+
+  public async decreaseTotalUsed(ids: string[], transaction?: Transaction): Promise<void> {
+    const tags = await this._tagModel.findAll({ where: { id: ids } });
+    for (const tag of tags) {
+      if (transaction) {
+        await tag.update({ totalUsed: tag.totalUsed - 1 }, { transaction });
+      } else {
+        await tag.update({ totalUsed: tag.totalUsed - 1 });
+      }
     }
   }
 
