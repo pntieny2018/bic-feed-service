@@ -61,7 +61,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
           },
         },
       },
@@ -120,7 +120,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
             creatorId: payload.authorId,
           },
         },
