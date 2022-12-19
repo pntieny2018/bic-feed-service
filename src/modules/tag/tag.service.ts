@@ -124,13 +124,21 @@ export class TagService {
     updateTagDto: UpdateTagDto,
     authUser: UserDto
   ): Promise<TagResponseDto> {
-    const tag = await this._tagModel.findOne({
+    const name = updateTagDto.name.trim();
+    const tags = await this._tagModel.findAll({
       where: {
-        id: tagId,
+        [Op.or]: [{ id: tagId }, { name: name }],
       },
     });
+    const tag = tags.find((e) => e.id === tagId);
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+    }
+    if (tag.createdBy !== authUser.id) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_NOT_OWNER);
+    }
+    if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
     const postTag = await this._postTagModel.findOne({
@@ -142,7 +150,6 @@ export class TagService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
 
-    const name = updateTagDto.name.trim();
     const slug = StringHelper.convertToSlug(name);
 
     await tag.update({

@@ -74,6 +74,9 @@ export class ReportContentListener {
           isReported: true,
         })
         .catch((ex) => this._logger.error(ex));
+      payload.details.forEach((dt) =>
+        this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
+      );
     }
   }
 
@@ -131,9 +134,6 @@ export class ReportContentListener {
         isHidden: true,
       })
       .catch((ex) => this._logger.error(ex));
-    payload.details.forEach((dt) =>
-      this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
-    );
 
     const posts = await this._postService.findPostByIds([payload.targetId]);
     this._searchService.deletePostsToSearch(posts).catch((ex) => this._logger.error(ex));
