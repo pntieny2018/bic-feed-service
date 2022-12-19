@@ -115,7 +115,7 @@ export class ReportContentService {
 
     results = results.map((rs) => {
       const author = authors.find((a) => a.id === rs['author_id']);
-      const details = reportStatisticsMap.get(rs['id']);
+      const details = reportStatisticsMap.get(`${rs['id']}:${groupId}`);
       delete author.groups;
       // const reason ?
       return { ...rs, author: new UserDto(author), details: details };
@@ -135,12 +135,14 @@ export class ReportContentService {
       reportId: string;
       total: string;
       reasonType: string;
+      groupId: string;
     }>(
       ` SELECT  report_id as "reportId",
               count(*) as total,
-              reason_type as "reasonType"
+              reason_type as "reasonType",
+              group_id as "groupId"
       FROM bein_stream.report_content_details
-      GROUP BY report_id,reason_type
+      GROUP BY report_id,reason_type,group_id
       HAVING report_id in (:reportIds)
     `,
       {
@@ -159,15 +161,16 @@ export class ReportContentService {
     const reasonTypes = await this._groupService.getReasonType();
 
     for (const reportStatistic of reportStatistics) {
-      const { reportId, reasonType, total } = reportStatistic;
+      const { reportId, reasonType, total, groupId } = reportStatistic;
+      const id = `${reportId}:${groupId}`;
       if (reportStatisticsMap.has(reportId)) {
-        reportStatisticsMap.get(reportId).push({
+        reportStatisticsMap.get(id).push({
           total: parseInt(total ?? '0'),
           reasonType: reasonType,
           description: reasonTypes.find((r) => r.id === reasonType).description ?? '',
         });
       } else {
-        reportStatisticsMap.set(reportId, [
+        reportStatisticsMap.set(id, [
           {
             total: parseInt(total ?? '0'),
             reasonType: reasonType,
@@ -507,25 +510,21 @@ export class ReportContentService {
   ): Promise<boolean> {
     const { status } = updateStatusReport;
 
-    const conditions = {
-      [Op.or]: {
-        targetId: updateStatusReport.targetIds ?? [],
-        id: updateStatusReport.reportIds ?? [],
-      },
-    };
-
     const reportDetails = await this._reportContentDetailModel.findAll({
       where: {
         [Op.or]: {
           targetId: updateStatusReport.targetIds ?? [],
-          id: updateStatusReport.reportIds ?? [],
+          reportId: updateStatusReport.reportIds ?? [],
         },
       },
     });
 
-    const groupIds = reportDetails.map((dt) => dt.groupId);
+    const reportDetailJsons = reportDetails.map((dt) => dt.toJSON());
 
-    await this.canPerform(admin.id, groupIds);
+    await this.canPerform(
+      admin.id,
+      reportDetailJsons.map((g) => g.groupId)
+    );
 
     const [affectedCount] = await this._reportContentModel.update(
       {
@@ -534,7 +533,10 @@ export class ReportContentService {
       },
       {
         where: {
-          ...conditions,
+          [Op.or]: {
+            targetId: updateStatusReport.targetIds ?? [],
+            id: updateStatusReport.reportIds ?? [],
+          },
           status: {
             [Op.not]: ReportStatus.HID,
           },
