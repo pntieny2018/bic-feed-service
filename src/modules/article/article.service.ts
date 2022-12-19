@@ -14,7 +14,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { PageDto } from '../../common/dto';
-import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
@@ -102,7 +101,6 @@ export class ArticleService extends PostService {
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
-    protected readonly authorityService: AuthorityService,
     private readonly _linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
@@ -458,13 +456,15 @@ export class ArticleService extends PostService {
    * @param articleId string
    * @param authUser
    * @param getArticleDto GetArticleDto
+   * @param shouldHideSecretAudienceCanNotAccess
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
    */
   public async get(
     articleId: string,
     authUser: UserDto,
-    getArticleDto?: GetArticleDto
+    getArticleDto?: GetArticleDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
       loadSaved: true,
@@ -500,14 +500,6 @@ export class ArticleService extends PostService {
       include,
     });
 
-    if (!article || (article.isHidden === true && article.createdBy !== authUser?.id)) {
-      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-    if (authUser) {
-      await this.authorityService.checkCanReadArticle(authUser, article);
-    } else {
-      await this.authorityService.checkIsPublicArticle(article);
-    }
     let comments = null;
     if (getArticleDto.withComment) {
       comments = await this.commentService.getComments(
@@ -529,7 +521,7 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
+      shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser,
     });
     await this.articleBinding.bindCommunity(articlesBindedData);

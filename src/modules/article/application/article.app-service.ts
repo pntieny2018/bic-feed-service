@@ -24,8 +24,9 @@ import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
-import { GroupService } from '../../../shared/group';
 import { FeedService } from 'src/modules/feed/feed.service';
+import { IPostGroup } from '../../../database/models/post-group.model';
+import { IPost } from '../../../database/models/post.model';
 
 @Injectable()
 export class ArticleAppService {
@@ -36,7 +37,8 @@ export class ArticleAppService {
     private _postService: PostService,
     private _postSearchService: SearchService,
     private _tagServices: TagService,
-    private _feedService: FeedService
+    private _feedService: FeedService,
+    protected readonly authorityService: AuthorityService
   ) {}
 
   public async getRelatedById(
@@ -58,17 +60,42 @@ export class ArticleAppService {
     articleId: string,
     getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    const article = await this._articleService.get(articleId, user, getArticleDto);
+    const articleResponseDto = await this._articleService.get(articleId, user, getArticleDto);
+
+    const article = {
+      privacy: articleResponseDto.privacy,
+      createdBy: articleResponseDto.createdBy,
+      isDraft: articleResponseDto.isDraft,
+      groups: articleResponseDto.audience.groups.map(
+        (g) =>
+          ({
+            groupId: g.id,
+          } as IPostGroup)
+      ),
+    } as IPost;
+
+    if (
+      !articleResponseDto ||
+      (articleResponseDto.isHidden === true && articleResponseDto.createdBy !== user?.id)
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
+    if (user) {
+      await this.authorityService.checkCanReadArticle(user, article);
+    } else {
+      await this.authorityService.checkIsPublicArticle(article);
+    }
+
     if (user) {
       const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
         TargetType.ARTICLE,
       ]);
-      if (articleIdsReported.includes(articleId) && article.actor.id !== user.id) {
+      if (articleIdsReported.includes(articleId) && articleResponseDto.actor.id !== user.id) {
         throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
       }
     }
 
-    return article;
+    return articleResponseDto;
   }
 
   public async create(
