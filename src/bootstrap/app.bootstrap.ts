@@ -1,9 +1,9 @@
-import { IAppConfig } from '../config/app';
-import { ConfigService } from '@nestjs/config';
-import { HttpExceptionFilter } from '../common/filters';
 import { INestApplication, Logger } from '@nestjs/common';
-import { HandleResponseInterceptor } from '../common/interceptors';
+import { ConfigService } from '@nestjs/config';
 import { json } from 'express';
+import { HttpExceptionFilter } from '../common/filters';
+import { HandleResponseInterceptor } from '../common/interceptors';
+import { IAppConfig } from '../config/app';
 export class AppBootstrap {
   /**
    * Initializers the AppBootstrap.
@@ -28,6 +28,6 @@ export class AppBootstrap {
     );
     await app.listen(appConfig.port).catch((ex) => Logger.error(ex));
 
-    Logger.log(`${appConfig.name} API run in ${appConfig.url}`, 'NestApplication');
+    Logger.debug(`${appConfig.name} API run in ${appConfig.url}`, 'NestApplication');
   }
 }

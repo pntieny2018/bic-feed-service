@@ -61,7 +61,7 @@ export class PostCronService {
       }
       await transaction.commit();
     } catch (e) {
-      this._logger.error(e.message);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
       await transaction.rollback();
     }
@@ -84,7 +84,7 @@ export class PostCronService {
         }
       );
     } catch (e) {
-      this._logger.error(e.message);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     }
   }
@@ -124,5 +124,12 @@ export class PostCronService {
       this._logger.error(e.message);
       this._sentryService.captureException(e);
     }
+  }
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  private async testLog() {
+    const error = new Error('Test');
+    this._logger.error('[test error]', JSON.stringify(error));
+    this._logger.debug('[test error debug]', JSON.stringify(error));
+    console.log('[test error]', JSON.stringify(error));
   }
 }
