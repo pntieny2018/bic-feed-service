@@ -134,7 +134,7 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    if (tags.find((e) => e.name === name)) {
+    if (tags.find((e) => e.name === name && e.groupId === tag.groupId)) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
