@@ -28,6 +28,19 @@ export class ReportContentListener {
     this._logger.debug(JSON.stringify(event, null, 4));
     const { payload } = event;
 
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+      this._postService
+        .updateData([payload.targetId], {
+          isReported: true,
+        })
+        .catch((ex) => this._logger.error(ex));
+      payload.details.forEach((dt) => {
+        this._postService
+          .unSavePostToUserCollection(dt.targetId, dt.createdBy)
+          .catch((ex) => this._logger.error(ex));
+      });
+    }
+
     const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
 
     const actor = {
@@ -67,17 +80,6 @@ export class ReportContentListener {
       },
     };
     this._notificationService.publishReportNotification(notificationPayload);
-
-    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      this._postService
-        .updateData([payload.targetId], {
-          isReported: true,
-        })
-        .catch((ex) => this._logger.error(ex));
-      payload.details.forEach((dt) =>
-        this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
-      );
-    }
   }
 
   @On(ApproveReportEvent)
