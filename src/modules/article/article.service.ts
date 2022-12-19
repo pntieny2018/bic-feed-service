@@ -456,13 +456,15 @@ export class ArticleService extends PostService {
    * @param articleId string
    * @param authUser
    * @param getArticleDto GetArticleDto
+   * @param shouldHideSecretAudienceCanNotAccess
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
    */
   public async get(
     articleId: string,
     authUser: UserDto,
-    getArticleDto?: GetArticleDto
+    getArticleDto?: GetArticleDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
       loadSaved: true,
@@ -519,7 +521,7 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
+      shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser,
     });
     await this.articleBinding.bindCommunity(articlesBindedData);
