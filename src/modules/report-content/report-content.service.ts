@@ -611,9 +611,10 @@ export class ReportContentService {
   public async canPerform(userId: string, rootGroupIds: string[]): Promise<void> {
     const adminInfo = await this._groupHttpService.getAdminIds(rootGroupIds);
 
-    const canView = Object.values({ ...adminInfo.admins, ...adminInfo.owners })
-      .flat()
-      .some((id) => userId === id);
+    const adminAndOwnerIds = Object.values({ ...adminInfo.admins, ...adminInfo.owners }).flat();
+
+    console.log(adminInfo, adminAndOwnerIds);
+    const canView = adminAndOwnerIds.includes(userId);
 
     if (!canView) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
