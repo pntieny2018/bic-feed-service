@@ -14,7 +14,6 @@ import { GroupSharedDto } from '../../shared/group/dto';
 import { AuthorityFactory } from './authority.factory';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesResponseDto } from '../series/dto/responses';
-import { group } from 'console';
 
 @Injectable()
 export class AuthorityService {
