@@ -88,7 +88,6 @@ export class SearchService {
       );
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
-        console.log('errorItems', JSON.stringify(errorItems));
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
         this._failedProcessingPostModel
           .bulkCreate(
@@ -103,7 +102,7 @@ export class SearchService {
       await this._updateLangAfterIndexToES(res?.items || [], index);
       return res.items.filter((item) => !item.index.error).length;
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
   }
@@ -155,7 +154,7 @@ export class SearchService {
           await this.elasticsearchService.delete({ index: oldIndex, id: `${dataIndex.id}` });
         }
       } catch (e) {
-        this.logger.debug(e);
+        this.logger.debug(JSON.stringify(e?.stack));
         this.sentryService.captureException(e);
       }
     }
@@ -173,7 +172,7 @@ export class SearchService {
         });
       }
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
   }
@@ -189,7 +188,7 @@ export class SearchService {
         },
       });
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
   }
@@ -232,7 +231,6 @@ export class SearchService {
     ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
-    console.log('payload', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articleIds = [];

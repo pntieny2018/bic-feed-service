@@ -137,7 +137,7 @@ export class RecentSearchService {
       });
       return true;
     } catch (error) {
-      this._logger.debug(error);
+      this._logger.debug(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
 
       throw new HttpException("Can't delete recent search", HttpStatus.INTERNAL_SERVER_ERROR);
