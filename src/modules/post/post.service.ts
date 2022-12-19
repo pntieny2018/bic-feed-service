@@ -160,7 +160,8 @@ export class PostService {
   public async get(
     postId: string,
     user: UserDto,
-    getPostDto?: GetPostDto
+    getPostDto?: GetPostDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
   ): Promise<PostResponseDto> {
     const attributes = this.getAttributesObj({
       loadMarkRead: true,
@@ -217,7 +218,7 @@ export class PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
+      shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser: user,
     });
 

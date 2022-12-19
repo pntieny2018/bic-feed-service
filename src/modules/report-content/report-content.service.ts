@@ -114,7 +114,7 @@ export class ReportContentService {
 
     const reportIds = results.map((rs) => rs['id']);
 
-    const reportStatisticsMap = await this.getDetailsReport(reportIds);
+    const reportStatisticsMap = await this.getDetailsReport(reportIds, groupId);
 
     const authorIds = results.map((rs) => rs['author_id']);
 
@@ -136,9 +136,11 @@ export class ReportContentService {
   /**
    * TODO: will optimize
    * @param reportIds
+   * @param groupId
    */
   public async getDetailsReport(
-    reportIds: string[]
+    reportIds: string[],
+    groupId?: string
   ): Promise<
     Map<string, { total: number; reasonType: string; description: string; reason?: string }[]>
   > {
@@ -146,20 +148,20 @@ export class ReportContentService {
       reportId: string;
       total: string;
       reasonType: string;
-      groupId: string;
     }>(
       ` SELECT  report_id as "reportId",
               count(*) as total,
-              reason_type as "reasonType",
-              group_id as "groupId"
-      FROM bein_stream.report_content_details
-      GROUP BY report_id,reason_type,group_id
-      HAVING report_id in (:reportIds)
+              reason_type as "reasonType"
+      FROM bein_stream.report_content_details WHERE  report_id in (:reportIds) ${
+        groupId ? 'AND group_id = :groupId' : ''
+      }
+      GROUP BY report_id,reason_type
     `,
       {
         type: QueryTypes.SELECT,
         replacements: {
           reportIds: reportIds,
+          groupId: groupId,
         },
       }
     );
@@ -172,7 +174,7 @@ export class ReportContentService {
     const reasonTypes = await this._groupService.getReasonType();
 
     for (const reportStatistic of reportStatistics) {
-      const { reportId, reasonType, total, groupId } = reportStatistic;
+      const { reportId, reasonType, total } = reportStatistic;
       const id = `${reportId}:${groupId}`;
       if (reportStatisticsMap.has(reportId)) {
         reportStatisticsMap.get(id).push({
@@ -648,13 +650,13 @@ export class ReportContentService {
       return detailContentReportResponseDto;
     }
     if (reportStatus.targetType === TargetType.POST) {
-      const post = await this._postService.get(targetId, null, { withComment: false });
+      const post = await this._postService.get(targetId, null, { withComment: false }, false);
       detailContentReportResponseDto.setPost(post);
       return detailContentReportResponseDto;
     }
 
     if (reportStatus.targetType === TargetType.ARTICLE) {
-      const article = await this._articleService.get(targetId, null, { withComment: false });
+      const article = await this._articleService.get(targetId, null, { withComment: false }, false);
       detailContentReportResponseDto.setArticle(article);
       return detailContentReportResponseDto;
     }
