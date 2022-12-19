@@ -260,7 +260,7 @@ export class ReportContentService {
     const dbConfig = getDatabaseConfig();
 
     const reportDetail = await this._reportContentDetailModel.findAll({
-      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('groupId')), 'groupId']],
+      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId']],
       where: {
         reportId: reportId,
       },
