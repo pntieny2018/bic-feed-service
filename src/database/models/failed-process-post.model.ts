@@ -1,13 +1,16 @@
 import { IsUUID } from 'class-validator';
 import {
+  AllowNull,
   Column,
   CreatedAt,
+  Default,
   ForeignKey,
   Model,
   PrimaryKey,
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
+import { v4 } from 'uuid';
 import { PostModel } from './post.model';
 
 export interface IFailedProcessPost {
@@ -21,11 +24,28 @@ export interface IFailedProcessPost {
   timestamps: false,
 })
 export class FailedProcessPostModel extends Model implements IFailedProcessPost {
-  @ForeignKey(() => PostModel)
   @PrimaryKey
+  @IsUUID()
+  @Default(() => v4())
+  @Column
+  public id: string;
+
+  @ForeignKey(() => PostModel)
   @IsUUID()
   @Column
   public postId: string;
+
+  @Default(false)
+  @Column
+  public isExpiredProcessing: boolean;
+
+  @AllowNull(true)
+  @Column
+  public reason: string;
+
+  @AllowNull(true)
+  @Column
+  public postJson: string;
 
   @CreatedAt
   @Column

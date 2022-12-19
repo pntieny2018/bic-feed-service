@@ -92,17 +92,30 @@ export class PostCronService {
   private async _checkProcessingPost(): Promise<void> {
     try {
       const posts = await this._postModel.findAll({
-        attributes: ['id'],
         where: {
           isProcessing: true,
           updatedAt: {
             [Op.lt]: moment().subtract(1, 'day').toDate(),
           },
         },
+        include: [
+          {
+            model: FailedProcessPostModel,
+            attributes: ['is_expired_processing'],
+            required: false,
+          },
+        ],
       });
 
       await this._failedProcessPostModel.bulkCreate(
-        posts.map((item) => ({ postId: item.id })),
+        posts
+          .filter((post) => post.failedPostReasons.every((r) => !r.isExpiredProcessing))
+          .map((item) => ({
+            postId: item.id,
+            isExpiredProcessing: true,
+            reason: 'Processing expired',
+            postJson: JSON.stringify(item),
+          })),
         {
           updateOnDuplicate: [],
         }
