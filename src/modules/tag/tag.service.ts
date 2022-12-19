@@ -132,6 +132,11 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
+    const name = updateTagDto.name.trim();
+
+    if (tag.name === name) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
+    }
 
     const postTag = await this._postTagModel.findOne({
       where: {
@@ -142,7 +147,6 @@ export class TagService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
 
-    const name = updateTagDto.name.trim();
     const slug = StringHelper.convertToSlug(name);
 
     await tag.update({
