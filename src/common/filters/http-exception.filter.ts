@@ -1,17 +1,16 @@
-import { Response } from 'express';
-import { ResponseDto } from '../dto';
-import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
-import { LogicException, ValidatorException } from '../exceptions';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { Response } from 'express';
 import snakecaseKeys from 'snakecase-keys';
+import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
+import { ResponseDto } from '../dto';
+import { LogicException, ValidatorException } from '../exceptions';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
   public catch(exception: Error, host: ArgumentsHost): Response {
-    console.log(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     if (exception instanceof ValidatorException) {

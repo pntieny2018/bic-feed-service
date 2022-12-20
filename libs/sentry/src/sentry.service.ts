@@ -14,7 +14,6 @@ export class SentryService implements OnApplicationShutdown {
     private readonly _opts?: SentryModuleOptions
   ) {
     if (!(_opts && _opts.dsn)) {
-      // console.log('options not found. Did you use SentryModule.forRoot?');
       return;
     }
     const { debug: isDebug, integrations = [], ...sentryOptions } = _opts;
