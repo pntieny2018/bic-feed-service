@@ -35,7 +35,7 @@ export class ArticleAppService {
     private _authorityService: AuthorityService,
     private _postService: PostService,
     private _postSearchService: SearchService,
-    private _tagServices: TagService,
+    private _tagService: TagService,
     private _feedService: FeedService
   ) {}
 
@@ -86,7 +86,7 @@ export class ArticleAppService {
     }
 
     if (tags?.length) {
-      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
+      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
     }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
@@ -166,7 +166,7 @@ export class ArticleAppService {
     }
 
     if (tags?.length) {
-      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
+      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
@@ -192,7 +192,7 @@ export class ArticleAppService {
     await this._authorityService.checkPostOwner(article, user.id);
     const { audience, setting } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
-    if (article.coverMedia === null) throw new BadRequestException('Cover is required');
+    // if (article.coverMedia === null) throw new BadRequestException('Cover is required');
     const groupIds = audience.groups.map((group) => group.id);
 
     const isEnableSetting =
@@ -227,14 +227,11 @@ export class ArticleAppService {
     this._postService.checkContent(article.content, article.media);
 
     if (article.categories.length === 0) {
-      throw new BadRequestException('Category is required');
+      // throw new BadRequestException('Category is required');
     }
     article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
-    if (article.tags.length) {
-      this._tagServices.increaseTotalUsed(article.tags.map((e) => e.id));
-    }
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
