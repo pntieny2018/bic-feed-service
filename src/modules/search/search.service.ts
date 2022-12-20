@@ -340,6 +340,8 @@ export class SearchService {
             communityId: group.communityId,
             icon: group.icon,
             privacy: group.privacy,
+            isCommunity: group.isCommunity,
+            rootGroupId: group.rootGroupId,
           });
         }
         if (post.communityIds && post.communityIds.includes(group.id)) {
