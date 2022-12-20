@@ -134,9 +134,6 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    if (tag.createdBy !== authUser.id) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_NOT_OWNER);
-    }
     if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }

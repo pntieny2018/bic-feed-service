@@ -18,6 +18,7 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class ArticleListener {
@@ -222,9 +223,16 @@ export class ArticleListener {
     ]);
 
     if (tags.length) {
-      this._tagService
-        .increaseTotalUsed(tags.map((e) => e.id))
-        .catch((ex) => this._logger.debug(ex));
+      const oldTagIds = oldArticle.tags.map((e) => e.id);
+      const newTagIds = tags.map((e) => e.id);
+      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+      if (deleteIds) {
+        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+      }
+      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+      if (addIds) {
+        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
+      }
     }
     try {
       // Fanout to write post to all news feed of user follow group audience
