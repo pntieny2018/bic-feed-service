@@ -621,10 +621,9 @@ export class ReportContentService {
 
     const reportDetailJsons = reportDetails.map((dt) => dt.toJSON());
 
-    await this.canPerform(
-      admin.id,
-      reportDetailJsons.map((g) => g.groupId)
-    );
+    const groupIds = [...new Set(reportDetailJsons.map((g) => g.groupId))];
+
+    await this.canPerform(admin.id, groupIds);
 
     const [affectedCount] = await this._reportContentModel.update(
       {
@@ -669,6 +668,7 @@ export class ReportContentService {
             new ApproveReportEvent({
               actor: admin,
               ...report.toJSON(),
+              groupIds: groupIds,
             })
           );
         }
