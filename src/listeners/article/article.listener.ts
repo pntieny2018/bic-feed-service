@@ -18,6 +18,7 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class ArticleListener {
@@ -47,7 +48,9 @@ export class ArticleListener {
 
     this._postSearchService.deletePostsToSearch([article]);
     if (!article.isDraft) {
-      this._tagService.decreaseTotalUsed(article.postTags.map((e) => e.tagId));
+      this._tagService
+        .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
+        .catch((ex) => this._logger.debug(ex));
     }
     //TODO:: send noti
   }
@@ -116,6 +119,12 @@ export class ArticleListener {
       },
     ]);
 
+    if (article.tags.length) {
+      this._tagService
+        .increaseTotalUsed(article.tags.map((e) => e.id))
+        .catch((ex) => this._logger.debug(ex));
+    }
+
     //TODO:: send noti
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -166,6 +175,11 @@ export class ArticleListener {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
+      if (tags.length) {
+        this._tagService
+          .decreaseTotalUsed(tags.map((e) => e.id))
+          .catch((ex) => this._logger.debug(ex));
+      }
     }
 
     if (isDraft) return;
@@ -208,6 +222,18 @@ export class ArticleListener {
       },
     ]);
 
+    if (tags.length) {
+      const oldTagIds = oldArticle.tags.map((e) => e.id);
+      const newTagIds = tags.map((e) => e.id);
+      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+      if (deleteIds) {
+        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+      }
+      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+      if (addIds) {
+        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
+      }
+    }
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
