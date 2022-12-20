@@ -6,8 +6,8 @@ import moment from 'moment';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { SentryService } from '../../../libs/sentry/src';
-import { ArrayHelper } from '../../common/helpers';
-import { MediaMarkAction, MediaModel } from '../../database/models/media.model';
+import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
+import { MediaModel } from '../../database/models/media.model';
 import { PostModel } from '../../database/models/post.model';
 import { MediaService } from '../media';
 import { PostService } from './post.service';
@@ -20,6 +20,8 @@ export class PostCronService {
   public constructor(
     @InjectModel(PostModel)
     private readonly _postModel: typeof PostModel,
+    @InjectModel(FailedProcessPostModel)
+    private readonly _failedProcessPostModel: typeof FailedProcessPostModel,
 
     @InjectConnection()
     private readonly _sequelizeConnection: Sequelize,
@@ -59,7 +61,7 @@ export class PostCronService {
       }
       await transaction.commit();
     } catch (e) {
-      this._logger.error(e.message);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
       await transaction.rollback();
     }
@@ -79,6 +81,43 @@ export class PostCronService {
             },
           },
           paranoid: false,
+        }
+      );
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      this._sentryService.captureException(e);
+    }
+  }
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  private async _checkProcessingPost(): Promise<void> {
+    try {
+      const posts = await this._postModel.findAll({
+        where: {
+          isProcessing: true,
+          updatedAt: {
+            [Op.lt]: moment().subtract(1, 'day').toDate(),
+          },
+        },
+        include: [
+          {
+            model: FailedProcessPostModel,
+            attributes: ['is_expired_processing'],
+            required: false,
+          },
+        ],
+      });
+
+      await this._failedProcessPostModel.bulkCreate(
+        posts
+          .filter((post) => post.failedPostReasons.every((r) => !r.isExpiredProcessing))
+          .map((item) => ({
+            postId: item.id,
+            isExpiredProcessing: true,
+            reason: 'Processing expired',
+            postJson: JSON.stringify(item),
+          })),
+        {
+          updateOnDuplicate: [],
         }
       );
     } catch (e) {

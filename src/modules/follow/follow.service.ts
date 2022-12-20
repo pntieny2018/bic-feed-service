@@ -1,15 +1,15 @@
-import { Op } from 'sequelize';
 import { SentryService } from '@app/sentry';
-import { Sequelize } from 'sequelize-typescript';
-import { ArrayHelper } from '../../common/helpers';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { getDatabaseConfig } from '../../config/database';
-import { CreateFollowDto, UnfollowDto } from './dto/requests';
-import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { ArrayHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
+import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
+import { CreateFollowDto, UnfollowDto } from './dto/requests';
 import { FollowsDto } from './dto/response/follows.dto';
 
 @Injectable()
@@ -163,7 +163,7 @@ export class FollowService {
         latestFollowId: 0,
       };
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return {
         userIds: [],
@@ -226,7 +226,7 @@ export class FollowService {
         latestFollowId: 0,
       };
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return {
         userIds: [],

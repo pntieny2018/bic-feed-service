@@ -708,7 +708,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
-        this._tagService.addToPost(tags, post.id, transaction),
+        this._tagService.addToPost(tags, post.id, post.isDraft, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -729,7 +729,7 @@ export class ArticleService extends PostService {
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this.sentryService.captureException(error);
       throw error;
     }
@@ -816,7 +816,7 @@ export class ArticleService extends PostService {
       });
       return true;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -900,7 +900,7 @@ export class ArticleService extends PostService {
       }
       if (tags) {
         const tagList = await this._tagService.getTagsByIds(tags);
-        await this._tagService.updateToPost(tags, post.id, transaction);
+        await this._tagService.updateToPost(tags, post.id, post.isDraft, transaction);
         dataUpdate['tagsJson'] = tagList;
       }
 
@@ -918,7 +918,7 @@ export class ArticleService extends PostService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }

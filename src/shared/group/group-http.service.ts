@@ -1,7 +1,7 @@
-import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { COMMUNITY_ADMIN_PATH } from '../../common/constants';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { lastValueFrom } from 'rxjs';
+import { COMMUNITY_ADMIN_PATH } from '../../common/constants';
 
 @Injectable()
 export class GroupHttpService {
@@ -29,7 +29,7 @@ export class GroupHttpService {
           owners: {},
         };
       }
-      this._logger.debug(response.data);
+      this._logger.debug(JSON.stringify(response.data));
       return response.data['data'];
     } catch (ex) {
       this._logger.error(ex);
