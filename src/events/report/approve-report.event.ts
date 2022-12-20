@@ -3,7 +3,10 @@ import { IEvent } from '../../common/interfaces';
 import { ReportContentHasBeenApproved } from '../../common/constants';
 import { IReportContentAttribute } from '../../database/models/report-content.model';
 
-export type ApproveReportEventPayload = IReportContentAttribute & { actor: UserDto };
+export type ApproveReportEventPayload = IReportContentAttribute & {
+  actor: UserDto;
+  groupIds: string[];
+};
 
 export class ApproveReportEvent implements IEvent<ApproveReportEventPayload> {
   public static event = ReportContentHasBeenApproved;

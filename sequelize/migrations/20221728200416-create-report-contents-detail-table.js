@@ -70,10 +70,6 @@ module.exports = {
     await queryInterface.addIndex(tableName, ['report_id']);
 
     await queryInterface.addIndex(tableName, ['report_id', 'reason_type']);
-
-    await queryInterface.addIndex(tableName, ['created_by', 'target_id'], {
-      unique: true,
-    });
   },
 
   down: async (queryInterface) => {
