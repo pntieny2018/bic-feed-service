@@ -141,12 +141,7 @@ export class TagService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
-    const postTag = await this._postTagModel.findOne({
-      where: {
-        tagId: tagId,
-      },
-    });
-    if (postTag) {
+    if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
 
@@ -172,10 +167,10 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    const postTag = await this._postTagModel.findOne({ where: { tagId: tagId } });
-    if (postTag) {
+    if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
+    await this._postTagModel.destroy({ where: { tagId: tagId } });
     await tag.destroy();
     return true;
   }
