@@ -36,7 +36,7 @@ export class ArticleAppService {
     private _authorityService: AuthorityService,
     private _postService: PostService,
     private _postSearchService: SearchService,
-    private _tagServices: TagService,
+    private _tagService: TagService,
     private _feedService: FeedService,
     protected readonly authorityService: AuthorityService
   ) {}
@@ -219,7 +219,7 @@ export class ArticleAppService {
     await this._authorityService.checkPostOwner(article, user.id);
     const { audience, setting } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
-    // if (article.coverMedia === null) throw new BadRequestException('Cover is required');
+    if (article.coverMedia === null) throw new BadRequestException('Cover is required');
     const groupIds = audience.groups.map((group) => group.id);
 
     const isEnableSetting =
@@ -254,7 +254,7 @@ export class ArticleAppService {
     this._postService.checkContent(article.content, article.media);
 
     if (article.categories.length === 0) {
-      // throw new BadRequestException('Category is required');
+      throw new BadRequestException('Category is required');
     }
     article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
