@@ -46,7 +46,9 @@ export class ArticleListener {
     });
 
     this._postSearchService.deletePostsToSearch([article]);
-    this._tagService.updateTotalUsedWhenDeleteArticle(article.postTags.map((e) => e.tagId));
+    if (!article.isDraft) {
+      this._tagService.decreaseTotalUsed(article.postTags.map((e) => e.tagId));
+    }
     //TODO:: send noti
   }
 
