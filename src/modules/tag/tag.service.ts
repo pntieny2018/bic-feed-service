@@ -183,8 +183,8 @@ export class TagService {
   public async addToPost(
     tagIds: string[],
     postId: string,
-    transaction: Transaction,
-    isDraft: boolean
+    isDraft: boolean,
+    transaction?: Transaction
   ): Promise<void> {
     if (tagIds.length === 0) return;
     const dataCreate = tagIds.map((tagId) => ({
@@ -193,15 +193,15 @@ export class TagService {
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
     if (!isDraft) {
-      await this.increaseTotalUsed(tagIds);
+      await this.increaseTotalUsed(tagIds, transaction);
     }
   }
 
   public async updateToPost(
     tagIds: string[],
     postId: string,
-    transaction: Transaction,
-    isDraft: boolean
+    isDraft: boolean,
+    transaction?: Transaction
   ): Promise<void> {
     const currentTags = await this._postTagModel.findAll({
       where: { postId },
@@ -216,7 +216,7 @@ export class TagService {
       });
 
       if (!isDraft) {
-        await this.decreaseTotalUsed(tagIds);
+        await this.decreaseTotalUsed(tagIds, transaction);
       }
     }
 
@@ -231,7 +231,7 @@ export class TagService {
       );
 
       if (!isDraft) {
-        await this.increaseTotalUsed(tagIds);
+        await this.increaseTotalUsed(tagIds, transaction);
       }
     }
   }
