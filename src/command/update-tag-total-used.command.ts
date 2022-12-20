@@ -14,9 +14,17 @@ export class UpdateTagTotalUsedCommand implements CommandRunner {
 
   public async run(): Promise<any> {
     try {
-      const tagPosts = await this._postTagModel.findAll();
+      const tagPosts = await this._postTagModel.findAll({
+        include: [
+          {
+            model: PostModel,
+            as: 'post',
+            required: false,
+          },
+        ],
+      });
       const totalUsedMapping = tagPosts.reduce((result, current) => {
-        if (current.post.isDraft) {
+        if (!current.post.isDraft) {
           if (result[current.tagId]) {
             result[current.tagId] += 1;
           } else {
@@ -25,13 +33,14 @@ export class UpdateTagTotalUsedCommand implements CommandRunner {
         }
         return result;
       }, {});
-      tagPosts.forEach((tagPost) => {
-        if (totalUsedMapping[tagPost.tagId]) {
-          tagPost.tag.update({ totalUsed: totalUsedMapping[tagPost.tagId] });
+      const tags = await this._tagModel.findAll();
+      for (const tag of tags) {
+        if (totalUsedMapping[tag.id]) {
+          await tag.update({ totalUsed: totalUsedMapping[tag.id] });
         } else {
-          tagPost.tag.update({ totalUsed: 0 });
+          await tag.update({ totalUsed: 0 });
         }
-      });
+      }
     } catch (e) {
       console.log(e);
     }
