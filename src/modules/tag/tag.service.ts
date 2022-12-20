@@ -134,19 +134,11 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    if (tag.createdBy !== authUser.id) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_NOT_OWNER);
-    }
     if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
-    const postTag = await this._postTagModel.findOne({
-      where: {
-        tagId: tagId,
-      },
-    });
-    if (postTag) {
+    if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
 
@@ -172,10 +164,10 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    const postTag = await this._postTagModel.findOne({ where: { tagId: tagId } });
-    if (postTag) {
+    if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
+    await this._postTagModel.destroy({ where: { tagId: tagId } });
     await tag.destroy();
     return true;
   }
@@ -183,7 +175,6 @@ export class TagService {
   public async addToPost(
     tagIds: string[],
     postId: string,
-    isDraft: boolean,
     transaction?: Transaction
   ): Promise<void> {
     if (tagIds.length === 0) return;
@@ -192,15 +183,11 @@ export class TagService {
       tagId,
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
-    if (!isDraft) {
-      await this.increaseTotalUsed(tagIds, transaction);
-    }
   }
 
   public async updateToPost(
     tagIds: string[],
     postId: string,
-    isDraft: boolean,
     transaction?: Transaction
   ): Promise<void> {
     const currentTags = await this._postTagModel.findAll({
@@ -214,10 +201,6 @@ export class TagService {
         where: { tagId: deleteIds, postId },
         transaction,
       });
-
-      if (!isDraft) {
-        await this.decreaseTotalUsed(tagIds, transaction);
-      }
     }
 
     const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
@@ -229,10 +212,6 @@ export class TagService {
         })),
         { transaction }
       );
-
-      if (!isDraft) {
-        await this.increaseTotalUsed(tagIds, transaction);
-      }
     }
   }
 

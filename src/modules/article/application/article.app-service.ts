@@ -36,7 +36,7 @@ export class ArticleAppService {
     private _authorityService: AuthorityService,
     private _postService: PostService,
     private _postSearchService: SearchService,
-    private _tagServices: TagService,
+    private _tagService: TagService,
     private _feedService: FeedService,
     protected readonly authorityService: AuthorityService
   ) {}
@@ -113,7 +113,7 @@ export class ArticleAppService {
     }
 
     if (tags?.length) {
-      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
+      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
     }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
@@ -193,7 +193,7 @@ export class ArticleAppService {
     }
 
     if (tags?.length) {
-      await this._tagServices.canCreateOrUpdate(tags, audience.groupIds);
+      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
@@ -259,9 +259,6 @@ export class ArticleAppService {
     article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
-    if (article.tags.length) {
-      this._tagServices.increaseTotalUsed(article.tags.map((e) => e.id));
-    }
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
