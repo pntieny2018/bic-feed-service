@@ -1,26 +1,26 @@
+import { SentryService } from '@app/sentry';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
-import { SentryService } from '@app/sentry';
+import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto, PageMetaDto } from '../../common/dto';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { ExceptionHelper } from '../../common/helpers';
+import { IPost } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
+import { GroupPrivacy } from '../../shared/group/dto';
+import { UserService } from '../../shared/user';
+import { UserDataShareDto } from '../../shared/user/dto';
+import { ArticleResponseDto } from '../article/dto/responses';
 import { UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
+import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { UserDataShareDto } from '../../shared/user/dto';
-import { ExceptionHelper } from '../../common/helpers';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { UserService } from '../../shared/user';
-import { GroupPrivacy } from '../../shared/group/dto';
-import { PostBindingService } from '../post/post-binding.service';
-import { ClassTransformer } from 'class-transformer';
-import { ArticleResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class FeedService {
@@ -43,6 +43,12 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
+    try {
+      const a = JSON.parse('{aaaaa]}');
+      this._logger.debug(JSON.stringify(a));
+    } catch (error) {
+      this._logger.debug('[Test]', JSON.stringify(error.stack));
+    }
     const { isImportant, type, isSaved, limit, offset } = getNewsFeedDto;
     let postIdsAndSorted = [];
     if (isSaved) {
@@ -182,7 +188,7 @@ export class FeedService {
         })
       );
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       throw ex;
     }
@@ -213,7 +219,7 @@ export class FeedService {
         );
       }
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }

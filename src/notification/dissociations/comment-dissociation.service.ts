@@ -1,17 +1,17 @@
-import { Op } from 'sequelize';
+import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { NIL as NIL_UUID } from 'uuid';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { FollowModel } from '../../database/models/follow.model';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentModel, IComment } from '../../database/models/comment.model';
+import { FollowModel } from '../../database/models/follow.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostResponseDto } from '../../modules/post/dto/responses';
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
-import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '@app/sentry';
 
 @Injectable()
 export class CommentDissociationService {
@@ -164,7 +164,7 @@ export class CommentDissociationService {
       }
       return recipient;
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return recipient;
     }
@@ -295,7 +295,7 @@ export class CommentDissociationService {
       }
       return recipient;
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return null;
     }
