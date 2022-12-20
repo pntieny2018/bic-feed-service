@@ -43,12 +43,6 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    try {
-      const a = JSON.parse('{aaaaa]}');
-      this._logger.debug(JSON.stringify(a));
-    } catch (error) {
-      this._logger.debug('[Test]', JSON.stringify(error.stack));
-    }
     const { isImportant, type, isSaved, limit, offset } = getNewsFeedDto;
     let postIdsAndSorted = [];
     if (isSaved) {
