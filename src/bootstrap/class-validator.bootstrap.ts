@@ -1,13 +1,13 @@
-import { useContainer } from 'class-validator';
-import { ValidatorException } from '../common/exceptions';
 import {
+  DynamicModule,
   INestApplication,
   Logger,
   Type,
-  DynamicModule,
-  ValidationPipe,
   ValidationError,
+  ValidationPipe,
 } from '@nestjs/common';
+import { useContainer } from 'class-validator';
+import { ValidatorException } from '../common/exceptions';
 import { StringHelper } from '../common/helpers';
 
 export type ConstraintItem = { title: string; message: string[] };
@@ -23,7 +23,7 @@ export class ClassValidatorBootstrap {
    */
   public static init(app: INestApplication, module: Type | DynamicModule): void {
     useContainer(app.select(module), { fallbackOnErrors: true });
-    Logger.log('ClassValidatorProvider initialized', ClassValidatorBootstrap.name);
+    Logger.debug('ClassValidatorProvider initialized', ClassValidatorBootstrap.name);
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,

@@ -1,7 +1,7 @@
-import { ConfigService } from '@nestjs/config';
-import { ISwaggerConfig } from '../config/swagger';
 import { INestApplication, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ISwaggerConfig } from '../config/swagger';
 
 export class SwaggerBootstrap {
   /**
@@ -31,7 +31,7 @@ export class SwaggerBootstrap {
           persistAuthorization: true,
         },
       });
-      Logger.log('Swagger initialized', SwaggerBootstrap.name);
+      Logger.debug('Swagger initialized', SwaggerBootstrap.name);
     }
   }
 }

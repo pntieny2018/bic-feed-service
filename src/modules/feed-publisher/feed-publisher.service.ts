@@ -1,15 +1,15 @@
-import { Op } from 'sequelize';
-import { FollowService } from '../follow';
-import { InjectModel } from '@nestjs/sequelize';
+import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
-import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
-import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
+import { NIL as NIL_UUID } from 'uuid';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
+import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { SentryService } from '@app/sentry';
-import { NIL as NIL_UUID } from 'uuid';
+import { FollowService } from '../follow';
 import { FollowsDto } from '../follow/dto/response/follows.dto';
+import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
 
 @Injectable()
 export class FeedPublisherService {
@@ -50,7 +50,7 @@ export class FeedPublisherService {
         );
       }
     } catch (ex) {
-      this._logger.debug(ex, ex.stack);
+      this._logger.debug(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }
@@ -82,7 +82,7 @@ export class FeedPublisherService {
              VALUES ${data} ON CONFLICT  (user_id,post_id) DO NOTHING;`
       );
     } catch (ex) {
-      this._logger.debug(ex, ex.stack);
+      this._logger.debug(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }
@@ -103,7 +103,7 @@ export class FeedPublisherService {
         },
       });
     } catch (ex) {
-      this._logger.debug(ex, ex.stack);
+      this._logger.debug(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }
@@ -155,7 +155,7 @@ export class FeedPublisherService {
           break;
         }
       } catch (ex) {
-        this._logger.error(ex, ex.stack);
+        this._logger.error(JSON.stringify(ex?.stack));
         this._sentryService.captureException(ex);
         break;
       }
@@ -193,7 +193,7 @@ export class FeedPublisherService {
           old: oldGroupIds,
           detached: [],
         }).catch((ex) => {
-          this._logger.error(ex, ex.stack);
+          this._logger.error(JSON.stringify(ex?.stack));
           this._sentryService.captureException(ex);
         });
       } else if (detachedGroupIds.length > 0) {
@@ -206,7 +206,7 @@ export class FeedPublisherService {
             ],
             detached: [],
           }).catch((ex) => {
-            this._logger.error(ex, ex.stack);
+            this._logger.error(JSON.stringify(ex?.stack));
             this._sentryService.captureException(ex);
           });
         }
@@ -216,7 +216,7 @@ export class FeedPublisherService {
             detached: detachedGroupIds,
             current: currentGroupIds,
           }).catch((ex) => {
-            this._logger.error(ex, ex.stack);
+            this._logger.error(JSON.stringify(ex?.stack));
             this._sentryService.captureException(ex);
           });
       }

@@ -1,42 +1,42 @@
-import { UserDto } from '../auth';
-import { PostAllow } from '../post';
-import { CommentService } from '../comment';
-import { ReactionEnum } from './reaction.enum';
-import { UserService } from '../../shared/user';
-import { Sequelize } from 'sequelize-typescript';
-import { plainToInstance } from 'class-transformer';
-import { PostService } from '../post/post.service';
-import {
-  CommentReactionModel,
-  ICommentReaction,
-} from '../../database/models/comment-reaction.model';
-import { LogicException } from '../../common/exceptions';
-import { getDatabaseConfig } from '../../config/database';
-import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
-import { PostPolicyService } from '../post/post-policy.service';
+import { SentryService } from '@app/sentry';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
-import { NotificationService, TypeActivity } from '../../notification';
-import { ReactionActivityService } from '../../notification/activities';
-import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
+import { plainToInstance } from 'class-transformer';
+import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { NIL as NIL_UUID } from 'uuid';
 import {
   HTTP_STATUS_ID,
   ReactionHasBeenCreated,
   ReactionHasBeenRemoved,
 } from '../../common/constants';
-import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/request';
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { FollowService } from '../follow';
-import { NIL as NIL_UUID } from 'uuid';
-import { SentryService } from '@app/sentry';
 import { OrderEnum } from '../../common/dto';
+import { LogicException } from '../../common/exceptions';
+import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
+import {
+  CommentReactionModel,
+  ICommentReaction,
+} from '../../database/models/comment-reaction.model';
+import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
+import { NotificationService, TypeActivity } from '../../notification';
+import { ReactionActivityService } from '../../notification/activities';
+import { UserService } from '../../shared/user';
+import { UserDto } from '../auth';
+import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
+import { FollowService } from '../follow';
+import { PostAllow } from '../post';
+import { PostPolicyService } from '../post/post-policy.service';
+import { PostService } from '../post/post.service';
+import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/request';
+import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import {
   SERIALIZE_TRANSACTION_ERROR,
   SERIALIZE_TRANSACTION_MAX_ATTEMPT,
   UNIQUE_CONSTRAINT_ERROR,
 } from './reaction.constant';
+import { ReactionEnum } from './reaction.enum';
 
 @Injectable()
 export class ReactionService {
@@ -270,18 +270,18 @@ export class ReactionService {
             });
           })
           .catch((ex) => {
-            this._logger.error(ex, ex.stack);
+            this._logger.error(JSON.stringify(ex?.stack));
             this._sentryService.captureException(ex);
           });
         this._feedService.markSeenPosts(postId, userId).catch((ex) => {
-          this._logger.error(ex, ex.stack);
+          this._logger.error(JSON.stringify(ex?.stack));
           this._sentryService.captureException(ex);
         });
         return reaction;
       }
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     } catch (e) {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
         this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
@@ -403,7 +403,7 @@ export class ReactionService {
             });
           })
           .catch((ex) => {
-            this._logger.error(ex, ex.stack);
+            this._logger.error(JSON.stringify(ex?.stack));
             this._sentryService.captureException(ex);
           });
 
@@ -411,7 +411,7 @@ export class ReactionService {
       }
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     } catch (e) {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
         this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
@@ -548,7 +548,7 @@ export class ReactionService {
       return response;
     } catch (ex) {
       await trx.rollback();
-      this._logger.error(ex, ex.message, ex.stack);
+      this._logger.error(ex, ex.message, ex?.stack);
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
         this._sentryService.captureException(ex);
@@ -665,7 +665,7 @@ export class ReactionService {
       return response;
     } catch (ex) {
       await trx.rollback();
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
         this._sentryService.captureException(ex);

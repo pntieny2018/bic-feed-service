@@ -96,7 +96,6 @@ export class StringHelper {
         .replace(/~(.*?)~/g, '$1'); //remove ~~
       return stringConverted;
     } catch (e) {
-      console.log('Invalid content=', str);
       return str;
     }
   }

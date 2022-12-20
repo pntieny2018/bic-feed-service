@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { GroupHttpService } from '../../shared/group';
-import { CreateReportEvent } from '../../events/report/create-report.event';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
+import { CreateReportEvent } from '../../events/report/create-report.event';
+import { PostService } from '../../modules/post/post.service';
+import { TargetType } from '../../modules/report-content/contstants';
+import { SearchService } from '../../modules/search/search.service';
 import { NotificationService, TypeActivity, VerbActivity } from '../../notification';
 import { ReportActivityService } from '../../notification/activities';
-import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
 import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
-import { PostService } from '../../modules/post/post.service';
-import { SearchService } from '../../modules/search/search.service';
-import { TargetType } from '../../modules/report-content/contstants';
+import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
+import { GroupHttpService } from '../../shared/group';
 
 @Injectable()
 export class ReportContentListener {
@@ -25,8 +25,20 @@ export class ReportContentListener {
   @On(CreateReportEvent)
   public async onReportCreated(event: CreateReportEvent): Promise<void> {
     this._logger.debug('[onReportCreated]');
-    this._logger.debug(JSON.stringify(event, null, 4));
     const { payload } = event;
+
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+      this._postService
+        .updateData([payload.targetId], {
+          isReported: true,
+        })
+        .catch((ex) => this._logger.error(JSON.stringify(ex?.stack)));
+      payload.details.forEach((dt) => {
+        this._postService
+          .unSavePostToUserCollection(dt.targetId, dt.createdBy)
+          .catch((ex) => this._logger.error(JSON.stringify(ex?.stack)));
+      });
+    }
 
     const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
 
@@ -61,27 +73,17 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
           },
         },
       },
     };
     this._notificationService.publishReportNotification(notificationPayload);
-
-    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      this._postService
-        .updateData([payload.targetId], {
-          isReported: true,
-        })
-        .catch((ex) => this._logger.error(ex));
-    }
   }
 
   @On(ApproveReportEvent)
   public async onReportApproved(event: ApproveReportEvent): Promise<void> {
     this._logger.debug('[onReportApproved]');
-    this._logger.debug(JSON.stringify(event, null, 4));
-
     const { payload } = event;
 
     const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
@@ -117,7 +119,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos,
+            adminInfos: adminInfos.admins,
             creatorId: payload.authorId,
           },
         },
@@ -130,13 +132,10 @@ export class ReportContentListener {
       .updateData([payload.targetId], {
         isHidden: true,
       })
-      .catch((ex) => this._logger.error(ex));
-
-    payload.details.forEach((dt) =>
-      this._postService.unSavePostToUserCollection(dt.targetId, dt.createdBy)
-    );
-
+      .catch((ex) => this._logger.error(JSON.stringify(ex?.stack)));
     const posts = await this._postService.findPostByIds([payload.targetId]);
-    this._searchService.deletePostsToSearch(posts).catch((ex) => this._logger.error(ex));
+    this._searchService
+      .deletePostsToSearch(posts)
+      .catch((ex) => this._logger.error(JSON.stringify(ex?.stack)));
   }
 }

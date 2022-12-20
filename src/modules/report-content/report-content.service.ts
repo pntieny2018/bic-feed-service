@@ -1,11 +1,10 @@
-import { Op, QueryTypes } from 'sequelize';
 import { UserDto } from '../auth';
+import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment';
 import { InjectModel } from '@nestjs/sequelize';
-import { GroupHttpService, GroupService } from '../../shared/group';
 import { PostService } from '../post/post.service';
-import { ReportStatus, ReportTo, TargetType } from './contstants';
-import { ArticleService } from '../article/article.service';
+import { ReportStatus, TargetType } from './contstants';
+import { GroupHttpService, GroupService } from '../../shared/group';
 import { LogicException, ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
@@ -22,7 +21,6 @@ import {
   IReportContentAttribute,
   ReportContentModel,
 } from '../../database/models/report-content.model';
-import { GroupSharedDto } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { getDatabaseConfig } from '../../config/database';
 import { plainToInstance } from 'class-transformer';
@@ -38,6 +36,8 @@ import { PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { ArticleService } from '../article/article.service';
+import { UserDataShareDto } from '../../shared/user/dto';
 
 @Injectable()
 export class ReportContentService {
@@ -56,6 +56,11 @@ export class ReportContentService {
     private readonly _reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param getReportDto
+   */
   public async getReports(
     admin: UserDto,
     getReportDto: GetReportDto
@@ -64,7 +69,7 @@ export class ReportContentService {
 
     const { targetType, groupId, limit, offset, order } = getReportDto;
 
-    await this.isCommunityAdmin(admin.id, [groupId]);
+    await this.canPerform(admin.id, [groupId]);
 
     let conditionStr = `AND rc.target_type = $targetType`;
 
@@ -109,7 +114,7 @@ export class ReportContentService {
 
     const reportIds = results.map((rs) => rs['id']);
 
-    const reportStatisticsMap = await this.getDetailsReport(reportIds);
+    const reportStatisticsMap = await this.getDetailsReport(reportIds, groupId);
 
     const authorIds = results.map((rs) => rs['author_id']);
 
@@ -117,10 +122,10 @@ export class ReportContentService {
 
     results = results.map((rs) => {
       const author = authors.find((a) => a.id === rs['author_id']);
-      const details = reportStatisticsMap.get(rs['id']);
+      const details = reportStatisticsMap.get(`${rs['id']}`);
       delete author.groups;
       // const reason ?
-      return { ...rs, author: new UserDto(author), details: details };
+      return { ...rs, author: new UserDataShareDto(author), details: details };
     });
 
     return plainToInstance(ReportReviewResponsesDto, results, {
@@ -128,8 +133,14 @@ export class ReportContentService {
     });
   }
 
+  /**
+   * TODO: will optimize
+   * @param reportIds
+   * @param groupId
+   */
   public async getDetailsReport(
-    reportIds: string[]
+    reportIds: string[],
+    groupId?: string
   ): Promise<
     Map<string, { total: number; reasonType: string; description: string; reason?: string }[]>
   > {
@@ -141,14 +152,16 @@ export class ReportContentService {
       ` SELECT  report_id as "reportId",
               count(*) as total,
               reason_type as "reasonType"
-      FROM bein_stream.report_content_details
+      FROM bein_stream.report_content_details WHERE  report_id in (:reportIds) ${
+        groupId ? 'AND group_id = :groupId' : ''
+      }
       GROUP BY report_id,reason_type
-      HAVING report_id in (:reportIds)
     `,
       {
         type: QueryTypes.SELECT,
         replacements: {
           reportIds: reportIds,
+          groupId: groupId,
         },
       }
     );
@@ -181,6 +194,11 @@ export class ReportContentService {
     return reportStatisticsMap;
   }
 
+  /**
+   * TODO: will optimize
+   * @param author
+   * @param getOptions
+   */
   public async getContentBlockedOfMe(
     author: UserDto,
     getOptions: GetBlockedContentOfMeDto
@@ -250,14 +268,27 @@ export class ReportContentService {
     return responses;
   }
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param reportId
+   * @param targetId
+   * @param groupId
+   * @param fetchReporter
+   */
   public async getStatistics(
+    admin: UserDto,
     reportId: string,
     targetId: string,
+    groupId: string,
     fetchReporter: number
   ): Promise<StatisticsReportResponsesDto> {
+    await this.canPerform(admin.id, [groupId]);
+
     if (fetchReporter > 10) {
       fetchReporter = 10;
     }
+
     const dbConfig = getDatabaseConfig();
 
     const reportStatus = await this._reportContentModel.findOne({
@@ -266,20 +297,26 @@ export class ReportContentService {
         status: ReportStatus.CREATED,
       },
     });
+
     if (!reportStatus) {
       throw new ValidatorException('Report not found or resolved');
     }
+
     const reportCount = await this._reportContentDetailModel.sequelize.query<{
       reasonType: string;
       total: string;
     }>(
-      `SELECT reason_type as "reasonType",count(*) as total
-           FROM ${dbConfig.schema}.report_content_details WHERE target_id = :targetId AND report_id = :reportId
-           GROUP BY reason_type;`,
+      `SELECT reason_type as "reasonType",
+                  count(*) as total,
+                  group_id as "groupId"
+           FROM ${dbConfig.schema}.report_content_details
+           WHERE target_id = :targetId AND report_id = :reportId AND group_id =:groupId
+           GROUP BY reason_type, group_id`,
       {
         replacements: {
           reportId: reportId,
           targetId: targetId,
+          groupId: groupId,
         },
         type: QueryTypes.SELECT,
       }
@@ -294,7 +331,7 @@ export class ReportContentService {
       totalReport += parseInt(reportCount[i].total ?? '0');
       queries.push(`
           ( SELECT * FROM  ${dbConfig.schema}.report_content_details
-            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = :targetId AND report_id = :reportId
+            WHERE reason_type = '${reportCount[i].reasonType}' AND target_id = :targetId AND report_id = :reportId AND group_id =:groupId
             ORDER BY created_at DESC
             LIMIT ${fetchReporter} )
       `);
@@ -308,6 +345,7 @@ export class ReportContentService {
       replacements: {
         reportId: reportId,
         targetId: targetId,
+        groupId: groupId,
       },
     });
 
@@ -342,10 +380,15 @@ export class ReportContentService {
     return new StatisticsReportResponsesDto([...reportByReasonTypeMap.values()], totalReport);
   }
 
+  /**
+   * TODO: will optimize
+   * @param audienceIds
+   * @param groupIdsNeedValidate
+   * @private
+   */
   private async _validateGroupIds(
     audienceIds: string[],
-    groupIdsNeedValidate: string[],
-    type: ReportTo
+    groupIdsNeedValidate: string[]
   ): Promise<void> {
     //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
@@ -387,14 +430,14 @@ export class ReportContentService {
         [isExisted, post] = await this._postService.isExisted(targetId, true);
         authorId = post?.createdBy;
         audienceIds = post?.groups.map((g) => g.groupId) ?? [];
-        await this._validateGroupIds(audienceIds, groupIds, reportTo);
+        await this._validateGroupIds(audienceIds, groupIds);
         break;
       case TargetType.COMMENT:
         [isExisted, comment] = await this._commentService.isExisted(targetId, true);
         authorId = comment?.createdBy;
         [isExisted, post] = await this._postService.isExisted(comment.postId, true);
         audienceIds = post.groups.map((g) => g.groupId);
-        await this._validateGroupIds(audienceIds, groupIds, reportTo);
+        await this._validateGroupIds(audienceIds, groupIds);
         break;
       default:
         throw new ValidatorException('Unknown resource');
@@ -489,31 +532,32 @@ export class ReportContentService {
     return true;
   }
 
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param updateStatusReport
+   */
   public async updateStatusReport(
     admin: UserDto,
     updateStatusReport: UpdateStatusReportDto
   ): Promise<boolean> {
     const { status } = updateStatusReport;
 
-    const conditions = {
-      [Op.or]: {
-        targetId: updateStatusReport.targetIds ?? [],
-        id: updateStatusReport.reportIds ?? [],
-      },
-    };
-
     const reportDetails = await this._reportContentDetailModel.findAll({
       where: {
         [Op.or]: {
           targetId: updateStatusReport.targetIds ?? [],
-          id: updateStatusReport.reportIds ?? [],
+          reportId: updateStatusReport.reportIds ?? [],
         },
       },
     });
 
-    const groupIds = reportDetails.map((dt) => dt.groupId);
+    const reportDetailJsons = reportDetails.map((dt) => dt.toJSON());
 
-    await this.isCommunityAdmin(admin.id, groupIds);
+    await this.canPerform(
+      admin.id,
+      reportDetailJsons.map((g) => g.groupId)
+    );
 
     const [affectedCount] = await this._reportContentModel.update(
       {
@@ -522,7 +566,10 @@ export class ReportContentService {
       },
       {
         where: {
-          ...conditions,
+          [Op.or]: {
+            targetId: updateStatusReport.targetIds ?? [],
+            id: updateStatusReport.reportIds ?? [],
+          },
           status: {
             [Op.not]: ReportStatus.HID,
           },
@@ -541,7 +588,10 @@ export class ReportContentService {
           },
         ],
         where: {
-          ...conditions,
+          [Op.or]: {
+            targetId: updateStatusReport.targetIds ?? [],
+            id: updateStatusReport.reportIds ?? [],
+          },
           status: ReportStatus.HID,
         },
       });
@@ -561,7 +611,19 @@ export class ReportContentService {
     return true;
   }
 
-  public async getContent(targetId: string): Promise<DetailContentReportResponseDto> {
+  /**
+   * TODO: will optimize
+   * @param admin
+   * @param rootGroupId
+   * @param targetId
+   */
+  public async getContent(
+    admin: UserDto,
+    rootGroupId: string,
+    targetId: string
+  ): Promise<DetailContentReportResponseDto> {
+    await this.canPerform(admin.id, [rootGroupId]);
+
     const reportStatus = await this._reportContentModel.findOne({
       where: {
         targetId: targetId,
@@ -586,20 +648,29 @@ export class ReportContentService {
 
       return detailContentReportResponseDto;
     }
-    const post = await this._postService.get(targetId, null, { withComment: false });
+    if (reportStatus.targetType === TargetType.POST) {
+      const post = await this._postService.get(targetId, null, { withComment: false }, false);
+      detailContentReportResponseDto.setPost(post);
+      return detailContentReportResponseDto;
+    }
 
-    detailContentReportResponseDto.setPost(post);
-
-    return detailContentReportResponseDto;
+    if (reportStatus.targetType === TargetType.ARTICLE) {
+      const article = await this._articleService.get(targetId, null, { withComment: false }, false);
+      detailContentReportResponseDto.setArticle(article);
+      return detailContentReportResponseDto;
+    }
+    throw new ValidatorException(`Unknown Target Type: ${reportStatus.targetType}`);
   }
 
-  public async isCommunityAdmin(userId: string, rootGroupIds: string[]): Promise<void> {
-    const adminInfo = this._groupHttpService.getAdminIds(rootGroupIds);
-    const isCommAdmin = Object.values(adminInfo)
-      .flat()
-      .some((id) => userId === id);
+  public async canPerform(userId: string, rootGroupIds: string[]): Promise<void> {
+    const adminInfo = await this._groupHttpService.getAdminIds(rootGroupIds);
 
-    if (!isCommAdmin) {
+    const adminIds = Object.values(adminInfo.admins).flat();
+    const ownerIds = Object.values(adminInfo.owners).flat();
+
+    const canView = adminIds.includes(userId) || ownerIds.includes(userId);
+
+    if (!canView) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
   }

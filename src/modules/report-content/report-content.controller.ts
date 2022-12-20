@@ -32,13 +32,14 @@ export class ReportContentController {
     name: 'id',
     description: 'Target id',
   })
-  @Get('/:id/content')
+  @Get('/:rootGroupId/content/:targetId')
   public async getDetailReportContent(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) targetId: string
+    @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
+    @Param('targetId', ParseUUIDPipe) targetId: string
   ): Promise<DetailContentReportResponseDto> {
     // TODO check permission
-    return this._reportContentService.getContent(targetId);
+    return this._reportContentService.getContent(user, rootGroupId, targetId);
   }
 
   @ApiParam({
@@ -54,10 +55,17 @@ export class ReportContentController {
     @AuthUser() user: UserDto,
     @Param('reportId', ParseUUIDPipe) reportId: string,
     @Param('targetId', ParseUUIDPipe) targetId: string,
+    @Query('group_id', ParseUUIDPipe) groupId: string,
     @Query('count_reporter') countReporter = 5
   ): Promise<StatisticsReportResponsesDto> {
     // TODO check permission
-    return this._reportContentService.getStatistics(reportId, targetId, countReporter);
+    return this._reportContentService.getStatistics(
+      user,
+      reportId,
+      targetId,
+      groupId,
+      countReporter
+    );
   }
 
   @Post('/content')
