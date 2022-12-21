@@ -38,6 +38,7 @@ import { DetailContentReportResponseDto } from './dto/detail-content-report.resp
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
+import { GroupSharedDto } from '../../shared/group/dto';
 
 @Injectable()
 export class ReportContentService {
@@ -386,10 +387,10 @@ export class ReportContentService {
    * @param groupIdsNeedValidate
    * @private
    */
-  private async _validateGroupIds(
+  private async _getValidGroupIds(
     audienceIds: string[],
     groupIdsNeedValidate: string[]
-  ): Promise<void> {
+  ): Promise<GroupSharedDto[]> {
     //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
     const postRootGroupIds = groups.map((group) => group.rootGroupId);
@@ -399,6 +400,7 @@ export class ReportContentService {
     if (!isExistGroups) {
       throw new ValidatorException('Invalid group_ids');
     }
+    return groups;
   }
 
   /**
@@ -408,6 +410,8 @@ export class ReportContentService {
    */
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
     const { authorId, groupIds } = await this.transformDataRequest(user, createReportDto);
+    //TODO: will optimize later
+    createReportDto.groupIds = groupIds;
 
     const existedReport = await this._reportContentModel.findOne({
       where: {
@@ -479,14 +483,16 @@ export class ReportContentService {
 
     audienceIds = post.groups.map((g) => g.groupId) ?? [];
 
-    await this._validateGroupIds(audienceIds, groupIds);
+    const groups = await this._getValidGroupIds(audienceIds, groupIds);
+
+    const validGroupIds = [...new Set(groups.map((g) => g.rootGroupId))];
 
     if (authorId === createdBy) {
       throw new ValidatorException('You cant not report yourself');
     }
     return {
       authorId: authorId,
-      groupIds: groupIds,
+      groupIds: validGroupIds,
     };
   }
 
