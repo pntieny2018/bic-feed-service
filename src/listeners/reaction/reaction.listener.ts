@@ -18,6 +18,11 @@ export class ReactionListener {
       post: event.payload.post,
       comment: event.payload.comment,
     };
+
+    if (createReactionEventPayload.post.isHidden) {
+      return;
+    }
+
     const kafkaCreateReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
       key: event.getEventName(),
       value: {
