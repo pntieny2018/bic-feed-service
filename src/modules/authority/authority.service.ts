@@ -4,7 +4,7 @@ import { GroupService } from '../../shared/group';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { Ability, subject, Subject } from '@casl/ability';
+import { Ability, subject } from '@casl/ability';
 import {
   PERMISSION_KEY,
   permissionToCommonName,
@@ -47,7 +47,6 @@ export class AuthorityService {
     const notEditSettingInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
     const ability = await this._buildAbility(user);
-    console.log('ability', ability);
     for (const group of groups) {
       const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_POST_ARTICLE,
