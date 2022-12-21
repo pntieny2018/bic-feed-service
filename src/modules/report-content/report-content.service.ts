@@ -597,14 +597,12 @@ export class ReportContentService {
       });
 
       for (const report of reports) {
-        if ([TargetType.ARTICLE, TargetType.POST].includes(report.targetType)) {
-          this._eventEmitter.emit(
-            new ApproveReportEvent({
-              actor: admin,
-              ...report.toJSON(),
-            })
-          );
-        }
+        this._eventEmitter.emit(
+          new ApproveReportEvent({
+            actor: admin,
+            ...report.toJSON(),
+          })
+        );
       }
     }
 
