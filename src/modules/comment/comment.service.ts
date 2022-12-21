@@ -907,4 +907,14 @@ export class CommentService {
     });
     return [commentCount > 1, null];
   }
+
+  public async updateData(commentIds: string[], data: Partial<IComment>): Promise<void> {
+    await this._commentModel.update(data, {
+      where: {
+        id: {
+          [Op.in]: commentIds,
+        },
+      },
+    });
+  }
 }
