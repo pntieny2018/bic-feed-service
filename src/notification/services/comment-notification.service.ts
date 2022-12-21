@@ -39,7 +39,9 @@ export class CommentNotificationService {
       commentLimit: 0,
       childCommentLimit: 0,
     });
-
+    if (postResponse.isHidden) {
+      return;
+    }
     const prevComments: IComment[] = [];
     const prevCommentActivities: NotificationActivity[] = [];
 
@@ -136,6 +138,9 @@ export class CommentNotificationService {
       childCommentLimit: 0,
     });
 
+    if (postResponse.isHidden) {
+      return;
+    }
     const newMentionedUserIds = Object.values(commentResponse.mentions ?? {}).map((u) => u.id);
 
     const oldMentionedUserIds = (oldComment.mentions ?? []).map((m) => m.userId);
