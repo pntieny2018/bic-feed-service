@@ -19,7 +19,6 @@ import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
-import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { FilterUserService } from '../../modules/filter-user';
 import { UserSharedDto } from '../../shared/user/dto';
 @Injectable()

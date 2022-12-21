@@ -337,6 +337,10 @@ export class PostResponseDto {
   @Expose()
   public isReported?: boolean;
 
+  @ApiProperty({
+    type: Boolean,
+  })
+  @Expose()
   public isHidden?: boolean;
 
   public constructor(data: Partial<PostResponseDto>) {
