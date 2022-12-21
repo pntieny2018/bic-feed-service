@@ -520,7 +520,7 @@ export class ReportContentService {
     const trx = await this._reportContentModel.sequelize.transaction();
 
     try {
-      if (existedReport.status === ReportStatus.HID) {
+      if (existedReport.status === ReportStatus.IGNORED) {
         await this._reportContentModel.update(
           {
             status: ReportStatus.CREATED,
