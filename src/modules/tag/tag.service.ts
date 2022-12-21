@@ -134,19 +134,11 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    if (tag.createdBy !== authUser.id) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_NOT_OWNER);
-    }
     if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
 
-    const postTag = await this._postTagModel.findOne({
-      where: {
-        tagId: tagId,
-      },
-    });
-    if (postTag) {
+    if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
 
@@ -172,10 +164,10 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
-    const postTag = await this._postTagModel.findOne({ where: { tagId: tagId } });
-    if (postTag) {
+    if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
+    await this._postTagModel.destroy({ where: { tagId: tagId } });
     await tag.destroy();
     return true;
   }
@@ -183,7 +175,7 @@ export class TagService {
   public async addToPost(
     tagIds: string[],
     postId: string,
-    transaction: Transaction
+    transaction?: Transaction
   ): Promise<void> {
     if (tagIds.length === 0) return;
     const dataCreate = tagIds.map((tagId) => ({
@@ -191,16 +183,12 @@ export class TagService {
       tagId,
     }));
     await this._postTagModel.bulkCreate(dataCreate, { transaction });
-    const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
-    effectTags.forEach((effectTag) =>
-      effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
-    );
   }
 
   public async updateToPost(
     tagIds: string[],
     postId: string,
-    transaction: Transaction
+    transaction?: Transaction
   ): Promise<void> {
     const currentTags = await this._postTagModel.findAll({
       where: { postId },
@@ -213,10 +201,6 @@ export class TagService {
         where: { tagId: deleteIds, postId },
         transaction,
       });
-      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
-      effectTags.forEach((effectTag) =>
-        effectTag.update({ totalUsed: effectTag.totalUsed - 1 }, { transaction })
-      );
     }
 
     const addIds = ArrayHelper.arrDifferenceElements(tagIds, currentTagIds);
@@ -227,10 +211,6 @@ export class TagService {
           tagId,
         })),
         { transaction }
-      );
-      const effectTags = await this._tagModel.findAll({ where: { id: tagIds } });
-      effectTags.forEach((effectTag) =>
-        effectTag.update({ totalUsed: effectTag.totalUsed + 1 }, { transaction })
       );
     }
   }
@@ -244,10 +224,25 @@ export class TagService {
     );
   }
 
-  public async updateTotalUsedWhenDeleteArticle(ids: string[]): Promise<void> {
+  public async increaseTotalUsed(ids: string[], transaction?: Transaction): Promise<void> {
     const tags = await this._tagModel.findAll({ where: { id: ids } });
     for (const tag of tags) {
-      await tag.update({ totalUsed: tag.totalUsed - 1 });
+      if (transaction) {
+        await tag.update({ totalUsed: tag.totalUsed + 1 }, { transaction });
+      } else {
+        await tag.update({ totalUsed: tag.totalUsed + 1 });
+      }
+    }
+  }
+
+  public async decreaseTotalUsed(ids: string[], transaction?: Transaction): Promise<void> {
+    const tags = await this._tagModel.findAll({ where: { id: ids } });
+    for (const tag of tags) {
+      if (transaction) {
+        await tag.update({ totalUsed: tag.totalUsed - 1 }, { transaction });
+      } else {
+        await tag.update({ totalUsed: tag.totalUsed - 1 });
+      }
     }
   }
 

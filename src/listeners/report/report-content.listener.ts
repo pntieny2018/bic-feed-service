@@ -42,7 +42,7 @@ export class ReportContentListener {
       });
     }
 
-    const adminInfos = await this._groupService.getAdminIds(payload.details.map((d) => d.groupId));
+    const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
 
     const actor = {
       id: payload.actor.id,
@@ -88,9 +88,7 @@ export class ReportContentListener {
     this._logger.debug('[onReportApproved]');
     const { payload } = event;
     if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
-      const adminInfos = await this._groupService.getAdminIds(
-        payload.details.map((d) => d.groupId)
-      );
+      const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
 
       const actor = {
         id: payload.actor.id,

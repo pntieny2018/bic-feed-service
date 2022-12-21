@@ -6,4 +6,4 @@ async function bootstrap(): Promise<void> {
   await CommandFactory.run(CommandModule, ['log']);
 }
 
-bootstrap().catch((ex) => Logger.debug(ex));
+bootstrap().catch((ex) => Logger.debug(JSON.stringify(ex?.stack)));

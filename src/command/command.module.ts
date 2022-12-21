@@ -18,6 +18,8 @@ import { ConfigModule } from '@nestjs/config';
 import { configs } from '../config/configuration';
 import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SearchModule } from '../modules/search';
+import { TagModule } from '../modules/tag';
+import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { SearchModule } from '../modules/search';
     MentionModule,
     MediaModule,
     SearchModule,
+    TagModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -45,6 +48,7 @@ import { SearchModule } from '../modules/search';
     CleanDraftPostCommand,
     IndexPostCommand,
     MoveMediaBucketCommand,
+    UpdateTagTotalUsedCommand,
   ],
 })
 export class CommandModule {}

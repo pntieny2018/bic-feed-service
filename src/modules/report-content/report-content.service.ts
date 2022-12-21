@@ -407,9 +407,42 @@ export class ReportContentService {
    * @param createReportDto
    */
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
+    const { authorId, audienceIds } = await this.transformDataRequest(user, createReportDto);
+
+    const existedReport = await this._reportContentModel.findOne({
+      where: {
+        targetId: createReportDto.targetId,
+      },
+    });
+
+    if (existedReport) {
+      await this.addNewReportDetails(user, {
+        ...createReportDto,
+        groupIds: audienceIds,
+        existedReport: existedReport.toJSON(),
+      });
+
+      return true;
+    }
+    await this.createNewReport(user, {
+      ...createReportDto,
+      authorId: authorId,
+      groupIds: audienceIds,
+    });
+
+    return true;
+  }
+
+  public async transformDataRequest(
+    user: UserDto,
+    createReportDto: CreateReportDto
+  ): Promise<{
+    authorId: string;
+    audienceIds: string[];
+  }> {
     const createdBy = user.id;
 
-    const { groupIds, reportTo, targetType, targetId, reason, reasonType } = createReportDto;
+    const { groupIds, targetType, targetId, reasonType } = createReportDto;
 
     const reasonTypes = await this._groupService.getReasonType();
 
@@ -420,75 +453,107 @@ export class ReportContentService {
     }
 
     let authorId = '';
-    let post,
-      comment = null;
+    let post = null;
+    let comment = null;
     let audienceIds = [];
     let isExisted = false;
-    switch (targetType) {
-      case TargetType.POST:
-      case TargetType.ARTICLE:
-        [isExisted, post] = await this._postService.isExisted(targetId, true);
-        authorId = post?.createdBy;
-        audienceIds = post?.groups.map((g) => g.groupId) ?? [];
-        await this._validateGroupIds(audienceIds, groupIds);
-        break;
-      case TargetType.COMMENT:
-        [isExisted, comment] = await this._commentService.isExisted(targetId, true);
-        authorId = comment?.createdBy;
-        [isExisted, post] = await this._postService.isExisted(comment.postId, true);
-        audienceIds = post.groups.map((g) => g.groupId);
-        await this._validateGroupIds(audienceIds, groupIds);
-        break;
-      default:
-        throw new ValidatorException('Unknown resource');
-    }
 
-    if (!authorId && !isExisted) {
+    if ([TargetType.POST, TargetType.ARTICLE].includes(targetType)) {
+      [isExisted, post] = await this._postService.isExisted(targetId, true);
+      if (isExisted) {
+        authorId = post.createdBy;
+      }
+    } else if (targetType === TargetType.COMMENT) {
+      [isExisted, comment] = await this._commentService.isExisted(targetId, true);
+      if (isExisted) {
+        authorId = comment.createdBy;
+        [isExisted, post] = await this._postService.isExisted(comment.postId, true);
+      }
+    } else {
       throw new ValidatorException('Unknown resource');
     }
+
+    if (!authorId || !isExisted || !post) {
+      throw new ValidatorException('Unknown resource');
+    }
+
+    audienceIds = post.groups.map((g) => g.groupId) ?? [];
+
+    await this._validateGroupIds(audienceIds, groupIds);
 
     if (authorId === createdBy) {
       throw new ValidatorException('You cant not report yourself');
     }
+    return {
+      authorId: authorId,
+      audienceIds: audienceIds,
+    };
+  }
 
-    const existedReport = await this._reportContentModel.findOne({
-      where: {
-        targetId: targetId,
-      },
-    });
+  public async addNewReportDetails(
+    user: UserDto,
+    createReportDto: CreateReportDto & {
+      groupIds: string[];
+      existedReport: IReportContentAttribute;
+    }
+  ): Promise<void> {
+    const { targetId, targetType, reportTo, groupIds, reason, reasonType, existedReport } =
+      createReportDto;
 
-    if (existedReport) {
-      const details: IReportContentDetailAttribute[] = groupIds.map((groupId) => ({
-        reportId: existedReport.id,
-        groupId: groupId,
-        reportTo: reportTo,
-        targetId: targetId,
-        targetType: targetType,
-        createdBy: createdBy,
-        reasonType: reasonType,
-        reason: reason,
-      }));
+    const details: IReportContentDetailAttribute[] = groupIds.map((groupId) => ({
+      reportId: existedReport.id,
+      groupId: groupId,
+      reportTo: reportTo,
+      targetId: targetId,
+      targetType: targetType,
+      createdBy: user.id,
+      reasonType: reasonType,
+      reason: reason,
+    }));
 
+    const trx = await this._reportContentModel.sequelize.transaction();
+
+    try {
       if (existedReport.status === ReportStatus.HID) {
-        await existedReport.update({
-          status: ReportStatus.CREATED,
-        });
+        await this._reportContentModel.update(
+          {
+            status: ReportStatus.CREATED,
+          },
+          {
+            where: {
+              id: existedReport.id,
+            },
+          }
+        );
       }
+
       await this._reportContentDetailModel.bulkCreate(details, {
         ignoreDuplicates: true,
       });
 
-      const report = existedReport.toJSON();
-      report.details = details;
-      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...report }));
+      await trx.commit();
 
-      return true;
+      existedReport.details = details;
+
+      this._eventEmitter.emit(
+        new CreateReportEvent({ actor: user, groupIds: groupIds, ...existedReport })
+      );
+    } catch (ex) {
+      await trx.rollback();
+      throw ex;
     }
+  }
+
+  public async createNewReport(
+    user: UserDto,
+    createReportDto: CreateReportDto & { authorId: string; groupIds: string[] }
+  ): Promise<void> {
+    const { targetId, targetType, authorId, reportTo, groupIds, reason, reasonType } =
+      createReportDto;
 
     const reportData: IReportContentAttribute = {
       targetId: targetId,
       targetType: targetType,
-      details: [],
       authorId: authorId,
       status: ReportStatus.CREATED,
     };
@@ -507,7 +572,7 @@ export class ReportContentService {
         reportTo: reportTo,
         targetId: targetId,
         targetType: targetType,
-        createdBy: createdBy,
+        createdBy: user.id,
         reasonType: reasonType,
         reason: reason,
       }));
@@ -518,18 +583,20 @@ export class ReportContentService {
       });
 
       await trx.commit();
+
       const detailJson = detailModels.map((detail) => detail.toJSON());
 
       const reportJson = report.toJSON();
+
       reportJson.details = detailJson;
 
-      this._eventEmitter.emit(new CreateReportEvent({ actor: user, ...reportJson }));
+      this._eventEmitter.emit(
+        new CreateReportEvent({ actor: user, groupIds: groupIds, ...reportJson })
+      );
     } catch (ex) {
       await trx.rollback();
       throw ex;
     }
-
-    return true;
   }
 
   /**
@@ -554,10 +621,9 @@ export class ReportContentService {
 
     const reportDetailJsons = reportDetails.map((dt) => dt.toJSON());
 
-    await this.canPerform(
-      admin.id,
-      reportDetailJsons.map((g) => g.groupId)
-    );
+    const groupIds = [...new Set(reportDetailJsons.map((g) => g.groupId))];
+
+    await this.canPerform(admin.id, groupIds);
 
     const [affectedCount] = await this._reportContentModel.update(
       {
@@ -601,6 +667,7 @@ export class ReportContentService {
           new ApproveReportEvent({
             actor: admin,
             ...report.toJSON(),
+            groupIds: groupIds,
           })
         );
       }
