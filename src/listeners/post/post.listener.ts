@@ -239,12 +239,13 @@ export class PostListener {
     }
     const validUserIds = await this._filterUserService.filterUser(newPost.id, mentionUserIds);
 
+    const validMention = {};
+
     for (const id of validUserIds) {
-      if (!mentionUserIds.includes(id)) {
-        const u = mentionMap.get(id);
-        delete newPost.mentions[u.username];
-      }
+      const u = mentionMap.get(id);
+      validMention[u.username] = u;
     }
+    newPost.mentions = validMention;
 
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);
