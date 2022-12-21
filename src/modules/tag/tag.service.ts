@@ -92,7 +92,7 @@ export class TagService {
     if (!group) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_GROUP_NOT_EXIST);
     }
-    const name = createTagDto.name.trim();
+    const name = createTagDto.name;
     const tag = await this._tagModel.findOne({
       where: {
         name: name,
@@ -124,7 +124,7 @@ export class TagService {
     updateTagDto: UpdateTagDto,
     authUser: UserDto
   ): Promise<TagResponseDto> {
-    const name = updateTagDto.name.trim();
+    const name = updateTagDto.name;
     const tags = await this._tagModel.findAll({
       where: {
         [Op.or]: [{ id: tagId }, { name: name }],
