@@ -15,7 +15,6 @@ import { PostModel } from './post.model';
 export interface IPostGroup {
   postId: string;
   groupId: string;
-  isReported?: boolean;
   totalPost?: number;
   totalArticle?: number;
   totalSeries?: number;
@@ -38,10 +37,6 @@ export class PostGroupModel extends Model<IPostGroup, IPostGroup> implements IPo
 
   @BelongsTo(() => PostModel)
   public post?: PostModel;
-
-  @Default(false)
-  @Column
-  public isReported?: boolean;
 
   @CreatedAt
   @Column
