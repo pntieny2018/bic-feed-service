@@ -32,7 +32,7 @@ export class GroupHttpService {
       this._logger.debug(JSON.stringify(response.data));
       return response.data['data'];
     } catch (ex) {
-      this._logger.error(ex);
+      this._logger.error(JSON.stringify(ex));
       return {
         admins: {},
         owners: {},
