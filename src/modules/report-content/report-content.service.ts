@@ -407,7 +407,7 @@ export class ReportContentService {
    * @param createReportDto
    */
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
-    const { authorId, audienceIds } = await this.transformDataRequest(user, createReportDto);
+    const { authorId, groupIds } = await this.transformDataRequest(user, createReportDto);
 
     const existedReport = await this._reportContentModel.findOne({
       where: {
@@ -418,7 +418,7 @@ export class ReportContentService {
     if (existedReport) {
       await this.addNewReportDetails(user, {
         ...createReportDto,
-        groupIds: audienceIds,
+        groupIds: groupIds,
         existedReport: existedReport.toJSON(),
       });
 
@@ -427,7 +427,7 @@ export class ReportContentService {
     await this.createNewReport(user, {
       ...createReportDto,
       authorId: authorId,
-      groupIds: audienceIds,
+      groupIds: groupIds,
     });
 
     return true;
@@ -438,7 +438,7 @@ export class ReportContentService {
     createReportDto: CreateReportDto
   ): Promise<{
     authorId: string;
-    audienceIds: string[];
+    groupIds: string[];
   }> {
     const createdBy = user.id;
 
@@ -486,7 +486,7 @@ export class ReportContentService {
     }
     return {
       authorId: authorId,
-      audienceIds: audienceIds,
+      groupIds: groupIds,
     };
   }
 
