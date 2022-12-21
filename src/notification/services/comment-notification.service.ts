@@ -95,6 +95,7 @@ export class CommentNotificationService {
       );
     } else {
       recipientObj.commentRecipient = recipient as CommentRecipientDto;
+
       const { mentionedUsersInComment, mentionedUsersInPost } = recipientObj.commentRecipient;
 
       recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUser(
@@ -171,6 +172,11 @@ export class CommentNotificationService {
       );
     } else {
       recipientObj.commentRecipient = new CommentRecipientDto(null, validMentionUserIds, [], []);
+
+      recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUser(
+        postResponse.id,
+        recipientObj.commentRecipient?.mentionedUsersInComment ?? []
+      );
     }
 
     this._notificationService.publishCommentNotification<NotificationActivity>({
