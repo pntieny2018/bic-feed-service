@@ -247,22 +247,24 @@ export class PostListener {
     }
     newPost.mentions = validMention;
 
-    const updatedActivity = this._postActivityService.createPayload(newPost);
-    const oldActivity = this._postActivityService.createPayload(oldPost);
+    if (!newPost.isHidden) {
+      const updatedActivity = this._postActivityService.createPayload(newPost);
+      const oldActivity = this._postActivityService.createPayload(oldPost);
 
-    this._notificationService.publishPostNotification({
-      key: `${id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: updatedActivity,
-        meta: {
-          post: {
-            oldData: oldActivity,
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
           },
         },
-      },
-    });
+      });
+    }
 
     const mediaList = [];
     for (const mediaType in media) {
