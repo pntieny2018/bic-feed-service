@@ -86,14 +86,12 @@ export class CommentNotificationService {
 
       recipientObj.replyCommentRecipient.mentionedUserIdsInParentComment = await this._filterUser(
         commentResponse.parentId,
-        mentionedUserIdsInParentComment,
-        commentResponse.parent.createdBy
+        mentionedUserIdsInParentComment
       );
 
       recipientObj.replyCommentRecipient.mentionedUserIdsInComment = await this._filterUser(
         postResponse.id,
-        mentionedUserIdsInComment,
-        commentResponse?.actor?.id
+        mentionedUserIdsInComment
       );
     } else {
       recipientObj.commentRecipient = recipient as CommentRecipientDto;
@@ -101,14 +99,12 @@ export class CommentNotificationService {
 
       recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUser(
         postResponse.id,
-        mentionedUsersInComment,
-        postResponse.createdBy
+        mentionedUsersInComment
       );
 
       recipientObj.commentRecipient.mentionedUsersInPost = await this._filterUser(
-        commentResponse.postId,
-        mentionedUsersInPost,
-        postResponse.createdBy
+        postResponse.id,
+        mentionedUsersInPost
       );
     }
 
@@ -199,11 +195,7 @@ export class CommentNotificationService {
     });
   }
 
-  private async _filterUser(
-    targetId: string,
-    userIds: string[],
-    authorId: string
-  ): Promise<string[]> {
+  private async _filterUser(targetId: string, userIds: string[]): Promise<string[]> {
     if (!userIds || !userIds?.length) {
       return [];
     }
@@ -220,7 +212,6 @@ export class CommentNotificationService {
       ],
       where: {
         targetId: targetId,
-        authorId: authorId,
       },
     });
 
@@ -228,6 +219,7 @@ export class CommentNotificationService {
       return userIds;
     }
     const details = records.map((r) => r.details).flat();
+
     const reporterIds = [...new Set(details.map((d) => d.createdBy))];
 
     return userIds.filter((userId) => !reporterIds.includes(userId));

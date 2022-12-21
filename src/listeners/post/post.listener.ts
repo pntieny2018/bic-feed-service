@@ -19,6 +19,9 @@ import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
+import { FilterUserService } from '../../modules/filter-user';
+import { UserSharedDto } from '../../shared/user/dto';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -31,7 +34,8 @@ export class PostListener {
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
-    private readonly _postHistoryService: PostHistoryService
+    private readonly _postHistoryService: PostHistoryService,
+    private readonly _filterUserService: FilterUserService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -226,6 +230,22 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
+    const mentionUserIds = [];
+    const mentionMap = new Map<string, UserSharedDto>();
+
+    for (const key in mentions) {
+      mentionUserIds.push(mentions[key].id);
+      mentionMap.set(mentions[key].id, mentions[key]);
+    }
+    const validUserIds = await this._filterUserService.filterUser(newPost.id, mentionUserIds);
+
+    for (const id of validUserIds) {
+      if (!mentionUserIds.includes(id)) {
+        const u = mentionMap.get(id);
+        delete newPost.mentions[u.username];
+      }
+    }
+
     const updatedActivity = this._postActivityService.createPayload(newPost);
     const oldActivity = this._postActivityService.createPayload(oldPost);
 
@@ -242,10 +262,7 @@ export class PostListener {
         },
       },
     });
-    const mentionUserIds = [];
-    for (const key in mentions) {
-      mentionUserIds.push(mentions[key].id);
-    }
+
     const mediaList = [];
     for (const mediaType in media) {
       for (const mediaItem of media[mediaType]) {
