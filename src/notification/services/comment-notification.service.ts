@@ -1,19 +1,21 @@
+import { NIL as NIL_UUID } from 'uuid';
+import { UserDto } from '../../modules/auth';
+import { InjectModel } from '@nestjs/sequelize';
+import { CommentService } from '../../modules/comment';
 import { CommentActivityService } from '../activities';
 import { CommentDissociationService } from '../dissociations';
 import { IComment } from '../../database/models/comment.model';
 import { PostService } from '../../modules/post/post.service';
 import { NotificationService } from '../notification.service';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { NotificationActivity } from '../dto/requests/notification-activity.dto';
+import { ReportContentModel } from '../../database/models/report-content.model';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
-import { UserDto } from '../../modules/auth';
-import { NIL as NIL_UUID } from 'uuid';
-import { CommentService } from '../../modules/comment';
+import { NotificationActivity } from '../dto/requests/notification-activity.dto';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 
 @Injectable()
 export class CommentNotificationService {
-  private _logger = new Logger(CommentNotificationService.name);
   public constructor(
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
@@ -21,7 +23,9 @@ export class CommentNotificationService {
     private readonly _commentService: CommentService,
     private readonly _notificationService: NotificationService,
     private _commentActivityService: CommentActivityService,
-    private _commentDissociationService: CommentDissociationService
+    private _commentDissociationService: CommentDissociationService,
+    @InjectModel(ReportContentModel)
+    private readonly _reportContentModel: typeof ReportContentModel
   ) {}
 
   public async create(
@@ -77,8 +81,35 @@ export class CommentNotificationService {
 
     if (commentResponse.parentId !== NIL_UUID) {
       recipientObj.replyCommentRecipient = recipient as ReplyCommentRecipientDto;
+      const { mentionedUserIdsInComment, mentionedUserIdsInParentComment } =
+        recipientObj.replyCommentRecipient;
+
+      recipientObj.replyCommentRecipient.mentionedUserIdsInParentComment = await this._filterUser(
+        commentResponse.parentId,
+        mentionedUserIdsInParentComment,
+        commentResponse.parent.createdBy
+      );
+
+      recipientObj.replyCommentRecipient.mentionedUserIdsInComment = await this._filterUser(
+        postResponse.id,
+        mentionedUserIdsInComment,
+        commentResponse?.actor?.id
+      );
     } else {
       recipientObj.commentRecipient = recipient as CommentRecipientDto;
+      const { mentionedUsersInComment, mentionedUsersInPost } = recipientObj.commentRecipient;
+
+      recipientObj.commentRecipient.mentionedUsersInComment = await this._filterUser(
+        postResponse.id,
+        mentionedUsersInComment,
+        postResponse.createdBy
+      );
+
+      recipientObj.commentRecipient.mentionedUsersInPost = await this._filterUser(
+        commentResponse.postId,
+        mentionedUsersInPost,
+        postResponse.createdBy
+      );
     }
 
     this._notificationService.publishCommentNotification<NotificationActivity>({
@@ -166,5 +197,39 @@ export class CommentNotificationService {
         data: deletedComment as any,
       },
     });
+  }
+
+  private async _filterUser(
+    targetId: string,
+    userIds: string[],
+    authorId: string
+  ): Promise<string[]> {
+    if (!userIds || !userIds?.length) {
+      return [];
+    }
+
+    const records = await this._reportContentModel.findAll({
+      include: [
+        {
+          model: ReportContentDetailModel,
+          as: 'details',
+          where: {
+            createdBy: userIds,
+          },
+        },
+      ],
+      where: {
+        targetId: targetId,
+        authorId: authorId,
+      },
+    });
+
+    if (!records || !records?.length) {
+      return userIds;
+    }
+    const details = records.map((r) => r.details).flat();
+    const reporterIds = [...new Set(details.map((d) => d.createdBy))];
+
+    return userIds.filter((userId) => !reporterIds.includes(userId));
   }
 }

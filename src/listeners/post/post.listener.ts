@@ -1,24 +1,24 @@
+import { SentryService } from '@app/sentry';
+import { Injectable, Logger } from '@nestjs/common';
+import { NIL as NIL_UUID } from 'uuid';
+import { On } from '../../common/decorators';
+import { MediaStatus } from '../../database/models/media.model';
+import { PostPrivacy, PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
-import { SentryService } from '@app/sentry';
-import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
-import { NotificationService } from '../../notification';
-import { FeedPublisherService } from '../../modules/feed-publisher';
-import { PostActivityService } from '../../notification/activities';
-import { PostService } from '../../modules/post/post.service';
-import { MediaStatus } from '../../database/models/media.model';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
-import { PostPrivacy, PostType } from '../../database/models/post.model';
-import { NIL as NIL_UUID } from 'uuid';
-import { SearchService } from '../../modules/search/search.service';
+import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
+import { PostService } from '../../modules/post/post.service';
+import { SearchService } from '../../modules/search/search.service';
+import { NotificationService } from '../../notification';
+import { PostActivityService } from '../../notification/activities';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -40,7 +40,7 @@ export class PostListener {
     if (post.isDraft) return;
 
     this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     });
 
@@ -83,7 +83,7 @@ export class PostListener {
 
       return;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
       return;
     }
@@ -107,7 +107,9 @@ export class PostListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    await this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    await this._mediaService
+      .processVideo(mediaIds)
+      .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
 
     if (isDraft) return;
 
@@ -118,7 +120,7 @@ export class PostListener {
     this._postHistoryService
       .saveEditedHistory(post.id, { oldData: null, newData: post })
       .catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
 
@@ -169,7 +171,7 @@ export class PostListener {
         updatedAt,
       },
     ]);
-    
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -211,7 +213,7 @@ export class PostListener {
 
     if (oldPost.isDraft === false && isDraft === true) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
     }
@@ -378,7 +380,7 @@ export class PostListener {
           [NIL_UUID]
         );
       } catch (error) {
-        this._logger.error(error, error?.stack);
+        this._logger.error(JSON.stringify(error?.stack));
         this._sentryService.captureException(error);
       }
     });

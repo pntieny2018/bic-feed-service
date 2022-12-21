@@ -42,6 +42,10 @@ export class UserDataShareDto {
   @Expose()
   @IsOptional()
   public email?: string;
+
+  public constructor(data: Partial<UserDataShareDto>) {
+    Object.assign(this, data);
+  }
 }
 
 export class UserSharedDto extends UserDataShareDto {

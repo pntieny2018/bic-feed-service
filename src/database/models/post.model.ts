@@ -25,6 +25,7 @@ import { TargetType } from '../../modules/report-content/contstants';
 import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
+import { FailedProcessPostModel } from './failed-process-post.model';
 import { HashtagModel, IHashtag } from './hashtag.model';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IMedia, MediaModel } from './media.model';
@@ -291,6 +292,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     foreignKey: 'cover',
   })
   public coverMedia: MediaModel;
+
+  @HasMany(() => FailedProcessPostModel, {
+    as: 'failedPostReasons',
+    foreignKey: 'postId',
+  })
+  public failedPostReasons?: FailedProcessPostModel[];
 
   public static loadMarkReadPost(authUserId: string, alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();

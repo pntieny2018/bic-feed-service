@@ -41,6 +41,6 @@ export class SeedCommand implements CommandRunner {
     groups.forEach((g) => this._storeService.set(`GS:${g.id}`, g));
     users.forEach((u) => this._storeService.set(`US:${u.id}`, u));
 
-    this.logger.log('done');
+    this.logger.debug('done');
   }
 }

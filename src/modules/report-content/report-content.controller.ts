@@ -14,10 +14,10 @@ export class ReportContentController {
 
   @Get('/review')
   public async getContentsReported(
-    // @AuthUser() user: UserDto,
+    @AuthUser() user: UserDto,
     @Query() getReportDto: GetReportDto
   ): Promise<ReportReviewResponsesDto[]> {
-    return this._reportContentService.getReports(getReportDto);
+    return this._reportContentService.getReports(user, getReportDto);
   }
 
   @Get('/me/content')
@@ -32,27 +32,40 @@ export class ReportContentController {
     name: 'id',
     description: 'Target id',
   })
-  @Get('/:id/content')
+  @Get('/:rootGroupId/content/:targetId')
   public async getDetailReportContent(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) targetId: string
+    @Param('rootGroupId', ParseUUIDPipe) rootGroupId: string,
+    @Param('targetId', ParseUUIDPipe) targetId: string
   ): Promise<DetailContentReportResponseDto> {
     // TODO check permission
-    return this._reportContentService.getContent(targetId);
+    return this._reportContentService.getContent(user, rootGroupId, targetId);
   }
 
   @ApiParam({
-    name: 'id',
+    name: 'reportId',
+    description: 'Report id',
+  })
+  @ApiParam({
+    name: 'targetId',
     description: 'Target id',
   })
-  @Get(':id/statistics')
+  @Get(':reportId/statistics/:targetId')
   public async getStatistics(
     @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) targetId: string,
+    @Param('reportId', ParseUUIDPipe) reportId: string,
+    @Param('targetId', ParseUUIDPipe) targetId: string,
+    @Query('group_id', ParseUUIDPipe) groupId: string,
     @Query('count_reporter') countReporter = 5
   ): Promise<StatisticsReportResponsesDto> {
     // TODO check permission
-    return this._reportContentService.getStatistics(targetId, countReporter);
+    return this._reportContentService.getStatistics(
+      user,
+      reportId,
+      targetId,
+      groupId,
+      countReporter
+    );
   }
 
   @Post('/content')

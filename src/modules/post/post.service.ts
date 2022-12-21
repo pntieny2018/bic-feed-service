@@ -4,7 +4,6 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { PostTagModel } from '../../database/models/post-tag.model';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { EntityIdDto, PageDto } from '../../common/dto';
@@ -23,8 +22,9 @@ import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostTagModel } from '../../database/models/post-tag.model';
 import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
-import { ReportContentModel } from '../../database/models/report-content.model';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
@@ -40,12 +40,11 @@ import { MediaDto } from '../media/dto';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
+import { ReportTo, TargetType } from '../report-content/contstants';
 import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
-import { ReportTo, TargetType } from '../report-content/contstants';
-import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 
 @Injectable()
 export class PostService {
@@ -161,7 +160,8 @@ export class PostService {
   public async get(
     postId: string,
     user: UserDto,
-    getPostDto?: GetPostDto
+    getPostDto?: GetPostDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
   ): Promise<PostResponseDto> {
     const attributes = this.getAttributesObj({
       loadMarkRead: true,
@@ -218,7 +218,7 @@ export class PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
+      shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser: user,
     });
 
@@ -906,7 +906,7 @@ export class PostService {
       });
       return posts.map((p) => p.postId);
     } catch (ex) {
-      this.logger.error(ex, ex.stack);
+      this.logger.error(ex, ex?.stack);
       this.sentryService.captureException(ex);
       return [];
     }
@@ -1171,16 +1171,6 @@ export class PostService {
   }
 
   public async updateData(postIds: string[], data: Partial<IPost>): Promise<void> {
-    await this.postGroupModel.update(
-      {
-        isReported: true,
-      },
-      {
-        where: {
-          postId: postIds,
-        },
-      }
-    );
     await this.postModel.update(data, {
       where: {
         id: {

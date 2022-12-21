@@ -1,12 +1,12 @@
-import { UserDto } from '../auth';
-import { FindAndCountOptions, Op } from 'sequelize';
-import { PageDto } from '../../common/dto';
-import { InjectModel } from '@nestjs/sequelize';
-import { GetCommentEditedHistoryDto } from './dto/requests';
-import { plainToInstance } from 'class-transformer';
 import { Injectable, Logger } from '@nestjs/common';
-import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
+import { InjectModel } from '@nestjs/sequelize';
+import { plainToInstance } from 'class-transformer';
+import { FindAndCountOptions } from 'sequelize';
+import { PageDto } from '../../common/dto';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
+import { UserDto } from '../auth';
+import { GetCommentEditedHistoryDto } from './dto/requests';
+import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 
 @Injectable()
 export class CommentHistoryService {
@@ -93,7 +93,7 @@ export class CommentHistoryService {
         total: count,
       });
     } catch (e) {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       throw e;
     }
   }

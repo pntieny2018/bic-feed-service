@@ -1,7 +1,9 @@
 import { SentryService } from '@app/sentry';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
+import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
+import { FailedProcessPostModel } from 'src/database/models/failed-process-post.model';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
@@ -54,7 +56,9 @@ export class SearchService {
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly groupService: GroupService,
     protected readonly userService: UserService,
-    protected readonly postBindingService: PostBindingService
+    protected readonly postBindingService: PostBindingService,
+    @InjectModel(FailedProcessPostModel)
+    protected readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
   public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
@@ -84,13 +88,21 @@ export class SearchService {
       );
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
-        console.log('errorItems', JSON.stringify(errorItems));
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
+        this._failedProcessingPostModel
+          .bulkCreate(
+            errorItems.map((it) => ({
+              postId: it.index._id,
+              reason: JSON.stringify(it.index.error),
+              postJson: JSON.stringify(posts.find((p) => p.id === it.index._id)),
+            }))
+          )
+          .catch((err) => this.logger.error(JSON.stringify(err?.stack)));
       }
       await this._updateLangAfterIndexToES(res?.items || [], index);
       return res.items.filter((item) => !item.index.error).length;
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
   }
@@ -142,7 +154,7 @@ export class SearchService {
           await this.elasticsearchService.delete({ index: oldIndex, id: `${dataIndex.id}` });
         }
       } catch (e) {
-        this.logger.debug(e);
+        this.logger.debug(JSON.stringify(e?.stack));
         this.sentryService.captureException(e);
       }
     }
@@ -160,7 +172,7 @@ export class SearchService {
         });
       }
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
   }
@@ -176,7 +188,7 @@ export class SearchService {
         },
       });
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
     }
   }
@@ -219,7 +231,6 @@ export class SearchService {
     ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
-    console.log('payload', JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const articleIds = [];
@@ -329,6 +340,8 @@ export class SearchService {
             communityId: group.communityId,
             icon: group.icon,
             privacy: group.privacy,
+            isCommunity: group.isCommunity,
+            rootGroupId: group.rootGroupId,
           });
         }
         if (post.communityIds && post.communityIds.includes(group.id)) {

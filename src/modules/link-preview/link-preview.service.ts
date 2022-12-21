@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
 import { ILinkPreview, LinkPreviewModel } from '../../database/models/link-preview.model';
 import { LinkPreviewDto } from './dto/link-preview.dto';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class LinkPreviewService {
   public constructor(
     @InjectModel(LinkPreviewModel)
-    private _linkPreviewModel: typeof LinkPreviewModel,
+    private _linkPreviewModel: typeof LinkPreviewModel
   ) {}
   private _logger = new Logger(LinkPreviewService.name);
 
@@ -27,7 +27,7 @@ export class LinkPreviewService {
       }
       return null;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }

@@ -23,7 +23,7 @@ export interface IReportContentAttribute {
   authorId: string;
   targetType: TargetType;
   status?: string;
-  details: IReportContentDetailAttribute[];
+  details?: IReportContentDetailAttribute[];
   updatedBy?: string;
   createdAt?: Date;
   updatedAt?: Date;

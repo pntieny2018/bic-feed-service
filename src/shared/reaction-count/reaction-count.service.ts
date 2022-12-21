@@ -1,6 +1,6 @@
 import { RedisService } from '@app/redis';
-import { Injectable, Logger } from '@nestjs/common';
 import { SentryService } from '@app/sentry';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class ReactionCountService {
@@ -23,7 +23,7 @@ export class ReactionCountService {
       }
       return parseInt(total);
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return null;
     }
@@ -36,7 +36,7 @@ export class ReactionCountService {
         total + 1
       );
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }
@@ -51,7 +51,7 @@ export class ReactionCountService {
         updatedTotal
       );
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }

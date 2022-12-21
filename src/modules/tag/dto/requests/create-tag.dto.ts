@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, MaxLength } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
 export class CreateTagDto {
   @ApiProperty({ type: String })
@@ -8,6 +8,9 @@ export class CreateTagDto {
   @IsNotEmpty()
   @Expose()
   @MaxLength(32)
+  @Transform(({ value }) => {
+    return value.toLowerCase().trim();
+  })
   public name: string;
 
   @ApiProperty({ type: String })

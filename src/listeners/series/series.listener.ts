@@ -1,18 +1,18 @@
+import { SentryService } from '@app/sentry';
+import { Injectable, Logger } from '@nestjs/common';
+import { FeedService } from 'src/modules/feed/feed.service';
+import { NIL as NIL_UUID } from 'uuid';
+import { On } from '../../common/decorators';
+import { MediaType } from '../../database/models/media.model';
+import { PostType } from '../../database/models/post.model';
 import {
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
   SeriesHasBeenUpdatedEvent,
 } from '../../events/series';
-import { SentryService } from '@app/sentry';
-import { On } from '../../common/decorators';
-import { Injectable, Logger, Post } from '@nestjs/common';
 import { FeedPublisherService } from '../../modules/feed-publisher';
-import { NIL as NIL_UUID } from 'uuid';
 import { PostHistoryService } from '../../modules/post/post-history.service';
-import { PostType } from '../../database/models/post.model';
 import { SearchService } from '../../modules/search/search.service';
-import { MediaType } from '../../database/models/media.model';
-import { FeedService } from 'src/modules/feed/feed.service';
 
 @Injectable()
 export class SeriesListener {
@@ -23,7 +23,7 @@ export class SeriesListener {
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService,
-    private readonly _feedService: FeedService,
+    private readonly _feedService: FeedService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
@@ -32,7 +32,7 @@ export class SeriesListener {
     if (series.isDraft) return;
 
     this._postServiceHistory.deleteEditedHistory(series.id).catch((e) => {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     });
 
@@ -81,7 +81,7 @@ export class SeriesListener {
         [NIL_UUID]
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
   }
@@ -141,7 +141,7 @@ export class SeriesListener {
         oldSeries.audience.groups.map((g) => g.id)
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
   }

@@ -1,7 +1,6 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
-import { ReportContentHasBeenCreated } from '../../common/constants';
 import { On } from '../../common/decorators';
 import { MediaStatus, MediaType } from '../../database/models/media.model';
 import {
@@ -11,7 +10,6 @@ import {
 } from '../../events/article';
 import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
 import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
-import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -20,6 +18,7 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class ArticleListener {
@@ -34,7 +33,7 @@ export class ArticleListener {
     private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService,
+    private readonly _postSearchService: SearchService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -43,12 +42,16 @@ export class ArticleListener {
     if (article.isDraft) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     });
 
     this._postSearchService.deletePostsToSearch([article]);
-    this._tagService.updateTotalUsedWhenDeleteArticle(article.postTags.map((e) => e.tagId));
+    if (!article.isDraft) {
+      this._tagService
+        .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
+        .catch((ex) => this._logger.debug(ex));
+    }
     //TODO:: send noti
   }
 
@@ -74,14 +77,16 @@ export class ArticleListener {
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    this._mediaService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
+    this._mediaService
+      .processVideo(mediaIds)
+      .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
     if (isDraft) return;
 
     this._postServiceHistory
       .saveEditedHistory(article.id, { oldData: null, newData: article })
       .catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
 
@@ -114,6 +119,12 @@ export class ArticleListener {
       },
     ]);
 
+    if (article.tags.length) {
+      this._tagService
+        .increaseTotalUsed(article.tags.map((e) => e.id))
+        .catch((ex) => this._logger.debug(ex));
+    }
+
     //TODO:: send noti
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -124,7 +135,7 @@ export class ArticleListener {
         [NIL_UUID]
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
   }
@@ -154,14 +165,21 @@ export class ArticleListener {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService
+        .processVideo(mediaIds)
+        .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
     }
 
     if (oldArticle.isDraft === false && isDraft === true) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
+      if (tags.length) {
+        this._tagService
+          .decreaseTotalUsed(tags.map((e) => e.id))
+          .catch((ex) => this._logger.debug(ex));
+      }
     }
 
     if (isDraft) return;
@@ -169,7 +187,7 @@ export class ArticleListener {
     this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
-        this._logger.debug(e, e?.stack);
+        this._logger.debug(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
     //TODO:: send noti
@@ -204,6 +222,18 @@ export class ArticleListener {
       },
     ]);
 
+    if (tags.length) {
+      const oldTagIds = oldArticle.tags.map((e) => e.id);
+      const newTagIds = tags.map((e) => e.id);
+      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+      if (deleteIds) {
+        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+      }
+      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+      if (addIds) {
+        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
+      }
+    }
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -213,7 +243,7 @@ export class ArticleListener {
         oldArticle.audience.groups.map((g) => g.id)
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
   }
@@ -288,7 +318,7 @@ export class ArticleListener {
           [NIL_UUID]
         );
       } catch (error) {
-        this._logger.error(error, error?.stack);
+        this._logger.error(JSON.stringify(error?.stack));
         this._sentryService.captureException(error);
       }
     });
