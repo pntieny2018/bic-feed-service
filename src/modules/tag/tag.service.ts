@@ -257,13 +257,6 @@ export class TagService {
       (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)
     );
     if (invalidTags.length) {
-      // throw new ForbiddenException({
-      //   code: HTTP_STATUS_ID.API_FORBIDDEN,
-      //   message: `The following tags were removed from this article: ${invalidTags
-      //     .map((e) => e.name)
-      //     .join(', ')}`,
-      //   errors: { tagsDenied: invalidTags.map((e) => e.id) },
-      // });
       return invalidTags;
     }
     return [];
