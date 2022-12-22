@@ -19,6 +19,8 @@ import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
+import { FilterUserService } from '../../modules/filter-user';
+import { UserSharedDto } from '../../shared/user/dto';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -31,7 +33,8 @@ export class PostListener {
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
-    private readonly _postHistoryService: PostHistoryService
+    private readonly _postHistoryService: PostHistoryService,
+    private readonly _filterUserService: FilterUserService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -226,26 +229,42 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
-    const updatedActivity = this._postActivityService.createPayload(newPost);
-    const oldActivity = this._postActivityService.createPayload(oldPost);
-
-    this._notificationService.publishPostNotification({
-      key: `${id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: updatedActivity,
-        meta: {
-          post: {
-            oldData: oldActivity,
-          },
-        },
-      },
-    });
     const mentionUserIds = [];
+    const mentionMap = new Map<string, UserSharedDto>();
+
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);
+      mentionMap.set(mentions[key].id, mentions[key]);
     }
+    const validUserIds = await this._filterUserService.filterUser(newPost.id, mentionUserIds);
+
+    const validMention = {};
+
+    for (const id of validUserIds) {
+      const u = mentionMap.get(id);
+      validMention[u.username] = u;
+    }
+    newPost.mentions = validMention;
+
+    if (!newPost.isHidden) {
+      const updatedActivity = this._postActivityService.createPayload(newPost);
+      const oldActivity = this._postActivityService.createPayload(oldPost);
+
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
+          },
+        },
+      });
+    }
+
     const mediaList = [];
     for (const mediaType in media) {
       for (const mediaItem of media[mediaType]) {

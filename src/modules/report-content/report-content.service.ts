@@ -38,6 +38,7 @@ import { DetailContentReportResponseDto } from './dto/detail-content-report.resp
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
+import { GroupSharedDto } from '../../shared/group/dto';
 
 @Injectable()
 export class ReportContentService {
@@ -386,10 +387,10 @@ export class ReportContentService {
    * @param groupIdsNeedValidate
    * @private
    */
-  private async _validateGroupIds(
+  private async _getValidGroupIds(
     audienceIds: string[],
     groupIdsNeedValidate: string[]
-  ): Promise<void> {
+  ): Promise<GroupSharedDto[]> {
     //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
     const postRootGroupIds = groups.map((group) => group.rootGroupId);
@@ -399,6 +400,7 @@ export class ReportContentService {
     if (!isExistGroups) {
       throw new ValidatorException('Invalid group_ids');
     }
+    return groups;
   }
 
   /**
@@ -407,7 +409,9 @@ export class ReportContentService {
    * @param createReportDto
    */
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
-    const { authorId, audienceIds } = await this.transformDataRequest(user, createReportDto);
+    const { authorId, groupIds } = await this.transformDataRequest(user, createReportDto);
+    //TODO: will optimize later
+    createReportDto.groupIds = groupIds;
 
     const existedReport = await this._reportContentModel.findOne({
       where: {
@@ -418,7 +422,7 @@ export class ReportContentService {
     if (existedReport) {
       await this.addNewReportDetails(user, {
         ...createReportDto,
-        groupIds: audienceIds,
+        groupIds: groupIds,
         existedReport: existedReport.toJSON(),
       });
 
@@ -427,7 +431,7 @@ export class ReportContentService {
     await this.createNewReport(user, {
       ...createReportDto,
       authorId: authorId,
-      groupIds: audienceIds,
+      groupIds: groupIds,
     });
 
     return true;
@@ -438,7 +442,7 @@ export class ReportContentService {
     createReportDto: CreateReportDto
   ): Promise<{
     authorId: string;
-    audienceIds: string[];
+    groupIds: string[];
   }> {
     const createdBy = user.id;
 
@@ -479,14 +483,16 @@ export class ReportContentService {
 
     audienceIds = post.groups.map((g) => g.groupId) ?? [];
 
-    await this._validateGroupIds(audienceIds, groupIds);
+    const groups = await this._getValidGroupIds(audienceIds, groupIds);
+
+    const validGroupIds = [...new Set(groups.map((g) => g.rootGroupId))];
 
     if (authorId === createdBy) {
       throw new ValidatorException('You cant not report yourself');
     }
     return {
       authorId: authorId,
-      audienceIds: audienceIds,
+      groupIds: validGroupIds,
     };
   }
 
@@ -514,7 +520,7 @@ export class ReportContentService {
     const trx = await this._reportContentModel.sequelize.transaction();
 
     try {
-      if (existedReport.status === ReportStatus.HID) {
+      if (existedReport.status === ReportStatus.IGNORED) {
         await this._reportContentModel.update(
           {
             status: ReportStatus.CREATED,
@@ -621,10 +627,9 @@ export class ReportContentService {
 
     const reportDetailJsons = reportDetails.map((dt) => dt.toJSON());
 
-    await this.canPerform(
-      admin.id,
-      reportDetailJsons.map((g) => g.groupId)
-    );
+    const groupIds = [...new Set(reportDetailJsons.map((g) => g.groupId))];
+
+    await this.canPerform(admin.id, groupIds);
 
     const [affectedCount] = await this._reportContentModel.update(
       {
@@ -664,14 +669,13 @@ export class ReportContentService {
       });
 
       for (const report of reports) {
-        if ([TargetType.ARTICLE, TargetType.POST].includes(report.targetType)) {
-          this._eventEmitter.emit(
-            new ApproveReportEvent({
-              actor: admin,
-              ...report.toJSON(),
-            })
-          );
-        }
+        this._eventEmitter.emit(
+          new ApproveReportEvent({
+            actor: admin,
+            ...report.toJSON(),
+            groupIds: groupIds,
+          })
+        );
       }
     }
 
