@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
-import { TagModel } from '../../database/models/tag.model';
+import { ITag, TagModel } from '../../database/models/tag.model';
 import { ClassTransformer } from 'class-transformer';
 import { PageDto } from '../../common/dto';
 import { Op, Transaction } from 'sequelize';
@@ -246,7 +246,10 @@ export class TagService {
     }
   }
 
-  public async canCreateOrUpdate(tagIds: string[], audienceGroupIds: string[]): Promise<void> {
+  public async getInvalidTagsByAudience(
+    tagIds: string[],
+    audienceGroupIds: string[]
+  ): Promise<ITag[]> {
     const tagsInfos = await this._tagModel.findAll({ where: { id: tagIds } });
     const audienceGroupInfos = await this._groupService.getMany(audienceGroupIds);
     const audienceRootGroupIds = audienceGroupInfos.map((e) => e.rootGroupId);
@@ -254,13 +257,15 @@ export class TagService {
       (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)
     );
     if (invalidTags.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `The following tags were removed from this article: ${invalidTags
-          .map((e) => e.name)
-          .join(', ')}`,
-        errors: { tagsDenied: invalidTags.map((e) => e.id) },
-      });
+      // throw new ForbiddenException({
+      //   code: HTTP_STATUS_ID.API_FORBIDDEN,
+      //   message: `The following tags were removed from this article: ${invalidTags
+      //     .map((e) => e.name)
+      //     .join(', ')}`,
+      //   errors: { tagsDenied: invalidTags.map((e) => e.id) },
+      // });
+      return invalidTags;
     }
+    return [];
   }
 }
