@@ -197,10 +197,12 @@ export class ArticleAppService {
           tags,
           audience.groupIds
         );
-        seriesTagErrorData.message += `The following tags were removed from this article: ${invalidTags
-          .map((e) => e.name)
-          .join(', ')}.`;
-        seriesTagErrorData.errors.tagsDenied = invalidTags.map((e) => e.id);
+        if (invalidTags.length) {
+          seriesTagErrorData.message += `The following tags were removed from this article: ${invalidTags
+            .map((e) => e.name)
+            .join(', ')}.`;
+          seriesTagErrorData.errors.tagsDenied = invalidTags.map((e) => e.id);
+        }
       }
       if (seriesTagErrorData.errors.seriesDenied || seriesTagErrorData.errors.tagsDenied) {
         throw new ForbiddenException(seriesTagErrorData);
@@ -273,10 +275,12 @@ export class ArticleAppService {
         article.tags.map((e) => e.id),
         article.audience.groups.map((e) => e.id)
       );
-      seriesTagErrorData.message += `The following tags were removed from this article: ${invalidTags
-        .map((e) => e.name)
-        .join(', ')}.`;
-      seriesTagErrorData.errors.tagsDenied = invalidTags.map((e) => e.id);
+      if (invalidTags.length) {
+        seriesTagErrorData.message += `The following tags were removed from this article: ${invalidTags
+          .map((e) => e.name)
+          .join(', ')}.`;
+        seriesTagErrorData.errors.tagsDenied = invalidTags.map((e) => e.id);
+      }
     }
     if (seriesTagErrorData.errors.seriesDenied || seriesTagErrorData.errors.tagsDenied) {
       throw new ForbiddenException(seriesTagErrorData);
