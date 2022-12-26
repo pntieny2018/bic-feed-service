@@ -36,7 +36,7 @@ export class ReactionListener {
       this._logger.error(ex);
     });
 
-    this._notifyPostReaction(payload).catch((ex) => this._logger.error(ex));
+    this._notifyPostReaction(payload).catch((ex) => this._logger.error(ex, ex?.stack));
 
     this._notifyCommentReaction(payload);
   }
@@ -76,6 +76,8 @@ export class ReactionListener {
     if (post.type === PostType.ARTICLE) {
       post = await this._articleService.get(post.id, actor, { withComment: false });
     }
+
+    this._logger.debug(post);
 
     this._followService
       .getValidUserIds(
