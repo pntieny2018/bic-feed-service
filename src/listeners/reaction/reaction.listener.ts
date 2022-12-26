@@ -105,7 +105,7 @@ export class ReactionListener {
         });
       })
       .catch((ex) => {
-        this._logger.error(ex);
+        this._logger.error(ex, ex?.stack);
       });
   }
 
@@ -159,7 +159,7 @@ export class ReactionListener {
         });
       })
       .catch((ex) => {
-        this._logger.error(ex);
+        this._logger.error(ex, ex?.stack);
       });
   }
 }
