@@ -10,6 +10,7 @@ export enum TypeActivity {
 export enum VerbActivity {
   APPROVE_REPORT_CONTENT = 'APPROVE_REPORT_CONTENT',
   POST = 'POST',
+  ADD = 'ADD',
   COMMENT = 'COMMENT',
   REACT = 'REACT',
   REPORT = 'REPORT',
