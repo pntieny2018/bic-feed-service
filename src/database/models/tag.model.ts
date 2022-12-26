@@ -13,22 +13,22 @@ import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 
-export interface ITag {
+export interface ITagEntity {
   id: string;
   groupId: string;
   name: string;
   slug: string;
-  createdBy?: string;
-  updatedBy?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  totalUsed?: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  totalUsed: number;
 }
 
 @Table({
   tableName: 'tags',
 })
-export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag {
+export class TagModel extends Model<ITagEntity, Optional<ITagEntity, 'id'>> implements ITagEntity {
   @PrimaryKey
   @IsUUID()
   @Default(() => uuid_v4())
@@ -60,9 +60,9 @@ export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag 
 
   @CreatedAt
   @Column
-  public createdAt?: Date;
+  public createdAt: Date;
 
   @UpdatedAt
   @Column
-  public updatedAt?: Date;
+  public updatedAt: Date;
 }

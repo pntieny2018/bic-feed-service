@@ -29,7 +29,7 @@ export interface ITag {
   delete: () => void;
   commit: () => void;
 }
-export class TagEntity extends AggregateRoot implements ITag {
+export class Tag extends AggregateRoot implements ITag {
   public id: string;
   public groupId: string;
   public name: string;
