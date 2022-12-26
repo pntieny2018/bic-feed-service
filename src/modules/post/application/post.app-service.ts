@@ -134,7 +134,7 @@ export class PostAppService {
       }
       this._postService.checkContent(updatePostDto.content, updatePostDto.media);
       const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
-      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, isEnableSetting);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
