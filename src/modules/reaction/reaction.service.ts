@@ -5,11 +5,7 @@ import { plainToInstance } from 'class-transformer';
 import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL as NIL_UUID } from 'uuid';
-import {
-  HTTP_STATUS_ID,
-  ReactionHasBeenCreated,
-  ReactionHasBeenRemoved,
-} from '../../common/constants';
+import { HTTP_STATUS_ID, ReactionHasBeenRemoved } from '../../common/constants';
 import { OrderEnum } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
@@ -240,7 +236,7 @@ export class ReactionService {
 
         this._emitter.emit(
           new CreateReactionInternalEvent({
-            actor: userDto.profile,
+            actor: userDto,
             post: post,
             reaction: reaction,
           })
@@ -336,7 +332,7 @@ export class ReactionService {
 
         this._emitter.emit(
           new CreateReactionInternalEvent({
-            actor: userDto.profile,
+            actor: userDto,
             post: post,
             comment: comment,
             reaction: reaction,
