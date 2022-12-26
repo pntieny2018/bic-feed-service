@@ -22,11 +22,13 @@ export class SeriesAddedArticlesListener {
     const series = await this._seriesService.findSeriesById(seriesId, {
       withArticleId: true,
     });
+
     if (series) {
       const articles = series.articles.map((article) => ({
         id: article.id,
         zindex: article['PostSeriesModel'].zindex,
       }));
+
       this._postSearchService.updateAttributePostToSearch(series, {
         articles,
       });

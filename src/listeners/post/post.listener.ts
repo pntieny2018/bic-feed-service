@@ -21,6 +21,7 @@ import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
 import { UserSharedDto } from '../../shared/user/dto';
+
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);

@@ -377,6 +377,7 @@ export class ReactionService {
       ReactionService.transformReactionNameNodeEmoji<DeleteReactionDto>(deleteReactionDto);
     switch (deleteReactionDto.target) {
       case ReactionEnum.POST:
+      case ReactionEnum.ARTICLE:
         return this._deletePostReaction(userDto, newDeleteReactionDto);
       case ReactionEnum.COMMENT:
         return this._deleteCommentReaction(userDto, newDeleteReactionDto);
