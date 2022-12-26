@@ -4,7 +4,7 @@ import { CommentNotificationService } from './services';
 import { CommentDissociationService } from './dissociations';
 import { NotificationService } from './notification.service';
 import { CommentModule } from '../modules/comment';
-import { ReportActivityService } from './activities';
+import { ReportActivityService, SeriesActivityService } from './activities';
 import { CommentActivityService, PostActivityService, ReactionActivityService } from './activities';
 
 @Module({
@@ -17,9 +17,11 @@ import { CommentActivityService, PostActivityService, ReactionActivityService } 
     CommentActivityService,
     CommentDissociationService,
     CommentNotificationService,
+    SeriesActivityService,
   ],
 
   exports: [
+    SeriesActivityService,
     ReportActivityService,
     NotificationService,
     PostActivityService,
