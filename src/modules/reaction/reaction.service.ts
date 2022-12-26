@@ -37,6 +37,8 @@ import {
   UNIQUE_CONSTRAINT_ERROR,
 } from './reaction.constant';
 import { ReactionEnum } from './reaction.enum';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { CreateReactionInternalEvent } from '../../events/reaction';
 
 @Injectable()
 export class ReactionService {
@@ -59,7 +61,8 @@ export class ReactionService {
     private readonly _reactionNotificationService: ReactionActivityService,
     private readonly _sentryService: SentryService,
     @Inject(forwardRef(() => FeedService))
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _emitter: InternalEventEmitterService
   ) {}
 
   /**
@@ -174,11 +177,10 @@ export class ReactionService {
 
     switch (newCreateReactionDto.target) {
       case ReactionEnum.POST:
+      case ReactionEnum.ARTICLE:
         return this._createPostReaction(userDto, newCreateReactionDto);
       case ReactionEnum.COMMENT:
         return this._createCommentReaction(userDto, newCreateReactionDto);
-      case ReactionEnum.ARTICLE:
-        break;
       default:
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_TARGET_EXISTING);
     }
@@ -205,8 +207,7 @@ export class ReactionService {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const post = await this._postService.get(postId, userDto, {
-        commentLimit: 0,
-        childCommentLimit: 0,
+        withComment: false,
       });
 
       await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -237,46 +238,14 @@ export class ReactionService {
           },
         });
 
-        this._followService
-          .getValidUserIds(
-            [post.actor.id],
-            post.audience.groups.map((g) => g.id)
-          )
-          .then((userIds) => {
-            if (!userIds.length) {
-              return;
-            }
-            const activity = this._reactionNotificationService.createPayload(
-              TypeActivity.POST,
-              {
-                reaction: reaction,
-                post: post,
-              },
-              'create'
-            );
-
-            this._notificationService.publishReactionNotification({
-              key: `${post.id}`,
-              value: {
-                actor: {
-                  id: userDto.profile.id,
-                  fullname: userDto.profile.fullname,
-                  username: userDto.profile.username,
-                  avatar: userDto.profile.avatar,
-                },
-                event: ReactionHasBeenCreated,
-                data: activity,
-              },
-            });
+        this._emitter.emit(
+          new CreateReactionInternalEvent({
+            actor: userDto.profile,
+            post: post,
+            reaction: reaction,
           })
-          .catch((ex) => {
-            this._logger.error(JSON.stringify(ex?.stack));
-            this._sentryService.captureException(ex);
-          });
-        this._feedService.markSeenPosts(postId, userId).catch((ex) => {
-          this._logger.error(JSON.stringify(ex?.stack));
-          this._sentryService.captureException(ex);
-        });
+        );
+
         return reaction;
       }
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
@@ -351,6 +320,7 @@ export class ReactionService {
           });
         }
       );
+
       if (rc !== null && rc.length > 0 && rc[0]['ccr_id']) {
         const commentReaction = await this._commentReactionModel.findByPk(rc[0]['ccr_id']);
 
@@ -364,48 +334,14 @@ export class ReactionService {
           },
         });
 
-        const type =
-          comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
-
-        const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
-
-        this._followService
-          .getValidUserIds(
-            [ownerId],
-            post.audience.groups.map((g) => g.id)
-          )
-          .then((userIds) => {
-            if (!userIds.length) {
-              return;
-            }
-            const activity = this._reactionNotificationService.createPayload(
-              type,
-              {
-                reaction: reaction,
-                post: post,
-                comment,
-              },
-              'create'
-            );
-
-            this._notificationService.publishReactionNotification({
-              key: `${post.id}`,
-              value: {
-                actor: {
-                  id: userDto.profile.id,
-                  fullname: userDto.profile.fullname,
-                  username: userDto.profile.username,
-                  avatar: userDto.profile.avatar,
-                },
-                event: ReactionHasBeenCreated,
-                data: activity,
-              },
-            });
+        this._emitter.emit(
+          new CreateReactionInternalEvent({
+            actor: userDto.profile,
+            post: post,
+            comment: comment,
+            reaction: reaction,
           })
-          .catch((ex) => {
-            this._logger.error(JSON.stringify(ex?.stack));
-            this._sentryService.captureException(ex);
-          });
+        );
 
         return reaction;
       }

@@ -1,6 +1,6 @@
-import { ReactionHasBeenCreated } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 import { CreateReactionEventInternalPayload } from './payload';
+import { ReactionHasBeenCreated } from '../../common/constants';
 
 export class CreateReactionInternalEvent implements IEvent<CreateReactionEventInternalPayload> {
   public static event = ReactionHasBeenCreated;
