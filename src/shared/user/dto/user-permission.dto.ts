@@ -5,11 +5,11 @@ export class UserPermissionDto {
     type: Object,
     name: 'communities',
   })
-  communities: { [commId: string]: string[] };
+  public communities: { [commId: string]: string[] };
 
   @ApiProperty({
     type: Object,
     name: 'groups',
   })
-  groups: { [groupId: string]: string[] };
+  public groups: { [groupId: string]: string[] };
 }

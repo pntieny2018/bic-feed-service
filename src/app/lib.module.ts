@@ -16,6 +16,8 @@ import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { IKafkaConfig } from '../config/kafka';
 import { KAFKA_PRODUCER } from '../common/constants';
 import { ExternalService } from './external.service';
+import { I18nModule } from 'nestjs-i18n';
+import * as path from 'path';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -127,6 +129,14 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
         };
       },
       inject: [ConfigService],
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
     }),
     InternalEventEmitterModule,
   ],

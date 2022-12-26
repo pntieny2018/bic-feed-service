@@ -1,6 +1,11 @@
 {
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
+  "compilerOptions": {
+    "assets": [
+      { "include": "i18n/**/*", "watchAssets": true }
+    ]
+  },
   "projects": {
     "redis": {
       "type": "library",
