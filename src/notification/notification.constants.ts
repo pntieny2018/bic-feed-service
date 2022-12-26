@@ -2,6 +2,7 @@ export enum TypeActivity {
   POST = 'POST',
   COMMENT = 'COMMENT',
   ARTICLE = 'ARTICLE',
+  SERIES = 'SERIES',
   CHILD_COMMENT = 'CHILD_COMMENT',
   REPORT_CONTENT = 'REPORT_CONTENT',
 }

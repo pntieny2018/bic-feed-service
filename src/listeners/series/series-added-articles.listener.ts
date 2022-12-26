@@ -16,7 +16,9 @@ export class SeriesAddedArticlesListener {
   @On(SeriesAddedArticlesEvent)
   public async handler(event: SeriesAddedArticlesEvent): Promise<void> {
     this._logger.debug(`[SeriesAddedArticlesListener] ${JSON.stringify(event.payload)}`);
+
     const { seriesId, articleIds } = event.payload;
+
     const series = await this._seriesService.findSeriesById(seriesId, {
       withArticleId: true,
     });

@@ -13,6 +13,8 @@ import {
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
+import { PostActivityService } from '../../notification/activities';
+import { NotificationService } from '../../notification';
 
 @Injectable()
 export class SeriesListener {
@@ -23,7 +25,9 @@ export class SeriesListener {
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService,
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _postActivityService: PostActivityService,
+    private readonly _notificationService: NotificationService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
@@ -37,7 +41,46 @@ export class SeriesListener {
     });
 
     this._postSearchService.deletePostsToSearch([series]);
-    //TODO:: send noti
+
+    const activity = this._postActivityService.createPayload({
+      actor: {
+        id: series.createdBy,
+      },
+      title: series.title,
+      commentsCount: series.commentsCount,
+      totalUsersSeen: series.totalUsersSeen,
+      content: series.content,
+      createdAt: series.createdAt,
+      updatedAt: series.updatedAt,
+      createdBy: series.createdBy,
+      isDraft: series.isDraft,
+      isProcessing: false,
+      setting: {
+        canComment: series.canComment,
+        canReact: series.canReact,
+        canShare: series.canShare,
+      },
+      id: series.id,
+      audience: {
+        users: [],
+        groups: (series?.groups ?? []).map((g) => ({
+          id: g.groupId,
+        })) as any,
+      },
+      type: series.type,
+      privacy: series.privacy,
+    });
+
+    this._notificationService.publishPostNotification({
+      key: `${series.id}`,
+      value: {
+        actor: {
+          id: series.createdBy,
+        },
+        event: event.getEventName(),
+        data: activity,
+      },
+    });
   }
 
   @On(SeriesHasBeenPublishedEvent)
@@ -71,7 +114,22 @@ export class SeriesListener {
         },
       },
     ]);
-    //TODO:: send noti
+
+    try {
+      const activity = this._postActivityService.createPayload(series);
+
+      this._notificationService.publishPostNotification({
+        key: `${series.id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: activity,
+        },
+      });
+    } catch (ex) {
+      this._logger.error(ex);
+    }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -131,6 +189,27 @@ export class SeriesListener {
         },
       },
     ]);
+
+    try {
+      const updatedActivity = this._postActivityService.createPayload(newSeries);
+      const oldActivity = this._postActivityService.createPayload(oldSeries);
+
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
+          },
+        },
+      });
+    } catch (ex) {
+      this._logger.error(ex);
+    }
 
     try {
       // Fanout to write post to all news feed of user follow group audience

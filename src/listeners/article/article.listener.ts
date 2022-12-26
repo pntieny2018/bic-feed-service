@@ -19,6 +19,8 @@ import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { ArrayHelper } from '../../common/helpers';
+import { PostActivityService } from '../../notification/activities';
+import { NotificationService } from '../../notification';
 
 @Injectable()
 export class ArticleListener {
@@ -33,7 +35,9 @@ export class ArticleListener {
     private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService
+    private readonly _postSearchService: SearchService,
+    private readonly _postActivityService: PostActivityService,
+    private readonly _notificationService: NotificationService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -46,13 +50,56 @@ export class ArticleListener {
       this._sentryService.captureException(e);
     });
 
-    this._postSearchService.deletePostsToSearch([article]);
+    this._postSearchService.deletePostsToSearch([article]).catch((e) => {
+      this._logger.error(JSON.stringify(e?.stack));
+      this._sentryService.captureException(e);
+    });
+
     if (!article.isDraft) {
       this._tagService
         .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
         .catch((ex) => this._logger.debug(ex));
     }
-    //TODO:: send noti
+
+    const activity = this._postActivityService.createPayload({
+      actor: {
+        id: article.createdBy,
+      },
+      title: article.title,
+      commentsCount: article.commentsCount,
+      totalUsersSeen: article.totalUsersSeen,
+      content: article.content,
+      createdAt: article.createdAt,
+      updatedAt: article.updatedAt,
+      createdBy: article.createdBy,
+      isDraft: article.isDraft,
+      isProcessing: false,
+      setting: {
+        canComment: article.canComment,
+        canReact: article.canReact,
+        canShare: article.canShare,
+      },
+      id: article.id,
+      audience: {
+        users: [],
+        groups: (article?.groups ?? []).map((g) => ({
+          id: g.groupId,
+        })) as any,
+      },
+      type: article.type,
+      privacy: article.privacy,
+    });
+
+    this._notificationService.publishPostNotification({
+      key: `${article.id}`,
+      value: {
+        actor: {
+          id: article.createdBy,
+        },
+        event: event.getEventName(),
+        data: activity,
+      },
+    });
   }
 
   @On(ArticleHasBeenPublishedEvent)
@@ -90,34 +137,39 @@ export class ArticleListener {
         this._sentryService.captureException(e);
       });
 
-    this._postSearchService.addPostsToSearch([
-      {
-        id,
-        type,
-        content,
-        groupIds: audience.groups.map((group) => group.id),
-        communityIds: audience.groups.map((group) => group.rootGroupId),
-        createdBy,
-        updatedAt,
-        createdAt,
-        title,
-        summary,
-        coverMedia: {
-          id: coverMedia.id,
-          createdBy: coverMedia.createdBy,
-          url: coverMedia.url,
-          createdAt: coverMedia.createdAt,
-          name: coverMedia.name,
-          type: coverMedia.type as MediaType,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
+    this._postSearchService
+      .addPostsToSearch([
+        {
+          id,
+          type,
+          content,
+          groupIds: audience.groups.map((group) => group.id),
+          communityIds: audience.groups.map((group) => group.rootGroupId),
+          createdBy,
+          updatedAt,
+          createdAt,
+          title,
+          summary,
+          coverMedia: {
+            id: coverMedia.id,
+            createdBy: coverMedia.createdBy,
+            url: coverMedia.url,
+            createdAt: coverMedia.createdAt,
+            name: coverMedia.name,
+            type: coverMedia.type as MediaType,
+            originName: coverMedia.originName,
+            width: coverMedia.width,
+            height: coverMedia.height,
+            extension: coverMedia.extension,
+          },
+          categories: categories.map((category) => ({ id: category.id, name: category.name })),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         },
-        categories: categories.map((category) => ({ id: category.id, name: category.name })),
-        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
-      },
-    ]);
+      ])
+      .catch((e) => {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      });
 
     if (article.tags.length) {
       this._tagService
@@ -125,7 +177,6 @@ export class ArticleListener {
         .catch((ex) => this._logger.debug(ex));
     }
 
-    //TODO:: send noti
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -138,6 +189,16 @@ export class ArticleListener {
       this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
+
+    const activity = this._postActivityService.createPayload(article);
+    this._notificationService.publishPostNotification({
+      key: `${article.id}`,
+      value: {
+        actor,
+        event: event.getEventName(),
+        data: activity,
+      },
+    });
   }
 
   @On(ArticleHasBeenUpdatedEvent)
@@ -190,7 +251,6 @@ export class ArticleListener {
         this._logger.debug(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
-    //TODO:: send noti
 
     this._postSearchService.updatePostsToSearch([
       {
@@ -234,6 +294,26 @@ export class ArticleListener {
         this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
       }
     }
+
+    if (!newArticle.isHidden) {
+      const updatedActivity = this._postActivityService.createPayload(newArticle);
+      const oldActivity = this._postActivityService.createPayload(oldArticle);
+
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
+          },
+        },
+      });
+    }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(

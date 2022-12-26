@@ -6,6 +6,8 @@ export class ActivityObject {
   public actor: ActorObject;
   public setting?: SettingObject;
   public content?: string;
+  public contentType?: string;
+  public title?: string;
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reactionsOfActor?: ReactionObject[];
