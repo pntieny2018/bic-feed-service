@@ -260,11 +260,16 @@ export class ReportContentService {
       meta(offset + limit + 1 <= count)
     );
 
-    responses.list = responses.list.map((post) => {
-      const reportId = postReportMap.get(post.id);
-      const reportDetails = reportStatisticsMap.get(reportId);
-      return { ...post, reportDetails };
-    });
+    responses.list = responses.list
+      .map((post) => {
+        const reportId = postReportMap.get(post.id);
+        if (!reportId) {
+          return null;
+        }
+        const reportDetails = reportStatisticsMap.get(reportId);
+        return { ...post, reportDetails };
+      })
+      .filter((item) => item);
 
     return responses;
   }
