@@ -100,7 +100,7 @@ export class ReactionListener {
     reaction: ReactionResponseDto;
     actor: UserSharedDto;
   }): void {
-    const { post, comment, reaction, actor } = data;
+    const { post, comment, reaction } = data;
     if (!comment) {
       return;
     }
