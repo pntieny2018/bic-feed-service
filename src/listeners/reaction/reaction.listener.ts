@@ -42,24 +42,7 @@ export class ReactionListener {
   }
 
   @On(DeleteReactionInternalEvent)
-  public onDeleteReactionEvent(event: DeleteReactionInternalEvent): void {
-    const deleteReactionEventPayload: ReactionEventPayload = {
-      reaction: event.payload.reaction,
-      post: event.payload.post,
-      comment: event.payload.comment,
-    };
-    const kafkaDeleteReactionMessage: NotificationPayloadDto<ReactionEventPayload> = {
-      key: event.getEventName(),
-      value: {
-        actor: event.payload.userSharedDto,
-        event: event.getEventName(),
-        data: deleteReactionEventPayload,
-      },
-    };
-    this._notificationService.publishReactionNotification<ReactionEventPayload>(
-      kafkaDeleteReactionMessage
-    );
-  }
+  public onDeleteReactionEvent(event: DeleteReactionInternalEvent): void {}
 
   private async _notifyPostReaction(data: {
     post: PostResponseDto;
@@ -100,7 +83,7 @@ export class ReactionListener {
         this._notificationService.publishReactionNotification({
           key: `${post.id}`,
           value: {
-            actor: actor,
+            actor: reaction.actor,
             event: ReactionHasBeenCreated,
             data: activity,
           },
@@ -149,12 +132,7 @@ export class ReactionListener {
         this._notificationService.publishReactionNotification({
           key: `${post.id}`,
           value: {
-            actor: {
-              id: actor.id,
-              fullname: actor.fullname,
-              username: actor.username,
-              avatar: actor.avatar,
-            },
+            actor: reaction.actor,
             event: ReactionHasBeenCreated,
             data: activity,
           },
