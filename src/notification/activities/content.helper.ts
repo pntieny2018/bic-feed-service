@@ -23,12 +23,14 @@ export class ContentHelper {
       images: [],
       files: [],
     };
-    if (post instanceof PostResponseDto) {
-      mentions = post.mentions;
-      media = post.media;
-      content = post.content;
+    if (post.type === PostType.POST) {
+      const nPost = post as PostResponseDto;
+      mentions = nPost.mentions;
+      media = nPost.media;
+      content = nPost.content;
     } else {
-      title = post.title;
+      const article = post as ArticleResponseDto;
+      title = article.title;
       targetType = post.type === PostType.ARTICLE ? TypeActivity.ARTICLE : TypeActivity.SERIES;
     }
 
