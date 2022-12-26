@@ -16,6 +16,7 @@ export class ActivityObject {
   public comment?: CommentObject;
   public reaction?: ReactionObject;
   public report?: ReportObject;
+  public article?: ActivityObject;
   public createdAt: Date;
   public updatedAt: Date;
 }

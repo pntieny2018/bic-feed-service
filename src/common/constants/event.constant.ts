@@ -14,6 +14,7 @@ export const ArticleHasBeenPublished = 'article.has.been.published';
 export const ArticleHasBeenDeleted = 'article.has.been.deleted';
 export const ArticleVideoHasBeenPublished = 'article_video.has.been.published';
 export const ArticleVideoHasBeenFailed = 'article_video.has.been.failed';
+export const ArticleHasBeenAdded = 'article.has.been.added';
 
 export const SeriesHasBeenUpdated = 'series.has.been.updated';
 export const SeriesHasBeenPublished = 'series.has.been.published';
