@@ -5,14 +5,19 @@ import { PostResponseDto } from '../../modules/post/dto/responses';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
 import { TypeActivity, VerbActivity } from '../index';
 import { ActivityObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
+import { ContentHelper } from './content.helper';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
+import { SeriesResponseDto } from '../../modules/series/dto/responses';
 
 @Injectable()
 export class ReactionActivityService {
   protected createReactionPostPayload(
-    post: PostResponseDto,
+    post: PostResponseDto | ArticleResponseDto | SeriesResponseDto,
     reaction: ReactionResponseDto,
     action: string
   ): NotificationActivity {
+    const { title, media, mentions, content, targetType } = ContentHelper.getInfo(post);
+
     post.reactionsCount = post.reactionsCount ?? {};
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
@@ -62,9 +67,11 @@ export class ReactionActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
-      content: post.content,
-      media: post.media,
-      mentions: post.mentions as any,
+      title: title,
+      contentType: post.type.toLowerCase(),
+      content: content,
+      media: media,
+      mentions: mentions as any,
       setting: post.setting as any,
       reaction: reactionObject,
       reactionsOfActor: ownerReactions,
@@ -76,7 +83,7 @@ export class ReactionActivityService {
     return new NotificationActivity(
       activityObject,
       VerbActivity.REACT,
-      TypeActivity.POST,
+      targetType,
       reaction.createdAt,
       reaction.createdAt
     );
@@ -89,6 +96,9 @@ export class ReactionActivityService {
     action: string
   ): NotificationActivity {
     comment.reactionsCount = comment.reactionsCount ?? {};
+
+    const { title, media, mentions, content } = ContentHelper.getInfo(post);
+
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
     Object.values(comment.reactionsCount ?? {}).forEach((r, index) => {
@@ -140,9 +150,11 @@ export class ReactionActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
-      content: post.content,
-      media: post.media,
-      mentions: post.mentions as any,
+      title: title,
+      contentType: post.type.toLowerCase(),
+      content: content,
+      media: media,
+      mentions: mentions as any,
       setting: post.setting as any,
       comment: {
         id: comment.id,
@@ -170,11 +182,12 @@ export class ReactionActivityService {
   }
 
   protected createReactionChildCommentPayload(
-    post: PostResponseDto,
+    post: PostResponseDto | ArticleResponseDto | SeriesResponseDto,
     comment: CommentResponseDto,
     reaction: ReactionResponseDto,
     action = 'create'
   ): NotificationActivity {
+    const { title, media, mentions, content } = ContentHelper.getInfo(post);
     comment.reactionsCount = comment.reactionsCount ?? {};
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
@@ -228,10 +241,12 @@ export class ReactionActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
-      content: post.content,
-      media: post.media,
+      title: title,
+      contentType: post.type.toLowerCase(),
+      content: content,
+      media: media,
       setting: post.setting as any,
-      mentions: post.mentions as any,
+      mentions: mentions as any,
       comment: {
         id: parentComment.id,
         actor: ObjectHelper.omit(['groups', 'email'], parentComment.actor) as any,
@@ -275,7 +290,7 @@ export class ReactionActivityService {
     },
     action: 'create' | 'remove'
   ): NotificationActivity {
-    if (type === TypeActivity.POST) {
+    if ([TypeActivity.POST, TypeActivity.ARTICLE, TypeActivity.SERIES].includes(type)) {
       const { post, reaction } = data;
       return this.createReactionPostPayload(post, reaction, action);
     }

@@ -1,4 +1,5 @@
 import { IEvent } from '../../common/interfaces';
+import { UserSharedDto } from '../../shared/user/dto';
 
 export class SeriesAddedArticlesEvent implements IEvent<ISeriesAddArticlesPayload> {
   public payload: ISeriesAddArticlesPayload;
@@ -17,4 +18,5 @@ export class SeriesAddedArticlesEvent implements IEvent<ISeriesAddArticlesPayloa
 export interface ISeriesAddArticlesPayload {
   seriesId: string;
   articleIds: string[];
+  actor: UserSharedDto;
 }

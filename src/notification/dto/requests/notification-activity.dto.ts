@@ -6,6 +6,8 @@ export class ActivityObject {
   public actor: ActorObject;
   public setting?: SettingObject;
   public content?: string;
+  public contentType?: string;
+  public title?: string;
   public media?: MediaObject;
   public mentions?: MentionObject;
   public reactionsOfActor?: ReactionObject[];
@@ -14,6 +16,7 @@ export class ActivityObject {
   public comment?: CommentObject;
   public reaction?: ReactionObject;
   public report?: ReportObject;
+  public article?: ActivityObject;
   public createdAt: Date;
   public updatedAt: Date;
 }
