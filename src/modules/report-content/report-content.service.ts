@@ -217,7 +217,7 @@ export class ReportContentService {
        WHERE p.deleted_at IS NULL
        AND rc.status = 'HID' 
        AND rc.target_type in ('POST','ARTICLE') 
-       AND rc.author_id = $authorId
+       AND rc.author_id = :authorId
     `;
 
     let countQuery = `
