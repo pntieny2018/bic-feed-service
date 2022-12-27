@@ -39,7 +39,6 @@ import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { GroupSharedDto } from '../../shared/group/dto';
-import { PostModel } from '../../database/models/post.model';
 import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
@@ -210,36 +209,58 @@ export class ReportContentService {
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order, specTargetIds } = getOptions;
 
-    const conditions = {};
+    let query = `
+       SELECT rc.id as "id" , rc.target_id as "targetId" FROM ${
+         getDatabaseConfig().schema
+       }.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.posts p ON p.id = rc.target_id
+       WHERE p.deleted_at IS NULL
+       AND rc.status = 'HID' 
+       AND rc.target_type in ('POST','ARTICLE') 
+       AND rc.author_id = $authorId
+    `;
+
+    let countQuery = `
+       SELECT count(*) as total FROM ${getDatabaseConfig().schema}.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.posts p ON p.id = rc.target_id
+       WHERE p.deleted_at IS NULL
+       AND rc.status = 'HID' 
+       AND rc.target_type in ('POST','ARTICLE') 
+       AND rc.author_id = :authorId
+    `;
+
+    const orderAndPaginateQuery = `    
+       ORDER BY rc.created_at ${this._sequelize.escape(order)}
+       LIMIT :limit OFFSET :offset
+    `;
 
     if (specTargetIds && specTargetIds.length > 0) {
-      conditions['targetId'] = specTargetIds;
+      query = `${query} AND post.id in :ids `;
+      countQuery = `${countQuery} AND p.id in :ids `;
     }
 
-    const { rows, count } = await this._reportContentModel.findAndCountAll({
-      attributes: ['id', 'targetId'],
-      include: [
-        {
-          model: PostModel,
-          as: 'post',
-          paranoid: true,
-          on: {
-            id: { [Op.eq]: this._sequelize.col('report_contents.target_id') },
-          },
+    const rows = await this._sequelize.query<{ id: string; targetId: string }>(
+      query + orderAndPaginateQuery,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          authorId: author.id,
+          limit: limit,
+          offset: offset,
+          ids: specTargetIds,
         },
-      ],
-      where: {
+      }
+    );
+
+    const count = await this._sequelize.query<{ total: string }>(countQuery, {
+      type: QueryTypes.SELECT,
+      bind: {
         authorId: author.id,
-        targetType: {
-          [Op.in]: [TargetType.POST, TargetType.ARTICLE],
-        },
-        ...conditions,
-        status: ReportStatus.HID,
+        ids: specTargetIds,
       },
-      limit: limit,
-      offset: offset,
-      order: [['createdAt', order]],
     });
+
+    const total = count[0]?.total ?? '0';
 
     const meta = (hasNextPage: boolean) => ({
       limit: limit,
@@ -271,7 +292,7 @@ export class ReportContentService {
     const responses = await this._feedService.getContentBlockedOfMe(
       author,
       targetIds,
-      meta(offset + limit + 1 <= count)
+      meta(offset + limit + 1 <= parseInt(total))
     );
 
     responses.list = responses.list

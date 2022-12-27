@@ -4,7 +4,11 @@ import { ReactionResponseDto } from '../../modules/reaction/dto/response';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
 import { TypeActivity, VerbActivity } from '../index';
-import { ActivityObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
+import {
+  ActivityObject,
+  NotificationActivity,
+  ReactionObject,
+} from '../dto/requests/notification-activity.dto';
 import { ContentHelper } from './content.helper';
 import { ArticleResponseDto } from '../../modules/article/dto/responses';
 import { SeriesResponseDto } from '../../modules/series/dto/responses';
@@ -48,7 +52,7 @@ export class ReactionActivityService {
       actor: reaction.actor as any,
     };
 
-    let ownerReactions = post.ownerReactions.map((or) => ({
+    let ownerReactions: ReactionObject[] = post.ownerReactions.map((or) => ({
       id: or.id,
       reactionName: or.reactionName,
       createdAt: or.createdAt,
@@ -57,6 +61,8 @@ export class ReactionActivityService {
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+
+      ownerReactions = this._filterDuplicateReactions(ownerReactions);
     } else {
       ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
@@ -131,7 +137,7 @@ export class ReactionActivityService {
       createdAt: reaction.createdAt,
     };
 
-    let ownerReactions = comment.ownerReactions.map((or) => ({
+    let ownerReactions: ReactionObject[] = comment.ownerReactions.map((or) => ({
       id: or.id,
       reactionName: or.reactionName,
       createdAt: or.createdAt,
@@ -140,6 +146,7 @@ export class ReactionActivityService {
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+      ownerReactions = this._filterDuplicateReactions(ownerReactions);
     } else {
       ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
@@ -222,7 +229,7 @@ export class ReactionActivityService {
       createdAt: reaction.createdAt,
     };
 
-    let ownerReactions = comment.ownerReactions.map((or) => ({
+    let ownerReactions: ReactionObject[] = comment.ownerReactions.map((or) => ({
       id: or.id,
       reactionName: or.reactionName,
       createdAt: or.createdAt,
@@ -231,6 +238,7 @@ export class ReactionActivityService {
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+      ownerReactions = this._filterDuplicateReactions(ownerReactions);
     } else {
       ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
@@ -305,5 +313,15 @@ export class ReactionActivityService {
       return this.createReactionChildCommentPayload(post, comment, reaction, action);
     }
     return null;
+  }
+
+  private _filterDuplicateReactions(reactions: ReactionObject[]): ReactionObject[] {
+    const filterMap = new Map<string, ReactionObject>();
+    reactions.forEach((r) => {
+      if (!filterMap.has(r.id)) {
+        filterMap.set(r.id, r);
+      }
+    });
+    return [...filterMap.values()];
   }
 }
