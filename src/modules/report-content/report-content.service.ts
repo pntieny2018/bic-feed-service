@@ -235,8 +235,8 @@ export class ReportContentService {
     `;
 
     if (specTargetIds && specTargetIds.length > 0) {
-      query = `${query} AND post.id in :ids `;
-      countQuery = `${countQuery} AND p.id in :ids `;
+      query = query + ' AND p.id in :ids ';
+      countQuery = countQuery + ' AND p.id in :ids ';
     }
 
     const rows = await this._sequelize.query<{ id: string; targetId: string }>(
@@ -254,7 +254,7 @@ export class ReportContentService {
 
     const count = await this._sequelize.query<{ total: string }>(countQuery, {
       type: QueryTypes.SELECT,
-      bind: {
+      replacements: {
         authorId: author.id,
         ids: specTargetIds,
       },
