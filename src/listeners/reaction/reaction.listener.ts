@@ -60,8 +60,6 @@ export class ReactionListener {
       post = await this._articleService.get(post.id, actor, { withComment: false });
     }
 
-    this._logger.debug(post);
-
     this._followService
       .getValidUserIds(
         [post.actor.id],
