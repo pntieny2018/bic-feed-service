@@ -22,29 +22,35 @@ export class ReactionActivityService {
   ): NotificationActivity {
     const { title, media, mentions, content, targetType } = ContentHelper.getInfo(post);
 
-    post.reactionsCount = post.reactionsCount ?? {};
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
-    Object.values(post.reactionsCount ?? {}).forEach((r, index) => {
-      const rn = Object.keys(r)[0];
-      reactionsName.push(rn);
-      reactionsMap.set(rn, index);
-    });
 
-    if (reactionsName.includes(reaction.reactionName)) {
-      post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
-        action === 'create'
-          ? post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] + 1
-          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
-              1 <
-            0
-          ? 0
-          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] - 1;
-    } else {
-      post.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: action === 'create' ? 1 : 0,
-      };
+    if (targetType === TypeActivity.POST) {
+      post.reactionsCount = post.reactionsCount ?? {};
+      Object.values(post.reactionsCount ?? {}).forEach((r, index) => {
+        const rn = Object.keys(r)[0];
+        reactionsName.push(rn);
+        reactionsMap.set(rn, index);
+      });
+
+      if (reactionsName.includes(reaction.reactionName)) {
+        post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
+          action === 'create'
+            ? post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] +
+              1
+            : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+                1 <
+              0
+            ? 0
+            : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+              1;
+      } else {
+        post.reactionsCount[reactionsMap.size] = {
+          [reaction.reactionName]: action === 'create' ? 1 : 0,
+        };
+      }
     }
+
     const reactionObject = {
       id: reaction.id,
       createdAt: reaction.createdAt,
@@ -107,6 +113,7 @@ export class ReactionActivityService {
 
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
+
     Object.values(comment.reactionsCount ?? {}).forEach((r, index) => {
       const rn = Object.keys(r)[0];
       reactionsName.push(rn);
@@ -195,6 +202,7 @@ export class ReactionActivityService {
     action = 'create'
   ): NotificationActivity {
     const { title, media, mentions, content } = ContentHelper.getInfo(post);
+
     comment.reactionsCount = comment.reactionsCount ?? {};
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
