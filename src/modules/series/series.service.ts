@@ -523,6 +523,7 @@ export class SeriesService {
           'canShare',
           'canComment',
           'canReact',
+          'isDraft',
           'importantExpiredAt',
         ],
       });

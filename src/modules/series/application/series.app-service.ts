@@ -239,10 +239,10 @@ export class SeriesAppService {
     await this._authorityService.checkPostOwner(series, user.id);
     await this._authorityService.checkCanUpdateSeries(
       user,
-      series[0].groups.map((group) => group.groupId)
+      series.groups.map((group) => group.groupId)
     );
     await this._seriesService.reorderArticles(seriesId, articleIds);
-    await this._seriesService.addArticles(series[0], articleIds);
+    await this._seriesService.addArticles(series, articleIds);
     this._eventEmitter.emit(
       new SeriesReoderArticlesEvent({
         seriesId,
