@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostService } from '../post/post.service';
 import { ReportStatus, TargetType } from './contstants';
 import { GroupHttpService, GroupService } from '../../shared/group';
@@ -39,10 +39,14 @@ import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { GroupSharedDto } from '../../shared/group/dto';
+import { PostModel } from '../../database/models/post.model';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class ReportContentService {
   public constructor(
+    @InjectConnection()
+    private readonly _sequelize: Sequelize,
     private readonly _feedService: FeedService,
     private readonly _userService: UserService,
     private readonly _postService: PostService,
@@ -214,6 +218,16 @@ export class ReportContentService {
 
     const { rows, count } = await this._reportContentModel.findAndCountAll({
       attributes: ['id', 'targetId'],
+      include: [
+        {
+          model: PostModel,
+          as: 'post',
+          paranoid: true,
+          on: {
+            id: { [Op.eq]: this._sequelize.col('report_contents.target_id') },
+          },
+        },
+      ],
       where: {
         authorId: author.id,
         targetType: {
