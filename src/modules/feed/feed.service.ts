@@ -283,14 +283,18 @@ export class FeedService {
       hasNextPage: boolean;
     }
   ): Promise<PageDto<PostResponseDto>> {
-    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
-
-    const postsBindData = await this._bindAndTransformReportedData({
-      posts,
-      authUser,
-    });
-
-    return new PageDto<PostResponseDto>(postsBindData, paging);
+    try {
+      let posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+      posts = posts.filter((p) => !p || !p?.createdBy);
+      const postsBindData = await this._bindAndTransformReportedData({
+        posts,
+        authUser,
+      });
+      return new PageDto<PostResponseDto>(postsBindData, paging);
+    } catch (ex) {
+      this._logger.error(ex, ex?.stack);
+      return new PageDto<PostResponseDto>([], paging);
+    }
   }
   /**
    * Delete newsfeed by post
