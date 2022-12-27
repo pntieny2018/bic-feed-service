@@ -32,7 +32,7 @@ import { CreateReportEvent } from '../../events/report/create-report.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { FeedService } from '../feed/feed.service';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
@@ -230,7 +230,7 @@ export class ReportContentService {
     `;
 
     const orderAndPaginateQuery = `    
-       ORDER BY rc.created_at ${this._sequelize.escape(order)}
+       ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
        LIMIT :limit OFFSET :offset
     `;
 
