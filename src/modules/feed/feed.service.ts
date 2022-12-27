@@ -285,8 +285,7 @@ export class FeedService {
   ): Promise<PageDto<PostResponseDto>> {
     try {
       let posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
-      posts = posts.filter((p) => !p || !p?.createdBy);
-      this._logger.debug(JSON.stringify(posts, null, 2));
+      posts = posts.filter((p) => p);
       const postsBindData = await this._bindAndTransformReportedData({
         posts,
         authUser,
