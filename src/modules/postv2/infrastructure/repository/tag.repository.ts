@@ -42,41 +42,34 @@ export class TagRepository implements ITagRepository {
     };
   }
 
-  public async create(data: ITag): Promise<void> {
-    await this._tagModel.create(data);
+  public async save(data: ITag): Promise<void> {
+    const property = this._modelToEntity(data);
+    const { id, groupId, name, slug, createdBy, updatedBy } = property;
+    await this._tagModel.create({
+      id,
+      name,
+      slug,
+      updatedBy,
+      createdBy,
+      groupId,
+    });
   }
 
-  public async update(data: ITag): Promise<void> {
-    const property = this._modelToEntity(data);
-    const { name, slug, updatedBy, id } = property;
-    await this._tagModel.update(
-      {
-        name,
-        slug,
-        updatedBy,
-      },
-      {
-        where: {
-          id,
-        },
-      }
-    );
+  public async delete(id: string): Promise<void> {
+    await this._tagModel.destroy({ where: { id } });
+  }
+
+  public async findOne(id: string): Promise<ITag> {
+    const entity = await this._tagModel.findByPk(id);
+    return this._entityToModel(entity);
   }
 
   private _modelToEntity(model: ITag): ITagEntity {
     const properties = JSON.parse(JSON.stringify(model)) as TagProperties;
-    return {
-      ...properties,
-      id: properties.id,
-      createdAt: properties.createdAt,
-    };
+    return properties;
   }
 
   private _entityToModel(entity: ITagEntity): ITag {
-    return this._tagFactory.reconstitute({
-      ...entity,
-      id: entity.id,
-      createdAt: entity.createdAt,
-    });
+    return this._tagFactory.reconstitute(entity);
   }
 }

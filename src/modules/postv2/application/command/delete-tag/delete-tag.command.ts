@@ -1,10 +1,9 @@
 import { ICommand } from '@nestjs/cqrs';
 
 type Props = {
-  groupId: string;
-  name: string;
+  id: string;
   userId: string;
 };
-export class CreatetagCommand implements ICommand {
+export class DeleteTagCommand implements ICommand {
   public constructor(public readonly payload: Props) {}
 }

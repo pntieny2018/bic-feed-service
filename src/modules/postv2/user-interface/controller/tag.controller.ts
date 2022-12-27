@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Logger,
   Param,
   ParseUUIDPipe,
@@ -11,16 +12,16 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { APP_VERSION } from '../../common/constants';
-import { TagService } from './tag.service';
-import { ResponseMessages } from '../../common/decorators';
-import { AuthUser, UserDto } from '../auth';
-import { PageDto } from '../../common/dto';
-import { CreateTagDto } from './dto/requests/create-tag.dto';
-import { TagResponseDto } from './dto/responses/tag-response.dto';
-import { GetTagDto } from './dto/requests/get-tag.dto';
-import { InjectUserToBody } from '../../common/decorators/inject.decorator';
-import { UpdateTagDto } from './dto/requests/update-tag.dto';
+import { APP_VERSION } from '../../../../common/constants';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CreatetagCommand } from '../../application/command/create-tag/create-tag.command';
+import { TagResponseDto } from '../dto/response';
+import { AuthUser, UserDto } from '../../../auth';
+import { ResponseMessages } from '../../../../common/decorators';
+import { ClassTransformer } from 'class-transformer';
+import { CreateTagDto } from '../dto/request/tag/create-tag.dto';
+import { group } from 'console';
+import { UpdateTagDto } from '../../../tag/dto/requests/update-tag.dto';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -29,9 +30,11 @@ import { UpdateTagDto } from './dto/requests/update-tag.dto';
   path: 'tags',
 })
 export class TagController {
-  public constructor(private _tagService: TagService) {}
-  private _logger = new Logger(TagController.name);
-
+  public constructor(
+    @Inject() private readonly _commandBus: CommandBus,
+    @Inject() private readonly _queryBus: QueryBus
+  ) {}
+  private _classTransformer = new ClassTransformer();
   @ApiOperation({ summary: 'Get tags' })
   @ApiOkResponse({
     type: TagResponseDto,
@@ -58,10 +61,13 @@ export class TagController {
   })
   @Post('/')
   public async create(
-    @AuthUser() _user: UserDto,
+    @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagDto
   ): Promise<TagResponseDto> {
-    return this._tagService.create(createTagDto, _user);
+    const { groupId, name } = createTagDto;
+    const userId = user.id;
+    const tag = this._commandBus.execute(new CreatetagCommand({ groupId, name, userId }));
+    return this._classTransformer.plainToInstance(TagResponseDto, tag);
   }
 
   @ApiOperation({ summary: 'Update tag' })
@@ -71,7 +77,6 @@ export class TagController {
   })
   @ResponseMessages({ success: 'Tag updated' })
   @Put('/:id')
-  @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,

@@ -14,8 +14,8 @@ export type GetTagListResult = {
 
 export const TAG_REPOSITORY = 'TAG_REPOSITORY';
 export interface ITagRepository {
+  findOne(id: string): Promise<ITag>;
   getList(input: GetTagListProps): Promise<GetTagListResult>;
-  create(data: ITag): Promise<void>;
-  update(data: ITag): Promise<void>;
+  save(data: ITag): Promise<void>;
   delete(id: string): Promise<void>;
 }

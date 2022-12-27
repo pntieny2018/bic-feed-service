@@ -5,7 +5,6 @@ import { StringHelper } from '../../../../../common/helpers';
 import { ITag, Tag, TagProperties } from './tag';
 
 type CreateTagOptions = Readonly<{
-  id: string;
   name: string;
   groupId: string;
   createdBy: string;

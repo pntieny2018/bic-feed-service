@@ -25,7 +25,7 @@ export type TagProperties = TagEssentialProperties & Required<TagOptionalPropert
 
 export interface ITag {
   increaseTotalUsed: () => void;
-  update: (properties: TagProperties) => void;
+  update: (properties: Partial<TagProperties>) => void;
   delete: () => void;
   commit: () => void;
 }
@@ -49,8 +49,12 @@ export class Tag extends AggregateRoot implements ITag {
     this.totalUsed += 1;
   }
 
-  public update(properties: TagProperties): void {
+  public update(properties: Partial<TagProperties>): void {
+    if (this.totalUsed > 0) {
+      throw new UnprocessableEntityException('i18n error');
+    }
     this.name = properties.name;
+    this.updatedBy = properties.updatedBy;
     this.slug = StringHelper.convertToSlug(properties.name);
   }
 
