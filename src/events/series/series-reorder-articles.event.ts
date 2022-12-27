@@ -1,8 +1,7 @@
-import { SeriesHasBeenDeleted } from '../../common/constants';
 import { IEvent } from '../../common/interfaces';
 
 export class SeriesReoderArticlesEvent implements IEvent<ISeriesReorderArticlesPayload> {
-  protected static event = SeriesHasBeenDeleted;
+  protected static event = SeriesReoderArticlesEvent.name;
 
   public payload: ISeriesReorderArticlesPayload;
 

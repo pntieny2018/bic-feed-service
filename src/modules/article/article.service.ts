@@ -14,6 +14,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { PageDto } from '../../common/dto';
+import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
@@ -499,6 +500,10 @@ export class ArticleService extends PostService {
       where: condition,
       include,
     });
+
+    if (!article) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
 
     let comments = null;
     if (getArticleDto.withComment) {
