@@ -71,6 +71,7 @@ export interface IDataPostToAdd {
   updatedAt: Date;
   createdBy: string;
   type: PostType;
+  isHidden: boolean;
   title?: string;
   summary?: string;
   content?: string;
