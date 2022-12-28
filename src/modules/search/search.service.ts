@@ -135,7 +135,7 @@ export class SearchService {
   public async updatePostsToSearch(posts: IDataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
-      if (dataIndex.isHidden === false) continue;
+      if (dataIndex.isHidden === true) continue;
       if (dataIndex.type === PostType.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       }
