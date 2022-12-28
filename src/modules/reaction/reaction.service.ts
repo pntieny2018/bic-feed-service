@@ -5,11 +5,7 @@ import { plainToInstance } from 'class-transformer';
 import sequelize, { Op, QueryTypes, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL as NIL_UUID } from 'uuid';
-import {
-  HTTP_STATUS_ID,
-  ReactionHasBeenCreated,
-  ReactionHasBeenRemoved,
-} from '../../common/constants';
+import { HTTP_STATUS_ID } from '../../common/constants';
 import { OrderEnum } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ExceptionHelper, ObjectHelper } from '../../common/helpers';
@@ -19,7 +15,7 @@ import {
   ICommentReaction,
 } from '../../database/models/comment-reaction.model';
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
-import { NotificationService, TypeActivity } from '../../notification';
+import { NotificationService } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
@@ -37,6 +33,8 @@ import {
   UNIQUE_CONSTRAINT_ERROR,
 } from './reaction.constant';
 import { ReactionEnum } from './reaction.enum';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
 
 @Injectable()
 export class ReactionService {
@@ -59,7 +57,8 @@ export class ReactionService {
     private readonly _reactionNotificationService: ReactionActivityService,
     private readonly _sentryService: SentryService,
     @Inject(forwardRef(() => FeedService))
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _emitter: InternalEventEmitterService
   ) {}
 
   /**
@@ -174,11 +173,10 @@ export class ReactionService {
 
     switch (newCreateReactionDto.target) {
       case ReactionEnum.POST:
+      case ReactionEnum.ARTICLE:
         return this._createPostReaction(userDto, newCreateReactionDto);
       case ReactionEnum.COMMENT:
         return this._createCommentReaction(userDto, newCreateReactionDto);
-      case ReactionEnum.ARTICLE:
-        break;
       default:
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_TARGET_EXISTING);
     }
@@ -205,8 +203,7 @@ export class ReactionService {
     const { reactionName, targetId: postId } = createReactionDto;
     try {
       const post = await this._postService.get(postId, userDto, {
-        commentLimit: 0,
-        childCommentLimit: 0,
+        withComment: false,
       });
 
       await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -237,46 +234,14 @@ export class ReactionService {
           },
         });
 
-        this._followService
-          .getValidUserIds(
-            [post.actor.id],
-            post.audience.groups.map((g) => g.id)
-          )
-          .then((userIds) => {
-            if (!userIds.length) {
-              return;
-            }
-            const activity = this._reactionNotificationService.createPayload(
-              TypeActivity.POST,
-              {
-                reaction: reaction,
-                post: post,
-              },
-              'create'
-            );
-
-            this._notificationService.publishReactionNotification({
-              key: `${post.id}`,
-              value: {
-                actor: {
-                  id: userDto.profile.id,
-                  fullname: userDto.profile.fullname,
-                  username: userDto.profile.username,
-                  avatar: userDto.profile.avatar,
-                },
-                event: ReactionHasBeenCreated,
-                data: activity,
-              },
-            });
+        this._emitter.emit(
+          new CreateReactionInternalEvent({
+            actor: userDto,
+            post: post,
+            reaction: reaction,
           })
-          .catch((ex) => {
-            this._logger.error(JSON.stringify(ex?.stack));
-            this._sentryService.captureException(ex);
-          });
-        this._feedService.markSeenPosts(postId, userId).catch((ex) => {
-          this._logger.error(JSON.stringify(ex?.stack));
-          this._sentryService.captureException(ex);
-        });
+        );
+
         return reaction;
       }
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
@@ -351,6 +316,7 @@ export class ReactionService {
           });
         }
       );
+
       if (rc !== null && rc.length > 0 && rc[0]['ccr_id']) {
         const commentReaction = await this._commentReactionModel.findByPk(rc[0]['ccr_id']);
 
@@ -364,48 +330,14 @@ export class ReactionService {
           },
         });
 
-        const type =
-          comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
-
-        const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
-
-        this._followService
-          .getValidUserIds(
-            [ownerId],
-            post.audience.groups.map((g) => g.id)
-          )
-          .then((userIds) => {
-            if (!userIds.length) {
-              return;
-            }
-            const activity = this._reactionNotificationService.createPayload(
-              type,
-              {
-                reaction: reaction,
-                post: post,
-                comment,
-              },
-              'create'
-            );
-
-            this._notificationService.publishReactionNotification({
-              key: `${post.id}`,
-              value: {
-                actor: {
-                  id: userDto.profile.id,
-                  fullname: userDto.profile.fullname,
-                  username: userDto.profile.username,
-                  avatar: userDto.profile.avatar,
-                },
-                event: ReactionHasBeenCreated,
-                data: activity,
-              },
-            });
+        this._emitter.emit(
+          new CreateReactionInternalEvent({
+            actor: userDto,
+            post: post,
+            comment: comment,
+            reaction: reaction,
           })
-          .catch((ex) => {
-            this._logger.error(JSON.stringify(ex?.stack));
-            this._sentryService.captureException(ex);
-          });
+        );
 
         return reaction;
       }
@@ -445,6 +377,7 @@ export class ReactionService {
       ReactionService.transformReactionNameNodeEmoji<DeleteReactionDto>(deleteReactionDto);
     switch (deleteReactionDto.target) {
       case ReactionEnum.POST:
+      case ReactionEnum.ARTICLE:
         return this._deletePostReaction(userDto, newDeleteReactionDto);
       case ReactionEnum.COMMENT:
         return this._deleteCommentReaction(userDto, newDeleteReactionDto);
@@ -471,8 +404,7 @@ export class ReactionService {
     }
 
     const post = await this._postService.get(deleteReactionDto.targetId, userDto, {
-      commentLimit: 0,
-      childCommentLimit: 0,
+      withComment: false,
     });
 
     await this._postPolicyService.allow(post, PostAllow.REACT);
@@ -522,28 +454,18 @@ export class ReactionService {
         avatar: userDto.profile.avatar,
       };
 
-      const activity = this._reactionNotificationService.createPayload(
-        TypeActivity.POST,
-        {
+      this._emitter.emit(
+        new DeleteReactionInternalEvent({
+          actor: userDto,
+          post: post,
           reaction: new ReactionResponseDto(
             response.id,
             response.reactionName,
             actor,
             response.createdAt
           ),
-          post: post,
-        },
-        'remove'
+        })
       );
-
-      this._notificationService.publishReactionNotification({
-        key: `${post.id}`,
-        value: {
-          actor: actor,
-          event: ReactionHasBeenRemoved,
-          data: activity,
-        },
-      });
 
       return response;
     } catch (ex) {
@@ -560,21 +482,21 @@ export class ReactionService {
 
   /**
    * Delete comment reaction
-   * @param userDto UserDto
+   * @param actor UserDto
    * @param deleteReactionDto DeleteReactionDto
    * @param attempt
    * @returns Promise resolve boolean
    * @throws HttpException
    */
   private async _deleteCommentReaction(
-    userDto: UserDto,
+    actor: UserDto,
     deleteReactionDto: DeleteReactionDto,
     attempt = 0
   ): Promise<ICommentReaction> {
     if (attempt === SERIALIZE_TRANSACTION_MAX_ATTEMPT) {
       throw new LogicException(HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR);
     }
-    const { id: userId } = userDto;
+    const { id: userId } = actor;
     const { targetId } = deleteReactionDto;
 
     const comment = await this._commentService.findComment(targetId);
@@ -583,9 +505,8 @@ export class ReactionService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_NOT_EXISTING);
     }
 
-    const post = await this._postService.get(comment.postId, userDto, {
-      commentLimit: 0,
-      childCommentLimit: 0,
+    const post = await this._postService.get(comment.postId, actor, {
+      withComment: false,
     });
 
     if (!post) {
@@ -629,38 +550,19 @@ export class ReactionService {
 
       await trx.commit();
 
-      const type =
-        comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
-
-      const actor = {
-        id: userId,
-        fullname: userDto.profile.fullname,
-        username: userDto.profile.username,
-        avatar: userDto.profile.avatar,
-      };
-      const activity = this._reactionNotificationService.createPayload(
-        type,
-        {
+      this._emitter.emit(
+        new DeleteReactionInternalEvent({
+          actor: actor,
+          post: post,
           reaction: new ReactionResponseDto(
             response.id,
             response.reactionName,
             actor,
             response.createdAt
           ),
-          post: post,
-          comment,
-        },
-        'remove'
+          comment: comment,
+        })
       );
-
-      this._notificationService.publishReactionNotification({
-        key: `${post.id}`,
-        value: {
-          actor: actor,
-          event: ReactionHasBeenRemoved,
-          data: activity,
-        },
-      });
 
       return response;
     } catch (ex) {
@@ -669,7 +571,7 @@ export class ReactionService {
 
       if (ex.message === SERIALIZE_TRANSACTION_ERROR) {
         this._sentryService.captureException(ex);
-        return this._deleteCommentReaction(userDto, deleteReactionDto, attempt + 1);
+        return this._deleteCommentReaction(actor, deleteReactionDto, attempt + 1);
       }
 
       throw ex;

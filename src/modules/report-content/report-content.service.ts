@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostService } from '../post/post.service';
 import { ReportStatus, TargetType } from './contstants';
 import { GroupHttpService, GroupService } from '../../shared/group';
@@ -32,17 +32,20 @@ import { CreateReportEvent } from '../../events/report/create-report.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { FeedService } from '../feed/feed.service';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { GroupSharedDto } from '../../shared/group/dto';
+import { Sequelize } from 'sequelize-typescript';
 
 @Injectable()
 export class ReportContentService {
   public constructor(
+    @InjectConnection()
+    private readonly _sequelize: Sequelize,
     private readonly _feedService: FeedService,
     private readonly _userService: UserService,
     private readonly _postService: PostService,
@@ -206,26 +209,58 @@ export class ReportContentService {
   ): Promise<PageDto<PostResponseDto>> {
     const { limit, offset, order, specTargetIds } = getOptions;
 
-    const conditions = {};
+    let query = `
+       SELECT rc.id as "id" , rc.target_id as "targetId" FROM ${
+         getDatabaseConfig().schema
+       }.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.posts p ON p.id = rc.target_id
+       WHERE p.deleted_at IS NULL
+       AND rc.status = 'HID' 
+       AND rc.target_type in ('POST','ARTICLE') 
+       AND rc.author_id = :authorId
+    `;
+
+    let countQuery = `
+       SELECT count(*) as total FROM ${getDatabaseConfig().schema}.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.posts p ON p.id = rc.target_id
+       WHERE p.deleted_at IS NULL
+       AND rc.status = 'HID' 
+       AND rc.target_type in ('POST','ARTICLE') 
+       AND rc.author_id = :authorId
+    `;
+
+    const orderAndPaginateQuery = `    
+       ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+       LIMIT :limit OFFSET :offset
+    `;
 
     if (specTargetIds && specTargetIds.length > 0) {
-      conditions['targetId'] = specTargetIds;
+      query = query + ' AND p.id in :ids ';
+      countQuery = countQuery + ' AND p.id in :ids ';
     }
 
-    const { rows, count } = await this._reportContentModel.findAndCountAll({
-      attributes: ['id', 'targetId'],
-      where: {
-        authorId: author.id,
-        targetType: {
-          [Op.in]: [TargetType.POST, TargetType.ARTICLE],
+    const rows = await this._sequelize.query<{ id: string; targetId: string }>(
+      query + orderAndPaginateQuery,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          authorId: author.id,
+          limit: limit,
+          offset: offset,
+          ids: specTargetIds,
         },
-        ...conditions,
-        status: ReportStatus.HID,
+      }
+    );
+
+    const count = await this._sequelize.query<{ total: string }>(countQuery, {
+      type: QueryTypes.SELECT,
+      replacements: {
+        authorId: author.id,
+        ids: specTargetIds,
       },
-      limit: limit,
-      offset: offset,
-      order: [['createdAt', order]],
     });
+
+    const total = count[0]?.total ?? '0';
 
     const meta = (hasNextPage: boolean) => ({
       limit: limit,
@@ -257,14 +292,19 @@ export class ReportContentService {
     const responses = await this._feedService.getContentBlockedOfMe(
       author,
       targetIds,
-      meta(offset + limit + 1 <= count)
+      meta(offset + limit + 1 <= parseInt(total))
     );
 
-    responses.list = responses.list.map((post) => {
-      const reportId = postReportMap.get(post.id);
-      const reportDetails = reportStatisticsMap.get(reportId);
-      return { ...post, reportDetails };
-    });
+    responses.list = responses.list
+      .map((post) => {
+        const reportId = postReportMap.get(post.id);
+        if (!reportId) {
+          return null;
+        }
+        const reportDetails = reportStatisticsMap.get(reportId);
+        return { ...post, reportDetails };
+      })
+      .filter((item) => item);
 
     return responses;
   }

@@ -25,7 +25,11 @@ export class ReportContentController {
     @AuthUser() user: UserDto,
     @Query() getOptions: GetBlockedContentOfMeDto
   ): Promise<any> {
-    return this._reportContentService.getContentBlockedOfMe(user, getOptions);
+    try {
+      return await this._reportContentService.getContentBlockedOfMe(user, getOptions);
+    } catch (ex) {
+      console.log(ex);
+    }
   }
 
   @ApiParam({

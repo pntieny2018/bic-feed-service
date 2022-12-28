@@ -102,7 +102,7 @@ export class ArticleAppService {
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting, tags } = createArticleDto;
+    const { audience, setting } = createArticleDto;
     if (audience.groupIds) {
       const isEnableSetting =
         setting.isImportant ||
@@ -112,9 +112,6 @@ export class ArticleAppService {
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
     }
 
-    if (tags?.length) {
-      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
-    }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
       const article = await this._articleService.get(created.id, user, new GetArticleDto());
@@ -154,7 +151,7 @@ export class ArticleAppService {
       }
 
       const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
-      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, isEnableSetting);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
@@ -164,6 +161,12 @@ export class ArticleAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+      const seriesTagErrorData = {
+        seriesIds: [],
+        tagIds: [],
+        seriesNames: [],
+        tagNames: [],
+      };
 
       if (series?.length) {
         const seriesGroups = await this._postService.getListWithGroupsByIds(series, true);
@@ -181,19 +184,31 @@ export class ArticleAppService {
           }
         });
         if (invalidSeries.length) {
-          throw new ForbiddenException({
-            code: HTTP_STATUS_ID.API_FORBIDDEN,
-            message: `The following series were removed from this article: ${invalidSeries
-              .map((e) => e.title)
-              .join(', ')}`,
-            errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+          invalidSeries.forEach((e) => {
+            seriesTagErrorData.seriesIds.push(e.id);
+            seriesTagErrorData.seriesNames.push(e.title);
           });
         }
       }
-    }
-
-    if (tags?.length) {
-      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
+      if (tags?.length) {
+        const invalidTags = await this._tagService.getInvalidTagsByAudience(
+          tags,
+          audience.groupIds
+        );
+        if (invalidTags.length) {
+          invalidTags.forEach((e) => {
+            seriesTagErrorData.tagIds.push(e.id);
+            seriesTagErrorData.tagNames.push(e.name);
+          });
+        }
+      }
+      if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: 'The following information will be removed when removed audiences:',
+          errors: seriesTagErrorData,
+        });
+      }
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
@@ -234,6 +249,13 @@ export class ArticleAppService {
       true
     );
 
+    const seriesTagErrorData = {
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
+    };
+
     const invalidSeries = [];
     seriesGroups.forEach((item) => {
       const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
@@ -242,12 +264,31 @@ export class ArticleAppService {
       }
     });
     if (invalidSeries.length) {
+      if (invalidSeries.length) {
+        invalidSeries.forEach((e) => {
+          seriesTagErrorData.seriesIds.push(e.id);
+          seriesTagErrorData.seriesNames.push(e.title);
+        });
+      }
+    }
+
+    if (article.tags?.length) {
+      const invalidTags = await this._tagService.getInvalidTagsByAudience(
+        article.tags.map((e) => e.id),
+        article.audience.groups.map((e) => e.id)
+      );
+      if (invalidTags.length) {
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.id);
+          seriesTagErrorData.tagNames.push(e.name);
+        });
+      }
+    }
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have create article permission at series: ${invalidSeries
-          .map((e) => e.title)
-          .join(', ')}`,
-        errors: { seriesDenied: invalidSeries.map((e) => e.id) },
+        message: 'The following information will be removed when removed audiences:',
+        errors: seriesTagErrorData,
       });
     }
 
