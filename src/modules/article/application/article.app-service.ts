@@ -162,12 +162,10 @@ export class ArticleAppService {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
       const seriesTagErrorData = {
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: '',
-        errors: {
-          seriesDenied: null,
-          tagsDenied: null,
-        },
+        seriesIds: [],
+        tagIds: [],
+        seriesNames: [],
+        tagNames: [],
       };
 
       if (series?.length) {
@@ -186,10 +184,10 @@ export class ArticleAppService {
           }
         });
         if (invalidSeries.length) {
-          seriesTagErrorData.message += `The following series were removed from this article: ${invalidSeries
-            .map((e) => e.title)
-            .join(', ')}. `;
-          seriesTagErrorData.errors.seriesDenied = invalidSeries.map((e) => e.id);
+          invalidSeries.forEach((e) => {
+            seriesTagErrorData.seriesIds.push(e.id);
+            seriesTagErrorData.seriesNames.push(e.title);
+          });
         }
       }
       if (tags?.length) {
@@ -198,14 +196,18 @@ export class ArticleAppService {
           audience.groupIds
         );
         if (invalidTags.length) {
-          seriesTagErrorData.message += `The following tags were removed from this article: ${invalidTags
-            .map((e) => e.name)
-            .join(', ')}.`;
-          seriesTagErrorData.errors.tagsDenied = invalidTags.map((e) => e.id);
+          invalidTags.forEach((e) => {
+            seriesTagErrorData.tagIds.push(e.id);
+            seriesTagErrorData.tagNames.push(e.name);
+          });
         }
       }
-      if (seriesTagErrorData.errors.seriesDenied || seriesTagErrorData.errors.tagsDenied) {
-        throw new ForbiddenException(seriesTagErrorData);
+      if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_FORBIDDEN,
+          message: 'The following information will be removed when removed audiences:',
+          errors: seriesTagErrorData,
+        });
       }
     }
 
@@ -248,12 +250,10 @@ export class ArticleAppService {
     );
 
     const seriesTagErrorData = {
-      code: HTTP_STATUS_ID.API_FORBIDDEN,
-      message: '',
-      errors: {
-        seriesDenied: null,
-        tagsDenied: null,
-      },
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
     };
 
     const invalidSeries = [];
@@ -264,10 +264,12 @@ export class ArticleAppService {
       }
     });
     if (invalidSeries.length) {
-      seriesTagErrorData.message += `The following series were removed from this article: ${invalidSeries
-        .map((e) => e.title)
-        .join(', ')}. `;
-      seriesTagErrorData.errors.seriesDenied = invalidSeries.map((e) => e.id);
+      if (invalidSeries.length) {
+        invalidSeries.forEach((e) => {
+          seriesTagErrorData.seriesIds.push(e.id);
+          seriesTagErrorData.seriesNames.push(e.title);
+        });
+      }
     }
 
     if (article.tags?.length) {
@@ -276,14 +278,18 @@ export class ArticleAppService {
         article.audience.groups.map((e) => e.id)
       );
       if (invalidTags.length) {
-        seriesTagErrorData.message += `The following tags were removed from this article: ${invalidTags
-          .map((e) => e.name)
-          .join(', ')}.`;
-        seriesTagErrorData.errors.tagsDenied = invalidTags.map((e) => e.id);
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.id);
+          seriesTagErrorData.tagNames.push(e.name);
+        });
       }
     }
-    if (seriesTagErrorData.errors.seriesDenied || seriesTagErrorData.errors.tagsDenied) {
-      throw new ForbiddenException(seriesTagErrorData);
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: 'The following information will be removed when removed audiences:',
+        errors: seriesTagErrorData,
+      });
     }
 
     this._postService.checkContent(article.content, article.media);
