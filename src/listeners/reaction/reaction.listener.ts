@@ -108,8 +108,9 @@ export class ReactionListener {
       )
       .then((userIds) => {
         if (!userIds.length) {
-          return notify();
+          return;
         }
+        return notify();
       })
       .catch((ex) => {
         this._logger.error(ex, ex?.stack);
@@ -169,8 +170,9 @@ export class ReactionListener {
       )
       .then((userIds) => {
         if (!userIds.length) {
-          return notify();
+          return;
         }
+        return notify();
       })
       .catch((ex) => {
         this._logger.error(ex, ex?.stack);
