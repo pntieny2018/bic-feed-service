@@ -2,7 +2,7 @@ import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../../common/helpers';
-import { ITag, Tag, TagProperties } from './tag';
+import { Tag, TagProperties } from './tag';
 
 type CreateTagOptions = Readonly<{
   name: string;
@@ -13,7 +13,7 @@ type CreateTagOptions = Readonly<{
 export class TagFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public create(options: CreateTagOptions): ITag {
+  public create(options: CreateTagOptions): Tag {
     const { name, groupId, createdBy } = options;
     return this._eventPublisher.mergeObjectContext(
       new Tag({

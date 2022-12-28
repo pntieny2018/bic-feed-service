@@ -30,7 +30,6 @@ import { UpdateTagDto } from './dto/requests/update-tag.dto';
 })
 export class TagController {
   public constructor(private _tagService: TagService) {}
-  private _logger = new Logger(TagController.name);
 
   @ApiOperation({ summary: 'Get tags' })
   @ApiOkResponse({

@@ -1,39 +1,30 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
+import { PostPrivacy, PostType } from '../../../data-type';
+import { Post, PostProperties } from './post';
 
-import {
-  Account,
-  AccountImplement,
-  AccountProperties,
-} from 'src/account/domain/Account';
-
-type CreateAccountOptions = Readonly<{
+type CreatePostOptions = Readonly<{
   id: string;
-  name: string;
-  email: string;
-  password: string;
+  createdBy: string;
 }>;
 
 export class PostFactory {
-  @Inject(EventPublisher) private readonly eventPublisher: EventPublisher;
+  @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  create(options: CreateAccountOptions): Account {
-    return this.eventPublisher.mergeObjectContext(
-      new AccountImplement({
-        ...options,
-        balance: 0,
-        lockedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        version: 0,
-      }),
-    );
+  public create(options: CreatePostOptions): any {
+    const { id } = options;
+    // return this._eventPublisher.mergeObjectContext(
+    //   // new Post({
+    //   //   id,
+    //   //   type: PostType.POST,
+    //   //   isDraft: true,
+    //   //   createdBy: createdBy,
+    //   //   postPrivacy: PostPrivacy.OPEN,
+    //   // })
+    // );
   }
 
-  reconstitute(properties: AccountProperties): Account {
-    return this.eventPublisher.mergeObjectContext(
-      new AccountImplement(properties),
-    );
+  public reconstitute(properties: PostProperties): Post {
+    return this._eventPublisher.mergeObjectContext(new Post(properties));
   }
 }

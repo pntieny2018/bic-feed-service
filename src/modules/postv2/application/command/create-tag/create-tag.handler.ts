@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ITag } from '../../../domain/model/tag/tag';
+import { Tag } from '../../../domain/model/tag/tag';
 import { TagFactory } from '../../../domain/model/tag/tag.factory';
 import {
   ITagRepository,
@@ -9,12 +9,12 @@ import {
 import { CreatetagCommand } from './create-tag.command';
 
 @CommandHandler(CreatetagCommand)
-export class CreateTagHandler implements ICommandHandler<CreatetagCommand, ITag> {
+export class CreateTagHandler implements ICommandHandler<CreatetagCommand, Tag> {
   @Inject(TAG_REPOSITORY)
   private readonly _tagRepository: ITagRepository;
   @Inject() private readonly _tagFactory: TagFactory;
 
-  public async execute(command: CreatetagCommand): Promise<ITag> {
+  public async execute(command: CreatetagCommand): Promise<Tag> {
     const { name, groupId, userId } = command.payload;
     const tag = this._tagFactory.create({
       name,

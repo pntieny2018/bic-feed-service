@@ -31,33 +31,26 @@ export type PostOptionalProperties = Readonly<
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date;
-    comments?: IComment[];
-    media?: IMedia[];
-    groups?: IPostGroup[];
-    mentions?: IMention[];
+    comments?: any[];
+    media?: any[];
+    groups?: any[];
+    mentions?: any[];
     mentionIds?: number[];
     reactionsCount?: string;
     giphyId: string;
     views: number;
-    categories: ICategory[];
-    series?: IPost[];
-    hashtagsJson?: HashtagResponseDto[];
-    tagsJson?: TagResponseDto[];
+    categories: any[];
+    series?: any[];
+    hashtagsJson?: any[];
+    tagsJson?: any[];
     linkPreviewId?: string;
-    linkPreview?: ILinkPreview;
     cover?: string;
-    articles?: Partial<IPost>[];
   }>
 >;
 
 export type PostProperties = PostEssentialProperties & Required<PostOptionalProperties>;
 
-export interface IPost {
-  update: () => void;
-  publish: () => void;
-  commit: () => void;
-}
-export class PostImplement extends AggregateRoot implements IPost {
+export class Post extends AggregateRoot {
   public id: string;
   public createdBy: string;
   public updatedBy: string;
@@ -77,8 +70,8 @@ export class PostImplement extends AggregateRoot implements IPost {
   public createdAt?: Date;
   public updatedAt?: Date;
   public deletedAt?: Date;
-  public media?: IMedia[];
-  public groups?: IPostGroup[];
+  public media?: any[];
+  public groups?: any[];
   public mentions?: {
     id: string;
     name: string;
@@ -91,21 +84,21 @@ export class PostImplement extends AggregateRoot implements IPost {
   public title?: string;
   public summary?: string;
   public views: number;
-  public categories?: ICategory[];
-  public series?: IPost[];
-  public hashtags?: IHashtag[];
-  public tags?: ITag[];
-  public postTags?: IPostTag[];
+  public categories?: any[];
+  public series?: any[];
+  public hashtags?: any[];
+  public tags?: any[];
+  public postTags?: any[];
   public privacy?: PostPrivacy;
-  public hashtagsJson?: HashtagResponseDto[];
-  public tagsJson?: TagResponseDto[];
+  public hashtagsJson?: any[];
+  public tagsJson?: any[];
   public linkPreviewId?: string;
-  public linkPreview?: ILinkPreview;
+  public linkPreview?: any;
   public cover?: string;
-  public articles?: Partial<IPost>[];
-  public userSavePosts?: IUserSavePost[];
+  public articles?: Partial<any>[];
+  public userSavePosts?: any[];
 
-  public constructor(properties: AccountProperties) {
+  public constructor(properties: PostProperties) {
     super();
     Object.assign(this, properties);
   }

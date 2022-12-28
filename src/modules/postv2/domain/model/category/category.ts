@@ -23,24 +23,37 @@ export type CategoryOptionalProperties = Readonly<
 
 export type CategoryProperties = CategoryEssentialProperties & Required<CategoryOptionalProperties>;
 
-export interface ICategory {
-  commit: () => void;
-}
-export class CategoryImplement extends AggregateRoot implements ICategory {
-  public id: string;
-  public parentId: string;
-  public name: string;
-  public level: number;
-  public zindex: number;
-  public isActive: boolean;
-  public createdBy: string;
-  public updatedBy: string;
-  public slug: string;
-  public createdAt: Date;
-  public updatedAt: Date;
+export class Category extends AggregateRoot {
+  private _id: string;
+  private _parentId: string;
+  private _name: string;
+  private _level: number;
+  private _zindex: number;
+  private _isActive: boolean;
+  private _createdBy: string;
+  private _updatedBy: string;
+  private _slug: string;
+  private _createdAt: Date;
+  private _updatedAt: Date;
 
   public constructor(properties: CategoryProperties) {
     super();
     Object.assign(this, properties);
+  }
+
+  public get id(): string {
+    return this._id;
+  }
+
+  public get parentId(): string {
+    return this._parentId;
+  }
+
+  public get name(): string {
+    return this._name;
+  }
+
+  public get slug(): string {
+    return this._slug;
   }
 }

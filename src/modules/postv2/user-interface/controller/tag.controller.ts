@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   Inject,
-  Logger,
   Param,
   ParseUUIDPipe,
   Post,
@@ -20,8 +19,12 @@ import { AuthUser, UserDto } from '../../../auth';
 import { ResponseMessages } from '../../../../common/decorators';
 import { ClassTransformer } from 'class-transformer';
 import { CreateTagDto } from '../dto/request/tag/create-tag.dto';
-import { group } from 'console';
 import { UpdateTagDto } from '../../../tag/dto/requests/update-tag.dto';
+import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
+import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
+import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
+import { PageDto } from '../../../../common/dto';
+import { GetTagDto } from '../dto/request/tag/get-tag.dto';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -48,7 +51,18 @@ export class TagController {
     @AuthUser() _user: UserDto,
     @Query() getTagDto: GetTagDto
   ): Promise<PageDto<TagResponseDto>> {
-    return this._tagService.get(getTagDto);
+    const { groupIds, name, offset, limit } = getTagDto;
+    const { rows, total } = await this._queryBus.execute(
+      new FindTagsPaginationQuery({ name, groupIds, offset, limit })
+    );
+
+    const tags = rows.map((row) => this._classTransformer.plainToInstance(TagResponseDto, row));
+
+    return new PageDto<TagResponseDto>(tags, {
+      total,
+      limit: getTagDto.limit,
+      offset: getTagDto.offset,
+    });
   }
 
   @ApiOperation({ summary: 'Create new tag' })
@@ -81,8 +95,9 @@ export class TagController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagDto
-  ): Promise<TagResponseDto> {
-    return this._tagService.update(tagId, updateTagDto, user);
+  ): Promise<void> {
+    const { name } = updateTagDto;
+    return this._commandBus.execute(new UpdatetagCommand({ id: tagId, name, userId: user.id }));
   }
 
   @ApiOperation({ summary: 'Delete tag' })
@@ -93,9 +108,9 @@ export class TagController {
   @Delete('/:id')
   @ResponseMessages({ success: 'Tag deleted' })
   public async delete(
-    @AuthUser() _user: UserDto,
-    @Param('id', ParseUUIDPipe) tagId: string
-  ): Promise<boolean> {
-    return this._tagService.delete(tagId);
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<void> {
+    await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
   }
 }

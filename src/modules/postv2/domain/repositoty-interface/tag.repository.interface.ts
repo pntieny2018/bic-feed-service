@@ -1,21 +1,27 @@
-import { ITag } from '../model/tag/tag';
+import { PaginationProps } from '../../../../common/types/pagination-props.type ';
+import { PaginationResult } from '../../../../common/types/pagination-result.type';
+import { Tag } from '../model/tag/tag';
 
-export type GetTagListProps = {
+export type FindOneTagProps = {
   name?: string;
+  id?: string;
+};
+
+export type FindAllTagsProps = {
   groupIds: string[];
-  offset: number;
-  limit: number;
+  name?: string;
 };
 
-export type GetTagListResult = {
-  rows: ITag[];
-  total: number;
+export type GetPaginationTagProps = PaginationProps & {
+  groupIds: string[];
+  name?: string;
 };
-
-export const TAG_REPOSITORY = 'TAG_REPOSITORY';
 export interface ITagRepository {
-  findOne(id: string): Promise<ITag>;
-  getList(input: GetTagListProps): Promise<GetTagListResult>;
-  save(data: ITag): Promise<void>;
+  findOne(input: FindOneTagProps): Promise<Tag>;
+  findAll(input: FindAllTagsProps): Promise<Tag[]>;
+  getPagination(input: GetPaginationTagProps): Promise<PaginationResult<Tag>>;
+  save(data: Tag): Promise<void>;
   delete(id: string): Promise<void>;
 }
+
+export const TAG_REPOSITORY = 'TAG_REPOSITORY';
