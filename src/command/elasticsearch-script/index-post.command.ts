@@ -183,6 +183,7 @@ export class IndexPostCommand implements CommandRunner {
           const item: IDataPostToAdd = {
             id: post.id,
             type: post.type,
+            isHidden: post.isHidden,
             groupIds,
             communityIds,
             createdAt: post.createdAt,

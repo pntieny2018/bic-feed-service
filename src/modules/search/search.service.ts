@@ -58,13 +58,14 @@ export class SearchService {
     protected readonly userService: UserService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
-    protected readonly _failedProcessingPostModel: typeof FailedProcessPostModel
+    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
   public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
+      if (post.isHidden === false) continue;
       if (post.type === PostType.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
       }
@@ -133,6 +134,7 @@ export class SearchService {
   public async updatePostsToSearch(posts: IDataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
+      if (dataIndex.isHidden === false) continue;
       if (dataIndex.type === PostType.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       }
