@@ -4,7 +4,7 @@ import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../
 import { ReactionEventPayload } from '../../events/reaction/payload';
 import { NotificationService, TypeActivity } from '../../notification';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
-import { ReactionHasBeenCreated } from '../../common/constants';
+import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../common/constants';
 import { FollowService } from '../../modules/follow';
 import { ReactionActivityService } from '../../notification/activities';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -29,26 +29,43 @@ export class ReactionListener {
   ) {}
 
   @On(CreateReactionInternalEvent)
-  public onCreatedReactionEvent(event: CreateReactionInternalEvent): void {
+  public onCreatedReactionEvent(event: CreateReactionInternalEvent): Promise<void> {
     const { payload } = event;
 
     this._feedService.markSeenPosts(payload.post.id, payload.actor.id).catch((ex) => {
       this._logger.error(ex);
     });
 
-    this._notifyPostReaction(payload).catch((ex) => this._logger.error(ex, ex?.stack));
+    if (!payload.comment) {
+      return this._notifyPostReaction('create', ReactionHasBeenCreated, payload).catch((ex) =>
+        this._logger.error(ex, ex?.stack)
+      );
+    }
 
-    this._notifyCommentReaction(payload);
+    this._notifyCommentReaction('create', ReactionHasBeenCreated, payload);
   }
 
   @On(DeleteReactionInternalEvent)
-  public onDeleteReactionEvent(event: DeleteReactionInternalEvent): void {}
+  public onDeleteReactionEvent(event: DeleteReactionInternalEvent): Promise<void> {
+    const { payload } = event;
 
-  private async _notifyPostReaction(data: {
-    post: PostResponseDto;
-    reaction: ReactionResponseDto;
-    actor: UserSharedDto;
-  }): Promise<void> {
+    if (!payload.comment) {
+      return this._notifyPostReaction('remove', ReactionHasBeenRemoved, payload).catch((ex) =>
+        this._logger.error(ex, ex?.stack)
+      );
+    }
+    this._notifyCommentReaction('remove', ReactionHasBeenRemoved, payload);
+  }
+
+  private async _notifyPostReaction(
+    action: 'create' | 'remove',
+    event: string,
+    data: {
+      post: PostResponseDto;
+      reaction: ReactionResponseDto;
+      actor: UserSharedDto;
+    }
+  ): Promise<void> {
     const { actor, reaction } = data;
     let post = data.post;
 
@@ -60,6 +77,30 @@ export class ReactionListener {
       post = await this._articleService.get(post.id, actor, { withComment: false });
     }
 
+    const notify = (): void => {
+      const activity = this._reactionActivityService.createPayload(
+        TypeActivity.POST,
+        {
+          reaction: reaction,
+          post: post,
+        },
+        action
+      );
+
+      this._notificationService.publishReactionNotification({
+        key: `${post.id}`,
+        value: {
+          actor: reaction.actor,
+          event: event,
+          data: activity,
+        },
+      });
+    };
+
+    if (action === 'remove') {
+      return notify();
+    }
+
     this._followService
       .getValidUserIds(
         [post.actor.id],
@@ -67,37 +108,24 @@ export class ReactionListener {
       )
       .then((userIds) => {
         if (!userIds.length) {
-          return;
+          return notify();
         }
-        const activity = this._reactionActivityService.createPayload(
-          TypeActivity.POST,
-          {
-            reaction: reaction,
-            post: post,
-          },
-          'create'
-        );
-
-        this._notificationService.publishReactionNotification({
-          key: `${post.id}`,
-          value: {
-            actor: reaction.actor,
-            event: ReactionHasBeenCreated,
-            data: activity,
-          },
-        });
       })
       .catch((ex) => {
         this._logger.error(ex, ex?.stack);
       });
   }
 
-  private _notifyCommentReaction(data: {
-    post: PostResponseDto;
-    comment?: CommentResponseDto;
-    reaction: ReactionResponseDto;
-    actor: UserSharedDto;
-  }): void {
+  private _notifyCommentReaction(
+    action: 'create' | 'remove',
+    event: string,
+    data: {
+      post: PostResponseDto;
+      comment?: CommentResponseDto;
+      reaction: ReactionResponseDto;
+      actor: UserSharedDto;
+    }
+  ): void {
     const { post, comment, reaction } = data;
     if (!comment) {
       return;
@@ -106,6 +134,32 @@ export class ReactionListener {
       return;
     }
     const type = comment.parentId !== NIL_UUID ? TypeActivity.CHILD_COMMENT : TypeActivity.COMMENT;
+
+    const notify = (): void => {
+      const activity = this._reactionActivityService.createPayload(
+        type,
+        {
+          reaction: reaction,
+          post: post,
+          comment,
+        },
+        action
+      );
+
+      this._notificationService.publishReactionNotification({
+        key: `${post.id}`,
+        value: {
+          actor: reaction.actor,
+          event: event,
+          data: activity,
+        },
+      });
+    };
+
+    if (action === 'remove') {
+      return notify();
+    }
+
     const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
 
     this._followService
@@ -115,26 +169,8 @@ export class ReactionListener {
       )
       .then((userIds) => {
         if (!userIds.length) {
-          return;
+          return notify();
         }
-        const activity = this._reactionActivityService.createPayload(
-          type,
-          {
-            reaction: reaction,
-            post: post,
-            comment,
-          },
-          'create'
-        );
-
-        this._notificationService.publishReactionNotification({
-          key: `${post.id}`,
-          value: {
-            actor: reaction.actor,
-            event: ReactionHasBeenCreated,
-            data: activity,
-          },
-        });
       })
       .catch((ex) => {
         this._logger.error(ex, ex?.stack);

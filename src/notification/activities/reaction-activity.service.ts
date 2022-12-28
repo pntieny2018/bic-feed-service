@@ -306,7 +306,7 @@ export class ReactionActivityService {
     },
     action: 'create' | 'remove'
   ): NotificationActivity {
-    if ([TypeActivity.POST, TypeActivity.ARTICLE, TypeActivity.SERIES].includes(type)) {
+    if ([TypeActivity.POST, TypeActivity.ARTICLE].includes(type)) {
       const { post, reaction } = data;
       return this.createReactionPostPayload(post, reaction, action);
     }
