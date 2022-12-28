@@ -301,6 +301,7 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
+        isHidden: false,
       },
       offset,
       limit,
