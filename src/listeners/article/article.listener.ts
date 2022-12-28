@@ -120,6 +120,7 @@ export class ArticleListener {
       categories,
       tags,
       createdBy,
+      isHidden,
     } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -143,6 +144,7 @@ export class ArticleListener {
           id,
           type,
           content,
+          isHidden,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
           createdBy,
@@ -220,6 +222,7 @@ export class ArticleListener {
       coverMedia,
       categories,
       tags,
+      isHidden,
     } = newArticle;
 
     if (oldArticle.isDraft === false) {
@@ -257,6 +260,7 @@ export class ArticleListener {
         id,
         type,
         content,
+        isHidden,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
@@ -349,6 +353,7 @@ export class ArticleListener {
         actor,
         id,
         content,
+        isHidden,
         updatedAt,
         audience,
         createdAt,
@@ -366,6 +371,7 @@ export class ArticleListener {
           id,
           type,
           content,
+          isHidden,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
           createdBy,

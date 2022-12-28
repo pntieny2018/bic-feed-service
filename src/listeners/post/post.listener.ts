@@ -107,6 +107,7 @@ export class PostListener {
       createdAt,
       updatedAt,
       type,
+      isHidden,
     } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -166,6 +167,7 @@ export class PostListener {
         id,
         type,
         content,
+        isHidden,
         media: mediaList,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
@@ -204,6 +206,7 @@ export class PostListener {
       lang,
       createdAt,
       updatedAt,
+      isHidden,
     } = newPost;
 
     if (oldPost.isDraft === false) {
@@ -293,6 +296,7 @@ export class PostListener {
         type,
         content,
         media: mediaList,
+        isHidden,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
@@ -351,6 +355,7 @@ export class PostListener {
         createdAt,
         updatedAt,
         type,
+        isHidden,
       } = post;
 
       const mentionUserIds = [];
@@ -383,6 +388,7 @@ export class PostListener {
           id,
           type,
           content,
+          isHidden,
           media: mediaList,
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
