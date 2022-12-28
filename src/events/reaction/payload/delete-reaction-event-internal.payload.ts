@@ -1,11 +1,11 @@
-import { IComment } from '../../../database/models/comment.model';
-import { IPost } from '../../../database/models/post.model';
-import { ReactionDto } from '../../../modules/reaction/dto/reaction.dto';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDataShareDto } from '../../../shared/user/dto';
+import { PostResponseDto } from '../../../modules/post/dto/responses';
+import { CommentResponseDto } from '../../../modules/comment/dto/response';
+import { ReactionResponseDto } from '../../../modules/reaction/dto/response';
 
 export class DeleteReactionEventInternalPayload {
-  public userSharedDto: UserSharedDto;
-  public reaction: ReactionDto;
-  public post: IPost;
-  public comment?: IComment;
+  public actor: UserDataShareDto;
+  public reaction: ReactionResponseDto;
+  public post: PostResponseDto;
+  public comment?: CommentResponseDto;
 }
