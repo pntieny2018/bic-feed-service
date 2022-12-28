@@ -65,7 +65,7 @@ export class SearchService {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
-      if (post.isHidden === false) continue;
+      if (post.isHidden === true) continue;
       if (post.type === PostType.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
       }
@@ -76,6 +76,7 @@ export class SearchService {
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
+    if (body.length === 0) return 0;
     try {
       const res = await this.elasticsearchService.bulk(
         {
