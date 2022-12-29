@@ -161,54 +161,7 @@ export class ArticleAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
-      const seriesTagErrorData = {
-        seriesIds: [],
-        tagIds: [],
-        seriesNames: [],
-        tagNames: [],
-      };
-
-      if (series?.length) {
-        const seriesGroups = await this._postService.getListWithGroupsByIds(series, true);
-        if (seriesGroups.length < series.length) {
-          throw new ForbiddenException({
-            code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
-            message: `Series parameter is invalid`,
-          });
-        }
-        const invalidSeries = [];
-        seriesGroups.forEach((item) => {
-          const isValid = item.groups.some((group) => audience.groupIds.includes(group.groupId));
-          if (!isValid) {
-            invalidSeries.push(item);
-          }
-        });
-        if (invalidSeries.length) {
-          invalidSeries.forEach((e) => {
-            seriesTagErrorData.seriesIds.push(e.id);
-            seriesTagErrorData.seriesNames.push(e.title);
-          });
-        }
-      }
-      if (tags?.length) {
-        const invalidTags = await this._tagService.getInvalidTagsByAudience(
-          tags,
-          audience.groupIds
-        );
-        if (invalidTags.length) {
-          invalidTags.forEach((e) => {
-            seriesTagErrorData.tagIds.push(e.id);
-            seriesTagErrorData.tagNames.push(e.name);
-          });
-        }
-      }
-      if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_FORBIDDEN,
-          message: 'The following information will be removed when removed audiences:',
-          errors: seriesTagErrorData,
-        });
-      }
+      await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
@@ -244,53 +197,11 @@ export class ArticleAppService {
       setting.canShare === false;
     await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
 
-    const seriesGroups = await this._postService.getListWithGroupsByIds(
+    await this.isSeriesAndTagsValid(
+      audience.groups.map((e) => e.id),
       article.series.map((item) => item.id),
-      true
+      article.tags.map((e) => e.id)
     );
-
-    const seriesTagErrorData = {
-      seriesIds: [],
-      tagIds: [],
-      seriesNames: [],
-      tagNames: [],
-    };
-
-    const invalidSeries = [];
-    seriesGroups.forEach((item) => {
-      const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
-      if (!isValid) {
-        invalidSeries.push(item);
-      }
-    });
-    if (invalidSeries.length) {
-      if (invalidSeries.length) {
-        invalidSeries.forEach((e) => {
-          seriesTagErrorData.seriesIds.push(e.id);
-          seriesTagErrorData.seriesNames.push(e.title);
-        });
-      }
-    }
-
-    if (article.tags?.length) {
-      const invalidTags = await this._tagService.getInvalidTagsByAudience(
-        article.tags.map((e) => e.id),
-        article.audience.groups.map((e) => e.id)
-      );
-      if (invalidTags.length) {
-        invalidTags.forEach((e) => {
-          seriesTagErrorData.tagIds.push(e.id);
-          seriesTagErrorData.tagNames.push(e.name);
-        });
-      }
-    }
-    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: 'The following information will be removed when removed audiences:',
-        errors: seriesTagErrorData,
-      });
-    }
 
     this._postService.checkContent(article.content, article.media);
 
@@ -344,5 +255,57 @@ export class ArticleAppService {
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
     return this._postSearchService.searchArticles(user, searchDto);
+  }
+
+  public async isSeriesAndTagsValid(
+    groupIds: string[],
+    seriesIds: string[] = [],
+    tagIds: string[] = []
+  ): Promise<boolean> {
+    const seriesTagErrorData = {
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
+    };
+    if (seriesIds.length) {
+      const seriesGroups = await this._postService.getListWithGroupsByIds(seriesIds, true);
+      if (seriesGroups.length < seriesIds.length) {
+        throw new ForbiddenException({
+          code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
+          message: `Series parameter is invalid`,
+        });
+      }
+      const invalidSeries = [];
+      seriesGroups.forEach((item) => {
+        const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
+        if (!isValid) {
+          invalidSeries.push(item);
+        }
+      });
+      if (invalidSeries.length) {
+        invalidSeries.forEach((e) => {
+          seriesTagErrorData.seriesIds.push(e.id);
+          seriesTagErrorData.seriesNames.push(e.title);
+        });
+      }
+    }
+    if (tagIds.length) {
+      const invalidTags = await this._tagService.getInvalidTagsByAudience(tagIds, groupIds);
+      if (invalidTags.length) {
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.id);
+          seriesTagErrorData.tagNames.push(e.name);
+        });
+      }
+    }
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: 'The following information will be removed when removed audiences:',
+        errors: seriesTagErrorData,
+      });
+    }
+    return true;
   }
 }
