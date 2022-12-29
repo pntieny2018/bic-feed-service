@@ -1,13 +1,42 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { COMMUNITY_ADMIN_PATH } from '../../common/constants';
+import { COMMUNITY_ADMIN_PATH, GROUP_ADMIN_PATH } from '../../common/constants';
 
 @Injectable()
 export class GroupHttpService {
   private readonly _logger = new Logger(GroupHttpService.name);
 
   public constructor(private readonly _httpService: HttpService) {}
+
+  public async getGroupAdminIds(groupIds: string[], offset = 0, limit = 50): Promise<string[]> {
+    const response: string[][] = await Promise.all(
+      groupIds.map(async (groupId): Promise<string[]> => {
+        try {
+          const response = await lastValueFrom(
+            this._httpService.get(GROUP_ADMIN_PATH.replace(':groupId', groupId), {
+              params: {
+                offset: offset,
+                limit: limit,
+              },
+            })
+          );
+
+          if (response.status !== HttpStatus.OK) {
+            return [];
+          }
+          this._logger.debug(JSON.stringify(response.data));
+
+          const admins = response.data['data']['group_admin']['data'];
+
+          return admins.map((admin) => admin.id);
+        } catch (ex) {
+          return [];
+        }
+      })
+    );
+    return response.flat();
+  }
 
   public async getAdminIds(
     rootGroupIds: string[],
