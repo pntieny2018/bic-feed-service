@@ -17,7 +17,7 @@ export class PostActivityService {
     const activityObject: ActivityObject = {
       id: post.id,
       title: title,
-      contentType: post.type.toLowerCase(),
+      contentType: targetType.toLowerCase(),
       setting: post.setting as any,
       actor: ObjectHelper.omit(['groups', 'email'], post.actor) as any,
       audience: {

@@ -15,6 +15,7 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
+import { GroupHttpService } from '../../shared/group';
 
 @Injectable()
 export class SeriesListener {
@@ -24,6 +25,7 @@ export class SeriesListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
+    private readonly _groupHttpService: GroupHttpService,
     private readonly _postSearchService: SearchService,
     private readonly _feedService: FeedService,
     private readonly _postActivityService: PostActivityService,
@@ -79,6 +81,11 @@ export class SeriesListener {
         },
         event: event.getEventName(),
         data: activity,
+        meta: {
+          series: {
+            targetUserIds: [],
+          },
+        },
       },
     });
   }
@@ -87,6 +94,7 @@ export class SeriesListener {
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
     const { series, actor } = event.payload;
     const { id, createdBy, audience, createdAt, updatedAt, title, summary, coverMedia } = series;
+    const groupIds = audience.groups.map((group) => group.id);
 
     this._postSearchService.addPostsToSearch([
       {
@@ -96,8 +104,8 @@ export class SeriesListener {
         createdBy,
         title,
         summary,
+        groupIds: groupIds,
         isHidden: false,
-        groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
         articles: series.articles.map((article) => ({ id: article.id, zindex: article.zindex })),
@@ -119,12 +127,19 @@ export class SeriesListener {
     try {
       const activity = this._postActivityService.createPayload(series);
 
+      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(groupIds);
+
       this._notificationService.publishPostNotification({
         key: `${series.id}`,
         value: {
           actor,
           event: event.getEventName(),
           data: activity,
+          meta: {
+            series: {
+              targetUserIds: groupAdminIds,
+            },
+          },
         },
       });
     } catch (ex) {
@@ -161,12 +176,12 @@ export class SeriesListener {
       articles,
     } = newSeries;
 
-    //TODO:: send noti
+    const groupIds = audience.groups.map((group) => group.id);
 
     this._postSearchService.updatePostsToSearch([
       {
         id,
-        groupIds: audience.groups.map((group) => group.id),
+        groupIds: groupIds,
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
         updatedAt,
@@ -195,6 +210,7 @@ export class SeriesListener {
     try {
       const updatedActivity = this._postActivityService.createPayload(newSeries);
       const oldActivity = this._postActivityService.createPayload(oldSeries);
+      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(groupIds);
 
       this._notificationService.publishPostNotification({
         key: `${id}`,
@@ -205,6 +221,9 @@ export class SeriesListener {
           meta: {
             post: {
               oldData: oldActivity,
+            },
+            series: {
+              targetUserIds: groupAdminIds,
             },
           },
         },
