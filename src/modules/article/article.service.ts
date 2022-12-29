@@ -187,6 +187,7 @@ export class ArticleService extends PostService {
       where: {
         id: ids,
         isHidden: false,
+        isDraft: false,
       },
     });
 

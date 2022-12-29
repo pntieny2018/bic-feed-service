@@ -25,6 +25,7 @@ import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from './dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
+import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -45,6 +46,22 @@ export class ArticleController {
     @Query() searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
     return this._articleAppService.searchArticles(user, searchDto);
+  }
+
+  @ApiOperation({ summary: 'Validate series and tags' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Validate article series and tags successfully',
+  })
+  @Post('/validate-series-tags')
+  public async validateSeriesTags(
+    @Body() validateSeriesTagDto: ValidateSeriesTagDto
+  ): Promise<boolean> {
+    return this._articleAppService.isSeriesAndTagsValid(
+      validateSeriesTagDto.groups,
+      validateSeriesTagDto.series,
+      validateSeriesTagDto.tags
+    );
   }
 
   @ApiOperation({ summary: 'Get related article' })
