@@ -137,7 +137,7 @@ export class SeriesListener {
           data: activity,
           meta: {
             series: {
-              targetUserIds: groupAdminIds,
+              targetUserIds: groupAdminIds.filter((id) => id !== actor.id),
             },
           },
         },
@@ -223,7 +223,7 @@ export class SeriesListener {
               oldData: oldActivity,
             },
             series: {
-              targetUserIds: groupAdminIds,
+              targetUserIds: groupAdminIds.filter((id) => id !== actor.id),
             },
           },
         },
