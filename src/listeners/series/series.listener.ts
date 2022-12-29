@@ -127,7 +127,7 @@ export class SeriesListener {
     try {
       const activity = this._postActivityService.createPayload(series);
 
-      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(groupIds);
+      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
 
       this._notificationService.publishPostNotification({
         key: `${series.id}`,
@@ -210,7 +210,7 @@ export class SeriesListener {
     try {
       const updatedActivity = this._postActivityService.createPayload(newSeries);
       const oldActivity = this._postActivityService.createPayload(oldSeries);
-      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(groupIds);
+      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
 
       this._notificationService.publishPostNotification({
         key: `${id}`,
