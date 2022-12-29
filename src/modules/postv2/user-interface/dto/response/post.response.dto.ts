@@ -18,9 +18,7 @@ import { MediaResponseDto } from './media.response.dto';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 
 export class PostResponseDto {
-  @ApiProperty({
-    type: String,
-  })
+  @ApiProperty()
   @IsUUID()
   public id: string;
 

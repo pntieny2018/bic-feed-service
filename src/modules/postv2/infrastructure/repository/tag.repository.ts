@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize/types';
+import { Op } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { ITagEntity, TagModel } from '../../../../database/models/tag.model';
 import { Tag, TagProperties } from '../../domain/model/tag/tag';
@@ -95,5 +95,5 @@ export class TagRepository implements ITagRepository {
       id: entity.id,
       name: entity.name,
     });
-  }
+   }
 }

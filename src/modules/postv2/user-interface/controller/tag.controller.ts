@@ -81,6 +81,7 @@ export class TagController {
     const { groupId, name } = createTagDto;
     const userId = user.id;
     const tag = this._commandBus.execute(new CreatetagCommand({ groupId, name, userId }));
+    console.log('111111111');
     return this._classTransformer.plainToInstance(TagResponseDto, tag);
   }
 

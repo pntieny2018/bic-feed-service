@@ -26,7 +26,7 @@ import { UpdateTagDto } from './dto/requests/update-tag.dto';
 @ApiSecurity('authorization')
 @Controller({
   version: APP_VERSION,
-  path: 'tags',
+  path: 'tags_old',
 })
 export class TagController {
   public constructor(private _tagService: TagService) {}

@@ -1,6 +1,5 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Tag } from '../../../domain/model/tag/tag';
 import { TagFactory } from '../../../domain/model/tag/tag.factory';
 import {
   ITagRepository,
@@ -9,7 +8,7 @@ import {
 import { DeleteTagCommand } from './delete-tag.command';
 
 @CommandHandler(DeleteTagCommand)
-export class CreateTagHandler implements ICommandHandler<DeleteTagCommand, void> {
+export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void> {
   @Inject(TAG_REPOSITORY)
   private readonly _tagRepository: ITagRepository;
   @Inject() private readonly _tagFactory: TagFactory;

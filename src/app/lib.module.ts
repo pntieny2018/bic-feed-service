@@ -130,14 +130,6 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
       },
       inject: [ConfigService],
     }),
-    I18nModule.forRoot({
-      fallbackLanguage: 'en',
-      loaderOptions: {
-        path: path.join(__dirname, '/i18n/'),
-        watch: true,
-      },
-      typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
-    }),
     InternalEventEmitterModule,
   ],
   providers: [ExternalService],

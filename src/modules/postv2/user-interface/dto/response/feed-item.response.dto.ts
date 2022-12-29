@@ -1,10 +1,7 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { ArticleResponseDto } from '.';
+import { ArticleResponseDto, PostResponseDto } from '.';
 
-export class ArticleInFeedResponseDto extends PickType(ArticleResponseDto, [
-  'id',
-  'title',
-] as const) {}
+export class ArticleInFeedResponseDto extends PickType(PostResponseDto, ['id'] as const) {}
 
 export class FeedItemResponseDto extends PickType(ArticleResponseDto, [
   'id',

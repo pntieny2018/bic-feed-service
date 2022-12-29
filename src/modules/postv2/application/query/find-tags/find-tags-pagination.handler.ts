@@ -16,7 +16,7 @@ export class FindTagsPaginationHandler
   @Inject() private readonly _groupService: GroupService;
 
   public async execute(query: FindTagsPaginationQuery): Promise<FindTagsPaginationResult> {
-    const { groupIds, name, offset, limit } = query;
+    const { groupIds, name, offset, limit } = query.payload;
     const { rows, total } = await this._tagRepo.getPagination({
       name,
       groupIds,
