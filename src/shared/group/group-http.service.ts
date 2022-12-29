@@ -49,7 +49,7 @@ export class GroupHttpService {
         }
       })
     );
-    return response.flat();
+    return [...new Set(response.flat())];
   }
 
   public async getAdminIds(
