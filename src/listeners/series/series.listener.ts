@@ -46,6 +46,7 @@ export class SeriesListener {
       actor: {
         id: series.createdBy,
       },
+      type: PostType.SERIES,
       title: series.title,
       commentsCount: series.commentsCount,
       totalUsersSeen: series.totalUsersSeen,
@@ -67,7 +68,6 @@ export class SeriesListener {
           id: g.groupId,
         })) as any,
       },
-      type: series.type,
       privacy: series.privacy,
     });
 
