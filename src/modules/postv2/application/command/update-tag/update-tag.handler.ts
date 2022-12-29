@@ -8,20 +8,19 @@ import {
 import { UpdatetagCommand } from './update-tag.command';
 
 @CommandHandler(UpdatetagCommand)
-export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, Tag> {
+export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, void> {
   @Inject(TAG_REPOSITORY)
   private readonly _tagRepository: ITagRepository;
 
-  public async execute(command: UpdatetagCommand): Promise<Tag> {
+  public async execute(command: UpdatetagCommand): Promise<void> {
     const { name, id, userId } = command.payload;
     const tag = await this._tagRepository.findOne({ id });
     if (!tag) {
       throw new NotFoundException('Not found');
     }
 
-    const tags = await this._tagRepository.findAll({ groupIds: [tag.groupId] });
-
-    if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
+    const findTagNameInGroup = await this._tagRepository.findOne({ groupId: tag.groupId, name });
+    if (findTagNameInGroup && findTagNameInGroup.id !== id) {
       throw new BadRequestException('Tag name already existed');
     }
 
@@ -33,11 +32,9 @@ export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, Tag> 
       name: name,
       updatedBy: userId,
     });
-
-    await this._tagRepository.save(tag);
-
-    tag.commit();
-
-    return tag;
+    if (tag.isChanged) {
+      await this._tagRepository.update(tag);
+      tag.commit();
+    }
   }
 }

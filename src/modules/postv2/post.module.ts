@@ -5,6 +5,7 @@ import { GroupModule } from '../../shared/group';
 import { CreateTagHandler } from './application/command/create-tag/create-tag.handler';
 import { DeleteTagHandler } from './application/command/delete-tag/delete-tag.handler';
 import { UpdateTagHandler } from './application/command/update-tag/update-tag.handler';
+import { FindTagsPaginationHandler } from './application/query/find-tags/find-tags-pagination.handler';
 import { TagFactory } from './domain/model/tag/tag.factory';
 import { TAG_REPOSITORY } from './domain/repositoty-interface/tag.repository.interface';
 import { TagRepository } from './infrastructure/repository/tag.repository';
@@ -17,7 +18,12 @@ const infrastructure: Provider[] = [
   },
 ];
 
-const application = [CreateTagHandler, UpdateTagHandler, DeleteTagHandler];
+const application = [
+  CreateTagHandler,
+  UpdateTagHandler,
+  DeleteTagHandler,
+  FindTagsPaginationHandler,
+];
 
 const domain = [TagFactory];
 @Module({

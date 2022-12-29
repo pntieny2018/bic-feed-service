@@ -1,16 +1,11 @@
 import { ModuleMetadata, Provider } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { StringHelper } from '../../../../../common/helpers';
 import { Tag } from '../../../domain/model/tag/tag';
 import { TagFactory } from '../../../domain/model/tag/tag.factory';
 import { TAG_REPOSITORY } from '../../../domain/repositoty-interface/tag.repository.interface';
 import { TagRepository } from '../../../infrastructure/repository/tag.repository';
 import { CreatetagCommand } from './create-tag.command';
 import { CreateTagHandler } from './create-tag.handler';
-
-jest.mock('libs/Transactional', () => ({
-  Transactional: () => () => undefined,
-}));
 
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;
@@ -49,15 +44,11 @@ describe('CreateTagHandler', () => {
         groupId: mockData.groupId,
         createdBy: mockData.userId,
         id: mockData.tagId,
-        slug: StringHelper.convertToSlug(mockData.name),
         updatedBy: mockData.userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        totalUsed: 0,
       });
       factory.create = jest.fn().mockResolvedValue(mockTag);
 
-      repository.save = jest.fn().mockReturnThis();
+      repository.create = jest.fn().mockReturnThis();
 
       const command = new CreatetagCommand({
         name: mockData.name,
@@ -72,8 +63,8 @@ describe('CreateTagHandler', () => {
         groupId: mockData.groupId,
         userId: mockData.userId,
       });
-      expect(repository.save).toBeCalledTimes(1);
-      expect(repository.save).toBeCalledWith(mockTag);
+      expect(repository.create).toBeCalledTimes(1);
+      expect(repository.create).toBeCalledWith(mockTag);
       expect(mockTag.commit).toBeCalledTimes(1);
     });
   });

@@ -5,6 +5,7 @@ import { Tag } from '../model/tag/tag';
 export type FindOneTagProps = {
   name?: string;
   id?: string;
+  groupId?: string;
 };
 
 export type FindAllTagsProps = {
@@ -20,7 +21,8 @@ export interface ITagRepository {
   findOne(input: FindOneTagProps): Promise<Tag>;
   findAll(input: FindAllTagsProps): Promise<Tag[]>;
   getPagination(input: GetPaginationTagProps): Promise<PaginationResult<Tag>>;
-  save(data: Tag): Promise<void>;
+  update(data: Tag): Promise<void>;
+  create(data: Tag): Promise<void>;
   delete(id: string): Promise<void>;
 }
 

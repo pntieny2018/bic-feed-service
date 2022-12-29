@@ -7,7 +7,6 @@ export class GetTagDto extends PageOptionsDto {
   @ApiProperty({ type: String, required: false })
   @Type(() => String)
   @IsOptional()
-  @MaxLength(32)
   public name?: string;
 
   @ApiProperty({
@@ -25,5 +24,6 @@ export class GetTagDto extends PageOptionsDto {
   @Expose({
     name: 'group_ids',
   })
+  @IsOptional()
   public groupIds: string[];
 }

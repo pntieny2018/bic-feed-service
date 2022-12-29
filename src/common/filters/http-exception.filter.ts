@@ -11,6 +11,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
   public catch(exception: Error, host: ArgumentsHost): Response {
+    console.log(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     if (exception instanceof ValidatorException) {
@@ -32,15 +33,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
-    let code = HTTP_STATUS_ID.API_SERVER_INTERNAL_ERROR;
-
-    if (status < HttpStatus.INTERNAL_SERVER_ERROR) {
-      code = HTTP_STATUS_ID.API_VALIDATION_ERROR;
-    }
     const res = exception.getResponse();
     return response.status(status).json(
       new ResponseDto({
-        code: code,
+        code: exception.message,
         meta: {
           message: exception.message,
           errors: res['errors'] ? snakecaseKeys(res['errors']) : null,
@@ -128,10 +124,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * @returns Stack array
    */
   private _getStack(exception: HttpException | Error): string[] {
+    if (this._appEnv === 'production') return null;
     const arrayStack = exception.stack.split('\n');
-    if (this._appEnv === 'development') {
-      return arrayStack;
-    }
-    return null;
+    return arrayStack;
   }
 }

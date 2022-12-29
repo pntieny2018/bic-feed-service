@@ -33,10 +33,21 @@ export class Tag extends AggregateRoot {
   private _createdAt: Date;
   private _updatedAt: Date;
   private _totalUsed: number;
+  private _isChanged: boolean;
 
-  public constructor(properties: TagProperties) {
+  public constructor(properties: TagEssentialProperties) {
     super();
-    Object.assign(this, properties);
+    const { id, groupId, name, createdBy, updatedBy } = properties;
+    this._id = id;
+    this._groupId = groupId;
+    this._name = name.trim().toLowerCase();
+    this._slug = StringHelper.convertToSlug(name);
+    this._totalUsed = 0;
+    this._createdBy = createdBy;
+    this._updatedBy = updatedBy;
+    this._createdAt = new Date();
+    this._updatedAt = new Date();
+    this._isChanged = false;
   }
 
   public get id(): string {
@@ -67,17 +78,35 @@ export class Tag extends AggregateRoot {
     return this._updatedBy;
   }
 
+  public get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  public get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  public get isChanged(): boolean {
+    return this._isChanged;
+  }
+
   public increaseTotalUsed(): void {
     this._totalUsed += 1;
   }
 
   public update(properties: Partial<TagProperties>): void {
-    if (this._totalUsed > 0) {
-      throw new UnprocessableEntityException('i18n error');
+    if (!this._name) {
+      throw new Error('Tag name is required');
     }
+    if (this._totalUsed > 0) {
+      throw new Error('i18n error');
+    }
+    const name = properties.name.trim().toLowerCase();
+    if (name === this._name) return;
     this._name = properties.name;
     this._updatedBy = properties.updatedBy;
     this._slug = StringHelper.convertToSlug(properties.name);
+    this._isChanged = true;
   }
 
   public delete(): void {

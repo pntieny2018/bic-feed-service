@@ -14,10 +14,10 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
   @Inject() private readonly _tagFactory: TagFactory;
 
   public async execute(command: DeleteTagCommand): Promise<void> {
-    const { id, userId } = command.payload;
+    const { id } = command.payload;
     const tag = await this._tagRepository.findOne({ id });
     if (!tag) {
-      throw new NotFoundException('Not fond');
+      throw new NotFoundException('The tag found');
     }
 
     tag.delete();

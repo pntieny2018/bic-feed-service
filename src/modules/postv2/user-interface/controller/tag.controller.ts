@@ -1,15 +1,16 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
-  Inject,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -17,7 +18,7 @@ import { CreatetagCommand } from '../../application/command/create-tag/create-ta
 import { TagResponseDto } from '../dto/response';
 import { AuthUser, UserDto } from '../../../auth';
 import { ResponseMessages } from '../../../../common/decorators';
-import { ClassTransformer } from 'class-transformer';
+import { ClassTransformer, TransformInstanceToPlain } from 'class-transformer';
 import { CreateTagDto } from '../dto/request/tag/create-tag.dto';
 import { UpdateTagDto } from '../../../tag/dto/requests/update-tag.dto';
 import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
@@ -34,8 +35,8 @@ import { GetTagDto } from '../dto/request/tag/get-tag.dto';
 })
 export class TagController {
   public constructor(
-    @Inject() private readonly _commandBus: CommandBus,
-    @Inject() private readonly _queryBus: QueryBus
+    private readonly _commandBus: CommandBus,
+    private readonly _queryBus: QueryBus
   ) {}
   private _classTransformer = new ClassTransformer();
   @ApiOperation({ summary: 'Get tags' })
@@ -56,7 +57,11 @@ export class TagController {
       new FindTagsPaginationQuery({ name, groupIds, offset, limit })
     );
 
-    const tags = rows.map((row) => this._classTransformer.plainToInstance(TagResponseDto, row));
+    const tags = rows.map((row) =>
+      this._classTransformer.plainToInstance(TagResponseDto, row, {
+        excludeExtraneousValues: true,
+      })
+    );
 
     return new PageDto<TagResponseDto>(tags, {
       total,
@@ -81,8 +86,9 @@ export class TagController {
     const { groupId, name } = createTagDto;
     const userId = user.id;
     const tag = this._commandBus.execute(new CreatetagCommand({ groupId, name, userId }));
-    console.log('111111111');
-    return this._classTransformer.plainToInstance(TagResponseDto, tag);
+    return this._classTransformer.plainToInstance(TagResponseDto, tag, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @ApiOperation({ summary: 'Update tag' })
@@ -98,7 +104,7 @@ export class TagController {
     @Body() updateTagDto: UpdateTagDto
   ): Promise<void> {
     const { name } = updateTagDto;
-    return this._commandBus.execute(new UpdatetagCommand({ id: tagId, name, userId: user.id }));
+    await this._commandBus.execute(new UpdatetagCommand({ id: tagId, name, userId: user.id }));
   }
 
   @ApiOperation({ summary: 'Delete tag' })

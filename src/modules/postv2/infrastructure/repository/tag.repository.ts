@@ -1,9 +1,9 @@
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { FindOptions, Op } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { ITagEntity, TagModel } from '../../../../database/models/tag.model';
-import { Tag, TagProperties } from '../../domain/model/tag/tag';
+import { Tag } from '../../domain/model/tag/tag';
 import { TagFactory } from '../../domain/model/tag/tag.factory';
 import {
   FindAllTagsProps,
@@ -13,11 +13,10 @@ import {
 } from '../../domain/repositoty-interface/tag.repository.interface';
 
 export class TagRepository implements ITagRepository {
-  public constructor(
-    @InjectModel(TagModel)
-    private readonly _tagModel: typeof TagModel,
-    @Inject() private readonly _tagFactory: TagFactory
-  ) {}
+  @Inject() private readonly _tagFactory: TagFactory;
+
+  @InjectModel(TagModel)
+  private readonly _tagModel: typeof TagModel;
 
   public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<Tag>> {
     const { offset, limit, name, groupIds } = input;
@@ -44,9 +43,9 @@ export class TagRepository implements ITagRepository {
     };
   }
 
-  public async save(data: Tag): Promise<void> {
+  public async create(data: Tag): Promise<void> {
     const property = this._modelToEntity(data);
-    const { id, groupId, name, slug, createdBy, updatedBy } = property;
+    const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = property;
     await this._tagModel.create({
       id,
       name,
@@ -54,7 +53,26 @@ export class TagRepository implements ITagRepository {
       updatedBy,
       createdBy,
       groupId,
+      totalUsed,
     });
+  }
+
+  public async update(data: Tag): Promise<void> {
+    const property = this._modelToEntity(data);
+    const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = property;
+    await this._tagModel.update(
+      {
+        name,
+        slug,
+        updatedBy,
+        createdBy,
+        groupId,
+        totalUsed,
+      },
+      {
+        where: { id },
+      }
+    );
   }
 
   public async delete(id: string): Promise<void> {
@@ -62,11 +80,17 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findOne(input: FindOneTagProps): Promise<Tag> {
-    const entity = await this._tagModel.findOne({
-      where: {
-        id: input.id,
-      },
-    });
+    const findOptions: FindOptions = { where: {} };
+    if (input.id) {
+      findOptions.where['id'] = input.id;
+    }
+    if (input.name) {
+      findOptions.where['name'] = input.name;
+    }
+    if (input.groupId) {
+      findOptions.where['groupId'] = input.groupId;
+    }
+    const entity = await this._tagModel.findOne(findOptions);
     return this._entityToModel(entity);
   }
 
@@ -74,7 +98,7 @@ export class TagRepository implements ITagRepository {
     const { groupIds, name } = input;
     const condition: any = { groupId: groupIds };
     if (name) {
-      condition.name = name;
+      condition.name = name.trim().toLowerCase();
     }
     const enties = await this._tagModel.findAll({
       where: condition,
@@ -85,15 +109,21 @@ export class TagRepository implements ITagRepository {
   }
 
   private _modelToEntity(model: Tag): ITagEntity {
-    const properties = JSON.parse(JSON.stringify(model)) as TagProperties;
-    return properties;
+    return {
+      id: model.id,
+      groupId: model.groupId,
+      name: model.name,
+      slug: model.slug,
+      totalUsed: model.totalUsed,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+      createdBy: model.createdBy,
+      updatedBy: model.updatedBy,
+    };
   }
 
   private _entityToModel(entity: ITagEntity): Tag {
-    return this._tagFactory.reconstitute({
-      ...entity,
-      id: entity.id,
-      name: entity.name,
-    });
-   }
+    if (entity === null) return null;
+    return this._tagFactory.reconstitute(entity);
+  }
 }
