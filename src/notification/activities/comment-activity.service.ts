@@ -58,7 +58,7 @@ export class CommentActivityService {
   ): NotificationActivity {
     const parent = comment.parent;
 
-    const { title, media, mentions, content } = ContentHelper.getInfo(post);
+    const { title, media, mentions, content, targetType } = ContentHelper.getInfo(post);
 
     const activityObject: ActivityObject = {
       id: post.id,
@@ -67,6 +67,7 @@ export class CommentActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
+      contentType: targetType,
       content: content,
       media: media,
       mentions: mentions as any,
