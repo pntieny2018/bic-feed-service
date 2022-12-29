@@ -24,6 +24,7 @@ export class GroupHttpService {
               headers: {
                 user: JSON.stringify({
                   ['token_use']: 'id',
+                  ['cognito:username']: actor.username,
                   ['custom:user_uuid']: actor.id,
                   ['email']: actor.email,
                 }),
