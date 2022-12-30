@@ -531,7 +531,7 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { media, mentions, audience } = updatePostDto;
+      const { media, mentions, audience, setting } = updatePostDto;
 
       let mediaListChanged = [];
       if (media) {
@@ -587,6 +587,18 @@ export class PostService {
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
+
+      if (setting.isImportant) {
+        await this.userMarkReadPostModel.create(
+          {
+            postId: post.id,
+            userId: authUserId,
+          },
+          { transaction }
+        );
+        post.markedReadPost = true;
+      }
+
       await transaction.commit();
 
       return true;
