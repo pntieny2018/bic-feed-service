@@ -786,10 +786,18 @@ export class ArticleService extends PostService {
       );
       article.isDraft = isDraft;
       if (article.setting.isImportant) {
-        await this.userMarkReadPostModel.create({
-          postId: article.id,
-          userId: authUserId,
+        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+          where: {
+            postId: article.id,
+            userId: authUserId,
+          },
         });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create({
+            postId: article.id,
+            userId: authUserId,
+          });
+        }
         article.markedReadPost = true;
       }
       return article;

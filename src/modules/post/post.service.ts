@@ -589,13 +589,22 @@ export class PostService {
       }
 
       if (setting.isImportant) {
-        await this.userMarkReadPostModel.create(
-          {
+        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+          where: {
             postId: post.id,
             userId: authUserId,
           },
-          { transaction }
-        );
+        });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create(
+            {
+              postId: post.id,
+              userId: authUserId,
+            },
+            { ignoreDuplicates: true, transaction }
+          );
+        }
+
         post.markedReadPost = true;
       }
 
@@ -684,10 +693,18 @@ export class PostService {
       post.isDraft = isDraft;
       post.isProcessing = isProcessing;
       if (post.setting.isImportant) {
-        await this.userMarkReadPostModel.create({
-          postId: post.id,
-          userId: authUserId,
+        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+          where: {
+            postId: post.id,
+            userId: authUserId,
+          },
         });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create({
+            postId: post.id,
+            userId: authUserId,
+          });
+        }
         post.markedReadPost = true;
       }
       return post;
