@@ -465,6 +465,7 @@ export class MediaService {
         },
       ],
       where: {
+        type: [MediaType.FILE, MediaType.VIDEO],
         createdAt: {
           [Op.lte]: moment().subtract(4, 'hours').toDate(),
         },
