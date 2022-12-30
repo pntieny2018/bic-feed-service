@@ -589,7 +589,7 @@ export class PostService {
       }
 
       if (setting.isImportant) {
-        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
             postId: post.id,
             userId: authUserId,
@@ -693,7 +693,7 @@ export class PostService {
       post.isDraft = isDraft;
       post.isProcessing = isProcessing;
       if (post.setting.isImportant) {
-        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
             postId: post.id,
             userId: authUserId,
