@@ -225,7 +225,9 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public publishedAt: Date;
 
   @AllowNull(true)
-  @Column
+  @Column({
+    type: DataTypes.JSONB,
+  })
   public errorLog: any;
 
   @CreatedAt

@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { PostModel, PostStatus } from '../database/models/post.model';
 
 @Command({ name: 'post:migrate-status', description: 'Migrate status for all posts' })
-export class UpdatePrivacyPostCommand implements CommandRunner {
+export class MigrateStatusPostCommand implements CommandRunner {
   public constructor(@InjectModel(PostModel) private _postModel: typeof PostModel) {}
 
   public async run(): Promise<any> {
@@ -21,9 +21,7 @@ export class UpdatePrivacyPostCommand implements CommandRunner {
             status = PostStatus.WAITING_SCHEDULE;
           }
         }
-        if (!post.status) {
-          post.update({ status: status });
-        }
+        await post.update({ status: status });
       }
       console.log(`Total ${posts.length}. DONE!`);
     } catch (e) {
