@@ -21,6 +21,7 @@ import { TagService } from '../../modules/tag/tag.service';
 import { ArrayHelper } from '../../common/helpers';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
+import { PostStatus } from '../../database/models/post.model';
 
 @Injectable()
 export class ArticleListener {
@@ -43,7 +44,7 @@ export class ArticleListener {
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     const { article } = event.payload;
-    if (article.isDraft) return;
+    if (article.status === PostStatus.DRAFT) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -55,11 +56,9 @@ export class ArticleListener {
       this._sentryService.captureException(e);
     });
 
-    if (!article.isDraft) {
-      this._tagService
-        .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
-        .catch((ex) => this._logger.debug(ex));
-    }
+    this._tagService
+      .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
+      .catch((ex) => this._logger.debug(ex));
 
     const activity = this._postActivityService.createPayload({
       actor: {
