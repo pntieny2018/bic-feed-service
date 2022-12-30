@@ -42,7 +42,6 @@ export class GroupHttpService {
           this._logger.debug(JSON.stringify(response.data));
 
           const admins = response.data['data']['group_admin']['data'];
-
           return admins.map((admin) => admin.id);
         } catch (ex) {
           return [];
