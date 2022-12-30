@@ -67,6 +67,12 @@ export class ReportContentListener {
       createdAt: payload.details[0].createdAt,
     });
 
+    const filterAdminInfo = {};
+
+    for (const [key, value] of Object.entries(adminInfos.admins)) {
+      filterAdminInfo[key] = value.filter((id) => actor.id !== id);
+    }
+
     const notificationPayload: NotificationPayloadDto<NotificationActivity> = {
       key: payload.id,
       value: {
@@ -75,7 +81,7 @@ export class ReportContentListener {
         data: activity,
         meta: {
           report: {
-            adminInfos: adminInfos.admins,
+            adminInfos: filterAdminInfo,
           },
         },
       },
