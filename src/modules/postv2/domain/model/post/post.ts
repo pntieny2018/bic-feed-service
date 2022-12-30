@@ -41,7 +41,6 @@ export type PostOptionalProperties = Readonly<
     views: number;
     categories: any[];
     series?: any[];
-    hashtagsJson?: any[];
     tagsJson?: any[];
     linkPreviewId?: string;
     cover?: string;
