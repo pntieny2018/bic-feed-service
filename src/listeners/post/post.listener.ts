@@ -208,7 +208,7 @@ export class PostListener {
       isHidden,
     } = newPost;
 
-    if (oldPost.status !== PostStatus.DRAFT) {
+    if (oldPost.status === PostStatus.PUBLISHED) {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
@@ -217,7 +217,7 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (oldPost.status !== PostStatus.DRAFT && status === PostStatus.DRAFT) {
+    if (oldPost.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);

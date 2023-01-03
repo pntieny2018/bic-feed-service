@@ -134,7 +134,7 @@ export class ArticleAppService {
 
     await this._authorityService.checkPostOwner(articleBefore, user.id);
 
-    if (articleBefore.status !== PostStatus.DRAFT) {
+    if (articleBefore.status === PostStatus.PUBLISHED) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
       if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
@@ -182,7 +182,7 @@ export class ArticleAppService {
   public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
     const article = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    if (article.status !== PostStatus.DRAFT) return article;
+    if (article.status === PostStatus.PUBLISHED) return article;
 
     await this._authorityService.checkPostOwner(article, user.id);
     const { audience, setting } = article;

@@ -223,16 +223,7 @@ export class ArticleListener {
       isHidden,
     } = newArticle;
 
-    if (oldArticle.status !== PostStatus.DRAFT) {
-      const mediaIds = media.videos
-        .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
-        .map((i) => i.id);
-      this._mediaService
-        .processVideo(mediaIds)
-        .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
-    }
-
-    if (oldArticle.status !== PostStatus.DRAFT && status === PostStatus.DRAFT) {
+    if (oldArticle.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);

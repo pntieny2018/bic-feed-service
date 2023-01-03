@@ -119,7 +119,7 @@ export class PostAppService {
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
     await this._authorityService.checkPostOwner(postBefore, user.id);
-    if (postBefore.status !== PostStatus.DRAFT) {
+    if (postBefore.status === PostStatus.PUBLISHED) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
 
       let isEnableSetting = false;
@@ -164,7 +164,7 @@ export class PostAppService {
   public async publishPost(user: UserDto, postId: string): Promise<PostResponseDto> {
     const post = await this._postService.get(postId, user, new GetPostDto());
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    if (post.status !== PostStatus.DRAFT) return post;
+    if (post.status === PostStatus.PUBLISHED) return post;
 
     await this._authorityService.checkPostOwner(post, user.id);
     const { audience, setting } = post;
@@ -201,7 +201,7 @@ export class PostAppService {
     }
     await this._authorityService.checkPostOwner(posts[0], user.id);
 
-    if (posts[0].status !== PostStatus.DRAFT) {
+    if (posts[0].status === PostStatus.PUBLISHED) {
       await this._authorityService.checkCanDeletePost(
         user,
         posts[0].groups.map((g) => g.groupId)
