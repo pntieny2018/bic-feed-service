@@ -237,7 +237,7 @@ export class ArticleAppService {
       );
     }
 
-    const articleDeleted = await this._articleService.delete(article, user);
+    const articleDeleted = await this._postService.delete(article, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
         new ArticleHasBeenDeletedEvent({
