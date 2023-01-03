@@ -209,7 +209,7 @@ export class ArticleAppService {
       throw new BadRequestException('Category is required');
     }
 
-    if (article.publishAt && article.publishAt.getTime() > Date.now()) {
+    if (article.publishedAt && article.publishedAt.getTime() > Date.now()) {
       await this._articleService.updateArticleStatusAndLog(
         articleId,
         PostStatus.WAITING_SCHEDULE,

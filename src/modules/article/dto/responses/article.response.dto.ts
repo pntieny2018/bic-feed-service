@@ -110,10 +110,10 @@ export class ArticleResponseDto extends PostResponseDto {
 
   @ApiProperty({
     type: Date,
-    name: 'publish_at',
+    name: 'published_at',
   })
   @Expose()
-  public publishAt?: Date;
+  public publishedAt?: Date;
 
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);

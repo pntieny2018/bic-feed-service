@@ -7,16 +7,17 @@ import { PostModel, PostStatus } from '../../database/models/post.model';
 import { Op } from 'sequelize';
 import moment from 'moment/moment';
 import { ArticleService } from './article.service';
+import { UserService } from '../../shared/user';
+import { UserDto } from '../auth';
 
 @Injectable()
 export class ArticleCronService {
   private _logger = new Logger(ArticleCronService.name);
 
-  protected classTransformer = new ClassTransformer();
-
   public constructor(
     private _articleAppService: ArticleAppService,
     private _articleService: ArticleService,
+    private _userService: UserService,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel
   ) {}
@@ -32,7 +33,20 @@ export class ArticleCronService {
       });
       for (const article of articles) {
         try {
-          await this._articleAppService.publish(article.errorLog, article.id);
+          const userProfile = await this._userService.get(article.createdBy);
+          const userPermission = await this._userService.getPermissions(
+            userProfile.id,
+            JSON.stringify({
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              'cognito:username': userProfile.username,
+            })
+          );
+          const userDTO: UserDto = {
+            id: userProfile.id,
+            profile: userProfile,
+            permissions: userPermission,
+          };
+          await this._articleAppService.publish(userDTO, article.id);
         } catch (e) {
           await this._articleService.updateArticleStatusAndLog(
             article.id,

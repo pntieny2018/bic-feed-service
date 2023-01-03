@@ -489,10 +489,7 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { status: PostStatus.DRAFT, createdBy: authUser.id },
-        ],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }], // Not only draft because schedule feature
       };
     } else {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
@@ -843,7 +840,8 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags, publishedAt } =
+        updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -911,6 +909,9 @@ export class ArticleService extends PostService {
       //if post is draft, isProcessing alway is true
       if (dataUpdate.isProcessing && post.status === PostStatus.DRAFT)
         dataUpdate.isProcessing = false;
+      if (publishedAt) {
+        dataUpdate['publishedAt'] = publishedAt;
+      }
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
