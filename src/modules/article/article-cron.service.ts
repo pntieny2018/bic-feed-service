@@ -46,7 +46,7 @@ export class ArticleCronService {
             profile: userProfile,
             permissions: userPermission,
           };
-          await this._articleAppService.publish(userDTO, article.id);
+          await this._articleAppService.publish(userDTO, article.id, true);
         } catch (e) {
           await this._articleService.updateArticleStatusAndLog(
             article.id,

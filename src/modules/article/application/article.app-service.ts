@@ -179,8 +179,16 @@ export class ArticleAppService {
     }
   }
 
-  public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
-    const article = await this._articleService.get(articleId, user, new GetArticleDto());
+  public async publish(
+    user: UserDto,
+    articleId: string,
+    isSchedule = false
+  ): Promise<ArticleResponseDto> {
+    const article = await this._articleService.get(
+      articleId,
+      isSchedule ? null : user,
+      new GetArticleDto()
+    );
     if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     if (article.status === PostStatus.PUBLISHED) return article;
 
