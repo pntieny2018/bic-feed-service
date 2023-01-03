@@ -28,7 +28,7 @@ export class AuthorityService {
   }
 
   public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
-    if (post.status === PostStatus.PUBLISHED && post.createdBy === user.id) return;
+    if (post.status === PostStatus.DRAFT && post.createdBy === user.id) return;
     if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.profile?.groups ?? [];

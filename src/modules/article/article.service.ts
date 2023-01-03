@@ -489,7 +489,10 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
+        [Op.or]: [
+          { status: PostStatus.PUBLISHED },
+          { status: PostStatus.DRAFT, createdBy: authUser.id },
+        ],
       };
     } else {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
