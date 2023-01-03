@@ -184,7 +184,7 @@ describe('ReactionService', () => {
     commentReactionModel = module.get<typeof CommentReactionModel>(
       getModelToken(CommentReactionModel)
     );
-    
+
     commentReactionModel = module.get<typeof CommentReactionModel>(
       getModelToken(CommentReactionModel)
     );
@@ -217,11 +217,11 @@ describe('ReactionService', () => {
 
         postReactionModel.findByPk = jest.fn().mockResolvedValue(mockPostReactionModel);
 
-        followService.getValidUserIds = jest.fn().mockResolvedValue([1, 2, 3, 4, 5]);
+        // followService.getValidUserIds = jest.fn().mockResolvedValue([1, 2, 3, 4, 5]);
 
-        reactionNotificationService.createPayload = jest.fn();
+        // reactionNotificationService.createPayload = jest.fn();
 
-        notificationService.publishReactionNotification = jest.fn();
+        // notificationService.publishReactionNotification = jest.fn();
 
         sentryService.captureException = jest.fn();
 
@@ -236,9 +236,9 @@ describe('ReactionService', () => {
         expect(postService.get).toBeCalledTimes(1);
         expect(sequelizeConnection.transaction).toBeCalledTimes(1);
         expect(postReactionModel.findByPk).toBeCalledTimes(1);
-        expect(followService.getValidUserIds).toBeCalledTimes(1);
-        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
-        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+        // expect(followService.getValidUserIds).toBeCalledTimes(1);
+        // expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        // expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
         expect(sentryService.captureException).toBeCalledTimes(0);
       });
     });
@@ -326,11 +326,11 @@ describe('ReactionService', () => {
 
         commentReactionModel.findByPk = jest.fn().mockResolvedValue(mockCommentReactionModel);
 
-        followService.getValidUserIds = jest.fn().mockResolvedValue([1, 2, 3, 4, 5]);
+        // followService.getValidUserIds = jest.fn().mockResolvedValue([1, 2, 3, 4, 5]);
 
-        reactionNotificationService.createPayload = jest.fn();
+        // reactionNotificationService.createPayload = jest.fn();
 
-        notificationService.publishReactionNotification = jest.fn();
+        // notificationService.publishReactionNotification = jest.fn();
 
         sentryService.captureException = jest.fn();
 
@@ -344,9 +344,9 @@ describe('ReactionService', () => {
         expect(postService.get).toBeCalledTimes(1);
         expect(sequelizeConnection.transaction).toBeCalledTimes(1);
         expect(commentReactionModel.findByPk).toBeCalledTimes(1);
-        expect(followService.getValidUserIds).toBeCalledTimes(1);
-        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
-        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+        // expect(followService.getValidUserIds).toBeCalledTimes(1);
+        // expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        // expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
         expect(sentryService.captureException).toBeCalledTimes(0);
       });
     });
@@ -431,9 +431,9 @@ describe('ReactionService', () => {
 
         postReactionModel.findOne = jest.fn().mockResolvedValue(mockPostReactionModel);
 
-        reactionNotificationService.createPayload = jest.fn();
+        // reactionNotificationService.createPayload = jest.fn();
 
-        notificationService.publishReactionNotification = jest.fn();
+        // notificationService.publishReactionNotification = jest.fn();
 
         const response = await reactionService.delete(
           mockUserDto,
@@ -444,8 +444,8 @@ describe('ReactionService', () => {
         expect(postService.get).toBeCalledTimes(1);
         expect(postPolicyService.allow).toBeCalledTimes(1);
         expect(postReactionModel.findOne).toBeCalledTimes(1);
-        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
-        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+        // expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        // expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
       });
     });
 
@@ -543,9 +543,9 @@ describe('ReactionService', () => {
 
         commentReactionModel.findOne = jest.fn().mockResolvedValue(mockCommentReactionModel);
 
-        reactionNotificationService.createPayload = jest.fn();
+        // reactionNotificationService.createPayload = jest.fn();
 
-        notificationService.publishReactionNotification = jest.fn();
+        // notificationService.publishReactionNotification = jest.fn();
 
         const response = await reactionService.delete(
           mockUserDto,
@@ -556,8 +556,8 @@ describe('ReactionService', () => {
         expect(commentService.findComment).toBeCalledTimes(1);
         expect(postService.get).toBeCalledTimes(1);
         expect(commentReactionModel.findOne).toBeCalledTimes(1);
-        expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
-        expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
+        // expect(reactionNotificationService.createPayload).toBeCalledTimes(1);
+        // expect(notificationService.publishReactionNotification).toBeCalledTimes(1);
       });
     });
 

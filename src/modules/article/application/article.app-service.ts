@@ -24,9 +24,9 @@ import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
-import { FeedService } from 'src/modules/feed/feed.service';
 import { IPostGroup } from '../../../database/models/post-group.model';
 import { IPost, PostStatus } from '../../../database/models/post.model';
+import { FeedService } from '../../feed/feed.service';
 
 @Injectable()
 export class ArticleAppService {

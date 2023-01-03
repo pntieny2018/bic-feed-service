@@ -43,6 +43,7 @@ import { PostHashtagModel } from '../../../database/models/post-hashtag.model';
 import { PostCategoryModel } from '../../../database/models/post-category.model';
 import { UserSavePostModel } from '../../../database/models/user-save-post.model';
 import { PostTagModel } from '../../../database/models/post-tag.model';
+import { ReportContentDetailModel } from '../../../database/models/report-content-detail.model';
 
 describe('PostService', () => {
   let postService: PostService;
@@ -205,6 +206,12 @@ describe('PostService', () => {
           provide: getModelToken(PostTagModel),
           useValue: {
             destroy: jest.fn(),
+          },
+        },
+        {
+          provide: getModelToken(ReportContentDetailModel),
+          useValue: {
+            findAll: jest.fn(),
           },
         },
       ],

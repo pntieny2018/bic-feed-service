@@ -74,7 +74,7 @@ export interface IPost {
   totalUsersSeen: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
-  isDraft: boolean;
+  isDraft?: boolean;
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;

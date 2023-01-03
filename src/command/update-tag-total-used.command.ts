@@ -1,6 +1,6 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel } from '../database/models/post.model';
+import { PostModel, PostStatus } from '../database/models/post.model';
 import { PostTagModel } from '../database/models/post-tag.model';
 import { TagModel } from '../database/models/tag.model';
 
@@ -24,7 +24,7 @@ export class UpdateTagTotalUsedCommand implements CommandRunner {
         ],
       });
       const totalUsedMapping = tagPosts.reduce((result, current) => {
-        if (!current.post.isDraft) {
+        if (current.post.status === PostStatus.PUBLISHED) {
           if (result[current.tagId]) {
             result[current.tagId] += 1;
           } else {
