@@ -970,4 +970,12 @@ export class ArticleService extends PostService {
       if (article.isLocked) article.content = null;
     }
   }
+
+  public async updateArticleStatusAndLog(
+    articleId: string,
+    status: PostStatus,
+    errorLog: any = null
+  ): Promise<void> {
+    await this.postModel.update({ status, errorLog }, { where: { id: articleId } });
+  }
 }

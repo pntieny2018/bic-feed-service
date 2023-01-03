@@ -182,7 +182,7 @@ export class ArticleAppService {
   public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
     const article = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    if (article.status !== PostStatus.DRAFT) return article;
+    if (article.status === PostStatus.PUBLISHED) return article;
 
     await this._authorityService.checkPostOwner(article, user.id);
     const { audience, setting } = article;
@@ -208,6 +208,17 @@ export class ArticleAppService {
     if (article.categories.length === 0) {
       throw new BadRequestException('Category is required');
     }
+
+    if (article.publishAt && article.publishAt.getTime() > Date.now()) {
+      await this._articleService.updateArticleStatusAndLog(
+        articleId,
+        PostStatus.WAITING_SCHEDULE,
+        user
+      );
+      article.status = PostStatus.WAITING_SCHEDULE;
+      return article;
+    }
+
     article.status = PostStatus.PUBLISHED;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
