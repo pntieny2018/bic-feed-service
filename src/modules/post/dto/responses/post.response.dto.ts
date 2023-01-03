@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsUUID } from 'class-validator';
+import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
@@ -113,9 +113,10 @@ export class PostResponseDto {
 
   @ApiProperty({
     description: 'To know post status',
-    type: PostStatus,
+    enum: PostStatus,
   })
   @Expose()
+  @IsEnum(PostStatus)
   public status: PostStatus;
 
   @ApiProperty({
