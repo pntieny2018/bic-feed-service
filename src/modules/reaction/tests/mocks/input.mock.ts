@@ -6,7 +6,7 @@ import { CommentResponseDto } from '../../../comment/dto/response';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionEnum } from '../../reaction.enum';
 import { NIL as NIL_UUID } from 'uuid';
-import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
+import { PostPrivacy, PostType } from '../../../../database/models/post.model';
 
 export const mockCreateReactionDto = {
   post: {
@@ -83,7 +83,8 @@ export const mockPostResponseDto: PostResponseDto = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  status: PostStatus.PUBLISHED,
+  isDraft: false,
+  isProcessing: false,
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,

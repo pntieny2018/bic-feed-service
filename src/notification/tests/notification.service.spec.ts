@@ -28,7 +28,7 @@ import {
 } from './mocks/input.mock';
 import { CommentService } from '../../modules/comment';
 
-describe.skip('NotificationService', () => {
+describe('NotificationService', () => {
   let notificationService: NotificationService;
   let postActivityService: PostActivityService;
   let reactionActivityService: ReactionActivityService;

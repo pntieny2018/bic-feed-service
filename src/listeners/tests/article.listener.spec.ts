@@ -20,7 +20,7 @@ import { mockedArticleResponse } from '../../modules/article/test/mocks/response
 import { PostActivityService } from '../../notification/activities';
 import { PostService } from '../../modules/post/post.service';
 import { VideoProcessingEndDto } from '../../modules/post/dto/responses/process-video-response.dto';
-import { PostStatus, PostType } from '../../database/models/post.model';
+import { PostType } from '../../database/models/post.model';
 
 describe.skip('ArticleListener', () => {
   let articleListener;
@@ -123,7 +123,7 @@ describe.skip('ArticleListener', () => {
         createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
         type: PostType.ARTICLE,
-        status: PostStatus.PUBLISHED,
+        isDraft: false,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
@@ -173,7 +173,7 @@ describe.skip('ArticleListener', () => {
       article: mockedArticleResponse,
     });
     it('should success even processVideo and saveEditedHistory', async () => {
-      articleHasBeenPublishedEvent.payload.article.status = PostStatus.PUBLISHED;
+      articleHasBeenPublishedEvent.payload.article.isDraft = false;
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
       mediaService.processVideo.mockRejectedValue(new Error('b0d0287a-3ec9-4b9b-8032-2c491d954945'));
       postService.saveEditedHistory.mockRejectedValue(new Error('2'));
@@ -190,7 +190,7 @@ describe.skip('ArticleListener', () => {
 
   describe('ArticleListener.onArticleUpdated', () => {
     const newArticle = JSON.parse(JSON.stringify(mockedArticleResponse));
-    newArticle.status = PostStatus.PUBLISHED;
+    newArticle.isDraft = false;
     const articleHasBeenUpdatedEvent = new ArticleHasBeenUpdatedEvent({
       actor: undefined,
       oldArticle: mockedArticleResponse,

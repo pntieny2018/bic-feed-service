@@ -22,13 +22,14 @@ import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
-import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { GroupService } from '../../shared/group';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
+import { AuthorityService } from '../authority';
 import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
@@ -186,7 +187,7 @@ export class ArticleService extends PostService {
       where: {
         id: ids,
         isHidden: false,
-        status: PostStatus.PUBLISHED,
+        isDraft: false,
       },
     });
 
@@ -297,7 +298,7 @@ export class ArticleService extends PostService {
     }
 
     const conditions = {
-      status: PostStatus.PUBLISHED,
+      isDraft: false,
     };
 
     const articles = await this.postModel.findAll({
@@ -322,7 +323,7 @@ export class ArticleService extends PostService {
     const { limit, offset, order, isProcessing } = getDraftPostDto;
     const condition = {
       createdBy: authUserId,
-      status: PostStatus.DRAFT,
+      isDraft: true,
       type: PostType.ARTICLE,
     };
 
@@ -422,7 +423,7 @@ export class ArticleService extends PostService {
       include: includeRelated,
       where: {
         type: PostType.ARTICLE,
-        status: PostStatus.PUBLISHED,
+        isDraft: false,
       },
       offset,
       limit,
@@ -489,10 +490,7 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { status: PostStatus.DRAFT, createdBy: authUser.id },
-        ],
+        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
@@ -685,7 +683,7 @@ export class ArticleService extends PostService {
         {
           title,
           summary,
-          status: PostStatus.DRAFT,
+          isDraft: true,
           type: PostType.ARTICLE,
           content: content,
           createdBy: authUserId,
@@ -758,7 +756,8 @@ export class ArticleService extends PostService {
       const authUserId = authUser.id;
       const groupIds = article.audience.groups.map((g) => g.id);
 
-      let status = PostStatus.PUBLISHED;
+      let isDraft = false;
+      let isProcessing = false;
       if (
         article.media.videos.filter(
           (m) =>
@@ -767,12 +766,14 @@ export class ArticleService extends PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        status = PostStatus.PROCESSING;
+        isDraft = true;
+        isProcessing = true;
       }
       const postPrivacy = await this.getPrivacy(groupIds);
       await this.postModel.update(
         {
-          status,
+          isDraft,
+          isProcessing,
           privacy: postPrivacy,
           createdAt: new Date(),
         },
@@ -783,7 +784,7 @@ export class ArticleService extends PostService {
           },
         }
       );
-      article.status = status;
+      article.isDraft = isDraft;
       if (article.setting.isImportant) {
         const checkMarkImportant = this.userMarkReadPostModel.findOne({
           where: {
@@ -835,7 +836,7 @@ export class ArticleService extends PostService {
   }
 
   /**
-   * Update Post except status === DRAFT
+   * Update Post except isDraft
    * @param postId postID
    * @param authUser UserDto
    * @param UpdateArticleDto UpdateArticleDto
@@ -868,7 +869,8 @@ export class ArticleService extends PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        dataUpdate['status'] = PostStatus.PROCESSING;
+        dataUpdate['isDraft'] = true;
+        dataUpdate['isProcessing'] = true;
       }
 
       dataUpdate.linkPreviewId = null;
@@ -917,8 +919,7 @@ export class ArticleService extends PostService {
       }
 
       //if post is draft, isProcessing alway is true
-      if (dataUpdate.isProcessing && post.status === PostStatus.DRAFT)
-        dataUpdate.isProcessing = false;
+      if (dataUpdate.isProcessing && post.isDraft === true) dataUpdate.isProcessing = false;
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
