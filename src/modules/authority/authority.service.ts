@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { GroupService } from '../../shared/group';
-import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
+import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { Ability, subject } from '@casl/ability';
@@ -28,7 +28,7 @@ export class AuthorityService {
   }
 
   public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
-    if (post.isDraft && post.createdBy === user.id) return;
+    if (post.status === PostStatus.DRAFT && post.createdBy === user.id) return;
     if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.profile?.groups ?? [];

@@ -1,8 +1,8 @@
-import { PostType } from '../../../../../database/models/post.model';
+import { PostStatus, PostType } from '../../../../../database/models/post.model';
 
 export const mockedArticleUpdated = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
-  isDraft: true,
+  status: PostStatus.DRAFT,
   type: PostType.ARTICLE,
   content: 'bbbbbb',
   hashtags: ['hashtag1'],
@@ -15,7 +15,6 @@ export const mockedArticleUpdated = {
   canShare: true,
   canComment: true,
   canReact: true,
-  isProcessing: false,
   updatedAt: '2022-05-19T07:31:55.504Z',
   createdAt: '2022-05-19T07:31:55.504Z',
   commentsCount: 0,

@@ -21,6 +21,7 @@ import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests'
 import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
+import { PostStatus } from '../../../database/models/post.model';
 
 @Injectable()
 export class SeriesAppService {
@@ -126,7 +127,7 @@ export class SeriesAppService {
     }
     await this._authorityService.checkPostOwner(series[0], user.id);
 
-    if (series[0].isDraft === false) {
+    if (series[0].status === PostStatus.PUBLISHED) {
       await this._authorityService.checkCanDeleteSeries(
         user,
         series[0].groups.map((g) => g.groupId)

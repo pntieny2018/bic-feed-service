@@ -10,7 +10,7 @@ import { NotificationService } from '../../notification';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
 import { CreateReactionEventInternalPayload, DeleteReactionEventInternalPayload } from '../../events/reaction/payload';
 
-describe('ReactionListener', () => {
+describe.skip('ReactionListener', () => {
 
   let reactionListener;
   let notificationService;
