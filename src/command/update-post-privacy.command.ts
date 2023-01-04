@@ -1,6 +1,6 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostStatus } from '../database/models/post.model';
+import { PostModel } from '../database/models/post.model';
 import { PostService } from '../modules/post/post.service';
 
 @Command({ name: 'post:update-privacy', description: 'Update privacy for all posts' })
@@ -17,7 +17,7 @@ export class UpdatePrivacyPostCommand implements CommandRunner {
         raw: true,
         where: {
           privacy: null,
-          status: PostStatus.PUBLISHED,
+          isDraft: false,
         },
       });
       for (const post of posts) {

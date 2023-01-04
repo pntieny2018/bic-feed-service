@@ -21,7 +21,6 @@ import { TagService } from '../../modules/tag/tag.service';
 import { ArrayHelper } from '../../common/helpers';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
-import { PostStatus } from '../../database/models/post.model';
 
 @Injectable()
 export class ArticleListener {
@@ -44,7 +43,7 @@ export class ArticleListener {
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     const { article } = event.payload;
-    if (article.status === PostStatus.DRAFT) return;
+    if (article.isDraft) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -56,9 +55,11 @@ export class ArticleListener {
       this._sentryService.captureException(e);
     });
 
-    this._tagService
-      .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
-      .catch((ex) => this._logger.debug(ex));
+    if (!article.isDraft) {
+      this._tagService
+        .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
+        .catch((ex) => this._logger.debug(ex));
+    }
 
     const activity = this._postActivityService.createPayload({
       actor: {
@@ -71,7 +72,8 @@ export class ArticleListener {
       createdAt: article.createdAt,
       updatedAt: article.updatedAt,
       createdBy: article.createdBy,
-      status: article.status,
+      isDraft: article.isDraft,
+      isProcessing: false,
       setting: {
         canComment: article.canComment,
         canReact: article.canReact,
@@ -104,7 +106,7 @@ export class ArticleListener {
   public async onArticlePublished(event: ArticleHasBeenPublishedEvent): Promise<void> {
     const { article, actor } = event.payload;
     const {
-      status,
+      isDraft,
       id,
       content,
       media,
@@ -127,7 +129,7 @@ export class ArticleListener {
       .processVideo(mediaIds)
       .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
-    if (status === PostStatus.DRAFT) return;
+    if (isDraft) return;
 
     this._postServiceHistory
       .saveEditedHistory(article.id, { oldData: null, newData: article })
@@ -205,7 +207,7 @@ export class ArticleListener {
   public async onArticleUpdated(event: ArticleHasBeenUpdatedEvent): Promise<void> {
     const { oldArticle, newArticle, actor } = event.payload;
     const {
-      status,
+      isDraft,
       id,
       content,
       media,
@@ -223,7 +225,16 @@ export class ArticleListener {
       isHidden,
     } = newArticle;
 
-    if (oldArticle.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
+    if (oldArticle.isDraft === false) {
+      const mediaIds = media.videos
+        .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
+        .map((i) => i.id);
+      this._mediaService
+        .processVideo(mediaIds)
+        .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
+    }
+
+    if (oldArticle.isDraft === false && isDraft === true) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
@@ -235,7 +246,7 @@ export class ArticleListener {
       }
     }
 
-    if (status === PostStatus.DRAFT) return;
+    if (isDraft) return;
 
     this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })

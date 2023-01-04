@@ -1,5 +1,6 @@
 import { MentionableType } from '../../../common/constants';
-import { PostPrivacy, PostStatus, PostType } from '../../../database/models/post.model';
+import { ObjectHelper } from '../../../common/helpers';
+import { PostPrivacy, PostType } from '../../../database/models/post.model';
 import { UserDto } from '../../../modules/auth';
 import { PostResponseDto } from '../../../modules/post/dto/responses';
 import { GroupPrivacy } from '../../../shared/group/dto';
@@ -43,7 +44,8 @@ export const mockPostResponseDto: PostResponseDto = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  status: PostStatus.PUBLISHED,
+  isDraft: false,
+  isProcessing: false,
   actor: mockUserSharedDto,
   mentions: {},
   commentsCount: 0,

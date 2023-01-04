@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { PostPrivacy, PostStatus, PostType } from '../../../../../database/models/post.model';
+import { IPost, PostPrivacy, PostType } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { PostResponseDto } from '../../../dto/responses';
 
@@ -29,7 +29,8 @@ export const mockedPostResponse: PostResponseDto = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  status: PostStatus.DRAFT,
+  isDraft: true,
+  isProcessing: false,
   actor: {
     id: '7251dac7-5088-4a33-b900-d1b058edaf98',
     username: 'quannhac',

@@ -12,7 +12,7 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
-import { TargetType } from '../../report-content/contstants';
+import { ReportStatus, TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
@@ -24,9 +24,9 @@ import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
+import { FeedService } from 'src/modules/feed/feed.service';
 import { IPostGroup } from '../../../database/models/post-group.model';
-import { IPost, PostStatus } from '../../../database/models/post.model';
-import { FeedService } from '../../feed/feed.service';
+import { IPost } from '../../../database/models/post.model';
 
 @Injectable()
 export class ArticleAppService {
@@ -65,7 +65,7 @@ export class ArticleAppService {
     const article = {
       privacy: articleResponseDto.privacy,
       createdBy: articleResponseDto.createdBy,
-      status: articleResponseDto.status,
+      isDraft: articleResponseDto.isDraft,
       groups: articleResponseDto.audience.groups.map(
         (g) =>
           ({
@@ -134,7 +134,7 @@ export class ArticleAppService {
 
     await this._authorityService.checkPostOwner(articleBefore, user.id);
 
-    if (articleBefore.status === PostStatus.PUBLISHED) {
+    if (articleBefore.isDraft === false) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
       if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
@@ -182,7 +182,7 @@ export class ArticleAppService {
   public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
     const article = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    if (article.status === PostStatus.PUBLISHED) return article;
+    if (article.isDraft === false) return article;
 
     await this._authorityService.checkPostOwner(article, user.id);
     const { audience, setting } = article;
@@ -208,7 +208,7 @@ export class ArticleAppService {
     if (article.categories.length === 0) {
       throw new BadRequestException('Category is required');
     }
-    article.status = PostStatus.PUBLISHED;
+    article.isDraft = false;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
@@ -230,7 +230,7 @@ export class ArticleAppService {
     const article = articles[0];
     await this._authorityService.checkPostOwner(article, user.id);
 
-    if (article.status === PostStatus.PUBLISHED) {
+    if (article.isDraft === false) {
       await this._authorityService.checkCanDeletePost(
         user,
         article.groups.map((g) => g.groupId)

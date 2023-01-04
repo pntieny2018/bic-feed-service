@@ -4,7 +4,7 @@ import { FeedService } from 'src/modules/feed/feed.service';
 import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
-import { PostStatus, PostType } from '../../database/models/post.model';
+import { PostType } from '../../database/models/post.model';
 import {
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
@@ -35,7 +35,7 @@ export class SeriesListener {
   @On(SeriesHasBeenDeletedEvent)
   public async onSeriesDeleted(event: SeriesHasBeenDeletedEvent): Promise<void> {
     const { series } = event.payload;
-    if (series.status === PostStatus.DRAFT) return;
+    if (series.isDraft) return;
 
     this._postServiceHistory.deleteEditedHistory(series.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -56,7 +56,8 @@ export class SeriesListener {
       createdAt: series.createdAt,
       updatedAt: series.updatedAt,
       createdBy: series.createdBy,
-      status: series.status,
+      isDraft: series.isDraft,
+      isProcessing: false,
       setting: {
         canComment: series.canComment,
         canReact: series.canReact,
