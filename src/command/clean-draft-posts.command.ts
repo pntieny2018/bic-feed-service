@@ -26,7 +26,7 @@ export class CleanDraftPostCommand implements CommandRunner {
         post.destroy({
           force: true,
         });
-        console.log(`Deleted ${post.id}`);
+        console.log(`Deleted  ${post.id}`);
       }
 
       const postIds = posts.map((post) => post.id);
