@@ -22,6 +22,7 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
+import { GetPostsByParamsDto } from '../dto/requests/get-posts-by-params.dto';
 
 @Injectable()
 export class PostAppService {
@@ -42,6 +43,25 @@ export class PostAppService {
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._postService.getDrafts(user.id, getDraftPostDto);
+  }
+
+  public async getsByParams(
+    user: UserDto,
+    getPostsByParamsDto: GetPostsByParamsDto
+  ): Promise<PageDto<PostResponseDto>> {
+    const { limit, offset, order, status } = getPostsByParamsDto;
+    const condition = {
+      createdBy: user.id,
+    };
+    if (status) {
+      user['status'] = status;
+    }
+    const result = await this._postService.getsAndCount(condition, order, { limit, offset });
+    return new PageDto<PostResponseDto>(result.data, {
+      total: result.count,
+      limit,
+      offset,
+    });
   }
 
   public async getPost(
