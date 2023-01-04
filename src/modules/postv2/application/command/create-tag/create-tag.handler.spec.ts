@@ -1,7 +1,7 @@
 import { ModuleMetadata, Provider } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Tag } from '../../../domain/model/tag/tag';
-import { TagFactory } from '../../../domain/model/tag/tag.factory';
+import { TagFactory } from '../../../domain/factory/tag.factory';
 import { TAG_REPOSITORY } from '../../../domain/repositoty-interface/tag.repository.interface';
 import { TagRepository } from '../../../infrastructure/repository/tag.repository';
 import { CreatetagCommand } from './create-tag.command';

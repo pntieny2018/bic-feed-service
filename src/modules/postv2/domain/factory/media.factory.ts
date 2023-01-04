@@ -1,8 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { MediaStatus, MediaType, PostPrivacy, PostType } from '../../../data-type';
-import { Media } from './media';
-import { Post, PostProperties } from './post';
+import { MediaStatus, MediaType } from '../../data-type';
+import { Media, MediaProperties } from '../model/media/media';
 
 type CreateMediaOptions = Readonly<{
   id: string;
@@ -14,12 +13,13 @@ type CreateMediaOptions = Readonly<{
   height: number;
   type: MediaType;
   createdBy: string;
+  mimeType: string;
+  extension: string;
   status: MediaStatus;
   createdAt: Date;
-  updatedAt: Date;
 }>;
 
-export class PostFactory {
+export class MediaFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
   public create(options: CreateMediaOptions): any {
@@ -34,8 +34,9 @@ export class PostFactory {
       type,
       createdBy,
       status,
+      mimeType,
+      extension,
       createdAt,
-      updatedAt,
     } = options;
     return this._eventPublisher.mergeObjectContext(
       new Media({
@@ -47,16 +48,16 @@ export class PostFactory {
         width,
         height,
         type,
+        mimeType,
+        extension,
         createdBy,
-        updatedBy: createdBy,
         status,
         createdAt,
-        updatedAt,
       })
     );
   }
 
-  public reconstitute(properties: PostProperties): Post {
-    return this._eventPublisher.mergeObjectContext(new Post(properties));
+  public reconstitute(properties: MediaProperties): Media {
+    return this._eventPublisher.mergeObjectContext(new Media(properties));
   }
 }

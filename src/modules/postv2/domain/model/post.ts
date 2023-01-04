@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@nestjs/cqrs';
-import { PostPrivacy, PostType } from '../../../data-type';
+import { PostPrivacy, PostType } from '../../data-type';
 
 export type PostEssentialProperties = Readonly<
   Required<{

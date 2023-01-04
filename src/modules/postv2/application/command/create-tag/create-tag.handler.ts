@@ -1,7 +1,7 @@
 import { BadRequestException, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Tag } from '../../../domain/model/tag/tag';
-import { TagFactory } from '../../../domain/model/tag/tag.factory';
+import { TagFactory } from '../../../domain/factory/tag.factory';
 import {
   ITagRepository,
   TAG_REPOSITORY,

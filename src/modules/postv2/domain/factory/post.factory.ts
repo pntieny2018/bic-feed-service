@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { PostPrivacy, PostType } from '../../../data-type';
-import { Post, PostProperties } from './post';
+import { PostPrivacy, PostType } from '../../data-type';
+import { Post, PostProperties } from '../model/post';
 
 type CreatePostOptions = Readonly<{
   id: string;

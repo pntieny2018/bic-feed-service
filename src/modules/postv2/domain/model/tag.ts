@@ -8,12 +8,12 @@ export type TagEssentialProperties = Readonly<
     groupId: string;
     name: string;
     createdBy: string;
-    updatedBy: string;
   }>
 >;
 
 export type TagOptionalProperties = Readonly<
   Partial<{
+    updatedBy: string;
     slug: string;
     createdAt: Date;
     updatedAt: Date;
@@ -37,14 +37,14 @@ export class Tag extends AggregateRoot {
 
   public constructor(properties: TagEssentialProperties) {
     super();
-    const { id, groupId, name, createdBy, updatedBy } = properties;
+    const { id, groupId, name, createdBy } = properties;
     this._id = id;
     this._groupId = groupId;
     this._name = name.trim().toLowerCase();
     this._slug = StringHelper.convertToSlug(name);
     this._totalUsed = 0;
     this._createdBy = createdBy;
-    this._updatedBy = updatedBy;
+    this._updatedBy = createdBy;
     this._createdAt = new Date();
     this._updatedAt = new Date();
     this._isChanged = false;

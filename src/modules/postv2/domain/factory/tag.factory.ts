@@ -1,7 +1,7 @@
 import { BadRequestException, Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
-import { Tag, TagProperties } from './tag';
+import { Tag, TagProperties } from '../model/tag/tag';
 
 type CreateTagOptions = Readonly<{
   name: string;
@@ -23,7 +23,6 @@ export class TagFactory {
         name,
         groupId,
         createdBy,
-        updatedBy: createdBy,
       })
     );
   }

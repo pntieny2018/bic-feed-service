@@ -1,6 +1,6 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { TagFactory } from '../../../domain/model/tag/tag.factory';
+import { TagFactory } from '../../../domain/factory/tag.factory';
 import {
   ITagRepository,
   TAG_REPOSITORY,

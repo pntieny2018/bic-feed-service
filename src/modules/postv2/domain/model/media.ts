@@ -34,6 +34,7 @@ export type MediaProperties = MediaEssentialProperties & Required<MediaOptionalP
 export class Media extends AggregateRoot {
   private _id: string;
   private _createdBy: string;
+  private _updatedBy: string;
   private _url: string;
   private _type: MediaType;
   private _createdAt?: Date;
@@ -51,19 +52,38 @@ export class Media extends AggregateRoot {
     url: string;
   }[];
 
-  public constructor(properties: MediaProperties) {
+  public constructor(properties: MediaEssentialProperties & MediaOptionalProperties) {
     super();
-    const { id, url, name, type, createdBy } = properties;
+    const {
+      id,
+      url,
+      name,
+      type,
+      createdBy,
+      originName,
+      mimeType,
+      width,
+      height,
+      size,
+      extension,
+      status,
+      thumbnails,
+    } = properties;
     this._id = id;
-    this._groupId = groupId;
-    this._name = name.trim().toLowerCase();
-    this._slug = StringHelper.convertToSlug(name);
-    this._totalUsed = 0;
+    this._url = url;
+    this._name = name;
+    this._type = type;
+    this._status = status;
+    this._originName = originName;
+    this._mimeType = mimeType;
+    this._width = width ?? 0;
+    this._height = height ?? 0;
+    this._size = size ?? 0;
+    this._extension = extension;
     this._createdBy = createdBy;
-    this._updatedBy = updatedBy;
+    this._updatedBy = createdBy;
+    this._thumbnails = thumbnails ?? null;
     this._createdAt = new Date();
-    this._updatedAt = new Date();
-    this._isChanged = false;
   }
 
   public get id(): string {
@@ -90,17 +110,11 @@ export class Media extends AggregateRoot {
     return this._mimeType;
   }
 
-
   public get status(): string {
     return this._status;
   }
 
-
   public update(): void {
-    this.isDraft = false;
-  }
-
-  public publish(): void {
-    this.isDraft = false;
+  //  this.isDraft = false;
   }
 }
