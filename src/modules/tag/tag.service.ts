@@ -13,12 +13,14 @@ import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
 import { GroupService } from '../../shared/group';
+import { PostModel } from '../../database/models/post.model';
 
 @Injectable()
 export class TagService {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
     @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
+    @InjectModel(PostModel) private _postModel: typeof PostModel,
     private readonly _groupService: GroupService
   ) {}
 
@@ -167,6 +169,11 @@ export class TagService {
     if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
+    const postTags = await this._postTagModel.findAll({ where: { tagId: tagId } });
+    await this._postModel.update(
+      { tagsJson: null },
+      { where: { id: postTags.map((e) => e.postId) } }
+    );
     await this._postTagModel.destroy({ where: { tagId: tagId } });
     await tag.destroy();
     return true;
