@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { ClassTransformer } from 'class-transformer';
 import { ArticleAppService } from './application/article.app-service';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostStatus } from '../../database/models/post.model';
-import { Op } from 'sequelize';
+import { IPost, PostModel, PostStatus } from '../../database/models/post.model';
+import { Op, WhereOptions } from 'sequelize';
 import moment from 'moment/moment';
 import { ArticleService } from './article.service';
 import { UserService } from '../../shared/user';
@@ -22,14 +21,35 @@ export class ArticleCronService {
     private _postModel: typeof PostModel
   ) {}
 
+  private async _getsRecursive(
+    conditions: WhereOptions,
+    _limit = 1000,
+    _offset = 0,
+    _posts: IPost[] = [],
+    _lastResultLength = 0
+  ): Promise<IPost[]> {
+    if (_offset > 0 && _lastResultLength < _limit) return _posts;
+    const posts = await this._postModel.findAll({
+      where: conditions,
+      limit: _limit,
+      offset: _offset,
+    });
+    // console.log('posts: ', posts.map(e=>e.id))
+    return this._getsRecursive(
+      conditions,
+      _limit,
+      _offset + _limit,
+      _posts.concat(posts),
+      posts.length
+    );
+  }
+
   @Cron(CronExpression.EVERY_MINUTE)
   private async _jobSchedulePublishArticle(): Promise<void> {
     try {
-      const articles = await this._postModel.findAll({
-        where: {
-          status: PostStatus.WAITING_SCHEDULE,
-          publishedAt: { [Op.lte]: moment().toDate() },
-        },
+      const articles = await this._getsRecursive({
+        status: PostStatus.WAITING_SCHEDULE,
+        publishedAt: { [Op.lte]: moment().toDate() },
       });
       for (const article of articles) {
         try {
