@@ -115,7 +115,7 @@ export class PostListener {
       .processVideo(mediaIds)
       .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
 
-    if (status === PostStatus.DRAFT) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     const activity = this._postActivityService.createPayload(post);
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
