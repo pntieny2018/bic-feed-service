@@ -1030,6 +1030,7 @@ export class PostService {
         attributes: [],
         where: {
           groupId: groupIds,
+          isArchived: { [Op.not]: true },
         },
       });
     }
@@ -1278,6 +1279,15 @@ export class PostService {
             userId,
           },
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: {
+            isArchived: { [Op.not]: true },
+          },
+        },
       ],
       subQuery: false,
       where: conditions,
@@ -1413,6 +1423,7 @@ export class PostService {
           attributes: [],
           where: {
             groupId: groupIds,
+            isArchived: { [Op.not]: true },
           },
         },
       ],
