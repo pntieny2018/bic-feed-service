@@ -20,6 +20,7 @@ import { ArticleBindingService } from './article-binding.service';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchModule } from '../search';
 import { TagModule } from '../tag';
+import { ArticleCronService } from './article-cron.service';
 @Module({
   imports: [
     PostModule,
@@ -45,6 +46,7 @@ import { TagModule } from '../tag';
     ArticleBindingService,
     CanUseCategoryConstraint,
     CanUseSeriesConstraint,
+    ArticleCronService,
   ],
   exports: [ArticleService],
 })

@@ -16,6 +16,7 @@ import { SearchService } from '../../modules/search/search.service';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
 import { GroupHttpService } from '../../shared/group';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class SeriesListener {
@@ -126,21 +127,25 @@ export class SeriesListener {
     try {
       const activity = this._postActivityService.createPayload(series);
 
-      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
+      let groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
 
-      this._notificationService.publishPostNotification({
-        key: `${series.id}`,
-        value: {
-          actor,
-          event: event.getEventName(),
-          data: activity,
-          meta: {
-            series: {
-              targetUserIds: groupAdminIds.filter((id) => id !== actor.id),
+      groupAdminIds = groupAdminIds.filter((id) => id !== actor.id);
+
+      if (groupAdminIds.length) {
+        this._notificationService.publishPostNotification({
+          key: `${series.id}`,
+          value: {
+            actor,
+            event: event.getEventName(),
+            data: activity,
+            meta: {
+              series: {
+                targetUserIds: groupAdminIds,
+              },
             },
           },
-        },
-      });
+        });
+      }
     } catch (ex) {
       this._logger.error(ex);
     }
@@ -207,9 +212,44 @@ export class SeriesListener {
     ]);
 
     try {
+      // Fanout to write post to all news feed of user follow group audience
+      this._feedPublisherService.fanoutOnWrite(
+        actor.id,
+        id,
+        audience.groups.map((g) => g.id),
+        oldSeries.audience.groups.map((g) => g.id)
+      );
+    } catch (error) {
+      this._logger.error(JSON.stringify(error?.stack));
+      this._sentryService.captureException(error);
+    }
+
+    try {
       const updatedActivity = this._postActivityService.createPayload(newSeries);
       const oldActivity = this._postActivityService.createPayload(oldSeries);
-      const groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
+      const oldGroupId = oldSeries.audience.groups.map((g) => g.id);
+
+      if (groupIds.length < oldGroupId.length) {
+        return;
+      }
+      const newGroupId = ArrayHelper.arrDifferenceElements<string>(groupIds, oldGroupId);
+
+      if (!newGroupId.length) {
+        return;
+      }
+      const newGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, newGroupId);
+      const oldGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, oldGroupId);
+
+      let filterGroupAdminIds = ArrayHelper.arrDifferenceElements<string>(
+        newGroupAdminIds,
+        oldGroupAdminIds
+      );
+
+      filterGroupAdminIds = filterGroupAdminIds.filter((id) => id !== actor.id);
+
+      if (!filterGroupAdminIds.length) {
+        return;
+      }
 
       this._notificationService.publishPostNotification({
         key: `${id}`,
@@ -222,26 +262,13 @@ export class SeriesListener {
               oldData: oldActivity,
             },
             series: {
-              targetUserIds: groupAdminIds.filter((id) => id !== actor.id),
+              targetUserIds: filterGroupAdminIds,
             },
           },
         },
       });
     } catch (ex) {
       this._logger.error(ex);
-    }
-
-    try {
-      // Fanout to write post to all news feed of user follow group audience
-      this._feedPublisherService.fanoutOnWrite(
-        actor.id,
-        id,
-        audience.groups.map((g) => g.id),
-        oldSeries.audience.groups.map((g) => g.id)
-      );
-    } catch (error) {
-      this._logger.error(JSON.stringify(error?.stack));
-      this._sentryService.captureException(error);
     }
   }
 }

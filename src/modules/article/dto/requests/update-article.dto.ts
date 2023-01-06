@@ -4,6 +4,7 @@ import { UpdatePostDto } from '../../../post/dto/requests';
 import { Expose, Transform } from 'class-transformer';
 import { CanUseSeries } from '../../validators/can-use-series.validator';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
+import { PostStatus } from '../../../../database/models/post.model';
 
 export class CoverMediaDto {
   public id: string;
@@ -66,9 +67,18 @@ export class UpdateArticleDto extends UpdatePostDto {
     },
   })
   @IsNotEmpty()
-  @ValidateIf((i) => i.isDraft === false)
+  @ValidateIf((i) => i.status === PostStatus.PUBLISHED)
   @Expose({
     name: 'cover_media',
   })
   public coverMedia: CoverMediaDto;
+
+  @ApiProperty({
+    type: String,
+  })
+  @Expose({
+    name: 'published_at',
+  })
+  @IsOptional()
+  public publishedAt?: Date = null;
 }
