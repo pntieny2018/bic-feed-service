@@ -187,7 +187,7 @@ export class ArticleAppService {
               isAdded: false,
               articleIds: [articleId],
               seriesId: seriesId,
-              actor: user.profile,
+              actor: user,
             })
           );
         }
