@@ -1,4 +1,4 @@
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -37,6 +37,25 @@ export class GetUserFollowsDto {
     name: 'group_ids',
   })
   public groupIds: string[];
+
+  @ApiProperty({
+    type: [String],
+    required: false,
+    name: 'old_group_ids',
+  })
+  @Type(() => Array)
+  @IsUUID(4, { each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string' && !value.includes(',')) {
+      return [value];
+    }
+    return value;
+  })
+  @Expose({
+    name: 'old_group_ids',
+  })
+  @IsOptional()
+  public oldGroupIds?: string[];
 
   @ApiProperty({
     name: 'follow_id',

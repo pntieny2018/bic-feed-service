@@ -19,6 +19,7 @@ export class FollowController {
     return this._followService.gets(
       getUserFollowsDto.ignoreUserIds,
       getUserFollowsDto.groupIds,
+      getUserFollowsDto.oldGroupIds,
       getUserFollowsDto.followId,
       getUserFollowsDto.limit
     );
