@@ -172,27 +172,9 @@ export class ArticleAppService {
         new ArticleHasBeenUpdatedEvent({
           oldArticle: articleBefore,
           newArticle: articleUpdated,
-          actor: user.profile,
+          actor: user,
         })
       );
-
-      if (series?.length > 0 && articleUpdated.isDraft !== true) {
-        const oldSeriesIds = articleBefore.series.map((s) => s.id) ?? [];
-
-        const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
-
-        for (const seriesId of newSeriesIds) {
-          this._eventEmitter.emit(
-            new SeriesAddedArticlesEvent({
-              isAdded: false,
-              articleIds: [articleId],
-              seriesId: seriesId,
-              actor: user,
-            })
-          );
-        }
-      }
-
       return articleUpdated;
     }
   }
@@ -234,22 +216,10 @@ export class ArticleAppService {
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
         article: articleUpdated,
-        actor: user.profile,
+        actor: user,
       })
     );
 
-    if (article.series.length > 0) {
-      for (const sr of article.series) {
-        this._eventEmitter.emit(
-          new SeriesAddedArticlesEvent({
-            isAdded: false,
-            articleIds: [articleId],
-            seriesId: sr.id,
-            actor: user.profile,
-          })
-        );
-      }
-    }
     return articleUpdated;
   }
 
