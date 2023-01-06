@@ -27,6 +27,7 @@ import { TagService } from '../../tag/tag.service';
 import { FeedService } from 'src/modules/feed/feed.service';
 import { IPostGroup } from '../../../database/models/post-group.model';
 import { IPost } from '../../../database/models/post.model';
+import { SeriesAddedArticlesEvent } from '../../../events/series';
 
 @Injectable()
 export class ArticleAppService {
@@ -212,12 +213,26 @@ export class ArticleAppService {
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
+
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
         article: articleUpdated,
         actor: user.profile,
       })
     );
+
+    if (article.series.length > 0) {
+      for (const sr of article.series) {
+        this._eventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [articleId],
+            seriesId: sr.id,
+            actor: user.profile,
+          })
+        );
+      }
+    }
     return articleUpdated;
   }
 
