@@ -843,7 +843,8 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags, publishedAt } =
+        updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -911,6 +912,9 @@ export class ArticleService extends PostService {
       //if post is draft, isProcessing alway is true
       if (dataUpdate.isProcessing && post.status === PostStatus.DRAFT)
         dataUpdate.isProcessing = false;
+      if (publishedAt) {
+        dataUpdate['publishedAt'] = publishedAt;
+      }
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
@@ -972,5 +976,13 @@ export class ArticleService extends PostService {
     for (const article of articles) {
       if (article.isLocked) article.content = null;
     }
+  }
+
+  public async updateArticleStatusAndLog(
+    articleId: string,
+    status: PostStatus,
+    errorLog: any = null
+  ): Promise<void> {
+    await this.postModel.update({ status, errorLog }, { where: { id: articleId } });
   }
 }

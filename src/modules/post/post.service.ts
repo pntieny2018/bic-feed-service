@@ -2,11 +2,19 @@ import { SentryService } from '@app/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
+import {
+  FindAttributeOptions,
+  FindOptions,
+  Includeable,
+  Op,
+  QueryTypes,
+  Transaction,
+  WhereOptions,
+} from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { EntityIdDto, PageDto } from '../../common/dto';
+import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
@@ -114,7 +122,22 @@ export class PostService {
 
     if (isProcessing) condition.status = PostStatus.PROCESSING;
 
+    const result = await this.getsAndCount(condition, order, { limit, offset });
+
+    return new PageDto<PostResponseDto>(result.data, {
+      total: result.count,
+      limit,
+      offset,
+    });
+  }
+
+  public async getsAndCount(
+    condition: WhereOptions<IPost>,
+    order?: OrderEnum,
+    otherParams?: FindOptions
+  ): Promise<{ data: PostResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });
+
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
@@ -124,11 +147,12 @@ export class PostService {
     });
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
-      attributes,
       include,
-      order: [['createdAt', order]],
-      offset,
-      limit,
+      order: [
+        ['publishedAt', order],
+        ['createdAt', order],
+      ],
+      ...otherParams,
     });
     const jsonPosts = rows.map((r) => r.toJSON());
     const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
@@ -139,20 +163,13 @@ export class PostService {
     });
 
     await this.postBinding.bindCommunity(postsBindedData);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
-      excludeExtraneousValues: true,
-    });
 
-    const total = await this.postModel.count<PostModel>({
-      where: condition,
-      attributes,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      total,
-      limit,
-      offset,
-    });
+    return {
+      data: this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+        excludeExtraneousValues: true,
+      }),
+      count: await this.postModel.count<PostModel>({ where: condition, attributes }),
+    };
   }
 
   /**
@@ -1444,6 +1461,22 @@ export class PostService {
         totalSeries: 0,
       };
     });
+  }
+
+  public async getPostByGroupIdsAndParam(groupIds: string[], params: WhereOptions): Promise<any> {
+    const postGroups = await this.postGroupModel.findAll({
+      where: { groupId: groupIds },
+      attributes: ['groupId'],
+      include: [
+        {
+          model: PostModel,
+          required: true,
+          where: params,
+          as: 'post',
+        },
+      ],
+    });
+    return postGroups.map((r) => r.toJSON());
   }
 
   public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
