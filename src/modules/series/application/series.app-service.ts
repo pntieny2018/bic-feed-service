@@ -221,6 +221,7 @@ export class SeriesAppService {
     await this._seriesService.addArticles(series[0], articleIds);
     this._eventEmitter.emit(
       new SeriesAddedArticlesEvent({
+        isAdded: true,
         actor: user,
         seriesId,
         articleIds,
