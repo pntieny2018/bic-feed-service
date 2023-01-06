@@ -177,7 +177,7 @@ export class ArticleAppService {
       );
 
       if (series?.length > 0 && articleUpdated.isDraft !== true) {
-        const oldSeriesIds = articleBefore.series.map((s) => s.id);
+        const oldSeriesIds = articleBefore.series.map((s) => s.id) ?? [];
 
         const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
 
