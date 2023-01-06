@@ -187,9 +187,9 @@ export class FollowService {
     followId = 0,
     limit = 1000
   ): Promise<FollowsDto> {
-    this._logger.debug(
-      `[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}. groupIds: ${groupIds}`
-    );
+    this._logger.debug(`[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}`);
+    this._logger.debug(`[filterUserFollows]:groupIds: ${groupIds}`);
+    this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
       const filterConditions =
         oldGroupIds && oldGroupIds.length
