@@ -2,11 +2,19 @@ import { SentryService } from '@app/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
+import {
+  FindAttributeOptions,
+  FindOptions,
+  Includeable,
+  Op,
+  QueryTypes,
+  Transaction,
+  WhereOptions,
+} from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { EntityIdDto, PageDto } from '../../common/dto';
+import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
@@ -23,7 +31,13 @@ import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
-import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
+import {
+  IPost,
+  PostModel,
+  PostPrivacy,
+  PostStatus,
+  PostType,
+} from '../../database/models/post.model';
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
@@ -102,13 +116,28 @@ export class PostService {
     const { limit, offset, order, isProcessing } = getDraftPostDto;
     const condition = {
       createdBy: authUserId,
-      isDraft: true,
+      status: PostStatus.DRAFT,
       type: PostType.POST,
     };
 
-    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
+    if (isProcessing) condition.status = PostStatus.PROCESSING;
 
+    const result = await this.getsAndCount(condition, order, { limit, offset });
+
+    return new PageDto<PostResponseDto>(result.data, {
+      total: result.count,
+      limit,
+      offset,
+    });
+  }
+
+  public async getsAndCount(
+    condition: WhereOptions<IPost>,
+    order?: OrderEnum,
+    otherParams?: FindOptions
+  ): Promise<{ data: PostResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });
+
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
@@ -118,11 +147,12 @@ export class PostService {
     });
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
-      attributes,
       include,
-      order: [['createdAt', order]],
-      offset,
-      limit,
+      order: [
+        ['publishedAt', order],
+        ['createdAt', order],
+      ],
+      ...otherParams,
     });
     const jsonPosts = rows.map((r) => r.toJSON());
     const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
@@ -133,20 +163,13 @@ export class PostService {
     });
 
     await this.postBinding.bindCommunity(postsBindedData);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
-      excludeExtraneousValues: true,
-    });
 
-    const total = await this.postModel.count<PostModel>({
-      where: condition,
-      attributes,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      total,
-      limit,
-      offset,
-    });
+    return {
+      data: this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+        excludeExtraneousValues: true,
+      }),
+      count: await this.postModel.count<PostModel>({ where: condition, attributes }),
+    };
   }
 
   /**
@@ -180,7 +203,10 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
-        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
+        [Op.or]: [
+          { status: PostStatus.PUBLISHED },
+          { status: PostStatus.DRAFT, createdBy: user.id },
+        ],
       };
     } else {
       condition = { id: postId, isHidden: false };
@@ -252,7 +278,7 @@ export class PostService {
 
   public async getListWithGroupsByIds(postIds: string[], must: boolean): Promise<IPost[]> {
     const postGroups = await this.postModel.findAll({
-      attributes: ['id', 'title', 'lang', 'isDraft', 'createdBy'],
+      attributes: ['id', 'title', 'lang', 'status', 'createdBy'],
       include: [
         {
           model: PostGroupModel,
@@ -348,7 +374,7 @@ export class PostService {
           'importantExpiredAt',
         ],
         where: {
-          isDraft: false,
+          status: PostStatus.PUBLISHED,
           isHidden: false,
         },
         include: [
@@ -455,7 +481,7 @@ export class PostService {
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
-          isDraft: true,
+          status: PostStatus.DRAFT,
           type: PostType.POST,
           content,
           createdBy: authUserId,
@@ -549,12 +575,12 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        dataUpdate['isDraft'] = true;
+        dataUpdate['status'] = PostStatus.DRAFT;
         dataUpdate['isProcessing'] = true;
       }
 
       //if post is draft, isProcessing alway is false
-      if (dataUpdate.isProcessing === true && post.isDraft === true) {
+      if (dataUpdate.isProcessing === true && post.status === PostStatus.DRAFT) {
         dataUpdate.isProcessing = false;
       }
 
@@ -662,8 +688,7 @@ export class PostService {
       const authUserId = authUser.id;
       const groupIds = post.audience.groups.map((g) => g.id);
 
-      let isDraft = false;
-      let isProcessing = false;
+      let status = PostStatus.PUBLISHED;
       if (
         post.media.videos.filter(
           (m) =>
@@ -672,14 +697,12 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        isDraft = true;
-        isProcessing = true;
+        status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this.getPrivacy(groupIds);
       await this.postModel.update(
         {
-          isDraft,
-          isProcessing,
+          status,
           privacy: postPrivacy,
           createdAt: new Date(),
         },
@@ -690,8 +713,7 @@ export class PostService {
           },
         }
       );
-      post.isDraft = isDraft;
-      post.isProcessing = isProcessing;
+      post.status = status;
       if (post.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -721,7 +743,7 @@ export class PostService {
     const transaction = await this.sequelizeConnection.transaction();
     try {
       const postId = post.id;
-      if (post.isDraft) {
+      if (post.status === PostStatus.DRAFT) {
         await this.cleanRelationship(postId, transaction, true);
         await this.postModel.destroy({
           where: {
@@ -975,7 +997,7 @@ export class PostService {
   ): Promise<string[]> {
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isHidden: false,
     };
 
@@ -1062,7 +1084,7 @@ export class PostService {
     const post = await this.postModel.findOne({
       where: {
         id,
-        isDraft: false,
+        status: PostStatus.PUBLISHED,
       },
     });
     if (!post) {
@@ -1098,7 +1120,9 @@ export class PostService {
     const post = PostModel.tableName;
     const media = MediaModel.tableName;
     const query = ` UPDATE ${schema}.${post}
-                SET is_processing = tmp.is_processing, is_draft = tmp.isDraft
+                SET status = CASE WHEN tmp.is_processing THEN ${PostStatus.PROCESSING} ELSE
+                    CASE WHEN tmp.isDraft THEN ${PostStatus.DRAFT} ELSE ${PostStatus.PUBLISHED} END
+                END
                 FROM (
                   SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
 		                ) >= 1 THEN true ELSE false END as is_processing,
@@ -1220,7 +1244,7 @@ export class PostService {
   ): Promise<string[]> {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isHidden: false,
       [Op.and]: [
         this.postModel.notIncludePostsReported(userId, {
@@ -1351,7 +1375,7 @@ export class PostService {
   ): Promise<string[]> {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isHidden: false,
       [Op.and]: [
         this.postModel.notIncludePostsReported(authUserId, {
@@ -1404,7 +1428,7 @@ export class PostService {
   public async getTotalDraft(user: UserDto): Promise<number> {
     return this.postModel.count({
       where: {
-        isDraft: true,
+        status: PostStatus.DRAFT,
         createdBy: user.id,
       },
     });
@@ -1428,7 +1452,7 @@ export class PostService {
           attributes: [],
           required: false,
           where: {
-            isDraft: false,
+            status: PostStatus.PUBLISHED,
           },
         },
       ],
@@ -1456,10 +1480,26 @@ export class PostService {
     });
   }
 
+  public async getPostByGroupIdsAndParam(groupIds: string[], params: WhereOptions): Promise<any> {
+    const postGroups = await this.postGroupModel.findAll({
+      where: { groupId: groupIds },
+      attributes: ['groupId'],
+      include: [
+        {
+          model: PostModel,
+          required: true,
+          where: params,
+          as: 'post',
+        },
+      ],
+    });
+    return postGroups.map((r) => r.toJSON());
+  }
+
   public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
     const conditions = {
       id: id,
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isProcessing: false,
     };
 

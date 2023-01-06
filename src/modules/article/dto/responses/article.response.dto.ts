@@ -108,6 +108,13 @@ export class ArticleResponseDto extends PostResponseDto {
   @Expose()
   public coverMedia?: MediaResponseDto;
 
+  @ApiProperty({
+    type: Date,
+    name: 'published_at',
+  })
+  @Expose()
+  public publishedAt?: Date;
+
   public constructor(data: Partial<ArticleResponseDto>) {
     super(data);
   }

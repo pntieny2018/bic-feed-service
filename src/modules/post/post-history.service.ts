@@ -8,6 +8,8 @@ import { AuthorityService } from '../authority';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { PostService } from './post.service';
+import { PostStatus } from '../../database/models/post.model';
+
 @Injectable()
 export class PostHistoryService {
   /**
@@ -76,7 +78,7 @@ export class PostHistoryService {
       await this._authorityService.checkPostOwner(post, user.id);
       const { offset, limit, order } = getPostEditedHistoryDto;
 
-      if (post.isDraft === true) {
+      if (post.status === PostStatus.DRAFT) {
         return new PageDto([], {
           limit: limit,
           total: 0,

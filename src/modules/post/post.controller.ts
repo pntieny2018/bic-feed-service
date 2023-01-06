@@ -28,6 +28,7 @@ import {
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
+import { GetPostsByParamsDto } from './dto/requests/get-posts-by-params.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -85,6 +86,18 @@ export class PostController {
     @Query() getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
+  }
+
+  @ApiOperation({ summary: 'Get posts by params' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Get('/params')
+  public getsByParams(
+    @AuthUser() user: UserDto,
+    @Query() getPostsByParamsDto: GetPostsByParamsDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._postAppService.getsByParams(user, getPostsByParamsDto);
   }
 
   @ApiOperation({ summary: 'Get total draft' })
