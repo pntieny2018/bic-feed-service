@@ -22,6 +22,8 @@ import { ArrayHelper } from '../../common/helpers';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
 import { PostStatus } from '../../database/models/post.model';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { SeriesAddedArticlesEvent } from '../../events/series';
 
 @Injectable()
 export class ArticleListener {
@@ -38,7 +40,8 @@ export class ArticleListener {
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService,
     private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
