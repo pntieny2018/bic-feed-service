@@ -75,10 +75,7 @@ export class SeriesService {
       condition = {
         id,
         type: PostType.SERIES,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { createdBy: authUser.id },
-        ],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
       };
     } else {
       condition = { id, type: PostType.SERIES };

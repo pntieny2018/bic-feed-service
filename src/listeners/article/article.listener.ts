@@ -251,8 +251,7 @@ export class ArticleListener {
       }
     }
 
-    if (status === PostStatus.DRAFT) return;
-
+    if (status !== PostStatus.PUBLISHED) return;
     this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
