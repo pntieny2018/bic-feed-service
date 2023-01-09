@@ -230,44 +230,57 @@ export class SeriesListener {
       const oldActivity = this._postActivityService.createPayload(oldSeries);
       const oldGroupId = oldSeries.audience.groups.map((g) => g.id);
 
-      if (groupIds.length < oldGroupId.length) {
-        return;
-      }
-      const newGroupId = ArrayHelper.arrDifferenceElements<string>(groupIds, oldGroupId);
+      const differenceGroupIds = [
+        ...ArrayHelper.arrDifferenceElements<string>(groupIds, oldGroupId),
+        ...ArrayHelper.arrDifferenceElements<string>(oldGroupId, groupIds),
+      ];
 
-      if (!newGroupId.length) {
-        return;
-      }
-      const newGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, newGroupId);
-      const oldGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, oldGroupId);
+      this._logger.debug(` differenceGroupIds: ${differenceGroupIds}`);
 
-      let filterGroupAdminIds = ArrayHelper.arrDifferenceElements<string>(
-        newGroupAdminIds,
-        oldGroupAdminIds
-      );
+      if (differenceGroupIds.length) {
+        const attachedGroupIds = differenceGroupIds.filter(
+          (groupId) => !oldGroupId.includes(groupId)
+        );
 
-      filterGroupAdminIds = filterGroupAdminIds.filter((id) => id !== actor.id);
+        if (!attachedGroupIds.length) {
+          return;
+        }
 
-      if (!filterGroupAdminIds.length) {
-        return;
-      }
-
-      this._notificationService.publishPostNotification({
-        key: `${id}`,
-        value: {
+        const newGroupAdminIds = await this._groupHttpService.getGroupAdminIds(
           actor,
-          event: event.getEventName(),
-          data: updatedActivity,
-          meta: {
-            post: {
-              oldData: oldActivity,
-            },
-            series: {
-              targetUserIds: filterGroupAdminIds,
+          attachedGroupIds
+        );
+
+        const oldGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, oldGroupId);
+
+        let filterGroupAdminIds = ArrayHelper.arrDifferenceElements<string>(
+          newGroupAdminIds,
+          oldGroupAdminIds
+        );
+
+        filterGroupAdminIds = filterGroupAdminIds.filter((id) => id !== actor.id);
+
+        if (!filterGroupAdminIds.length) {
+          return;
+        }
+
+        this._notificationService.publishPostNotification({
+          key: `${id}`,
+          value: {
+            actor,
+            event: event.getEventName(),
+            data: updatedActivity,
+            meta: {
+              post: {
+                oldData: oldActivity,
+              },
+              series: {
+                targetUserIds: filterGroupAdminIds,
+              },
             },
           },
-        },
-      });
+        });
+      }
     } catch (ex) {
       this._logger.error(ex);
     }
