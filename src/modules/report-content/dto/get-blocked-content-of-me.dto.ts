@@ -25,6 +25,6 @@ export class GetBlockedContentOfMeDto extends PageOptionsDto {
   @Expose({
     name: 'target_type',
   })
-  @IsNotEmpty()
+  @IsOptional()
   public targetType?: TargetType;
 }
