@@ -68,6 +68,13 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     type: Boolean,
+    name: 'marked_read_post',
+  })
+  @Expose()
+  public markedReadPost?: boolean;
+
+  @ApiProperty({
+    type: Boolean,
     name: 'isSaved',
   })
   @Expose()
