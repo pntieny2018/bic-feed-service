@@ -60,7 +60,7 @@ export class GroupHttpService {
     owners: Record<string, string[]>;
   }> {
     try {
-      const params = `root_group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
+      const params = `group_ids=${rootGroupIds.join(',')}&offset=${offset}&limit=${limit}`;
 
       const response = await lastValueFrom(
         this._httpService.get(`${COMMUNITY_ADMIN_PATH}?${params}`)

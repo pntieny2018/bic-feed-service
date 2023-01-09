@@ -288,7 +288,7 @@ export class SeriesService {
     const transaction = await this._sequelizeConnection.transaction();
     const seriesId = series.id;
     try {
-      if (series.status === PostStatus.DRAFT) {
+      if (series.status !== PostStatus.PUBLISHED) {
         await Promise.all([
           this._postGroupModel.destroy({
             where: {

@@ -217,7 +217,7 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (oldPost.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
+    if (oldPost.status === PostStatus.PUBLISHED && status !== PostStatus.PUBLISHED) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);

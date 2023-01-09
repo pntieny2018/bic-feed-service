@@ -22,6 +22,8 @@ import { ArrayHelper } from '../../common/helpers';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
 import { PostStatus } from '../../database/models/post.model';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { SeriesAddedArticlesEvent } from '../../events/series';
 
 @Injectable()
 export class ArticleListener {
@@ -38,7 +40,8 @@ export class ArticleListener {
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService,
     private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -194,11 +197,24 @@ export class ArticleListener {
     this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
-        actor,
+        actor: actor.profile,
         event: event.getEventName(),
         data: activity,
       },
     });
+
+    if (article.series && article.series.length) {
+      for (const sr of article.series) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [article.id],
+            seriesId: sr.id,
+            actor: actor,
+          })
+        );
+      }
+    }
   }
 
   @On(ArticleHasBeenUpdatedEvent)
@@ -304,6 +320,25 @@ export class ArticleListener {
           },
         },
       });
+
+      const series = newArticle.series?.map((s) => s.id) ?? [];
+
+      if (series.length > 0) {
+        const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
+
+        const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+
+        for (const seriesId of newSeriesIds) {
+          this._internalEventEmitter.emit(
+            new SeriesAddedArticlesEvent({
+              isAdded: false,
+              articleIds: [newArticle.id],
+              seriesId: seriesId,
+              actor: actor,
+            })
+          );
+        }
+      }
     }
 
     try {
