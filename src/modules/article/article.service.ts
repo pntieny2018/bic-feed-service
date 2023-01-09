@@ -900,7 +900,16 @@ export class ArticleService extends PostService {
         await this._categoryService.updateToPost(categories, post.id, transaction);
       }
       if (series) {
-        await this._seriesService.updateToPost(series, post.id, transaction);
+        const filterSeriesExist = await this.postModel.findAll({
+          where: {
+            id: series,
+          },
+        });
+        await this._seriesService.updateToPost(
+          filterSeriesExist.map((series) => series.id),
+          post.id,
+          transaction
+        );
       }
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
