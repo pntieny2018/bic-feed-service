@@ -1,5 +1,5 @@
 import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { PageOptionsDto } from '../../../common/dto';
 import { TargetType } from '../contstants';
@@ -12,9 +12,13 @@ export class GetBlockedContentOfMeDto extends PageOptionsDto {
   @Expose({
     name: 'target_ids',
   })
-  @IsArray()
-  @IsOptional()
-  @IsUUID('4', { each: true })
+  @Type(() => Array)
+  @Transform(({ value }) => {
+    if (typeof value === 'string' && !value.includes(',')) {
+      return [value];
+    }
+    return value;
+  })
   public specTargetIds?: string[];
 
   @ApiProperty({
