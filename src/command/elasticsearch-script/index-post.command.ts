@@ -101,7 +101,6 @@ export class IndexPostCommand implements CommandRunner {
       return false;
     }
   }
-
   private async _removeIndex(indexName): Promise<boolean> {
     try {
       const deleteIndexResult = await this.elasticsearchService.indices.delete({
