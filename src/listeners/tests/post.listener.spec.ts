@@ -2,14 +2,20 @@ import { SentryService } from '@app/sentry';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
-import { PostStatus, PostType } from '../../database/models/post.model';
-import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
+import { PostType } from '../../database/models/post.model';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent
+} from '../../events/post';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
 import { MediaService } from '../../modules/media';
-import { VideoProcessingEndDto } from '../../modules/post/dto/responses/process-video-response.dto';
+import {
+  VideoProcessingEndDto
+} from '../../modules/post/dto/responses/process-video-response.dto';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { PostService } from '../../modules/post/post.service';
@@ -19,7 +25,7 @@ import { PostActivityService } from '../../notification/activities';
 import { mockPostResponseDto } from '../../notification/tests/mocks/input.mock';
 import { PostListener } from '../post';
 
-describe.skip('PostListener', () => {
+describe('PostListener', () => {
   let postListener;
   let postService;
   let postHistoryService;
@@ -143,11 +149,11 @@ describe.skip('PostListener', () => {
         createdBy: '00000000-0000-0000-0000-000000000000',
         id: '',
         type: PostType.POST,
+        isDraft: false,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
         groups: [{ postId: 'fcaa3c4b-d4d8-4082-bda3-858dda6d42c7', groupId: 'b113788a-c7fa-45f1-98a8-5e2c135dc1da' }],
-        status: PostStatus.PUBLISHED,
       },
     });
     it('should success', async () => {

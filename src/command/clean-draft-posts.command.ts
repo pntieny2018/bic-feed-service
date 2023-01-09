@@ -1,6 +1,6 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostModel, PostStatus } from '../database/models/post.model';
+import { PostModel } from '../database/models/post.model';
 import { PostService } from '../modules/post/post.service';
 import { PostEditedHistoryModel } from '../database/models/post-edited-history.model';
 
@@ -17,7 +17,7 @@ export class CleanDraftPostCommand implements CommandRunner {
       const posts = await this._postModel.findAll({
         attributes: ['id'],
         where: {
-          status: PostStatus.DRAFT,
+          isDraft: true,
         },
         paranoid: false,
       });

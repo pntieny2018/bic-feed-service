@@ -1,8 +1,8 @@
 import { ArticleResponseDto } from '../../../modules/article/dto/responses';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../../modules/auth';
 
 export class ArticleHasBeenUpdatedEventPayload {
   public oldArticle: ArticleResponseDto;
   public newArticle: ArticleResponseDto;
-  public actor: UserSharedDto;
+  public actor: UserDto;
 }

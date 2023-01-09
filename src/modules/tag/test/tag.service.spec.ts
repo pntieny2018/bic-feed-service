@@ -6,7 +6,6 @@ import { getModelToken } from '@nestjs/sequelize';
 import { TagModel } from '../../../database/models/tag.model';
 import { modelGetResult } from './mocks/get-tags.mock';
 import { TagResponseDto } from '../dto/responses/tag-response.dto';
-import { createTagDto } from './mocks/create-tag-dto.mock';
 import { PostTagModel } from '../../../database/models/post-tag.model';
 import { GroupService } from '../../../shared/group';
 import { PostModel } from '../../../database/models/post.model';
@@ -63,7 +62,7 @@ describe('TagService', () => {
         {
           provide: getModelToken(PostModel),
           useValue: {
-           findOne: jest.fn(),
+            findOne: jest.fn(),
             findAndCountAll: jest.fn(),
             findAll: jest.fn(),
             update: jest.fn(),

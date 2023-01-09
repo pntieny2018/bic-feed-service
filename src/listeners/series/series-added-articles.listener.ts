@@ -25,7 +25,7 @@ export class SeriesAddedArticlesListener {
   public async handler(event: SeriesAddedArticlesEvent): Promise<void> {
     this._logger.debug(`[SeriesAddedArticlesListener] ${JSON.stringify(event.payload)}`);
 
-    const { seriesId } = event.payload;
+    const { seriesId, isAdded } = event.payload;
 
     const series = await this._seriesService.findSeriesById(seriesId, {
       withArticleId: true,
@@ -33,7 +33,7 @@ export class SeriesAddedArticlesListener {
 
     this._notifyAddedArticle(event.payload).catch((ex) => this._logger.error(ex, ex?.stack));
 
-    if (series) {
+    if (series && isAdded) {
       const articles = series.articles.map((article) => ({
         id: article.id,
         zindex: article['PostSeriesModel'].zindex,

@@ -12,7 +12,7 @@ import { MediaModel } from '../../database/models/media.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
-import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { ArticleService } from '../article/article.service';
 import { UserDto } from '../auth';
@@ -75,10 +75,7 @@ export class SeriesService {
       condition = {
         id,
         type: PostType.SERIES,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { status: PostStatus.DRAFT, createdBy: authUser.id },
-        ],
+        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
       condition = { id, type: PostType.SERIES };
@@ -168,7 +165,7 @@ export class SeriesService {
           summary,
           createdBy: authUserId,
           updatedBy: authUserId,
-          status: PostStatus.PUBLISHED,
+          isDraft: false,
           isProcessing: false,
           cover: coverMedia.id,
           type: PostType.SERIES,
@@ -291,7 +288,7 @@ export class SeriesService {
     const transaction = await this._sequelizeConnection.transaction();
     const seriesId = series.id;
     try {
-      if (series.status === PostStatus.DRAFT) {
+      if (series.isDraft) {
         await Promise.all([
           this._postGroupModel.destroy({
             where: {
@@ -526,7 +523,7 @@ export class SeriesService {
           'canShare',
           'canComment',
           'canReact',
-          'status',
+          'isDraft',
           'importantExpiredAt',
         ],
       });
