@@ -67,6 +67,13 @@ export class SeriesResponseDto {
   public actor: UserSharedDto;
 
   @ApiProperty({
+    type: Boolean,
+    name: 'isSaved',
+  })
+  @Expose()
+  public isSaved?: boolean;
+
+  @ApiProperty({
     description: 'Total number of comments',
     type: Number,
     name: 'comments_count',
