@@ -52,6 +52,7 @@ import {
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
+import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -848,8 +849,7 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags, publishedAt } =
-        updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -917,9 +917,6 @@ export class ArticleService extends PostService {
       //if post is draft, isProcessing alway is true
       if (dataUpdate.isProcessing && post.status === PostStatus.DRAFT)
         dataUpdate.isProcessing = false;
-      if (publishedAt) {
-        dataUpdate['publishedAt'] = publishedAt;
-      }
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
@@ -983,6 +980,12 @@ export class ArticleService extends PostService {
     }
   }
 
+  public async schedule(articleId: string, scheduleArticleDto: ScheduleArticleDto): Promise<void> {
+    await this.postModel.update(
+      { status: PostStatus.WAITING_SCHEDULE, publishedAt: scheduleArticleDto.publishedAt },
+      { where: { id: articleId } }
+    );
+  }
   public async updateArticleStatusAndLog(
     articleId: string,
     status: PostStatus,
