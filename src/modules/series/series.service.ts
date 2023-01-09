@@ -90,8 +90,9 @@ export class SeriesService {
         {
           model: PostGroupModel,
           as: 'groups',
-          required: false,
+          required: true,
           attributes: ['groupId'],
+          where: { isArchived: false },
         },
         {
           model: PostReactionModel,

@@ -282,6 +282,7 @@ export class PostService {
           as: 'groups',
           required: must,
           attributes: ['groupId'],
+          where: { isArchived: false },
         },
         {
           model: PostTagModel,
@@ -334,13 +335,12 @@ export class PostService {
       const obj = {
         model: PostGroupModel,
         as: 'groups',
-        required: mustIncludeGroup ? true : false,
+        required: mustIncludeGroup,
         attributes: ['groupId'],
+        where: { isArchived: false },
       };
       if (filterGroupIds) {
-        obj['where'] = {
-          groupId: filterGroupIds,
-        };
+        obj.where['groupId'] = filterGroupIds;
       }
       includes.push(obj);
     }
@@ -849,6 +849,8 @@ export class PostService {
             model: PostGroupModel,
             as: 'groups',
             attributes: ['groupId'],
+            require: true,
+            where: { isArchived: false },
           },
           {
             model: MentionModel,
@@ -1019,6 +1021,7 @@ export class PostService {
         attributes: [],
         where: {
           groupId: groupIds,
+          isArchived: false,
         },
       });
     }
@@ -1258,6 +1261,15 @@ export class PostService {
             userId,
           },
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: {
+            isArchived: false,
+          },
+        },
       ],
       subQuery: false,
       where: conditions,
@@ -1393,6 +1405,7 @@ export class PostService {
           attributes: [],
           where: {
             groupId: groupIds,
+            isArchived: false,
           },
         },
       ],
