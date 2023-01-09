@@ -1,6 +1,6 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
@@ -301,7 +301,7 @@ export class IndexPostCommand implements CommandRunner {
       attributes,
       include,
       where: {
-        isDraft: false,
+        status: PostStatus.PUBLISHED,
         isHidden: false,
       },
       offset,
