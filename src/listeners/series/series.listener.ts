@@ -36,7 +36,7 @@ export class SeriesListener {
   @On(SeriesHasBeenDeletedEvent)
   public async onSeriesDeleted(event: SeriesHasBeenDeletedEvent): Promise<void> {
     const { series } = event.payload;
-    if (series.status === PostStatus.DRAFT) return;
+    if (series.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(series.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));

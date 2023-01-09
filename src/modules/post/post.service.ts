@@ -203,10 +203,7 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { status: PostStatus.DRAFT, createdBy: user.id },
-        ],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: user.id }],
       };
     } else {
       condition = { id: postId, isHidden: false };

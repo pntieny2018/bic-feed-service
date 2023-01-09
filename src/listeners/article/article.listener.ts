@@ -44,7 +44,7 @@ export class ArticleListener {
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     const { article } = event.payload;
-    if (article.status === PostStatus.DRAFT) return;
+    if (article.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -127,7 +127,7 @@ export class ArticleListener {
       .processVideo(mediaIds)
       .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
-    if (status === PostStatus.DRAFT) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory
       .saveEditedHistory(article.id, { oldData: null, newData: article })
@@ -235,8 +235,7 @@ export class ArticleListener {
       }
     }
 
-    if (status === PostStatus.DRAFT) return;
-
+    if (status !== PostStatus.PUBLISHED) return;
     this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
