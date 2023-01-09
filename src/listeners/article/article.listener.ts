@@ -290,7 +290,7 @@ export class ArticleListener {
       },
     ]);
 
-    if (tags.length) {
+    if (tags.length !== oldArticle.tags.length) {
       const oldTagIds = oldArticle.tags.map((e) => e.id);
       const newTagIds = tags.map((e) => e.id);
       const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
