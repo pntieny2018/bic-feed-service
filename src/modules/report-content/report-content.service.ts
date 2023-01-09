@@ -243,7 +243,9 @@ export class ReportContentService {
       query =
         query +
         ` AND p.id IN   ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} ) `;
-      countQuery = countQuery + ' AND p.id in :ids ';
+      countQuery =
+        countQuery +
+        ` AND p.id IN   ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} ) `;
     }
 
     const rows = await this._sequelize.query<{ id: string; targetId: string }>(

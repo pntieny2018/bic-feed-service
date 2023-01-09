@@ -8,6 +8,7 @@ export class GetBlockedContentOfMeDto extends PageOptionsDto {
   @ApiProperty({
     name: 'target_ids',
     required: false,
+    type: [String],
   })
   @Expose({
     name: 'target_ids',
