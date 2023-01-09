@@ -272,12 +272,12 @@ export class ArticleAppService {
     };
     if (seriesIds.length) {
       const seriesGroups = await this._postService.getListWithGroupsByIds(seriesIds, true);
-      if (seriesGroups.length < seriesIds.length) {
-        throw new ForbiddenException({
-          code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
-          message: `Series parameter is invalid`,
-        });
-      }
+      // if (seriesGroups.length < seriesIds.length) {
+      //   throw new ForbiddenException({
+      //     code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
+      //     message: `Series parameter is invalid`,
+      //   });
+      // }
       const invalidSeries = [];
       seriesGroups.forEach((item) => {
         const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
