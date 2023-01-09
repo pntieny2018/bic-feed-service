@@ -27,6 +27,7 @@ import { TagService } from '../../tag/tag.service';
 import { IPostGroup } from '../../../database/models/post-group.model';
 import { IPost, PostStatus } from '../../../database/models/post.model';
 import { FeedService } from '../../feed/feed.service';
+import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 
 @Injectable()
 export class ArticleAppService {
@@ -179,20 +180,9 @@ export class ArticleAppService {
     }
   }
 
-  public async publish(
-    user: UserDto,
-    articleId: string,
-    isSchedule = false
-  ): Promise<ArticleResponseDto> {
-    const article = await this._articleService.get(
-      articleId,
-      isSchedule ? null : user,
-      new GetArticleDto()
-    );
-    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    if (article.status === PostStatus.PUBLISHED) return article;
-
+  private async _preCheck(article: ArticleResponseDto, user: UserDto): Promise<void> {
     await this._authorityService.checkPostOwner(article, user.id);
+
     const { audience, setting } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     if (article.coverMedia === null) throw new BadRequestException('Cover is required');
@@ -216,16 +206,21 @@ export class ArticleAppService {
     if (article.categories.length === 0) {
       throw new BadRequestException('Category is required');
     }
+  }
 
-    if (article.publishedAt && article.publishedAt.getTime() > Date.now()) {
-      await this._articleService.updateArticleStatusAndLog(
-        articleId,
-        PostStatus.WAITING_SCHEDULE,
-        user
-      );
-      article.status = PostStatus.WAITING_SCHEDULE;
-      return article;
-    }
+  public async publish(
+    user: UserDto,
+    articleId: string,
+    isSchedule = false
+  ): Promise<ArticleResponseDto> {
+    const article = await this._articleService.get(
+      articleId,
+      isSchedule ? null : user,
+      new GetArticleDto()
+    );
+    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (article.status === PostStatus.PUBLISHED) return article;
+    await this._preCheck(article, user);
 
     article.status = PostStatus.PUBLISHED;
     const articleUpdated = await this._articleService.publish(article, user);
@@ -238,6 +233,20 @@ export class ArticleAppService {
       })
     );
     return articleUpdated;
+  }
+
+  public async schedule(
+    user: UserDto,
+    articleId: string,
+    scheduleArticleDto: ScheduleArticleDto
+  ): Promise<ArticleResponseDto> {
+    const article = await this._articleService.get(articleId, user, new GetArticleDto());
+    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (article.status === PostStatus.PUBLISHED) return article;
+    await this._preCheck(article, user);
+    await this._articleService.schedule(articleId, scheduleArticleDto);
+    article.status = PostStatus.WAITING_SCHEDULE;
+    return article;
   }
 
   public async delete(user: UserDto, articleId: string): Promise<boolean> {
