@@ -235,14 +235,15 @@ export class ArticleAppService {
     return articleUpdated;
   }
 
-  public async schedule(user: UserDto, articleId: string, scheduleArticleDto: ScheduleArticleDto) {
+  public async schedule(
+    user: UserDto,
+    articleId: string,
+    scheduleArticleDto: ScheduleArticleDto
+  ): Promise<ArticleResponseDto> {
     const article = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     if (article.status === PostStatus.PUBLISHED) return article;
     await this._preCheck(article, user);
-    if (scheduleArticleDto.publishedAt.getTime() <= Date.now()) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_INVALID_PUBLISHED_AT);
-    }
     await this._articleService.schedule(articleId, scheduleArticleDto);
     article.status = PostStatus.WAITING_SCHEDULE;
     return article;
