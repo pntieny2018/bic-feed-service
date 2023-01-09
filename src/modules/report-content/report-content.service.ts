@@ -240,7 +240,9 @@ export class ReportContentService {
     `;
 
     if (specTargetIds && specTargetIds.length > 0) {
-      query = query + ' AND p.id in :ids ';
+      query =
+        query +
+        ` AND p.id IN   ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} ) `;
       countQuery = countQuery + ' AND p.id in :ids ';
     }
 
@@ -252,7 +254,6 @@ export class ReportContentService {
           authorId: author.id,
           limit: limit,
           offset: offset,
-          ids: specTargetIds,
         },
       }
     );
@@ -804,7 +805,7 @@ export class ReportContentService {
        }.report_contents rc
        INNER JOIN  ${getDatabaseConfig().schema}.comments c ON c.id = rc.target_id
        WHERE c.deleted_at IS NULL
-        AND c.id in :ids
+        AND c.id in  ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} )
         AND rc.status = 'HID' 
         AND rc.target_type in ('COMMENT','CHILD_COMMENT') 
         AND rc.author_id = :authorId
@@ -818,7 +819,6 @@ export class ReportContentService {
         authorId: author.id,
         limit: limit,
         offset: offset,
-        ids: specTargetIds,
       },
     });
 

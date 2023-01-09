@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { PageOptionsDto } from '../../../common/dto';
