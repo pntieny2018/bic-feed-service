@@ -545,10 +545,9 @@ export class ArticleService extends PostService {
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
-
-    if (attributes['includes'] && Array.isArray(attributes['includes'])) {
-      attributes['include'].push([['hashtags_json', 'hashtags']]);
-      attributes['include'].push([['tags_json', 'tags']]);
+    if (attributes['include'] && Array.isArray(attributes['include'])) {
+      attributes['include'].push(['hashtags_json', 'hashtags']);
+      attributes['include'].push(['tags_json', 'tags']);
     } else {
       attributes['include'] = [
         ['hashtags_json', 'hashtags'],
