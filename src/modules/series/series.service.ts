@@ -95,7 +95,7 @@ export class SeriesService {
           as: 'groups',
           required: true,
           attributes: ['groupId'],
-          where: { isArchived: { [Op.not]: true } },
+          where: { isArchived: false },
         },
         {
           model: PostReactionModel,
