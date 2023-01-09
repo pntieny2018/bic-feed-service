@@ -572,13 +572,7 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        dataUpdate['status'] = PostStatus.DRAFT;
-        dataUpdate['isProcessing'] = true;
-      }
-
-      //if post is draft, isProcessing alway is false
-      if (dataUpdate.isProcessing === true && post.status === PostStatus.DRAFT) {
-        dataUpdate.isProcessing = false;
+        dataUpdate['status'] = PostStatus.PROCESSING;
       }
 
       dataUpdate.linkPreviewId = null;
@@ -1112,32 +1106,23 @@ export class PostService {
   }
 
   public async updateStatus(postId: string): Promise<void> {
-    const { schema } = getDatabaseConfig();
-    const postMedia = PostMediaModel.tableName;
-    const post = PostModel.tableName;
-    const media = MediaModel.tableName;
-    const query = ` UPDATE ${schema}.${post}
-                SET status = CASE WHEN tmp.is_processing THEN ${PostStatus.PROCESSING} ELSE
-                    CASE WHEN tmp.isDraft THEN ${PostStatus.DRAFT} ELSE ${PostStatus.PUBLISHED} END
-                END
-                FROM (
-                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
-		                ) >= 1 THEN true ELSE false END as is_processing,
-                    CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.FAILED}' OR m.status = '${MediaStatus.PROCESSING}' OR m.status = '${MediaStatus.WAITING_PROCESS}' THEN 1 ELSE 0 END 
-		                ) >= 1 THEN true ELSE false END as isDraft
-                  FROM ${schema}.${media} as m
-                  JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
-                  WHERE pm.post_id = :postId
-                  GROUP BY pm.post_id
-                ) as tmp 
-                WHERE tmp.post_id = ${schema}.${post}.id`;
-    await this.sequelizeConnection.query(query, {
-      replacements: {
-        postId,
-      },
-      type: QueryTypes.UPDATE,
-      raw: true,
-    });
+    const mediaList = await this.mediaService.getMediaByPostId(postId);
+    let totalWaitingProcess = 0;
+    let totalProcessing = 0;
+    let totalFailed = 0;
+    let totalCompleted = 0;
+    for (const media of mediaList) {
+      if (media.status === MediaStatus.COMPLETED) totalCompleted++;
+      if (media.status === MediaStatus.FAILED) totalFailed++;
+      if (media.status === MediaStatus.WAITING_PROCESS) totalWaitingProcess++;
+      if (media.status === MediaStatus.PROCESSING) totalProcessing++;
+    }
+    let status;
+    if (totalCompleted === mediaList.length) status = PostStatus.PUBLISHED;
+    if (totalProcessing > 0) status = PostStatus.PROCESSING;
+    if (totalFailed === mediaList.length || totalWaitingProcess === mediaList.length)
+      status = PostStatus.DRAFT;
+    await this.postModel.update({ status }, { where: { id: postId } });
   }
 
   public checkContent(content: string, media: MediaDto): void {
