@@ -72,13 +72,4 @@ export class UpdateArticleDto extends UpdatePostDto {
     name: 'cover_media',
   })
   public coverMedia: CoverMediaDto;
-
-  @ApiProperty({
-    type: String,
-  })
-  @Expose({
-    name: 'published_at',
-  })
-  @IsOptional()
-  public publishedAt?: Date = null;
 }

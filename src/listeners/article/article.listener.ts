@@ -1,15 +1,17 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
+import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus, MediaType } from '../../database/models/media.model';
+import { PostStatus } from '../../database/models/post.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent,
+  ArticleHasBeenUpdatedEvent
 } from '../../events/article';
-import { ArticleVideoFailedEvent } from '../../events/article/article-video-failed.event';
-import { ArticleVideoSuccessEvent } from '../../events/article/article-video-success.event';
+import { SeriesAddedArticlesEvent } from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -18,10 +20,8 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
-import { ArrayHelper } from '../../common/helpers';
-import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
-import { PostStatus } from '../../database/models/post.model';
+import { PostActivityService } from '../../notification/activities';
 
 @Injectable()
 export class ArticleListener {
@@ -38,13 +38,14 @@ export class ArticleListener {
     private readonly _postServiceHistory: PostHistoryService,
     private readonly _postSearchService: SearchService,
     private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
     const { article } = event.payload;
-    if (article.status === PostStatus.DRAFT) return;
+    if (article.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -127,7 +128,7 @@ export class ArticleListener {
       .processVideo(mediaIds)
       .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
-    if (status === PostStatus.DRAFT) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory
       .saveEditedHistory(article.id, { oldData: null, newData: article })
@@ -194,11 +195,24 @@ export class ArticleListener {
     this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
-        actor,
+        actor: actor.profile,
         event: event.getEventName(),
         data: activity,
       },
     });
+
+    if (article.series && article.series.length) {
+      for (const sr of article.series) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [article.id],
+            seriesId: sr.id,
+            actor: actor,
+          })
+        );
+      }
+    }
   }
 
   @On(ArticleHasBeenUpdatedEvent)
@@ -235,8 +249,7 @@ export class ArticleListener {
       }
     }
 
-    if (status === PostStatus.DRAFT) return;
-
+    if (status !== PostStatus.PUBLISHED) return;
     this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
@@ -275,7 +288,7 @@ export class ArticleListener {
       },
     ]);
 
-    if (tags.length) {
+    if (tags.length !== oldArticle.tags.length) {
       const oldTagIds = oldArticle.tags.map((e) => e.id);
       const newTagIds = tags.map((e) => e.id);
       const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
@@ -305,6 +318,25 @@ export class ArticleListener {
           },
         },
       });
+
+      const series = newArticle.series?.map((s) => s.id) ?? [];
+
+      if (series.length > 0) {
+        const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
+
+        const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+
+        for (const seriesId of newSeriesIds) {
+          this._internalEventEmitter.emit(
+            new SeriesAddedArticlesEvent({
+              isAdded: false,
+              articleIds: [newArticle.id],
+              seriesId: seriesId,
+              actor: actor,
+            })
+          );
+        }
+      }
     }
 
     try {
@@ -319,102 +351,5 @@ export class ArticleListener {
       this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
-  }
-
-  @On(ArticleVideoSuccessEvent)
-  public async onArticleVideoSuccess(event: ArticleVideoSuccessEvent): Promise<void> {
-    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.COMPLETED,
-    };
-    if (properties?.name) dataUpdate['name'] = properties.name;
-    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
-    if (properties?.size) dataUpdate['size'] = properties.size;
-    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
-    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.COMPLETED });
-    const articles = await this._articleService.getsByMedia(videoId);
-    articles.forEach((article) => {
-      this._articleService.updateStatus(article.id);
-      //TODO:: send noti
-
-      const {
-        actor,
-        id,
-        content,
-        isHidden,
-        updatedAt,
-        audience,
-        createdAt,
-        type,
-        summary,
-        title,
-        coverMedia,
-        createdBy,
-        categories,
-        tags,
-      } = article;
-
-      this._postSearchService.addPostsToSearch([
-        {
-          id,
-          type,
-          content,
-          isHidden,
-          groupIds: audience.groups.map((group) => group.id),
-          communityIds: audience.groups.map((group) => group.rootGroupId),
-          createdBy,
-          updatedAt,
-          createdAt,
-          title,
-          summary,
-          coverMedia: {
-            id: coverMedia.id,
-            createdBy: coverMedia.createdBy,
-            url: coverMedia.url,
-            createdAt: coverMedia.createdAt,
-            name: coverMedia.name,
-            type: coverMedia.type as MediaType,
-            originName: coverMedia.originName,
-            width: coverMedia.width,
-            height: coverMedia.height,
-            extension: coverMedia.extension,
-          },
-          categories: categories.map((category) => ({ id: category.id, name: category.name })),
-          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
-        },
-      ]);
-
-      try {
-        this._feedPublisherService.fanoutOnWrite(
-          actor.id,
-          id,
-          audience.groups.map((g) => g.id),
-          [NIL_UUID]
-        );
-      } catch (error) {
-        this._logger.error(JSON.stringify(error?.stack));
-        this._sentryService.captureException(error);
-      }
-    });
-  }
-
-  @On(ArticleVideoFailedEvent)
-  public async onArticleVideoFailed(event: ArticleVideoFailedEvent): Promise<void> {
-    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.COMPLETED,
-    };
-    if (properties?.name) dataUpdate['name'] = properties.name;
-    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
-    if (properties?.size) dataUpdate['size'] = properties.size;
-    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
-    await this._mediaService.updateData([videoId], { url: hlsUrl, status: MediaStatus.FAILED });
-    const articles = await this._articleService.getsByMedia(videoId);
-    articles.forEach((article) => {
-      this._articleService.updateStatus(article.id);
-      //TODO:: send noti
-    });
   }
 }

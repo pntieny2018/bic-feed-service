@@ -41,7 +41,7 @@ export class PostListener {
   @On(PostHasBeenDeletedEvent)
   public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
     const { actor, post } = event.payload;
-    if (post.status === PostStatus.DRAFT) return;
+    if (post.status !== PostStatus.PUBLISHED) return;
 
     this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -115,7 +115,7 @@ export class PostListener {
       .processVideo(mediaIds)
       .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
 
-    if (status === PostStatus.DRAFT) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     const activity = this._postActivityService.createPayload(post);
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
@@ -217,14 +217,14 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (oldPost.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
+    if (oldPost.status === PostStatus.PUBLISHED && status !== PostStatus.PUBLISHED) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
     }
 
-    if (status === PostStatus.DRAFT) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     this._postHistoryService
       .saveEditedHistory(id, { oldData: oldPost, newData: newPost })

@@ -76,10 +76,7 @@ export class SeriesService {
       condition = {
         id,
         type: PostType.SERIES,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { status: PostStatus.DRAFT, createdBy: authUser.id },
-        ],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
       };
     } else {
       condition = { id, type: PostType.SERIES };
@@ -295,7 +292,7 @@ export class SeriesService {
     const transaction = await this._sequelizeConnection.transaction();
     const seriesId = series.id;
     try {
-      if (series.status === PostStatus.DRAFT) {
+      if (series.status !== PostStatus.PUBLISHED) {
         await Promise.all([
           this._postGroupModel.destroy({
             where: {

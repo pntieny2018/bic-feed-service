@@ -53,6 +53,7 @@ import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
+import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -490,10 +491,7 @@ export class ArticleService extends PostService {
       condition = {
         id: articleId,
         type: PostType.ARTICLE,
-        [Op.or]: [
-          { status: PostStatus.PUBLISHED },
-          { status: PostStatus.DRAFT, createdBy: authUser.id },
-        ],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
       };
     } else {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
@@ -854,8 +852,7 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags, publishedAt } =
-        updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -903,7 +900,16 @@ export class ArticleService extends PostService {
         await this._categoryService.updateToPost(categories, post.id, transaction);
       }
       if (series) {
-        await this._seriesService.updateToPost(series, post.id, transaction);
+        const filterSeriesExist = await this.postModel.findAll({
+          where: {
+            id: series,
+          },
+        });
+        await this._seriesService.updateToPost(
+          filterSeriesExist.map((series) => series.id),
+          post.id,
+          transaction
+        );
       }
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
@@ -923,9 +929,6 @@ export class ArticleService extends PostService {
       //if post is draft, isProcessing alway is true
       if (dataUpdate.isProcessing && post.status === PostStatus.DRAFT)
         dataUpdate.isProcessing = false;
-      if (publishedAt) {
-        dataUpdate['publishedAt'] = publishedAt;
-      }
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,
@@ -989,6 +992,12 @@ export class ArticleService extends PostService {
     }
   }
 
+  public async schedule(articleId: string, scheduleArticleDto: ScheduleArticleDto): Promise<void> {
+    await this.postModel.update(
+      { status: PostStatus.WAITING_SCHEDULE, publishedAt: scheduleArticleDto.publishedAt },
+      { where: { id: articleId } }
+    );
+  }
   public async updateArticleStatusAndLog(
     articleId: string,
     status: PostStatus,

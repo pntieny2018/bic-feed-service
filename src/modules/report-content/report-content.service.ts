@@ -40,6 +40,7 @@ import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { Sequelize } from 'sequelize-typescript';
+import { CommentResponseDto } from '../comment/dto/response';
 
 @Injectable()
 export class ReportContentService {
@@ -206,8 +207,12 @@ export class ReportContentService {
   public async getContentBlockedOfMe(
     author: UserDto,
     getOptions: GetBlockedContentOfMeDto
-  ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order, specTargetIds } = getOptions;
+  ): Promise<PageDto<PostResponseDto | CommentResponseDto>> {
+    const { limit, offset, order, specTargetIds, targetType } = getOptions;
+
+    if (specTargetIds?.length && targetType === TargetType.COMMENT) {
+      return this.getCommentDetail(author, getOptions);
+    }
 
     let query = `
        SELECT rc.id as "id" , rc.target_id as "targetId" FROM ${
@@ -759,6 +764,7 @@ export class ReportContentService {
 
       return detailContentReportResponseDto;
     }
+
     if (reportStatus.targetType === TargetType.POST) {
       const post = await this._postService.get(targetId, null, { withComment: false }, false);
       detailContentReportResponseDto.setPost(post);
@@ -784,5 +790,76 @@ export class ReportContentService {
     if (!canView) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
+  }
+
+  public async getCommentDetail(
+    author: UserDto,
+    getOptions: GetBlockedContentOfMeDto
+  ): Promise<PageDto<CommentResponseDto>> {
+    const { limit, offset, order, specTargetIds } = getOptions;
+
+    const query = `
+       SELECT rc.id as "id" , rc.target_id as "targetId" FROM ${
+         getDatabaseConfig().schema
+       }.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.comments c ON c.id = rc.target_id
+       WHERE c.deleted_at IS NULL
+        AND c.id in :ids
+        AND rc.status = 'HID' 
+        AND rc.target_type in ('COMMENT','CHILD_COMMENT') 
+        AND rc.author_id = :authorId
+        ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+        LIMIT :limit OFFSET :offset
+    `;
+
+    const rows = await this._sequelize.query<{ id: string; targetId: string }>(query, {
+      type: QueryTypes.SELECT,
+      replacements: {
+        authorId: author.id,
+        limit: limit,
+        offset: offset,
+        ids: specTargetIds,
+      },
+    });
+
+    if (!rows || !rows.length) {
+      return new PageDto([], {
+        limit: limit,
+        offset: offset,
+        total: 0,
+        hasNextPage: false,
+      });
+    }
+    const reportIds = [];
+    const targetIds = [];
+
+    const commentReportMap = new Map<string, string>();
+
+    for (const item of rows) {
+      targetIds.push(item.targetId);
+      reportIds.push(item.id);
+      commentReportMap.set(item.targetId, item.id);
+    }
+
+    if (!targetIds || !targetIds.length) {
+      return new PageDto([], {
+        limit: limit,
+        offset: offset,
+        total: 0,
+        hasNextPage: false,
+      });
+    }
+    const reportStatisticsMap = await this.getDetailsReport(reportIds);
+
+    const responses = await this._commentService.getComment(author, targetIds[0], 0);
+
+    const reportDetails = reportStatisticsMap.get(reportIds[0]);
+
+    return new PageDto([{ ...responses, reportDetails }], {
+      limit: limit,
+      offset: offset,
+      total: 1,
+      hasNextPage: false,
+    });
   }
 }
