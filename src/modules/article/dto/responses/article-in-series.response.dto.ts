@@ -26,6 +26,13 @@ export class ArticleInSeriesResponseDto {
   public title: string;
 
   @ApiProperty({
+    type: Boolean,
+    name: 'isSaved',
+  })
+  @Expose()
+  public isSaved?: boolean;
+
+  @ApiProperty({
     description: 'zindex',
     type: Number,
   })
