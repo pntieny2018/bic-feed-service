@@ -52,6 +52,7 @@ import {
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
+import { PostHelper } from '../post/post.helper';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 
 @Injectable()
@@ -496,11 +497,13 @@ export class ArticleService extends PostService {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
     }
 
-    const article = await this.postModel.findOne({
-      attributes,
-      where: condition,
-      include,
-    });
+    const article = PostHelper.filterArchivedPost(
+      await this.postModel.findOne({
+        attributes,
+        where: condition,
+        include,
+      })
+    );
 
     if (!article) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
