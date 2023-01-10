@@ -175,7 +175,7 @@ export class ArticleService extends PostService {
     });
 
     const attributes = {
-      include: [],
+      include: [PostModel.loadSaved(authUser.id)],
       exclude: ['content'],
     };
     if (authUser) {
