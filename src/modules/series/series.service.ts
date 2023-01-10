@@ -23,6 +23,7 @@ import { PostBindingService } from '../post/post-binding.service';
 import { ReactionService } from '../reaction';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
+import { PostHelper } from '../post/post.helper';
 
 @Injectable()
 export class SeriesService {
@@ -84,34 +85,36 @@ export class SeriesService {
       condition = { id, type: PostType.SERIES };
     }
 
-    const series = await this._postModel.findOne({
-      attributes: {
-        include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
-      },
-      where: condition,
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: true,
-          attributes: ['groupId'],
-          where: { isArchived: false },
+    const series = PostHelper.filterArchivedPost(
+      await this._postModel.findOne({
+        attributes: {
+          include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
         },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: authUser.id,
+        where: condition,
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: false,
+            attributes: ['groupId'],
+            where: { isArchived: false },
           },
-        },
-        {
-          model: MediaModel,
-          as: 'coverMedia',
-          required: false,
-        },
-      ],
-    });
+          {
+            model: PostReactionModel,
+            as: 'ownerReactions',
+            required: false,
+            where: {
+              createdBy: authUser.id,
+            },
+          },
+          {
+            model: MediaModel,
+            as: 'coverMedia',
+            required: false,
+          },
+        ],
+      })
+    );
 
     if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);

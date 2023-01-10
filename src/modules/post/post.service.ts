@@ -59,6 +59,7 @@ import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+import { PostHelper } from './post.helper';
 
 @Injectable()
 export class PostService {
@@ -212,11 +213,13 @@ export class PostService {
       condition = { id: postId, isHidden: false };
     }
 
-    const post = await this.postModel.findOne({
-      attributes,
-      where: condition,
-      include,
-    });
+    const post = PostHelper.filterArchivedPost(
+      await this.postModel.findOne({
+        attributes,
+        where: condition,
+        include,
+      })
+    );
 
     if (!post || (post.isHidden === true && post.createdBy !== user?.id)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
@@ -339,11 +342,12 @@ export class PostService {
         model: PostGroupModel,
         as: 'groups',
         required: mustIncludeGroup,
-        attributes: ['groupId'],
-        where: { isArchived: false },
+        attributes: ['groupId', 'isArchived'],
       };
       if (filterGroupIds) {
-        obj.where['groupId'] = filterGroupIds;
+        obj['where'] = {
+          groupId: filterGroupIds,
+        };
       }
       includes.push(obj);
     }
