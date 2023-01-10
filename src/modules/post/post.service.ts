@@ -1034,6 +1034,7 @@ export class PostService {
         attributes: [],
         where: {
           groupId: groupIds,
+          isArchived: false,
         },
       });
     }
@@ -1282,6 +1283,15 @@ export class PostService {
             userId,
           },
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: {
+            isArchived: false,
+          },
+        },
       ],
       subQuery: false,
       where: conditions,
@@ -1417,6 +1427,7 @@ export class PostService {
           attributes: [],
           where: {
             groupId: groupIds,
+            isArchived: false,
           },
         },
       ],
