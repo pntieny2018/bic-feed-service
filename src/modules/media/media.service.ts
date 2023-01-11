@@ -502,4 +502,19 @@ export class MediaService {
       this._sentryService.captureException(e);
     }
   }
+
+  public async getMediaByPostId(id: string): Promise<IMedia[]> {
+    return this._mediaModel.findAll({
+      include: [
+        {
+          model: PostMediaModel,
+          attributes: [],
+          required: true,
+          where: {
+            postId: id,
+          },
+        },
+      ],
+    });
+  }
 }

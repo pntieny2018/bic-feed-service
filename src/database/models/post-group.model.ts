@@ -20,6 +20,7 @@ export interface IPostGroup {
   totalSeries?: number;
   createdAt?: Date;
   updatedAt?: Date;
+  isArchived?: boolean;
 }
 @Table({
   tableName: 'posts_groups',
@@ -45,4 +46,7 @@ export class PostGroupModel extends Model<IPostGroup, IPostGroup> implements IPo
   @UpdatedAt
   @Column
   public updatedAt?: Date;
+
+  @Column
+  public isArchived?: boolean;
 }
