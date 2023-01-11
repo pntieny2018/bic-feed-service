@@ -303,7 +303,7 @@ export class PostService {
   }
 
   public getIncludeObj({
-    mustIncludeGroup,
+    mustIncludeGroup = false,
     mustIncludeMedia,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
@@ -383,13 +383,13 @@ export class PostService {
             as: 'coverMedia',
             required: false,
           },
-          // {
-          //   model: PostGroupModel,
-          //   as: 'groups',
-          //   required: false,
-          //   attributes: ['groupId', 'isArchived'],
-          //   where: { isArchived: false },
-          // },
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
         ],
       });
     }
@@ -932,7 +932,6 @@ export class PostService {
       };
     }
 
-    // const post = PostHelper.filterArchivedPost(await this.postModel.findOne(conditions));
     const post = await this.postModel.findOne(conditions);
 
     if (!post) {
