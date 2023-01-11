@@ -246,6 +246,7 @@ export class ArticleAppService {
     await this._preCheck(article, user);
     await this._articleService.schedule(articleId, scheduleArticleDto);
     article.status = PostStatus.WAITING_SCHEDULE;
+    article.publishedAt = scheduleArticleDto.publishedAt;
     return article;
   }
 
