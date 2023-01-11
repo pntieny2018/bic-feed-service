@@ -93,7 +93,8 @@ export class ReportContentListener {
   public async onReportApproved(event: ApproveReportEvent): Promise<void> {
     this._logger.debug('[onReportApproved]');
     const { payload } = event;
-    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+
+    try {
       const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
 
       const actor = {
@@ -134,6 +135,11 @@ export class ReportContentListener {
         },
       };
       this._notificationService.publishReportNotification(notificationPayload);
+    } catch (ex) {
+      this._logger.debug(ex);
+    }
+
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
       this._postService
         .updateData([payload.targetId], {
           isHidden: true,
