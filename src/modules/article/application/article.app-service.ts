@@ -28,6 +28,7 @@ import { IPostGroup } from '../../../database/models/post-group.model';
 import { IPost, PostStatus } from '../../../database/models/post.model';
 import { FeedService } from '../../feed/feed.service';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
+import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
 
 @Injectable()
 export class ArticleAppService {
@@ -56,6 +57,24 @@ export class ArticleAppService {
     return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
+  public async getsByParams(
+    user: UserDto,
+    getPostsByParamsDto: GetPostsByParamsDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, order, status } = getPostsByParamsDto;
+    const condition = {
+      createdBy: user.id,
+    };
+    if (status) {
+      user['status'] = status;
+    }
+    const result = await this._articleService.getsAndCount(condition, order, { limit, offset });
+    return new PageDto<ArticleResponseDto>(result.data, {
+      total: result.count,
+      limit,
+      offset,
+    });
+  }
   public async get(
     user: UserDto,
     articleId: string,

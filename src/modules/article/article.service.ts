@@ -9,11 +9,11 @@ import {
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FindAttributeOptions, Includeable, Op } from 'sequelize';
+import { FindAttributeOptions, FindOptions, Includeable, Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
@@ -330,6 +330,20 @@ export class ArticleService extends PostService {
 
     if (isProcessing !== null) condition['isProcessing'] = isProcessing;
 
+    const result = await this.getsAndCount(condition, order, { limit, offset });
+
+    return new PageDto<ArticleResponseDto>(result.data, {
+      total: result.count,
+      limit,
+      offset,
+    });
+  }
+
+  public async getsAndCount(
+    condition: WhereOptions<IPost>,
+    order?: OrderEnum,
+    otherParams?: FindOptions
+  ): Promise<{ data: ArticleResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: false,
@@ -343,9 +357,11 @@ export class ArticleService extends PostService {
       where: condition,
       attributes,
       include,
-      order: [['createdAt', order]],
-      offset,
-      limit,
+      order: [
+        ['publishedAt', order],
+        ['createdAt', order],
+      ],
+      ...otherParams,
     });
     const jsonArticles = rows.map((r) => r.toJSON());
     const articlesBindedData = await this.articleBinding.bindRelatedData(jsonArticles, {
@@ -366,11 +382,10 @@ export class ArticleService extends PostService {
       attributes,
     });
 
-    return new PageDto<ArticleResponseDto>(result, {
-      total,
-      limit,
-      offset,
-    });
+    return {
+      data: result,
+      count: total,
+    };
   }
 
   /**
