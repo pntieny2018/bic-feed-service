@@ -2,6 +2,7 @@ import { PostModel, PostStatus } from '../../database/models/post.model';
 
 export class PostHelper {
   public static isArchived(post: PostModel): boolean {
+    if (!post) return false;
     return (
       post.status !== PostStatus.DRAFT &&
       post.groups &&
