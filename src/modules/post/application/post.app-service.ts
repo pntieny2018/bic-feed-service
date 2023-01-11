@@ -54,7 +54,7 @@ export class PostAppService {
       createdBy: user.id,
     };
     if (status) {
-      user['status'] = status;
+      condition['status'] = status;
     }
     const result = await this._postService.getsAndCount(condition, order, { limit, offset });
     return new PageDto<PostResponseDto>(result.data, {
