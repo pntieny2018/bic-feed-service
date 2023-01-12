@@ -1486,22 +1486,6 @@ export class PostService {
     });
   }
 
-  public async getPostByGroupIdsAndParam(groupIds: string[], params: WhereOptions): Promise<any> {
-    const postGroups = await this.postGroupModel.findAll({
-      where: { groupId: groupIds },
-      attributes: ['groupId'],
-      include: [
-        {
-          model: PostModel,
-          required: true,
-          where: params,
-          as: 'post',
-        },
-      ],
-    });
-    return postGroups.map((r) => r.toJSON());
-  }
-
   public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
     const conditions = {
       id: id,

@@ -29,6 +29,7 @@ import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
+import { GetsByAdminDto } from '../post/dto/requests/gets-by-admin.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -102,6 +103,14 @@ export class ArticleController {
     @Query() getPostsByParamsDto: GetPostsByParamsDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._articleAppService.getsByParams(user, getPostsByParamsDto);
+  }
+
+  @ApiOperation({ summary: 'Get total post in groups' })
+  @Get('/admin')
+  public getPostsByParamsInGroups(
+    @Query() getsByAdminDto: GetsByAdminDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._articleAppService.getsByAdmin(getsByAdminDto);
   }
 
   // @ApiOperation({ summary: 'Get list article' })

@@ -3,8 +3,9 @@ import { Expose, Transform } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import { validate as isValidUUID } from 'uuid';
 import { PostStatus } from '../../../../database/models/post.model';
+import { PageOptionsDto } from '../../../../common/dto';
 
-export class GetPostsByParamsInGroupsDto {
+export class GetsByAdminDto extends PageOptionsDto {
   @ApiProperty({
     type: String,
     name: 'group_ids',

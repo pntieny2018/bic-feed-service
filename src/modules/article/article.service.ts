@@ -54,6 +54,7 @@ import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
+import { GetsByAdminDto } from '../post/dto/requests/gets-by-admin.dto';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -1020,5 +1021,24 @@ export class ArticleService extends PostService {
     errorLog: any = null
   ): Promise<void> {
     await this.postModel.update({ status, errorLog }, { where: { id: articleId } });
+  }
+
+  public async getsByAdmin(getsByAdminDto: GetsByAdminDto): Promise<any> {
+    const { groupIds } = getsByAdminDto;
+    const postIds = this.postGroupModel.findAll({ where: { groupId: groupIds } });
+
+    // const postGroups = await this.postGroupModel.findAll({
+    //   where: { groupId: groupIds },
+    //   attributes: ['groupId'],
+    //   include: [
+    //     {
+    //       model: PostModel,
+    //       required: true,
+    //       where: params,
+    //       as: 'post',
+    //     },
+    //   ],
+    // });
+    // return postGroups.map((r) => r.toJSON());
   }
 }
