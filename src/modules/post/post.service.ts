@@ -858,9 +858,6 @@ export class PostService {
           {
             model: PostGroupModel,
             as: 'groups',
-            attributes: ['groupId'],
-            require: false,
-            where: { isArchived: false },
           },
           {
             model: MentionModel,
