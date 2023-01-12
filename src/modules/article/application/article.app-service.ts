@@ -29,7 +29,6 @@ import { IPost, PostStatus } from '../../../database/models/post.model';
 import { FeedService } from '../../feed/feed.service';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
-import { GetsByAdminDto } from '../../admin/dto/requests/gets-by-admin.dto';
 
 @Injectable()
 export class ArticleAppService {
@@ -356,20 +355,5 @@ export class ArticleAppService {
       });
     }
     return true;
-  }
-
-  public async getsByAdmin(getsByAdminDto: GetsByAdminDto): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset, order, status, groupIds } = getsByAdminDto;
-    const postIds = await this._postService.findIdsByGroupId(groupIds, null);
-    const condition = { id: postIds };
-    if (status) {
-      condition['status'] = status;
-    }
-    const result = await this._articleService.getsAndCount(condition, order, { limit, offset });
-    return new PageDto<ArticleResponseDto>(result.data, {
-      total: result.count,
-      limit,
-      offset,
-    });
   }
 }
