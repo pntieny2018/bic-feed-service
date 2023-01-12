@@ -16,7 +16,7 @@ export class GetsByAdminDto extends PageOptionsDto {
   @Expose({
     name: 'group_ids',
   })
-  public groupIds?: string[];
+  public groupIds: string[];
 
   @ApiProperty({
     type: String,

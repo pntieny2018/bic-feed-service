@@ -29,7 +29,7 @@ import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
-import { GetsByAdminDto } from '../post/dto/requests/gets-by-admin.dto';
+import { GetsByAdminDto } from '../admin/dto/requests/gets-by-admin.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')

@@ -31,6 +31,7 @@ import { SearchModule } from '../modules/search';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { TagModule } from '../modules/tag';
 import { FilterUserModule } from '../modules/filter-user';
+import { AdminModule } from '../modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { FilterUserModule } from '../modules/filter-user';
     InternalModule,
     SearchModule,
     ReportContentModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [],

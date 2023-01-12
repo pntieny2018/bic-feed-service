@@ -54,7 +54,7 @@ import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { GetsByAdminDto } from '../post/dto/requests/gets-by-admin.dto';
+import { GetsByAdminDto } from '../admin/dto/requests/gets-by-admin.dto';
 
 @Injectable()
 export class ArticleService extends PostService {

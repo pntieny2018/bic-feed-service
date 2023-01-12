@@ -29,7 +29,7 @@ import { IPost, PostStatus } from '../../../database/models/post.model';
 import { FeedService } from '../../feed/feed.service';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
-import { GetsByAdminDto } from '../../post/dto/requests/gets-by-admin.dto';
+import { GetsByAdminDto } from '../../admin/dto/requests/gets-by-admin.dto';
 
 @Injectable()
 export class ArticleAppService {
