@@ -1,6 +1,6 @@
 import { PaginationProps } from '../../../../common/types/pagination-props.type ';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import { Tag } from '../model/tag/tag';
+import { Tag } from '../model';
 
 export type FindOneTagProps = {
   name?: string;

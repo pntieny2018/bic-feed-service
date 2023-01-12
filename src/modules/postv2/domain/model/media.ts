@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@nestjs/cqrs';
-import { MediaStatus, MediaType } from '../../../data-type';
+import { MediaStatus, MediaType } from '../../data-type';
 
 export type MediaEssentialProperties = Readonly<
   Required<{
