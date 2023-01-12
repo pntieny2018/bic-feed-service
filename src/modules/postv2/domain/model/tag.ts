@@ -1,6 +1,6 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { AggregateRoot } from '@nestjs/cqrs';
-import { StringHelper } from '../../../../../common/helpers';
+import { StringHelper } from '../../../../common/helpers';
 
 export type TagEssentialProperties = Readonly<
   Required<{

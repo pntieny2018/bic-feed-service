@@ -1,7 +1,7 @@
 import { BadRequestException, Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
-import { Tag, TagProperties } from '../model/tag/tag';
+import { Tag, TagProperties } from '../model';
 
 type CreateTagOptions = Readonly<{
   name: string;
