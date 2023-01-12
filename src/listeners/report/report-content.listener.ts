@@ -94,52 +94,52 @@ export class ReportContentListener {
     this._logger.debug('[onReportApproved]');
     const { payload } = event;
 
-    try {
-      const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
+    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
+      try {
+        const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
 
-      const actor = {
-        id: payload.actor.id,
-        email: payload.actor.email,
-        username: payload.actor.username,
-        fullname: payload.actor.profile.fullname,
-        avatar: payload.actor.avatar,
-      };
+        const actor = {
+          id: payload.actor.id,
+          email: payload.actor.email,
+          username: payload.actor.username,
+          fullname: payload.actor.profile.fullname,
+          avatar: payload.actor.avatar,
+        };
 
-      const activity = this._reportActivityService.createCreatedReportPayload({
-        id: payload.id,
-        actor: actor,
-        targetId: payload.targetId,
-        targetType: payload.targetType,
-        status: payload.status,
-        details: payload.details.map((rc) => {
-          delete rc.createdBy;
-          return rc;
-        }),
-        verb: VerbActivity.APPROVE_REPORT_CONTENT,
-        target: TypeActivity.REPORT_CONTENT,
-        createdAt: payload.details[0].createdAt,
-      });
-
-      const notificationPayload: NotificationPayloadDto<NotificationActivity> = {
-        key: payload.id,
-        value: {
+        const activity = this._reportActivityService.createCreatedReportPayload({
+          id: payload.id,
           actor: actor,
-          event: event.getEventName(),
-          data: activity,
-          meta: {
-            report: {
-              adminInfos: adminInfos.admins,
-              creatorId: payload.authorId,
+          targetId: payload.targetId,
+          targetType: payload.targetType,
+          status: payload.status,
+          details: payload.details.map((rc) => {
+            delete rc.createdBy;
+            return rc;
+          }),
+          verb: VerbActivity.APPROVE_REPORT_CONTENT,
+          target: TypeActivity.REPORT_CONTENT,
+          createdAt: payload.details[0].createdAt,
+        });
+
+        const notificationPayload: NotificationPayloadDto<NotificationActivity> = {
+          key: payload.id,
+          value: {
+            actor: actor,
+            event: event.getEventName(),
+            data: activity,
+            meta: {
+              report: {
+                adminInfos: adminInfos.admins,
+                creatorId: payload.authorId,
+              },
             },
           },
-        },
-      };
-      this._notificationService.publishReportNotification(notificationPayload);
-    } catch (ex) {
-      this._logger.debug(ex);
-    }
+        };
+        this._notificationService.publishReportNotification(notificationPayload);
+      } catch (ex) {
+        this._logger.debug(ex);
+      }
 
-    if (payload.targetType === TargetType.ARTICLE || payload.targetType === TargetType.POST) {
       this._postService
         .updateData([payload.targetId], {
           isHidden: true,
