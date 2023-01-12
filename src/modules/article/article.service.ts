@@ -1022,23 +1022,4 @@ export class ArticleService extends PostService {
   ): Promise<void> {
     await this.postModel.update({ status, errorLog }, { where: { id: articleId } });
   }
-
-  public async getsByAdmin(getsByAdminDto: GetsByAdminDto): Promise<any> {
-    const { groupIds } = getsByAdminDto;
-    const postIds = this.postGroupModel.findAll({ where: { groupId: groupIds } });
-
-    // const postGroups = await this.postGroupModel.findAll({
-    //   where: { groupId: groupIds },
-    //   attributes: ['groupId'],
-    //   include: [
-    //     {
-    //       model: PostModel,
-    //       required: true,
-    //       where: params,
-    //       as: 'post',
-    //     },
-    //   ],
-    // });
-    // return postGroups.map((r) => r.toJSON());
-  }
 }
