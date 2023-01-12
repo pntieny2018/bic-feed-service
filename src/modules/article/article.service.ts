@@ -171,6 +171,7 @@ export class ArticleService extends PostService {
       shouldIncludeMention: true,
       shouldIncludeOwnerReaction: true,
       shouldIncludeCover: true,
+      mustIncludeGroup: true,
       authUserId: authUser.id,
     });
 

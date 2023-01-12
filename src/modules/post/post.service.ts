@@ -303,7 +303,7 @@ export class PostService {
   }
 
   public getIncludeObj({
-    mustIncludeGroup,
+    mustIncludeGroup = false,
     mustIncludeMedia,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
@@ -340,11 +340,10 @@ export class PostService {
         as: 'groups',
         required: mustIncludeGroup,
         attributes: ['groupId', 'isArchived'],
+        where: { isArchived: false },
       };
       if (filterGroupIds) {
-        obj['where'] = {
-          groupId: filterGroupIds,
-        };
+        obj['where']['groupId'] = filterGroupIds;
       }
       includes.push(obj);
     }
@@ -383,6 +382,13 @@ export class PostService {
             model: MediaModel,
             as: 'coverMedia',
             required: false,
+          },
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
           },
         ],
       });
@@ -853,7 +859,7 @@ export class PostService {
             model: PostGroupModel,
             as: 'groups',
             attributes: ['groupId'],
-            require: true,
+            require: false,
             where: { isArchived: false },
           },
           {
@@ -1298,6 +1304,7 @@ export class PostService {
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
       shouldIncludeArticlesInSeries: true,
+      mustIncludeGroup: true,
       authUserId: userId,
     });
 
