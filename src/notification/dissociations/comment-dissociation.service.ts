@@ -276,12 +276,6 @@ export class CommentDissociationService {
             handledUserIds.push(validUserId);
             continue;
           }
-
-          if (mentionedUserIdsInPrevChildComment.includes(validUserId)) {
-            recipient.mentionedUserIdsInPrevChildComment.push(validUserId);
-            handledUserIds.push(validUserId);
-            continue;
-          }
           if (mentionedUserIdsInParentComment.includes(validUserId)) {
             recipient.mentionedUserIdsInParentComment.push(validUserId);
             handledUserIds.push(validUserId);
