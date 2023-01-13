@@ -9,4 +9,10 @@ export class InternalService {
   public async getTotalPostByGroupIds(groupIds: string[]): Promise<any> {
     return this._postService.getTotalPostByGroupIds(groupIds);
   }
+
+  // TODO move this to kafka
+  public async archiveGroup(groupIds: string[]): Promise<boolean> {
+    await this._postService.getTotalPostByGroupIds(groupIds);
+    return true;
+  }
 }

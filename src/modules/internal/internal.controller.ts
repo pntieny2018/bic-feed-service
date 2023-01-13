@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { GetTotalPostsInGroupDto } from './dto/requests';
@@ -21,5 +21,12 @@ export class InternalController {
   ): Promise<TotalPostInGroupsDto[]> {
     const { groupIds } = getTotalPostsInGroupDto;
     return this._internalService.getTotalPostByGroupIds(groupIds);
+  }
+
+  // TODO move this to kafka
+  @ApiOperation({ summary: 'Get total post in groups' })
+  @Post('/archiveGroup/:id')
+  public archiveGroup(@Body() ids: string[]): Promise<boolean> {
+    return this._internalService.archiveGroup(ids);
   }
 }
