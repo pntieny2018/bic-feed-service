@@ -14,7 +14,7 @@ export class GroupService {
     if (group && !group?.child) {
       group.child = {
         open: [],
-        public: [],
+        closed: [],
         private: [],
         secret: [],
       };
@@ -52,17 +52,19 @@ export class GroupService {
   }
 
   /**
-   * Get groupId and childIds(user joinned) to show posts in timeline
+   * Get groupId and childIds(user joinned) to show posts in timeline and in search
+   * Anonymous: can not see posts
+   * Guest can see post in current group(joinned or close) and child group(joined)
    */
   public getGroupIdAndChildIdsUserJoined(group: GroupSharedDto, authUser: UserDto): string[] {
     if (!authUser) {
-      return this._getGroupIdsGuestCanSeePost(group);
+      return [];
     }
 
     const groupIdsUserJoined = authUser.profile.groups;
     const childGroupIds = [
-      ...group.child.public,
       ...group.child.open,
+      ...group.child.closed,
       ...group.child.private,
       ...group.child.secret,
     ];
@@ -70,11 +72,11 @@ export class GroupService {
       groupIdsUserJoined.includes(groupId)
     );
 
-    if (group.privacy === GroupPrivacy.PUBLIC) {
+    if (group.privacy === GroupPrivacy.OPEN) {
       filterGroupIdsUserJoined.push(group.id);
     }
     if (
-      group.privacy === GroupPrivacy.OPEN &&
+      group.privacy === GroupPrivacy.CLOSED &&
       this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupId)
     ) {
       filterGroupIdsUserJoined.push(group.id);
@@ -86,7 +88,7 @@ export class GroupService {
     return groupIdsUserJoined.includes(rootGroupId);
   }
   private _getGroupIdsGuestCanSeePost(group: GroupSharedDto): string[] {
-    if (group.privacy === GroupPrivacy.PUBLIC) {
+    if (group.privacy === GroupPrivacy.OPEN) {
       return [group.id];
     }
     return [];
@@ -95,5 +97,42 @@ export class GroupService {
   public filterGroupIdsUsersJoined(groupIds: string[], user: UserDto): string[] {
     const groupIdsUserJoined = user.profile.groups || [];
     return groupIds.filter((groupId) => groupIdsUserJoined.includes(groupId));
+  }
+
+  public async getReasonType(): Promise<{ id: string; description: string }[]> {
+    const raws: unknown[] = await this._store.get(`${AppHelper.getRedisEnv()}report_reason_type`);
+    if (!raws || !raws?.length) {
+      //FIX ME : it was blocked by group service
+      return [
+        {
+          id: 'spam',
+          description: 'Spam',
+        },
+        {
+          id: 'bullying_threatening_or_harassing',
+          description: 'Bullying, threatening or harassing',
+        },
+        {
+          id: 'violent_or_porn',
+          description: 'Violent, pornographic, or sexually explicit',
+        },
+        {
+          id: 'pretending_someone',
+          description: 'Pretending to be someone else',
+        },
+        {
+          id: 'illegal',
+          description: 'Illegal',
+        },
+        {
+          id: 'others',
+          description: 'Others',
+        },
+      ];
+    }
+    return raws.map((raw) => ({
+      id: raw['id'],
+      description: raw['value'],
+    }));
   }
 }

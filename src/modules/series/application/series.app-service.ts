@@ -50,7 +50,7 @@ export class SeriesAppService {
     const post = await this._seriesService.get(postId, user, getSeriesDto);
     if (user) {
       this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
-        this._logger.error(ex, ex.stack);
+        this._logger.error(JSON.stringify(ex?.stack));
       });
     }
 
@@ -65,6 +65,8 @@ export class SeriesAppService {
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
       const series = await this._seriesService.get(created.id, user, new GetSeriesDto());
+      this._feedService.markSeenPosts(series.id, user.id);
+      series.totalUsersSeen = Math.max(series.totalUsersSeen, 1);
       this._eventEmitter.emit(
         new SeriesHasBeenPublishedEvent({
           series,
@@ -219,6 +221,8 @@ export class SeriesAppService {
     await this._seriesService.addArticles(series[0], articleIds);
     this._eventEmitter.emit(
       new SeriesAddedArticlesEvent({
+        isAdded: true,
+        actor: user,
         seriesId,
         articleIds,
       })
@@ -237,10 +241,10 @@ export class SeriesAppService {
     await this._authorityService.checkPostOwner(series, user.id);
     await this._authorityService.checkCanUpdateSeries(
       user,
-      series[0].groups.map((group) => group.groupId)
+      series.groups.map((group) => group.groupId)
     );
     await this._seriesService.reorderArticles(seriesId, articleIds);
-    await this._seriesService.addArticles(series[0], articleIds);
+    await this._seriesService.addArticles(series, articleIds);
     this._eventEmitter.emit(
       new SeriesReoderArticlesEvent({
         seriesId,

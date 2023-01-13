@@ -1,28 +1,28 @@
-import { HTTP_STATUS_ID } from '../../common/constants';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { UserDto } from '../auth';
-import { Sequelize } from 'sequelize-typescript';
-import { SeriesResponseDto } from './dto/responses';
-import { ClassTransformer } from 'class-transformer';
-import { LogicException } from '../../common/exceptions';
-import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
-import { Op, Transaction } from 'sequelize';
 import { SentryService } from '@app/sentry';
-import { PostSeriesModel } from '../../database/models/post-series.model';
-import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer } from 'class-transformer';
+import { Op, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { NIL } from 'uuid';
+import { HTTP_STATUS_ID } from '../../common/constants';
+import { LogicException } from '../../common/exceptions';
+import { ArrayHelper } from '../../common/helpers';
+import { MediaModel } from '../../database/models/media.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { MediaModel } from '../../database/models/media.model';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { ArticleService } from '../article/article.service';
+import { UserDto } from '../auth';
 import { AuthorityService } from '../authority';
 import { CommentService } from '../comment';
-import { NIL } from 'uuid';
-import { PostBindingService } from '../post/post-binding.service';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { FeedService } from '../feed/feed.service';
+import { PostBindingService } from '../post/post-binding.service';
 import { ReactionService } from '../reaction';
-import { ArticleService } from '../article/article.service';
+import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
+import { SeriesResponseDto } from './dto/responses';
 
 @Injectable()
 export class SeriesService {
@@ -183,7 +183,7 @@ export class SeriesService {
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
       throw error;
     }
@@ -242,7 +242,7 @@ export class SeriesService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -323,7 +323,7 @@ export class SeriesService {
 
       return series;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       await transaction.rollback();
       throw error;
     }
@@ -353,7 +353,7 @@ export class SeriesService {
 
       return series;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -372,7 +372,7 @@ export class SeriesService {
         });
       }
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -523,6 +523,7 @@ export class SeriesService {
           'canShare',
           'canComment',
           'canReact',
+          'isDraft',
           'importantExpiredAt',
         ],
       });

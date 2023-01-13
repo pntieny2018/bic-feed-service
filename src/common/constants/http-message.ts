@@ -19,4 +19,9 @@ export const HTTP_MESSAGES = {
   [HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING]: 'Unable to find the series',
   [HTTP_STATUS_ID.APP_NOT_OWNER]: 'You are not owner',
   [HTTP_STATUS_ID.API_POST_USER_IS_NOT_MEMBER_OF_GROUP]: 'You are not a member of group',
+  [HTTP_STATUS_ID.APP_TAG_NAME_EXISTING]: 'Name is existed',
+  [HTTP_STATUS_ID.APP_TAG_EXISTING]: 'Tag is existed',
+  [HTTP_STATUS_ID.APP_TAG_NOT_EXISTING]: 'Tag is not existed',
+  [HTTP_STATUS_ID.APP_TAG_POST_ATTACH]: 'Tag is used',
+  [HTTP_STATUS_ID.APP_GROUP_NOT_EXIST]: 'Group id is not existed',
 };

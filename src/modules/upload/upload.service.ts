@@ -1,10 +1,10 @@
-import * as uuid from 'uuid';
-import * as path from 'path';
-import { Injectable, Logger } from '@nestjs/common';
-import { IS3Config } from '../../config/s3';
-import { ConfigService } from '@nestjs/config';
-import { UploadPrefix } from './dto/requests/upload.dto';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as path from 'path';
+import * as uuid from 'uuid';
+import { IS3Config } from '../../config/s3';
+import { UploadPrefix } from './dto/requests/upload.dto';
 @Injectable()
 export class UploadService {
   private _storage: S3Client;
@@ -44,7 +44,7 @@ export class UploadService {
       );
       return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
     } catch (e) {
-      this.logger.debug(e);
+      this.logger.debug(JSON.stringify(e?.stack));
       throw e;
     }
   }

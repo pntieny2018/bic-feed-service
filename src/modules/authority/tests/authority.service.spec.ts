@@ -48,7 +48,7 @@ describe.skip('AuthorityService', () => {
     privacy: GroupPrivacy.PRIVATE,
     rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     child: {
-      public: ['54366eb1-b428-4265-a71b-1b923a311506', '55a19f0a-4209-4fbd-8c44-f1c2fd350b10'],
+      closed: ['54366eb1-b428-4265-a71b-1b923a311506', '55a19f0a-4209-4fbd-8c44-f1c2fd350b10'],
       open: [],
       private: [],
       secret: [],
@@ -116,8 +116,8 @@ describe.skip('AuthorityService', () => {
   });
 
   describe('AuthorityService.checkIsPublicPost', () => {
-    it('pass if GroupPrivacy.PUBLIC', async () => {
-      mockGroup.privacy = GroupPrivacy.PUBLIC;
+    it('pass if GroupPrivacy.OPEN', async () => {
+      mockGroup.privacy = GroupPrivacy.OPEN;
 
       await service.checkIsPublicPost({
         lang: '',
@@ -134,7 +134,7 @@ describe.skip('AuthorityService', () => {
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
-        privacy: PostPrivacy.PUBLIC,
+        privacy: PostPrivacy.OPEN,
         groups: [{ postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712', groupId: '54366eb1-b428-4265-a71b-1b923a311506' }]
       });
     });

@@ -1,3 +1,4 @@
+import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   registerDecorator,
@@ -6,7 +7,6 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { SentryService } from '@app/sentry';
 import { UserService } from '../../../../shared/user';
 import { UserDto } from '../../../auth';
 
@@ -32,7 +32,7 @@ export class CanReadTimelineConstraint implements ValidatorConstraintInterface {
       const userSharedDto = await this._userService.get(userDto.id);
       return userSharedDto.groups.includes(groupId);
     } catch (e) {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
       return false;
     }

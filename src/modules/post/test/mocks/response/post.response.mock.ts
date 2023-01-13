@@ -53,7 +53,7 @@ export const mockedPostResponse: PostResponseDto = {
         id: '7251dac7-5088-4a33-b900-d1b058edaf99',
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
-        privacy: GroupPrivacy.PUBLIC,
+        privacy: GroupPrivacy.OPEN,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
@@ -67,7 +67,7 @@ export const mockedPostResponse: PostResponseDto = {
       hasPreviousPage: false,
     },
   },
-  privacy: PostPrivacy.PUBLIC,
+  privacy: PostPrivacy.OPEN,
 };
 
 export const mockedPostData = {
@@ -104,5 +104,5 @@ export const mockedPostData = {
       createdAt: '2022-05-18T11:05:31.990Z',
     },
   ],
-  privacy: PostPrivacy.PUBLIC,
+  privacy: PostPrivacy.OPEN,
 };

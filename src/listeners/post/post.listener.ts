@@ -1,24 +1,27 @@
+import { SentryService } from '@app/sentry';
+import { Injectable, Logger } from '@nestjs/common';
+import { NIL as NIL_UUID } from 'uuid';
+import { On } from '../../common/decorators';
+import { MediaStatus } from '../../database/models/media.model';
+import { PostPrivacy, PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../events/post';
-import { SentryService } from '@app/sentry';
-import { On } from '../../common/decorators';
-import { Injectable, Logger } from '@nestjs/common';
-import { NotificationService } from '../../notification';
-import { FeedPublisherService } from '../../modules/feed-publisher';
-import { PostActivityService } from '../../notification/activities';
-import { PostService } from '../../modules/post/post.service';
-import { MediaStatus } from '../../database/models/media.model';
-import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
-import { MediaService } from '../../modules/media';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
+import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
+import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
-import { PostPrivacy, PostType } from '../../database/models/post.model';
-import { NIL as NIL_UUID } from 'uuid';
-import { SearchService } from '../../modules/search/search.service';
+import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
+import { PostService } from '../../modules/post/post.service';
+import { SearchService } from '../../modules/search/search.service';
+import { NotificationService } from '../../notification';
+import { PostActivityService } from '../../notification/activities';
+import { FilterUserService } from '../../modules/filter-user';
+import { UserSharedDto } from '../../shared/user/dto';
+
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -31,7 +34,8 @@ export class PostListener {
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
-    private readonly _postHistoryService: PostHistoryService
+    private readonly _postHistoryService: PostHistoryService,
+    private readonly _filterUserService: FilterUserService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -40,7 +44,7 @@ export class PostListener {
     if (post.isDraft) return;
 
     this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     });
 
@@ -69,7 +73,7 @@ export class PostListener {
           groups: post?.groups ?? ([] as any),
         },
         type: PostType.POST,
-        privacy: PostPrivacy.PUBLIC,
+        privacy: PostPrivacy.OPEN,
       });
 
       this._notificationService.publishPostNotification({
@@ -83,7 +87,7 @@ export class PostListener {
 
       return;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
       return;
     }
@@ -103,11 +107,14 @@ export class PostListener {
       createdAt,
       updatedAt,
       type,
+      isHidden,
     } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    await this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+    await this._mediaService
+      .processVideo(mediaIds)
+      .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
 
     if (isDraft) return;
 
@@ -118,7 +125,7 @@ export class PostListener {
     this._postHistoryService
       .saveEditedHistory(post.id, { oldData: null, newData: post })
       .catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
 
@@ -160,6 +167,7 @@ export class PostListener {
         id,
         type,
         content,
+        isHidden,
         media: mediaList,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
@@ -179,7 +187,6 @@ export class PostListener {
         [NIL_UUID]
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
     }
   }
@@ -199,18 +206,21 @@ export class PostListener {
       lang,
       createdAt,
       updatedAt,
+      isHidden,
     } = newPost;
 
     if (oldPost.isDraft === false) {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService
+        .processVideo(mediaIds)
+        .catch((e) => this._sentryService.captureException(e));
     }
 
     if (oldPost.isDraft === false && isDraft === true) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
     }
@@ -220,30 +230,45 @@ export class PostListener {
     this._postHistoryService
       .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
       .catch((e) => {
-        this._logger.debug(e, e?.stack);
         this._sentryService.captureException(e);
       });
 
-    const updatedActivity = this._postActivityService.createPayload(newPost);
-    const oldActivity = this._postActivityService.createPayload(oldPost);
-
-    this._notificationService.publishPostNotification({
-      key: `${id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: updatedActivity,
-        meta: {
-          post: {
-            oldData: oldActivity,
-          },
-        },
-      },
-    });
     const mentionUserIds = [];
+    const mentionMap = new Map<string, UserSharedDto>();
+
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);
+      mentionMap.set(mentions[key].id, mentions[key]);
     }
+    const validUserIds = await this._filterUserService.filterUser(newPost.id, mentionUserIds);
+
+    const validMention = {};
+
+    for (const id of validUserIds) {
+      const u = mentionMap.get(id);
+      validMention[u.username] = u;
+    }
+    newPost.mentions = validMention;
+
+    if (!newPost.isHidden) {
+      const updatedActivity = this._postActivityService.createPayload(newPost);
+      const oldActivity = this._postActivityService.createPayload(oldPost);
+
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
+          },
+        },
+      });
+    }
+
     const mediaList = [];
     for (const mediaType in media) {
       for (const mediaItem of media[mediaType]) {
@@ -271,6 +296,7 @@ export class PostListener {
         type,
         content,
         media: mediaList,
+        isHidden,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
@@ -289,7 +315,6 @@ export class PostListener {
         oldPost.audience.groups.map((g) => g.id)
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
       this._sentryService.captureException(error);
     }
   }
@@ -330,6 +355,7 @@ export class PostListener {
         createdAt,
         updatedAt,
         type,
+        isHidden,
       } = post;
 
       const mentionUserIds = [];
@@ -362,6 +388,7 @@ export class PostListener {
           id,
           type,
           content,
+          isHidden,
           media: mediaList,
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
@@ -379,7 +406,7 @@ export class PostListener {
           [NIL_UUID]
         );
       } catch (error) {
-        this._logger.error(error, error?.stack);
+        this._logger.error(JSON.stringify(error?.stack));
         this._sentryService.captureException(error);
       }
     });

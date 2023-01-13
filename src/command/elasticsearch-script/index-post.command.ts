@@ -26,7 +26,7 @@ interface ICommandOptions {
   updateIndex: boolean;
 }
 
-//npx ts-node -r tsconfig-paths/register src/command/cli.ts es:index-post --update-index --old-index=24-10-2022
+//npx ts-node -r tsconfig-paths/register src/command/cli.ts es:index-post --update-index --old-index=8-12-2022
 //node dist/src/command/cli.js es:index-post --update-index --old-index=001
 @Command({ name: 'es:index-post', description: 'Reindex post in elasticsearch' })
 export class IndexPostCommand implements CommandRunner {
@@ -163,7 +163,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 50;
+    const limitEach = 200;
     let offset = 0;
     let hasMore = true;
     let total = 0;
@@ -183,6 +183,7 @@ export class IndexPostCommand implements CommandRunner {
           const item: IDataPostToAdd = {
             id: post.id,
             type: post.type,
+            isHidden: false,
             groupIds,
             communityIds,
             createdAt: post.createdAt,
@@ -235,6 +236,12 @@ export class IndexPostCommand implements CommandRunner {
               id: category.id,
               name: category.name,
             }));
+            const tagList = post.tagsJson ?? [];
+            item.tags = tagList.map((tag) => ({
+              id: tag.id,
+              name: tag.name,
+              groupId: tag.groupId,
+            }));
           }
           if (post.type === PostType.SERIES) {
             item.title = post.title;
@@ -267,7 +274,7 @@ export class IndexPostCommand implements CommandRunner {
         successNumber += totalItemsIndexed;
         offset = offset + limitEach;
         total += posts.length;
-        console.log(`Indexed ${posts.length}`);
+        console.log(`Indexed ${totalItemsIndexed}`);
         console.log('-----------------------------------');
         await this.delay(1000);
       }
@@ -295,6 +302,7 @@ export class IndexPostCommand implements CommandRunner {
       include,
       where: {
         isDraft: false,
+        isHidden: false,
       },
       offset,
       limit,

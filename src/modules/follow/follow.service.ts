@@ -1,15 +1,15 @@
-import { Op } from 'sequelize';
 import { SentryService } from '@app/sentry';
-import { Sequelize } from 'sequelize-typescript';
-import { ArrayHelper } from '../../common/helpers';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { getDatabaseConfig } from '../../config/database';
-import { CreateFollowDto, UnfollowDto } from './dto/requests';
-import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { ArrayHelper } from '../../common/helpers';
+import { getDatabaseConfig } from '../../config/database';
+import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
+import { CreateFollowDto, UnfollowDto } from './dto/requests';
 import { FollowsDto } from './dto/response/follows.dto';
 
 @Injectable()
@@ -163,7 +163,7 @@ export class FollowService {
         latestFollowId: 0,
       };
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return {
         userIds: [],
@@ -176,19 +176,27 @@ export class FollowService {
    * filter user follows
    * @param ignoreUserIds Array<Number>
    * @param groupIds Array<Number>
+   * @param oldGroupIds
    * @param followId Number
    * @param limit Number
    */
   public async gets(
     ignoreUserIds: string[],
     groupIds: string[],
+    oldGroupIds: string[],
     followId = 0,
     limit = 1000
   ): Promise<FollowsDto> {
-    this._logger.debug(
-      `[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}. groupIds: ${groupIds}`
-    );
+    this._logger.debug(`[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}`);
+    this._logger.debug(`[filterUserFollows]:groupIds: ${groupIds}`);
+    this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
+      const filterConditions =
+        oldGroupIds && oldGroupIds.length
+          ? `
+         AND group_id NOT IN  (${oldGroupIds.map((id) => this._sequelize.escape(id)).join(',')})
+        `
+          : '';
       const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
@@ -198,10 +206,10 @@ export class FollowService {
                    FROM ${schema}.${this._followModel.tableName}
                    WHERE group_id IN  (${groupIds
                      .map((id) => this._sequelize.escape(id))
-                     .join(',')})
-                   AND user_id NOT IN (${ignoreUserIds
-                     .map((id) => this._sequelize.escape(id))
-                     .join(',')})
+                     .join(',')}) ${filterConditions}
+              AND user_id NOT IN (${ignoreUserIds
+                .map((id) => this._sequelize.escape(id))
+                .join(',')})
               ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
                 WHERE duplicate_count = 1
                 AND id > $followId  limit $limit ;
@@ -226,7 +234,7 @@ export class FollowService {
         latestFollowId: 0,
       };
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       return {
         userIds: [],

@@ -4,7 +4,7 @@ import { GroupService } from '../../shared/group';
 import { IPost, PostModel, PostPrivacy } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { subject, Subject } from '@casl/ability';
+import { Ability, subject } from '@casl/ability';
 import {
   PERMISSION_KEY,
   permissionToCommonName,
@@ -14,7 +14,6 @@ import { GroupSharedDto } from '../../shared/group/dto';
 import { AuthorityFactory } from './authority.factory';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesResponseDto } from '../series/dto/responses';
-import { group } from 'console';
 
 @Injectable()
 export class AuthorityService {
@@ -24,13 +23,13 @@ export class AuthorityService {
   ) {}
 
   public async checkIsPublicPost(post: IPost): Promise<void> {
-    if (post.privacy === PostPrivacy.PUBLIC) return;
+    if (post.privacy === PostPrivacy.OPEN) return;
     throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
   }
 
   public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
     if (post.isDraft && post.createdBy === user.id) return;
-    if (post.privacy === PostPrivacy.PUBLIC || post.privacy === PostPrivacy.OPEN) return;
+    if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.profile?.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
@@ -47,9 +46,9 @@ export class AuthorityService {
     const notCreatableInGroups: GroupSharedDto[] = [];
     const notEditSettingInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
+    const ability = await this._buildAbility(user);
     for (const group of groups) {
-      const canCreatePost = await this._can(
-        user,
+      const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_POST_ARTICLE,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -58,8 +57,7 @@ export class AuthorityService {
       }
 
       if (canCreatePost && needEnableSetting) {
-        const canEditPostSetting = await this._can(
-          user,
+        const canEditPostSetting = ability.can(
           PERMISSION_KEY.EDIT_POST_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
@@ -98,9 +96,9 @@ export class AuthorityService {
     const notCreatableInGroups: GroupSharedDto[] = [];
     const notEditSettingInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
+    const ability = await this._buildAbility(user);
     for (const group of groups) {
-      const canCreatePost = await this._can(
-        user,
+      const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_POST_ARTICLE,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -109,8 +107,7 @@ export class AuthorityService {
       }
 
       if (canCreatePost && needEnableSetting) {
-        const canEditPostSetting = await this._can(
-          user,
+        const canEditPostSetting = ability.can(
           PERMISSION_KEY.EDIT_POST_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
@@ -144,9 +141,9 @@ export class AuthorityService {
   public async checkCanDeletePost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableInGroups: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
+    const ability = await this._buildAbility(user);
     for (const group of groups) {
-      const canCreatePost = await this._can(
-        user,
+      const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_POST_ARTICLE,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -169,10 +166,9 @@ export class AuthorityService {
   public async checkCanUpdateSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableGroupInfos: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
-
+    const ability = await this._buildAbility(user);
     for (const group of groups) {
-      const canCreatePost = await this._can(
-        user,
+      const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_SERIES,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -195,10 +191,9 @@ export class AuthorityService {
   public async checkCanCreateSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
     const notCreatableGroupInfos: GroupSharedDto[] = [];
     const groups = await this._groupService.getMany(groupAudienceIds);
-
+    const ability = await this._buildAbility(user);
     for (const group of groups) {
-      const canCreatePost = await this._can(
-        user,
+      const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_SERIES,
         subject(SUBJECT.GROUP, { id: group.id })
       );
@@ -251,9 +246,8 @@ export class AuthorityService {
     return this.checkIsPublicPost(post);
   }
 
-  private async _can(user: UserDto, action: string, subject: Subject = null): Promise<boolean> {
-    const ability = await this._authorityFactory.createForUser(user);
-    return ability.can(action, subject);
+  private async _buildAbility(user: UserDto): Promise<Ability> {
+    return this._authorityFactory.createForUser(user);
   }
 
   public checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {

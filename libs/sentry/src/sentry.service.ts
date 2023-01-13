@@ -1,10 +1,9 @@
+import { Inject, Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import * as SourceMap from 'source-map-support';
-import { Inject, Injectable } from '@nestjs/common';
 import { Client, Event } from '@sentry/types';
-import { SentryModuleOptions } from './sentry.interfaces';
+import * as SourceMap from 'source-map-support';
 import { SENTRY_MODULE_OPTIONS } from './sentry.constants';
-import { Logger, OnApplicationShutdown } from '@nestjs/common';
+import { SentryModuleOptions } from './sentry.interfaces';
 
 @Injectable()
 export class SentryService implements OnApplicationShutdown {
@@ -15,7 +14,6 @@ export class SentryService implements OnApplicationShutdown {
     private readonly _opts?: SentryModuleOptions
   ) {
     if (!(_opts && _opts.dsn)) {
-      // console.log('options not found. Did you use SentryModule.forRoot?');
       return;
     }
     const { debug: isDebug, integrations = [], ...sentryOptions } = _opts;
@@ -28,7 +26,7 @@ export class SentryService implements OnApplicationShutdown {
         new Sentry.Integrations.OnUncaughtException({
           onFatalError: async (err): Promise<void> => {
             if (err.name === 'SentryError') {
-              this._logger.error(err);
+              this._logger.error(JSON.stringify(err?.stack));
             } else {
               (Sentry.getCurrentHub().getClient<Client>() as Client).captureException(err);
               process.exit(1);

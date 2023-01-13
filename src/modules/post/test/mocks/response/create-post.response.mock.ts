@@ -46,7 +46,7 @@ export const mockedCreatePostResponse = {
         id: 1,
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
-        privacy: 'PUBLIC',
+        privacy: 'OPEN',
       },
     ],
   },

@@ -1,50 +1,51 @@
-import { MentionModel, IMention } from './mention.model';
-import { IMedia, MediaModel } from './media.model';
-import sequelize, {
-  Optional,
-  BelongsToManyAddAssociationsMixin,
-  QueryTypes,
-  DataTypes,
-} from 'sequelize';
+import { IsUUID } from 'class-validator';
+import { BelongsToManyAddAssociationsMixin, DataTypes, Optional, QueryTypes } from 'sequelize';
 import {
   AllowNull,
+  BelongsTo,
   BelongsToMany,
   Column,
   CreatedAt,
   Default,
+  DeletedAt,
   HasMany,
   Model,
   PrimaryKey,
+  Sequelize,
   Table,
   UpdatedAt,
-  Sequelize,
-  DeletedAt,
-  BelongsTo,
 } from 'sequelize-typescript';
-import { CommentModel, IComment } from './comment.model';
-import { PostMediaModel } from './post-media.model';
-import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
-import { PostGroupModel, IPostGroup } from './post-group.model';
-import { PostReactionModel } from './post-reaction.model';
 import { Literal } from 'sequelize/types/utils';
+import { v4 as uuid_v4 } from 'uuid';
+import { MentionableType } from '../../common/constants';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { MentionableType } from '../../common/constants';
-import { UserMarkReadPostModel } from './user-mark-read-post.model';
-import { IsUUID } from 'class-validator';
-import { v4 as uuid_v4 } from 'uuid';
-import { CategoryModel, ICategory } from './category.model';
-import { HashtagModel, IHashtag } from './hashtag.model';
-import { PostCategoryModel } from './post-category.model';
-import { PostSeriesModel } from './post-series.model';
-import { PostHashtagModel } from './post-hashtag.model';
 import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
+import { TargetType } from '../../modules/report-content/contstants';
+import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
+import { CategoryModel, ICategory } from './category.model';
+import { CommentModel, IComment } from './comment.model';
+import { FailedProcessPostModel } from './failed-process-post.model';
+import { HashtagModel, IHashtag } from './hashtag.model';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
+import { IMedia, MediaModel } from './media.model';
+import { IMention, MentionModel } from './mention.model';
+import { PostCategoryModel } from './post-category.model';
+import { IPostGroup, PostGroupModel } from './post-group.model';
+import { PostHashtagModel } from './post-hashtag.model';
+import { PostMediaModel } from './post-media.model';
+import { PostReactionModel } from './post-reaction.model';
+import { PostSeriesModel } from './post-series.model';
+import { IPostTag, PostTagModel } from './post-tag.model';
+import { ReportContentDetailModel } from './report-content-detail.model';
+import { ITag, TagModel } from './tag.model';
+import { UserMarkReadPostModel } from './user-mark-read-post.model';
+import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
 
 export enum PostPrivacy {
-  PUBLIC = 'PUBLIC',
   OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
   PRIVATE = 'PRIVATE',
   SECRET = 'SECRET',
 }
@@ -69,6 +70,8 @@ export interface IPost {
   canShare: boolean;
   canComment: boolean;
   isProcessing?: boolean;
+  isReported?: boolean;
+  isHidden?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
@@ -88,8 +91,11 @@ export interface IPost {
   categories?: ICategory[];
   series?: IPost[];
   hashtags?: IHashtag[];
+  tags?: ITag[];
+  postTags?: IPostTag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
+  tagsJson?: TagResponseDto[];
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
@@ -136,6 +142,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column
   public canShare: boolean;
 
+  @Column
+  public isHidden: boolean;
+
+  @Column
+  public isReported: boolean;
+
   @AllowNull(true)
   @Column
   public content: string;
@@ -171,6 +183,11 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   })
   public hashtagsJson: HashtagResponseDto[];
 
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public tagsJson: TagResponseDto[];
+
   @AllowNull(false)
   @Column
   public createdBy: string;
@@ -197,7 +214,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @DeletedAt
   @Column
-  deletedAt?: Date;
+  public deletedAt?: Date;
 
   @HasMany(() => CommentModel)
   public comments?: CommentModel[];
@@ -216,6 +233,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => PostHashtagModel)
   public postHashtags?: PostHashtagModel[];
+
+  @BelongsToMany(() => TagModel, () => PostTagModel)
+  public tags?: TagModel[];
+
+  @HasMany(() => PostTagModel)
+  public postTags?: PostTagModel[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'postId', 'seriesId')
   public series?: PostModel[];
@@ -269,6 +292,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     foreignKey: 'cover',
   })
   public coverMedia: MediaModel;
+
+  @HasMany(() => FailedProcessPostModel, {
+    as: 'failedPostReasons',
+    foreignKey: 'postId',
+  })
+  public failedPostReasons?: FailedProcessPostModel[];
 
   public static loadMarkReadPost(authUserId: string, alias?: string): [Literal, string] {
     const { schema } = getDatabaseConfig();
@@ -326,6 +355,34 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
       Sequelize.literal(`(CASE WHEN type = ARTICLE THEN content ELSE null END)`),
       alias ? alias : 'content',
     ];
+  }
+  public static notIncludePostsReported(
+    userId: string,
+    options?: {
+      mainTableAlias?: string;
+      type?: TargetType[];
+    }
+  ): Literal {
+    //TODO limit scope in group
+    if (!userId) return Sequelize.literal(`1 = 1`);
+    const { mainTableAlias, type } = options ?? {
+      mainTableAlias: 'PostModel',
+      type: [],
+    };
+    const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    let condition = `WHERE rp.target_id = ${mainTableAlias}.id AND rp.created_by = ${this.sequelize.escape(
+      userId
+    )}`;
+
+    if (type.length) {
+      condition += ` AND target_type IN (${type.map((item) => `'${item}'`).join(',')})`;
+    }
+
+    return Sequelize.literal(`NOT EXISTS ( 
+      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+        ${condition}
+    )`);
   }
 
   public static loadLock(groupIds: string[], alias?: string): [Literal, string] {

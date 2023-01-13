@@ -73,4 +73,11 @@ export const HTTP_STATUS_ID = {
   APP_CATEGORY_INVALID_PARAMETER: 'app.category.invalid_parameter',
 
   APP_NOT_OWNER: 'app.not_owner',
+
+  APP_TAG_EXISTING: 'app.tag.existing.app_error',
+  APP_TAG_NAME_EXISTING: 'app.tag.name_existing.app_error',
+  APP_TAG_NOT_EXISTING: 'app.tag.not_existing.app_error',
+  APP_TAG_POST_ATTACH: 'app.tag.post_attach.app_error',
+
+  APP_GROUP_NOT_EXIST: 'app.group.existing.app_error',
 };

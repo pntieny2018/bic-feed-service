@@ -1,3 +1,4 @@
+import { SentryService } from '@app/sentry';
 import {
   HttpException,
   HttpStatus,
@@ -6,17 +7,15 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { UserDto } from '../auth';
-import { MediaDto } from './dto';
-import { EntityType } from './media.constants';
-import { Sequelize } from 'sequelize-typescript';
-import { ArrayHelper } from '../../common/helpers';
-import { plainToInstance } from 'class-transformer';
-import { MediaFilterResponseDto } from './dto/response';
-import { Op, QueryTypes, Transaction } from 'sequelize';
-import { UploadType } from '../upload/dto/requests/upload.dto';
+import { ClientKafka } from '@nestjs/microservices';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { PostMediaModel } from '../../database/models/post-media.model';
+import { plainToInstance } from 'class-transformer';
+import moment from 'moment';
+import { Op, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
+import { ArrayHelper } from '../../common/helpers';
 import { CommentMediaModel } from '../../database/models/comment-media.model';
 import {
   IMedia,
@@ -25,15 +24,16 @@ import {
   MediaStatus,
   MediaType,
 } from '../../database/models/media.model';
-import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../common/constants';
-import { SentryService } from '@app/sentry';
+import { PostMediaModel } from '../../database/models/post-media.model';
+import { PostModel } from '../../database/models/post.model';
+import { UserDto } from '../auth';
+import { UploadType } from '../upload/dto/requests/upload.dto';
+import { MediaDto } from './dto';
+import { MediaFilterResponseDto } from './dto/response';
 import { FileMetadataResponseDto } from './dto/response/file-metadata-response.dto';
 import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
 import { VideoMetadataResponseDto } from './dto/response/video-metadata-response.dto';
-import { ClientKafka } from '@nestjs/microservices';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import moment from 'moment';
-import { PostModel } from '../../database/models/post.model';
+import { EntityType } from './media.constants';
 
 @Injectable()
 export class MediaService {
@@ -182,6 +182,7 @@ export class MediaService {
         url: i.url ?? null,
         width: i.width ?? null,
         height: i.height ?? null,
+        mimeType: i.mimeType ?? null,
         status: i.status ?? MediaStatus.WAITING_PROCESS,
         thumbnails: i.thumbnails ?? [],
         createdAt: i.createdAt ? i.createdAt : new Date(),
@@ -497,7 +498,7 @@ export class MediaService {
       });
       await this.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     }
   }

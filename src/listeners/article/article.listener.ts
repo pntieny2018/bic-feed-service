@@ -17,6 +17,12 @@ import { MediaService } from '../../modules/media';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
+import { TagService } from '../../modules/tag/tag.service';
+import { ArrayHelper } from '../../common/helpers';
+import { PostActivityService } from '../../notification/activities';
+import { NotificationService } from '../../notification';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { SeriesAddedArticlesEvent } from '../../events/series';
 
 @Injectable()
 export class ArticleListener {
@@ -28,9 +34,13 @@ export class ArticleListener {
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _seriesService: SeriesService,
+    private readonly _tagService: TagService,
     private readonly _articleService: ArticleService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _postSearchService: SearchService
+    private readonly _postSearchService: SearchService,
+    private readonly _postActivityService: PostActivityService,
+    private readonly _notificationService: NotificationService,
+    private readonly _internalEventEmitter: InternalEventEmitterService
   ) {}
 
   @On(ArticleHasBeenDeletedEvent)
@@ -39,12 +49,60 @@ export class ArticleListener {
     if (article.isDraft) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
-      this._logger.error(e, e?.stack);
+      this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     });
 
-    this._postSearchService.deletePostsToSearch([article]);
-    //TODO:: send noti
+    this._postSearchService.deletePostsToSearch([article]).catch((e) => {
+      this._logger.error(JSON.stringify(e?.stack));
+      this._sentryService.captureException(e);
+    });
+
+    if (!article.isDraft) {
+      this._tagService
+        .decreaseTotalUsed(article.postTags.map((e) => e.tagId))
+        .catch((ex) => this._logger.debug(ex));
+    }
+
+    const activity = this._postActivityService.createPayload({
+      actor: {
+        id: article.createdBy,
+      },
+      title: article.title,
+      commentsCount: article.commentsCount,
+      totalUsersSeen: article.totalUsersSeen,
+      content: article.content,
+      createdAt: article.createdAt,
+      updatedAt: article.updatedAt,
+      createdBy: article.createdBy,
+      isDraft: article.isDraft,
+      isProcessing: false,
+      setting: {
+        canComment: article.canComment,
+        canReact: article.canReact,
+        canShare: article.canShare,
+      },
+      id: article.id,
+      audience: {
+        users: [],
+        groups: (article?.groups ?? []).map((g) => ({
+          id: g.groupId,
+        })) as any,
+      },
+      type: article.type,
+      privacy: article.privacy,
+    });
+
+    this._notificationService.publishPostNotification({
+      key: `${article.id}`,
+      value: {
+        actor: {
+          id: article.createdBy,
+        },
+        event: event.getEventName(),
+        data: activity,
+      },
+    });
   }
 
   @On(ArticleHasBeenPublishedEvent)
@@ -63,51 +121,67 @@ export class ArticleListener {
       summary,
       coverMedia,
       categories,
+      tags,
       createdBy,
+      isHidden,
     } = article;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
       .map((i) => i.id);
-    this._mediaService.processVideo(mediaIds).catch((e) => this._logger.debug(e));
+    this._mediaService
+      .processVideo(mediaIds)
+      .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
     if (isDraft) return;
 
     this._postServiceHistory
       .saveEditedHistory(article.id, { oldData: null, newData: article })
       .catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
 
-    this._postSearchService.addPostsToSearch([
-      {
-        id,
-        type,
-        content,
-        groupIds: audience.groups.map((group) => group.id),
-        communityIds: audience.groups.map((group) => group.rootGroupId),
-        createdBy,
-        updatedAt,
-        createdAt,
-        title,
-        summary,
-        coverMedia: {
-          id: coverMedia.id,
-          createdBy: coverMedia.createdBy,
-          url: coverMedia.url,
-          createdAt: coverMedia.createdAt,
-          name: coverMedia.name,
-          type: coverMedia.type as MediaType,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
+    this._postSearchService
+      .addPostsToSearch([
+        {
+          id,
+          type,
+          content,
+          isHidden,
+          groupIds: audience.groups.map((group) => group.id),
+          communityIds: audience.groups.map((group) => group.rootGroupId),
+          createdBy,
+          updatedAt,
+          createdAt,
+          title,
+          summary,
+          coverMedia: {
+            id: coverMedia.id,
+            createdBy: coverMedia.createdBy,
+            url: coverMedia.url,
+            createdAt: coverMedia.createdAt,
+            name: coverMedia.name,
+            type: coverMedia.type as MediaType,
+            originName: coverMedia.originName,
+            width: coverMedia.width,
+            height: coverMedia.height,
+            extension: coverMedia.extension,
+          },
+          categories: categories.map((category) => ({ id: category.id, name: category.name })),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         },
-        categories: categories.map((category) => ({ id: category.id, name: category.name })),
-      },
-    ]);
+      ])
+      .catch((e) => {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      });
 
-    //TODO:: send noti
+    if (article.tags.length) {
+      this._tagService
+        .increaseTotalUsed(article.tags.map((e) => e.id))
+        .catch((ex) => this._logger.debug(ex));
+    }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -117,8 +191,31 @@ export class ArticleListener {
         [NIL_UUID]
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
+    }
+
+    const activity = this._postActivityService.createPayload(article);
+    this._notificationService.publishPostNotification({
+      key: `${article.id}`,
+      value: {
+        actor: actor.profile,
+        event: event.getEventName(),
+        data: activity,
+      },
+    });
+
+    if (article.series && article.series.length) {
+      for (const sr of article.series) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [article.id],
+            seriesId: sr.id,
+            actor: actor,
+          })
+        );
+      }
     }
   }
 
@@ -140,20 +237,29 @@ export class ArticleListener {
       title,
       coverMedia,
       categories,
+      tags,
+      isHidden,
     } = newArticle;
 
     if (oldArticle.isDraft === false) {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
-      this._mediaService.processVideo(mediaIds).catch((ex) => this._logger.debug(ex));
+      this._mediaService
+        .processVideo(mediaIds)
+        .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
     }
 
     if (oldArticle.isDraft === false && isDraft === true) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
-        this._logger.error(e, e?.stack);
+        this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
+      if (tags.length) {
+        this._tagService
+          .decreaseTotalUsed(tags.map((e) => e.id))
+          .catch((ex) => this._logger.debug(ex));
+      }
     }
 
     if (isDraft) return;
@@ -161,16 +267,16 @@ export class ArticleListener {
     this._postServiceHistory
       .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
       .catch((e) => {
-        this._logger.debug(e, e?.stack);
+        this._logger.debug(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
-    //TODO:: send noti
 
     this._postSearchService.updatePostsToSearch([
       {
         id,
         type,
         content,
+        isHidden,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
@@ -192,8 +298,60 @@ export class ArticleListener {
           extension: coverMedia.extension,
         },
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
     ]);
+
+    if (tags.length !== oldArticle.tags.length) {
+      const oldTagIds = oldArticle.tags.map((e) => e.id);
+      const newTagIds = tags.map((e) => e.id);
+      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+      if (deleteIds) {
+        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+      }
+      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+      if (addIds) {
+        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
+      }
+    }
+
+    if (!newArticle.isHidden) {
+      const updatedActivity = this._postActivityService.createPayload(newArticle);
+      const oldActivity = this._postActivityService.createPayload(oldArticle);
+
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor: actor.profile,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
+          },
+        },
+      });
+
+      const series = newArticle.series?.map((s) => s.id) ?? [];
+
+      if (series.length > 0) {
+        const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
+
+        const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+
+        for (const seriesId of newSeriesIds) {
+          this._internalEventEmitter.emit(
+            new SeriesAddedArticlesEvent({
+              isAdded: false,
+              articleIds: [newArticle.id],
+              seriesId: seriesId,
+              actor: actor,
+            })
+          );
+        }
+      }
+    }
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -204,7 +362,7 @@ export class ArticleListener {
         oldArticle.audience.groups.map((g) => g.id)
       );
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
     }
   }
@@ -230,6 +388,7 @@ export class ArticleListener {
         actor,
         id,
         content,
+        isHidden,
         updatedAt,
         audience,
         createdAt,
@@ -238,6 +397,8 @@ export class ArticleListener {
         title,
         coverMedia,
         createdBy,
+        categories,
+        tags,
       } = article;
 
       this._postSearchService.addPostsToSearch([
@@ -245,25 +406,28 @@ export class ArticleListener {
           id,
           type,
           content,
+          isHidden,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
-          createdAt,
-          updatedAt,
           createdBy,
-          summary,
+          updatedAt,
+          createdAt,
           title,
+          summary,
           coverMedia: {
             id: coverMedia.id,
             createdBy: coverMedia.createdBy,
             url: coverMedia.url,
-            type: coverMedia.type as MediaType,
             createdAt: coverMedia.createdAt,
             name: coverMedia.name,
+            type: coverMedia.type as MediaType,
             originName: coverMedia.originName,
             width: coverMedia.width,
             height: coverMedia.height,
             extension: coverMedia.extension,
           },
+          categories: categories.map((category) => ({ id: category.id, name: category.name })),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         },
       ]);
 
@@ -275,7 +439,7 @@ export class ArticleListener {
           [NIL_UUID]
         );
       } catch (error) {
-        this._logger.error(error, error?.stack);
+        this._logger.error(JSON.stringify(error?.stack));
         this._sentryService.captureException(error);
       }
     });

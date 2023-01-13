@@ -100,14 +100,14 @@ export const mockPostResponseDto: PostResponseDto = {
         id: 'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
-        privacy: GroupPrivacy.OPEN,
+        privacy: GroupPrivacy.CLOSED,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
       },
     ],
   },
   ownerReactions: [],
   comments: null,
-  privacy: PostPrivacy.PUBLIC,
+  privacy: PostPrivacy.OPEN,
 };
 
 export const mockCreatePostReactionProcedureReturn = [

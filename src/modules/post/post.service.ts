@@ -22,7 +22,9 @@ import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostTagModel } from '../../database/models/post-tag.model';
 import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
@@ -30,7 +32,6 @@ import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
-import { AuthorityService } from '../authority';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -39,10 +40,12 @@ import { MediaDto } from '../media/dto';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
+import { ReportTo, TargetType } from '../report-content/contstants';
 import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+
 @Injectable()
 export class PostService {
   /**
@@ -66,6 +69,8 @@ export class PostService {
     protected postCategoryModel: typeof PostCategoryModel,
     @InjectModel(PostHashtagModel)
     protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(PostTagModel)
+    protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
@@ -76,14 +81,15 @@ export class PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    protected authorityService: AuthorityService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBinding: PostBindingService,
-    protected readonly linkPreviewService: LinkPreviewService
+    protected readonly linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentDetailModel)
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
   ) {}
 
   /**
@@ -154,7 +160,8 @@ export class PostService {
   public async get(
     postId: string,
     user: UserDto,
-    getPostDto?: GetPostDto
+    getPostDto?: GetPostDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
   ): Promise<PostResponseDto> {
     const attributes = this.getAttributesObj({
       loadMarkRead: true,
@@ -176,25 +183,21 @@ export class PostService {
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
       };
     } else {
-      condition = { id: postId };
+      condition = { id: postId, isHidden: false };
     }
+
     const post = await this.postModel.findOne({
       attributes,
       where: condition,
       include,
     });
-    if (!post) {
+
+    if (!post || (post.isHidden === true && post.createdBy !== user?.id)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
 
-    if (user) {
-      await this.authorityService.checkCanReadPost(user, post);
-    } else {
-      await this.authorityService.checkIsPublicPost(post);
-    }
-
     let comments = null;
-    if (getPostDto.withComment && post.canComment) {
+    if (getPostDto?.withComment && post.canComment) {
       comments = await this.commentService.getComments(
         {
           postId,
@@ -209,20 +212,24 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
+
     const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
+      shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser: user,
     });
+
     await this.postBinding.bindCommunity(postsBindedData);
+
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
 
     result[0]['comments'] = comments;
+
     return result[0];
   }
 
@@ -252,6 +259,12 @@ export class PostService {
           as: 'groups',
           required: must,
           attributes: ['groupId'],
+        },
+        {
+          model: PostTagModel,
+          as: 'postTags',
+          required: false,
+          attributes: ['tagId'],
         },
       ],
       where: {
@@ -334,6 +347,10 @@ export class PostService {
           'canReact',
           'importantExpiredAt',
         ],
+        where: {
+          isDraft: false,
+          isHidden: false,
+        },
         include: [
           {
             model: MediaModel,
@@ -491,14 +508,14 @@ export class PostService {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.PUBLIC) {
-        return PostPrivacy.PUBLIC;
+      if (group.privacy === GroupPrivacy.OPEN) {
+        return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.OPEN) totalOpen++;
+      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
       if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
     }
 
-    if (totalOpen > 0) return PostPrivacy.OPEN;
+    if (totalOpen > 0) return PostPrivacy.CLOSED;
     if (totalPrivate > 0) return PostPrivacy.PRIVATE;
     return PostPrivacy.SECRET;
   }
@@ -514,7 +531,7 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { media, mentions, audience } = updatePostDto;
+      const { media, mentions, audience, setting } = updatePostDto;
 
       let mediaListChanged = [];
       if (media) {
@@ -570,6 +587,27 @@ export class PostService {
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
+
+      if (setting && setting.isImportant) {
+        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
+          where: {
+            postId: post.id,
+            userId: authUserId,
+          },
+        });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create(
+            {
+              postId: post.id,
+              userId: authUserId,
+            },
+            { ignoreDuplicates: true, transaction }
+          );
+        }
+
+        post.markedReadPost = true;
+      }
+
       await transaction.commit();
 
       return true;
@@ -655,10 +693,18 @@ export class PostService {
       post.isDraft = isDraft;
       post.isProcessing = isProcessing;
       if (post.setting.isImportant) {
-        await this.userMarkReadPostModel.create({
-          postId: post.id,
-          userId: authUserId,
+        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
+          where: {
+            postId: post.id,
+            userId: authUserId,
+          },
         });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create({
+            postId: post.id,
+            userId: authUserId,
+          });
+        }
         post.markedReadPost = true;
       }
       return post;
@@ -722,6 +768,7 @@ export class PostService {
       this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
       this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
       this.postHashtagModel.destroy({ where: { postId: postId }, transaction }),
+      this.postTagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
@@ -868,6 +915,15 @@ export class PostService {
     return post.toJSON();
   }
 
+  public async findPostByIds(ids: string[]): Promise<IPost[]> {
+    const posts = await this.postModel.findAll({
+      where: {
+        id: ids,
+      },
+    });
+    return posts;
+  }
+
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
       const posts = await this.postGroupModel.findAll({
@@ -879,7 +935,7 @@ export class PostService {
       });
       return posts.map((p) => p.postId);
     } catch (ex) {
-      this.logger.error(ex, ex.stack);
+      this.logger.error(ex, ex?.stack);
       this.sentryService.captureException(ex);
       return [];
     }
@@ -920,6 +976,7 @@ export class PostService {
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
       isDraft: false,
+      isHidden: false,
     };
 
     if (type) {
@@ -1092,11 +1149,11 @@ export class PostService {
     groupPrivacy: GroupPrivacy,
     postPrivacy: PostPrivacy
   ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.PUBLIC || postPrivacy === PostPrivacy.PUBLIC) {
-      return PostPrivacy.PUBLIC;
-    }
     if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
       return PostPrivacy.OPEN;
+    }
+    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
+      return PostPrivacy.CLOSED;
     }
     if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
       return PostPrivacy.PRIVATE;
@@ -1164,6 +1221,13 @@ export class PostService {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      isHidden: false,
+      [Op.and]: [
+        this.postModel.notIncludePostsReported(userId, {
+          mainTableAlias: '"PostModel"',
+          type: [TargetType.ARTICLE, TargetType.POST],
+        }),
+      ],
     };
     const order = [];
     if (isImportant) {
@@ -1226,11 +1290,18 @@ export class PostService {
       },
     });
 
+    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
+
     const mappedPosts = ids.map((postId) => {
       const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
+      if (post) {
+        const postJson = post.toJSON();
+        postJson.articles = postJson.articles.filter(
+          (article) => !articleIdsReported.includes(article.id)
+        );
+        return postJson;
+      }
     });
-
     return mappedPosts;
   }
 
@@ -1256,6 +1327,7 @@ export class PostService {
       ],
       where: {
         id: ids,
+        isHidden: false,
       },
     });
 
@@ -1280,6 +1352,13 @@ export class PostService {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
       isDraft: false,
+      isHidden: false,
+      [Op.and]: [
+        this.postModel.notIncludePostsReported(authUserId, {
+          mainTableAlias: '"PostModel"',
+          type: [TargetType.ARTICLE, TargetType.POST],
+        }),
+      ],
     };
 
     const order = [];
@@ -1375,5 +1454,57 @@ export class PostService {
         totalSeries: 0,
       };
     });
+  }
+
+  public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
+    const conditions = {
+      id: id,
+      isDraft: false,
+      isProcessing: false,
+    };
+
+    if (returning) {
+      const post = await this.postModel.findOne({
+        include: ['groups'],
+        where: conditions,
+      });
+      if (post) {
+        return [true, post];
+      }
+      return [false, null];
+    }
+
+    const postCount = await this.postModel.count({
+      where: conditions,
+    });
+    return [postCount > 1, null];
+  }
+
+  public async getEntityIdsReportedByUser(
+    userId: string,
+    targetTypes: TargetType[],
+    options?: {
+      reportTo?: ReportTo;
+      groupIds?: string[];
+    }
+  ): Promise<string[]> {
+    const { groupIds } = options ?? {};
+    const condition = {
+      [Op.and]: [
+        {
+          createdBy: userId,
+          targetType: targetTypes,
+        },
+      ],
+    };
+
+    if (groupIds) {
+      //condition[''] improve later
+    }
+    const rows = await this.reportContentDetailModel.findAll({
+      where: condition,
+    });
+
+    return rows.map((row) => row.targetId);
   }
 }

@@ -28,10 +28,14 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from '../modules/health/health.module';
 import { InternalModule } from '../modules/internal';
 import { SearchModule } from '../modules/search';
+import { ReportContentModule } from '../modules/report-content/report-content.module';
+import { TagModule } from '../modules/tag';
+import { FilterUserModule } from '../modules/filter-user';
 
 @Module({
   imports: [
     DatabaseModule,
+    FilterUserModule,
     LibModule,
     AuthModule,
     CommentModule,
@@ -55,11 +59,13 @@ import { SearchModule } from '../modules/search';
     SeriesModule,
     CategoryModule,
     HashtagModule,
+    TagModule,
     ScheduleModule.forRoot(),
     HealthModule,
     SeriesModule,
     InternalModule,
     SearchModule,
+    ReportContentModule,
   ],
   controllers: [AppController],
   providers: [],

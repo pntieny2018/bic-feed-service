@@ -3,6 +3,7 @@ import {
   BelongsTo,
   Column,
   CreatedAt,
+  Default,
   ForeignKey,
   Model,
   PrimaryKey,
@@ -23,7 +24,7 @@ export interface IPostGroup {
 @Table({
   tableName: 'posts_groups',
 })
-export class PostGroupModel extends Model implements IPostGroup {
+export class PostGroupModel extends Model<IPostGroup, IPostGroup> implements IPostGroup {
   @ForeignKey(() => PostModel)
   @PrimaryKey
   @IsUUID()

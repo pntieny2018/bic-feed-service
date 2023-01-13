@@ -48,6 +48,11 @@ export interface IPostElasticsearch {
     id: string;
     name: string;
   }[];
+  tags?: {
+    id: string;
+    groupId: string;
+    name: string;
+  }[];
   title?: string;
   summary?: string;
   content?: string;
@@ -66,6 +71,7 @@ export interface IDataPostToAdd {
   updatedAt: Date;
   createdBy: string;
   type: PostType;
+  isHidden: boolean;
   title?: string;
   summary?: string;
   content?: string;
@@ -73,6 +79,11 @@ export interface IDataPostToAdd {
   mentionUserIds?: string[];
   categories?: { id: string; name: string }[];
   articles?: { id: string; zindex: number }[];
+  tags?: {
+    id: string;
+    groupId: string;
+    name: string;
+  }[];
   coverMedia?: ICoverMedia;
 }
 

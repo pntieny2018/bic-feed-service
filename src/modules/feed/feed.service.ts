@@ -1,26 +1,26 @@
+import { SentryService } from '@app/sentry';
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
-import { SentryService } from '@app/sentry';
+import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto, PageMetaDto } from '../../common/dto';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { ExceptionHelper } from '../../common/helpers';
+import { IPost } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
+import { GroupPrivacy } from '../../shared/group/dto';
+import { UserService } from '../../shared/user';
+import { UserDataShareDto } from '../../shared/user/dto';
+import { ArticleResponseDto } from '../article/dto/responses';
 import { UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
+import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { UserDataShareDto } from '../../shared/user/dto';
-import { ExceptionHelper } from '../../common/helpers';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { UserService } from '../../shared/user';
-import { GroupPrivacy } from '../../shared/group/dto';
-import { PostBindingService } from '../post/post-binding.service';
-import { ClassTransformer } from 'class-transformer';
-import { ArticleResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class FeedService {
@@ -110,6 +110,28 @@ export class FeedService {
     });
   }
 
+  private async _bindAndTransformReportedData({
+    posts,
+    authUser,
+  }: {
+    posts: IPost[];
+    authUser: UserDto;
+  }): Promise<ArticleResponseDto[]> {
+    const postsBindData = await this._postBindingService.bindRelatedData(posts, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudienceReported: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
+    });
+
+    await this._postBindingService.bindCommunity(posts);
+    return this._classTransformer.plainToInstance(ArticleResponseDto, postsBindData, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
@@ -126,7 +148,7 @@ export class FeedService {
 
       const privacy = groupInfos.map((g) => g.privacy);
 
-      if (privacy.every((p) => p !== GroupPrivacy.OPEN && p !== GroupPrivacy.PUBLIC)) {
+      if (privacy.every((p) => p !== GroupPrivacy.CLOSED && p !== GroupPrivacy.OPEN)) {
         if (!this._groupService.isMemberOfSomeGroups(groupIds, groupsOfUser)) {
           ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
         }
@@ -160,7 +182,7 @@ export class FeedService {
         })
       );
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
       throw ex;
     }
@@ -191,7 +213,7 @@ export class FeedService {
         );
       }
     } catch (ex) {
-      this._logger.error(ex, ex.stack);
+      this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     }
   }
@@ -252,6 +274,27 @@ export class FeedService {
     });
   }
 
+  public async getContentBlockedOfMe(
+    authUser: UserDto,
+    postIdsAndSorted: string[],
+    paging: {
+      limit: number;
+      offset: number;
+      hasNextPage: boolean;
+    }
+  ): Promise<PageDto<PostResponseDto>> {
+    try {
+      const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+      const postsBindData = await this._bindAndTransformReportedData({
+        posts,
+        authUser,
+      });
+      return new PageDto<PostResponseDto>(postsBindData, paging);
+    } catch (ex) {
+      this._logger.error(ex, ex?.stack);
+      return new PageDto<PostResponseDto>([], paging);
+    }
+  }
   /**
    * Delete newsfeed by post
    */

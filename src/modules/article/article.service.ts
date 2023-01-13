@@ -1,6 +1,4 @@
-import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { SentryService } from '@app/sentry';
 import {
   BadRequestException,
   forwardRef,
@@ -9,46 +7,52 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { UserDto } from '../auth';
-import { MediaService } from '../media';
-import { MentionService } from '../mention';
-import { CommentService } from '../comment';
-import { AuthorityService } from '../authority';
-import { Sequelize } from 'sequelize-typescript';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { ClassTransformer } from 'class-transformer';
 import { FindAttributeOptions, Includeable, Op } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { NIL } from 'uuid';
+import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
+import { PageDto } from '../../common/dto';
+import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
+import { MediaStatus } from '../../database/models/media.model';
+import { PostCategoryModel } from '../../database/models/post-category.model';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostHashtagModel } from '../../database/models/post-hashtag.model';
+import { PostSeriesModel } from '../../database/models/post-series.model';
+import { PostTagModel } from '../../database/models/post-tag.model';
+import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
+import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
+import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { GroupService } from '../../shared/group';
+import { UserService } from '../../shared/user';
+import { UserDto } from '../auth';
+import { AuthorityService } from '../authority';
+import { CategoryService } from '../category/category.service';
+import { CommentService } from '../comment';
+import { FeedService } from '../feed/feed.service';
+import { HashtagService } from '../hashtag/hashtag.service';
+import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { MediaService } from '../media';
+import { EntityType } from '../media/media.constants';
+import { MentionService } from '../mention';
+import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
-import { SentryService } from '@app/sentry';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
+import { TargetType } from '../report-content/contstants';
+import { SeriesService } from '../series/series.service';
+import { TagService } from '../tag/tag.service';
+import { ArticleBindingService } from './article-binding.service';
 import {
   CreateArticleDto,
-  UpdateArticleDto,
-  GetListArticlesDto,
   GetArticleDto,
+  GetListArticlesDto,
+  UpdateArticleDto,
 } from './dto/requests';
-import { ClassTransformer } from 'class-transformer';
-import { PostService } from '../post/post.service';
-import { PageDto } from '../../common/dto';
-import { EntityType } from '../media/media.constants';
-import { CategoryService } from '../category/category.service';
-import { SeriesService } from '../series/series.service';
-import { HashtagService } from '../hashtag/hashtag.service';
-import { GroupService } from '../../shared/group';
-import { LogicException } from '../../common/exceptions';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { NIL } from 'uuid';
-import { FeedService } from '../feed/feed.service';
-import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { UserService } from '../../shared/user';
-import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
-import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { ArticleBindingService } from './article-binding.service';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
-import { PostSeriesModel } from '../../database/models/post-series.model';
-import { PostCategoryModel } from '../../database/models/post-category.model';
-import { PostHashtagModel } from '../../database/models/post-hashtag.model';
-import { MediaStatus } from '../../database/models/media.model';
-import { UserSavePostModel } from '../../database/models/user-save-post.model';
+import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
+import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -77,6 +81,8 @@ export class ArticleService extends PostService {
     protected postCategoryModel: typeof PostCategoryModel,
     @InjectModel(PostHashtagModel)
     protected postHashtagModel: typeof PostHashtagModel,
+    @InjectModel(PostTagModel)
+    protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     protected userService: UserService,
@@ -96,8 +102,10 @@ export class ArticleService extends PostService {
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
-    protected readonly authorityService: AuthorityService,
-    private readonly _linkPreviewService: LinkPreviewService
+    private readonly _linkPreviewService: LinkPreviewService,
+    @InjectModel(ReportContentDetailModel)
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
+    private readonly _tagService: TagService
   ) {
     super(
       sequelizeConnection,
@@ -106,6 +114,7 @@ export class ArticleService extends PostService {
       postSeriesModel,
       postCategoryModel,
       postHashtagModel,
+      postTagModel,
       userMarkReadPostModel,
       userSavePostModel,
       userService,
@@ -113,12 +122,12 @@ export class ArticleService extends PostService {
       mediaService,
       mentionService,
       commentService,
-      authorityService,
       reactionService,
       feedService,
       sentryService,
       articleBinding,
-      _linkPreviewService
+      _linkPreviewService,
+      reportContentDetailModel
     );
   }
 
@@ -165,7 +174,7 @@ export class ArticleService extends PostService {
     });
 
     const attributes = {
-      include: [],
+      include: [PostModel.loadSaved(authUser.id)],
       exclude: ['content'],
     };
     if (authUser) {
@@ -177,6 +186,8 @@ export class ArticleService extends PostService {
       include,
       where: {
         id: ids,
+        isHidden: false,
+        isDraft: false,
       },
     });
 
@@ -202,7 +213,13 @@ export class ArticleService extends PostService {
         ['createdAt', 'ASC'],
       ],
     });
-    const articleIdsSorted = articlesInSeries.map((article) => article.postId);
+
+    const articleIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+    ]);
+    const articleIdsSorted = articlesInSeries
+      .filter((article) => !articleIdsReported.includes(article.postId))
+      .map((article) => article.postId);
     const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
     const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindActor: true,
@@ -220,7 +237,7 @@ export class ArticleService extends PostService {
     getListArticleDto: GetListArticlesDto,
     authUser: UserDto
   ): Promise<string[]> {
-    const { groupId, categories, hashtags, series, offset, limit } = getListArticleDto;
+    const { groupId, categories, hashtags, series, offset, limit, tags } = getListArticleDto;
     const include = [];
     if (groupId) {
       const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
@@ -265,6 +282,17 @@ export class ArticleService extends PostService {
         attributes: [],
         where: {
           hashtagId: hashtags,
+        },
+      });
+    }
+
+    if (tags && tags.length > 0) {
+      include.push({
+        model: PostTagModel,
+        required: true,
+        attributes: [],
+        where: {
+          tagId: tags,
         },
       });
     }
@@ -430,13 +458,15 @@ export class ArticleService extends PostService {
    * @param articleId string
    * @param authUser
    * @param getArticleDto GetArticleDto
+   * @param shouldHideSecretAudienceCanNotAccess
    * @returns Promise resolve ArticleResponseDto
    * @throws HttpException
    */
   public async get(
     articleId: string,
     authUser: UserDto,
-    getArticleDto?: GetArticleDto
+    getArticleDto?: GetArticleDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
   ): Promise<ArticleResponseDto> {
     const attributes = this.getAttributesObj({
       loadSaved: true,
@@ -463,7 +493,7 @@ export class ArticleService extends PostService {
         [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
       };
     } else {
-      condition = { id: articleId, type: PostType.ARTICLE };
+      condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
     }
 
     const article = await this.postModel.findOne({
@@ -475,11 +505,7 @@ export class ArticleService extends PostService {
     if (!article) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
-    if (authUser) {
-      await this.authorityService.checkCanReadArticle(authUser, article);
-    } else {
-      await this.authorityService.checkIsPublicArticle(article);
-    }
+
     let comments = null;
     if (getArticleDto.withComment) {
       comments = await this.commentService.getComments(
@@ -501,7 +527,7 @@ export class ArticleService extends PostService {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: true,
+      shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser,
     });
     await this.articleBinding.bindCommunity(articlesBindedData);
@@ -519,11 +545,14 @@ export class ArticleService extends PostService {
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
-
-    if (attributes['includes'] && Array.isArray(attributes['includes'])) {
-      attributes['include'].push([['hashtags_json', 'hashtags']]);
+    if (attributes['include'] && Array.isArray(attributes['include'])) {
+      attributes['include'].push(['hashtags_json', 'hashtags']);
+      attributes['include'].push(['tags_json', 'tags']);
     } else {
-      attributes['include'] = [['hashtags_json', 'hashtags']];
+      attributes['include'] = [
+        ['hashtags_json', 'hashtags'],
+        ['tags_json', 'tags'],
+      ];
     }
     return attributes;
   }
@@ -624,6 +653,7 @@ export class ArticleService extends PostService {
         mentions,
         audience,
         categories,
+        tags,
         hashtags,
         series,
       } = createArticleDto;
@@ -644,6 +674,10 @@ export class ArticleService extends PostService {
       if (hashtags) {
         hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
       }
+      let tagList = [];
+      if (tags) {
+        tagList = await this._tagService.getTagsByIds(tags);
+      }
       const post = await this.postModel.create(
         {
           title,
@@ -661,6 +695,7 @@ export class ArticleService extends PostService {
           isProcessing: false,
           privacy: null,
           hashtagsJson: hashtagArr,
+          tagsJson: tagList,
           views: 0,
           linkPreviewId: linkPreview?.id || null,
         },
@@ -678,6 +713,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
+        this._tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -698,7 +734,7 @@ export class ArticleService extends PostService {
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       this.sentryService.captureException(error);
       throw error;
     }
@@ -749,10 +785,18 @@ export class ArticleService extends PostService {
       );
       article.isDraft = isDraft;
       if (article.setting.isImportant) {
-        await this.userMarkReadPostModel.create({
-          postId: article.id,
-          userId: authUserId,
+        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+          where: {
+            postId: article.id,
+            userId: authUserId,
+          },
         });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create({
+            postId: article.id,
+            userId: authUserId,
+          });
+        }
         article.markedReadPost = true;
       }
       return article;
@@ -785,7 +829,7 @@ export class ArticleService extends PostService {
       });
       return true;
     } catch (error) {
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -807,7 +851,7 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags } = updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -856,9 +900,17 @@ export class ArticleService extends PostService {
         await this._categoryService.updateToPost(categories, post.id, transaction);
       }
       if (series) {
-        await this._seriesService.updateToPost(series, post.id, transaction);
+        const filterSeriesExist = await this.postModel.findAll({
+          where: {
+            id: series,
+          },
+        });
+        await this._seriesService.updateToPost(
+          filterSeriesExist.map((series) => series.id),
+          post.id,
+          transaction
+        );
       }
-
       if (hashtags) {
         const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
         await this._hashtagService.updateToPost(
@@ -867,6 +919,11 @@ export class ArticleService extends PostService {
           transaction
         );
         dataUpdate['hashtagsJson'] = hashtagArr;
+      }
+      if (tags) {
+        const tagList = await this._tagService.getTagsByIds(tags);
+        await this._tagService.updateToPost(tags, post.id, transaction);
+        dataUpdate['tagsJson'] = tagList;
       }
 
       //if post is draft, isProcessing alway is true
@@ -883,7 +940,7 @@ export class ArticleService extends PostService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(error, error?.stack);
+      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }

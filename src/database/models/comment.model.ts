@@ -30,6 +30,8 @@ import { IsUUID } from 'class-validator';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 import { OrderEnum } from '../../common/dto';
 import { GetCommentsDto } from '../../modules/comment/dto/requests';
+import { ReportContentDetailModel } from './report-content-detail.model';
+import { TargetType } from '../../modules/report-content/contstants';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -45,6 +47,7 @@ export interface IComment {
   parent?: IComment;
   content?: string;
   giphyId?: string;
+  isHidden?: boolean;
   createdBy: string;
   updatedBy: string;
   createdAt?: Date;
@@ -93,6 +96,9 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
   @Column
   public edited?: boolean;
+
+  @Column
+  public isHidden?: boolean;
 
   @AllowNull(true)
   @Column
@@ -289,8 +295,14 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     const { limit } = getCommentsDto;
     const order = getCommentsDto.order ?? OrderEnum.DESC;
     const { schema } = getDatabaseConfig();
-    const condition = await CommentModel._getCondition(getCommentsDto);
-
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
+    let condition = await CommentModel._getCondition(getCommentsDto);
+    condition += `AND "c".is_hidden = false AND NOT EXISTS ( 
+      SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+      WHERE rp.target_id = "c".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
+        authUserId
+      )}
+    )`;
     let select = `SELECT "CommentModel".*,
     "media"."id" AS "mediaId",
     "media"."url" AS "mediaUrl", 
@@ -361,7 +373,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     const order = getCommentsDto.order ?? OrderEnum.DESC;
     const { schema } = getDatabaseConfig();
     const condition = await CommentModel._getCondition(getCommentsDto);
-
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
     let select = `SELECT "CommentModel".*,
     "media"."id" AS "mediaId",
     "media"."url" AS "mediaUrl", 
@@ -397,6 +409,12 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       ${subSelect}
       FROM ${schema}."comments" AS "c"
       WHERE ${condition} AND "c".created_at <= ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
+      AND "c".is_hidden = false AND NOT EXISTS (
+        SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+        WHERE rp.target_id = "c".id AND target_type = '${
+          TargetType.COMMENT
+        }' AND rp.created_by = ${this.sequelize.escape(authUserId)}
+      )
       ORDER BY "c"."created_at" DESC
       OFFSET 0 LIMIT :limitTop
       )
@@ -405,6 +423,12 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         ${subSelect}
         FROM ${schema}."comments" AS "c"
         WHERE ${condition} AND "c".created_at > ( SELECT "c1"."created_at" FROM ${schema}."comments" AS "c1" WHERE "c1".id = :aroundId)
+        AND "c".is_hidden = false AND NOT EXISTS ( 
+          SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+          WHERE rp.target_id = "c".id AND target_type = '${
+            TargetType.COMMENT
+          }' AND rp.created_by = ${this.sequelize.escape(authUserId)}
+        )
         ORDER BY "c"."created_at" ASC
         OFFSET 0 LIMIT :limitBottom
       )
@@ -442,6 +466,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   ): Promise<any[]> {
     const subQuery = [];
     const { schema } = getDatabaseConfig();
+    const reportContentDetailTable = ReportContentDetailModel.tableName;
     for (const comment of comments) {
       subQuery.push(`(SELECT * 
       FROM (
@@ -457,8 +482,14 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
               "created_at" AS "createdAt", 
               "updated_at" AS "updatedAt",
               "giphy_id" AS "giphyId"
-        FROM ${schema}."comments" AS "CommentModel" 
+        FROM ${schema}."comments" AS "CommentModel"
         WHERE "CommentModel"."parent_id" = ${this.sequelize.escape(comment.id)} 
+        AND "CommentModel".is_hidden = false AND NOT EXISTS ( 
+          SELECT target_id FROM  ${schema}.${reportContentDetailTable} rp
+          WHERE rp.target_id = "CommentModel".id AND target_type = 'COMMENT' AND rp.created_by = ${this.sequelize.escape(
+            authUserId
+          )}
+        )
         ORDER BY "CommentModel"."created_at" DESC LIMIT :limit
       ) AS sub)`);
     }
