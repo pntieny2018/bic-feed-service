@@ -169,7 +169,12 @@ export class PostService {
       data: this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
         excludeExtraneousValues: true,
       }),
-      count: await this.postModel.count<PostModel>({ where: condition, attributes }),
+      count: await this.postModel.count<PostModel>({
+        where: condition,
+        attributes,
+        include: otherParams.include ? otherParams.include : include,
+        distinct: true,
+      }),
     };
   }
 
