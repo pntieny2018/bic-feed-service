@@ -25,7 +25,7 @@ export class AdminService {
       {
         model: PostGroupModel,
         as: 'groups',
-        required: false,
+        required: true,
         attributes: ['groupId', 'isArchived'],
         where: {
           groupId: groupIds,
