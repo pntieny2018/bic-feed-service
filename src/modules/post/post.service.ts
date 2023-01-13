@@ -858,9 +858,6 @@ export class PostService {
           {
             model: PostGroupModel,
             as: 'groups',
-            attributes: ['groupId'],
-            require: false,
-            where: { isArchived: false },
           },
           {
             model: MentionModel,
@@ -1484,22 +1481,6 @@ export class PostService {
         totalSeries: 0,
       };
     });
-  }
-
-  public async getPostByGroupIdsAndParam(groupIds: string[], params: WhereOptions): Promise<any> {
-    const postGroups = await this.postGroupModel.findAll({
-      where: { groupId: groupIds },
-      attributes: ['groupId'],
-      include: [
-        {
-          model: PostModel,
-          required: true,
-          where: params,
-          as: 'post',
-        },
-      ],
-    });
-    return postGroups.map((r) => r.toJSON());
   }
 
   public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {

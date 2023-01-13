@@ -4,7 +4,6 @@ import { APP_VERSION } from '../../common/constants';
 import { GetTotalPostsInGroupDto } from './dto/requests';
 import { TotalPostInGroupsDto } from './dto/responses';
 import { InternalService } from './internal.service';
-import { GetPostsByParamsInGroupsDto } from './dto/requests/get-posts-by-params-in-groups.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Internal')
@@ -22,14 +21,5 @@ export class InternalController {
   ): Promise<TotalPostInGroupsDto[]> {
     const { groupIds } = getTotalPostsInGroupDto;
     return this._internalService.getTotalPostByGroupIds(groupIds);
-  }
-
-  @ApiOperation({ summary: 'Get total post in groups' })
-  @Get('/get-posts-in-groups')
-  public getPostsByParamsInGroups(
-    @Query() getTotalPostsInGroupDto: GetPostsByParamsInGroupsDto
-  ): Promise<TotalPostInGroupsDto[]> {
-    const { status, groupIds } = getTotalPostsInGroupDto;
-    return this._internalService.getPostsByParamsByGroupsIds(groupIds, status);
   }
 }
