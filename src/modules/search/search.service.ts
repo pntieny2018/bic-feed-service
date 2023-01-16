@@ -292,17 +292,21 @@ export class SearchService {
       ]),
     ]);
 
+    let articlesFilterReport = [];
     const articles = await this.postService.getSimpleArticlessByIds(
       ArrayHelper.arrayUnique(articleIds)
     );
+    if (articles.length) {
+      const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+        TargetType.ARTICLE,
+      ]);
 
-    const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-    ]);
-
-    const articlesFilterReport = articles.filter(
-      (article) => !articleIdsReported.includes(article.id)
-    );
+      if (articleIdsReported.length) {
+        articlesFilterReport = articles.filter(
+          (article) => !articleIdsReported.includes(article.id)
+        );
+      }
+    }
     const result = this.bindResponseSearch(posts, {
       groups,
       users,

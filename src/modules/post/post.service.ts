@@ -1362,10 +1362,11 @@ export class PostService {
       },
     });
 
-    const mappedPosts = ids.map((postId) => {
-      const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
-    });
+    const mappedPosts = [];
+    for (const id of ids) {
+      const post = rows.find((row) => row.id === id);
+      if (post) mappedPosts.push(post.toJSON());
+    }
 
     return mappedPosts;
   }
