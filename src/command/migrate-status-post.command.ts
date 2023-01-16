@@ -12,9 +12,8 @@ export class MigrateStatusPostCommand implements CommandRunner {
       for (const post of posts) {
         let status = PostStatus.PUBLISHED;
         if (post.isDraft) {
-          status = PostStatus.DRAFT;
-        } else if (post.isProcessing) {
-          status = PostStatus.PROCESSING;
+          if (post.isProcessing) status = PostStatus.PROCESSING;
+          else status = PostStatus.DRAFT;
         } else if (post.publishedAt) {
           const now = Date.now();
           if (new Date(post.publishedAt).getTime() > now) {
