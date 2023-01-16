@@ -1,5 +1,5 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
-import { IPost, PostPrivacy, PostType } from '../../../../../database/models/post.model';
+import { PostPrivacy, PostStatus, PostType } from '../../../../../database/models/post.model';
 import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { ArticleResponseDto } from '../../../dto/responses';
 
@@ -32,8 +32,7 @@ export const mockedArticleResponse: ArticleResponseDto = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  isDraft: true,
-  isProcessing: false,
+  status: PostStatus.DRAFT,
   actor: {
     id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
     username: 'quannhac',
@@ -108,10 +107,9 @@ export const mockedArticleData = {
   type: PostType.ARTICLE,
   isImportant: false,
   importantExpiredAt: null,
-  isDraft: true,
+  status: PostStatus.DRAFT,
   canComment: true,
   canReact: true,
-  isProcessing: false,
   canShare: true,
   content: 'bbbbbb',
   giphyId: null,
