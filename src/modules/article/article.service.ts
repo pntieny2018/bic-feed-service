@@ -377,10 +377,11 @@ export class ArticleService extends PostService {
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
-
     const total = await this.postModel.count<PostModel>({
       where: condition,
       attributes,
+      include: otherParams.include ? otherParams.include : include,
+      distinct: true,
     });
 
     return {
