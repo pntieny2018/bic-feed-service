@@ -519,7 +519,26 @@ export class ArticleService extends PostService {
     } else {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
     }
+    return this.getDetail(
+      attributes,
+      condition,
+      include,
+      articleId,
+      authUser,
+      getArticleDto,
+      shouldHideSecretAudienceCanNotAccess
+    );
+  }
 
+  public async getDetail(
+    attributes: FindAttributeOptions,
+    condition: WhereOptions<IPost>,
+    include: Includeable[],
+    articleId: string,
+    authUser: UserDto,
+    getArticleDto?: GetArticleDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
+  ): Promise<ArticleResponseDto> {
     const article = PostHelper.filterArchivedPost(
       await this.postModel.findOne({
         attributes,
