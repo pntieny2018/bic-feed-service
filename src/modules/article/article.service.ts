@@ -354,14 +354,20 @@ export class ArticleService extends PostService {
       shouldIncludeCategory: true,
       shouldIncludeCover: true,
     });
+    const orderOption = [];
+    if (
+      condition['status'] &&
+      PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
+    ) {
+      orderOption.push(['publishedAt', order]);
+    } else {
+      orderOption.push(['createdAt', order]);
+    }
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes,
       include,
-      order: [
-        ['publishedAt', order],
-        ['createdAt', order],
-      ],
+      order: orderOption,
       ...otherParams,
     });
     const jsonArticles = rows.map((r) => r.toJSON());
@@ -513,7 +519,26 @@ export class ArticleService extends PostService {
     } else {
       condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
     }
+    return this.getDetail(
+      attributes,
+      condition,
+      include,
+      articleId,
+      authUser,
+      getArticleDto,
+      shouldHideSecretAudienceCanNotAccess
+    );
+  }
 
+  public async getDetail(
+    attributes: FindAttributeOptions,
+    condition: WhereOptions<IPost>,
+    include: Includeable[],
+    articleId: string,
+    authUser: UserDto,
+    getArticleDto?: GetArticleDto,
+    shouldHideSecretAudienceCanNotAccess?: boolean
+  ): Promise<ArticleResponseDto> {
     const article = PostHelper.filterArchivedPost(
       await this.postModel.findOne({
         attributes,
