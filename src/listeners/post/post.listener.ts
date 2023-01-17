@@ -443,7 +443,7 @@ export class PostListener {
   public async onPostUpdateCacheGroup(event: PostUpdateCacheGroupEvent): Promise<void> {
     for (const post of event.payload.posts) {
       await this._postSearchService.updateAttributePostToSearch(post, {
-        groupIds: event.payload.cacheIndex[post.id],
+        groupIds: event.payload.mappingPostIdGroupIds[post.id],
       });
     }
   }

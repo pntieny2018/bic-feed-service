@@ -18,12 +18,13 @@ export class InternalService {
 
   // TODO move this to kafka
   public async archiveGroup(groupIds: string[]): Promise<boolean> {
-    const cachedUpdate = await this._postService.updateStateAndGetCacheGroupNeedUpdate(
+    const affectedPostId = await this._postService.updateGroupStateAndGetPostIdsAffected(
       groupIds,
       true
     );
-    if (cachedUpdate) {
-      this._eventEmitter.emit(new PostUpdateCacheGroupEvent(cachedUpdate));
+    if (affectedPostId) {
+      const payload = await this._postService.getPostUpdateCacheGroupEventPayload(affectedPostId);
+      this._eventEmitter.emit(new PostUpdateCacheGroupEvent(payload));
     }
     return true;
   }
