@@ -91,7 +91,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             HEAD=$(git rev-parse --short HEAD)
-            git commit -m "Commit: $HEAD           Build:$CIRCLE_BUILD_NUM"
+            git commit -m "Commit: $HEAD           Build: $CIRCLE_BUILD_NUM"
             git push
   stg:
     docker:
@@ -131,7 +131,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             HEAD=$(git rev-parse --short HEAD)
-            git commit -m "Commit: $HEAD           Build:$CIRCLE_BUILD_NUM"
+            git commit -m "Commit: $HEAD           Build: $CIRCLE_BUILD_NUM"
             git push
   pro:
     docker:
@@ -171,7 +171,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             HEAD=$(git rev-parse --short HEAD)
-            git commit -m "Commit: $HEAD           Build:$CIRCLE_BUILD_NUM"
+            git commit -m "Commit: $HEAD           Build: $CIRCLE_BUILD_NUM"
             git push
 workflows:
   version: 2
