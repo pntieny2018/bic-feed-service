@@ -57,6 +57,8 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
+import { SearchService } from '../search/search.service';
+import { PostUpdateCacheGroupEventPayload } from '../../events/post/payload/post-update-cache-group-event.payload';
 
 @Injectable()
 export class PostService {
@@ -1544,11 +1546,38 @@ export class PostService {
     return rows.map((row) => row.targetId);
   }
 
-  public async archiveGroup(groupIds: string[]): Promise<void> {
-    await this.postGroupModel.update({ isArchived: true }, { where: { groupId: groupIds } });
+  public async updateStateAndGetCacheGroupNeedUpdate(
+    groupIds: string[],
+    isArchive: boolean
+  ): Promise<PostUpdateCacheGroupEventPayload> {
+    const [affectedCount, affectedPostGroups] = await this.postGroupModel.update(
+      { isArchived: isArchive },
+      { where: { groupId: groupIds }, returning: true }
+    );
+    if (affectedCount > 0) {
+      const postIds = affectedPostGroups.map((e) => e.postId);
+      const postGroups = await this.postGroupModel.findAll({
+        where: { postId: postIds, isArchived: true },
+      });
+      const postIndex: { [key: string]: string[] } = postGroups.reduce((result, currentValue) => {
+        if (result[currentValue.postId]) {
+          result[currentValue.postId].push(currentValue.groupId);
+        } else {
+          result = [currentValue.postId];
+        }
+        return result;
+      }, {});
+      const affectedPosts = await this.postModel.findAll({ where: { id: Object.keys(postIndex) } });
+      return {
+        posts: affectedPosts,
+        cacheIndex: postIndex,
+      };
+    }
+    return null;
   }
 
-  public async restoreGroup(groupIds: string[]): Promise<void> {
-    await this.postGroupModel.update({ isArchived: false }, { where: { groupId: groupIds } });
+  public async getArchivedPostGroup(condition: WhereOptions<IPostGroup>): Promise<IPostGroup[]> {
+    condition['isArchived'] = true;
+    return this.postGroupModel.findAll({ where: condition });
   }
 }

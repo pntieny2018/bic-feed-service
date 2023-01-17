@@ -10,6 +10,7 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
+import { PostUpdateCacheGroupEvent } from '../../events/post/post-update-cache-group.event';
 
 @Controller()
 export class PostConsumerController {
@@ -48,10 +49,12 @@ export class PostConsumerController {
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.GROUP_STATE_HAS_BEEN_CHANGED)
   public async updateState(@Payload('value') updateStateDto: UpdateStateDto): Promise<void> {
     const groupIds: string[] = updateStateDto.object.groups.map((e) => e.id);
-    if (updateStateDto.verb === StateVerb.archive) {
-      await this._postService.archiveGroup(groupIds);
-    } else if (updateStateDto.verb === StateVerb.restore) {
-      await this._postService.restoreGroup(groupIds);
+    const cachedUpdate = await this._postService.updateStateAndGetCacheGroupNeedUpdate(
+      groupIds,
+      updateStateDto.verb === StateVerb.archive
+    );
+    if (cachedUpdate) {
+      this._eventEmitter.emit(new PostUpdateCacheGroupEvent(cachedUpdate));
     }
   }
 }

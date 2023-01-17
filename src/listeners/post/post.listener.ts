@@ -21,6 +21,7 @@ import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
 import { UserSharedDto } from '../../shared/user/dto';
+import { PostUpdateCacheGroupEvent } from '../../events/post/post-update-cache-group.event';
 
 @Injectable()
 export class PostListener {
@@ -436,5 +437,14 @@ export class PostListener {
         },
       });
     });
+  }
+
+  @On(PostUpdateCacheGroupEvent)
+  public async onPostUpdateCacheGroup(event: PostUpdateCacheGroupEvent): Promise<void> {
+    for (const post of event.payload.posts) {
+      await this._postSearchService.updateAttributePostToSearch(post, {
+        groupIds: event.payload.cacheIndex[post.id],
+      });
+    }
   }
 }

@@ -26,7 +26,7 @@ export class InternalController {
   // TODO move this to kafka
   @ApiOperation({ summary: 'Get total post in groups' })
   @Post('/archiveGroup/:id')
-  public archiveGroup(@Body() ids: string[]): Promise<boolean> {
-    return this._internalService.archiveGroup(ids);
+  public archiveGroup(@Body() ids: string): Promise<boolean> {
+    return this._internalService.archiveGroup([ids]);
   }
 }
