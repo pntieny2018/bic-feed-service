@@ -21,4 +21,13 @@ export class PostHelper {
       return !this.isArchived(post);
     });
   }
+
+  public static scheduleTypeStatus = [PostStatus.WAITING_SCHEDULE, PostStatus.SCHEDULE_FAILED];
+  public static defaultTypeStatus = [PostStatus.DRAFT, PostStatus.PROCESSING, PostStatus.PUBLISHED];
+  public static isConflictStatus(status: PostStatus[]): boolean {
+    return (
+      PostHelper.scheduleTypeStatus.some((e) => status.includes(e)) &&
+      PostHelper.defaultTypeStatus.some((e) => status.includes(e))
+    );
+  }
 }

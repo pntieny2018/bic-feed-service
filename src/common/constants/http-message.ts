@@ -24,4 +24,5 @@ export const HTTP_MESSAGES = {
   [HTTP_STATUS_ID.APP_TAG_NOT_EXISTING]: 'Tag is not existed',
   [HTTP_STATUS_ID.APP_TAG_POST_ATTACH]: 'Tag is used',
   [HTTP_STATUS_ID.APP_GROUP_NOT_EXIST]: 'Group id is not existed',
+  [HTTP_STATUS_ID.APP_ARTICLE_INVALID_PUBLISHED_AT]: 'Fail schedule',
 };
