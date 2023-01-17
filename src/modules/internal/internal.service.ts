@@ -15,17 +15,4 @@ export class InternalService {
   public async getTotalPostByGroupIds(groupIds: string[]): Promise<any> {
     return this._postService.getTotalPostByGroupIds(groupIds);
   }
-
-  // TODO move this to kafka
-  public async archiveGroup(groupIds: string[]): Promise<boolean> {
-    const affectedPostId = await this._postService.updateGroupStateAndGetPostIdsAffected(
-      groupIds,
-      true
-    );
-    if (affectedPostId) {
-      const payload = await this._postService.getPostUpdateCacheGroupEventPayload(affectedPostId);
-      this._eventEmitter.emit(new PostUpdateCacheGroupEvent(payload));
-    }
-    return true;
-  }
 }

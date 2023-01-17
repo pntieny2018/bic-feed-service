@@ -1639,31 +1639,4 @@ export class PostService {
       mappingPostIdGroupIds: postIndex,
     };
   }
-  // public async updateStateAndGetCacheGroupNeedUpdate(
-  //   groupIds: string[],
-  //   isArchive: boolean
-  // ): Promise<PostUpdateCacheGroupEventPayload> {
-  //   const [affectedCount, affectedPostGroups] = await this.postGroupModel.update(
-  //     { isArchived: isArchive },
-  //     { where: { groupId: groupIds }, returning: true }
-  //   );
-  //   if (affectedCount > 0) {
-  //     const postIds = affectedPostGroups.map((e) => e.postId);
-  //     const postGroups = await this.postGroupModel.findAll({
-  //       where: { postId: postIds, isArchived: false },
-  //     });
-  //     const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
-  //       if (!result[postId]) {
-  //         result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
-  //       }
-  //       return result;
-  //     }, {});
-  //     const affectedPosts = await this.postModel.findAll({ where: { id: Object.keys(postIndex) } });
-  //     return {
-  //       posts: affectedPosts,
-  //       mappingPostIdGroupIds: postIndex,
-  //     };
-  //   }
-  //   return null;
-  // }
 }

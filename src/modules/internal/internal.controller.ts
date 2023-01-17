@@ -22,11 +22,4 @@ export class InternalController {
     const { groupIds } = getTotalPostsInGroupDto;
     return this._internalService.getTotalPostByGroupIds(groupIds);
   }
-
-  // TODO move this to kafka
-  @ApiOperation({ summary: 'Get total post in groups' })
-  @Post('/archiveGroup/:id')
-  public archiveGroup(@Param('id', ParseUUIDPipe) ids: string): Promise<boolean> {
-    return this._internalService.archiveGroup([ids]);
-  }
 }
