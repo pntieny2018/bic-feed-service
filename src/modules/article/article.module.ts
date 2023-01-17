@@ -48,6 +48,6 @@ import { ArticleCronService } from './article-cron.service';
     CanUseSeriesConstraint,
     ArticleCronService,
   ],
-  exports: [ArticleService],
+  exports: [ArticleService, ArticleBindingService],
 })
 export class ArticleModule {}

@@ -45,25 +45,6 @@ export class PostAppService {
     return this._postService.getDrafts(user.id, getDraftPostDto);
   }
 
-  public async getsByParams(
-    user: UserDto,
-    getPostsByParamsDto: GetPostsByParamsDto
-  ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order, status } = getPostsByParamsDto;
-    const condition = {
-      createdBy: user.id,
-    };
-    if (status) {
-      condition['status'] = status;
-    }
-    const result = await this._postService.getsAndCount(condition, order, { limit, offset });
-    return new PageDto<PostResponseDto>(result.data, {
-      total: result.count,
-      limit,
-      offset,
-    });
-  }
-
   public async getPost(
     user: UserDto,
     postId: string,

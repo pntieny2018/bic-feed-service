@@ -88,18 +88,6 @@ export class PostController {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 
-  @ApiOperation({ summary: 'Get posts by params' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-  })
-  @Get('/params')
-  public getsByParams(
-    @AuthUser() user: UserDto,
-    @Query() getPostsByParamsDto: GetPostsByParamsDto
-  ): Promise<PageDto<PostResponseDto>> {
-    return this._postAppService.getsByParams(user, getPostsByParamsDto);
-  }
-
   @ApiOperation({ summary: 'Get total draft' })
   @ApiOkResponse({
     type: Number,

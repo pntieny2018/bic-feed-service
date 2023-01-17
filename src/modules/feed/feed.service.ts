@@ -239,7 +239,7 @@ export class FeedService {
     const authUserId = authUser?.id || null;
     let postIdsAndSorted = [];
     if (isSaved) {
-      postIdsAndSorted = await this._postService.getListSavedByUserId(authUser.id, {
+      postIdsAndSorted = await this._postService.getListSavedByUserId(authUserId, {
         limit: limit + 1, //1 is next row
         offset,
         isImportant,

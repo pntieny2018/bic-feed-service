@@ -1003,6 +1003,7 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
+    if (!userId) return [];
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
@@ -1326,16 +1327,17 @@ export class PostService {
 
     const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
 
-    const mappedPosts = ids.map((postId) => {
+    const mappedPosts = [];
+    for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
         postJson.articles = postJson.articles.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
-        return postJson;
+        mappedPosts.push(postJson);
       }
-    });
+    }
     return mappedPosts;
   }
 
@@ -1388,14 +1390,16 @@ export class PostService {
     const conditions = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
-      [Op.and]: [
+    };
+
+    if (authUserId) {
+      conditions[Op.and] = [
         this.postModel.notIncludePostsReported(authUserId, {
           mainTableAlias: '"PostModel"',
           type: [TargetType.ARTICLE, TargetType.POST],
         }),
-      ],
-    };
-
+      ];
+    }
     const order = [];
     const attributes: any = ['id'];
     if (isImportant) {
@@ -1524,6 +1528,7 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
+    if (!userId) return [];
     const { groupIds } = options ?? {};
     const condition = {
       [Op.and]: [
@@ -1542,5 +1547,49 @@ export class PostService {
     });
 
     return rows.map((row) => row.targetId);
+  }
+
+  public async getPostsByFilter(
+    params: {
+      createdBy?: string;
+      groupIds?: string[];
+      status?: PostStatus[];
+    },
+    sort: {
+      sortColumn: string;
+      sortBy: 'ASC' | 'DESC';
+      limit: number;
+      offset: number;
+    }
+  ): Promise<IPost[]> {
+    const { groupIds, status, createdBy } = params;
+    const { sortColumn, sortBy, limit, offset } = sort;
+    const conditionGroup = { isArchived: false };
+    const findOption: FindOptions = {
+      include: [],
+      where: {},
+    };
+    if (groupIds) {
+      conditionGroup['groupId'] = groupIds;
+    }
+    if (status) {
+      findOption.where['status'] = status;
+    }
+    if (createdBy) {
+      findOption.where['createdBy'] = createdBy;
+    }
+    if (sortColumn && sortBy) findOption.order = [[sortColumn, sortBy]];
+    findOption.limit = limit ?? 10;
+    findOption.offset = offset ?? 0;
+    findOption.include = [
+      {
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: ['groupId'],
+        where: conditionGroup,
+      },
+    ];
+    return this.postModel.findAll(findOption);
   }
 }

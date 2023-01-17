@@ -29,11 +29,16 @@ import { IPost, PostStatus } from '../../../database/models/post.model';
 import { FeedService } from '../../feed/feed.service';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
+import { ClassTransformer } from 'class-transformer';
+import { PostHelper } from '../../post/post.helper';
+import { ArticleBindingService } from '../article-binding.service';
 
 @Injectable()
 export class ArticleAppService {
+  private readonly _classTransformer = new ClassTransformer();
   public constructor(
     private _articleService: ArticleService,
+    private _articleBindingService: ArticleBindingService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
@@ -58,21 +63,53 @@ export class ArticleAppService {
   }
 
   public async getsByParams(
-    user: UserDto,
+    authUser: UserDto,
     getPostsByParamsDto: GetPostsByParamsDto
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, order, status } = getPostsByParamsDto;
     const condition = {
-      createdBy: user.id,
+      createdBy: authUser.id,
     };
     if (status) {
       condition['status'] = status;
     }
-    const result = await this._articleService.getsAndCount(condition, order, { limit, offset });
-    return new PageDto<ArticleResponseDto>(result.data, {
-      total: result.count,
+    const postsSorted = await this._articleService.getPostsByFilter(condition, {
+      sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
+        ? 'publishedAt'
+        : 'createdAt',
+      sortBy: order,
       limit,
       offset,
+    });
+
+    let hasNextPage = false;
+    if (postsSorted.length > limit) {
+      postsSorted.pop();
+      hasNextPage = true;
+    }
+
+    const postsInfo = await this._articleService.getPostsByIds(
+      postsSorted.map((post) => post.id),
+      authUser.id
+    );
+
+    const postsBindedData = await this._articleBindingService.bindRelatedData(postsInfo, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
+    });
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      limit,
+      offset,
+      hasNextPage,
     });
   }
   public async get(
