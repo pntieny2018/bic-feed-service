@@ -43,7 +43,7 @@ export class AdminService {
           ? 'publishedAt'
           : 'createdAt',
         sortBy: order,
-        limit,
+        limit: limit + 1,
         offset,
       }
     );
