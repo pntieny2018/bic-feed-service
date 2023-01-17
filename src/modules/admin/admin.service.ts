@@ -138,9 +138,6 @@ export class AdminService {
         model: PostReactionModel,
         as: 'ownerReactions',
         required: false,
-        where: {
-          createdBy: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
-        },
       },
       {
         model: CategoryModel,
