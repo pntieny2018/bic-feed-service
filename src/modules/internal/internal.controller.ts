@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { GetTotalPostsInGroupDto } from './dto/requests';
@@ -26,7 +26,7 @@ export class InternalController {
   // TODO move this to kafka
   @ApiOperation({ summary: 'Get total post in groups' })
   @Post('/archiveGroup/:id')
-  public archiveGroup(@Body() ids: string): Promise<boolean> {
+  public archiveGroup(@Param('id', ParseUUIDPipe) ids: string): Promise<boolean> {
     return this._internalService.archiveGroup([ids]);
   }
 }

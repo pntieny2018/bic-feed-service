@@ -1557,13 +1557,11 @@ export class PostService {
     if (affectedCount > 0) {
       const postIds = affectedPostGroups.map((e) => e.postId);
       const postGroups = await this.postGroupModel.findAll({
-        where: { postId: postIds, isArchived: true },
+        where: { postId: postIds, isArchived: false },
       });
-      const postIndex: { [key: string]: string[] } = postGroups.reduce((result, currentValue) => {
-        if (result[currentValue.postId]) {
-          result[currentValue.postId].push(currentValue.groupId);
-        } else {
-          result = [currentValue.postId];
+      const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
+        if (!result[postId]) {
+          result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
         }
         return result;
       }, {});
