@@ -7,7 +7,6 @@ import {
   FindOptions,
   Includeable,
   Op,
-  QueryTypes,
   Transaction,
   WhereOptions,
 } from 'sequelize';
@@ -17,7 +16,6 @@ import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -27,7 +25,6 @@ import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
@@ -146,13 +143,19 @@ export class PostService {
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
     });
+    const orderOption = [];
+    if (
+      condition['status'] &&
+      PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
+    ) {
+      orderOption.push(['publishedAt', order]);
+    } else {
+      orderOption.push(['createdAt', order]);
+    }
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       include,
-      order: [
-        ['publishedAt', order],
-        ['createdAt', order],
-      ],
+      order: orderOption,
       ...otherParams,
     });
     const jsonPosts = rows.map((r) => r.toJSON());

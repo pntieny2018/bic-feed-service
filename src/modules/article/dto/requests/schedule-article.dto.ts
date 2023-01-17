@@ -16,7 +16,7 @@ export class ScheduleArticleDto {
   @Transform(({ value }) => {
     const date = new Date(value);
     if (!date.getTime() || date.getTime() <= Date.now()) {
-      ExceptionHelper.throwBadRequestException(HTTP_STATUS_ID.APP_ARTICLE_INVALID_PUBLISHED_AT);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_INVALID_PUBLISHED_AT);
     }
     return date;
   })
