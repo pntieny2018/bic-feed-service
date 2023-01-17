@@ -1544,4 +1544,8 @@ export class PostService {
   public async archiveGroup(groupIds: string[]): Promise<void> {
     await this.postGroupModel.update({ isArchived: true }, { where: { groupId: groupIds } });
   }
+
+  public async restoreGroup(groupIds: string[]): Promise<void> {
+    await this.postGroupModel.update({ isArchived: false }, { where: { groupId: groupIds } });
+  }
 }

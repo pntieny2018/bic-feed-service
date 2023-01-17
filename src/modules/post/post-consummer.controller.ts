@@ -9,6 +9,7 @@ import { VideoProcessingEndDto } from './dto/responses/process-video-response.dt
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
 
 @Controller()
 export class PostConsumerController {
@@ -41,6 +42,16 @@ export class PostConsumerController {
       case VideoProcessStatus.ERROR:
         this._eventEmitter.emit(new PostVideoFailedEvent(videoProcessingEndDto));
         break;
+    }
+  }
+
+  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.GROUP_STATE_HAS_BEEN_CHANGED)
+  public async updateState(@Payload('value') updateStateDto: UpdateStateDto): Promise<void> {
+    const groupIds: string[] = updateStateDto.object.groups.map((e) => e.id);
+    if (updateStateDto.verb === StateVerb.archive) {
+      await this._postService.archiveGroup(groupIds);
+    } else if (updateStateDto.verb === StateVerb.restore) {
+      await this._postService.restoreGroup(groupIds);
     }
   }
 }
