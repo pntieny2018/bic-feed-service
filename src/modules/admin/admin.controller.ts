@@ -22,9 +22,10 @@ export class AdminController {
   @ApiOperation({ summary: 'Get posts by param' })
   @Get('/posts/params')
   public getPostsByParamsInGroups(
-    @Query() getsByAdminDto: GetsByAdminDto
+    @Query() getsByAdminDto: GetsByAdminDto,
+    @AuthUser() user: UserDto
   ): Promise<PageDto<PostResponseDto>> {
-    return this._adminService.getPostsByParamsInGroups(getsByAdminDto);
+    return this._adminService.getPostsByParamsInGroups(getsByAdminDto, user);
   }
 
   @ApiOperation({ summary: 'Get post detail' })
