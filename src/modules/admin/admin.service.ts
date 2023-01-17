@@ -12,79 +12,70 @@ import { PostModel, PostStatus, PostType } from '../../database/models/post.mode
 import { Op } from 'sequelize';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import { PostHelper } from '../post/post.helper';
+import { UserDto } from '../auth';
+import { ClassTransformer } from 'class-transformer';
+import { ArticleBindingService } from '../article/article-binding.service';
 
 @Injectable()
 export class AdminService {
-  public constructor(private _articleService: ArticleService) {}
-
+  public constructor(
+    private _articleService: ArticleService,
+    private _articleBinding: ArticleBindingService
+  ) {}
+  private readonly _classTransformer = new ClassTransformer();
   public async getPostsByParamsInGroups(
-    getsByAdminDto: GetsByAdminDto
+    getsByAdminDto: GetsByAdminDto,
+    authUser: UserDto
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, order, status, groupIds } = getsByAdminDto;
     const condition = {};
     if (status) {
       condition['status'] = status;
     }
-    // override include
-    const include = [
+    const postsSorted = await this._articleService.getPostsByFilter(
       {
-        model: PostGroupModel,
-        as: 'groups',
-        required: true,
-        attributes: ['groupId', 'isArchived'],
-        where: {
-          groupId: groupIds,
-        },
+        groupIds,
+        status,
       },
       {
-        model: MentionModel,
-        as: 'mentions',
-        required: false,
-      },
-      {
-        model: MediaModel,
-        as: 'media',
-        required: false,
-        attributes: [
-          'id',
-          'url',
-          'size',
-          'extension',
-          'type',
-          'name',
-          'originName',
-          'width',
-          'height',
-          'thumbnails',
-          'status',
-          'mimeType',
-          'createdAt',
-        ],
-      },
-      {
-        model: CategoryModel,
-        as: 'categories',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'name'],
-      },
-      {
-        model: MediaModel,
-        as: 'coverMedia',
-        required: false,
-      },
-    ];
-    const result = await this._articleService.getsAndCount(condition, order, {
-      limit,
-      offset,
-      include,
+        sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
+          ? 'publishedAt'
+          : 'createdAt',
+        sortBy: order,
+        limit,
+        offset,
+      }
+    );
+
+    let hasNextPage = false;
+    if (postsSorted.length > limit) {
+      postsSorted.pop();
+      hasNextPage = true;
+    }
+
+    const postsInfo = await this._articleService.getPostsByIds(
+      postsSorted.map((post) => post.id),
+      authUser.id
+    );
+
+    const postsBindedData = await this._articleBinding.bindRelatedData(postsInfo, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
     });
-    return new PageDto<ArticleResponseDto>(result.data, {
-      total: result.count,
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
       limit,
       offset,
+      hasNextPage,
     });
   }
 
