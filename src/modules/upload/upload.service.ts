@@ -38,6 +38,7 @@ export class UploadService {
         new PutObjectCommand({
           Bucket: bucket,
           Body: file.buffer,
+          ContentType: file.mimetype,
           Key: key,
           ACL: alc,
         })
