@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import AWS from 'aws-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
@@ -7,13 +7,13 @@ import { IS3Config } from '../../config/s3';
 import { UploadPrefix } from './dto/requests/upload.dto';
 @Injectable()
 export class UploadService {
-  private _storage: S3Client;
+  private _storage: AWS.S3;
   private _s3Config: IS3Config;
   protected logger = new Logger(UploadService.name);
   public constructor(private _configService: ConfigService) {
     const s3Config = this._configService.get<IS3Config>('s3');
     this._s3Config = s3Config;
-    this._storage = new S3Client({
+    this._storage = new AWS.S3({
       region: s3Config.region,
     });
   }
@@ -34,14 +34,13 @@ export class UploadService {
         extension: path.extname(file.originalname),
       });
       const bucket = this._s3Config.userSharingAssetsBucket;
-      await this._storage.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Body: file.buffer,
-          Key: key,
-          ACL: alc,
-        })
-      );
+      await this._storage.upload({
+        Bucket: bucket,
+        Body: file.buffer,
+        Key: key,
+        ContentType: file.mimetype,
+        ACL: alc,
+      });
       return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
