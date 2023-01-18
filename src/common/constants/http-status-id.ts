@@ -65,6 +65,7 @@ export const HTTP_STATUS_ID = {
   // SERIES
   APP_ARTICLE_NOT_EXISTING: 'app.article.not_existing.app_error',
   APP_ARTICLE_CATEGORY_REQUIRED: 'app.article.category_required',
+  APP_ARTICLE_INVALID_PARAMETER: 'app.article.invalid_parameter',
   APP_SERIES_NOT_EXISTING: 'app.series.not_existing',
   APP_SERIES_INVALID_PARAMETER: 'app.series.invalid_parameter',
   APP_USER_NOT_EXISTING: 'app.user.not_existing',

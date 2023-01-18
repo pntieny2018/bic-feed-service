@@ -303,8 +303,8 @@ export class ArticleAppService {
     }
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
       throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: 'The following information will be removed when removed audiences:',
+        code: HTTP_STATUS_ID.APP_ARTICLE_INVALID_PARAMETER,
+        message: 'Invalid series, tags',
         errors: seriesTagErrorData,
       });
     }
