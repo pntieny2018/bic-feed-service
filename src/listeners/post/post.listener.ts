@@ -440,7 +440,9 @@ export class PostListener {
   }
 
   @On(PostsArchivedOrRestoredByGroupEvent)
-  public async onPostUpdateCacheGroup(event: PostsArchivedOrRestoredByGroupEvent): Promise<void> {
+  public async onPostsArchivedOrRestoredByGroup(
+    event: PostsArchivedOrRestoredByGroupEvent
+  ): Promise<void> {
     for (const post of event.payload.posts) {
       await this._postSearchService.updateAttributePostToSearch(post, {
         groupIds: event.payload.mappingPostIdGroupIds[post.id],
