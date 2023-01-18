@@ -21,6 +21,7 @@ import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
 import { UserSharedDto } from '../../shared/user/dto';
+import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 
 @Injectable()
 export class PostListener {
@@ -436,5 +437,16 @@ export class PostListener {
         },
       });
     });
+  }
+
+  @On(PostsArchivedOrRestoredByGroupEvent)
+  public async onPostsArchivedOrRestoredByGroup(
+    event: PostsArchivedOrRestoredByGroupEvent
+  ): Promise<void> {
+    for (const post of event.payload.posts) {
+      await this._postSearchService.updateAttributePostToSearch(post, {
+        groupIds: event.payload.mappingPostIdGroupIds[post.id],
+      });
+    }
   }
 }

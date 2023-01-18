@@ -4,6 +4,7 @@ export const KAFKA_TOPIC = {
     USERS_FOLLOW_GROUPS: `${process.env.KAFKA_ENV}.bein_group.users_follow_groups`,
     USERS_UNFOLLOW_GROUP: `${process.env.KAFKA_ENV}.bein_group.users_unfollow_group`,
     UPDATED_PRIVACY_GROUP: `${process.env.KAFKA_ENV}.bein_group.group_privacy_has_been_updated`,
+    GROUP_STATE_HAS_BEEN_CHANGED: `${process.env.KAFKA_ENV}.bein_group.group_state_has_been_changed`,
   },
   BEIN_UPLOAD: {
     VIDEO_HAS_BEEN_PROCESSED: `${process.env.KAFKA_ENV}.bein_upload.video_processing_end`,

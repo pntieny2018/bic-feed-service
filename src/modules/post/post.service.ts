@@ -57,6 +57,8 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
+import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
+import { ModelHelper } from '../../common/helpers/model.helper';
 
 @Injectable()
 export class PostService {
@@ -1591,5 +1593,50 @@ export class PostService {
       },
     ];
     return this.postModel.findAll(findOption);
+  }
+
+  public async updateGroupStateAndGetPostIdsAffected(
+    groupIds: string[],
+    isArchive: boolean
+  ): Promise<string[]> {
+    const notInStateGroupIds = await this.postGroupModel.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId'], 'is_archived'],
+      where: { groupId: groupIds, isArchived: !isArchive },
+      limit: groupIds.length,
+    });
+
+    const [affectedCount] = await this.postGroupModel.update(
+      { isArchived: isArchive },
+      { where: { groupId: notInStateGroupIds.map((e) => e.groupId) } }
+    );
+    if (affectedCount > 0) {
+      const affectPostGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
+        groupId: notInStateGroupIds.map((e) => e.groupId),
+      });
+      return affectPostGroups.map((e) => e.postId);
+    }
+    return null;
+  }
+
+  public async getPostsArchivedOrRestoredByGroupEventPayload(
+    postIds: string[]
+  ): Promise<PostsArchivedOrRestoredByGroupEventPayload> {
+    const postGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
+      postId: postIds,
+      isArchived: false,
+    });
+    const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
+      if (!result[postId]) {
+        result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
+      }
+      return result;
+    }, {});
+    const affectedPosts = await ModelHelper.getAllRecursive<IPost>(this.postModel, {
+      id: Object.keys(postIndex),
+    });
+    return {
+      posts: affectedPosts,
+      mappingPostIdGroupIds: postIndex,
+    };
   }
 }

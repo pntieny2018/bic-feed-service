@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PostService } from '../post/post.service';
-import { PostStatus } from '../../database/models/post.model';
 
 @Injectable()
 export class InternalService {
