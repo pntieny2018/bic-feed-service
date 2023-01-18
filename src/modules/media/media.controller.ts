@@ -66,4 +66,9 @@ export class MediaController {
     });
     return result.toJSON();
   }
+
+  @Post('migrate-file')
+  public updateFile(@Body() data: { path: string; contentType: string }) {
+    return this._uploadService.update(data.path, data.contentType);
+  }
 }
