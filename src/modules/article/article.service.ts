@@ -5,7 +5,7 @@ import {
   Inject,
   Injectable,
   Logger,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -48,7 +48,7 @@ import {
   CreateArticleDto,
   GetArticleDto,
   GetListArticlesDto,
-  UpdateArticleDto
+  UpdateArticleDto,
 } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
@@ -363,8 +363,6 @@ export class ArticleService extends PostService {
     } else {
       orderOption.push(['createdAt', order]);
     }
-    condition['$groups.group_id$'] = 'a0ba8fb5-ae9e-4b18-8073-375d401166a8';
-    //condition += ` AND target_type IN (${type.map((item) => `'${item}'`).join(',')})`;
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes,
