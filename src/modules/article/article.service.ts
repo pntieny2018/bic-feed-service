@@ -5,7 +5,7 @@ import {
   Inject,
   Injectable,
   Logger,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -37,6 +37,7 @@ import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
+import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
@@ -47,13 +48,12 @@ import {
   CreateArticleDto,
   GetArticleDto,
   GetListArticlesDto,
-  UpdateArticleDto,
+  UpdateArticleDto
 } from './dto/requests';
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
-import { PostHelper } from '../post/post.helper';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
+import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -363,10 +363,13 @@ export class ArticleService extends PostService {
     } else {
       orderOption.push(['createdAt', order]);
     }
+    condition['$groups.group_id$'] = 'a0ba8fb5-ae9e-4b18-8073-375d401166a8';
+    //condition += ` AND target_type IN (${type.map((item) => `'${item}'`).join(',')})`;
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
       attributes,
       include,
+      subQuery: false,
       order: orderOption,
       ...otherParams,
     });

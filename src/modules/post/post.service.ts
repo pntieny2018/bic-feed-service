@@ -57,6 +57,8 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
+import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
+import { ModelHelper } from '../../common/helpers/model.helper';
 
 @Injectable()
 export class PostService {
@@ -1003,6 +1005,7 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
+    if (!userId) return [];
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
@@ -1326,16 +1329,17 @@ export class PostService {
 
     const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
 
-    const mappedPosts = ids.map((postId) => {
+    const mappedPosts = [];
+    for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
         postJson.articles = postJson.articles.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
-        return postJson;
+        mappedPosts.push(postJson);
       }
-    });
+    }
     return mappedPosts;
   }
 
@@ -1388,14 +1392,16 @@ export class PostService {
     const conditions = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
-      [Op.and]: [
+    };
+
+    if (authUserId) {
+      conditions[Op.and] = [
         this.postModel.notIncludePostsReported(authUserId, {
           mainTableAlias: '"PostModel"',
           type: [TargetType.ARTICLE, TargetType.POST],
         }),
-      ],
-    };
-
+      ];
+    }
     const order = [];
     const attributes: any = ['id'];
     if (isImportant) {
@@ -1524,6 +1530,7 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
+    if (!userId) return [];
     const { groupIds } = options ?? {};
     const condition = {
       [Op.and]: [
@@ -1542,5 +1549,94 @@ export class PostService {
     });
 
     return rows.map((row) => row.targetId);
+  }
+
+  public async getPostsByFilter(
+    params: {
+      createdBy?: string;
+      groupIds?: string[];
+      status?: PostStatus[];
+    },
+    sort: {
+      sortColumn: string;
+      sortBy: 'ASC' | 'DESC';
+      limit: number;
+      offset: number;
+    }
+  ): Promise<IPost[]> {
+    const { groupIds, status, createdBy } = params;
+    const { sortColumn, sortBy, limit, offset } = sort;
+    const conditionGroup = { isArchived: false };
+    const findOption: FindOptions = {
+      include: [],
+      where: {},
+    };
+    if (groupIds) {
+      conditionGroup['groupId'] = groupIds;
+    }
+    if (status) {
+      findOption.where['status'] = status;
+    }
+    if (createdBy) {
+      findOption.where['createdBy'] = createdBy;
+    }
+    if (sortColumn && sortBy) findOption.order = [[sortColumn, sortBy]];
+    findOption.limit = limit ?? 10;
+    findOption.offset = offset ?? 0;
+    findOption.include = [
+      {
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: ['groupId'],
+        where: conditionGroup,
+      },
+    ];
+    return this.postModel.findAll(findOption);
+  }
+
+  public async updateGroupStateAndGetPostIdsAffected(
+    groupIds: string[],
+    isArchive: boolean
+  ): Promise<string[]> {
+    const notInStateGroupIds = await this.postGroupModel.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId'], 'is_archived'],
+      where: { groupId: groupIds, isArchived: !isArchive },
+      limit: groupIds.length,
+    });
+
+    const [affectedCount] = await this.postGroupModel.update(
+      { isArchived: isArchive },
+      { where: { groupId: notInStateGroupIds.map((e) => e.groupId) } }
+    );
+    if (affectedCount > 0) {
+      const affectPostGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
+        groupId: notInStateGroupIds.map((e) => e.groupId),
+      });
+      return affectPostGroups.map((e) => e.postId);
+    }
+    return null;
+  }
+
+  public async getPostsArchivedOrRestoredByGroupEventPayload(
+    postIds: string[]
+  ): Promise<PostsArchivedOrRestoredByGroupEventPayload> {
+    const postGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
+      postId: postIds,
+      isArchived: false,
+    });
+    const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
+      if (!result[postId]) {
+        result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
+      }
+      return result;
+    }, {});
+    const affectedPosts = await ModelHelper.getAllRecursive<IPost>(this.postModel, {
+      id: Object.keys(postIndex),
+    });
+    return {
+      posts: affectedPosts,
+      mappingPostIdGroupIds: postIndex,
+    };
   }
 }
