@@ -272,7 +272,8 @@ export class ArticleAppService {
     const article = await this._articleService.get(
       articleId,
       isSchedule ? null : user,
-      new GetArticleDto()
+      new GetArticleDto(),
+      !isSchedule
     );
     if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     if (article.status === PostStatus.PUBLISHED) return article;
