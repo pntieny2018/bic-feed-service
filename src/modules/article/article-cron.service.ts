@@ -44,7 +44,7 @@ export class ArticleCronService {
     );
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   private async _jobSchedulePublishArticle(): Promise<void> {
     try {
       const articles = await this._getsRecursive({
