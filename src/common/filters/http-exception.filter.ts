@@ -40,7 +40,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const res = exception.getResponse();
     return response.status(status).json(
       new ResponseDto({
-        code: code,
+        code: res['code'] || code,
         meta: {
           message: exception.message,
           errors: res['errors'] ? snakecaseKeys(res['errors']) : null,
