@@ -33,7 +33,8 @@ export class UploadService {
       const key = this.getKey(uploadType, {
         extension: path.extname(file.originalname),
       });
-      const bucket = this._s3Config.userSharingAssetsBucket;
+      const bucket = 'bic-stg-user-upload-images-s3-bucket'; //this._s3Config.userSharingAssetsBucket;
+
       await this._storage.send(
         new PutObjectCommand({
           Bucket: bucket,
@@ -44,6 +45,30 @@ export class UploadService {
         })
       );
       return `https://${bucket}.s3.${this._s3Config.region}.amazonaws.com/${key}`;
+    } catch (e) {
+      this.logger.debug(JSON.stringify(e?.stack));
+      throw e;
+    }
+  }
+
+  public async update(filePath: string, contentType: string): Promise<any> {
+    try {
+      const bucket = 'bic-stg-user-upload-images-s3-bucket'; //this._s3Config.userSharingAssetsBucket;
+
+      console.log({
+        Bucket: bucket,
+        Key: filePath,
+        ContentType: contentType,
+        ACL: 'public-read',
+      });
+      return this._storage.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: filePath,
+          ContentType: contentType,
+          ACL: 'public-read',
+        })
+      );
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
       throw e;
