@@ -57,7 +57,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
-import { PostUpdateCacheGroupEventPayload } from '../../events/post/payload/post-update-cache-group-event.payload';
+import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 
 @Injectable()
@@ -1618,9 +1618,9 @@ export class PostService {
     return null;
   }
 
-  public async getPostUpdateCacheGroupEventPayload(
+  public async getPostsArchivedOrRestoredByGroupEventPayload(
     postIds: string[]
-  ): Promise<PostUpdateCacheGroupEventPayload> {
+  ): Promise<PostsArchivedOrRestoredByGroupEventPayload> {
     const postGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
       postId: postIds,
       isArchived: false,

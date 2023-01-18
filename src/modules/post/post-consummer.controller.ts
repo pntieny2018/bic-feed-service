@@ -10,7 +10,7 @@ import { PostVideoSuccessEvent } from '../../events/post/post-video-success.even
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
-import { PostUpdateCacheGroupEvent } from '../../events/post/post-update-cache-group.event';
+import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 
 @Controller()
 export class PostConsumerController {
@@ -49,13 +49,15 @@ export class PostConsumerController {
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.GROUP_STATE_HAS_BEEN_CHANGED)
   public async updateState(@Payload('value') updateStateDto: UpdateStateDto): Promise<void> {
     const groupIds: string[] = updateStateDto.object.groups.map((e) => e.id);
-    const cachedUpdate = await this._postService.updateGroupStateAndGetPostIdsAffected(
+    const postIdsAffected = await this._postService.updateGroupStateAndGetPostIdsAffected(
       groupIds,
       updateStateDto.verb === StateVerb.archive
     );
-    if (cachedUpdate) {
-      const payload = await this._postService.getPostUpdateCacheGroupEventPayload(cachedUpdate);
-      this._eventEmitter.emit(new PostUpdateCacheGroupEvent(payload));
+    if (postIdsAffected) {
+      const payload = await this._postService.getPostsArchivedOrRestoredByGroupEventPayload(
+        postIdsAffected
+      );
+      this._eventEmitter.emit(new PostsArchivedOrRestoredByGroupEvent(payload));
     }
   }
 }

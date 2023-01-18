@@ -8,7 +8,6 @@ export const PostHasBeenUpdated = 'post.has.been.updated';
 export const PostHasBeenDeleted = 'post.has.been.deleted';
 export const PostVideoHasBeenPublished = 'post_video.has.been.published';
 export const PostVideoHasBeenFailed = 'post_video.has.been.failed';
-export const PostUpdatedCacheGroup = 'post.update.cache.group';
 
 export const ArticleHasBeenUpdated = 'article.has.been.updated';
 export const ArticleHasBeenPublished = 'article.has.been.published';
