@@ -50,30 +50,6 @@ export class UploadService {
     }
   }
 
-  public async update(filePath: string, contentType: string): Promise<any> {
-    try {
-      const bucket = 'bic-stg-user-upload-images-s3-bucket'; //this._s3Config.userSharingAssetsBucket;
-
-      console.log({
-        Bucket: bucket,
-        Key: filePath,
-        ContentType: contentType,
-        ACL: 'public-read',
-      });
-      return this._storage.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: filePath,
-          ContentType: contentType,
-          ACL: 'public-read',
-        })
-      );
-    } catch (e) {
-      this.logger.debug(JSON.stringify(e?.stack));
-      throw e;
-    }
-  }
-
   /**
    * get S3 object key (file path)
    * @param uploadType
