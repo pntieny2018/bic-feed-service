@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
-import { TagModel } from '../../database/models/tag.model';
+import { ITag, TagModel } from '../../database/models/tag.model';
 import { ClassTransformer } from 'class-transformer';
 import { PageDto } from '../../common/dto';
 import { Op, Transaction } from 'sequelize';
@@ -13,12 +13,14 @@ import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
 import { GroupService } from '../../shared/group';
+import { PostModel } from '../../database/models/post.model';
 
 @Injectable()
 export class TagService {
   public constructor(
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
     @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
+    @InjectModel(PostModel) private _postModel: typeof PostModel,
     private readonly _groupService: GroupService
   ) {}
 
@@ -167,6 +169,11 @@ export class TagService {
     if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
     }
+    const postTags = await this._postTagModel.findAll({ where: { tagId: tagId } });
+    await this._postModel.update(
+      { tagsJson: null },
+      { where: { id: postTags.map((e) => e.postId) } }
+    );
     await this._postTagModel.destroy({ where: { tagId: tagId } });
     await tag.destroy();
     return true;
@@ -246,7 +253,10 @@ export class TagService {
     }
   }
 
-  public async canCreateOrUpdate(tagIds: string[], audienceGroupIds: string[]): Promise<void> {
+  public async getInvalidTagsByAudience(
+    tagIds: string[],
+    audienceGroupIds: string[]
+  ): Promise<ITag[]> {
     const tagsInfos = await this._tagModel.findAll({ where: { id: tagIds } });
     const audienceGroupInfos = await this._groupService.getMany(audienceGroupIds);
     const audienceRootGroupIds = audienceGroupInfos.map((e) => e.rootGroupId);
@@ -254,13 +264,8 @@ export class TagService {
       (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)
     );
     if (invalidTags.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `The following tags were removed from this article: ${invalidTags
-          .map((e) => e.name)
-          .join(', ')}`,
-        errors: { tagsDenied: invalidTags.map((e) => e.id) },
-      });
+      return invalidTags;
     }
+    return [];
   }
 }

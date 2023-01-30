@@ -466,6 +466,7 @@ export class MediaService {
         },
       ],
       where: {
+        type: [MediaType.FILE, MediaType.VIDEO],
         createdAt: {
           [Op.lte]: moment().subtract(4, 'hours').toDate(),
         },
@@ -500,5 +501,20 @@ export class MediaService {
       this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     }
+  }
+
+  public async getMediaByPostId(id: string): Promise<IMedia[]> {
+    return this._mediaModel.findAll({
+      include: [
+        {
+          model: PostMediaModel,
+          attributes: [],
+          required: true,
+          where: {
+            postId: id,
+          },
+        },
+      ],
+    });
   }
 }

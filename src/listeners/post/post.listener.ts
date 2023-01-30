@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaStatus } from '../../database/models/media.model';
-import { PostPrivacy, PostType } from '../../database/models/post.model';
+import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -19,6 +19,10 @@ import { PostService } from '../../modules/post/post.service';
 import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
+import { FilterUserService } from '../../modules/filter-user';
+import { UserSharedDto } from '../../shared/user/dto';
+import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
+
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
@@ -31,13 +35,14 @@ export class PostListener {
     private readonly _sentryService: SentryService,
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
-    private readonly _postHistoryService: PostHistoryService
+    private readonly _postHistoryService: PostHistoryService,
+    private readonly _filterUserService: FilterUserService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
   public async onPostDeleted(event: PostHasBeenDeletedEvent): Promise<void> {
     const { actor, post } = event.payload;
-    if (post.isDraft) return;
+    if (post.status !== PostStatus.PUBLISHED) return;
 
     this._postHistoryService.deleteEditedHistory(post.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -55,8 +60,7 @@ export class PostListener {
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
         createdBy: post.createdBy,
-        isDraft: post.isDraft,
-        isProcessing: false,
+        status: post.status,
         setting: {
           canComment: post.canComment,
           canReact: post.canReact,
@@ -93,7 +97,7 @@ export class PostListener {
   public async onPostPublished(event: PostHasBeenPublishedEvent): Promise<void> {
     const { post, actor } = event.payload;
     const {
-      isDraft,
+      status,
       id,
       content,
       media,
@@ -103,6 +107,7 @@ export class PostListener {
       createdAt,
       updatedAt,
       type,
+      isHidden,
     } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -111,7 +116,7 @@ export class PostListener {
       .processVideo(mediaIds)
       .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
 
-    if (isDraft) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     const activity = this._postActivityService.createPayload(post);
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
@@ -162,6 +167,7 @@ export class PostListener {
         id,
         type,
         content,
+        isHidden,
         media: mediaList,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
@@ -189,7 +195,7 @@ export class PostListener {
   public async onPostUpdated(event: PostHasBeenUpdatedEvent): Promise<void> {
     const { oldPost, newPost, actor } = event.payload;
     const {
-      isDraft,
+      status,
       id,
       content,
       media,
@@ -200,9 +206,10 @@ export class PostListener {
       lang,
       createdAt,
       updatedAt,
+      isHidden,
     } = newPost;
 
-    if (oldPost.isDraft === false) {
+    if (oldPost.status === PostStatus.PUBLISHED) {
       const mediaIds = media.videos
         .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
         .map((i) => i.id);
@@ -211,14 +218,14 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (oldPost.isDraft === false && isDraft === true) {
+    if (oldPost.status === PostStatus.PUBLISHED && status !== PostStatus.PUBLISHED) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
     }
 
-    if (isDraft) return;
+    if (status !== PostStatus.PUBLISHED) return;
 
     this._postHistoryService
       .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
@@ -226,26 +233,42 @@ export class PostListener {
         this._sentryService.captureException(e);
       });
 
-    const updatedActivity = this._postActivityService.createPayload(newPost);
-    const oldActivity = this._postActivityService.createPayload(oldPost);
-
-    this._notificationService.publishPostNotification({
-      key: `${id}`,
-      value: {
-        actor,
-        event: event.getEventName(),
-        data: updatedActivity,
-        meta: {
-          post: {
-            oldData: oldActivity,
-          },
-        },
-      },
-    });
     const mentionUserIds = [];
+    const mentionMap = new Map<string, UserSharedDto>();
+
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);
+      mentionMap.set(mentions[key].id, mentions[key]);
     }
+    const validUserIds = await this._filterUserService.filterUser(newPost.id, mentionUserIds);
+
+    const validMention = {};
+
+    for (const id of validUserIds) {
+      const u = mentionMap.get(id);
+      validMention[u.username] = u;
+    }
+    newPost.mentions = validMention;
+
+    if (!newPost.isHidden) {
+      const updatedActivity = this._postActivityService.createPayload(newPost);
+      const oldActivity = this._postActivityService.createPayload(oldPost);
+
+      this._notificationService.publishPostNotification({
+        key: `${id}`,
+        value: {
+          actor,
+          event: event.getEventName(),
+          data: updatedActivity,
+          meta: {
+            post: {
+              oldData: oldActivity,
+            },
+          },
+        },
+      });
+    }
+
     const mediaList = [];
     for (const mediaType in media) {
       for (const mediaItem of media[mediaType]) {
@@ -273,6 +296,7 @@ export class PostListener {
         type,
         content,
         media: mediaList,
+        isHidden,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
@@ -331,6 +355,7 @@ export class PostListener {
         createdAt,
         updatedAt,
         type,
+        isHidden,
       } = post;
 
       const mentionUserIds = [];
@@ -363,6 +388,7 @@ export class PostListener {
           id,
           type,
           content,
+          isHidden,
           media: mediaList,
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
@@ -411,5 +437,16 @@ export class PostListener {
         },
       });
     });
+  }
+
+  @On(PostsArchivedOrRestoredByGroupEvent)
+  public async onPostsArchivedOrRestoredByGroup(
+    event: PostsArchivedOrRestoredByGroupEvent
+  ): Promise<void> {
+    for (const post of event.payload.posts) {
+      await this._postSearchService.updateAttributePostToSearch(post, {
+        groupIds: event.payload.mappingPostIdGroupIds[post.id],
+      });
+    }
   }
 }

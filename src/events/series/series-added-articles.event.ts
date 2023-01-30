@@ -1,4 +1,5 @@
 import { IEvent } from '../../common/interfaces';
+import { UserDto } from '../../modules/auth';
 
 export class SeriesAddedArticlesEvent implements IEvent<ISeriesAddArticlesPayload> {
   public payload: ISeriesAddArticlesPayload;
@@ -15,6 +16,8 @@ export class SeriesAddedArticlesEvent implements IEvent<ISeriesAddArticlesPayloa
 }
 
 export interface ISeriesAddArticlesPayload {
+  isAdded: boolean;
   seriesId: string;
   articleIds: string[];
+  actor: UserDto;
 }

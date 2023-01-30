@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { IsUUID } from 'class-validator';
+import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
-import { PostPrivacy, PostType } from '../../../../database/models/post.model';
+import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import { CommentResponseDto } from '../../../comment/dto/response';
@@ -112,19 +112,12 @@ export class PostResponseDto {
   public setting: PostSettingDto;
 
   @ApiProperty({
-    description: 'To know draft post or not',
-    type: Boolean,
-    name: 'is_draft',
+    description: 'To know post status',
+    enum: PostStatus,
   })
   @Expose()
-  public isDraft: boolean;
-
-  @ApiProperty({
-    description: 'To know post is processing',
-    type: Boolean,
-  })
-  @Expose()
-  public isProcessing: boolean;
+  @IsEnum(PostStatus)
+  public status: PostStatus;
 
   @ApiProperty({
     description: 'Post creator information',
@@ -337,6 +330,10 @@ export class PostResponseDto {
   @Expose()
   public isReported?: boolean;
 
+  @ApiProperty({
+    type: Boolean,
+  })
+  @Expose()
   public isHidden?: boolean;
 
   public constructor(data: Partial<PostResponseDto>) {

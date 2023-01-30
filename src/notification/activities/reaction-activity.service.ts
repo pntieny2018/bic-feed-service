@@ -4,38 +4,53 @@ import { ReactionResponseDto } from '../../modules/reaction/dto/response';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
 import { TypeActivity, VerbActivity } from '../index';
-import { ActivityObject, NotificationActivity } from '../dto/requests/notification-activity.dto';
+import {
+  ActivityObject,
+  NotificationActivity,
+  ReactionObject,
+} from '../dto/requests/notification-activity.dto';
+import { ContentHelper } from './content.helper';
+import { ArticleResponseDto } from '../../modules/article/dto/responses';
+import { SeriesResponseDto } from '../../modules/series/dto/responses';
 
 @Injectable()
 export class ReactionActivityService {
   protected createReactionPostPayload(
-    post: PostResponseDto,
+    post: PostResponseDto | ArticleResponseDto | SeriesResponseDto,
     reaction: ReactionResponseDto,
     action: string
   ): NotificationActivity {
-    post.reactionsCount = post.reactionsCount ?? {};
+    const { title, media, mentions, content, targetType } = ContentHelper.getInfo(post);
+
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
-    Object.values(post.reactionsCount ?? {}).forEach((r, index) => {
-      const rn = Object.keys(r)[0];
-      reactionsName.push(rn);
-      reactionsMap.set(rn, index);
-    });
 
-    if (reactionsName.includes(reaction.reactionName)) {
-      post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
-        action === 'create'
-          ? post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] + 1
-          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
-              1 <
-            0
-          ? 0
-          : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] - 1;
-    } else {
-      post.reactionsCount[reactionsMap.size] = {
-        [reaction.reactionName]: action === 'create' ? 1 : 0,
-      };
+    if (targetType === TypeActivity.POST) {
+      post.reactionsCount = post.reactionsCount ?? {};
+      Object.values(post.reactionsCount ?? {}).forEach((r, index) => {
+        const rn = Object.keys(r)[0];
+        reactionsName.push(rn);
+        reactionsMap.set(rn, index);
+      });
+
+      if (reactionsName.includes(reaction.reactionName)) {
+        post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] =
+          action === 'create'
+            ? post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] +
+              1
+            : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+                1 <
+              0
+            ? 0
+            : post.reactionsCount[reactionsMap.get(reaction.reactionName)][reaction.reactionName] -
+              1;
+      } else {
+        post.reactionsCount[reactionsMap.size] = {
+          [reaction.reactionName]: action === 'create' ? 1 : 0,
+        };
+      }
     }
+
     const reactionObject = {
       id: reaction.id,
       createdAt: reaction.createdAt,
@@ -43,7 +58,7 @@ export class ReactionActivityService {
       actor: reaction.actor as any,
     };
 
-    let ownerReactions = post.ownerReactions.map((or) => ({
+    let ownerReactions: ReactionObject[] = post.ownerReactions.map((or) => ({
       id: or.id,
       reactionName: or.reactionName,
       createdAt: or.createdAt,
@@ -52,6 +67,8 @@ export class ReactionActivityService {
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+
+      ownerReactions = this._filterDuplicateReactions(ownerReactions);
     } else {
       ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
@@ -62,9 +79,11 @@ export class ReactionActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
-      content: post.content,
-      media: post.media,
-      mentions: post.mentions as any,
+      title: title,
+      contentType: post.type.toLowerCase(),
+      content: content,
+      media: media,
+      mentions: mentions as any,
       setting: post.setting as any,
       reaction: reactionObject,
       reactionsOfActor: ownerReactions,
@@ -76,7 +95,7 @@ export class ReactionActivityService {
     return new NotificationActivity(
       activityObject,
       VerbActivity.REACT,
-      TypeActivity.POST,
+      targetType,
       reaction.createdAt,
       reaction.createdAt
     );
@@ -89,8 +108,12 @@ export class ReactionActivityService {
     action: string
   ): NotificationActivity {
     comment.reactionsCount = comment.reactionsCount ?? {};
+
+    const { title, media, mentions, content } = ContentHelper.getInfo(post);
+
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
+
     Object.values(comment.reactionsCount ?? {}).forEach((r, index) => {
       const rn = Object.keys(r)[0];
       reactionsName.push(rn);
@@ -121,7 +144,7 @@ export class ReactionActivityService {
       createdAt: reaction.createdAt,
     };
 
-    let ownerReactions = comment.ownerReactions.map((or) => ({
+    let ownerReactions: ReactionObject[] = comment.ownerReactions.map((or) => ({
       id: or.id,
       reactionName: or.reactionName,
       createdAt: or.createdAt,
@@ -130,6 +153,7 @@ export class ReactionActivityService {
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+      ownerReactions = this._filterDuplicateReactions(ownerReactions);
     } else {
       ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
@@ -140,9 +164,11 @@ export class ReactionActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
-      content: post.content,
-      media: post.media,
-      mentions: post.mentions as any,
+      title: title,
+      contentType: post.type.toLowerCase(),
+      content: content,
+      media: media,
+      mentions: mentions as any,
       setting: post.setting as any,
       comment: {
         id: comment.id,
@@ -170,11 +196,13 @@ export class ReactionActivityService {
   }
 
   protected createReactionChildCommentPayload(
-    post: PostResponseDto,
+    post: PostResponseDto | ArticleResponseDto | SeriesResponseDto,
     comment: CommentResponseDto,
     reaction: ReactionResponseDto,
     action = 'create'
   ): NotificationActivity {
+    const { title, media, mentions, content } = ContentHelper.getInfo(post);
+
     comment.reactionsCount = comment.reactionsCount ?? {};
     const reactionsMap = new Map<string, number>();
     const reactionsName = [];
@@ -209,7 +237,7 @@ export class ReactionActivityService {
       createdAt: reaction.createdAt,
     };
 
-    let ownerReactions = comment.ownerReactions.map((or) => ({
+    let ownerReactions: ReactionObject[] = comment.ownerReactions.map((or) => ({
       id: or.id,
       reactionName: or.reactionName,
       createdAt: or.createdAt,
@@ -218,6 +246,7 @@ export class ReactionActivityService {
 
     if (action === 'create') {
       ownerReactions.push(reactionObject);
+      ownerReactions = this._filterDuplicateReactions(ownerReactions);
     } else {
       ownerReactions = ownerReactions.filter((or) => or.id !== reaction.id);
     }
@@ -228,10 +257,12 @@ export class ReactionActivityService {
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },
-      content: post.content,
-      media: post.media,
+      title: title,
+      contentType: post.type.toLowerCase(),
+      content: content,
+      media: media,
       setting: post.setting as any,
-      mentions: post.mentions as any,
+      mentions: mentions as any,
       comment: {
         id: parentComment.id,
         actor: ObjectHelper.omit(['groups', 'email'], parentComment.actor) as any,
@@ -275,7 +306,7 @@ export class ReactionActivityService {
     },
     action: 'create' | 'remove'
   ): NotificationActivity {
-    if (type === TypeActivity.POST) {
+    if ([TypeActivity.POST, TypeActivity.ARTICLE].includes(type)) {
       const { post, reaction } = data;
       return this.createReactionPostPayload(post, reaction, action);
     }
@@ -290,5 +321,15 @@ export class ReactionActivityService {
       return this.createReactionChildCommentPayload(post, comment, reaction, action);
     }
     return null;
+  }
+
+  private _filterDuplicateReactions(reactions: ReactionObject[]): ReactionObject[] {
+    const filterMap = new Map<string, ReactionObject>();
+    reactions.forEach((r) => {
+      if (!filterMap.has(r.id)) {
+        filterMap.set(r.id, r);
+      }
+    });
+    return [...filterMap.values()];
   }
 }

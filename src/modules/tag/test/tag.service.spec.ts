@@ -9,10 +9,12 @@ import { TagResponseDto } from '../dto/responses/tag-response.dto';
 import { createTagDto } from './mocks/create-tag-dto.mock';
 import { PostTagModel } from '../../../database/models/post-tag.model';
 import { GroupService } from '../../../shared/group';
+import { PostModel } from '../../../database/models/post.model';
 
 describe('TagService', () => {
   let tagService;
   let tagModel;
+  let postModel;
   let postTagModel;
 
   beforeEach(async () => {
@@ -59,6 +61,20 @@ describe('TagService', () => {
           },
         },
         {
+          provide: getModelToken(PostModel),
+          useValue: {
+           findOne: jest.fn(),
+            findAndCountAll: jest.fn(),
+            findAll: jest.fn(),
+            update: jest.fn(),
+            create: jest.fn(),
+            destroy: jest.fn(),
+            findByPk: jest.fn(),
+            findOrCreate: jest.fn(),
+            bulkCreate: jest.fn(),
+          },
+        },
+        {
           provide: GroupService,
           useValue: {
             get: jest.fn(),
@@ -72,6 +88,7 @@ describe('TagService', () => {
 
     tagService = module.get<TagService>(TagService);
     tagModel = module.get<typeof TagModel>(getModelToken(TagModel));
+    postModel = module.get<typeof PostModel>(getModelToken(PostModel));
     postTagModel = module.get<typeof PostTagModel>(getModelToken(PostTagModel));
   })
 

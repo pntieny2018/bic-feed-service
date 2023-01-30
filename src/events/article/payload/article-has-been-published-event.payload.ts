@@ -1,7 +1,7 @@
 import { ArticleResponseDto } from '../../../modules/article/dto/responses';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../../modules/auth';
 
 export class ArticleHasBeenPublishedEventPayload {
   public article: ArticleResponseDto;
-  public actor: UserSharedDto;
+  public actor: UserDto;
 }

@@ -239,7 +239,7 @@ export class FeedService {
     const authUserId = authUser?.id || null;
     let postIdsAndSorted = [];
     if (isSaved) {
-      postIdsAndSorted = await this._postService.getListSavedByUserId(authUser.id, {
+      postIdsAndSorted = await this._postService.getListSavedByUserId(authUserId, {
         limit: limit + 1, //1 is next row
         offset,
         isImportant,
@@ -283,14 +283,17 @@ export class FeedService {
       hasNextPage: boolean;
     }
   ): Promise<PageDto<PostResponseDto>> {
-    const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
-
-    const postsBindData = await this._bindAndTransformReportedData({
-      posts,
-      authUser,
-    });
-
-    return new PageDto<PostResponseDto>(postsBindData, paging);
+    try {
+      const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
+      const postsBindData = await this._bindAndTransformReportedData({
+        posts,
+        authUser,
+      });
+      return new PageDto<PostResponseDto>(postsBindData, paging);
+    } catch (ex) {
+      this._logger.error(ex, ex?.stack);
+      return new PageDto<PostResponseDto>([], paging);
+    }
   }
   /**
    * Delete newsfeed by post

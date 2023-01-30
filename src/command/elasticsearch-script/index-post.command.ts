@@ -1,6 +1,6 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
@@ -101,7 +101,6 @@ export class IndexPostCommand implements CommandRunner {
       return false;
     }
   }
-
   private async _removeIndex(indexName): Promise<boolean> {
     try {
       const deleteIndexResult = await this.elasticsearchService.indices.delete({
@@ -163,7 +162,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 100;
+    const limitEach = 200;
     let offset = 0;
     let hasMore = true;
     let total = 0;
@@ -183,6 +182,7 @@ export class IndexPostCommand implements CommandRunner {
           const item: IDataPostToAdd = {
             id: post.id,
             type: post.type,
+            isHidden: false,
             groupIds,
             communityIds,
             createdAt: post.createdAt,
@@ -273,7 +273,7 @@ export class IndexPostCommand implements CommandRunner {
         successNumber += totalItemsIndexed;
         offset = offset + limitEach;
         total += posts.length;
-        console.log(`Indexed ${posts.length}`);
+        console.log(`Indexed ${totalItemsIndexed}`);
         console.log('-----------------------------------');
         await this.delay(1000);
       }
@@ -300,7 +300,8 @@ export class IndexPostCommand implements CommandRunner {
       attributes,
       include,
       where: {
-        isDraft: false,
+        status: PostStatus.PUBLISHED,
+        isHidden: false,
       },
       offset,
       limit,

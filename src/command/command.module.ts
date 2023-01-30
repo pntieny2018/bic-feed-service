@@ -20,6 +20,8 @@ import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SearchModule } from '../modules/search';
 import { TagModule } from '../modules/tag';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
+import { MigrateStatusPostCommand } from './migrate-status-post.command';
+import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
     IndexPostCommand,
     MoveMediaBucketCommand,
     UpdateTagTotalUsedCommand,
+    MigrateStatusPostCommand,
+    FixProcessingStatusPostCommand,
   ],
 })
 export class CommandModule {}

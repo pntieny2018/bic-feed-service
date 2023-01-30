@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FailedProcessPostModel } from 'src/database/models/failed-process-post.model';
+import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
@@ -58,13 +58,14 @@ export class SearchService {
     protected readonly userService: UserService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
-    protected readonly _failedProcessingPostModel: typeof FailedProcessPostModel
+    private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
   public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
+      if (post.isHidden === true) continue;
       if (post.type === PostType.ARTICLE) {
         post.content = StringHelper.serializeEditorContentToText(post.content);
       }
@@ -75,6 +76,7 @@ export class SearchService {
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
+    if (body.length === 0) return 0;
     try {
       const res = await this.elasticsearchService.bulk(
         {
@@ -133,6 +135,7 @@ export class SearchService {
   public async updatePostsToSearch(posts: IDataPostToUpdate[]): Promise<void> {
     const index = ElasticsearchHelper.ALIAS.POST.default.name;
     for (const dataIndex of posts) {
+      if (dataIndex.isHidden === true) continue;
       if (dataIndex.type === PostType.ARTICLE) {
         dataIndex.content = StringHelper.serializeEditorContentToText(dataIndex.content);
       }
@@ -289,17 +292,21 @@ export class SearchService {
       ]),
     ]);
 
+    let articlesFilterReport = [];
     const articles = await this.postService.getSimpleArticlessByIds(
       ArrayHelper.arrayUnique(articleIds)
     );
+    if (articles.length) {
+      const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+        TargetType.ARTICLE,
+      ]);
 
-    const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-    ]);
-
-    const articlesFilterReport = articles.filter(
-      (article) => !articleIdsReported.includes(article.id)
-    );
+      if (articleIdsReported.length) {
+        articlesFilterReport = articles.filter(
+          (article) => !articleIdsReported.includes(article.id)
+        );
+      }
+    }
     const result = this.bindResponseSearch(posts, {
       groups,
       users,

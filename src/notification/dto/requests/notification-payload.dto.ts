@@ -17,6 +17,10 @@ export class NotificationMetaPayloadDto<T> {
     replyCommentRecipient?: ReplyCommentRecipientDto;
     prevCommentActivities?: T[];
   };
+  public series?: {
+    isSendToArticleCreator?: boolean;
+    targetUserIds?: string[];
+  };
 }
 export class NotificationPayloadDto<T> {
   public key: string;

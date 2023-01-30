@@ -1,7 +1,7 @@
 import { UserDto } from '../auth';
 import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostService } from '../post/post.service';
 import { ReportStatus, TargetType } from './contstants';
 import { GroupHttpService, GroupService } from '../../shared/group';
@@ -32,16 +32,21 @@ import { CreateReportEvent } from '../../events/report/create-report.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { FeedService } from '../feed/feed.service';
-import { PageDto } from '../../common/dto';
+import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
 import { UserDataShareDto } from '../../shared/user/dto';
+import { GroupSharedDto } from '../../shared/group/dto';
+import { Sequelize } from 'sequelize-typescript';
+import { CommentResponseDto } from '../comment/dto/response';
 
 @Injectable()
 export class ReportContentService {
   public constructor(
+    @InjectConnection()
+    private readonly _sequelize: Sequelize,
     private readonly _feedService: FeedService,
     private readonly _userService: UserService,
     private readonly _postService: PostService,
@@ -202,29 +207,68 @@ export class ReportContentService {
   public async getContentBlockedOfMe(
     author: UserDto,
     getOptions: GetBlockedContentOfMeDto
-  ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order, specTargetIds } = getOptions;
+  ): Promise<PageDto<PostResponseDto | CommentResponseDto>> {
+    const { limit, offset, order, specTargetIds, targetType } = getOptions;
 
-    const conditions = {};
-
-    if (specTargetIds && specTargetIds.length > 0) {
-      conditions['targetId'] = specTargetIds;
+    if (specTargetIds?.length && targetType === TargetType.COMMENT) {
+      return this.getCommentDetail(author, getOptions);
     }
 
-    const { rows, count } = await this._reportContentModel.findAndCountAll({
-      attributes: ['id', 'targetId'],
-      where: {
-        authorId: author.id,
-        targetType: {
-          [Op.in]: [TargetType.POST, TargetType.ARTICLE],
+    let query = `
+       SELECT rc.id as "id" , rc.target_id as "targetId" FROM ${
+         getDatabaseConfig().schema
+       }.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.posts p ON p.id = rc.target_id
+       WHERE p.deleted_at IS NULL
+       AND rc.status = 'HID' 
+       AND rc.target_type in ('POST','ARTICLE') 
+       AND rc.author_id = :authorId
+    `;
+
+    let countQuery = `
+       SELECT count(*) as total FROM ${getDatabaseConfig().schema}.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.posts p ON p.id = rc.target_id
+       WHERE p.deleted_at IS NULL
+       AND rc.status = 'HID' 
+       AND rc.target_type in ('POST','ARTICLE') 
+       AND rc.author_id = :authorId
+    `;
+
+    const orderAndPaginateQuery = `    
+       ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+       LIMIT :limit OFFSET :offset
+    `;
+
+    if (specTargetIds && specTargetIds.length > 0) {
+      query =
+        query +
+        ` AND p.id IN   ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} ) `;
+      countQuery =
+        countQuery +
+        ` AND p.id IN   ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} ) `;
+    }
+
+    const rows = await this._sequelize.query<{ id: string; targetId: string }>(
+      query + orderAndPaginateQuery,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          authorId: author.id,
+          limit: limit,
+          offset: offset,
         },
-        ...conditions,
-        status: ReportStatus.HID,
+      }
+    );
+
+    const count = await this._sequelize.query<{ total: string }>(countQuery, {
+      type: QueryTypes.SELECT,
+      replacements: {
+        authorId: author.id,
+        ids: specTargetIds,
       },
-      limit: limit,
-      offset: offset,
-      order: [['createdAt', order]],
     });
+
+    const total = count[0]?.total ?? '0';
 
     const meta = (hasNextPage: boolean) => ({
       limit: limit,
@@ -256,14 +300,19 @@ export class ReportContentService {
     const responses = await this._feedService.getContentBlockedOfMe(
       author,
       targetIds,
-      meta(offset + limit + 1 <= count)
+      meta(offset + limit + 1 <= parseInt(total))
     );
 
-    responses.list = responses.list.map((post) => {
-      const reportId = postReportMap.get(post.id);
-      const reportDetails = reportStatisticsMap.get(reportId);
-      return { ...post, reportDetails };
-    });
+    responses.list = responses.list
+      .map((post) => {
+        const reportId = postReportMap.get(post.id);
+        if (!reportId) {
+          return null;
+        }
+        const reportDetails = reportStatisticsMap.get(reportId);
+        return { ...post, reportDetails };
+      })
+      .filter((item) => item);
 
     return responses;
   }
@@ -386,10 +435,10 @@ export class ReportContentService {
    * @param groupIdsNeedValidate
    * @private
    */
-  private async _validateGroupIds(
+  private async _getValidGroupIds(
     audienceIds: string[],
     groupIdsNeedValidate: string[]
-  ): Promise<void> {
+  ): Promise<GroupSharedDto[]> {
     //TODO: implement for Group later
     const groups = await this._groupService.getMany(audienceIds);
     const postRootGroupIds = groups.map((group) => group.rootGroupId);
@@ -399,6 +448,7 @@ export class ReportContentService {
     if (!isExistGroups) {
       throw new ValidatorException('Invalid group_ids');
     }
+    return groups;
   }
 
   /**
@@ -407,7 +457,9 @@ export class ReportContentService {
    * @param createReportDto
    */
   public async report(user: UserDto, createReportDto: CreateReportDto): Promise<boolean> {
-    const { authorId, audienceIds } = await this.transformDataRequest(user, createReportDto);
+    const { authorId, groupIds } = await this.transformDataRequest(user, createReportDto);
+    //TODO: will optimize later
+    createReportDto.groupIds = groupIds;
 
     const existedReport = await this._reportContentModel.findOne({
       where: {
@@ -418,7 +470,7 @@ export class ReportContentService {
     if (existedReport) {
       await this.addNewReportDetails(user, {
         ...createReportDto,
-        groupIds: audienceIds,
+        groupIds: groupIds,
         existedReport: existedReport.toJSON(),
       });
 
@@ -427,7 +479,7 @@ export class ReportContentService {
     await this.createNewReport(user, {
       ...createReportDto,
       authorId: authorId,
-      groupIds: audienceIds,
+      groupIds: groupIds,
     });
 
     return true;
@@ -438,7 +490,7 @@ export class ReportContentService {
     createReportDto: CreateReportDto
   ): Promise<{
     authorId: string;
-    audienceIds: string[];
+    groupIds: string[];
   }> {
     const createdBy = user.id;
 
@@ -479,14 +531,16 @@ export class ReportContentService {
 
     audienceIds = post.groups.map((g) => g.groupId) ?? [];
 
-    await this._validateGroupIds(audienceIds, groupIds);
+    const groups = await this._getValidGroupIds(audienceIds, groupIds);
+
+    const validGroupIds = [...new Set(groups.map((g) => g.rootGroupId))];
 
     if (authorId === createdBy) {
       throw new ValidatorException('You cant not report yourself');
     }
     return {
       authorId: authorId,
-      audienceIds: audienceIds,
+      groupIds: validGroupIds,
     };
   }
 
@@ -514,7 +568,7 @@ export class ReportContentService {
     const trx = await this._reportContentModel.sequelize.transaction();
 
     try {
-      if (existedReport.status === ReportStatus.HID) {
+      if (existedReport.status === ReportStatus.IGNORED) {
         await this._reportContentModel.update(
           {
             status: ReportStatus.CREATED,
@@ -713,6 +767,7 @@ export class ReportContentService {
 
       return detailContentReportResponseDto;
     }
+
     if (reportStatus.targetType === TargetType.POST) {
       const post = await this._postService.get(targetId, null, { withComment: false }, false);
       detailContentReportResponseDto.setPost(post);
@@ -738,5 +793,75 @@ export class ReportContentService {
     if (!canView) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
+  }
+
+  public async getCommentDetail(
+    author: UserDto,
+    getOptions: GetBlockedContentOfMeDto
+  ): Promise<PageDto<CommentResponseDto>> {
+    const { limit, offset, order, specTargetIds } = getOptions;
+
+    const query = `
+       SELECT rc.id as "id" , rc.target_id as "targetId" FROM ${
+         getDatabaseConfig().schema
+       }.report_contents rc
+       INNER JOIN  ${getDatabaseConfig().schema}.comments c ON c.id = rc.target_id
+       WHERE c.deleted_at IS NULL
+        AND c.id in  ( ${specTargetIds.map((id) => this._sequelize.escape(id)).join(',')} )
+        AND rc.status = 'HID' 
+        AND rc.target_type in ('COMMENT','CHILD_COMMENT') 
+        AND rc.author_id = :authorId
+        ORDER BY rc.created_at ${order === OrderEnum.DESC ? 'DESC' : 'ASC'}
+        LIMIT :limit OFFSET :offset
+    `;
+
+    const rows = await this._sequelize.query<{ id: string; targetId: string }>(query, {
+      type: QueryTypes.SELECT,
+      replacements: {
+        authorId: author.id,
+        limit: limit,
+        offset: offset,
+      },
+    });
+
+    if (!rows || !rows.length) {
+      return new PageDto([], {
+        limit: limit,
+        offset: offset,
+        total: 0,
+        hasNextPage: false,
+      });
+    }
+    const reportIds = [];
+    const targetIds = [];
+
+    const commentReportMap = new Map<string, string>();
+
+    for (const item of rows) {
+      targetIds.push(item.targetId);
+      reportIds.push(item.id);
+      commentReportMap.set(item.targetId, item.id);
+    }
+
+    if (!targetIds || !targetIds.length) {
+      return new PageDto([], {
+        limit: limit,
+        offset: offset,
+        total: 0,
+        hasNextPage: false,
+      });
+    }
+    const reportStatisticsMap = await this.getDetailsReport(reportIds);
+
+    const responses = await this._commentService.getComment(author, targetIds[0], 0);
+
+    const reportDetails = reportStatisticsMap.get(reportIds[0]);
+
+    return new PageDto([{ ...responses, reportDetails }], {
+      limit: limit,
+      offset: offset,
+      total: 1,
+      hasNextPage: false,
+    });
   }
 }

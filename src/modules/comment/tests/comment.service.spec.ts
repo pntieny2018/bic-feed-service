@@ -76,6 +76,7 @@ describe('CommentService', () => {
           provide: PostService,
           useValue: {
             findPost: jest.fn(),
+            getEntityIdsReportedByUser: jest.fn()
           },
         },
         {
@@ -1046,6 +1047,7 @@ describe('CommentService', () => {
           },
         ],
       });
+      postService.getEntityIdsReportedByUser.mockResolvedValue([]);
       commentService.bindChildrenToComment = jest.fn();
       jest.spyOn(commentService as any, '_getComments').mockResolvedValue({ list: [] });
       await commentService.getCommentsArroundId('57dc4093-1bd0-4105-869f-8504e1986145', authUserMock, {});

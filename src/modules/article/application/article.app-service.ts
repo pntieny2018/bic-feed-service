@@ -12,7 +12,7 @@ import {
 import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
-import { ReportStatus, TargetType } from '../../report-content/contstants';
+import { TargetType } from '../../report-content/contstants';
 import { SearchService } from '../../search/search.service';
 import { ArticleService } from '../article.service';
 import { SearchArticlesDto } from '../dto/requests';
@@ -24,14 +24,21 @@ import { UpdateArticleDto } from '../dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from '../dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
-import { FeedService } from 'src/modules/feed/feed.service';
 import { IPostGroup } from '../../../database/models/post-group.model';
-import { IPost } from '../../../database/models/post.model';
+import { IPost, PostStatus } from '../../../database/models/post.model';
+import { FeedService } from '../../feed/feed.service';
+import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
+import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
+import { ClassTransformer } from 'class-transformer';
+import { PostHelper } from '../../post/post.helper';
+import { ArticleBindingService } from '../article-binding.service';
 
 @Injectable()
 export class ArticleAppService {
+  private readonly _classTransformer = new ClassTransformer();
   public constructor(
     private _articleService: ArticleService,
+    private _articleBindingService: ArticleBindingService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
@@ -55,6 +62,56 @@ export class ArticleAppService {
     return this._articleService.getDrafts(user.id, getDraftDto);
   }
 
+  public async getsByParams(
+    authUser: UserDto,
+    getPostsByParamsDto: GetPostsByParamsDto
+  ): Promise<PageDto<ArticleResponseDto>> {
+    const { limit, offset, order, status } = getPostsByParamsDto;
+    const condition = {
+      createdBy: authUser.id,
+    };
+    if (status) {
+      condition['status'] = status;
+    }
+    const postsSorted = await this._articleService.getPostsByFilter(condition, {
+      sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
+        ? 'publishedAt'
+        : 'createdAt',
+      sortBy: order,
+      limit: limit + 1,
+      offset,
+    });
+
+    let hasNextPage = false;
+    if (postsSorted.length > limit) {
+      postsSorted.pop();
+      hasNextPage = true;
+    }
+
+    const postsInfo = await this._articleService.getPostsByIds(
+      postsSorted.map((post) => post.id),
+      authUser.id
+    );
+
+    const postsBindedData = await this._articleBindingService.bindRelatedData(postsInfo, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser,
+    });
+
+    const result = this._classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return new PageDto<ArticleResponseDto>(result, {
+      limit,
+      offset,
+      hasNextPage,
+    });
+  }
   public async get(
     user: UserDto,
     articleId: string,
@@ -65,7 +122,7 @@ export class ArticleAppService {
     const article = {
       privacy: articleResponseDto.privacy,
       createdBy: articleResponseDto.createdBy,
-      isDraft: articleResponseDto.isDraft,
+      status: articleResponseDto.status,
       groups: articleResponseDto.audience.groups.map(
         (g) =>
           ({
@@ -102,7 +159,7 @@ export class ArticleAppService {
     user: UserDto,
     createArticleDto: CreateArticleDto
   ): Promise<ArticleResponseDto> {
-    const { audience, setting, tags } = createArticleDto;
+    const { audience, setting } = createArticleDto;
     if (audience.groupIds) {
       const isEnableSetting =
         setting.isImportant ||
@@ -112,9 +169,6 @@ export class ArticleAppService {
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
     }
 
-    if (tags?.length) {
-      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
-    }
     const created = await this._articleService.create(user, createArticleDto);
     if (created) {
       const article = await this._articleService.get(created.id, user, new GetArticleDto());
@@ -137,7 +191,10 @@ export class ArticleAppService {
 
     await this._authorityService.checkPostOwner(articleBefore, user.id);
 
-    if (articleBefore.isDraft === false) {
+    if (
+      articleBefore.status === PostStatus.PUBLISHED ||
+      articleBefore.status === PostStatus.WAITING_SCHEDULE
+    ) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
       if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
@@ -154,7 +211,7 @@ export class ArticleAppService {
       }
 
       const oldGroupIds = articleBefore.audience.groups.map((group) => group.id);
-      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, isEnableSetting);
+      await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
       const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
       if (newAudienceIds.length) {
@@ -164,36 +221,7 @@ export class ArticleAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
-
-      if (series?.length) {
-        const seriesGroups = await this._postService.getListWithGroupsByIds(series, true);
-        if (seriesGroups.length < series.length) {
-          throw new ForbiddenException({
-            code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
-            message: `Series parameter is invalid`,
-          });
-        }
-        const invalidSeries = [];
-        seriesGroups.forEach((item) => {
-          const isValid = item.groups.some((group) => audience.groupIds.includes(group.groupId));
-          if (!isValid) {
-            invalidSeries.push(item);
-          }
-        });
-        if (invalidSeries.length) {
-          throw new ForbiddenException({
-            code: HTTP_STATUS_ID.API_FORBIDDEN,
-            message: `The following series were removed from this article: ${invalidSeries
-              .map((e) => e.title)
-              .join(', ')}`,
-            errors: { seriesDenied: invalidSeries.map((e) => e.id) },
-          });
-        }
-      }
-    }
-
-    if (tags?.length) {
-      await this._tagService.canCreateOrUpdate(tags, audience.groupIds);
+      await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
     const isUpdated = await this._articleService.update(articleBefore, user, updateArticleDto);
@@ -211,12 +239,9 @@ export class ArticleAppService {
     }
   }
 
-  public async publish(user: UserDto, articleId: string): Promise<ArticleResponseDto> {
-    const article = await this._articleService.get(articleId, user, new GetArticleDto());
-    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    if (article.isDraft === false) return article;
-
+  private async _preCheck(article: ArticleResponseDto, user: UserDto): Promise<void> {
     await this._authorityService.checkPostOwner(article, user.id);
+
     const { audience, setting } = article;
     if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
     if (article.coverMedia === null) throw new BadRequestException('Cover is required');
@@ -229,34 +254,35 @@ export class ArticleAppService {
       setting.canShare === false;
     await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
 
-    const seriesGroups = await this._postService.getListWithGroupsByIds(
+    await this.isSeriesAndTagsValid(
+      audience.groups.map((e) => e.id),
       article.series.map((item) => item.id),
-      true
+      article.tags.map((e) => e.id)
     );
-
-    const invalidSeries = [];
-    seriesGroups.forEach((item) => {
-      const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
-      if (!isValid) {
-        invalidSeries.push(item);
-      }
-    });
-    if (invalidSeries.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have create article permission at series: ${invalidSeries
-          .map((e) => e.title)
-          .join(', ')}`,
-        errors: { seriesDenied: invalidSeries.map((e) => e.id) },
-      });
-    }
 
     this._postService.checkContent(article.content, article.media);
 
     if (article.categories.length === 0) {
       throw new BadRequestException('Category is required');
     }
-    article.isDraft = false;
+  }
+
+  public async publish(
+    user: UserDto,
+    articleId: string,
+    isSchedule = false
+  ): Promise<ArticleResponseDto> {
+    const article = await this._articleService.get(
+      articleId,
+      isSchedule ? null : user,
+      new GetArticleDto(),
+      !isSchedule
+    );
+    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (article.status === PostStatus.PUBLISHED) return article;
+    await this._preCheck(article, user);
+
+    article.status = PostStatus.PUBLISHED;
     const articleUpdated = await this._articleService.publish(article, user);
     this._feedService.markSeenPosts(articleUpdated.id, user.id);
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
@@ -269,6 +295,21 @@ export class ArticleAppService {
     return articleUpdated;
   }
 
+  public async schedule(
+    user: UserDto,
+    articleId: string,
+    scheduleArticleDto: ScheduleArticleDto
+  ): Promise<ArticleResponseDto> {
+    const article = await this._articleService.get(articleId, user, new GetArticleDto());
+    if (!article) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    if (article.status === PostStatus.PUBLISHED) return article;
+    await this._preCheck(article, user);
+    await this._articleService.schedule(articleId, scheduleArticleDto);
+    article.status = PostStatus.WAITING_SCHEDULE;
+    article.publishedAt = scheduleArticleDto.publishedAt;
+    return article;
+  }
+
   public async delete(user: UserDto, articleId: string): Promise<boolean> {
     const articles = await this._postService.getListWithGroupsByIds([articleId], false);
 
@@ -278,14 +319,14 @@ export class ArticleAppService {
     const article = articles[0];
     await this._authorityService.checkPostOwner(article, user.id);
 
-    if (article.isDraft === false) {
+    if (article.status === PostStatus.PUBLISHED) {
       await this._authorityService.checkCanDeletePost(
         user,
         article.groups.map((g) => g.groupId)
       );
     }
 
-    const articleDeleted = await this._articleService.delete(article, user);
+    const articleDeleted = await this._postService.delete(article, user);
     if (articleDeleted) {
       this._eventEmitter.emit(
         new ArticleHasBeenDeletedEvent({
@@ -303,5 +344,57 @@ export class ArticleAppService {
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
     return this._postSearchService.searchArticles(user, searchDto);
+  }
+
+  public async isSeriesAndTagsValid(
+    groupIds: string[],
+    seriesIds: string[] = [],
+    tagIds: string[] = []
+  ): Promise<boolean> {
+    const seriesTagErrorData = {
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
+    };
+    if (seriesIds.length) {
+      const seriesGroups = await this._postService.getListWithGroupsByIds(seriesIds, true);
+      // if (seriesGroups.length < seriesIds.length) {
+      //   throw new ForbiddenException({
+      //     code: HTTP_STATUS_ID.API_VALIDATION_ERROR,
+      //     message: `Series parameter is invalid`,
+      //   });
+      // }
+      const invalidSeries = [];
+      seriesGroups.forEach((item) => {
+        const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
+        if (!isValid) {
+          invalidSeries.push(item);
+        }
+      });
+      if (invalidSeries.length) {
+        invalidSeries.forEach((e) => {
+          seriesTagErrorData.seriesIds.push(e.id);
+          seriesTagErrorData.seriesNames.push(e.title);
+        });
+      }
+    }
+    if (tagIds.length) {
+      const invalidTags = await this._tagService.getInvalidTagsByAudience(tagIds, groupIds);
+      if (invalidTags.length) {
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.id);
+          seriesTagErrorData.tagNames.push(e.name);
+        });
+      }
+    }
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.APP_ARTICLE_INVALID_PARAMETER,
+        message: 'Invalid series, tags',
+        errors: seriesTagErrorData,
+      });
+    }
+    return true;
   }
 }

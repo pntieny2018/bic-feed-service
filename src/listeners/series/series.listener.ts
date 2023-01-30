@@ -4,7 +4,7 @@ import { FeedService } from 'src/modules/feed/feed.service';
 import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
-import { PostType } from '../../database/models/post.model';
+import { PostStatus, PostType } from '../../database/models/post.model';
 import {
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
@@ -13,6 +13,10 @@ import {
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
+import { PostActivityService } from '../../notification/activities';
+import { NotificationService } from '../../notification';
+import { GroupHttpService } from '../../shared/group';
+import { ArrayHelper } from '../../common/helpers';
 
 @Injectable()
 export class SeriesListener {
@@ -22,14 +26,17 @@ export class SeriesListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
+    private readonly _groupHttpService: GroupHttpService,
     private readonly _postSearchService: SearchService,
-    private readonly _feedService: FeedService
+    private readonly _feedService: FeedService,
+    private readonly _postActivityService: PostActivityService,
+    private readonly _notificationService: NotificationService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
   public async onSeriesDeleted(event: SeriesHasBeenDeletedEvent): Promise<void> {
     const { series } = event.payload;
-    if (series.isDraft) return;
+    if (series.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(series.id).catch((e) => {
       this._logger.error(JSON.stringify(e?.stack));
@@ -37,13 +44,57 @@ export class SeriesListener {
     });
 
     this._postSearchService.deletePostsToSearch([series]);
-    //TODO:: send noti
+
+    const activity = this._postActivityService.createPayload({
+      actor: {
+        id: series.createdBy,
+      },
+      type: PostType.SERIES,
+      title: series.title,
+      commentsCount: series.commentsCount,
+      totalUsersSeen: series.totalUsersSeen,
+      content: series.content,
+      createdAt: series.createdAt,
+      updatedAt: series.updatedAt,
+      createdBy: series.createdBy,
+      status: series.status,
+      setting: {
+        canComment: series.canComment,
+        canReact: series.canReact,
+        canShare: series.canShare,
+      },
+      id: series.id,
+      audience: {
+        users: [],
+        groups: (series?.groups ?? []).map((g) => ({
+          id: g.groupId,
+        })) as any,
+      },
+      privacy: series.privacy,
+    });
+
+    this._notificationService.publishPostNotification({
+      key: `${series.id}`,
+      value: {
+        actor: {
+          id: series.createdBy,
+        },
+        event: event.getEventName(),
+        data: activity,
+        meta: {
+          series: {
+            targetUserIds: [],
+          },
+        },
+      },
+    });
   }
 
   @On(SeriesHasBeenPublishedEvent)
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
     const { series, actor } = event.payload;
     const { id, createdBy, audience, createdAt, updatedAt, title, summary, coverMedia } = series;
+    const groupIds = audience.groups.map((group) => group.id);
 
     this._postSearchService.addPostsToSearch([
       {
@@ -53,7 +104,8 @@ export class SeriesListener {
         createdBy,
         title,
         summary,
-        groupIds: audience.groups.map((group) => group.id),
+        groupIds: groupIds,
+        isHidden: false,
         communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
         articles: series.articles.map((article) => ({ id: article.id, zindex: article.zindex })),
@@ -71,7 +123,33 @@ export class SeriesListener {
         },
       },
     ]);
-    //TODO:: send noti
+
+    try {
+      const activity = this._postActivityService.createPayload(series);
+
+      let groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
+
+      groupAdminIds = groupAdminIds.filter((id) => id !== actor.id);
+
+      if (groupAdminIds.length) {
+        this._notificationService.publishPostNotification({
+          key: `${series.id}`,
+          value: {
+            actor,
+            event: event.getEventName(),
+            data: activity,
+            meta: {
+              series: {
+                targetUserIds: groupAdminIds,
+              },
+            },
+          },
+        });
+      }
+    } catch (ex) {
+      this._logger.error(ex);
+    }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -102,16 +180,17 @@ export class SeriesListener {
       articles,
     } = newSeries;
 
-    //TODO:: send noti
+    const groupIds = audience.groups.map((group) => group.id);
 
     this._postSearchService.updatePostsToSearch([
       {
         id,
-        groupIds: audience.groups.map((group) => group.id),
+        groupIds: groupIds,
         communityIds: audience.groups.map((group) => group.rootGroupId),
         createdAt,
         updatedAt,
         createdBy,
+        isHidden: false,
         lang,
         summary,
         title,
@@ -143,6 +222,66 @@ export class SeriesListener {
     } catch (error) {
       this._logger.error(JSON.stringify(error?.stack));
       this._sentryService.captureException(error);
+    }
+
+    try {
+      const updatedActivity = this._postActivityService.createPayload(newSeries);
+      const oldActivity = this._postActivityService.createPayload(oldSeries);
+      const oldGroupId = oldSeries.audience.groups.map((g) => g.id);
+
+      const differenceGroupIds = [
+        ...ArrayHelper.arrDifferenceElements<string>(groupIds, oldGroupId),
+        ...ArrayHelper.arrDifferenceElements<string>(oldGroupId, groupIds),
+      ];
+
+      this._logger.debug(` differenceGroupIds: ${differenceGroupIds}`);
+
+      if (differenceGroupIds.length) {
+        const attachedGroupIds = differenceGroupIds.filter(
+          (groupId) => !oldGroupId.includes(groupId)
+        );
+
+        if (!attachedGroupIds.length) {
+          return;
+        }
+
+        const newGroupAdminIds = await this._groupHttpService.getGroupAdminIds(
+          actor,
+          attachedGroupIds
+        );
+
+        const oldGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, oldGroupId);
+
+        let filterGroupAdminIds = ArrayHelper.arrDifferenceElements<string>(
+          newGroupAdminIds,
+          oldGroupAdminIds
+        );
+
+        filterGroupAdminIds = filterGroupAdminIds.filter((id) => id !== actor.id);
+
+        if (!filterGroupAdminIds.length) {
+          return;
+        }
+
+        this._notificationService.publishPostNotification({
+          key: `${id}`,
+          value: {
+            actor,
+            event: event.getEventName(),
+            data: updatedActivity,
+            meta: {
+              post: {
+                oldData: oldActivity,
+              },
+              series: {
+                targetUserIds: filterGroupAdminIds,
+              },
+            },
+          },
+        });
+      }
+    } catch (ex) {
+      this._logger.error(ex);
     }
   }
 }

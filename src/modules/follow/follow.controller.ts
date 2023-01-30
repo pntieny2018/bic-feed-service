@@ -4,7 +4,6 @@ import { APP_VERSION } from '../../common/constants';
 import { GetUserFollowsDto } from './dto/requests';
 import { ApiTags } from '@nestjs/swagger';
 import { FollowsDto } from './dto/response/follows.dto';
-import { IFollow } from '../../database/models/follow.model';
 
 @ApiTags('Follow')
 @Controller({
@@ -19,6 +18,7 @@ export class FollowController {
     return this._followService.gets(
       getUserFollowsDto.ignoreUserIds,
       getUserFollowsDto.groupIds,
+      getUserFollowsDto.oldGroupIds,
       getUserFollowsDto.followId,
       getUserFollowsDto.limit
     );

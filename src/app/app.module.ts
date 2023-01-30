@@ -31,10 +31,13 @@ import { SearchModule } from '../modules/search';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { TagModule } from '../modules/tag';
 import { PostModuleV2 } from '../modules/postv2/post.module';
+import { FilterUserModule } from '../modules/filter-user';
+import { AdminModule } from '../modules/admin/admin.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    FilterUserModule,
     LibModule,
     AuthModule,
     CommentModule,
@@ -66,6 +69,7 @@ import { PostModuleV2 } from '../modules/postv2/post.module';
     SearchModule,
     ReportContentModule,
     PostModuleV2,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [],

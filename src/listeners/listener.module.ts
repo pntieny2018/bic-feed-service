@@ -23,9 +23,13 @@ import { SearchModule } from '../modules/search';
 import { ReportContentListener } from './report';
 import { GroupModule } from '../shared/group';
 import { TagModule } from '../modules/tag';
+import { FilterUserModule } from '../modules/filter-user';
+import { FollowModule } from '../modules/follow';
 
 @Module({
   imports: [
+    FollowModule,
+    FilterUserModule,
     GroupModule,
     PostModule,
     CommentModule,
