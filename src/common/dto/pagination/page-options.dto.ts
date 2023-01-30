@@ -8,7 +8,7 @@ export enum OrderEnum {
   DESC = 'DESC',
 }
 export class PageOptionsDto {
-  @ApiProperty({ enum: OrderEnum, default: OrderEnum.ASC, required: false })
+  @ApiProperty({ enum: OrderEnum, default: OrderEnum.DESC, required: false })
   @IsEnum(OrderEnum)
   @IsOptional()
   public order?: OrderEnum = OrderEnum.DESC;

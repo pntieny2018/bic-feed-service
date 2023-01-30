@@ -191,7 +191,10 @@ export class ArticleAppService {
 
     await this._authorityService.checkPostOwner(articleBefore, user.id);
 
-    if (articleBefore.status === PostStatus.PUBLISHED) {
+    if (
+      articleBefore.status === PostStatus.PUBLISHED ||
+      articleBefore.status === PostStatus.WAITING_SCHEDULE
+    ) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
       if (coverMedia === null) throw new BadRequestException('Cover is required');
       this._postService.checkContent(updateArticleDto.content, updateArticleDto.media);
