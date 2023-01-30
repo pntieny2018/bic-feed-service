@@ -16,6 +16,14 @@ export class RedisService {
     return await this._store.set(key, JSON.stringify(value));
   }
 
+  public async setNxEx(key: string, value: unknown, expireTime = 1000): Promise<any> {
+    const setnxResult = await this._store.setnx(key, JSON.stringify(value));
+    if (setnxResult === 1) {
+      await this._store.expire(key, expireTime);
+    }
+    return setnxResult;
+  }
+
   public async get<T>(key: string): Promise<T> {
     const result = await this._store.get(key);
     try {
