@@ -1580,7 +1580,15 @@ export class PostService {
     if (createdBy) {
       findOption.where['createdBy'] = createdBy;
     }
-    if (sortColumn && sortBy) findOption.order = [[sortColumn, sortBy]];
+    if (sortColumn && sortBy) {
+      findOption.order =
+        sortColumn === 'publishedAt'
+          ? [
+              [sortColumn, sortBy],
+              ['createdAt', sortBy],
+            ]
+          : [[sortColumn, sortBy]];
+    }
     findOption.limit = limit ?? 10;
     findOption.offset = offset ?? 0;
     findOption.include = [
