@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
@@ -50,6 +50,27 @@ export class UploadService {
       throw e;
     }
   }
+
+  public async update(filePath: string, contentType: string): Promise<any> {
+    try {
+      const bucket = this._s3Config.userSharingAssetsBucket;
+
+      const res = await this._storage.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          ContentType: contentType,
+          Key: filePath,
+          CopySource: `${bucket}/${filePath}`,
+          MetadataDirective: 'REPLACE',
+        })
+      );
+      console.log('res', res);
+    } catch (e) {
+      this.logger.debug(JSON.stringify(e?.stack));
+      throw e;
+    }
+  }
+
 
   /**
    * get S3 object key (file path)
