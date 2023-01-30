@@ -33,7 +33,7 @@ export class UploadService {
       const key = this.getKey(uploadType, {
         extension: path.extname(file.originalname),
       });
-      const bucket = 'bic-stg-user-upload-images-s3-bucket'; //this._s3Config.userSharingAssetsBucket;
+      const bucket = this._s3Config.userSharingAssetsBucket;
 
       await this._storage.send(
         new PutObjectCommand({
