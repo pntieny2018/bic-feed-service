@@ -1228,6 +1228,27 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@beincom/common@^0.1.6", "@beincom/common@~0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@beincom/common/-/common-0.1.6.tgz#90ce18dec66f4c4f6d8b00fca812149f459ada4e"
+  integrity sha512-VlyzNmEbf6gCccK9JwTZS363c4XFu6cDJ1uDATy/8ZmcJ5P9m72PDlX5gSq/VKbfU9xo65SsgbMAvkyn68VpqQ==
+  dependencies:
+    fast-equals "^4.0.3"
+    uuid "^9.0.0"
+    validator "^13.7.0"
+
+"@beincom/domain@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@beincom/domain/-/domain-0.1.7.tgz#64b589aca9febcdb09e2eadfc27958cea3884398"
+  integrity sha512-iwrWxLLYDQhjm0NLd8ekTxfCx9qLW6E8uCqxCD6cIPU9bypF2p+uGLVbFAZB6/DElXbCkeQx1C0qirFlJWYFmw==
+  dependencies:
+    "@beincom/common" "~0.1.6"
+
+"@beincom/nest-domain-event@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@beincom/nest-domain-event/-/nest-domain-event-0.0.2.tgz#c8a7892299642fb5291be062eb1e73f98d13c533"
+  integrity sha512-ugiwXknHQabM7tFW5z9vCYMslxC2CTOo+2W3oSOZHhWamDmb/sRfTEXqr7FBYTqkawpyYRTJJzktAs48sErSYg==
+
 "@casl/ability@^5.4.4":
   version "5.4.4"
   resolved "https://registry.yarnpkg.com/@casl/ability/-/ability-5.4.4.tgz#fbe54340c156248e73804942eed350903b27b9f3"
@@ -4320,6 +4341,11 @@ fast-diff@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/fast-diff/-/fast-diff-1.2.0.tgz#73ee11982d86caaf7959828d519cfe927fac5f03"
   integrity sha512-xJuoT5+L99XlZ8twedaRf6Ax2TgQVxvgZOYoPKqZufmJib0tL2tegPBOZb1pVNgIhlqDlA0eO0c3wBvQcmzx4w==
+
+fast-equals@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/fast-equals/-/fast-equals-4.0.3.tgz#72884cc805ec3c6679b99875f6b7654f39f0e8c7"
+  integrity sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==
 
 fast-glob@^3.2.9:
   version "3.2.11"
@@ -8212,6 +8238,11 @@ uuid@^3.2.1:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
+
+uuid@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.0.tgz#592f550650024a38ceb0c562f2f6aa435761efb5"
+  integrity sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==
 
 v8-compile-cache-lib@^3.0.0:
   version "3.0.0"
