@@ -62,6 +62,7 @@ export class UploadService {
           Key: filePath,
           CopySource: `${bucket}/${filePath}`,
           MetadataDirective: 'REPLACE',
+          ACL: 'public-read',
         })
       );
       console.log('res', res);
