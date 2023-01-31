@@ -33,7 +33,10 @@ export class ArticleCronService {
     if (_offset > 0 && _lastResultLength < _limit) return _posts;
     const posts = await this._postModel.findAll({
       where: conditions,
-      order: [['createdAt', 'ASC']],
+      order: [
+        ['publishedAt', 'ASC'],
+        ['createdAt', 'ASC'],
+      ],
       limit: _limit,
       offset: _offset,
     });
