@@ -47,7 +47,7 @@ export class ArticleCronService {
     );
   }
 
-  @Cron('33 54 * * * *')
+  @Cron('33 */30 * * * *')
   private async _jobSchedulePublishArticle(): Promise<void> {
     try {
       const isRunningArticleSchedule = await this._redisService.setNxEx(
