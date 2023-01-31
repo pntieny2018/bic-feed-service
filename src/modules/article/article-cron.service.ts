@@ -33,6 +33,7 @@ export class ArticleCronService {
     if (_offset > 0 && _lastResultLength < _limit) return _posts;
     const posts = await this._postModel.findAll({
       where: conditions,
+      order: [['createdAt', 'ASC']],
       limit: _limit,
       offset: _offset,
     });
@@ -46,7 +47,7 @@ export class ArticleCronService {
     );
   }
 
-  @Cron('33 */30 * * * *')
+  @Cron('33 54 * * * *')
   private async _jobSchedulePublishArticle(): Promise<void> {
     try {
       const isRunningArticleSchedule = await this._redisService.setNxEx(
