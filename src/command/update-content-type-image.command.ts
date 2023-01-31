@@ -27,7 +27,7 @@ export class UpdateContentTypeImageCommand implements CommandRunner {
           const url = new URL(record.url);
           if (url.pathname) {
             const isSuccess = await this._uploadService.updateContentType(
-              url.pathname,
+              url.pathname.substring(1),
               record.mimeType
             );
             if (isSuccess) total++;
