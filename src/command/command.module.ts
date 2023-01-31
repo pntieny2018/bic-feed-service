@@ -22,6 +22,8 @@ import { TagModule } from '../modules/tag';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { MigrateStatusPostCommand } from './migrate-status-post.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
+import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
+import { UploadModule } from '../modules/upload';
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { FixProcessingStatusPostCommand } from './fix-processing-status-post.com
     MediaModule,
     SearchModule,
     TagModule,
+    UploadModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -53,6 +56,7 @@ import { FixProcessingStatusPostCommand } from './fix-processing-status-post.com
     UpdateTagTotalUsedCommand,
     MigrateStatusPostCommand,
     FixProcessingStatusPostCommand,
+    UpdateContentTypeImageCommand,
   ],
 })
 export class CommandModule {}
