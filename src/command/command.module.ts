@@ -23,6 +23,7 @@ import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { MigrateStatusPostCommand } from './migrate-status-post.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
+import { UploadModule } from '../modules/upload';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UpdateContentTypeImageCommand } from './update-content-type-image.comma
     MediaModule,
     SearchModule,
     TagModule,
+    UploadModule,
   ],
   providers: [
     SequelizeTinkerCommand,
