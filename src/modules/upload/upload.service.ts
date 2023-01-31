@@ -51,11 +51,11 @@ export class UploadService {
     }
   }
 
-  public async update(filePath: string, contentType: string): Promise<any> {
+  public async updateContentType(filePath: string, contentType: string): Promise<boolean> {
     try {
       const bucket = this._s3Config.userSharingAssetsBucket;
 
-      const res = await this._storage.send(
+      await this._storage.send(
         new CopyObjectCommand({
           Bucket: bucket,
           ContentType: contentType,
@@ -65,13 +65,12 @@ export class UploadService {
           ACL: 'public-read',
         })
       );
-      console.log('res', res);
+      return true;
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
-      throw e;
+      return false;
     }
   }
-
 
   /**
    * get S3 object key (file path)
