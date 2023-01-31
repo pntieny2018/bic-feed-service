@@ -22,6 +22,7 @@ import { TagModule } from '../modules/tag';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { MigrateStatusPostCommand } from './migrate-status-post.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
+import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { FixProcessingStatusPostCommand } from './fix-processing-status-post.com
     UpdateTagTotalUsedCommand,
     MigrateStatusPostCommand,
     FixProcessingStatusPostCommand,
+    UpdateContentTypeImageCommand,
   ],
 })
 export class CommandModule {}
