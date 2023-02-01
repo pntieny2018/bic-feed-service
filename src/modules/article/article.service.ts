@@ -665,6 +665,14 @@ export class ArticleService extends PostService {
           attributes: [],
         },
         attributes: ['id', 'title'],
+        include: [
+          {
+            model: PostGroupModel,
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
+        ],
       });
     }
     if (mustInSeriesIds) {
