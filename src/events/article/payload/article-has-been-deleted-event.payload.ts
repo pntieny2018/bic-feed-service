@@ -1,7 +1,7 @@
 import { IPost } from '../../../database/models/post.model';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../../modules/auth';
 
 export class ArticleHasBeenDeletedEventPayload {
   public article: IPost;
-  public actor: UserSharedDto;
+  public actor: UserDto;
 }

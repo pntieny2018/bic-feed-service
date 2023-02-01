@@ -308,7 +308,7 @@ export class ArticleListener {
       this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
-          actor,
+          actor: actor.profile,
           event: event.getEventName(),
           data: updatedActivity,
           meta: {
