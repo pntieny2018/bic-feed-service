@@ -1,9 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
+import { ERRORS } from '../../../common/constants/errors';
 
-export class TagDuplicateNameException extends NotFoundException {
+export class TagNotFoundException extends NotFoundException {
   public constructor(message: string = null) {
     super({
-      code: 'tag.not_found',
+      code: ERRORS.tag.TAG_NOT_FOUND,
       message: message || 'Tag is existed',
     });
   }

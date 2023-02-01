@@ -23,6 +23,6 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
     tag.delete();
     await this._tagRepository.delete(id);
 
-    tag.commit();
+    //tag.commit();
   }
 }

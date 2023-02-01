@@ -2,10 +2,6 @@ import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GroupService } from '../../../../../shared/group';
 import { GroupSharedDto } from '../../../../../shared/group/dto';
-import {
-  ITagRepository,
-  TAG_REPOSITORY,
-} from '../../../domain/repositoty-interface/tag.repository.interface';
 import { FindTagsPaginationQuery } from './find-tags-pagination.query';
 import { FindTagsPaginationResult } from './find-tags-pagination.result';
 
@@ -13,7 +9,6 @@ import { FindTagsPaginationResult } from './find-tags-pagination.result';
 export class FindTagsPaginationHandler
   implements IQueryHandler<FindTagsPaginationQuery, FindTagsPaginationResult>
 {
-  @Inject(TAG_REPOSITORY) private readonly _tagRepo: ITagRepository;
   @Inject() private readonly _groupService: GroupService;
 
   public async execute(query: FindTagsPaginationQuery): Promise<FindTagsPaginationResult> {
@@ -25,29 +20,29 @@ export class FindTagsPaginationHandler
       };
     }
 
-    const { rows, total } = await this._tagRepo.getPagination({
-      name,
-      groupIds,
-      offset,
-      limit,
-    });
+    // const { rows, total } = await this._tagRepo.getPagination({
+    //   name,
+    //   groupIds,
+    //   offset,
+    //   limit,
+    // });
 
-    const rootGroupIds = rows.map((r) => {
-      return r.groupId;
-    });
-    const groups = await this._getGroupsInfo(rootGroupIds);
-    const result = {
-      rows: rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        slug: row.slug,
-        groupId: row.id,
-        totalUsed: row.totalUsed,
-        groups: groups[row.groupId],
-      })),
-      total,
-    };
-    return result;
+    // const rootGroupIds = rows.map((r) => {
+    //   return r.get('groupId').value;
+    // });
+    // const groups = await this._getGroupsInfo(rootGroupIds);
+    // const result = {
+    //   rows: rows.map((row) => ({
+    //     id: row.get('id').value,
+    //     name: row.get('name').value,
+    //     slug: row.get('slug').value,
+    //     groupId: row.get('groupId').value,
+    //     totalUsed: row.get('totalUsed').value,
+    //     groups: groups[row.get('groupId').value],
+    //   })),
+    //   total,
+    // };
+    // return result;
   }
 
   private async _getGroupsInfo(groupIds: string[]): Promise<Record<string, GroupSharedDto[]>> {

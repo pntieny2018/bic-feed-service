@@ -36,9 +36,9 @@ export class TagEntity extends AggregateRoot<TagId, TagProps> {
       id: raw.id,
       props: {
         groupId: raw.groupId,
-        name: TagName.fromString(raw.schemeId),
-        slug: TagSlug.fromString(raw.teamId),
-        totalUsed: TagTotalUsed.fromString(raw.ownerId),
+        name: TagName.fromString(raw.name),
+        slug: TagSlug.fromString(raw.slug),
+        totalUsed: TagTotalUsed.fromString(raw.totalUsed),
         createdBy: raw.createdBy,
         updatedBy: raw.updatedBy,
       },
@@ -46,7 +46,7 @@ export class TagEntity extends AggregateRoot<TagId, TagProps> {
       updatedAt: UpdatedAt.fromDateString(raw.updatedAt),
     };
 
-    return new TagEntity(props, []);
+    return new TagEntity(props);
   }
 
   public update(properties: Partial<TagProps>): void {

@@ -5,6 +5,6 @@ type Props = {
   name: string;
   userId: string;
 };
-export class CreatetagCommand implements ICommand {
+export class CreateTagCommand implements ICommand {
   public constructor(public readonly payload: Props) {}
 }

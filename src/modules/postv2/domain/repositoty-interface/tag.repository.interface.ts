@@ -1,6 +1,6 @@
 import { PaginationProps } from '../../../../common/types/pagination-props.type ';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import { Tag } from '../model';
+import { TagEntity } from '../model/tag';
 
 export type FindOneTagProps = {
   name?: string;
@@ -18,11 +18,11 @@ export type GetPaginationTagProps = PaginationProps & {
   name?: string;
 };
 export interface ITagRepository {
-  findOne(input: FindOneTagProps): Promise<Tag>;
-  findAll(input: FindAllTagsProps): Promise<Tag[]>;
-  getPagination(input: GetPaginationTagProps): Promise<PaginationResult<Tag>>;
-  update(data: Tag): Promise<void>;
-  create(data: Tag): Promise<void>;
+  findOne(input: FindOneTagProps): Promise<TagEntity>;
+  findAll(input: FindAllTagsProps): Promise<TagEntity[]>;
+  getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>>;
+  update(data: TagEntity): Promise<void>;
+  create(data: TagEntity): Promise<void>;
   delete(id: string): Promise<void>;
 }
 

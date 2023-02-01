@@ -1,7 +1,10 @@
-import { BadRequestException, Inject } from '@nestjs/common';
-import { EventPublisher } from '@nestjs/cqrs';
+import { CreatedAt, EntityProps, UpdatedAt } from '@beincom/domain';
 import { v4 } from 'uuid';
-import { Tag, TagProperties } from '../model';
+import { StringHelper } from '../../../../common/helpers';
+import { TagCreatedEvent } from '../event';
+import { GroupId } from '../model/group';
+import { TagEntity, TagId, TagName, TagProps, TagSlug, TagTotalUsed } from '../model/tag';
+import { UserId } from '../model/user';
 
 type CreateTagOptions = Readonly<{
   name: string;
@@ -10,20 +13,19 @@ type CreateTagOptions = Readonly<{
 }>;
 
 export class TagFactory {
-  @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
-
-  public create(options: CreateTagOptions): Tag {
+  public create(options: CreateTagOptions): TagEntity {
     const { name, groupId, createdBy } = options;
-    if (!name) {
-      throw new BadRequestException('Tag name is required');
-    }
-    return this._eventPublisher.mergeObjectContext(
-      new Tag({
-        id: v4(),
-        name,
-        groupId,
-        createdBy,
-      })
-    );
+    const now = new Date().toISOString();
+    const tagEntity = TagEntity.fromJson({
+      groupId: groupId,
+      name: name,
+      slug: StringHelper.convertToSlug(name),
+      totalUsed: 0,
+      createdBy: createdBy,
+      updatedBy: createdBy,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return tagEntity;
   }
 }

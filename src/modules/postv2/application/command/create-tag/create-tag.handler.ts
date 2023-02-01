@@ -1,40 +1,31 @@
-import { BadRequestException, Inject } from '@nestjs/common';
+import { DomainEvents } from '@beincom/domain';
+import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Tag } from '../../../domain/model';
+import { v4 } from 'uuid';
+import { TagCreatedEvent } from '../../../domain/event';
 import { TagFactory } from '../../../domain/factory/tag.factory';
-import {
-  ITagRepository,
-  TAG_REPOSITORY,
-} from '../../../domain/repositoty-interface/tag.repository.interface';
-import { TagDuplicateNameException } from '../../../exception/tag-duplicate-name.exception';
-import { CreatetagCommand } from './create-tag.command';
+import { GroupId } from '../../../domain/model/group';
+import { TagEntity, TagId } from '../../../domain/model/tag';
+import { CreateTagCommand } from './create-tag.command';
 
-@CommandHandler(CreatetagCommand)
-export class CreateTagHandler implements ICommandHandler<CreatetagCommand, Tag> {
-  @Inject(TAG_REPOSITORY)
-  private readonly _tagRepository: ITagRepository;
+@CommandHandler(CreateTagCommand)
+export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEntity> {
   @Inject() private readonly _tagFactory: TagFactory;
 
-  public async execute(command: CreatetagCommand): Promise<Tag> {
+  public async execute(command: CreateTagCommand): Promise<TagEntity> {
     const { name, groupId, userId } = command.payload;
-
-    const findTagByName = await this._tagRepository.findOne({
-      name,
-      groupId,
-    });
-    if (findTagByName) {
-      throw new TagDuplicateNameException();
-    }
-
-    const tag = this._tagFactory.create({
+    const tagEntity = this._tagFactory.create({
       name,
       groupId,
       createdBy: userId,
     });
 
-    await this._tagRepository.create(tag);
+    tagEntity.raiseEvent(new TagCreatedEvent(tagEntity));
 
-    tag.commit();
-    return tag;
+    DomainEvents.publishEvents(tagEntity.id, null);
+
+    // await this._tagRepository.create(tag);
+
+    return tagEntity.toObject();
   }
 }

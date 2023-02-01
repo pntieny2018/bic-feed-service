@@ -44,32 +44,29 @@ export class TagRepository implements ITagRepository {
   }
 
   public async create(data: TagEntity): Promise<void> {
-    const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = data;
     await this._tagModel.create({
-      id,
-      name,
-      slug,
-      updatedBy,
-      createdBy,
-      groupId,
-      totalUsed,
+      id: data.get('id').value,
+      name: data.get('name').value,
+      slug: data.get('slug').value,
+      updatedBy: data.get('updatedBy').value,
+      createdBy: data.get('createdBy').value,
+      groupId: data.get('groupId').value,
+      totalUsed: data.get('totalUsed').value,
     });
   }
 
   public async update(data: TagEntity): Promise<void> {
-    const property = this._entityToModel(data);
-    const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = property;
     await this._tagModel.update(
       {
-        name,
-        slug,
-        updatedBy,
-        createdBy,
-        groupId,
-        totalUsed,
+        name: data.get('name').value,
+        slug: data.get('slug').value,
+        updatedBy: data.get('updatedBy').value,
+        createdBy: data.get('createdBy').value,
+        groupId: data.get('groupId').value,
+        totalUsed: data.get('totalUsed').value,
       },
       {
-        where: { id },
+        where: { id: data.get('id') },
       }
     );
   }
@@ -108,21 +105,7 @@ export class TagRepository implements ITagRepository {
   }
 
   private _modelToEntity(model: ITag): TagEntity {
+    if (model === null) return null;
     return TagEntity.fromJson(model);
-  }
-
-  private _entityToModel(entity: TagEntity): ITag {
-    if (entity === null) return null;
-    return {
-      id: entity.get('id'),
-      groupId: entity.get('groupId'),
-      name: entity.get('name'),
-      slug: entity.get('slug'),
-      totalUsed: entity.get('groupId'),
-      createdAt: entity.get('createdAt'),
-      updatedAt: entity.get('updatedAt'),
-      createdBy: entity.get('createdBy'),
-      updatedBy: entity.get('updatedBy'),
-    }
   }
 }

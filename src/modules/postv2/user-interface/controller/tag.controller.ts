@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreatetagCommand } from '../../application/command/create-tag/create-tag.command';
+import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { TagResponseDto } from '../dto/response';
 import { AuthUser, UserDto } from '../../../auth';
 import { ResponseMessages } from '../../../../common/decorators';
@@ -79,13 +79,10 @@ export class TagController {
     success: 'Tag was created successfully',
   })
   @Post('/')
-  public async create(
-    @AuthUser() user: UserDto,
-    @Body() createTagDto: CreateTagDto
-  ): Promise<TagResponseDto> {
+  public async create(@AuthUser() user: UserDto, @Body() createTagDto: CreateTagDto): Promise<any> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
-    const tag = this._commandBus.execute(new CreatetagCommand({ groupId, name, userId }));
+    const tag = this._commandBus.execute(new CreateTagCommand({ groupId, name, userId }));
     return this._classTransformer.plainToInstance(TagResponseDto, tag, {
       excludeExtraneousValues: true,
     });

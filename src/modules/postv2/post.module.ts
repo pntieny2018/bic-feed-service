@@ -8,7 +8,7 @@ import { UpdateTagHandler } from './application/command/update-tag/update-tag.ha
 import { FindTagsPaginationHandler } from './application/query/find-tags/find-tags-pagination.handler';
 import { TagFactory } from './domain/factory/tag.factory';
 import { TAG_REPOSITORY } from './domain/repositoty-interface/tag.repository.interface';
-import { TagRepository } from './infrastructure/repository/tag.repository';
+import { TagRepository } from './infrastructure/repository';
 import { TagController } from './user-interface/controller/tag.controller';
 
 const infrastructure: Provider[] = [

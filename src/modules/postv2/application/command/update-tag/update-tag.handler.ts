@@ -1,6 +1,5 @@
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Tag } from '../../../domain/model';
 import {
   ITagRepository,
   TAG_REPOSITORY,
@@ -19,22 +18,25 @@ export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, void>
       throw new NotFoundException('Not found');
     }
 
-    const findTagNameInGroup = await this._tagRepository.findOne({ groupId: tag.groupId, name });
-    if (findTagNameInGroup && findTagNameInGroup.id !== id) {
+    const findTagNameInGroup = await this._tagRepository.findOne({
+      groupId: tag.get('groupId').value,
+      name,
+    });
+    if (findTagNameInGroup && findTagNameInGroup.id.value !== id) {
       throw new BadRequestException('Tag name already existed');
     }
 
-    if (tag.totalUsed > 0) {
+    if (tag.get('totalUsed').value > 0) {
       throw new NotFoundException('This tag is used, can not update');
     }
 
-    tag.update({
-      name: name,
-      updatedBy: userId,
-    });
-    if (tag.isChanged) {
-      await this._tagRepository.update(tag);
-      tag.commit();
-    }
+    // tag.update({
+    //   name: name,
+    //   updatedBy: userId,
+    // });
+    // if (tag.isChanged) {
+    //   await this._tagRepository.update(tag);
+    //   tag.commit();
+    // }
   }
 }

@@ -38,7 +38,7 @@ import { PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
 import { IPostTag, PostTagModel } from './post-tag.model';
 import { ReportContentDetailModel } from './report-content-detail.model';
-import { ITagEntity, TagModel } from './tag.model';
+import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
@@ -100,7 +100,7 @@ export interface IPost {
   categories?: ICategory[];
   series?: IPost[];
   hashtags?: IHashtag[];
-  tags?: ITagEntity[];
+  tags?: ITag[];
   postTags?: IPostTag[];
   privacy?: PostPrivacy;
   hashtagsJson?: HashtagResponseDto[];
