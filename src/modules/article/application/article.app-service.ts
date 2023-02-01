@@ -231,7 +231,7 @@ export class ArticleAppService {
         new ArticleHasBeenUpdatedEvent({
           oldArticle: articleBefore,
           newArticle: articleUpdated,
-          actor: user.profile,
+          actor: user,
         })
       );
 
@@ -289,7 +289,7 @@ export class ArticleAppService {
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
         article: articleUpdated,
-        actor: user.profile,
+        actor: user,
       })
     );
     return articleUpdated;
@@ -331,7 +331,7 @@ export class ArticleAppService {
       this._eventEmitter.emit(
         new ArticleHasBeenDeletedEvent({
           article: articleDeleted,
-          actor: user.profile,
+          actor: user,
         })
       );
       return true;
