@@ -13,7 +13,7 @@ import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
 
-export interface ITagEntity {
+export interface ITag {
   id: string;
   groupId: string;
   name: string;
@@ -28,7 +28,7 @@ export interface ITagEntity {
 @Table({
   tableName: 'tags',
 })
-export class TagModel extends Model<ITagEntity, Optional<ITagEntity, 'id'>> implements ITagEntity {
+export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag {
   @PrimaryKey
   @IsUUID()
   @Default(() => uuid_v4())

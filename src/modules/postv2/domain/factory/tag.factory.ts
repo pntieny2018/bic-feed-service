@@ -26,8 +26,4 @@ export class TagFactory {
       })
     );
   }
-
-  public reconstitute(properties: TagProperties): Tag {
-    return this._eventPublisher.mergeObjectContext(new Tag(properties));
-  }
 }

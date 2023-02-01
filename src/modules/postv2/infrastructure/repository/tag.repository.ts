@@ -2,9 +2,9 @@ import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import { ITagEntity, TagModel } from '../../../../database/models/tag.model';
-import { Tag } from '../../domain/model';
+import { ITag, TagModel } from '../../../../database/models/tag.model';
 import { TagFactory } from '../../domain/factory/tag.factory';
+import { TagEntity } from '../../domain/model/tag/tag.entity';
 import {
   FindAllTagsProps,
   FindOneTagProps,
@@ -18,7 +18,7 @@ export class TagRepository implements ITagRepository {
   @InjectModel(TagModel)
   private readonly _tagModel: typeof TagModel;
 
-  public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<Tag>> {
+  public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>> {
     const { offset, limit, name, groupIds } = input;
     const conditions = {
       groupId: groupIds,
@@ -36,16 +36,15 @@ export class TagRepository implements ITagRepository {
       ],
     });
 
-    const result = rows.map((row) => this._entityToModel(row));
+    const result = rows.map((row) => this._modelToEntity(row));
     return {
       rows: result,
       total: count,
     };
   }
 
-  public async create(data: Tag): Promise<void> {
-    const property = this._modelToEntity(data);
-    const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = property;
+  public async create(data: TagEntity): Promise<void> {
+    const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = data;
     await this._tagModel.create({
       id,
       name,
@@ -57,8 +56,8 @@ export class TagRepository implements ITagRepository {
     });
   }
 
-  public async update(data: Tag): Promise<void> {
-    const property = this._modelToEntity(data);
+  public async update(data: TagEntity): Promise<void> {
+    const property = this._entityToModel(data);
     const { id, groupId, name, slug, createdBy, updatedBy, totalUsed } = property;
     await this._tagModel.update(
       {
@@ -79,7 +78,7 @@ export class TagRepository implements ITagRepository {
     await this._tagModel.destroy({ where: { id } });
   }
 
-  public async findOne(input: FindOneTagProps): Promise<Tag> {
+  public async findOne(input: FindOneTagProps): Promise<TagEntity> {
     const findOptions: FindOptions = { where: {} };
     if (input.id) {
       findOptions.where['id'] = input.id;
@@ -91,10 +90,10 @@ export class TagRepository implements ITagRepository {
       findOptions.where['groupId'] = input.groupId;
     }
     const entity = await this._tagModel.findOne(findOptions);
-    return this._entityToModel(entity);
+    return this._modelToEntity(entity);
   }
 
-  public async findAll(input: FindAllTagsProps): Promise<Tag[]> {
+  public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
     const { groupIds, name } = input;
     const condition: any = { groupId: groupIds };
     if (name) {
@@ -103,27 +102,27 @@ export class TagRepository implements ITagRepository {
     const enties = await this._tagModel.findAll({
       where: condition,
     });
-    const rows = enties.map((entity) => this._entityToModel(entity));
+    const rows = enties.map((entity) => this._modelToEntity(entity));
 
     return rows;
   }
 
-  private _modelToEntity(model: Tag): ITagEntity {
-    return {
-      id: model.id,
-      groupId: model.groupId,
-      name: model.name,
-      slug: model.slug,
-      totalUsed: model.totalUsed,
-      createdAt: model.createdAt,
-      updatedAt: model.updatedAt,
-      createdBy: model.createdBy,
-      updatedBy: model.updatedBy,
-    };
+  private _modelToEntity(model: ITag): TagEntity {
+    return TagEntity.fromJson(model);
   }
 
-  private _entityToModel(entity: ITagEntity): Tag {
+  private _entityToModel(entity: TagEntity): ITag {
     if (entity === null) return null;
-    return this._tagFactory.reconstitute(entity);
+    return {
+      id: entity.get('id'),
+      groupId: entity.get('groupId'),
+      name: entity.get('name'),
+      slug: entity.get('slug'),
+      totalUsed: entity.get('groupId'),
+      createdAt: entity.get('createdAt'),
+      updatedAt: entity.get('updatedAt'),
+      createdBy: entity.get('createdBy'),
+      updatedBy: entity.get('updatedBy'),
+    }
   }
 }

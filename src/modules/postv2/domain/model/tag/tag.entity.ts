@@ -1,62 +1,65 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { StringHelper } from '../../../../../common/helpers';
-import {
-  UUID,
-  AggregateRoot,
-  CreatedAt,
-  DeletedAt,
-  Entity,
-  EntityProps,
-  UpdatedAt,
-  IDomainEvent,
-  EntitySetting,
-} from '@beincom/domain';
+import { AggregateRoot, EntityProps, IDomainEvent, CreatedAt, UpdatedAt } from '@beincom/domain';
+import { GroupId } from '../group';
+import { TagId, TagName, TagSlug, TagTotalUsed } from '.';
+import { UserId } from '../user';
+import { TagDeletedEvent } from '../../event/tag-deleted.event';
 export type TagProps = {
-  id: UUID;
-  groupId: UUID;
-  name: string;
-  createdBy: UUID;
-  updatedBy: UUID;
-  slug: string;
-  totalUsed: number;
+  groupId: GroupId;
+  name: TagName;
+  createdBy: UserId;
+  updatedBy: UserId;
+  slug: TagSlug;
+  totalUsed: TagTotalUsed;
 };
 
-export class TagEntity extends AggregateRoot<UUID, TagProps> {
+export class TagEntity extends AggregateRoot<TagId, TagProps> {
   public static TAG_NAME_MAX_LENGTH = 32;
 
-  protected _id: UUID;
+  protected _id: TagId;
 
   public constructor(
-    entityProps: EntityProps<UUID, TagProps>,
-    domainEvent: IDomainEvent<unknown>[]
+    entityProps: EntityProps<TagId, TagProps>,
+    domainEvent: IDomainEvent<unknown>[] = []
   ) {
-    super(entityProps, domainEvent, { disablePropSetter: true });
+    super(entityProps, domainEvent, { disablePropSetter: false });
     this._id = entityProps.id;
   }
 
   public validate(): void {
-    if (!this._props.name) {
-      throw new Error('Tag name is required');
-    }
-    if (this._props.totalUsed > 0) {
-      throw new Error('i18n error');
-    }
+    //
   }
 
-  public increaseTotalUsed(): void {
-    this._props.totalUsed += 1;
+  public static fromJson(raw: any): TagEntity {
+    const props: EntityProps<TagId, TagProps> = {
+      id: raw.id,
+      props: {
+        groupId: raw.groupId,
+        name: TagName.fromString(raw.schemeId),
+        slug: TagSlug.fromString(raw.teamId),
+        totalUsed: TagTotalUsed.fromString(raw.ownerId),
+        createdBy: raw.createdBy,
+        updatedBy: raw.updatedBy,
+      },
+      createdAt: CreatedAt.fromDateString(raw.createdAt),
+      updatedAt: UpdatedAt.fromDateString(raw.updatedAt),
+    };
+
+    return new TagEntity(props, []);
   }
 
   public update(properties: Partial<TagProps>): void {
     const { name, updatedBy } = properties;
     this._props.name = name;
     this._props.updatedBy = updatedBy;
-    this._props.slug = StringHelper.convertToSlug(name);
+    this._props.slug = new TagSlug({ value: StringHelper.convertToSlug(name.value) });
   }
 
   public delete(): void {
-    if (this._props.totalUsed > 0) {
+    if (this._props.totalUsed.value > 0) {
       throw new UnprocessableEntityException('i18n error');
     }
+    this.raiseEvent(new TagDeletedEvent({ name: 'á fasdf' }));
   }
 }
