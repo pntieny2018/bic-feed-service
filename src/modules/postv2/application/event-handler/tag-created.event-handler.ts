@@ -5,6 +5,6 @@ import { TagCreatedEvent } from '../../domain/event';
 @EventsHandler(TagCreatedEvent)
 export class TagCreatedEventHandler extends DomainEventHandler {
   public handle(event: TagCreatedEvent): void {
-    console.log('TagCreatedEvent', event);
+    console.log('TagCreatedEvent11111111111', event);
   }
 }

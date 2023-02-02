@@ -18,6 +18,7 @@ import { KAFKA_PRODUCER } from '../common/constants';
 import { ExternalService } from './external.service';
 import { I18nModule } from 'nestjs-i18n';
 import * as path from 'path';
+import { DomainEventModule } from '@beincom/nest-domain-event';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -131,6 +132,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
       inject: [ConfigService],
     }),
     InternalEventEmitterModule,
+    DomainEventModule,
   ],
   providers: [ExternalService],
   exports: [ElasticsearchModule, ClientsModule, ExternalService],

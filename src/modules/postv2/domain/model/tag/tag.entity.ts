@@ -55,11 +55,4 @@ export class TagEntity extends AggregateRoot<TagId, TagProps> {
     this._props.updatedBy = updatedBy;
     this._props.slug = new TagSlug({ value: StringHelper.convertToSlug(name.value) });
   }
-
-  public delete(): void {
-    if (this._props.totalUsed.value > 0) {
-      throw new UnprocessableEntityException('i18n error');
-    }
-    this.raiseEvent(new TagDeletedEvent({ name: 'á fasdf' }));
-  }
 }

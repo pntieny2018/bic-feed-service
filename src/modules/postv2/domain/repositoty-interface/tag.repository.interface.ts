@@ -26,4 +26,4 @@ export interface ITagRepository {
   delete(id: string): Promise<void>;
 }
 
-export const TAG_REPOSITORY = 'TAG_REPOSITORY';
+export const TAG_REPOSITORY_TOKEN = 'TAG_REPOSITORY_TOKEN';

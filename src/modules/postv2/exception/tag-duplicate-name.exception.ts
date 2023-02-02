@@ -5,7 +5,7 @@ export class TagDuplicateNameException extends BadRequestException {
   public constructor(message: string = null) {
     super({
       code: ERRORS.tag.TAG_DUPLICATE_NAME,
-      message: message || 'Tag is existed',
+      message: message || 'Duplicate tag',
     });
   }
 }

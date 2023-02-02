@@ -1,7 +1,8 @@
-import { Inject } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op } from 'sequelize';
+import { Inject, InternalServerErrorException, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { FindOptions, Op, Sequelize } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
+import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../../../database/models/tag.model';
 import { TagFactory } from '../../domain/factory/tag.factory';
 import { TagEntity } from '../../domain/model/tag/tag.entity';
@@ -13,10 +14,13 @@ import {
 } from '../../domain/repositoty-interface/tag.repository.interface';
 
 export class TagRepository implements ITagRepository {
-  @Inject() private readonly _tagFactory: TagFactory;
-
+  private _logger = new Logger(TagRepository.name);
   @InjectModel(TagModel)
   private readonly _tagModel: typeof TagModel;
+  @InjectModel(PostTagModel)
+  private readonly _postTagModel: typeof PostTagModel;
+
+  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
   public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>> {
     const { offset, limit, name, groupIds } = input;
@@ -72,7 +76,16 @@ export class TagRepository implements ITagRepository {
   }
 
   public async delete(id: string): Promise<void> {
-    await this._tagModel.destroy({ where: { id } });
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      await this._postTagModel.destroy({ where: { tagId: id }, transaction });
+      await this._tagModel.destroy({ where: { id }, transaction });
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new InternalServerErrorException();
+    }
   }
 
   public async findOne(input: FindOneTagProps): Promise<TagEntity> {

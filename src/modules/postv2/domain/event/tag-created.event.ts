@@ -7,5 +7,6 @@ export class TagCreatedEvent extends DomainEvent<TagEntity> {
 
   public constructor(data) {
     super(data);
+    this.payload = data;
   }
 }

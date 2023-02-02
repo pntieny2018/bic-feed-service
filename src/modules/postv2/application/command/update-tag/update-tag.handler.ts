@@ -1,15 +1,23 @@
-import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
+  ITagDomainService,
+  TAG_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interfaces/tag.domain-service.interface';
+import {
   ITagRepository,
-  TAG_REPOSITORY,
+  TAG_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/tag.repository.interface';
+import { TagDuplicateNameException } from '../../../exception';
+import { TagUsedException } from '../../../exception/tag-used.exception';
 import { UpdatetagCommand } from './update-tag.command';
 
 @CommandHandler(UpdatetagCommand)
 export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, void> {
-  @Inject(TAG_REPOSITORY)
+  @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
+  @Inject(TAG_DOMAIN_SERVICE_TOKEN)
+  private readonly _tagDomainService: ITagDomainService;
 
   public async execute(command: UpdatetagCommand): Promise<void> {
     const { name, id, userId } = command.payload;
@@ -23,20 +31,17 @@ export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, void>
       name,
     });
     if (findTagNameInGroup && findTagNameInGroup.id.value !== id) {
-      throw new BadRequestException('Tag name already existed');
+      throw new TagDuplicateNameException();
     }
 
     if (tag.get('totalUsed').value > 0) {
-      throw new NotFoundException('This tag is used, can not update');
+      throw new TagUsedException();
     }
 
-    // tag.update({
-    //   name: name,
-    //   updatedBy: userId,
-    // });
-    // if (tag.isChanged) {
-    //   await this._tagRepository.update(tag);
-    //   tag.commit();
-    // }
+    return this._tagDomainService.updateTag(tag, {
+      id,
+      name,
+      userId,
+    });
   }
 }
