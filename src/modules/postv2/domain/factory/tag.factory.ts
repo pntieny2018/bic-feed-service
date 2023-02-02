@@ -17,6 +17,7 @@ export class TagFactory {
     const { name, groupId, createdBy } = options;
     const now = new Date().toISOString();
     const tagEntity = TagEntity.fromJson({
+      id: v4(),
       groupId: groupId,
       name: name,
       slug: StringHelper.convertToSlug(name),

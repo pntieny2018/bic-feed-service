@@ -33,14 +33,14 @@ export class TagEntity extends AggregateRoot<TagId, TagProps> {
 
   public static fromJson(raw: any): TagEntity {
     const props: EntityProps<TagId, TagProps> = {
-      id: raw.id,
+      id: TagId.fromString(raw.id),
       props: {
-        groupId: raw.groupId,
+        groupId: GroupId.fromString(raw.groupId),
         name: TagName.fromString(raw.name),
         slug: TagSlug.fromString(raw.slug),
         totalUsed: TagTotalUsed.fromString(raw.totalUsed),
-        createdBy: raw.createdBy,
-        updatedBy: raw.updatedBy,
+        createdBy: UserId.fromString(raw.createdBy),
+        updatedBy: UserId.fromString(raw.updatedBy),
       },
       createdAt: CreatedAt.fromDateString(raw.createdAt),
       updatedAt: UpdatedAt.fromDateString(raw.updatedAt),

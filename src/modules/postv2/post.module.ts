@@ -5,6 +5,7 @@ import { GroupModule } from '../../shared/group';
 import { CreateTagHandler } from './application/command/create-tag/create-tag.handler';
 import { DeleteTagHandler } from './application/command/delete-tag/delete-tag.handler';
 import { UpdateTagHandler } from './application/command/update-tag/update-tag.handler';
+import { TagCreatedEventHandler } from './application/event-handler/tag-created.event-handler';
 import { FindTagsPaginationHandler } from './application/query/find-tags/find-tags-pagination.handler';
 import { TagFactory } from './domain/factory/tag.factory';
 import { TAG_REPOSITORY } from './domain/repositoty-interface/tag.repository.interface';
@@ -23,6 +24,7 @@ const application = [
   UpdateTagHandler,
   DeleteTagHandler,
   FindTagsPaginationHandler,
+  TagCreatedEventHandler,
 ];
 
 const domain = [TagFactory];

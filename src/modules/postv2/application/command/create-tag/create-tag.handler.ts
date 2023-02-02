@@ -1,5 +1,5 @@
-import { DomainEvents } from '@beincom/domain';
-import { Inject } from '@nestjs/common';
+import { DomainEvents, ILogger } from '@beincom/domain';
+import { Inject, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { v4 } from 'uuid';
 import { TagCreatedEvent } from '../../../domain/event';
@@ -11,6 +11,7 @@ import { CreateTagCommand } from './create-tag.command';
 @CommandHandler(CreateTagCommand)
 export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEntity> {
   @Inject() private readonly _tagFactory: TagFactory;
+  private _logger = new Logger(CreateTagHandler.name);
 
   public async execute(command: CreateTagCommand): Promise<TagEntity> {
     const { name, groupId, userId } = command.payload;
@@ -22,10 +23,31 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEn
 
     tagEntity.raiseEvent(new TagCreatedEvent(tagEntity));
 
-    DomainEvents.publishEvents(tagEntity.id, null);
+    DomainEvents.publishEvents(tagEntity.id, new MyLogger());
 
     // await this._tagRepository.create(tag);
 
     return tagEntity.toObject();
+  }
+}
+
+export class MyLogger implements ILogger {
+  public log(message: string, ...meta: unknown[]): void {
+    console.log(message);
+  }
+  public debug(message: string, ...meta: unknown[]): void {
+    console.log(message);
+  }
+
+  public error(message: string, trace?: unknown, ...meta: unknown[]): void {
+    console.log(message);
+  }
+
+  public warn(message: string, ...meta: unknown[]): void {
+    console.log(message);
+  }
+
+  public setContext(context: string): void {
+    console.log(context);
   }
 }

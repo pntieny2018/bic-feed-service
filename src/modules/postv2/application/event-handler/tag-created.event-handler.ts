@@ -1,9 +1,9 @@
 import { DomainEventHandler } from '@beincom/domain';
-import { EventsHandler } from '@nestjs/cqrs';
+import { EventsHandler } from '@beincom/nest-domain-event';
 import { TagCreatedEvent } from '../../domain/event';
 
 @EventsHandler(TagCreatedEvent)
-export class UserDomainEventHandler extends DomainEventHandler {
+export class TagCreatedEventHandler extends DomainEventHandler {
   public handle(event: TagCreatedEvent): void {
     console.log('TagCreatedEvent', event);
   }
