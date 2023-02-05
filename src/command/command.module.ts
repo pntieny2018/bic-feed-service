@@ -25,6 +25,8 @@ import { FixProcessingStatusPostCommand } from './fix-processing-status-post.com
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
 import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publisher';
 import { FollowModule, FollowService } from '../modules/follow';
+import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
+import { UploadModule } from '../modules/upload';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { FollowModule, FollowService } from '../modules/follow';
     TagModule,
     FeedPublisherModule,
     FollowModule,
+    UploadModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -60,6 +63,7 @@ import { FollowModule, FollowService } from '../modules/follow';
     FixProcessingStatusPostCommand,
     UpdateNewsfeedCommand,
     FeedPublisherService,
+    UpdateContentTypeImageCommand,
   ],
 })
 export class CommandModule {}
