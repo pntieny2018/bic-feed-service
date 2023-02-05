@@ -1,5 +1,6 @@
 import { ModuleMetadata, Provider } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { TagDomainService } from '../../../domain/domain-service/tag.domain-service';
 import { TagFactory } from '../../../domain/factory/tag.factory';
 import { TagEntity } from '../../../domain/model/tag';
 import { TAG_REPOSITORY } from '../../../domain/repositoty-interface/tag.repository.interface';
@@ -10,7 +11,7 @@ import { CreateTagHandler } from './create-tag.handler';
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;
   let repository: TagRepository;
-  let factory: TagFactory;
+  let domainService: TagDomainService;
 
   beforeEach(async () => {
     const repoProvider: Provider = {
@@ -27,8 +28,8 @@ describe('CreateTagHandler', () => {
     const testModule = await Test.createTestingModule(moduleMetadata).compile();
 
     handler = testModule.get(CreateTagHandler);
-    repository = testModule.get(TAG_REPOSITORY);
-    factory = testModule.get(TagFactory);
+    //repository = testModule.get(TAG_REPOSITORY);
+    domainService = testModule.get(TagDomainService);
   });
 
   describe('execute', () => {
