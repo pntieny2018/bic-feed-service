@@ -26,18 +26,20 @@ export class FeedPublisherService {
   public async attachPostsForUsersNewsFeed(userIds: string[], postIds: string[]): Promise<void> {
     const schema = this._databaseConfig.schema;
     try {
-      const seenPostData = await this._userSeenPostModel.findAll({
-        where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
-      });
-      const seenPostDataMap = seenPostData.reduce(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (_dataMap, _seenPostRecord) => ({ userId: true }),
-        {}
-      );
+      this._logger.debug(`[attachPostsForUsersNewsFeed]: userIds:${userIds} -- postIds:${postIds}`);
+      // const seenPostData = await this._userSeenPostModel.findAll({
+      //   where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
+      // });
+      // const seenPostDataMap = seenPostData.reduce(
+      //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      //   (_dataMap, _seenPostRecord) => ({ userId: true }),
+      //   {}
+      // );
 
       const data = userIds
         .map((userId) => {
-          return postIds.map((postId) => `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`);
+          //return postIds.map((postId) => `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`);
+          return postIds.map((postId) => `('${userId}','${postId}', false)`);
         })
         .flat();
 
@@ -63,17 +65,18 @@ export class FeedPublisherService {
   public async attachPostForAnyNewsFeed(userIds: string[], postId: string): Promise<void> {
     const schema = this._databaseConfig.schema;
     try {
-      const seenPostData = await this._userSeenPostModel.findAll({
-        where: { postId, userId: { [Op.in]: userIds } },
-      });
-      const seenPostDataMap = seenPostData.reduce(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (_dataMap, _seenPostRecord) => ({ userId: true }),
-        {}
-      );
+      // const seenPostData = await this._userSeenPostModel.findAll({
+      //   where: { postId, userId: { [Op.in]: userIds } },
+      // });
+      // const seenPostDataMap = seenPostData.reduce(
+      //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      //   (_dataMap, _seenPostRecord) => ({ userId: true }),
+      //   {}
+      // );
       const data = userIds
         .map((userId) => {
-          return `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`;
+          //return `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`;
+          return `('${userId}','${postId}', false)`;
         })
         .join(',');
 
