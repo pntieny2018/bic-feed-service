@@ -12,7 +12,7 @@ import { MediaModel } from '../../database/models/media.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
-import { IPost, PostModel, PostType } from '../../database/models/post.model';
+import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { ArticleService } from '../article/article.service';
 import { UserDto } from '../auth';
@@ -23,6 +23,7 @@ import { PostBindingService } from '../post/post-binding.service';
 import { ReactionService } from '../reaction';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
+import { PostHelper } from '../post/post.helper';
 
 @Injectable()
 export class SeriesService {
@@ -75,39 +76,42 @@ export class SeriesService {
       condition = {
         id,
         type: PostType.SERIES,
-        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: authUser.id }],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
       };
     } else {
       condition = { id, type: PostType.SERIES };
     }
 
-    const series = await this._postModel.findOne({
-      attributes: {
-        include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
-      },
-      where: condition,
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-          attributes: ['groupId'],
+    const series = PostHelper.filterArchivedPost(
+      await this._postModel.findOne({
+        attributes: {
+          include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
         },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: authUser.id,
+        where: condition,
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: false,
+            attributes: ['groupId'],
+            where: { isArchived: false },
           },
-        },
-        {
-          model: MediaModel,
-          as: 'coverMedia',
-          required: false,
-        },
-      ],
-    });
+          {
+            model: PostReactionModel,
+            as: 'ownerReactions',
+            required: false,
+            where: {
+              createdBy: authUser.id,
+            },
+          },
+          {
+            model: MediaModel,
+            as: 'coverMedia',
+            required: false,
+          },
+        ],
+      })
+    );
 
     if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
@@ -165,7 +169,7 @@ export class SeriesService {
           summary,
           createdBy: authUserId,
           updatedBy: authUserId,
-          isDraft: false,
+          status: PostStatus.PUBLISHED,
           isProcessing: false,
           cover: coverMedia.id,
           type: PostType.SERIES,
@@ -288,7 +292,7 @@ export class SeriesService {
     const transaction = await this._sequelizeConnection.transaction();
     const seriesId = series.id;
     try {
-      if (series.isDraft) {
+      if (series.status !== PostStatus.PUBLISHED) {
         await Promise.all([
           this._postGroupModel.destroy({
             where: {
@@ -523,7 +527,7 @@ export class SeriesService {
           'canShare',
           'canComment',
           'canReact',
-          'isDraft',
+          'status',
           'importantExpiredAt',
         ],
       });

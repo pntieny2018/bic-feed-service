@@ -5,7 +5,7 @@ import { PageDto } from '../../../common/dto';
 import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import { IPostGroup } from '../../../database/models/post-group.model';
-import { IPost } from '../../../database/models/post.model';
+import { IPost, PostStatus } from '../../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -22,6 +22,7 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
+import { GetPostsByParamsDto } from '../dto/requests/get-posts-by-params.dto';
 
 @Injectable()
 export class PostAppService {
@@ -65,7 +66,7 @@ export class PostAppService {
     const post = {
       privacy: postResponseDto.privacy,
       createdBy: postResponseDto.createdBy,
-      isDraft: postResponseDto.isDraft,
+      status: postResponseDto.status,
       groups: postResponseDto.audience.groups.map(
         (g) =>
           ({
@@ -119,7 +120,7 @@ export class PostAppService {
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
     await this._authorityService.checkPostOwner(postBefore, user.id);
-    if (postBefore.isDraft === false) {
+    if (postBefore.status === PostStatus.PUBLISHED) {
       if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
 
       let isEnableSetting = false;
@@ -164,7 +165,7 @@ export class PostAppService {
   public async publishPost(user: UserDto, postId: string): Promise<PostResponseDto> {
     const post = await this._postService.get(postId, user, new GetPostDto());
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    if (post.isDraft === false) return post;
+    if (post.status === PostStatus.PUBLISHED) return post;
 
     await this._authorityService.checkPostOwner(post, user.id);
     const { audience, setting } = post;
@@ -201,7 +202,7 @@ export class PostAppService {
     }
     await this._authorityService.checkPostOwner(posts[0], user.id);
 
-    if (posts[0].isDraft === false) {
+    if (posts[0].status === PostStatus.PUBLISHED) {
       await this._authorityService.checkCanDeletePost(
         user,
         posts[0].groups.map((g) => g.groupId)

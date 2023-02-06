@@ -41,6 +41,8 @@ jobs:
       - run:
           name: Update image version
           command: |
+            HEAD=$(git rev-parse --short HEAD)
+            GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
             git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
@@ -51,7 +53,7 @@ jobs:
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
-            git commit -m "Updated version to $ITN_IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
             git push
   dev:
     docker:
@@ -80,6 +82,8 @@ jobs:
       - run:
           name: Update image version
           command: |
+            HEAD=$(git rev-parse --short HEAD)
+            GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
             git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
@@ -90,7 +94,7 @@ jobs:
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
-            git commit -m "Updated version to $DEV_IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
             git push
   stg:
     docker:
@@ -119,6 +123,8 @@ jobs:
       - run:
           name: Update image version
           command: |
+            HEAD=$(git rev-parse --short HEAD)
+            GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
             git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
@@ -129,7 +135,7 @@ jobs:
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
-            git commit -m "Updated version to $STG_IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
             git push
   pro:
     docker:
@@ -158,6 +164,8 @@ jobs:
       - run:
           name: Update image version
           command: |
+            HEAD=$(git rev-parse --short HEAD)
+            GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
             git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
             set -e
@@ -168,7 +176,7 @@ jobs:
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
-            git commit -m "Updated version to $PRO_IMAGE_NAME:$CIRCLE_SHA1 by CICD"
+            git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
             git push
 workflows:
   version: 2

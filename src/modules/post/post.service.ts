@@ -2,14 +2,20 @@ import { SentryService } from '@app/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FindAttributeOptions, Includeable, Op, QueryTypes, Transaction } from 'sequelize';
+import {
+  FindAttributeOptions,
+  FindOptions,
+  Includeable,
+  Op,
+  Transaction,
+  WhereOptions,
+} from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
-import { EntityIdDto, PageDto } from '../../common/dto';
+import { EntityIdDto, OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
-import { getDatabaseConfig } from '../../config/database';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
@@ -19,11 +25,16 @@ import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
 import { PostHashtagModel } from '../../database/models/post-hashtag.model';
-import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
-import { IPost, PostModel, PostPrivacy, PostType } from '../../database/models/post.model';
+import {
+  IPost,
+  PostModel,
+  PostPrivacy,
+  PostStatus,
+  PostType,
+} from '../../database/models/post.model';
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
@@ -45,6 +56,9 @@ import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
 import { PostBindingService } from './post-binding.service';
+import { PostHelper } from './post.helper';
+import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
+import { ModelHelper } from '../../common/helpers/model.helper';
 
 @Injectable()
 export class PostService {
@@ -102,13 +116,28 @@ export class PostService {
     const { limit, offset, order, isProcessing } = getDraftPostDto;
     const condition = {
       createdBy: authUserId,
-      isDraft: true,
+      status: PostStatus.DRAFT,
       type: PostType.POST,
     };
 
-    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
+    if (isProcessing) condition.status = PostStatus.PROCESSING;
 
+    const result = await this.getsAndCount(condition, order, { limit, offset });
+
+    return new PageDto<PostResponseDto>(result.data, {
+      total: result.count,
+      limit,
+      offset,
+    });
+  }
+
+  public async getsAndCount(
+    condition: WhereOptions<IPost>,
+    order?: OrderEnum,
+    otherParams?: FindOptions
+  ): Promise<{ data: PostResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });
+
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
@@ -116,13 +145,20 @@ export class PostService {
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
     });
+    const orderOption = [];
+    if (
+      condition['status'] &&
+      PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
+    ) {
+      orderOption.push(['publishedAt', order]);
+    } else {
+      orderOption.push(['createdAt', order]);
+    }
     const rows = await this.postModel.findAll<PostModel>({
       where: condition,
-      attributes,
       include,
-      order: [['createdAt', order]],
-      offset,
-      limit,
+      order: orderOption,
+      ...otherParams,
     });
     const jsonPosts = rows.map((r) => r.toJSON());
     const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
@@ -133,20 +169,18 @@ export class PostService {
     });
 
     await this.postBinding.bindCommunity(postsBindedData);
-    const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
-      excludeExtraneousValues: true,
-    });
 
-    const total = await this.postModel.count<PostModel>({
-      where: condition,
-      attributes,
-    });
-
-    return new PageDto<PostResponseDto>(result, {
-      total,
-      limit,
-      offset,
-    });
+    return {
+      data: this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
+        excludeExtraneousValues: true,
+      }),
+      count: await this.postModel.count<PostModel>({
+        where: condition,
+        attributes,
+        include: otherParams.include ? otherParams.include : include,
+        distinct: true,
+      }),
+    };
   }
 
   /**
@@ -180,17 +214,19 @@ export class PostService {
     if (user) {
       condition = {
         id: postId,
-        [Op.or]: [{ isDraft: false }, { isDraft: true, createdBy: user.id }],
+        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: user.id }],
       };
     } else {
       condition = { id: postId, isHidden: false };
     }
 
-    const post = await this.postModel.findOne({
-      attributes,
-      where: condition,
-      include,
-    });
+    const post = PostHelper.filterArchivedPost(
+      await this.postModel.findOne({
+        attributes,
+        where: condition,
+        include,
+      })
+    );
 
     if (!post || (post.isHidden === true && post.createdBy !== user?.id)) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
@@ -252,13 +288,14 @@ export class PostService {
 
   public async getListWithGroupsByIds(postIds: string[], must: boolean): Promise<IPost[]> {
     const postGroups = await this.postModel.findAll({
-      attributes: ['id', 'title', 'lang', 'isDraft', 'createdBy'],
+      attributes: ['id', 'title', 'lang', 'status', 'createdBy'],
       include: [
         {
           model: PostGroupModel,
           as: 'groups',
           required: must,
           attributes: ['groupId'],
+          where: { isArchived: false },
         },
         {
           model: PostTagModel,
@@ -276,7 +313,7 @@ export class PostService {
   }
 
   public getIncludeObj({
-    mustIncludeGroup,
+    mustIncludeGroup = false,
     mustIncludeMedia,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
@@ -311,13 +348,12 @@ export class PostService {
       const obj = {
         model: PostGroupModel,
         as: 'groups',
-        required: mustIncludeGroup ? true : false,
-        attributes: ['groupId'],
+        required: mustIncludeGroup,
+        attributes: ['groupId', 'isArchived'],
+        where: { isArchived: false },
       };
       if (filterGroupIds) {
-        obj['where'] = {
-          groupId: filterGroupIds,
-        };
+        obj['where']['groupId'] = filterGroupIds;
       }
       includes.push(obj);
     }
@@ -348,7 +384,7 @@ export class PostService {
           'importantExpiredAt',
         ],
         where: {
-          isDraft: false,
+          status: PostStatus.PUBLISHED,
           isHidden: false,
         },
         include: [
@@ -356,6 +392,13 @@ export class PostService {
             model: MediaModel,
             as: 'coverMedia',
             required: false,
+          },
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
           },
         ],
       });
@@ -455,7 +498,7 @@ export class PostService {
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
-          isDraft: true,
+          status: PostStatus.DRAFT,
           type: PostType.POST,
           content,
           createdBy: authUserId,
@@ -549,13 +592,7 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        dataUpdate['isDraft'] = true;
-        dataUpdate['isProcessing'] = true;
-      }
-
-      //if post is draft, isProcessing alway is false
-      if (dataUpdate.isProcessing === true && post.isDraft === true) {
-        dataUpdate.isProcessing = false;
+        dataUpdate['status'] = PostStatus.PROCESSING;
       }
 
       dataUpdate.linkPreviewId = null;
@@ -662,8 +699,7 @@ export class PostService {
       const authUserId = authUser.id;
       const groupIds = post.audience.groups.map((g) => g.id);
 
-      let isDraft = false;
-      let isProcessing = false;
+      let status = PostStatus.PUBLISHED;
       if (
         post.media.videos.filter(
           (m) =>
@@ -672,14 +708,12 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        isDraft = true;
-        isProcessing = true;
+        status = PostStatus.PROCESSING;
       }
       const postPrivacy = await this.getPrivacy(groupIds);
       await this.postModel.update(
         {
-          isDraft,
-          isProcessing,
+          status,
           privacy: postPrivacy,
           createdAt: new Date(),
         },
@@ -690,8 +724,7 @@ export class PostService {
           },
         }
       );
-      post.isDraft = isDraft;
-      post.isProcessing = isProcessing;
+      post.status = status;
       if (post.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -721,7 +754,7 @@ export class PostService {
     const transaction = await this.sequelizeConnection.transaction();
     try {
       const postId = post.id;
-      if (post.isDraft) {
+      if (post.status === PostStatus.DRAFT) {
         await this.cleanRelationship(postId, transaction, true);
         await this.postModel.destroy({
           where: {
@@ -835,7 +868,6 @@ export class PostService {
           {
             model: PostGroupModel,
             as: 'groups',
-            attributes: ['groupId'],
           },
           {
             model: MentionModel,
@@ -973,9 +1005,10 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
+    if (!userId) return [];
     const { groupIds, type, isImportant, offset, limit } = search;
     const condition = {
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isHidden: false,
     };
 
@@ -1006,6 +1039,7 @@ export class PostService {
         attributes: [],
         where: {
           groupId: groupIds,
+          isArchived: false,
         },
       });
     }
@@ -1062,7 +1096,7 @@ export class PostService {
     const post = await this.postModel.findOne({
       where: {
         id,
-        isDraft: false,
+        status: PostStatus.PUBLISHED,
       },
     });
     if (!post) {
@@ -1093,30 +1127,23 @@ export class PostService {
   }
 
   public async updateStatus(postId: string): Promise<void> {
-    const { schema } = getDatabaseConfig();
-    const postMedia = PostMediaModel.tableName;
-    const post = PostModel.tableName;
-    const media = MediaModel.tableName;
-    const query = ` UPDATE ${schema}.${post}
-                SET is_processing = tmp.is_processing, is_draft = tmp.isDraft
-                FROM (
-                  SELECT pm.post_id, CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.PROCESSING}' THEN 1 ELSE 0 END 
-		                ) >= 1 THEN true ELSE false END as is_processing,
-                    CASE WHEN SUM ( CASE WHEN m.status = '${MediaStatus.FAILED}' OR m.status = '${MediaStatus.PROCESSING}' OR m.status = '${MediaStatus.WAITING_PROCESS}' THEN 1 ELSE 0 END 
-		                ) >= 1 THEN true ELSE false END as isDraft
-                  FROM ${schema}.${media} as m
-                  JOIN ${schema}.${postMedia} AS pm ON pm.media_id = m.id
-                  WHERE pm.post_id = :postId
-                  GROUP BY pm.post_id
-                ) as tmp 
-                WHERE tmp.post_id = ${schema}.${post}.id`;
-    await this.sequelizeConnection.query(query, {
-      replacements: {
-        postId,
-      },
-      type: QueryTypes.UPDATE,
-      raw: true,
-    });
+    const mediaList = await this.mediaService.getMediaByPostId(postId);
+    let totalWaitingProcess = 0;
+    let totalProcessing = 0;
+    let totalFailed = 0;
+    let totalCompleted = 0;
+    for (const media of mediaList) {
+      if (media.status === MediaStatus.COMPLETED) totalCompleted++;
+      if (media.status === MediaStatus.FAILED) totalFailed++;
+      if (media.status === MediaStatus.WAITING_PROCESS) totalWaitingProcess++;
+      if (media.status === MediaStatus.PROCESSING) totalProcessing++;
+    }
+    let status;
+    if (totalCompleted === mediaList.length) status = PostStatus.PUBLISHED;
+    if (totalProcessing > 0) status = PostStatus.PROCESSING;
+    if (totalFailed === mediaList.length || totalWaitingProcess === mediaList.length)
+      status = PostStatus.DRAFT;
+    await this.postModel.update({ status }, { where: { id: postId } });
   }
 
   public checkContent(content: string, media: MediaDto): void {
@@ -1220,7 +1247,7 @@ export class PostService {
   ): Promise<string[]> {
     const { offset, limit, isImportant, type } = filters;
     const conditions = {
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isHidden: false,
       [Op.and]: [
         this.postModel.notIncludePostsReported(userId, {
@@ -1252,6 +1279,15 @@ export class PostService {
             userId,
           },
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: {
+            isArchived: false,
+          },
+        },
       ],
       subQuery: false,
       where: conditions,
@@ -1276,6 +1312,7 @@ export class PostService {
       shouldIncludePreviewLink: true,
       shouldIncludeCover: true,
       shouldIncludeArticlesInSeries: true,
+      mustIncludeGroup: true,
       authUserId: userId,
     });
 
@@ -1292,16 +1329,17 @@ export class PostService {
 
     const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
 
-    const mappedPosts = ids.map((postId) => {
+    const mappedPosts = [];
+    for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
         postJson.articles = postJson.articles.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
-        return postJson;
+        mappedPosts.push(postJson);
       }
-    });
+    }
     return mappedPosts;
   }
 
@@ -1331,10 +1369,11 @@ export class PostService {
       },
     });
 
-    const mappedPosts = ids.map((postId) => {
-      const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
-    });
+    const mappedPosts = [];
+    for (const id of ids) {
+      const post = rows.find((row) => row.id === id);
+      if (post) mappedPosts.push(post.toJSON());
+    }
 
     return mappedPosts;
   }
@@ -1351,16 +1390,18 @@ export class PostService {
   ): Promise<string[]> {
     const { offset, limit, authUserId, isImportant, type } = filters;
     const conditions = {
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isHidden: false,
-      [Op.and]: [
+    };
+
+    if (authUserId) {
+      conditions[Op.and] = [
         this.postModel.notIncludePostsReported(authUserId, {
           mainTableAlias: '"PostModel"',
           type: [TargetType.ARTICLE, TargetType.POST],
         }),
-      ],
-    };
-
+      ];
+    }
     const order = [];
     const attributes: any = ['id'];
     if (isImportant) {
@@ -1387,6 +1428,7 @@ export class PostService {
           attributes: [],
           where: {
             groupId: groupIds,
+            isArchived: false,
           },
         },
       ],
@@ -1404,7 +1446,7 @@ export class PostService {
   public async getTotalDraft(user: UserDto): Promise<number> {
     return this.postModel.count({
       where: {
-        isDraft: true,
+        status: PostStatus.DRAFT,
         createdBy: user.id,
       },
     });
@@ -1428,7 +1470,7 @@ export class PostService {
           attributes: [],
           required: false,
           where: {
-            isDraft: false,
+            status: PostStatus.PUBLISHED,
           },
         },
       ],
@@ -1459,7 +1501,7 @@ export class PostService {
   public async isExisted(id: string, returning = false): Promise<[boolean, IPost]> {
     const conditions = {
       id: id,
-      isDraft: false,
+      status: PostStatus.PUBLISHED,
       isProcessing: false,
     };
 
@@ -1488,6 +1530,7 @@ export class PostService {
       groupIds?: string[];
     }
   ): Promise<string[]> {
+    if (!userId) return [];
     const { groupIds } = options ?? {};
     const condition = {
       [Op.and]: [
@@ -1506,5 +1549,102 @@ export class PostService {
     });
 
     return rows.map((row) => row.targetId);
+  }
+
+  public async getPostsByFilter(
+    params: {
+      createdBy?: string;
+      groupIds?: string[];
+      status?: PostStatus[];
+    },
+    sort: {
+      sortColumn: string;
+      sortBy: 'ASC' | 'DESC';
+      limit: number;
+      offset: number;
+    }
+  ): Promise<IPost[]> {
+    const { groupIds, status, createdBy } = params;
+    const { sortColumn, sortBy, limit, offset } = sort;
+    const conditionGroup = { isArchived: false };
+    const findOption: FindOptions = {
+      include: [],
+      where: {},
+    };
+    if (groupIds) {
+      conditionGroup['groupId'] = groupIds;
+    }
+    if (status) {
+      findOption.where['status'] = status;
+    }
+    if (createdBy) {
+      findOption.where['createdBy'] = createdBy;
+    }
+    if (sortColumn && sortBy) {
+      findOption.order =
+        sortColumn === 'publishedAt'
+          ? [
+              [sortColumn, sortBy],
+              ['createdAt', sortBy],
+            ]
+          : [[sortColumn, sortBy]];
+    }
+    findOption.limit = limit ?? 10;
+    findOption.offset = offset ?? 0;
+    findOption.include = [
+      {
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: ['groupId'],
+        where: conditionGroup,
+      },
+    ];
+    return this.postModel.findAll(findOption);
+  }
+
+  public async updateGroupStateAndGetPostIdsAffected(
+    groupIds: string[],
+    isArchive: boolean
+  ): Promise<string[]> {
+    const notInStateGroupIds = await this.postGroupModel.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('group_id')), 'groupId'], 'is_archived'],
+      where: { groupId: groupIds, isArchived: !isArchive },
+      limit: groupIds.length,
+    });
+
+    const [affectedCount] = await this.postGroupModel.update(
+      { isArchived: isArchive },
+      { where: { groupId: notInStateGroupIds.map((e) => e.groupId) } }
+    );
+    if (affectedCount > 0) {
+      const affectPostGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
+        groupId: notInStateGroupIds.map((e) => e.groupId),
+      });
+      return affectPostGroups.map((e) => e.postId);
+    }
+    return null;
+  }
+
+  public async getPostsArchivedOrRestoredByGroupEventPayload(
+    postIds: string[]
+  ): Promise<PostsArchivedOrRestoredByGroupEventPayload> {
+    const postGroups = await ModelHelper.getAllRecursive<IPostGroup>(this.postGroupModel, {
+      postId: postIds,
+      isArchived: false,
+    });
+    const postIndex: { [key: string]: string[] } = postIds.reduce((result, postId) => {
+      if (!result[postId]) {
+        result[postId] = postGroups.filter((e) => e.postId === postId).map((e) => e.groupId);
+      }
+      return result;
+    }, {});
+    const affectedPosts = await ModelHelper.getAllRecursive<IPost>(this.postModel, {
+      id: Object.keys(postIndex),
+    });
+    return {
+      posts: affectedPosts,
+      mappingPostIdGroupIds: postIndex,
+    };
   }
 }

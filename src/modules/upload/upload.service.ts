@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
@@ -34,10 +34,12 @@ export class UploadService {
         extension: path.extname(file.originalname),
       });
       const bucket = this._s3Config.userSharingAssetsBucket;
+
       await this._storage.send(
         new PutObjectCommand({
           Bucket: bucket,
           Body: file.buffer,
+          ContentType: file.mimetype,
           Key: key,
           ACL: alc,
         })
@@ -46,6 +48,27 @@ export class UploadService {
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
       throw e;
+    }
+  }
+
+  public async updateContentType(filePath: string, contentType: string): Promise<boolean> {
+    try {
+      const bucket = this._s3Config.userSharingAssetsBucket;
+
+      await this._storage.send(
+        new CopyObjectCommand({
+          Bucket: bucket,
+          ContentType: contentType,
+          Key: filePath,
+          CopySource: `${bucket}/${filePath}`,
+          MetadataDirective: 'REPLACE',
+          ACL: 'public-read',
+        })
+      );
+      return true;
+    } catch (e) {
+      this.logger.debug(JSON.stringify(e?.stack));
+      return false;
     }
   }
 

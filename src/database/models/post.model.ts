@@ -55,6 +55,15 @@ export enum PostType {
   ARTICLE = 'ARTICLE',
   SERIES = 'SERIES',
 }
+
+export enum PostStatus {
+  DRAFT = 'DRAFT',
+  PROCESSING = 'PROCESSING',
+  PUBLISHED = 'PUBLISHED',
+  WAITING_SCHEDULE = 'WAITING_SCHEDULE',
+  SCHEDULE_FAILED = 'SCHEDULE_FAILED',
+}
+
 export interface IPost {
   id: string;
   createdBy: string;
@@ -65,7 +74,7 @@ export interface IPost {
   totalUsersSeen: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
-  isDraft: boolean;
+  isDraft?: boolean;
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
@@ -101,6 +110,9 @@ export interface IPost {
   cover?: string;
   articles?: Partial<IPost>[];
   userSavePosts?: IUserSavePost[];
+  status: PostStatus;
+  publishedAt?: Date;
+  errorLog?: any;
 }
 
 @Table({
@@ -203,6 +215,20 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public cover: string;
+
+  @AllowNull(false)
+  @Column
+  public status: PostStatus;
+
+  @AllowNull(true)
+  @Column
+  public publishedAt: Date;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public errorLog: any;
 
   @CreatedAt
   @Column

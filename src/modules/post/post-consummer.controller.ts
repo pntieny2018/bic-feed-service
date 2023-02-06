@@ -9,6 +9,8 @@ import { VideoProcessingEndDto } from './dto/responses/process-video-response.dt
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { StateVerb, UpdateStateDto } from './dto/requests/update-state.dto';
+import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 
 @Controller()
 export class PostConsumerController {
@@ -41,6 +43,22 @@ export class PostConsumerController {
       case VideoProcessStatus.ERROR:
         this._eventEmitter.emit(new PostVideoFailedEvent(videoProcessingEndDto));
         break;
+    }
+  }
+
+  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.GROUP_STATE_HAS_BEEN_CHANGED)
+  public async updateState(@Payload('value') updateStateDto: UpdateStateDto): Promise<void> {
+    this._logger.debug(`[Event group change state]: ${JSON.stringify(updateStateDto)}`);
+    const groupIds: string[] = updateStateDto.data.object.groups.map((e) => e.id);
+    const postIdsAffected = await this._postService.updateGroupStateAndGetPostIdsAffected(
+      groupIds,
+      updateStateDto.data.verb === StateVerb.archive
+    );
+    if (postIdsAffected) {
+      const payload = await this._postService.getPostsArchivedOrRestoredByGroupEventPayload(
+        postIdsAffected
+      );
+      this._eventEmitter.emit(new PostsArchivedOrRestoredByGroupEvent(payload));
     }
   }
 }

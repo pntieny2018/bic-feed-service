@@ -20,6 +20,10 @@ import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SearchModule } from '../modules/search';
 import { TagModule } from '../modules/tag';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
+import { MigrateStatusPostCommand } from './migrate-status-post.command';
+import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
+import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
+import { UploadModule } from '../modules/upload';
 
 @Module({
   imports: [
@@ -37,6 +41,7 @@ import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
     MediaModule,
     SearchModule,
     TagModule,
+    UploadModule,
   ],
   providers: [
     SequelizeTinkerCommand,
@@ -49,6 +54,9 @@ import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
     IndexPostCommand,
     MoveMediaBucketCommand,
     UpdateTagTotalUsedCommand,
+    MigrateStatusPostCommand,
+    FixProcessingStatusPostCommand,
+    UpdateContentTypeImageCommand,
   ],
 })
 export class CommandModule {}

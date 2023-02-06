@@ -26,6 +26,9 @@ import { UpdateArticleDto } from './dto/requests/update-article.dto';
 import { ArticleSearchResponseDto } from './dto/responses/article-search.response.dto';
 import { ArticleResponseDto } from './dto/responses/article.response.dto';
 import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
+import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
+import { PostResponseDto } from '../post/dto/responses';
+import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -87,6 +90,18 @@ export class ArticleController {
     @Query() getDraftDto: GetDraftArticleDto
   ): Promise<PageDto<ArticleResponseDto>> {
     return this._articleAppService.getDrafts(user, getDraftDto);
+  }
+
+  @ApiOperation({ summary: 'Get posts by params' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Get('/params')
+  public getsByParams(
+    @AuthUser() user: UserDto,
+    @Query() getPostsByParamsDto: GetPostsByParamsDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._articleAppService.getsByParams(user, getPostsByParamsDto);
   }
 
   // @ApiOperation({ summary: 'Get list article' })
@@ -168,6 +183,20 @@ export class ArticleController {
     @Param('id', ParseUUIDPipe) articleId: string
   ): Promise<ArticleResponseDto> {
     return this._articleAppService.publish(user, articleId);
+  }
+
+  @ApiOperation({ summary: 'Schedule article' })
+  @ApiOkResponse({
+    type: ArticleResponseDto,
+    description: 'Schedule article successfully',
+  })
+  @Put('/:id/schedule')
+  public async schedule(
+    @AuthUser() user: UserDto,
+    @Param('id', ParseUUIDPipe) articleId: string,
+    @Body() scheduleArticleDto: ScheduleArticleDto
+  ): Promise<ArticleResponseDto> {
+    return this._articleAppService.schedule(user, articleId, scheduleArticleDto);
   }
 
   @ApiOperation({ summary: 'Delete article' })

@@ -28,6 +28,7 @@ import {
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
+import { GetPostsByParamsDto } from './dto/requests/get-posts-by-params.dto';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')

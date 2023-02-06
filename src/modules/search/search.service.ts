@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { FailedProcessPostModel } from 'src/database/models/failed-process-post.model';
+import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { ELASTIC_POST_MAPPING_PATH } from '../../common/constants/elasticsearch.constant';
 import { PageDto } from '../../common/dto';
 import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/helpers';
@@ -292,17 +292,21 @@ export class SearchService {
       ]),
     ]);
 
+    let articlesFilterReport = [];
     const articles = await this.postService.getSimpleArticlessByIds(
       ArrayHelper.arrayUnique(articleIds)
     );
+    if (articles.length) {
+      const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
+        TargetType.ARTICLE,
+      ]);
 
-    const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-    ]);
-
-    const articlesFilterReport = articles.filter(
-      (article) => !articleIdsReported.includes(article.id)
-    );
+      if (articleIdsReported.length) {
+        articlesFilterReport = articles.filter(
+          (article) => !articleIdsReported.includes(article.id)
+        );
+      }
+    }
     const result = this.bindResponseSearch(posts, {
       groups,
       users,
