@@ -958,14 +958,29 @@ export class PostService {
 
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
     try {
-      const posts = await this.postGroupModel.findAll({
+      const posts = await this.postModel.findAll({
+        attributes: ['id'],
+        subQuery: false,
         where: {
-          groupId: groupIds,
+          status: PostStatus.PUBLISHED,
+          isHidden: false,
         },
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: true,
+            attributes: ['groupId'],
+            where: {
+              groupId: groupIds,
+              isArchived: false,
+            },
+          },
+        ],
         limit: take,
         order: [['createdAt', 'DESC']],
       });
-      return posts.map((p) => p.postId);
+      return posts.map((p) => p.id);
     } catch (ex) {
       this.logger.error(ex, ex?.stack);
       this.sentryService.captureException(ex);
