@@ -508,7 +508,6 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
-          isProcessing: false,
         },
         { transaction }
       );
@@ -1517,7 +1516,6 @@ export class PostService {
     const conditions = {
       id: id,
       status: PostStatus.PUBLISHED,
-      isProcessing: false,
     };
 
     if (returning) {

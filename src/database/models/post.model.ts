@@ -74,11 +74,9 @@ export interface IPost {
   totalUsersSeen: number;
   isImportant: boolean;
   importantExpiredAt?: Date;
-  isDraft?: boolean;
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;
-  isProcessing?: boolean;
   isReported?: boolean;
   isHidden?: boolean;
   createdAt?: Date;
@@ -140,16 +138,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public importantExpiredAt?: Date;
 
   @Column
-  public isDraft: boolean;
-
-  @Column
   public canComment: boolean;
 
   @Column
   public canReact: boolean;
-
-  @Column
-  public isProcessing: boolean;
 
   @Column
   public canShare: boolean;
