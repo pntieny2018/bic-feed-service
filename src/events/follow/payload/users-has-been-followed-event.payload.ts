@@ -1,9 +1,10 @@
 export class UsersHasBeenFollowedEventPayload {
-  public userIds: string[];
-  public groupIds: string[];
+  public users: {
+    userId: string;
+    followedGroupIds: string[];
+  }[];
 
-  public constructor(userIds: string[], groupIds: string[]) {
-    this.userIds = userIds;
-    this.groupIds = groupIds;
+  public constructor(data: UsersHasBeenFollowedEventPayload) {
+    Object.assign(this, data);
   }
 }

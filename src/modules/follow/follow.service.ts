@@ -9,7 +9,11 @@ import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import { CreateFollowDto, UnfollowDto } from './dto/requests';
+import {
+  UsersHasBeenFollowedEventPayload,
+  UsersHasBeenUnfollowedEventPayload,
+} from '../../events/follow/payload';
+import { FollowDto } from './dto/requests';
 import { FollowsDto } from './dto/response/follows.dto';
 
 @Injectable()
@@ -27,20 +31,43 @@ export class FollowService {
 
   /**
    * Make user follow  group
-   * @param createFollowDto CreateFollowDto
-   * @returns Promise resolve Array<FollowModel>
-   * @throws RpcException
    */
-  public async follow(createFollowDto: CreateFollowDto): Promise<void> {
+  public async follow(createFollowDto: FollowDto): Promise<void> {
     try {
-      const bulkCreateData = createFollowDto.userIds
-        .map((userId) =>
-          createFollowDto.groupIds.map((groupId) => ({
-            userId: userId,
-            groupId: groupId,
-          }))
-        )
-        .flat();
+      const users = await this._followModel.findAll({
+        attributes: [
+          'userId',
+          [Sequelize.literal(`string_agg(group_id::character varying, ',')`), 'groupId'],
+        ],
+        group: 'user_id',
+      });
+
+      const dataEventPayload: UsersHasBeenFollowedEventPayload = {
+        users: [],
+      };
+      const bulkCreateData = [];
+      for (const userId of createFollowDto.userIds) {
+        const userEventPayload = {
+          userId,
+          followedGroupIds: [],
+        };
+        let currentGroupIds = new Set([]);
+        const user = users.find((item) => item.userId === userId);
+        if (user) {
+          currentGroupIds = new Set(user.groupId.split(',') || []);
+        }
+
+        for (const groupId of createFollowDto.groupIds) {
+          if (!currentGroupIds.has(groupId)) {
+            userEventPayload.followedGroupIds.push(groupId);
+            bulkCreateData.push({
+              userId: userId,
+              groupId: groupId,
+            });
+          }
+        }
+        dataEventPayload.users.push(userEventPayload);
+      }
 
       const insertData = bulkCreateData
         .map((record) => {
@@ -55,7 +82,7 @@ export class FollowService {
              VALUES ${insertData} ON CONFLICT (user_id,group_id) DO NOTHING;`
       );
 
-      this._eventEmitter.emit(new UsersHasBeenFollowedEvent(createFollowDto));
+      this._eventEmitter.emit(new UsersHasBeenFollowedEvent(dataEventPayload));
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
@@ -64,13 +91,10 @@ export class FollowService {
 
   /**
    * Make user unfollow  group
-   * @param unfollowDto UnfollowDto
-   * @returns Promise resolve Number
-   * @throws RpcException
    */
-  public async unfollow(unfollowDto: UnfollowDto): Promise<void> {
+  public async unfollow(unfollowDto: FollowDto): Promise<void> {
     try {
-      const response = await this._followModel.destroy({
+      await this._followModel.destroy({
         where: {
           groupId: {
             [Op.in]: unfollowDto.groupIds,
@@ -80,8 +104,23 @@ export class FollowService {
           },
         },
       });
-      this._logger.debug(`[unfollow] ${response}`);
-      this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(unfollowDto));
+
+      const dataEventPayload: UsersHasBeenUnfollowedEventPayload = {
+        users: [],
+      };
+      for (const userId of unfollowDto.userIds) {
+        const userEventPayload = {
+          userId,
+          unfollowedGroupIds: [],
+        };
+
+        for (const groupId of unfollowDto.groupIds) {
+          userEventPayload.unfollowedGroupIds.push(groupId);
+        }
+        dataEventPayload.users.push(userEventPayload);
+      }
+
+      this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(dataEventPayload));
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
@@ -115,37 +154,37 @@ export class FollowService {
    * @param followId Number
    * @param limit Number
    */
-  // TODO remove this
-  public async getsUnique(
-    ignoreUserIds: string[],
-    targetGroupIds: string[],
+  public async getUserFollowGroupIds(
     groupIds: string[],
+    notExistInGroupIds: string[] = [],
     followId = 0,
     limit = 1000
   ): Promise<FollowsDto> {
     try {
       const schema = this._databaseConfig.schema;
+      let condition = `duplicate_count = 1 AND id > :followId`;
 
+      if (notExistInGroupIds.length > 0) {
+        condition += ` AND NOT EXISTS (
+          SELECT user_id FROM  ${schema}.${this._followModel.tableName} tb2
+          WHERE group_id IN (:notExistInGroupIds)
+          AND tb1.user_id = tb2.user_id
+        )`;
+      }
       const rows = await this._sequelize.query(
         ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
                    SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
                    AS duplicate_count
                    FROM ${schema}.${this._followModel.tableName}
-                   WHERE group_id IN  (${targetGroupIds
-                     .map((id) => this._sequelize.escape(id))
-                     .join(',')})
+                   WHERE group_id IN (:groupIds)
               ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
-                WHERE duplicate_count = 1
-                AND NOT EXISTS (
-                  SELECT user_id FROM  ${schema}.${this._followModel.tableName} tb2
-                  WHERE group_id IN (${groupIds.map((id) => this._sequelize.escape(id)).join(',')})
-                  AND tb1.user_id = tb2.user_id
-                )
-                AND id > $followId  limit $limit ;
+                WHERE ${condition} ORDER BY id ASC limit :limit ;
              `,
         {
-          bind: {
+          replacements: {
             followId: followId,
+            groupIds,
+            notExistInGroupIds,
             limit: limit,
           },
         }
