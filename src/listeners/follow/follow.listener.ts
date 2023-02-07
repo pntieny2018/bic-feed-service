@@ -29,72 +29,48 @@ export class FollowListener {
     this._logger.debug(`[onUsersFollowGroups]: ${JSON.stringify(event)}`);
     const { payload } = event;
 
-    const { userIds, groupIds } = payload;
+    const { users } = payload;
 
-    const postIds = await this._postService.findIdsByGroupId(groupIds);
-
-    if (postIds && postIds.length) {
-      this._feedPublishService
-        .attachPostsForUsersNewsFeed(userIds, postIds)
-        .catch((ex) => this._sentryService.captureException(ex));
+    for (const user of users) {
+      const postIds = await this._postService.findIdsByGroupId(user.followedGroupIds);
+      if (postIds.length) {
+        this._feedPublishService
+          .attachPostsForUsersNewsFeed([user.userId], postIds)
+          .catch((ex) => this._sentryService.captureException(ex));
+      }
     }
   }
 
   @On(UsersHasBeenUnfollowedEvent)
   public async onUsersUnFollowGroup(event: UsersHasBeenUnfollowedEvent): Promise<void> {
-    this._logger.debug(`[onUsersUnFollowGroup]: ${JSON.stringify(event)}`);
     const {
-      payload: { userIds, groupIds },
+      payload: { users },
     } = event;
 
-    userIds.forEach((userId: string) => {
-      this.detachPosts(userId, groupIds).catch((e) => {
+    for (const user of users) {
+      await this.detachAllPostsInGroupByUserId(user.userId, user.unfollowedGroupIds).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
-    });
+    }
   }
 
-  public async detachPosts(userId: string, groupIds: string[]): Promise<any> {
-    this._logger.debug(`[userUnfollowGroup] userId: ${userId}. groupId: ${groupIds}`);
-
-    const userSharedDto = await this._userService.get(userId);
-
-    if (!userSharedDto) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-
-    let filterGroup = (userSharedDto.groups ?? [])
-      .filter((gId) => !groupIds.includes(gId))
-      .map((gId) => `'${gId}'`);
-
-    if (!filterGroup.length) {
-      filterGroup = [`''`];
-    }
+  public async detachAllPostsInGroupByUserId(userId: string, groupIds: string[]): Promise<void> {
+    this._logger.debug(`[detachAllPostsInGroupByUserId] userId: ${userId}. groupIds: ${groupIds}`);
     const { schema } = getDatabaseConfig();
 
     const query = `
-      DELETE FROM ${schema}.user_newsfeed AS "un"
-      WHERE "un".id IN 
-      (
-        SELECT "un_need_to_delete".id
-        FROM (
-          SELECT "un_sq".id, (
-            SELECT ARRAY_AGG("pg".group_id)
-		        FROM ${schema}.posts_groups AS "pg"
-		        WHERE "pg".post_id = "un_sq".post_id
-          ) AS groups_of_post
-          FROM ${schema}.user_newsfeed AS "un_sq"
-          WHERE "un_sq".user_id = :userId
-        ) AS "un_need_to_delete"
-          WHERE ( "un_need_to_delete".groups_of_post::text[] &&  ARRAY[${filterGroup}] )= false
-      )
-    
-    `;
+    DELETE FROM ${schema}.user_newsfeed u 
+    WHERE user_id = ${this._sequelizeConnection.escape(userId)} AND EXISTS(
+     SELECT null
+     FROM ${schema}.posts_groups pg
+       WHERE pg.group_id IN(:groupIds) AND  pg.post_id = u.post_id
+   )`;
 
     await this._sequelizeConnection.query(query, {
       replacements: {
-        userId: userId,
+        userId,
+        groupIds,
       },
       type: QueryTypes.DELETE,
     });

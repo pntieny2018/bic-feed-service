@@ -153,10 +153,9 @@ export class SeriesListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [NIL_UUID]
+        []
       );
     } catch (error) {
       this._logger.error(JSON.stringify(error?.stack));
@@ -214,7 +213,6 @@ export class SeriesListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
         oldSeries.audience.groups.map((g) => g.id)

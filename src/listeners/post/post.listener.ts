@@ -181,10 +181,9 @@ export class PostListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [NIL_UUID]
+        []
       );
     } catch (error) {
       this._sentryService.captureException(error);
@@ -309,7 +308,6 @@ export class PostListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
         oldPost.audience.groups.map((g) => g.id)
@@ -400,10 +398,9 @@ export class PostListener {
       ]);
       try {
         this._feedPublisherService.fanoutOnWrite(
-          actor.id,
           id,
           audience.groups.map((g) => g.id),
-          [NIL_UUID]
+          []
         );
       } catch (error) {
         this._logger.error(JSON.stringify(error?.stack));

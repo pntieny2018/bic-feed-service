@@ -92,13 +92,13 @@ describe('FeedPublisherService', () => {
     });
   });
 
-  describe('Func: attachPostForAnyNewsFeed', () => {
+  describe('Func: attachPostToUserIds', () => {
     it('Should successfully', async () => {
       userSeenPostModel.findAll = jest.fn().mockResolvedValue(mockUserSeenPostModels);
       sequelize.query = jest.fn().mockResolvedValue(Promise.resolve());
       sentryService.captureException = jest.fn();
 
-      await feedPublisherService.attachPostForAnyNewsFeed(
+      await feedPublisherService.attachPostToUserIds(
         ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
         'a7850c03-c07d-4258-9712-c08cfd5c674d'
       );
@@ -115,7 +115,7 @@ describe('FeedPublisherService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        await feedPublisherService.attachPostForAnyNewsFeed(
+        await feedPublisherService.attachPostToUserIds(
           ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
           'a7850c03-c07d-4258-9712-c08cfd5c674d'
         );
@@ -128,12 +128,12 @@ describe('FeedPublisherService', () => {
     });
   });
 
-  describe('Func: detachPostForAnyNewsFeed', () => {
+  describe('Func: detachPostFromUserIds', () => {
     it('Should successfully', async () => {
       userNewsfeedModel.destroy = jest.fn().mockResolvedValue(Promise.resolve());
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
-      await feedPublisherService.detachPostForAnyNewsFeed(
+      await feedPublisherService.detachPostFromUserIds(
         ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
         'a7850c03-c07d-4258-9712-c08cfd5c674d'
       );
@@ -150,7 +150,7 @@ describe('FeedPublisherService', () => {
       sentryService.captureException = jest.fn().mockResolvedValue(Promise.resolve());
 
       try {
-        await feedPublisherService.detachPostForAnyNewsFeed(
+        await feedPublisherService.detachPostFromUserIds(
           ['8548c944-91f3-4577-99e2-18a541186c18', '8c846fe3-a615-42ae-958a-33a43d24a033', '2963a142-18a8-4420-bfaf-98680a3aee35'],
           'a7850c03-c07d-4258-9712-c08cfd5c674d'
         );
@@ -165,9 +165,9 @@ describe('FeedPublisherService', () => {
 
   describe('Func: processFanout', () => {
     it('Should successfully', async () => {
-      followService.getsUnique = jest.fn().mockResolvedValue({ userIds: [2, 3, 4] });
+      followService.getUserFollowGroupIds = jest.fn().mockResolvedValue({ userIds: [2, 3, 4] });
 
-      feedPublisherService.attachPostForAnyNewsFeed = jest
+      feedPublisherService.attachPostToUserIds = jest
         .fn()
         .mockResolvedValue(Promise.resolve());
 
@@ -177,11 +177,11 @@ describe('FeedPublisherService', () => {
         attached: ['31c2e99b-88dd-40c8-9d1a-5ad7d54572c1'],
       });
 
-      expect(followService.getsUnique).toBeCalled();
+      expect(followService.getUserFollowGroupIds).toBeCalled();
     });
 
     it('Should failed', async () => {
-      followService.getsUnique = jest
+      followService.getUserFollowGroupIds = jest
         .fn()
         .mockRejectedValue(new Error('Database connection error.'));
 
@@ -196,7 +196,7 @@ describe('FeedPublisherService', () => {
       }
 
       expect(sentryService.captureException).toBeCalled();
-      expect(followService.getsUnique).toBeCalled();
+      expect(followService.getUserFollowGroupIds).toBeCalled();
     });
   });
 
