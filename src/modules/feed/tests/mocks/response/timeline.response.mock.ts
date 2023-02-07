@@ -24,7 +24,6 @@ export const mockTimelineResponse = {
         isImportant: false,
         importantExpiredAt: null,
       },
-      isDraft: false,
       actor: {
         id: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
         username: 'trangha',
@@ -79,7 +78,6 @@ export const mockTimelineResponse = {
         isImportant: false,
         importantExpiredAt: null,
       },
-      isDraft: false,
       actor: {
         id: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
         username: 'trangha',

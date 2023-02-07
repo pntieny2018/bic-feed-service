@@ -25,7 +25,6 @@ export const mockedNewsFeedResponse = {
         isImportant: false,
         importantExpiredAt: null,
       },
-      isDraft: true,
       actor: {
         id: 59,
         username: 'trangha',
@@ -92,7 +91,6 @@ export const mockedNewsFeedResponse = {
         isImportant: false,
         importantExpiredAt: null,
       },
-      isDraft: true,
       actor: {
         id: 59,
         username: 'trangha',
