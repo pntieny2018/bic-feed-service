@@ -1,8 +1,6 @@
 export class UsersHasBeenFollowedEventPayload {
-  public users: {
-    userId: string;
-    followedGroupIds: string[];
-  }[];
+  public userId: string;
+  public followedGroupIds: string[];
 
   public constructor(data: UsersHasBeenFollowedEventPayload) {
     Object.assign(this, data);

@@ -29,26 +29,21 @@ export class FollowListener {
     this._logger.debug(`[onUsersFollowGroups]: ${JSON.stringify(event)}`);
     const { payload } = event;
 
-    const { users } = payload;
+    const { userId, followedGroupIds } = payload;
 
-    for (const user of users) {
-      const postIds = await this._postService.findIdsByGroupId(user.followedGroupIds);
-      if (postIds.length) {
-        this._feedPublishService
-          .attachPostsForUsersNewsFeed([user.userId], postIds)
-          .catch((ex) => this._sentryService.captureException(ex));
-      }
+    const postIds = await this._postService.findIdsByGroupId(followedGroupIds);
+    if (postIds.length) {
+      this._feedPublishService
+        .attachPostsForUsersNewsFeed([userId], postIds)
+        .catch((ex) => this._sentryService.captureException(ex));
     }
   }
 
   @On(UsersHasBeenUnfollowedEvent)
   public async onUsersUnFollowGroup(event: UsersHasBeenUnfollowedEvent): Promise<void> {
-    const {
-      payload: { users },
-    } = event;
-
-    for (const user of users) {
-      await this.detachAllPostsInGroupByUserId(user.userId, user.unfollowedGroupIds).catch((e) => {
+    const { userId, unfollowedGroupIds } = event.payload;
+    if (unfollowedGroupIds.length > 0) {
+      this.detachAllPostsInGroupByUserId(userId, unfollowedGroupIds).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
       });
