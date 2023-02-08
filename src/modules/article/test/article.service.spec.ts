@@ -301,7 +301,6 @@ describe.skip('ArticleService', () => {
       expect(mentionService.create).toBeCalledTimes(1);
       expect(articleService.addGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
-        isDraft: true,
         type: PostType.ARTICLE,
         content: mockedCreateArticleDto.content,
         createdBy: mockedUserAuth.id,
@@ -311,7 +310,6 @@ describe.skip('ArticleService', () => {
         canShare: mockedCreateArticleDto.setting.canShare,
         canComment: mockedCreateArticleDto.setting.canComment,
         canReact: mockedCreateArticleDto.setting.canReact,
-        isProcessing: false,
         hashtagsJson: mockedCreateArticleDto.hashtags,
         title: mockedCreateArticleDto.title,
         summary: mockedCreateArticleDto.summary,

@@ -49,10 +49,10 @@ export class PostConsumerController {
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.GROUP_STATE_HAS_BEEN_CHANGED)
   public async updateState(@Payload('value') updateStateDto: UpdateStateDto): Promise<void> {
     this._logger.debug(`[Event group change state]: ${JSON.stringify(updateStateDto)}`);
-    const groupIds: string[] = updateStateDto.object.groups.map((e) => e.id);
+    const groupIds: string[] = updateStateDto.data.object.groups.map((e) => e.id);
     const postIdsAffected = await this._postService.updateGroupStateAndGetPostIdsAffected(
       groupIds,
-      updateStateDto.verb === StateVerb.archive
+      updateStateDto.data.verb === StateVerb.archive
     );
     if (postIdsAffected) {
       const payload = await this._postService.getPostsArchivedOrRestoredByGroupEventPayload(

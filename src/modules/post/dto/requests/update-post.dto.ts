@@ -106,8 +106,6 @@ export class UpdatePostDto {
   @ValidateMention()
   public mentions?: string[];
 
-  public isDraft?: boolean;
-
   @ApiProperty({
     type: LinkPreviewDto,
     example: {

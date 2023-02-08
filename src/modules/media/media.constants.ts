@@ -15,4 +15,5 @@ export const WHITE_LIST_MIME_TYPE_IMAGE = [
   'image/heic-sequence',
   'image/avif',
   'image/avif-sequence',
+  'image/webp',
 ];

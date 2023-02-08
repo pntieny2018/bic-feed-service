@@ -23,8 +23,6 @@ export const mockedCreatePostResponse = {
     isImportant: false,
     importantExpiredAt: null,
   },
-  isDraft: true,
-  isProcessing: false,
   actor: {
     id: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
     username: 'quannhac',
@@ -63,7 +61,6 @@ export const mockedCreatePostResponse = {
 
 export const mockedPostCreated = {
   id: 'ad70928e-cffd-44a9-9b27-19faa7210530',
-  isDraft: true,
   content: 'bbbbbb',
   createdBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
   updatedBy: '438e292f-d8a3-4777-8cd2-0b8a61fd049c',
@@ -72,7 +69,6 @@ export const mockedPostCreated = {
   canShare: true,
   canComment: true,
   canReact: true,
-  isProcessing: false,
   updatedAt: '2022-05-19T07:31:55.504Z',
   createdAt: '2022-05-19T07:31:55.504Z',
   commentsCount: 0,
