@@ -329,7 +329,7 @@ export class ArticleService extends PostService {
       type: PostType.ARTICLE,
     };
 
-    if (isProcessing !== null) condition['status'] = PostStatus.PROCESSING;
+    if (isProcessing) condition['status'] = PostStatus.PROCESSING;
 
     const result = await this.getsAndCount(condition, order, { limit, offset });
 
