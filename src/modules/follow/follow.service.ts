@@ -9,10 +9,6 @@ import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel, IFollow } from '../../database/models/follow.model';
 import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
-import {
-  UsersHasBeenFollowedEventPayload,
-  UsersHasBeenUnfollowedEventPayload,
-} from '../../events/follow/payload';
 import { FollowDto } from './dto/requests';
 import { FollowsDto } from './dto/response/follows.dto';
 
@@ -34,54 +30,40 @@ export class FollowService {
    */
   public async follow(followDto: FollowDto): Promise<void> {
     const { userId, groupIds } = followDto;
-    const dataEventPayload: UsersHasBeenFollowedEventPayload = {
-      userId,
-      followedGroupIds: [],
-    };
-    const bulkCreateData = [];
-
     try {
-      //Filter: remove group which user already joined from payload.
-      const groups = await this._followModel.findAll({
-        attributes: ['groupId'],
-        where: {
-          userId,
-        },
-        group: 'user_id',
-      });
-      const currentGroupIds = new Set(groups.map((group) => group.groupId));
-      for (const groupId of groupIds) {
-        if (!currentGroupIds.has(groupId)) {
-          dataEventPayload.followedGroupIds.push(groupId);
-          bulkCreateData.push({
-            userId: userId,
-            groupId: groupId,
-          });
-        }
-      }
+      const followedGroupIds = await this._filterGroupsUserJoined(userId, groupIds);
 
-      await this._insertFollowData(bulkCreateData);
-      this._eventEmitter.emit(new UsersHasBeenFollowedEvent(dataEventPayload));
+      await this._createFollowData(userId, followedGroupIds);
+
+      this._eventEmitter.emit(
+        new UsersHasBeenFollowedEvent({
+          userId,
+          followedGroupIds,
+        })
+      );
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
     }
   }
 
-  private async _insertFollowData(
-    bulkCreateData: { userId: string; groupId: string }[]
-  ): Promise<void> {
-    const insertData = bulkCreateData
-      .map((record) => {
-        const escapedUserId = this._sequelize.escape(record.userId);
-        const escapedGroupId = this._sequelize.escape(record.groupId);
-        return `(${escapedUserId}, ${escapedGroupId})`;
-      })
-      .join(',');
+  private async _filterGroupsUserJoined(userId: string, groupIds: string[]): Promise<string[]> {
+    const groups = await this._followModel.findAll({
+      attributes: ['groupId'],
+      where: { userId },
+      group: 'user_id',
+    });
+    const currentGroupIds = new Set(groups.map((group) => group.groupId));
+    return groupIds.filter((groupId) => !currentGroupIds.has(groupId));
+  }
 
-    await this._followModel.sequelize.query(
-      `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id)
-             VALUES ${insertData} ON CONFLICT (user_id,group_id) DO NOTHING;`
+  private async _createFollowData(userId: string, groupIds: string[]): Promise<void> {
+    await this._followModel.bulkCreate(
+      groupIds.map((groupId) => ({
+        userId,
+        groupId,
+      })),
+      { ignoreDuplicates: true }
     );
   }
   /**
@@ -141,12 +123,12 @@ export class FollowService {
   public async getUserFollowGroupIds(
     groupIds: string[],
     notExistInGroupIds: string[] = [],
-    followId = 0,
+    zindex = 0,
     limit = 1000
   ): Promise<FollowsDto> {
     try {
       const schema = this._databaseConfig.schema;
-      let condition = `duplicate_count = 1 AND id > :followId`;
+      let condition = ` group_id IN (:groupIds) AND zindex > :zindex`;
 
       if (notExistInGroupIds.length > 0) {
         condition += ` AND NOT EXISTS (
@@ -156,17 +138,12 @@ export class FollowService {
         )`;
       }
       const rows = await this._sequelize.query(
-        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
-                   AS duplicate_count
-                   FROM ${schema}.${this._followModel.tableName}
-                   WHERE group_id IN (:groupIds)
-              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
-                WHERE ${condition} ORDER BY id ASC limit :limit ;
-             `,
+        `SELECT DISTINCT(user_id), zindex
+          FROM ${schema}.${this._followModel.tableName} tb1
+          WHERE ${condition} ORDER BY zindex ASC limit :limit`,
         {
           replacements: {
-            followId: followId,
+            zindex,
             groupIds,
             notExistInGroupIds,
             limit: limit,
@@ -177,7 +154,7 @@ export class FollowService {
       if (userIds.length) {
         return {
           userIds: userIds,
-          latestFollowId: rows[0][rows[0].length - 1]['id'],
+          latestFollowId: rows[0][rows[0].length - 1]['zindex'],
         };
       }
 
