@@ -331,7 +331,10 @@ export class PostListener {
     await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updateStatus(post.id);
+      this._postService.updateStatus(post.id).catch((e) => {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      });
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -423,7 +426,10 @@ export class PostListener {
     await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updateStatus(post.id);
+      this._postService.updateStatus(post.id).catch((e) => {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      });
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
