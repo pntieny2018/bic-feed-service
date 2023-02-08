@@ -172,10 +172,10 @@ export class FollowService {
     this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
       let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
-      if (oldGroupIds.length > 0) {
+      if (oldGroupIds && oldGroupIds.length > 0) {
         condition += ' AND group_id NOT IN (:oldGroupIds)';
       }
-      if (ignoreUserIds.length > 0) {
+      if (ignoreUserIds && ignoreUserIds.length > 0) {
         condition += ' AND user_id NOT IN (:ignoreUserIds)';
       }
       const schema = this._databaseConfig.schema;
