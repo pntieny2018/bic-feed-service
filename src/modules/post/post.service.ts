@@ -508,7 +508,6 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
-          isProcessing: false,
         },
         { transaction }
       );
@@ -957,15 +956,31 @@ export class PostService {
   }
 
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
+    if (groupIds.length === 0) return [];
     try {
-      const posts = await this.postGroupModel.findAll({
+      const posts = await this.postModel.findAll({
+        attributes: ['id'],
+        subQuery: false,
         where: {
-          groupId: groupIds,
+          status: PostStatus.PUBLISHED,
+          isHidden: false,
         },
+        include: [
+          {
+            model: PostGroupModel,
+            as: 'groups',
+            required: true,
+            attributes: ['groupId'],
+            where: {
+              groupId: groupIds,
+              isArchived: false,
+            },
+          },
+        ],
         limit: take,
         order: [['createdAt', 'DESC']],
       });
-      return posts.map((p) => p.postId);
+      return posts.map((p) => p.id);
     } catch (ex) {
       this.logger.error(ex, ex?.stack);
       this.sentryService.captureException(ex);
@@ -1502,7 +1517,6 @@ export class PostService {
     const conditions = {
       id: id,
       status: PostStatus.PUBLISHED,
-      isProcessing: false,
     };
 
     if (returning) {
@@ -1580,7 +1594,15 @@ export class PostService {
     if (createdBy) {
       findOption.where['createdBy'] = createdBy;
     }
-    if (sortColumn && sortBy) findOption.order = [[sortColumn, sortBy]];
+    if (sortColumn && sortBy) {
+      findOption.order =
+        sortColumn === 'publishedAt'
+          ? [
+              [sortColumn, sortBy],
+              ['createdAt', sortBy],
+            ]
+          : [[sortColumn, sortBy]];
+    }
     findOption.limit = limit ?? 10;
     findOption.offset = offset ?? 0;
     findOption.include = [

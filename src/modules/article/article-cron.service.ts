@@ -8,6 +8,7 @@ import moment from 'moment/moment';
 import { ArticleService } from './article.service';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
+import { RedisService } from '@app/redis';
 
 @Injectable()
 export class ArticleCronService {
@@ -17,6 +18,7 @@ export class ArticleCronService {
     private _articleAppService: ArticleAppService,
     private _articleService: ArticleService,
     private _userService: UserService,
+    private _redisService: RedisService,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel
   ) {}
@@ -31,6 +33,10 @@ export class ArticleCronService {
     if (_offset > 0 && _lastResultLength < _limit) return _posts;
     const posts = await this._postModel.findAll({
       where: conditions,
+      order: [
+        ['publishedAt', 'ASC'],
+        ['createdAt', 'ASC'],
+      ],
       limit: _limit,
       offset: _offset,
     });
@@ -47,32 +53,38 @@ export class ArticleCronService {
   @Cron('33 */30 * * * *')
   private async _jobSchedulePublishArticle(): Promise<void> {
     try {
-      const articles = await this._getsRecursive({
-        status: PostStatus.WAITING_SCHEDULE,
-        publishedAt: { [Op.lte]: moment().toDate() },
-      });
-      for (const article of articles) {
-        try {
-          const userProfile = await this._userService.get(article.createdBy);
-          const userPermission = await this._userService.getPermissions(
-            userProfile.id,
-            JSON.stringify({
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              'cognito:username': userProfile.username,
-            })
-          );
-          const userDTO: UserDto = {
-            id: userProfile.id,
-            profile: userProfile,
-            permissions: userPermission,
-          };
-          await this._articleAppService.publish(userDTO, article.id, true);
-        } catch (e) {
-          await this._articleService.updateArticleStatusAndLog(
-            article.id,
-            PostStatus.SCHEDULE_FAILED,
-            { message: e.message, data: article }
-          );
+      const isRunningArticleSchedule = await this._redisService.setNxEx(
+        'isRunningArticleSchedule',
+        true
+      );
+      if (isRunningArticleSchedule === 1) {
+        const articles = await this._getsRecursive({
+          status: PostStatus.WAITING_SCHEDULE,
+          publishedAt: { [Op.lte]: moment().toDate() },
+        });
+        for (const article of articles) {
+          try {
+            const userProfile = await this._userService.get(article.createdBy);
+            const userPermission = await this._userService.getPermissions(
+              userProfile.id,
+              JSON.stringify({
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'cognito:username': userProfile.username,
+              })
+            );
+            const userDTO: UserDto = {
+              id: userProfile.id,
+              profile: userProfile,
+              permissions: userPermission,
+            };
+            await this._articleAppService.publish(userDTO, article.id, true);
+          } catch (e) {
+            await this._articleService.updateArticleStatusAndLog(
+              article.id,
+              PostStatus.SCHEDULE_FAILED,
+              { message: e.message, data: article }
+            );
+          }
         }
       }
     } catch (e) {

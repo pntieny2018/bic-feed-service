@@ -26,18 +26,20 @@ export class FeedPublisherService {
   public async attachPostsForUsersNewsFeed(userIds: string[], postIds: string[]): Promise<void> {
     const schema = this._databaseConfig.schema;
     try {
-      const seenPostData = await this._userSeenPostModel.findAll({
-        where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
-      });
-      const seenPostDataMap = seenPostData.reduce(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (_dataMap, _seenPostRecord) => ({ userId: true }),
-        {}
-      );
+      this._logger.debug(`[attachPostsForUsersNewsFeed]: userIds:${userIds} -- postIds:${postIds}`);
+      // const seenPostData = await this._userSeenPostModel.findAll({
+      //   where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
+      // });
+      // const seenPostDataMap = seenPostData.reduce(
+      //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      //   (_dataMap, _seenPostRecord) => ({ userId: true }),
+      //   {}
+      // );
 
       const data = userIds
         .map((userId) => {
-          return postIds.map((postId) => `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`);
+          //return postIds.map((postId) => `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`);
+          return postIds.map((postId) => `('${userId}','${postId}', false)`);
         })
         .flat();
 
@@ -60,20 +62,21 @@ export class FeedPublisherService {
    * @param userIds Array<Number>
    * @param postId String
    */
-  public async attachPostForAnyNewsFeed(userIds: string[], postId: string): Promise<void> {
+  public async attachPostToUserIds(userIds: string[], postId: string): Promise<void> {
     const schema = this._databaseConfig.schema;
     try {
-      const seenPostData = await this._userSeenPostModel.findAll({
-        where: { postId, userId: { [Op.in]: userIds } },
-      });
-      const seenPostDataMap = seenPostData.reduce(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (_dataMap, _seenPostRecord) => ({ userId: true }),
-        {}
-      );
+      // const seenPostData = await this._userSeenPostModel.findAll({
+      //   where: { postId, userId: { [Op.in]: userIds } },
+      // });
+      // const seenPostDataMap = seenPostData.reduce(
+      //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      //   (_dataMap, _seenPostRecord) => ({ userId: true }),
+      //   {}
+      // );
       const data = userIds
         .map((userId) => {
-          return `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`;
+          //return `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`;
+          return `('${userId}','${postId}', false)`;
         })
         .join(',');
 
@@ -92,7 +95,7 @@ export class FeedPublisherService {
    * @param userIds Array<Number>
    * @param postId String
    */
-  public async detachPostForAnyNewsFeed(userIds: string[], postId: string): Promise<void> {
+  public async detachPostFromUserIds(userIds: string[], postId: string): Promise<void> {
     try {
       await this._userNewsFeedModel.destroy({
         where: {
@@ -108,117 +111,61 @@ export class FeedPublisherService {
     }
   }
 
-  protected async processFanout(
-    userId: string,
+  public async fanoutOnWrite(
     postId: string,
-    changeGroupAudienceDto: ChangeGroupAudienceDto
+    newGroupIds: string[],
+    oldGroupIds: string[]
   ): Promise<void> {
-    let latestFollowId = 0;
-    const { old, attached, detached, current } = changeGroupAudienceDto;
-    let followers: FollowsDto;
+    const attachedGroupIds = ArrayHelper.arrDifferenceElements(newGroupIds, oldGroupIds);
+    const detachedGroupIds = ArrayHelper.arrDifferenceElements(oldGroupIds, newGroupIds);
 
-    while (true) {
-      try {
-        if (attached.length) {
-          // if attached new group
-          // I will get only users who are in the new group but not in the old groups
-          followers = await this._followService.getsUnique(
-            [NIL_UUID],
-            attached,
-            old,
-            latestFollowId
+    if (attachedGroupIds.length > 0) {
+      let latestFollowId = 0;
+      //for ex: old: 12, new: 2,3 => notchange is 2, attach: 3
+      const groupIdsNotChange = ArrayHelper.arrDifferenceElements(newGroupIds, attachedGroupIds);
+      this._logger.debug(
+        `[fanoutOnWrite]: attachedGroupIds: ${attachedGroupIds} and keep: ${groupIdsNotChange}`
+      );
+      while (true) {
+        const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
+          attachedGroupIds,
+          groupIdsNotChange,
+          latestFollowId,
+          1000
+        );
+        if (userIds.length) {
+          await this.attachPostToUserIds(userIds, postId);
+          this._logger.debug(
+            `[fanoutOnWrite]: attached post: ${postId} to users(${userIds.length}): ${userIds}`
           );
-          if (followers.userIds.length) {
-            await this.attachPostForAnyNewsFeed(followers.userIds, postId);
-          }
         }
-
-        if (detached.length) {
-          /**
-           ** attached group
-           ** detach group and attach new group
-           ** replace group
-           */
-          // I will get only users who are in the attached group but not in the old groups
-          followers = await this._followService.getsUnique(
-            [NIL_UUID],
-            detached,
-            current,
-            latestFollowId
-          );
-          if (followers.userIds.length) {
-            await this.detachPostForAnyNewsFeed(followers.userIds, postId);
-          }
-        }
-        latestFollowId = followers?.latestFollowId ?? 0;
-        if (!followers?.userIds?.length) {
-          break;
-        }
-      } catch (ex) {
-        this._logger.error(JSON.stringify(ex?.stack));
-        this._sentryService.captureException(ex);
-        break;
+        if (userIds.length === 0 || userIds.length < 1000) break;
+        latestFollowId = lastId;
       }
     }
-  }
 
-  public fanoutOnWrite(
-    createdBy: string,
-    postId: string,
-    currentGroupIds: string[],
-    oldGroupIds: string[]
-  ): void {
-    this._logger.debug(
-      `[fanoutOnWrite]: postId:${postId} currentGroupIds:${currentGroupIds}, oldGroupIds:${oldGroupIds}`
-    );
-    const differenceGroupIds = [
-      ...ArrayHelper.arrDifferenceElements<string>(currentGroupIds, oldGroupIds),
-      ...ArrayHelper.arrDifferenceElements<string>(oldGroupIds, currentGroupIds),
-    ];
-    this._logger.debug(`[fanoutOnWrite]: differenceGroupIds: ${differenceGroupIds}`);
-    if (differenceGroupIds.length) {
-      const attachedGroupIds = differenceGroupIds.filter(
-        (groupId) => !oldGroupIds.includes(groupId)
+    if (detachedGroupIds.length > 0) {
+      let latestFollowId = 0;
+      //for ex: old: 12, new: 2,3 => notchange is 2, detach: 1
+      const groupIdsNotChange = ArrayHelper.arrDifferenceElements(oldGroupIds, detachedGroupIds);
+      this._logger.debug(
+        `[fanoutOnWrite]: detachedGroupIds: ${detachedGroupIds} and keep: ${groupIdsNotChange}`
       );
-      const detachedGroupIds = differenceGroupIds.filter((groupId) =>
-        oldGroupIds.includes(groupId)
-      );
-
-      this._logger.debug(`[fanoutOnWrite]: attachedGroupIds: ${attachedGroupIds}`);
-      this._logger.debug(`[fanoutOnWrite]: detachedGroupIds: ${detachedGroupIds}`);
-
-      if (attachedGroupIds.length > 0 && detachedGroupIds.length == 0) {
-        this.processFanout(createdBy, postId, {
-          attached: attachedGroupIds,
-          old: oldGroupIds,
-          detached: [],
-        }).catch((ex) => {
-          this._logger.error(JSON.stringify(ex?.stack));
-          this._sentryService.captureException(ex);
-        });
-      } else if (detachedGroupIds.length > 0) {
-        if (attachedGroupIds.length > 0) {
-          this.processFanout(createdBy, postId, {
-            attached: attachedGroupIds,
-            old: [
-              ...currentGroupIds.filter((id) => !attachedGroupIds.includes(id)),
-              ...detachedGroupIds,
-            ],
-            detached: [],
-          }).catch((ex) => {
-            this._logger.error(JSON.stringify(ex?.stack));
-            this._sentryService.captureException(ex);
-          });
+      while (true) {
+        const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
+          detachedGroupIds,
+          groupIdsNotChange,
+          latestFollowId,
+          1000
+        );
+        if (userIds.length) {
+          await this.detachPostFromUserIds(userIds, postId);
         }
-        if (detachedGroupIds[0] !== NIL_UUID)
-          this.processFanout(createdBy, postId, {
-            attached: [],
-            detached: detachedGroupIds,
-            current: currentGroupIds,
-          }).catch((ex) => {
-            this._logger.error(JSON.stringify(ex?.stack));
-            this._sentryService.captureException(ex);
-          });
+        this._logger.debug(
+          `[fanoutOnWrite]: dettached post: ${postId} to users(${userIds.length}): ${userIds}`
+        );
+        if (userIds.length === 0 || userIds.length < 1000) break;
+        latestFollowId = lastId;
       }
     }
   }

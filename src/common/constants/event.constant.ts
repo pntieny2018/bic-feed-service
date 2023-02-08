@@ -29,8 +29,6 @@ export const CommentHasBeenUpdated = 'comment.has.been.updated';
 export const CommentHasBeenDeleted = 'comment.has.been.deleted';
 
 // user
-export const UsersHasBeenFollowed = 'users.has.been.followed';
-export const UsersHasBeenUnFollowed = 'users.has.been.unfollowed';
 export const UserHasJoinedCommunity = 'user.has.joined.community';
 export const UserHasLeftCommunity = 'user.has.left.community';
 

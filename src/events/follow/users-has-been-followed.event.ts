@@ -1,9 +1,8 @@
 import { IEvent } from '../../common/interfaces';
 import { UsersHasBeenFollowedEventPayload } from './payload';
-import { UsersHasBeenFollowed } from '../../common/constants';
 
 export class UsersHasBeenFollowedEvent implements IEvent<UsersHasBeenFollowedEventPayload> {
-  protected static event = UsersHasBeenFollowed;
+  protected static event = UsersHasBeenFollowedEvent.name;
 
   public payload: UsersHasBeenFollowedEventPayload;
 
