@@ -32,56 +32,35 @@ export class FollowService {
   /**
    * Make user follow  group
    */
-  public async follow(createFollowDto: FollowDto): Promise<void> {
+  public async follow(followDto: FollowDto): Promise<void> {
+    const { userId, groupIds } = followDto;
+    const dataEventPayload: UsersHasBeenFollowedEventPayload = {
+      userId,
+      followedGroupIds: [],
+    };
+    const bulkCreateData = [];
+
     try {
-      const users = await this._followModel.findAll({
-        attributes: [
-          'userId',
-          [Sequelize.literal(`string_agg(group_id::character varying, ',')`), 'groupId'],
-        ],
+      //Filter: remove group which user already joined from payload.
+      const groups = await this._followModel.findAll({
+        attributes: ['groupId'],
+        where: {
+          userId,
+        },
         group: 'user_id',
       });
-
-      const dataEventPayload: UsersHasBeenFollowedEventPayload = {
-        users: [],
-      };
-      const bulkCreateData = [];
-      for (const userId of createFollowDto.userIds) {
-        const userEventPayload = {
-          userId,
-          followedGroupIds: [],
-        };
-        let currentGroupIds = new Set([]);
-        const user = users.find((item) => item.userId === userId);
-        if (user) {
-          currentGroupIds = new Set(user.groupId.split(',') || []);
+      const currentGroupIds = new Set(groups.map((group) => group.groupId));
+      for (const groupId of groupIds) {
+        if (!currentGroupIds.has(groupId)) {
+          dataEventPayload.followedGroupIds.push(groupId);
+          bulkCreateData.push({
+            userId: userId,
+            groupId: groupId,
+          });
         }
-
-        for (const groupId of createFollowDto.groupIds) {
-          if (!currentGroupIds.has(groupId)) {
-            userEventPayload.followedGroupIds.push(groupId);
-            bulkCreateData.push({
-              userId: userId,
-              groupId: groupId,
-            });
-          }
-        }
-        dataEventPayload.users.push(userEventPayload);
       }
 
-      const insertData = bulkCreateData
-        .map((record) => {
-          const escapedUserId = this._sequelize.escape(record.userId);
-          const escapedGroupId = this._sequelize.escape(record.groupId);
-          return `(${escapedUserId}, ${escapedGroupId})`;
-        })
-        .join(',');
-
-      await this._followModel.sequelize.query(
-        `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id)
-             VALUES ${insertData} ON CONFLICT (user_id,group_id) DO NOTHING;`
-      );
-
+      await this._insertFollowData(bulkCreateData);
       this._eventEmitter.emit(new UsersHasBeenFollowedEvent(dataEventPayload));
     } catch (ex) {
       this._sentryService.captureException(ex);
@@ -89,38 +68,43 @@ export class FollowService {
     }
   }
 
+  private async _insertFollowData(
+    bulkCreateData: { userId: string; groupId: string }[]
+  ): Promise<void> {
+    const insertData = bulkCreateData
+      .map((record) => {
+        const escapedUserId = this._sequelize.escape(record.userId);
+        const escapedGroupId = this._sequelize.escape(record.groupId);
+        return `(${escapedUserId}, ${escapedGroupId})`;
+      })
+      .join(',');
+
+    await this._followModel.sequelize.query(
+      `INSERT INTO ${this._databaseConfig.schema}.${this._followModel.tableName} (user_id,group_id)
+             VALUES ${insertData} ON CONFLICT (user_id,group_id) DO NOTHING;`
+    );
+  }
   /**
    * Make user unfollow  group
    */
   public async unfollow(unfollowDto: FollowDto): Promise<void> {
+    const { userId, groupIds } = unfollowDto;
     try {
       await this._followModel.destroy({
         where: {
           groupId: {
             [Op.in]: unfollowDto.groupIds,
           },
-          userId: {
-            [Op.in]: unfollowDto.userIds,
-          },
+          userId: unfollowDto.userId,
         },
       });
 
-      const dataEventPayload: UsersHasBeenUnfollowedEventPayload = {
-        users: [],
-      };
-      for (const userId of unfollowDto.userIds) {
-        const userEventPayload = {
+      this._eventEmitter.emit(
+        new UsersHasBeenUnfollowedEvent({
           userId,
-          unfollowedGroupIds: [],
-        };
-
-        for (const groupId of unfollowDto.groupIds) {
-          userEventPayload.unfollowedGroupIds.push(groupId);
-        }
-        dataEventPayload.users.push(userEventPayload);
-      }
-
-      this._eventEmitter.emit(new UsersHasBeenUnfollowedEvent(dataEventPayload));
+          unfollowedGroupIds: groupIds,
+        })
+      );
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");

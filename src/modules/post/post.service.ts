@@ -957,6 +957,7 @@ export class PostService {
   }
 
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
+    if (groupIds.length === 0) return [];
     try {
       const posts = await this.postModel.findAll({
         attributes: ['id'],
