@@ -8,7 +8,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { SentryService } from '../../../libs/sentry/src';
 import { FailedProcessPostModel } from '../../database/models/failed-process-post.model';
 import { MediaModel } from '../../database/models/media.model';
-import { PostModel } from '../../database/models/post.model';
+import { PostModel, PostStatus } from '../../database/models/post.model';
 import { MediaService } from '../media';
 import { PostService } from './post.service';
 @Injectable()
@@ -93,7 +93,7 @@ export class PostCronService {
     try {
       const posts = await this._postModel.findAll({
         where: {
-          isProcessing: true,
+          status: PostStatus.PROCESSING,
           updatedAt: {
             [Op.lt]: moment().subtract(1, 'day').toDate(),
           },
