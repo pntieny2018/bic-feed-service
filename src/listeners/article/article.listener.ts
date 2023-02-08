@@ -130,12 +130,12 @@ export class ArticleListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    this._postServiceHistory
-      .saveEditedHistory(article.id, { oldData: null, newData: article })
-      .catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+    // this._postServiceHistory
+    //   .saveEditedHistory(article.id, { oldData: null, newData: article })
+    //   .catch((e) => {
+    //     this._logger.error(JSON.stringify(e?.stack));
+    //     this._sentryService.captureException(e);
+    //   });
 
     this._postSearchService
       .addPostsToSearch([
@@ -249,12 +249,12 @@ export class ArticleListener {
     }
 
     if (status !== PostStatus.PUBLISHED) return;
-    this._postServiceHistory
-      .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
-      .catch((e) => {
-        this._logger.debug(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+    // this._postServiceHistory
+    //   .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
+    //   .catch((e) => {
+    //     this._logger.debug(JSON.stringify(e?.stack));
+    //     this._sentryService.captureException(e);
+    //   });
 
     this._postSearchService.updatePostsToSearch([
       {

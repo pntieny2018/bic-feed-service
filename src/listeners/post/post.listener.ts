@@ -122,12 +122,12 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    this._postHistoryService
-      .saveEditedHistory(post.id, { oldData: null, newData: post })
-      .catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+    // this._postHistoryService
+    //   .saveEditedHistory(post.id, { oldData: null, newData: post })
+    //   .catch((e) => {
+    //     this._logger.error(JSON.stringify(e?.stack));
+    //     this._sentryService.captureException(e);
+    //   });
 
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -226,11 +226,11 @@ export class PostListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    this._postHistoryService
-      .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
-      .catch((e) => {
-        this._sentryService.captureException(e);
-      });
+    // this._postHistoryService
+    //   .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
+    //   .catch((e) => {
+    //     this._sentryService.captureException(e);
+    //   });
 
     const mentionUserIds = [];
     const mentionMap = new Map<string, UserSharedDto>();
