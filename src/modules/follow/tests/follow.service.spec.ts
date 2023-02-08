@@ -168,19 +168,4 @@ describe('FollowService', () => {
     })
   })
 
-  describe('FollowService.getValidUserIds', () => {
-    it('should call query', async () => {
-      sequelize.query.mockResolvedValue([[{user_id: '2c4738ec-0da2-465b-83bc-6c85fd01d862', id: 2}], false])
-      await followService.getValidUserIds(['2c4738ec-0da2-465b-83bc-6c85fd01d862', 'a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'], ['43f306ba-a89f-4d43-8ee8-4d51fdcd4b13', '655a4c00-c245-4399-b64c-5ffa674a7c26'])
-      expect(sequelize.query).toBeCalled()
-    })
-
-    it('should return [] if query null', async () => {
-      sequelize.query.mockResolvedValue(null)
-      const value = await followService.getValidUserIds(['2c4738ec-0da2-465b-83bc-6c85fd01d862', 'a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'], ['43f306ba-a89f-4d43-8ee8-4d51fdcd4b13', '655a4c00-c245-4399-b64c-5ffa674a7c26'])
-      expect(sequelize.query).toBeCalled()
-      expect(value).toEqual([])
-    })
-  })
-
 });

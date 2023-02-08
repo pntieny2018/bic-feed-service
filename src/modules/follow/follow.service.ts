@@ -51,7 +51,6 @@ export class FollowService {
     const groups = await this._followModel.findAll({
       attributes: ['groupId'],
       where: { userId },
-      group: 'user_id',
     });
     const currentGroupIds = new Set(groups.map((group) => group.groupId));
     return groupIds.filter((groupId) => !currentGroupIds.has(groupId));
@@ -91,25 +90,6 @@ export class FollowService {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
     }
-  }
-
-  public async getUsersNotInGroups(userIds: number[], groupIds: number[]): Promise<number[]> {
-    const schema = this._databaseConfig.schema;
-
-    const rows = await this._sequelize.query(
-      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
-                   AS duplicate_count
-                   FROM ${schema}.${this._followModel.tableName}
-                   WHERE group_id IN  (${groupIds
-                     .map((id) => this._sequelize.escape(id))
-                     .join(',')})
-                   AND user_id IN (${userIds.map((id) => this._sequelize.escape(id)).join(',')})
-              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
-                WHERE duplicate_count = 1 ; `
-    );
-    const targetIds = rows[0].map((r) => r['user_id']);
-    return ArrayHelper.arrDifferenceElements(userIds, targetIds);
   }
 
   /**
@@ -184,39 +164,34 @@ export class FollowService {
     ignoreUserIds: string[],
     groupIds: string[],
     oldGroupIds: string[],
-    followId = 0,
+    zindex = 0,
     limit = 1000
   ): Promise<FollowsDto> {
     this._logger.debug(`[filterUserFollows]:ignoreUserIds: ${ignoreUserIds}`);
     this._logger.debug(`[filterUserFollows]:groupIds: ${groupIds}`);
     this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
-      const filterConditions =
-        oldGroupIds && oldGroupIds.length
-          ? `
-         AND group_id NOT IN  (${oldGroupIds.map((id) => this._sequelize.escape(id)).join(',')})
-        `
-          : '';
+      let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
+      if (oldGroupIds.length > 0) {
+        condition += ' AND group_id NOT IN (:oldGroupIds)';
+      }
+      if (ignoreUserIds.length > 0) {
+        condition += ' AND user_id NOT IN (:ignoreUserIds)';
+      }
       const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
-        ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
-                   AS duplicate_count
-                   FROM ${schema}.${this._followModel.tableName}
-                   WHERE group_id IN  (${groupIds
-                     .map((id) => this._sequelize.escape(id))
-                     .join(',')}) ${filterConditions}
-              AND user_id NOT IN (${ignoreUserIds
-                .map((id) => this._sequelize.escape(id))
-                .join(',')})
-              ) SELECT id, user_id FROM REMOVE_DUPLICATE tb1
-                WHERE duplicate_count = 1
-                AND id > $followId  limit $limit ;
+        `SELECT DISTINCT(user_id), zindex
+          FROM ${schema}.${this._followModel.tableName} tb1
+          WHERE  ${condition}
+          ORDER BY zindex ASC limit :limit ;
              `,
         {
-          bind: {
-            followId: followId,
+          replacements: {
+            groupIds,
+            oldGroupIds,
+            ignoreUserIds,
+            zindex,
             limit: limit,
           },
         }
@@ -225,7 +200,7 @@ export class FollowService {
       if (userIds.length) {
         return {
           userIds: userIds,
-          latestFollowId: rows[0][rows[0].length - 1]['id'],
+          latestFollowId: rows[0][rows[0].length - 1]['zindex'],
         };
       }
 
@@ -241,30 +216,6 @@ export class FollowService {
         latestFollowId: 0,
       };
     }
-  }
-
-  // TODO move this
-  public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
-    const { schema } = getDatabaseConfig();
-
-    const rows = await this._sequelize.query(
-      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS (
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC)
-                   AS duplicate_count
-                   FROM ${schema}.${FollowModel.tableName}
-                   WHERE group_id IN  (${groupIds
-                     .map((id) => this._sequelize.escape(id))
-                     .join(',')})
-              ) SELECT user_id FROM REMOVE_DUPLICATE tb1
-                WHERE duplicate_count = 1
-                AND user_id IN  (${userIds.map((id) => this._sequelize.escape(id)).join(',')})
-             `
-    );
-    if (!rows) {
-      return [];
-    }
-
-    return rows[0].map((r) => r['user_id']);
   }
 
   public async getFollowByUserId(userId: string): Promise<IFollow[]> {
