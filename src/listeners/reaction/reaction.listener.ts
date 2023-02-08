@@ -1,20 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { On } from '../../common/decorators';
-import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
-import { ReactionEventPayload } from '../../events/reaction/payload';
-import { NotificationService, TypeActivity } from '../../notification';
-import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
+import { NIL as NIL_UUID } from 'uuid';
 import { ReactionHasBeenCreated, ReactionHasBeenRemoved } from '../../common/constants';
-import { FollowService } from '../../modules/follow';
-import { ReactionActivityService } from '../../notification/activities';
-import { FeedService } from '../../modules/feed/feed.service';
+import { On } from '../../common/decorators';
+import { FollowModel } from '../../database/models/follow.model';
+import { PostType } from '../../database/models/post.model';
+import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
 import { ArticleService } from '../../modules/article/article.service';
+import { CommentResponseDto } from '../../modules/comment/dto/response';
+import { FeedService } from '../../modules/feed/feed.service';
+import { FollowService } from '../../modules/follow';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { ReactionResponseDto } from '../../modules/reaction/dto/response';
+import { NotificationService, TypeActivity } from '../../notification';
+import { ReactionActivityService } from '../../notification/activities';
 import { UserSharedDto } from '../../shared/user/dto';
-import { PostType } from '../../database/models/post.model';
-import { CommentResponseDto } from '../../modules/comment/dto/response';
-import { NIL as NIL_UUID } from 'uuid';
 
 @Injectable()
 export class ReactionListener {
@@ -101,11 +100,10 @@ export class ReactionListener {
       return notify();
     }
 
-    this._followService
-      .getValidUserIds(
-        [post.actor.id],
-        post.audience.groups.map((g) => g.id)
-      )
+    FollowModel.getValidUserIds(
+      [post.actor.id],
+      post.audience.groups.map((g) => g.id)
+    )
       .then((userIds) => {
         if (!userIds.length) {
           return;
@@ -163,11 +161,10 @@ export class ReactionListener {
 
     const ownerId = comment.parentId !== NIL_UUID ? comment.parent.actor.id : comment.actor.id;
 
-    this._followService
-      .getValidUserIds(
-        [ownerId],
-        post.audience.groups.map((g) => g.id)
-      )
+    FollowModel.getValidUserIds(
+      [ownerId],
+      post.audience.groups.map((g) => g.id)
+    )
       .then((userIds) => {
         if (!userIds.length) {
           return;
