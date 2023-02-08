@@ -1,14 +1,16 @@
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interfaces/tag.domain-service.interface';
+import { TagId, TagName } from '../../../domain/model/tag';
+import { UserId } from '../../../domain/model/user';
 import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/tag.repository.interface';
-import { TagDuplicateNameException } from '../../../exception';
+import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
 import { TagUsedException } from '../../../exception/tag-used.exception';
 import { UpdatetagCommand } from './update-tag.command';
 
@@ -21,14 +23,14 @@ export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, void>
 
   public async execute(command: UpdatetagCommand): Promise<void> {
     const { name, id, userId } = command.payload;
-    const tag = await this._tagRepository.findOne({ id });
+    const tag = await this._tagRepository.findOne({ id: TagId.fromString(id) });
     if (!tag) {
-      throw new NotFoundException('Not found');
+      throw new TagNotFoundException();
     }
 
     const findTagNameInGroup = await this._tagRepository.findOne({
-      groupId: tag.get('groupId').value,
-      name,
+      groupId: tag.get('groupId'),
+      name: TagName.fromString(name),
     });
     if (findTagNameInGroup && findTagNameInGroup.id.value !== id) {
       throw new TagDuplicateNameException();
@@ -38,10 +40,10 @@ export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, void>
       throw new TagUsedException();
     }
 
-    return this._tagDomainService.updateTag(tag, {
-      id,
-      name,
-      userId,
+    await this._tagDomainService.updateTag(tag, {
+      id: tag.get('id'),
+      name: TagName.fromString(name),
+      userId: UserId.fromString(userId),
     });
   }
 }

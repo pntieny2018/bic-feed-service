@@ -1,22 +1,22 @@
-import { CreateTagCommandPayload } from '../../../application/command/create-tag/create-tag.command';
-import { UpdateTagPayload } from '../../../application/command/update-tag/update-tag.command';
-import { TagEntity } from '../../model/tag';
+import { GroupId } from '../../model/group';
+import { TagEntity, TagId, TagName } from '../../model/tag';
+import { UserId } from '../../model/user';
 
 export type TagCreateProps = {
-  name: string;
-  groupId: string;
-  userId: string;
+  name: TagName;
+  groupId: GroupId;
+  userId: UserId;
 };
 
 export type TagUpdateProps = {
-  name: string;
-  id: string;
-  userId: string;
+  name: TagName;
+  id: TagId;
+  userId: UserId;
 };
 
 export interface ITagDomainService {
   createTag(data: TagCreateProps): Promise<TagEntity>;
   updateTag(tag: TagEntity, data: TagUpdateProps): Promise<void>;
-  deleteTag(id: string): Promise<void>;
+  deleteTag(id: TagId): Promise<void>;
 }
 export const TAG_DOMAIN_SERVICE_TOKEN = 'TAG_DOMAIN_SERVICE_TOKEN';

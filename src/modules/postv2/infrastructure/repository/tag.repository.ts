@@ -1,10 +1,10 @@
-import { Inject, InternalServerErrorException, Logger } from '@nestjs/common';
+import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Op, Sequelize } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../../../database/models/tag.model';
-import { TagFactory } from '../../domain/factory/tag.factory';
+import { TagId } from '../../domain/model/tag';
 import { TagEntity } from '../../domain/model/tag/tag.entity';
 import {
   FindAllTagsProps,
@@ -25,10 +25,10 @@ export class TagRepository implements ITagRepository {
   public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>> {
     const { offset, limit, name, groupIds } = input;
     const conditions = {
-      groupId: groupIds,
+      groupId: groupIds.map((groupId) => groupId.value),
     };
     if (name) {
-      conditions['name'] = { [Op.iLike]: '%' + name + '%' };
+      conditions['name'] = { [Op.iLike]: '%' + name.value + '%' };
     }
     const { rows, count } = await this._tagModel.findAndCountAll({
       where: conditions,
@@ -75,11 +75,11 @@ export class TagRepository implements ITagRepository {
     );
   }
 
-  public async delete(id: string): Promise<void> {
+  public async delete(id: TagId): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      await this._postTagModel.destroy({ where: { tagId: id }, transaction });
-      await this._tagModel.destroy({ where: { id }, transaction });
+      await this._postTagModel.destroy({ where: { tagId: id.value }, transaction });
+      await this._tagModel.destroy({ where: { id: id.value }, transaction });
       await transaction.commit();
     } catch (e) {
       await transaction.rollback();
@@ -91,10 +91,10 @@ export class TagRepository implements ITagRepository {
   public async findOne(input: FindOneTagProps): Promise<TagEntity> {
     const findOptions: FindOptions = { where: {} };
     if (input.id) {
-      findOptions.where['id'] = input.id;
+      findOptions.where['id'] = input.id.value;
     }
     if (input.name) {
-      findOptions.where['name'] = input.name;
+      findOptions.where['name'] = input.name.value;
     }
     if (input.groupId) {
       findOptions.where['groupId'] = input.groupId;
@@ -107,7 +107,7 @@ export class TagRepository implements ITagRepository {
     const { groupIds, name } = input;
     const condition: any = { groupId: groupIds };
     if (name) {
-      condition.name = name.trim().toLowerCase();
+      condition.name = name.value.trim().toLowerCase();
     }
     const enties = await this._tagModel.findAll({
       where: condition,

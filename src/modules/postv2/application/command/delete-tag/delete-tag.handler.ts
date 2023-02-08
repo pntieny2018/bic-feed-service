@@ -4,6 +4,7 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interfaces/tag.domain-service.interface';
+import { TagId } from '../../../domain/model/tag';
 import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
@@ -21,7 +22,8 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
 
   public async execute(command: DeleteTagCommand): Promise<void> {
     const { id } = command.payload;
-    const tag = await this._tagRepository.findOne({ id });
+    const tagId = TagId.fromString(id);
+    const tag = await this._tagRepository.findOne({ id: tagId });
     if (!tag) {
       throw new TagNotFoundException();
     }
@@ -30,6 +32,6 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
       throw new TagUsedException();
     }
 
-    return this._tagDomainService.deleteTag(id);
+    return this._tagDomainService.deleteTag(tagId);
   }
 }

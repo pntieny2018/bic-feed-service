@@ -3,8 +3,7 @@ import { Inject } from '@nestjs/common';
 import { MyLogger } from '../../my-log';
 import { TagCreatedEvent } from '../event';
 import { TagFactory } from '../factory';
-import { TagEntity, TagName } from '../model/tag';
-import { UserId } from '../model/user';
+import { TagEntity, TagId } from '../model/tag';
 import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
@@ -23,9 +22,9 @@ export class TagDomainService implements ITagDomainService {
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;
     const tagEntity = this._tagFactory.create({
-      name,
-      groupId,
-      createdBy: userId,
+      name: name.value,
+      groupId: groupId.value,
+      createdBy: userId.value,
     });
     tagEntity.raiseEvent(new TagCreatedEvent(tagEntity));
 
@@ -39,8 +38,8 @@ export class TagDomainService implements ITagDomainService {
   public async updateTag(tag: TagEntity, input: TagUpdateProps): Promise<void> {
     const { name, userId } = input;
     tag.update({
-      name: TagName.fromString(name),
-      updatedBy: UserId.fromString(userId),
+      name,
+      updatedBy: userId,
     });
 
     if (tag.isChanged()) {
@@ -48,7 +47,7 @@ export class TagDomainService implements ITagDomainService {
     }
   }
 
-  public async deleteTag(id: string): Promise<void> {
-    return this._tagRepository.delete(id);
+  public async deleteTag(tagId: TagId): Promise<void> {
+    return this._tagRepository.delete(tagId);
   }
 }
