@@ -20,8 +20,8 @@ import { MoveMediaBucketCommand } from './move-media-bucket.command';
 import { SearchModule } from '../modules/search';
 import { TagModule } from '../modules/tag';
 import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
-import { MigrateStatusPostCommand } from './migrate-status-post.command';
-import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
+// import { MigrateStatusPostCommand } from './migrate-status-post.command';
+// import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
 import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publisher';
 import { FollowModule, FollowService } from '../modules/follow';
@@ -59,8 +59,8 @@ import { UploadModule } from '../modules/upload';
     IndexPostCommand,
     MoveMediaBucketCommand,
     UpdateTagTotalUsedCommand,
-    MigrateStatusPostCommand,
-    FixProcessingStatusPostCommand,
+    // MigrateStatusPostCommand,
+    // FixProcessingStatusPostCommand,
     UpdateNewsfeedCommand,
     FeedPublisherService,
     UpdateContentTypeImageCommand,

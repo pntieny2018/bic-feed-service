@@ -508,7 +508,6 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
-          isProcessing: false,
         },
         { transaction }
       );
@@ -957,6 +956,7 @@ export class PostService {
   }
 
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
+    if (groupIds.length === 0) return [];
     try {
       const posts = await this.postModel.findAll({
         attributes: ['id'],
@@ -1517,7 +1517,6 @@ export class PostService {
     const conditions = {
       id: id,
       status: PostStatus.PUBLISHED,
-      isProcessing: false,
     };
 
     if (returning) {

@@ -119,7 +119,7 @@ export class CommentDissociationService {
       if (!checkUserIds.length) {
         return recipient;
       }
-      const validUserIds = await this.getValidUserIds(
+      const validUserIds = await FollowModel.getValidUserIds(
         [...new Set(checkUserIds)].filter((id) => id),
         groupAudienceIds
       );
@@ -242,7 +242,7 @@ export class CommentDissociationService {
 
       const handledUserIds = [];
 
-      const validUserIds = await this.getValidUserIds(
+      const validUserIds = await FollowModel.getValidUserIds(
         [
           ...new Set([
             parentCommentCreatorId,
@@ -293,27 +293,5 @@ export class CommentDissociationService {
       this._sentryService.captureException(ex);
       return null;
     }
-  }
-
-  public async getValidUserIds(userIds: string[], groupIds: string[]): Promise<string[]> {
-    const { schema } = getDatabaseConfig();
-    if (!userIds.length) {
-      return [];
-    }
-    const rows = await this._sequelize.query(
-      ` WITH REMOVE_DUPLICATE(id,user_id,duplicate_count) AS ( 
-                   SELECT id,user_id, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY id ASC) 
-                   AS duplicate_count
-                   FROM ${schema}.${FollowModel.tableName} 
-                   WHERE group_id IN  (${groupIds.map((g) => `'${g}'`).join(',')})  
-              ) SELECT user_id FROM REMOVE_DUPLICATE tb1 
-                WHERE duplicate_count = 1 
-                AND user_id IN  (${userIds.map((u) => `'${u}'`).join(',')})  
-             `
-    );
-    if (!rows) {
-      return [];
-    }
-    return rows[0].map((r) => r['user_id']);
   }
 }

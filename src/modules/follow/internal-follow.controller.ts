@@ -1,8 +1,8 @@
 import { Controller, Logger } from '@nestjs/common';
-import { FollowService } from './follow.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { KAFKA_TOPIC } from '../../common/constants';
-import { CreateFollowDto, UnfollowDto } from './dto/requests';
+import { FollowDto } from './dto/requests';
+import { FollowService } from './follow.service';
 
 @Controller()
 export class InternalFollowController {
@@ -10,14 +10,14 @@ export class InternalFollowController {
   public constructor(private _followService: FollowService) {}
 
   @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_FOLLOW_GROUPS)
-  public async follow(@Payload('value') createFollowDto: CreateFollowDto): Promise<void> {
-    this._logger.debug(`[Event follow]: ${JSON.stringify(createFollowDto)}`);
-    await this._followService.follow(createFollowDto);
-  }
+  public async follow(@Payload('value') payload: FollowDto): Promise<void> {
+    this._logger.debug(`[Event follow/unfollow]: ${JSON.stringify(payload)}`);
+    if (payload.verb === 'FOLLOW') {
+      return this._followService.follow(payload);
+    }
 
-  @EventPattern(KAFKA_TOPIC.BEIN_GROUP.USERS_UNFOLLOW_GROUP)
-  public async unfollow(@Payload('value') unfollowDto: UnfollowDto): Promise<void> {
-    this._logger.debug(`[Event unfollow]: ${JSON.stringify(unfollowDto)}`);
-    await this._followService.unfollow(unfollowDto);
+    if (payload.verb === 'UNFOLLOW') {
+      await this._followService.unfollow(payload);
+    }
   }
 }
