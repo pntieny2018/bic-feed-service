@@ -472,7 +472,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     const { schema } = getDatabaseConfig();
     const query = `SELECT COUNT(*) as total
     FROM ${schema}.posts as p
-    WHERE "p"."deleted_at" IS NULL AND "p"."is_draft" = false AND "p"."important_expired_at" > NOW()
+    WHERE "p"."deleted_at" IS NULL AND "p"."status" = ${PostStatus.PUBLISHED} AND "p"."important_expired_at" > NOW()
     AND EXISTS(
         SELECT 1
         from ${schema}.posts_groups AS g
