@@ -197,11 +197,13 @@ export class FeedService {
         },
       });
       if (!exist) {
-        await this._userSeenPostModel.create(
-          {
-            postId: postId,
-            userId: userId,
-          },
+        await this._userSeenPostModel.bulkCreate(
+          [
+            {
+              postId: postId,
+              userId: userId,
+            },
+          ],
           { ignoreDuplicates: true }
         );
 
