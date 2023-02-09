@@ -43,15 +43,6 @@ export class GroupService {
   }
 
   /**
-   * Check user must join all group audience
-   * @param groupIds Number[]
-   * @param myGroupIds Number[]
-   */
-  public isMemberOfGroups(groupIds: string[], myGroupIds: string[]): boolean {
-    return groupIds.every((groupId) => myGroupIds.includes(groupId));
-  }
-
-  /**
    * Get groupId and childIds(user joinned) to show posts in timeline and in search
    * Anonymous: can not see posts
    * Guest can see post in current group(joinned or close) and child group(joined)

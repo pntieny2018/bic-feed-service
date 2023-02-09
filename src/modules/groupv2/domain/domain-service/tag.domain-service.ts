@@ -7,7 +7,7 @@ import { TagEntity, TagId } from '../model/tag';
 import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,
-} from '../repositoty-interface/tag.repository.interface';
+} from '../repositoty-interface/group.repository.interface';
 import {
   ITagDomainService,
   TagCreateProps,

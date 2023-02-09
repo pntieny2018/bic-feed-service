@@ -10,7 +10,7 @@ import { FindTagsPaginationHandler } from './application/query/find/find-tags-pa
 import { TAG_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interfaces/tag.domain-service.interface';
 import { TagDomainService } from './domain/domain-service/tag.domain-service';
 import { TagFactory } from './domain/factory/tag.factory';
-import { TAG_REPOSITORY_TOKEN } from './domain/repositoty-interface/tag.repository.interface';
+import { TAG_REPOSITORY_TOKEN } from './domain/repositoty-interface/group.repository.interface';
 import { TagRepository } from './driven-adapter/repository';
 import { TagController } from './driving-adapter/controller/tag.controller';
 

@@ -88,17 +88,6 @@ describe('GroupService', () => {
     });
   });
 
-  describe('GroupService.isMemberOfGroups', () => {
-    it('is member', () => {
-      const isMember = service.isMemberOfGroups(['b0d0287a-3ec9-4b9b-8032-2c491d954945', '85dfe22e-866d-49a5-bbef-3fbc72e4febf'], ['85dfe22e-866d-49a5-bbef-3fbc72e4febf', 'b0d0287a-3ec9-4b9b-8032-2c491d954945']);
-      expect(isMember).toBe(true);
-    });
-    it('is not member', () => {
-      const isMember = service.isMemberOfGroups(['b0d0287a-3ec9-4b9b-8032-2c491d954945', '85dfe22e-866d-49a5-bbef-3fbc72e4febf'], ['85dfe22e-866d-49a5-bbef-3fbc72e4febf', '2a47c42d-f41d-457d-8359-707f4d0ab242']);
-      expect(isMember).toBe(false);
-    });
-  });
-
   describe.skip('GroupService.getGroupIdAndChildIdsUserJoined', () => {
     it('return list access', () => {
       const listAccess = service.getGroupIdAndChildIdsUserJoined(sharedGroupMock[0], mockedUserAuth);

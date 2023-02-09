@@ -1,10 +1,8 @@
-import { UnprocessableEntityException } from '@nestjs/common';
-import { StringHelper } from '../../../../../common/helpers';
-import { AggregateRoot, EntityProps, IDomainEvent, CreatedAt, UpdatedAt } from '@beincom/domain';
-import { GroupId } from '../group';
+import { AggregateRoot, CreatedAt, EntityProps, IDomainEvent, UpdatedAt } from '@beincom/domain';
 import { TagId, TagName, TagSlug, TagTotalUsed } from '.';
+import { StringHelper } from '../../../../../common/helpers';
+import { GroupId } from '../group';
 import { UserId } from '../user';
-import { TagDeletedEvent } from '../../event/tag-deleted.event';
 export type TagProps = {
   groupId: GroupId;
   name: TagName;
