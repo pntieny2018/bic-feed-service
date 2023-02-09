@@ -632,11 +632,13 @@ export class PostService {
           },
         });
         if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.create(
-            {
-              postId: post.id,
-              userId: authUserId,
-            },
+          await this.userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
             { ignoreDuplicates: true, transaction }
           );
         }
