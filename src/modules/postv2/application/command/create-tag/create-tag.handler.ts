@@ -23,7 +23,6 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEn
 
   public async execute(command: CreateTagCommand): Promise<TagEntity> {
     const { name, groupId, userId } = command.payload;
-
     const findTagNameInGroup = await this._tagRepository.findOne({
       groupId: GroupId.fromString(groupId),
       name: TagName.fromString(name),
@@ -38,6 +37,6 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEn
       userId: UserId.fromString(userId),
     });
 
-    return tagEntity.toObject();
+    return tagEntity;
   }
 }

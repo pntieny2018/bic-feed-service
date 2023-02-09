@@ -3,19 +3,18 @@ import { Test } from '@nestjs/testing';
 import { TagDomainService } from '../../../domain/domain-service/tag.domain-service';
 import { TagFactory } from '../../../domain/factory/tag.factory';
 import { TagEntity } from '../../../domain/model/tag';
-import { TAG_REPOSITORY } from '../../../domain/repositoty-interface/tag.repository.interface';
-import { TagRepository } from '../../../infrastructure/repository/tag.repository.ts';
-import { CreatetagCommand } from './create-tag.command';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface/tag.repository.interface';
+import { CreateTagCommand } from './create-tag.command';
 import { CreateTagHandler } from './create-tag.handler';
 
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;
-  let repository: TagRepository;
+  let repository: ITagRepository;
   let domainService: TagDomainService;
 
   beforeEach(async () => {
     const repoProvider: Provider = {
-      provide: TAG_REPOSITORY,
+      provide: TAG_REPOSITORY_TOKEN,
       useValue: {},
     };
     const factoryProvider: Provider = {
@@ -28,7 +27,7 @@ describe('CreateTagHandler', () => {
     const testModule = await Test.createTestingModule(moduleMetadata).compile();
 
     handler = testModule.get(CreateTagHandler);
-    //repository = testModule.get(TAG_REPOSITORY);
+    repository = testModule.get(TAG_REPOSITORY);
     domainService = testModule.get(TagDomainService);
   });
 
