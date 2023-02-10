@@ -26,6 +26,7 @@ import { DeleteTagCommand } from '../../application/command/delete-tag/delete-ta
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 import { PageDto } from '../../../../common/dto';
 import { GetTagDto } from '../dto/request/tag/get-tag.dto';
+import { TagEntity } from '../../domain/model/tag';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -79,11 +80,16 @@ export class TagController {
     success: 'Tag was created successfully',
   })
   @Post('/')
-  public async create(@AuthUser() user: UserDto, @Body() createTagDto: CreateTagDto): Promise<any> {
+  public async create(
+    @AuthUser() user: UserDto,
+    @Body() createTagDto: CreateTagDto
+  ): Promise<TagResponseDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
-    const tag = this._commandBus.execute(new CreateTagCommand({ groupId, name, userId }));
-    return this._classTransformer.plainToInstance(TagResponseDto, tag, {
+    const tag = await this._commandBus.execute<CreateTagCommand, TagEntity>(
+      new CreateTagCommand({ groupId, name, userId })
+    );
+    return this._classTransformer.plainToInstance(TagResponseDto, tag.toObject(), {
       excludeExtraneousValues: true,
     });
   }
@@ -99,9 +105,14 @@ export class TagController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagDto
-  ): Promise<void> {
+  ): Promise<TagResponseDto> {
     const { name } = updateTagDto;
-    await this._commandBus.execute(new UpdatetagCommand({ id: tagId, name, userId: user.id }));
+    const tag = await this._commandBus.execute<UpdatetagCommand, TagEntity>(
+      new UpdatetagCommand({ id: tagId, name, userId: user.id })
+    );
+    return this._classTransformer.plainToInstance(TagResponseDto, tag.toObject(), {
+      excludeExtraneousValues: true,
+    });
   }
 
   @ApiOperation({ summary: 'Delete tag' })

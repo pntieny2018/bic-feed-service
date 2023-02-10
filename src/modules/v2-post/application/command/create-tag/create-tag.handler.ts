@@ -1,27 +1,25 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GroupId } from '../../../../v2-group/domain/model/group';
+import { UserId } from '../../../../v2-user/domain/model/user';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interfaces/tag.domain-service.interface';
-import { TagEntity, TagName } from '../../../domain/model/tag';
-import { UserId } from '../../../domain/model/user';
-import {
-  ITagRepository,
-  TAG_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/tag.repository.interface';
+} from '../../../domain/domain-service/interface';
+import { TagName } from '../../../domain/model/tag';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagDuplicateNameException } from '../../../exception';
 import { CreateTagCommand } from './create-tag.command';
+import { CreateTagResult } from './create-tag.result';
 
 @CommandHandler(CreateTagCommand)
-export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEntity> {
+export class CreateTagHandler implements ICommandHandler<CreateTagCommand, CreateTagResult> {
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
 
-  public async execute(command: CreateTagCommand): Promise<TagEntity> {
+  public async execute(command: CreateTagCommand): Promise<CreateTagResult> {
     const { name, groupId, userId } = command.payload;
     const findTagNameInGroup = await this._tagRepository.findOne({
       groupId: GroupId.fromString(groupId),
@@ -37,6 +35,12 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, TagEn
       userId: UserId.fromString(userId),
     });
 
-    return tagEntity;
+    return {
+      id: tagEntity.get('id').value,
+      name: tagEntity.get('name').value,
+      groupId: tagEntity.get('groupId').value,
+      slug: tagEntity.get('slug').value,
+      totalUsed: tagEntity.get('totalUsed').value,
+    };
   }
 }

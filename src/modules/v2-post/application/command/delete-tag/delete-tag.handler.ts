@@ -3,14 +3,10 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interfaces/tag.domain-service.interface';
+} from '../../../domain/domain-service/interface';
 import { TagId } from '../../../domain/model/tag';
-import {
-  ITagRepository,
-  TAG_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/tag.repository.interface';
-import { TagNotFoundException } from '../../../exception';
-import { TagUsedException } from '../../../exception/tag-used.exception';
+import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { TagNotFoundException, TagUsedException } from '../../../exception';
 import { DeleteTagCommand } from './delete-tag.command';
 
 @CommandHandler(DeleteTagCommand)

@@ -1,17 +1,14 @@
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { FindOptions, Op, Sequelize } from 'sequelize';
-import { PaginationResult } from '../../../../common/types/pagination-result.type';
+import { FindOptions, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../../../database/models/tag.model';
-import { TagId } from '../../domain/model/tag';
-import { TagEntity } from '../../domain/model/tag/tag.entity';
+import { TagEntity, TagId } from '../../domain/model/tag';
 import {
   FindAllTagsProps,
   FindOneTagProps,
-  GetPaginationTagProps,
   ITagRepository,
-} from '../../domain/repositoty-interface/tag.repository.interface';
+} from '../../domain/repositoty-interface';
 
 export class TagRepository implements ITagRepository {
   private _logger = new Logger(TagRepository.name);
@@ -21,31 +18,6 @@ export class TagRepository implements ITagRepository {
   private readonly _postTagModel: typeof PostTagModel;
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
-
-  public async getPagination(input: GetPaginationTagProps): Promise<PaginationResult<TagEntity>> {
-    const { offset, limit, name, groupIds } = input;
-    const conditions = {
-      groupId: groupIds.map((groupId) => groupId.value),
-    };
-    if (name) {
-      conditions['name'] = { [Op.iLike]: '%' + name.value + '%' };
-    }
-    const { rows, count } = await this._tagModel.findAndCountAll({
-      where: conditions,
-      offset,
-      limit,
-      order: [
-        ['totalUsed', 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
-    });
-
-    const result = rows.map((row) => this._modelToEntity(row));
-    return {
-      rows: result,
-      total: count,
-    };
-  }
 
   public async create(data: TagEntity): Promise<void> {
     await this._tagModel.create({

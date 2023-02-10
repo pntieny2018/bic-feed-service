@@ -33,6 +33,8 @@ import { TagModule } from '../modules/tag';
 import { PostModuleV2 } from '../modules/v2-post/post.module';
 import { FilterUserModule } from '../modules/filter-user';
 import { AdminModule } from '../modules/admin/admin.module';
+import { GroupModuleV2 } from '../modules/v2-group/group.module';
+import { UserModuleV2 } from '../modules/v2-user/user.module';
 
 @Module({
   imports: [
@@ -69,6 +71,8 @@ import { AdminModule } from '../modules/admin/admin.module';
     SearchModule,
     ReportContentModule,
     PostModuleV2,
+    GroupModuleV2,
+    UserModuleV2,
     AdminModule,
   ],
   controllers: [AppController],

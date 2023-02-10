@@ -1,9 +1,8 @@
-import { GroupId } from '../domain/model/user';
-import { GroupEntity } from '../domain/model/user/group.entity';
+import { UserDto } from '.';
 
-export interface IGroupApplicationService {
-  findOne(id: GroupId): Promise<GroupEntity>;
-  findAllByIds(ids: GroupId[]): Promise<GroupEntity[]>;
+export interface IUserApplicationService {
+  findOne(id: string): Promise<UserDto>;
+  findAllByIds(ids: string[]): Promise<UserDto[]>;
 }
 
-export const GROUP_APPLICATION_TOKEN = 'GROUP_APPLICATION_TOKEN';
+export const USER_APPLICATION_TOKEN = 'USER_APPLICATION_TOKEN';

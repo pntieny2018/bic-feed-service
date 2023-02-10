@@ -1,10 +1,7 @@
 import { AggregateRoot, CreatedAt, EntityProps, IDomainEvent, UpdatedAt } from '@beincom/domain';
-import { GroupId } from '.';
+import { GroupIcon, GroupId, GroupName, GroupPrivacy } from '.';
 import { GROUP_PRIVACY } from '../../../data-type';
 import { CommunityId } from '../community';
-import { GroupIcon } from './group-icon.value-object';
-import { GroupName } from './group-name.value-object';
-import { GroupPrivacy } from './group-privacy.value-object';
 
 export type GroupProps = {
   name: GroupName;

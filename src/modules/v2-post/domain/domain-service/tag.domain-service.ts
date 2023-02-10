@@ -12,7 +12,7 @@ import {
   ITagDomainService,
   TagCreateProps,
   TagUpdateProps,
-} from './interfaces/tag.domain-service.interface';
+} from './interface/tag.domain-service.interface';
 
 export class TagDomainService implements ITagDomainService {
   @Inject() private readonly _tagFactory: TagFactory;
@@ -35,7 +35,7 @@ export class TagDomainService implements ITagDomainService {
     return tagEntity;
   }
 
-  public async updateTag(tag: TagEntity, input: TagUpdateProps): Promise<void> {
+  public async updateTag(tag: TagEntity, input: TagUpdateProps): Promise<TagEntity> {
     const { name, userId } = input;
     tag.update({
       name,
@@ -45,6 +45,7 @@ export class TagDomainService implements ITagDomainService {
     if (tag.isChanged()) {
       await this._tagRepository.update(tag);
     }
+    return tag;
   }
 
   public async deleteTag(tagId: TagId): Promise<void> {

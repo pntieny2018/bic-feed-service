@@ -1,5 +1,5 @@
 import { IQueryResult } from '@nestjs/cqrs';
-import { GroupSharedDto } from '../../../../../shared/group/dto';
+import { GroupDto } from '../../../../v2-group/application';
 
 export class FindTagsPaginationResult implements IQueryResult {
   public readonly rows: {
@@ -8,7 +8,7 @@ export class FindTagsPaginationResult implements IQueryResult {
     name: string;
     slug: string;
     totalUsed: number;
-    groups: GroupSharedDto[];
+    groups: Omit<GroupDto, 'child'>[];
   }[];
   public readonly total: number;
 }

@@ -1,5 +1,4 @@
-import { GroupId } from '../model/group';
-import { GroupEntity } from '../model/group/group.entity';
+import { GroupEntity, GroupId } from '../model/group';
 
 export interface IGroupRepository {
   findOne(id: GroupId): Promise<GroupEntity>;

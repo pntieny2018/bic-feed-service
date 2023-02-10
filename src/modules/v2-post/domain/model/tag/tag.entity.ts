@@ -2,7 +2,7 @@ import { AggregateRoot, CreatedAt, EntityProps, IDomainEvent, UpdatedAt } from '
 import { TagId, TagName, TagSlug, TagTotalUsed } from '.';
 import { StringHelper } from '../../../../../common/helpers';
 import { GroupId } from '../../../../v2-group/domain/model/group';
-import { UserId } from '../user';
+import { UserId } from '../../../../v2-user/domain/model/user';
 export type TagProps = {
   groupId: GroupId;
   name: TagName;

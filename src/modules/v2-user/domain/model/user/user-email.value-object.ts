@@ -1,6 +1,6 @@
 import { ValueObject, ValueObjectProperties } from '@beincom/domain';
 
-export class UserAvatar extends ValueObject<string> {
+export class UserEmail extends ValueObject<string> {
   public constructor(props: ValueObjectProperties<string>) {
     super(props);
   }
@@ -8,7 +8,7 @@ export class UserAvatar extends ValueObject<string> {
   public validate(properties: ValueObjectProperties<string>): void {
     //
   }
-  public static fromString(value: string): UserAvatar {
-    return new UserAvatar({ value });
+  public static fromString(value: string): UserEmail {
+    return new UserEmail({ value });
   }
 }
