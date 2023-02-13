@@ -1,6 +1,6 @@
 import { IllegalArgumentException } from '@beincom/common';
 import { ValueObject, ValueObjectProperties } from '@beincom/domain';
-import { TagEntity } from './tag.entity';
+import { TagEntity } from './tag.model';
 
 export class TagName extends ValueObject<string> {
   public constructor(props: ValueObjectProperties<string>) {

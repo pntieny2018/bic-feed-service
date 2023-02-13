@@ -1,7 +1,4 @@
-import { DomainEvents } from '@beincom/domain';
 import { Inject } from '@nestjs/common';
-import { MyLogger } from '../../my-log';
-import { TagCreatedEvent } from '../event';
 import { TagFactory } from '../factory';
 import { TagEntity, TagId } from '../model/tag';
 import {
@@ -26,11 +23,8 @@ export class TagDomainService implements ITagDomainService {
       groupId: groupId.value,
       createdBy: userId.value,
     });
-    tagEntity.raiseEvent(new TagCreatedEvent(tagEntity));
 
     await this._tagRepository.create(tagEntity);
-
-    DomainEvents.publishEvents(tagEntity.id, new MyLogger());
 
     return tagEntity;
   }

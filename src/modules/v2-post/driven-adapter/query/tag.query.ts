@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { TagModel } from '../../../../database/models/tag.model';
-import { TagEntity } from '../../domain/model/tag/tag.entity';
+import { TagEntity } from '../../domain/model/tag/tag.model';
 import { GetPaginationTagProps, ITagQuery } from '../../domain/query-interface';
 
 export class TagQuery implements ITagQuery {

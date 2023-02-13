@@ -1,11 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
+import { I18nContext } from 'nestjs-i18n';
 import { ERRORS } from '../../../common/constants/errors';
 
 export class TagUsedException extends NotFoundException {
-  public constructor(message: string = null) {
-    super({
-      code: ERRORS.tag.TAG_IS_USED,
-      message: message || 'This tag is used',
-    });
+  public constructor(message?: string) {
+    const i18n = I18nContext.current();
+    super(ERRORS.tag.TAG_NOT_FOUND, message || i18n.translate('error.tag.is_used'));
   }
 }

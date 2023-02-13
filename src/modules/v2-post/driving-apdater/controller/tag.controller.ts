@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -16,11 +17,13 @@ import { APP_VERSION } from '../../../../common/constants';
 import { ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { AuthUser, UserDto } from '../../../auth';
+import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
 import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
+import { UpdateTagDto } from '../../application/command/update-tag/update-tag.dto';
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
-import { TagEntity } from '../../domain/model/tag';
+import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
 import { TagResponseDto } from '../dto/response';
 
@@ -82,12 +85,22 @@ export class TagController {
   ): Promise<TagResponseDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
-    const tag = await this._commandBus.execute<CreateTagCommand, TagEntity>(
-      new CreateTagCommand({ groupId, name, userId })
-    );
-    return this._classTransformer.plainToInstance(TagResponseDto, tag, {
-      excludeExtraneousValues: true,
-    });
+    try {
+      const tag = await this._commandBus.execute<CreateTagCommand, CreateTagDto>(
+        new CreateTagCommand({ groupId, name, userId })
+      );
+      return this._classTransformer.plainToInstance(TagResponseDto, tag, {
+        excludeExtraneousValues: true,
+      });
+    } catch (e) {
+      switch (e.constructor) {
+        case TagNotFoundException:
+        case TagDuplicateNameException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Update tag' })
@@ -95,7 +108,7 @@ export class TagController {
     type: TagResponseDto,
     description: 'Update tag successfully',
   })
-  @ResponseMessages({ success: 'Tag updated' })
+  @ResponseMessages({ success: 'message.tag.updated_success' })
   @Put('/:id')
   public async update(
     @AuthUser() user: UserDto,
@@ -103,12 +116,23 @@ export class TagController {
     @Body() updateTagDto: UpdateTagRequestDto
   ): Promise<TagResponseDto> {
     const { name } = updateTagDto;
-    const tag = await this._commandBus.execute<UpdatetagCommand, TagEntity>(
-      new UpdatetagCommand({ id: tagId, name, userId: user.id })
-    );
-    return this._classTransformer.plainToInstance(TagResponseDto, tag.toObject(), {
-      excludeExtraneousValues: true,
-    });
+    try {
+      const tag = await this._commandBus.execute<UpdatetagCommand, UpdateTagDto>(
+        new UpdatetagCommand({ id: tagId, name, userId: user.id })
+      );
+      return this._classTransformer.plainToInstance(TagResponseDto, tag, {
+        excludeExtraneousValues: true,
+      });
+    } catch (e) {
+      switch (e.constructor) {
+        case TagNotFoundException:
+        case TagDuplicateNameException:
+        case TagUsedException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Delete tag' })
@@ -117,11 +141,21 @@ export class TagController {
     description: 'Delete tag successfully',
   })
   @Delete('/:id')
-  @ResponseMessages({ success: 'Tag deleted' })
+  @ResponseMessages({ success: 'message.tag.deleted_success' })
   public async delete(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<void> {
-    await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
+    try {
+      await this._commandBus.execute(new DeleteTagCommand({ id, userId: user.id }));
+    } catch (e) {
+      switch (e.constructor) {
+        case TagNotFoundException:
+        case TagUsedException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }

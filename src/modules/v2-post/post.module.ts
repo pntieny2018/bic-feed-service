@@ -5,7 +5,6 @@ import { GroupModuleV2 } from '../v2-group/group.module';
 import { CreateTagHandler } from './application/command/create-tag/create-tag.handler';
 import { DeleteTagHandler } from './application/command/delete-tag/delete-tag.handler';
 import { UpdateTagHandler } from './application/command/update-tag/update-tag.handler';
-import { TagCreatedEventHandler } from './application/event-handler/tag-created.event-handler';
 import { FindTagsPaginationHandler } from './application/query/find-tags/find-tags-pagination.handler';
 import { TAG_DOMAIN_SERVICE_TOKEN } from './domain/domain-service/interface/tag.domain-service.interface';
 import { TagDomainService } from './domain/domain-service/tag.domain-service';
@@ -36,7 +35,6 @@ const application = [
   UpdateTagHandler,
   DeleteTagHandler,
   FindTagsPaginationHandler,
-  TagCreatedEventHandler,
 ];
 
 const domain = [TagFactory];

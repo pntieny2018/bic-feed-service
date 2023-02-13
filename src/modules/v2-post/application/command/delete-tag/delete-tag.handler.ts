@@ -28,6 +28,6 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
       throw new TagUsedException();
     }
 
-    return this._tagDomainService.deleteTag(tagId);
+    await this._tagDomainService.deleteTag(tagId);
   }
 }
