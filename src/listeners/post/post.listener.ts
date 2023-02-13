@@ -453,5 +453,11 @@ export class PostListener {
         });
       }
     }
+    await this._postSearchService.updateAttributePostsToSearch(
+      event.payload.posts,
+      event.payload.posts.map((post) => ({
+        groupIds: event.payload.mappingPostIdGroupIds[post.id],
+      }))
+    );
   }
 }
