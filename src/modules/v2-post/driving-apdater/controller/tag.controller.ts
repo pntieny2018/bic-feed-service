@@ -40,13 +40,7 @@ export class TagController {
   ) {}
   private _classTransformer = new ClassTransformer();
   @ApiOperation({ summary: 'Get tags' })
-  @ApiOkResponse({
-    type: TagResponseDto,
-    description: 'Get tag successfully',
-  })
-  @ResponseMessages({
-    success: 'Get tag successfully',
-  })
+  @ApiOkResponse({ type: TagResponseDto })
   @Get('/')
   public async get(
     @AuthUser() _user: UserDto,

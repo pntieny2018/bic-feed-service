@@ -1,13 +1,7 @@
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../common/helpers';
 import { TagEntity } from '../model/tag';
-
-type CreateTagOptions = Readonly<{
-  name: string;
-  groupId: string;
-  createdBy: string;
-}>;
-
+import { CreateTagOptions } from './tag.factory.interface';
 export class TagFactory {
   public create(options: CreateTagOptions): TagEntity {
     const { name, groupId, createdBy } = options;

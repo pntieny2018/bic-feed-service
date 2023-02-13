@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { TagFactory } from '../factory';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory';
 import { TagEntity, TagId } from '../model/tag';
 import {
   ITagRepository,
@@ -12,9 +12,10 @@ import {
 } from './interface/tag.domain-service.interface';
 
 export class TagDomainService implements ITagDomainService {
-  @Inject() private readonly _tagFactory: TagFactory;
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
+  @Inject(TAG_FACTORY_TOKEN)
+  private readonly _tagFactory: ITagFactory;
 
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;

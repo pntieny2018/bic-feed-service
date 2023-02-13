@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { TagDomainService } from '../../../domain/domain-service/tag.domain-service';
 import { TagFactory } from '../../../domain/factory/tag.factory';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { CreateTagHandler } from '../../../application/command/create-tag/create-tag.handler';
+import { CreateTagHandler } from './create-tag.handler';
 
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;
