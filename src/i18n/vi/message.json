@@ -1,0 +1,7 @@
+{
+    "tag": {
+        "created_success": "Tạo tag thành công",
+        "updated_success": "Cập nhật tag thành công",
+        "deleted_success": "Xóa tag thành công"
+    }
+}

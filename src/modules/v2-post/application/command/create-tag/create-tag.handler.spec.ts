@@ -5,7 +5,7 @@ import { TagFactory } from '../../../domain/factory/tag.factory';
 import { TagEntity } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface/tag.repository.interface';
 import { CreateTagCommand } from './create-tag.command';
-import { CreateTagHandler } from './create-tag.result';
+import { CreateTagHandler } from './create-tag.dto';
 
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;

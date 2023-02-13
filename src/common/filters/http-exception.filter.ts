@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { Response } from 'express';
+import { I18n, I18nContext, I18nService } from 'nestjs-i18n';
 import snakecaseKeys from 'snakecase-keys';
 import { HTTP_MESSAGES, HTTP_STATUS_ID } from '../constants';
 import { ResponseDto } from '../dto';
@@ -11,7 +12,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
   public catch(exception: Error, host: ArgumentsHost): Response {
-    console.log(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     if (exception instanceof ValidatorException) {

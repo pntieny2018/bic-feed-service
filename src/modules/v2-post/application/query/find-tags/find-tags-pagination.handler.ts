@@ -8,16 +8,16 @@ import {
 import { GroupId } from '../../../../v2-group/domain/model/group';
 import { ITagQuery, TAG_QUERY_TOKEN } from '../../../domain/query-interface';
 import { FindTagsPaginationQuery } from './find-tags-pagination.query';
-import { FindTagsPaginationResult } from './find-tags-pagination.result';
+import { FindTagsPaginationDto } from './find-tags-pagination.dto';
 
 @QueryHandler(FindTagsPaginationQuery)
 export class FindTagsPaginationHandler
-  implements IQueryHandler<FindTagsPaginationQuery, FindTagsPaginationResult>
+  implements IQueryHandler<FindTagsPaginationQuery, FindTagsPaginationDto>
 {
   @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(TAG_QUERY_TOKEN) private readonly _tagQuery: ITagQuery;
 
-  public async execute(query: FindTagsPaginationQuery): Promise<FindTagsPaginationResult> {
+  public async execute(query: FindTagsPaginationQuery): Promise<FindTagsPaginationDto> {
     const { groupIds, name, offset, limit } = query.payload;
     if (!groupIds) {
       return {

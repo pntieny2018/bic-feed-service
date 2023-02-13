@@ -10,16 +10,16 @@ import { TagName } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagDuplicateNameException } from '../../../exception';
 import { CreateTagCommand } from './create-tag.command';
-import { CreateTagResult } from './create-tag.result';
+import { CreateTagDto } from './create-tag.dto';
 
 @CommandHandler(CreateTagCommand)
-export class CreateTagHandler implements ICommandHandler<CreateTagCommand, CreateTagResult> {
+export class CreateTagHandler implements ICommandHandler<CreateTagCommand, CreateTagDto> {
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
 
-  public async execute(command: CreateTagCommand): Promise<CreateTagResult> {
+  public async execute(command: CreateTagCommand): Promise<CreateTagDto> {
     const { name, groupId, userId } = command.payload;
     const findTagNameInGroup = await this._tagRepository.findOne({
       groupId: GroupId.fromString(groupId),

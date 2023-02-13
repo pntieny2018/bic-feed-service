@@ -1,5 +1,8 @@
 {
-    "TAG": {
-        "DELETE_FAIL_USING_REASON": "This tag is used, you can not delete"
+    "tag": {
+        "duplicate_name": "This tag is used, you can not delete",
+        "not_found": "Tag not found",
+        "tag_name_exceed_max_length": "Tag name must be less than or equal to {num} characters",
+        "is_used": "The tag is used"
     }
 }

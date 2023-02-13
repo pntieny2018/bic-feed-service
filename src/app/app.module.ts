@@ -35,6 +35,8 @@ import { FilterUserModule } from '../modules/filter-user';
 import { AdminModule } from '../modules/admin/admin.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
+import { I18nMiddleware } from 'nestjs-i18n';
 
 @Module({
   imports: [
@@ -74,6 +76,7 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
     GroupModuleV2,
     UserModuleV2,
     AdminModule,
+    I18nGlobalModule,
   ],
   controllers: [AppController],
   providers: [],
@@ -81,6 +84,6 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).forRoutes('*');
+    consumer.apply(I18nMiddleware, AuthMiddleware).forRoutes('*');
   }
 }

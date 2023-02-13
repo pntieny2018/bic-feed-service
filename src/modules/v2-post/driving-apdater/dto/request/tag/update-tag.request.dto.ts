@@ -1,23 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, MaxLength } from 'class-validator';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
-export class CreateTagDto {
+export class UpdateTagRequestDto {
   @ApiProperty({ type: String })
   @Type(() => String)
   @IsNotEmpty()
-  @Expose()
   @MaxLength(32)
   @Transform(({ value }) => {
     return value.toLowerCase().trim();
   })
   public name: string;
-
-  @ApiProperty({ type: String })
-  @Type(() => String)
-  @IsNotEmpty()
-  @Expose({
-    name: 'group_id',
-  })
-  public groupId: string;
 }

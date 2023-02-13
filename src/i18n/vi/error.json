@@ -1,0 +1,8 @@
+{
+    "tag": {
+        "duplicate_name": "Trùng tên",
+        "not_found": "Không tìm thấy tag",
+        "tag_name_exceed_max_length": "Tên không vượt quá {num} kí tự",
+        "is_used": "Tag này đã được sử dụng"
+    }
+}

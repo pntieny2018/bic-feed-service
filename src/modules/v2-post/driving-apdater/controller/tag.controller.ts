@@ -1,7 +1,5 @@
-import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -10,23 +8,21 @@ import {
   Post,
   Put,
   Query,
-  UseInterceptors,
 } from '@nestjs/common';
-import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
-import { TagResponseDto } from '../dto/response';
-import { AuthUser, UserDto } from '../../../auth';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ClassTransformer } from 'class-transformer';
+import { APP_VERSION } from '../../../../common/constants';
 import { ResponseMessages } from '../../../../common/decorators';
-import { ClassTransformer, TransformInstanceToPlain } from 'class-transformer';
-import { CreateTagDto } from '../dto/request/tag/create-tag.dto';
-import { UpdateTagDto } from '../../../tag/dto/requests/update-tag.dto';
-import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
-import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
-import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 import { PageDto } from '../../../../common/dto';
-import { GetTagDto } from '../dto/request/tag/get-tag.dto';
+import { AuthUser, UserDto } from '../../../auth';
+import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
+import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
+import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
+import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 import { TagEntity } from '../../domain/model/tag';
+import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
+import { TagResponseDto } from '../dto/response';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -51,7 +47,7 @@ export class TagController {
   @Get('/')
   public async get(
     @AuthUser() _user: UserDto,
-    @Query() getTagDto: GetTagDto
+    @Query() getTagDto: GetTagRequestDto
   ): Promise<PageDto<TagResponseDto>> {
     const { groupIds, name, offset, limit } = getTagDto;
     const { rows, total } = await this._queryBus.execute(
@@ -77,19 +73,19 @@ export class TagController {
     description: 'Create tag successfully',
   })
   @ResponseMessages({
-    success: 'Tag was created successfully',
+    success: 'message.tag.created_success',
   })
   @Post('/')
   public async create(
     @AuthUser() user: UserDto,
-    @Body() createTagDto: CreateTagDto
+    @Body() createTagDto: CreateTagRequestDto
   ): Promise<TagResponseDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
     const tag = await this._commandBus.execute<CreateTagCommand, TagEntity>(
       new CreateTagCommand({ groupId, name, userId })
     );
-    return this._classTransformer.plainToInstance(TagResponseDto, tag.toObject(), {
+    return this._classTransformer.plainToInstance(TagResponseDto, tag, {
       excludeExtraneousValues: true,
     });
   }
@@ -104,7 +100,7 @@ export class TagController {
   public async update(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,
-    @Body() updateTagDto: UpdateTagDto
+    @Body() updateTagDto: UpdateTagRequestDto
   ): Promise<TagResponseDto> {
     const { name } = updateTagDto;
     const tag = await this._commandBus.execute<UpdatetagCommand, TagEntity>(
