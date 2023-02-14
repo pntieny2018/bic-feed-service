@@ -42,6 +42,7 @@ export interface IPostElasticsearch {
   groupIds: string[];
   communityIds: string[];
   createdAt: string;
+  updatedAt: string;
   createdBy: string;
   mentionUserIds: string[];
   categories?: {

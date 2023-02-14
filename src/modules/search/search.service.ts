@@ -256,6 +256,7 @@ export class SearchService {
         mentionUserIds: source.mentionUserIds,
         type: source.type,
         createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
         createdBy: source.createdBy,
         coverMedia: source.coverMedia ?? null,
         media: source.media || [],
