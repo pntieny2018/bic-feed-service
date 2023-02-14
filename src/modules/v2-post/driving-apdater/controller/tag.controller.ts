@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,8 +17,9 @@ import { ClassTransformer } from 'class-transformer';
 import { APP_VERSION } from '../../../../common/constants';
 import { ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
-import { AuthUser, UserDto } from '../../../auth';
+import { AuthUser } from '../../../auth';
 import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
+import { UserDto } from '../../../v2-user/application';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
 import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
@@ -89,6 +91,7 @@ export class TagController {
     } catch (e) {
       switch (e.constructor) {
         case TagNotFoundException:
+          throw new NotFoundException(e);
         case TagDuplicateNameException:
           throw new BadRequestException(e);
         default:

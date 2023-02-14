@@ -7,14 +7,8 @@ export const mockedUserAuth: UserDto = {
   username: 'martine.baumbach',
   avatar: 'https://bein.group/baumbach.png',
   email: 'baumbach@tgm.vn',
-  staffRole: 'normal',
-  profile: {
-    id: '26799d29-189b-435d-b618-30fb70e9b09e',
-    fullname: 'Martine Baumbach',
-    username: 'martine.baumbach',
-    avatar: 'https://bein.group/baumbach.png',
-    groups: ['26799d29-189b-435d-b618-30fb70e9b09f', '26799d29-189b-435d-b618-30fb70e9b09d'],
-  },
+  fullname: 'Martine Baumbach',
+  groups: ['26799d29-189b-435d-b618-30fb70e9b09f', '26799d29-189b-435d-b618-30fb70e9b09d'],
 };
 
 export const mockGroup: GroupSharedDto = {

@@ -52,7 +52,7 @@ export class GroupService {
       return [];
     }
 
-    const groupIdsUserJoined = authUser.profile.groups;
+    const groupIdsUserJoined = authUser.groups;
     const childGroupIds = [
       ...group.child.open,
       ...group.child.closed,
@@ -86,7 +86,7 @@ export class GroupService {
   }
 
   public filterGroupIdsUsersJoined(groupIds: string[], user: UserDto): string[] {
-    const groupIdsUserJoined = user.profile.groups || [];
+    const groupIdsUserJoined = user.groups || [];
     return groupIds.filter((groupId) => groupIdsUserJoined.includes(groupId));
   }
 

@@ -25,6 +25,7 @@ export class UserApplicationService implements IUserApplicationService {
     return {
       id: user.get('id').value,
       username: user.get('username').value,
+      fullname: user.get('fullname').value,
       email: user.get('email').value,
       avatar: user.get('avatar').value,
     };

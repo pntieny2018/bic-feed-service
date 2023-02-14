@@ -7,32 +7,20 @@ export const mockedUserAuth: UserDto = {
   username: 'martine.baumbach',
   avatar: 'https://bein.group/baumbach.png',
   email: 'baumbach@tgm.vn',
-  staffRole: 'normal',
-  profile: {
-    id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
-    fullname: 'Martine Baumbach',
-    username: 'martine.baumbach',
-    avatar: 'https://bein.group/baumbach.png',
-    groups: ['855bedeb-b708-4e13-8c68-131d92cd79b3', '855bedeb-b708-4e13-8c68-131d92cd79b4'],
-  },
+  fullname: 'Martine Baumbach',
+  groups: ['855bedeb-b708-4e13-8c68-131d92cd79b3', '855bedeb-b708-4e13-8c68-131d92cd79b4'],
 };
 
 export const actorComment: UserDataShareDto = {
-  ...(ObjectHelper.omit(['groups'], mockedUserAuth.profile) as any),
+  ...(ObjectHelper.omit(['groups'], mockedUserAuth) as any),
 };
 export const authUserNotInGroupContainPostMock: UserDto = {
   id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
   username: 'john.kendy',
   avatar: 'https://bein.group/kendy.png',
   email: 'kendy@tgm.vn',
-  staffRole: 'normal',
-  profile: {
-    id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
-    fullname: 'John Kendy',
-    username: 'john.kendy',
-    avatar: 'https://bein.group/kendy.png',
-    groups: ['855bedeb-b708-4e13-8c68-131d92cd79b3', '855bedeb-b708-4e13-8c68-131d92cd79b4'],
-  },
+  fullname: 'John Kendy',
+  groups: ['855bedeb-b708-4e13-8c68-131d92cd79b3', '855bedeb-b708-4e13-8c68-131d92cd79b4'],
 };
 export const userMentionInGroupMock: UserDataShareDto = {
   id: '855bedeb-b708-4e13-8c68-131d92cd79b2',

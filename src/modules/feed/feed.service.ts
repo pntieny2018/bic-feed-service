@@ -142,7 +142,7 @@ export class FeedService {
       const post = await this._postService.findPost({
         postId: postId,
       });
-      const groupsOfUser = user.profile.groups;
+      const groupsOfUser = user.groups;
       const groupIds = post.groups.map((g) => g.groupId);
       const groupInfos = await this._groupService.getMany(groupIds);
 

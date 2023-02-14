@@ -461,7 +461,6 @@ describe.skip('ArticleService', () => {
       try {
         await articleService.updateView(mockedArticleCreated.id, {
           ...mockedUserAuth,
-          profile: null,
         });
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);

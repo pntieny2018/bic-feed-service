@@ -71,7 +71,7 @@ export class SeriesAppService {
       this._eventEmitter.emit(
         new SeriesHasBeenPublishedEvent({
           series,
-          actor: user.profile,
+          actor: user,
         })
       );
       return series;
@@ -112,7 +112,7 @@ export class SeriesAppService {
         new SeriesHasBeenUpdatedEvent({
           oldSeries: seriesBefore,
           newSeries: seriesUpdated,
-          actor: user.profile,
+          actor: user,
         })
       );
 
@@ -139,7 +139,7 @@ export class SeriesAppService {
       this._eventEmitter.emit(
         new SeriesHasBeenDeletedEvent({
           series: seriesDeleted,
-          actor: user.profile,
+          actor: user,
         })
       );
       return true;

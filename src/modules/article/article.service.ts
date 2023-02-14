@@ -410,7 +410,7 @@ export class ArticleService extends PostService {
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, id } = getRelatedArticlesDto;
 
-    const groupIdsUserCanAccess: string[] = user.profile.groups;
+    const groupIdsUserCanAccess: string[] = user.groups;
     const includePostDetail = this.getIncludeObj({
       shouldIncludeCategory: true,
     });
@@ -866,7 +866,7 @@ export class ArticleService extends PostService {
    */
   public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
+    const creator = authUser;
     if (!creator) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }

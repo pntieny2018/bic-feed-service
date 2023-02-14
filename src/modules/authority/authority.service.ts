@@ -31,7 +31,7 @@ export class AuthorityService {
     if (post.status !== PostStatus.PUBLISHED && post.createdBy === user.id) return;
     if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
-    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const userJoinedGroupIds = user.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
@@ -251,7 +251,7 @@ export class AuthorityService {
   }
 
   public checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
-    const userJoinedGroupIds = user.profile?.groups ?? [];
+    const userJoinedGroupIds = user.groups ?? [];
     const canAccess = this._groupService.isMemberOfSomeGroups(groupAudienceIds, userJoinedGroupIds);
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);

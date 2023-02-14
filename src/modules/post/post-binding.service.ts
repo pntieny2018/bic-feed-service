@@ -116,7 +116,7 @@ export class PostBindingService {
           const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
           if (isPostOutOfScope) return false;
 
-          const isUserNotInGroup = !options?.authUser?.profile.groups.includes(dataGroup.id);
+          const isUserNotInGroup = !options?.authUser?.groups.includes(dataGroup.id);
           const isGuest = !options?.authUser;
           if (
             options?.shouldHideSecretAudienceCanNotAccess &&

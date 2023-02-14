@@ -34,25 +34,19 @@ export const mockUserDto: UserDto = {
   email: 'vuquang@tgm.vn',
   avatar: 'https://google.com/vuquang.png',
   id: '89eee543-5ad2-415d-adf4-7a89188f92bc',
-  profile: {
-    id: '89eee543-5ad2-415d-adf4-7a89188f92bc',
-    username: 'vuquang23',
-    fullname: 'Vu Quang Le',
-    avatar: 'https://google.com/vuquang.png',
-    email: 'vuquang@tgm.vn',
-    groups: [
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5638',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5637',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5636',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5635',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5634',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5633',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5632',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5631',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5630',
-    ],
-  },
+  fullname: 'Vu Quang Le',
+  groups: [
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5638',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5637',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5636',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5635',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5634',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5633',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5632',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5631',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5630',
+  ],
 };
 
 export const mockUserSharedDto = {
@@ -158,7 +152,7 @@ export const mockCommentReactionModel = {
 export const mockReactionResponseDto = {
   post: {
     actor: {
-      ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+      ...ObjectHelper.omit(['groups'], mockUserDto),
       email: mockUserDto.email,
     },
     id: mockPostReactionModel.id,
@@ -167,7 +161,7 @@ export const mockReactionResponseDto = {
   },
   comment: {
     actor: {
-      ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+      ...ObjectHelper.omit(['groups'], mockUserDto),
       email: mockUserDto.email,
     },
     id: mockCommentReactionModel.id,
@@ -245,7 +239,7 @@ export const mockReactionResponseDtos = {
     {
       id: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
       actor: {
-        ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+        ...ObjectHelper.omit(['groups'], mockUserDto),
         email: mockUserDto.email,
       },
       reactionName: mockCreateReactionDto.post.reactionName,
@@ -256,7 +250,7 @@ export const mockReactionResponseDtos = {
     {
       id: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
       actor: {
-        ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+        ...ObjectHelper.omit(['groups'], mockUserDto),
         email: mockUserDto.email,
       },
       reactionName: mockCreateReactionDto.comment.reactionName,

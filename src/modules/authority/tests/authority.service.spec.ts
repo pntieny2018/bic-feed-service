@@ -18,7 +18,7 @@ describe.skip('AuthorityService', () => {
         {
           provide: AuthorityFactory,
           useValue: {
-            createForUser: jest.fn()
+            createForUser: jest.fn(),
           },
         },
         {
@@ -75,14 +75,11 @@ describe.skip('AuthorityService', () => {
             username: 'martine.baumbach',
             avatar: 'https://bein.group/baumbach.png',
             email: 'baumbach@tgm.vn',
-            staffRole: 'normal',
-            profile: {
-              id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
-              fullname: 'Martine Baumbach',
-              username: 'martine.baumbach',
-              avatar: 'https://bein.group/baumbach.png',
-              groups: ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3', '54366eb1-b428-4265-a71b-1b923a311506'],
-            },
+            fullname: 'Martine Baumbach',
+            groups: [
+              'a0ceb67b-1cf9-4f10-aa60-3ee6473017a3',
+              '54366eb1-b428-4265-a71b-1b923a311506',
+            ],
           },
           userDtoMock
         );
@@ -135,7 +132,12 @@ describe.skip('AuthorityService', () => {
         updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
         privacy: PostPrivacy.OPEN,
-        groups: [{ postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712', groupId: '54366eb1-b428-4265-a71b-1b923a311506' }]
+        groups: [
+          {
+            postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712',
+            groupId: '54366eb1-b428-4265-a71b-1b923a311506',
+          },
+        ],
       });
     });
 
@@ -158,24 +160,33 @@ describe.skip('AuthorityService', () => {
           updatedBy: '00000000-0000-0000-0000-000000000000',
           views: 0,
           privacy: PostPrivacy.PRIVATE,
-          groups: [{ postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712', groupId: '54366eb1-b428-4265-a71b-1b923a311506' }]
+          groups: [
+            {
+              postId: 'a0ceb67b-1cf9-4f10-aa60-3ee647301712',
+              groupId: '54366eb1-b428-4265-a71b-1b923a311506',
+            },
+          ],
         });
       } catch (e) {
-        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN)
+        expect(e.message).toEqual(HTTP_STATUS_ID.API_FORBIDDEN);
       }
     });
   });
 
   const ability = {
-    can: jest.fn()
-  }
+    can: jest.fn(),
+  };
   describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
       groupService.isMemberOfGroups.mockReturnValue(true);
-      groupService.getMany.mockResolvedValue([{id: 1, name: 'BIC to the moon'}])
-      authorityFactory.createForUser.mockResolvedValue(ability)
-      ability.can.mockResolvedValue(true)
-      await service.checkCanUpdatePost(userDtoMock, ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'], false);
+      groupService.getMany.mockResolvedValue([{ id: 1, name: 'BIC to the moon' }]);
+      authorityFactory.createForUser.mockResolvedValue(ability);
+      ability.can.mockResolvedValue(true);
+      await service.checkCanUpdatePost(
+        userDtoMock,
+        ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'],
+        false
+      );
       expect(groupService.isMemberOfGroups).toBeCalled();
       expect(groupService.getMany).toBeCalled();
       expect(authorityFactory.createForUser).toBeCalled();

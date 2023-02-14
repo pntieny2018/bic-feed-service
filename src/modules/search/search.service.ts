@@ -204,7 +204,7 @@ export class SearchService {
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<any>> {
     const { contentSearch, limit, offset, groupId } = searchPostsDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<any>([], {
         total: 0,
@@ -433,7 +433,7 @@ export class SearchService {
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
     const { limit, offset, groupIds, contentSearch } = searchDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<SeriesSearchResponseDto>([], {
         total: 0,
@@ -487,7 +487,7 @@ export class SearchService {
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
     const { limit, offset, groupIds, categoryIds, contentSearch } = searchDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleSearchResponseDto>([], {
         total: 0,
@@ -503,7 +503,7 @@ export class SearchService {
       });
     }
 
-    let filterGroupIds = authUser.profile.groups;
+    let filterGroupIds = authUser.groups;
     if (groupIds) {
       filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
     }

@@ -154,7 +154,7 @@ export class PostAppService {
         new PostHasBeenUpdatedEvent({
           oldPost: postBefore,
           newPost: postUpdated,
-          actor: user.profile,
+          actor: user,
         })
       );
 
@@ -187,7 +187,7 @@ export class PostAppService {
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
         post: postUpdated,
-        actor: user.profile,
+        actor: user,
       })
     );
 
@@ -214,7 +214,7 @@ export class PostAppService {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
           post: postDeleted,
-          actor: user.profile,
+          actor: user,
         })
       );
       return true;

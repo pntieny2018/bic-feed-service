@@ -48,7 +48,7 @@ export class ReportContentListener {
       id: payload.actor.id,
       email: payload.actor.email,
       username: payload.actor.username,
-      fullname: payload.actor.profile.fullname,
+      fullname: payload.actor.fullname,
       avatar: payload.actor.avatar,
     };
 
@@ -100,7 +100,7 @@ export class ReportContentListener {
         id: payload.actor.id,
         email: payload.actor.email,
         username: payload.actor.username,
-        fullname: payload.actor.profile.fullname,
+        fullname: payload.actor.fullname,
         avatar: payload.actor.avatar,
       };
 

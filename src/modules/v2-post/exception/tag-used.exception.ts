@@ -5,6 +5,6 @@ import { ERRORS } from '../../../common/constants/errors';
 export class TagUsedException extends NotFoundException {
   public constructor(message?: string) {
     const i18n = I18nContext.current();
-    super(ERRORS.tag.TAG_NOT_FOUND, message || i18n.translate('error.tag.is_used'));
+    super(ERRORS.tag.TAG_NOT_FOUND, message || i18n.t('error.tag.is_used'));
   }
 }

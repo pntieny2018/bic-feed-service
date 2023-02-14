@@ -78,19 +78,13 @@ export const mockUserDto: UserDto = {
   email: 'vuquang@tgm.vn',
   avatar: 'https://google.com/vuquang.png',
   id: '36d66fb6-5a24-4fb4-892e-1c38760da778',
-  profile: {
-    id: '36d66fb6-5a24-4fb4-892e-1c38760da779',
-    username: 'vuquang23',
-    fullname: 'Vu Quang Le',
-    avatar: 'https://google.com/vuquang.png',
-    email: 'vuquang@tgm.vn',
-    groups: [
-      '36d66fb6-5a24-4fb4-892e-1c38760da770',
-      '36d66fb6-5a24-4fb4-892e-1c38760da771',
-      '36d66fb6-5a24-4fb4-892e-1c38760da772',
-      '36d66fb6-5a24-4fb4-892e-1c38760da773',
-    ],
-  },
+  fullname: 'Vu Quang Le',
+  groups: [
+    '36d66fb6-5a24-4fb4-892e-1c38760da770',
+    '36d66fb6-5a24-4fb4-892e-1c38760da771',
+    '36d66fb6-5a24-4fb4-892e-1c38760da772',
+    '36d66fb6-5a24-4fb4-892e-1c38760da773',
+  ],
 };
 
 export const mockReactionResponseDto = {

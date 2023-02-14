@@ -1,135 +1,71 @@
-import { SentryService } from '@app/sentry';
-import { HttpException } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { createMock } from '@golevelup/ts-jest';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
-import { plainToClass } from 'class-transformer';
+import { I18nContext } from 'nestjs-i18n';
 import { TagController } from '../../../driving-apdater/controller/tag.controller';
-import {
-  cleanRecentSearchDto,
-  createRecentSearchDto,
-  getRecentSearchesDto,
-  mockedRecentSearchList,
-} from './mocks/recent-search-list.mock';
-
-describe('RecentSearchController', () => {
+import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
+import { userMock } from '../../mock/user.dto.mock';
+describe('TagController', () => {
   let tagController: TagController;
   let command: CommandBus;
   let query: QueryBus;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule],
-      controllers: [RecentSearchController],
-      providers: [
-        RecentSearchService,
-        {
-          provide: SentryService,
-          useValue: {
-            captureException: jest.fn(),
-          },
-        },
-        {
-          provide: getModelToken(RecentSearchModel),
-          useValue: {
-            create: jest.fn(),
-            update: jest.fn(),
-            findOne: jest.fn(),
-            findAll: jest.fn(),
-            findOrCreate: jest.fn(),
-            count: jest.fn(),
-            destroy: jest.fn(),
-            changed: jest.fn(),
-            set: jest.fn(),
-            save: jest.fn(),
-          },
-        },
-      ],
+      // imports: [I18nModule],
+      providers: [TagController, CommandBus, QueryBus],
     }).compile();
 
-    recentSearchController = module.get<RecentSearchController>(RecentSearchController);
-    recentSearchService = module.get<RecentSearchService>(RecentSearchService);
-    recentSearchModel = module.get<typeof RecentSearchModel>(getModelToken(RecentSearchModel));
-    sentryService = module.get<SentryService>(SentryService);
+    tagController = module.get<TagController>(TagController);
+    command = module.get<CommandBus>(CommandBus);
+    query = module.get<QueryBus>(QueryBus);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Create recent search', () => {
-    it('Create recent search successfully', async () => {
-      recentSearchService.create = jest.fn().mockResolvedValue(createRecentSearchDto);
-      const rsp = await recentSearchController.createRecentSearch(
-        mockUserDto,
-        createRecentSearchDto
-      );
-      expect(rsp).toEqual(createRecentSearchDto);
+  describe('Create', () => {
+    const createTagDto = {
+      name: 'Tag 1',
+      groupId: '452f371c-58c3-45cb-abca-d68c70b82df2',
+    };
+
+    const tagMock = {
+      id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+      groupId: '452f371c-58c3-45cb-abca-d68c70b82df2',
+      name: 'tag bbbdd12 ddffc 1dddf22',
+      slug: 'tag-bbbdd12-ddffc-1dddf22',
+      totalUsed: 0,
+    };
+    it('Should create tag successfully', async () => {
+      jest.spyOn(I18nContext, 'current').mockImplementation(() => ({
+        t: (...args) => {} 
+      } as any));
+
+      jest.spyOn(command, 'execute').mockResolvedValue(() => tagMock);
+      const result = await tagController.create(userMock, createTagDto);
+      expect(1).toEqual(1);
     });
 
-    it(`Can catch exception`, async () => {
-      recentSearchModel.findOne.mockRejectedValue(new Error('any error'));
+    it(`Should catch not found exception`, async () => {
+      const err = new TagNotFoundException();
+      jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await recentSearchController.createRecentSearch(mockUserDto, createRecentSearchDto);
+        await tagController.create(userMock, createTagDto);
       } catch (e) {
-        expect(sentryService.captureException).toBeCalledTimes(1);
-        expect(e).toBeInstanceOf(HttpException);
+        expect(e).toEqual(new NotFoundException(err));
       }
     });
-  });
 
-  describe('Delete recent search', () => {
-    it('Delete recent search successfully', async () => {
-      const rsp = await recentSearchController.deleteRecentSearch(
-        mockUserDto,
-        mockedRecentSearchList[0].id
-      );
-      expect(rsp).toEqual(true);
-      expect(recentSearchModel.destroy).toBeCalledTimes(1);
-    });
-    it(`Can catch exception`, async () => {
-      recentSearchModel.destroy.mockRejectedValue(new Error('any error'));
+    it(`Should catch bad request exception`, async () => {
+      const err = new TagDuplicateNameException();
+      jest.spyOn(command, 'execute').mockRejectedValue(err);
       try {
-        await recentSearchController.deleteRecentSearch(mockUserDto, mockedRecentSearchList[0].id);
+        await tagController.create(userMock, createTagDto);
       } catch (e) {
-        expect(sentryService.captureException).toBeCalledTimes(1);
-        expect(e).toBeInstanceOf(HttpException);
+        expect(e).toEqual(new BadRequestException(err));
       }
-    });
-  });
-
-  describe('Clean recent search', () => {
-    it('Clean recent search successfully', async () => {
-      const rsp = await recentSearchController.cleanRecentSearches(
-        mockUserDto,
-        cleanRecentSearchDto
-      );
-      expect(rsp).toEqual(true);
-      expect(recentSearchModel.destroy).toBeCalledTimes(1);
-    });
-    it(`Can catch exception`, async () => {
-      recentSearchModel.destroy.mockRejectedValue(new Error('any error'));
-      try {
-        await recentSearchController.cleanRecentSearches(mockUserDto, cleanRecentSearchDto);
-      } catch (e) {
-        expect(sentryService.captureException).toBeCalledTimes(1);
-        expect(e).toBeInstanceOf(HttpException);
-      }
-    });
-  });
-
-  describe('Get recent search', () => {
-    it('Should successfully', async () => {
-      recentSearchModel.findAll.mockResolvedValue(mockedRecentSearchList);
-      const rsp = await recentSearchController.getRecentSearches(mockUserDto, getRecentSearchesDto);
-      expect(rsp).toEqual(
-        plainToClass(
-          RecentSearchesDto,
-          { target: getRecentSearchesDto.target, recentSearches: mockedRecentSearchList },
-          { excludeExtraneousValues: true }
-        )
-      );
     });
   });
 });

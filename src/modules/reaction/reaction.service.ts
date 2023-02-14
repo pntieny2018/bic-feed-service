@@ -229,7 +229,7 @@ export class ReactionService {
           reactionName: postReaction.reactionName,
           createdAt: postReaction.createdAt,
           actor: {
-            ...ObjectHelper.omit(['groups'], userDto.profile),
+            ...ObjectHelper.omit(['groups'], userDto),
             email: userDto.email,
           },
         });
@@ -325,7 +325,7 @@ export class ReactionService {
           reactionName: commentReaction.reactionName,
           createdAt: commentReaction.createdAt,
           actor: {
-            ...ObjectHelper.omit(['groups'], userDto.profile),
+            ...ObjectHelper.omit(['groups'], userDto),
             email: userDto.email,
           },
         });
@@ -448,10 +448,10 @@ export class ReactionService {
       await trx.commit();
 
       const actor = {
-        id: userDto.profile.id,
-        fullname: userDto.profile.fullname,
-        username: userDto.profile.username,
-        avatar: userDto.profile.avatar,
+        id: userDto.id,
+        fullname: userDto.fullname,
+        username: userDto.username,
+        avatar: userDto.avatar,
       };
 
       this._emitter.emit(

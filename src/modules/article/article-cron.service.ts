@@ -74,8 +74,12 @@ export class ArticleCronService {
             );
             const userDTO: UserDto = {
               id: userProfile.id,
-              profile: userProfile,
+              avatar: userProfile.avatar,
+              email: userProfile.email,
+              username: userProfile.username,
+              fullname: userProfile.fullname,
               permissions: userPermission,
+              groups: userProfile.groups || [],
             };
             await this._articleAppService.publish(userDTO, article.id, true);
           } catch (e) {
