@@ -27,6 +27,7 @@ import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publi
 import { FollowModule, FollowService } from '../modules/follow';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UploadModule } from '../modules/upload';
+import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-vs-bulk-update.command';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { UploadModule } from '../modules/upload';
     UpdateNewsfeedCommand,
     FeedPublisherService,
     UpdateContentTypeImageCommand,
+    MultiUpdateVsBulkUpdateCommand,
   ],
 })
 export class CommandModule {}

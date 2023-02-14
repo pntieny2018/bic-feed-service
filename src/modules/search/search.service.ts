@@ -196,6 +196,37 @@ export class SearchService {
     }
   }
 
+  public async updateAttributePostsToSearch(posts: IPost[], dataUpdate: any): Promise<void> {
+    const updateOps = [];
+    posts.forEach((post, indexPost) => {
+      const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
+      updateOps.push({
+        update: {
+          _index: index,
+          _id: post.id,
+        },
+      });
+      updateOps.push({
+        doc: dataUpdate[indexPost],
+      });
+    });
+    try {
+      await this.elasticsearchService.bulk(
+        {
+          refresh: true,
+          body: updateOps,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        },
+        {
+          maxRetries: 5,
+        }
+      );
+    } catch (e) {
+      this.logger.debug(JSON.stringify(e?.stack));
+      this.sentryService.captureException(e);
+    }
+  }
+
   /*
     Search posts, articles, series
   */
