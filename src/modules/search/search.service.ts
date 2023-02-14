@@ -387,14 +387,7 @@ export class SearchService {
       }
 
       if (post.articles) {
-        post.articles = post.articles.map((article) => {
-          const findArticle = articles.find((item) => item.id === article.id);
-          if (!findArticle) return article;
-          return {
-            ...article,
-            ...findArticle,
-          };
-        });
+        post.articles = articles;
       }
       if (post.reactionsCount) {
         post.reactionsCount.forEach(
