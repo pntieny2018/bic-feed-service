@@ -85,9 +85,11 @@ export class TagController {
       const tag = await this._commandBus.execute<CreateTagCommand, CreateTagDto>(
         new CreateTagCommand({ groupId, name, userId })
       );
-      return this._classTransformer.plainToInstance(TagResponseDto, tag, {
+      const a = this._classTransformer.plainToInstance(TagResponseDto, tag, {
         excludeExtraneousValues: true,
       });
+
+      return a;
     } catch (e) {
       switch (e.constructor) {
         case TagNotFoundException:

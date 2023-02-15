@@ -17,9 +17,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof ValidatorException) {
       console.log('handleValidatorException');
       return this.handleValidatorException(exception, response);
-    } else if (exception instanceof LogicException) {
-      console.log('handleLogicException');
-      return this.handleLogicException(exception, response);
     } else if (exception instanceof HttpException) {
       console.log('handleHttpException');
       return this.handleHttpException(exception, response);

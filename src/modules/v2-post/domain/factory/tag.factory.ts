@@ -4,16 +4,16 @@ import { TagEntity } from '../model/tag';
 import { CreateTagOptions } from './tag.factory.interface';
 export class TagFactory {
   public create(options: CreateTagOptions): TagEntity {
-    const { name, groupId, createdBy } = options;
+    const { name, groupId, userId } = options;
     const now = new Date().toISOString();
     const tagEntity = TagEntity.fromJson({
       id: v4(),
-      groupId: groupId,
-      name: name,
-      slug: StringHelper.convertToSlug(name),
+      groupId: groupId.value,
+      name: name.value,
+      slug: StringHelper.convertToSlug(name.value),
       totalUsed: 0,
-      createdBy: createdBy,
-      updatedBy: createdBy,
+      createdBy: userId.value,
+      updatedBy: userId.value,
       createdAt: now,
       updatedAt: now,
     });

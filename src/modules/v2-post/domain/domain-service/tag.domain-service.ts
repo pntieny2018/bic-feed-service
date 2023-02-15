@@ -1,4 +1,5 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory';
 import { TagEntity, TagId } from '../model/tag';
 import {
@@ -12,6 +13,8 @@ import {
 } from './interface/tag.domain-service.interface';
 
 export class TagDomainService implements ITagDomainService {
+  private readonly _logger = new Logger(TagDomainService.name);
+
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_FACTORY_TOKEN)
@@ -20,12 +23,17 @@ export class TagDomainService implements ITagDomainService {
   public async createTag(input: TagCreateProps): Promise<TagEntity> {
     const { name, groupId, userId } = input;
     const tagEntity = this._tagFactory.create({
-      name: name.value,
-      groupId: groupId.value,
-      createdBy: userId.value,
+      name,
+      groupId,
+      userId,
     });
 
-    await this._tagRepository.create(tagEntity);
+    try {
+      await this._tagRepository.create(tagEntity);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
 
     return tagEntity;
   }
@@ -38,12 +46,22 @@ export class TagDomainService implements ITagDomainService {
     });
 
     if (tag.isChanged()) {
-      await this._tagRepository.update(tag);
+      try {
+        await this._tagRepository.update(tag);
+      } catch (e) {
+        this._logger.error(JSON.stringify(e?.stack));
+        throw new DatabaseException();
+      }
     }
     return tag;
   }
 
   public async deleteTag(tagId: TagId): Promise<void> {
-    return this._tagRepository.delete(tagId);
+    try {
+      return this._tagRepository.delete(tagId);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
   }
 }

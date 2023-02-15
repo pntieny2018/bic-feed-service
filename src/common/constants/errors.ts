@@ -5,5 +5,11 @@ export const ERRORS = {
     TAG_NOT_FOUND: 'tag.not_found',
     TAG_IS_USED: 'tag.is_used',
   },
-  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  API_OK: 'api.ok',
+  API_VALIDATION_ERROR: 'api.validation_error',
+  API_UNAUTHORIZED: 'api.unauthorized',
+  API_FORBIDDEN: 'api.forbidden',
+  API_SERVER_INTERNAL_ERROR: 'api.server_internal_error',
+  DATABASE_ERROR: 'database_error',
+  INTERNAL_SERVER_ERROR: 'internal_server_error',
 };

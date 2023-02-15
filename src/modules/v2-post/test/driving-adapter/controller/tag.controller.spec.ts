@@ -1,5 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, INestApplication, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
@@ -10,15 +10,19 @@ describe('TagController', () => {
   let tagController: TagController;
   let command: CommandBus;
   let query: QueryBus;
+  let app: INestApplication;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      // imports: [I18nModule],
       providers: [TagController, CommandBus, QueryBus],
     }).compile();
 
     tagController = module.get<TagController>(TagController);
     command = module.get<CommandBus>(CommandBus);
     query = module.get<QueryBus>(QueryBus);
+
+    jest.spyOn(I18nContext, 'current').mockImplementation(() => ({
+      t: (...args) => {} 
+    } as any));
   });
 
   afterEach(() => {
@@ -37,15 +41,22 @@ describe('TagController', () => {
       name: 'tag bbbdd12 ddffc 1dddf22',
       slug: 'tag-bbbdd12-ddffc-1dddf22',
       totalUsed: 0,
+      createdBy: userMock.id,
+      updatedBy: userMock.id
     };
     it('Should create tag successfully', async () => {
-      jest.spyOn(I18nContext, 'current').mockImplementation(() => ({
-        t: (...args) => {} 
-      } as any));
-
-      jest.spyOn(command, 'execute').mockResolvedValue(() => tagMock);
+      jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
       const result = await tagController.create(userMock, createTagDto);
-      expect(1).toEqual(1);
+      expect(result).toEqual({
+        id: tagMock.id,
+        groupId: tagMock.groupId,
+        name: tagMock.name,
+        slug: tagMock.slug,
+        totalUsed: tagMock.totalUsed,
+        createdAt: undefined,
+        updatedAt: undefined,
+        groups: undefined
+      });
     });
 
     it(`Should catch not found exception`, async () => {
