@@ -446,10 +446,11 @@ export class PostListener {
   public async onPostsArchivedOrRestoredByGroup(
     event: PostsArchivedOrRestoredByGroupEvent
   ): Promise<void> {
-    for (const post of event.payload.posts) {
-      await this._postSearchService.updateAttributePostToSearch(post, {
+    await this._postSearchService.updateAttributePostsToSearch(
+      event.payload.posts,
+      event.payload.posts.map((post) => ({
         groupIds: event.payload.mappingPostIdGroupIds[post.id],
-      });
-    }
+      }))
+    );
   }
 }
