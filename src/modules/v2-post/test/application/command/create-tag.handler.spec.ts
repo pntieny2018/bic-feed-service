@@ -85,5 +85,67 @@ describe('CreateTagHandler', () => {
         totalUsed: tagEntity.get('totalUsed').value,
       });
     });
+
+    it('Should throw error when tag name is duplicate', async () => {
+      jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
+
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: tagRecord.name,
+        userId: tagRecord.createdBy,
+      })
+
+      await expect(handler.execute(command)).rejects.toThrow();
+    })
+
+    it('Should throw error when tag name is empty', async () => {
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: '',
+        userId: tagRecord.createdBy,
+      })
+
+      await expect(handler.execute(command)).rejects.toThrow();
+    })
+
+    it('Should throw error when tag name is too long', async () => {
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: 'a'.repeat(256),
+        userId: tagRecord.createdBy,
+      })
+
+      await expect(handler.execute(command)).rejects.toThrow();
+    })
+
+    it('Should throw error when group id is empty', async () => {
+      const command = new CreateTagCommand({
+        groupId: '',
+        name: tagRecord.name,
+        userId: tagRecord.createdBy,
+      })
+
+      await expect(handler.execute(command)).rejects.toThrow();
+    })
+
+    it('Should throw error when group id is invalid', async () => {
+      const command = new CreateTagCommand({
+        groupId: 'invalid',
+        name: tagRecord.name,
+        userId: tagRecord.createdBy,
+      })
+
+      await expect(handler.execute(command)).rejects.toThrow();
+    })
+
+    it('Should throw error when user id is empty', async () => {
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: tagRecord.name,
+        userId: '',
+      })
+
+      await expect(handler.execute(command)).rejects.toThrow();
+    })
   });
 });
