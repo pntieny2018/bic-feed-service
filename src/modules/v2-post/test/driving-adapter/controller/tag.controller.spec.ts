@@ -1,4 +1,3 @@
-import { createMock } from '@golevelup/ts-jest';
 import { BadRequestException, INestApplication, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -20,9 +19,12 @@ describe('TagController', () => {
     command = module.get<CommandBus>(CommandBus);
     query = module.get<QueryBus>(QueryBus);
 
-    jest.spyOn(I18nContext, 'current').mockImplementation(() => ({
-      t: (...args) => {} 
-    } as any));
+    jest.spyOn(I18nContext, 'current').mockImplementation(
+      () =>
+        ({
+          t: (...args) => {},
+        } as any)
+    );
   });
 
   afterEach(() => {
@@ -42,7 +44,7 @@ describe('TagController', () => {
       slug: 'tag-bbbdd12-ddffc-1dddf22',
       totalUsed: 0,
       createdBy: userMock.id,
-      updatedBy: userMock.id
+      updatedBy: userMock.id,
     };
     it('Should create tag successfully', async () => {
       jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
@@ -55,7 +57,7 @@ describe('TagController', () => {
         totalUsed: tagMock.totalUsed,
         createdAt: undefined,
         updatedAt: undefined,
-        groups: undefined
+        groups: undefined,
       });
     });
 
