@@ -297,6 +297,7 @@ export class IndexPostCommand implements CommandRunner {
       exclude: ['updatedBy'],
     };
     const rows = await this._postModel.findAll({
+      subQuery: false,
       attributes,
       include,
       where: {
