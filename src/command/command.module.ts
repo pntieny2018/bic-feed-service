@@ -28,6 +28,7 @@ import { FollowModule, FollowService } from '../modules/follow';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UploadModule } from '../modules/upload';
 import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-vs-bulk-update.command';
+import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-
     FeedPublisherService,
     UpdateContentTypeImageCommand,
     MultiUpdateVsBulkUpdateCommand,
+    FixTotalUsersSeenCommand,
   ],
 })
 export class CommandModule {}
