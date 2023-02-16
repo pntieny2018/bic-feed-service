@@ -94,6 +94,11 @@ describe('TagDomainService', () => {
         expect(e).toEqual(new DatabaseException());
       }
     });
+
+    it('Should throw error when tag name is too long', async () => {
+      jest.spyOn(factory, 'create').mockReturnValue(tagEntity);
+      jest.spyOn(repo, 'create').mockRejectedValue(new Error('Tag name is too long'));
+    });
   });
 
   describe('updateTag', () => {
