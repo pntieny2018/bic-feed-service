@@ -1337,6 +1337,7 @@ export class PostService {
       include: [PostModel.loadMarkReadPost(userId), PostModel.loadSaved(userId)],
     };
     const rows = await this.postModel.findAll({
+      subQuery: false,
       attributes,
       include,
       where: {
