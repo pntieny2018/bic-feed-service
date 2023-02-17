@@ -27,7 +27,6 @@ export class TagDomainService implements ITagDomainService {
       groupId,
       userId,
     });
-
     try {
       await this._tagRepository.create(tagEntity);
     } catch (e) {

@@ -6,6 +6,7 @@
         "is_used": "The tag is used"
     },
     "common": {
-        "database_error": "Database error"
+        "database_error": "Database error",
+        "domain_model_error": "Domain model error"
     }
 }

@@ -5,9 +5,6 @@ import { Expose, Transform, Type } from 'class-transformer';
 export class CreateTagRequestDto {
   @ApiProperty({ type: String })
   @Type(() => String)
-  @IsNotEmpty()
-  @Expose()
-  @MaxLength(32)
   @Transform(({ value }) => {
     return value.toLowerCase().trim();
   })

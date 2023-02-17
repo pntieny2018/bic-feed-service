@@ -56,7 +56,7 @@ export class TagRepository implements ITagRepository {
     } catch (e) {
       await transaction.rollback();
       this._logger.error(JSON.stringify(e?.stack));
-      throw new InternalServerErrorException();
+      throw e;
     }
   }
 
