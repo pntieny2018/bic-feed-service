@@ -320,8 +320,8 @@ export class ArticleListener {
       });
 
       const series = newArticle.series?.map((s) => s.id) ?? [];
-      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
       const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
+      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
       for (const seriesId of newSeriesIds) {
         this._internalEventEmitter.emit(
           new SeriesAddedArticlesEvent({
