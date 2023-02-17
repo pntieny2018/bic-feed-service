@@ -594,12 +594,8 @@ export class ArticleService extends PostService {
 
     if (attributes['includes'] && Array.isArray(attributes['includes'])) {
       attributes['include'].push([['hashtags_json', 'hashtags']]);
-      attributes['include'].push([['tags_json', 'tags']]);
     } else {
-      attributes['include'] = [
-        ['hashtags_json', 'hashtags'],
-        ['tags_json', 'tags'],
-      ];
+      attributes['include'] = [['hashtags_json', 'hashtags']];
     }
     return attributes;
   }

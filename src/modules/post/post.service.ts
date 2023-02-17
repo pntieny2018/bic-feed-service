@@ -248,7 +248,6 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-
     const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -282,7 +281,9 @@ export class PostService {
     if (options?.authUserId && options?.loadSaved) {
       include.push(PostModel.loadSaved(options.authUserId));
     }
+    include.push(['tags_json', 'tags']);
     attributes.include = include;
+
     return attributes;
   }
 
@@ -1333,12 +1334,15 @@ export class PostService {
       authUserId: userId,
     });
 
-    const attributes = {
-      include: [PostModel.loadMarkReadPost(userId), PostModel.loadSaved(userId)],
-    };
     const rows = await this.postModel.findAll({
       subQuery: false,
-      attributes,
+      attributes: {
+        include: [
+          ['tags_json', 'tags'],
+          PostModel.loadMarkReadPost(userId),
+          PostModel.loadSaved(userId),
+        ],
+      },
       include,
       where: {
         id: ids,
