@@ -151,7 +151,14 @@
       "!**/cli.ts",
       "!**/configuration.ts",
       "!**/main.ts",
-      "!<rootDir>/libs/"
+      "!<rootDir>/libs/",
+      "!**/*.provider.ts",
+      "!**/*.value-object.ts",
+      "!**/*.entity.ts",
+      "!**/*.exception.ts",
+      "!**/*.interface.ts",
+      "!**/*.decorator.ts",
+      "!**/*.interceptor.ts"
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
