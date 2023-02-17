@@ -1395,6 +1395,7 @@ export class PostService {
       where: {
         id: ids,
         isHidden: false,
+        status: PostStatus.PUBLISHED,
       },
     });
 
