@@ -332,7 +332,7 @@ export class ArticleListener {
           })
         );
       }
-      const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !newSeriesIds.includes(id));
+      const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !series.includes(id));
       for (const seriesId of seriesIdsShouldRemove) {
         this._internalEventEmitter.emit(
           new SeriesRemovedArticlesEvent({
