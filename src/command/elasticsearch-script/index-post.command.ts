@@ -280,7 +280,7 @@ export class IndexPostCommand implements CommandRunner {
         total += posts.length;
         console.log(`Indexed ${totalItemsIndexed}/${posts.length}`);
         console.log('-----------------------------------');
-        await this.delay(1000);
+        await this.delay(3000);
       }
     }
 
