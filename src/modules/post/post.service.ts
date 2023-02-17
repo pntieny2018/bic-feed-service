@@ -282,8 +282,8 @@ export class PostService {
       include.push(PostModel.loadSaved(options.authUserId));
     }
     include.push(['tags_json', 'tags']);
-    attributes.include = include;
 
+    attributes.include = include;
     return attributes;
   }
 

@@ -592,11 +592,12 @@ export class ArticleService extends PostService {
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
 
-    if (attributes['includes'] && Array.isArray(attributes['includes'])) {
-      attributes['include'].push([['hashtags_json', 'hashtags']]);
+    if (attributes['include'] && Array.isArray(attributes['include'])) {
+      attributes['include'].push(['hashtags_json', 'hashtags']);
     } else {
       attributes['include'] = [['hashtags_json', 'hashtags']];
     }
+    console.log(JSON.stringify(attributes));
     return attributes;
   }
 
