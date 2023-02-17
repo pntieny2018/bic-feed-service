@@ -167,7 +167,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 200;
+    const limitEach = 100;
     let offset = 0;
     let hasMore = true;
     let total = 0;
