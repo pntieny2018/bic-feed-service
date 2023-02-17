@@ -47,6 +47,13 @@ export class PostResponseDto {
   @Expose()
   public content: string;
 
+  @ApiProperty({
+    description: 'tags',
+    type: [TagResponseDto],
+  })
+  @Expose()
+  public tags?: TagResponseDto[];
+
   @Expose()
   public lang?: string;
 
@@ -313,16 +320,6 @@ export class PostResponseDto {
   })
   @Expose()
   public communities?: CommunityResponseDto[];
-
-  @ApiProperty({
-    type: [TagResponseDto],
-  })
-  @Expose()
-  @Transform(({ obj }) => {
-    if (obj.tagsJson === null) return [];
-    return obj.tagsJson;
-  })
-  public tags?: TagResponseDto[];
 
   @ApiProperty({
     type: Boolean,

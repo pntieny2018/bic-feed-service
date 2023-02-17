@@ -108,6 +108,7 @@ export class PostListener {
       updatedAt,
       type,
       isHidden,
+      tags,
     } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -172,6 +173,7 @@ export class PostListener {
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         createdBy,
         createdAt,
         updatedAt,
@@ -206,6 +208,7 @@ export class PostListener {
       createdAt,
       updatedAt,
       isHidden,
+      tags,
     } = newPost;
 
     if (oldPost.status === PostStatus.PUBLISHED) {
@@ -299,6 +302,7 @@ export class PostListener {
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         createdBy,
         createdAt,
         updatedAt,
@@ -357,6 +361,7 @@ export class PostListener {
         updatedAt,
         type,
         isHidden,
+        tags,
       } = post;
 
       const mentionUserIds = [];
@@ -394,6 +399,7 @@ export class PostListener {
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
           createdBy,
           createdAt,
           updatedAt,

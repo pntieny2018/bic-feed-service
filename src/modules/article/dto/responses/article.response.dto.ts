@@ -60,13 +60,6 @@ export class ArticleResponseDto extends PostResponseDto {
   public hashtags: HashtagResponseDto[];
 
   @ApiProperty({
-    description: 'tags',
-    type: [TagResponseDto],
-  })
-  @Expose()
-  public tags: TagResponseDto[];
-
-  @ApiProperty({
     description: 'isLocked',
     type: Boolean,
   })
