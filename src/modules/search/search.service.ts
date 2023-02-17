@@ -418,7 +418,12 @@ export class SearchService {
       }
 
       if (post.articles) {
-        post.articles = articles;
+        const bindArticles = [];
+        for (const article of post.articles) {
+          const findArticle = articles.find((item) => item.id === article.id);
+          if (findArticle) bindArticles.push(findArticle);
+        }
+        post.articles = bindArticles;
       }
       if (post.reactionsCount) {
         post.reactionsCount.forEach(

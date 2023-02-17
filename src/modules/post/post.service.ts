@@ -1384,6 +1384,13 @@ export class PostService {
           as: 'coverMedia',
           required: false,
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: { isArchived: false },
+        },
       ],
       where: {
         id: ids,
