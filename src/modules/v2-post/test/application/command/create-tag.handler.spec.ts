@@ -7,12 +7,18 @@ import { UserId } from '../../../../v2-user/domain/model/user';
 import { CreateTagCommand } from '../../../application/command/create-tag/create-tag.command';
 import { CreateTagHandler } from '../../../application/command/create-tag/create-tag.handler';
 import { TagDomainService } from '../../../domain/domain-service';
-import { ITagDomainService, TAG_DOMAIN_SERVICE_TOKEN } from '../../../domain/domain-service/interface';
-import { TagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory';
+import {
+  ITagDomainService,
+  TAG_DOMAIN_SERVICE_TOKEN,
+} from '../../../domain/domain-service/interface';
 import { TagEntity, TagName } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
+import { I18nContext } from 'nestjs-i18n';
+import { TagRepository } from '../../../driven-adapter/repository';
+import { TagDuplicateNameException } from '../../../exception';
+import { IllegalArgumentException } from '@beincom/common';
+
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;
   let domainService: ITagDomainService;
@@ -26,15 +32,21 @@ describe('CreateTagHandler', () => {
           useValue: createMock<TagDomainService>(),
         },
         {
-            provide: TAG_REPOSITORY_TOKEN,
-            useValue: createMock<TagRepository>(),
-          },
+          provide: TAG_REPOSITORY_TOKEN,
+          useValue: createMock<TagRepository>(),
+        },
       ],
     }).compile();
 
     handler = module.get<CreateTagHandler>(CreateTagHandler);
     domainService = module.get(TAG_DOMAIN_SERVICE_TOKEN);
     repo = module.get(TAG_REPOSITORY_TOKEN);
+    jest.spyOn(I18nContext, 'current').mockImplementation(
+      () =>
+        ({
+          t: (...,args) => {},
+        } as any)
+    );
   });
 
   afterEach(() => {
@@ -63,8 +75,8 @@ describe('CreateTagHandler', () => {
         groupId: tagRecord.groupId,
         name: tagRecord.name,
         userId: tagRecord.createdBy,
-      })
-      const result = await handler.execute(command)
+      });
+      const result = await handler.execute(command);
 
       expect(repo.findOne).toBeCalledWith({
         name: TagName.fromString(tagRecord.name),
@@ -84,6 +96,53 @@ describe('CreateTagHandler', () => {
         slug: tagEntity.get('slug').value,
         totalUsed: tagEntity.get('totalUsed').value,
       });
+    });
+
+    it('Should throw error when tag name is duplicate', async () => {
+      jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
+
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: tagRecord.name,
+        userId: tagRecord.createdBy,
+      });
+      await expect(handler.execute(command)).rejects.toThrowError(TagDuplicateNameException);
+    });
+
+    it('Should throw error when tag name is empty', async () => {
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: '',
+        userId: tagRecord.createdBy,
+      });
+      await expect(handler.execute(command)).rejects.toThrowError(TagDuplicateNameException);
+    });
+
+    it('Should throw error when tag name is too long', async () => {
+      const command = new CreateTagCommand({
+        groupId: tagRecord.groupId,
+        name: 'a'.repeat(256),
+        userId: tagRecord.createdBy,
+      });
+      await expect(handler.execute(command)).rejects.toThrowError(IllegalArgumentException);
+    });
+
+    it('Should throw error when group id is empty', async () => {
+      const command = new CreateTagCommand({
+        groupId: '',
+        name: tagRecord.name,
+        userId: tagRecord.createdBy,
+      });
+      await expect(handler.execute(command)).rejects.toThrowError(IllegalArgumentException);
+    });
+
+    it('Should throw error when group id is invalid', async () => {
+      const command = new CreateTagCommand({
+        groupId: 'invalid',
+        name: tagRecord.name,
+        userId: tagRecord.createdBy,
+      });
+      await expect(handler.execute(command)).rejects.toThrowError(IllegalArgumentException);
     });
   });
 });
