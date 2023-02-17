@@ -24,6 +24,7 @@ import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
 import { GetPostsByParamsDto } from '../dto/requests/get-posts-by-params.dto';
 import { TagService } from '../../tag/tag.service';
+import { ArticleResponseDto } from '../../article/dto/responses';
 
 @Injectable()
 export class PostAppService {
@@ -170,19 +171,7 @@ export class PostAppService {
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     if (post.status === PostStatus.PUBLISHED) return post;
 
-    await this._authorityService.checkPostOwner(post, user.id);
-    const { audience, setting } = post;
-    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
-
-    const groupIds = audience.groups.map((group) => group.id);
-    const isEnableSetting =
-      setting.isImportant ||
-      setting.canComment === false ||
-      setting.canReact === false ||
-      setting.canShare === false;
-    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
-
-    this._postService.checkContent(post.content, post.media);
+    await this._preCheck(post, user);
 
     const postUpdated = await this._postService.publish(post, user);
     this._feedService.markSeenPosts(postUpdated.id, user.id);
@@ -299,11 +288,34 @@ export class PostAppService {
     }
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
       throw new ForbiddenException({
-        code: HTTP_STATUS_ID.APP_ARTICLE_INVALID_PARAMETER,
+        code: HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER,
         message: 'Invalid series, tags',
         errors: seriesTagErrorData,
       });
     }
     return true;
+  }
+
+  private async _preCheck(post: PostResponseDto, user: UserDto): Promise<void> {
+    await this._authorityService.checkPostOwner(post, user.id);
+
+    const { audience, setting } = post;
+    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
+    const groupIds = audience.groups.map((group) => group.id);
+
+    const isEnableSetting =
+      setting.isImportant ||
+      setting.canComment === false ||
+      setting.canReact === false ||
+      setting.canShare === false;
+    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
+
+    await this.isSeriesAndTagsValid(
+      audience.groups.map((e) => e.id),
+      post.series.map((item) => item.id),
+      post.tags.map((e) => e.id)
+    );
+
+    this._postService.checkContent(post.content, post.media);
   }
 }

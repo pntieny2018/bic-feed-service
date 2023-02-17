@@ -56,6 +56,10 @@ export class PostListener {
       this._sentryService.captureException(e);
     });
 
+    this._tagService
+      .decreaseTotalUsed(post.postTags.map((e) => e.tagId))
+      .catch((ex) => this._logger.debug(ex));
+
     try {
       this._postSearchService.deletePostsToSearch([post]);
 
@@ -187,6 +191,12 @@ export class PostListener {
       },
     ]);
 
+    if (post.tags.length) {
+      this._tagService
+        .increaseTotalUsed(post.tags.map((e) => e.id))
+        .catch((ex) => this._logger.debug(ex));
+    }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -196,6 +206,19 @@ export class PostListener {
       );
     } catch (error) {
       this._sentryService.captureException(error);
+    }
+
+    if (post.series && post.series.length) {
+      for (const sr of post.series) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [post.id],
+            seriesId: sr.id,
+            actor: actor,
+          })
+        );
+      }
     }
   }
 
