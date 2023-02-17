@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -23,6 +23,7 @@ import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
 import { GetPostsByParamsDto } from '../dto/requests/get-posts-by-params.dto';
+import { TagService } from '../../tag/tag.service';
 
 @Injectable()
 export class PostAppService {
@@ -35,7 +36,8 @@ export class PostAppService {
     private _feedService: FeedService,
     private _userService: UserService,
     private _groupService: GroupService,
-    protected authorityService: AuthorityService
+    protected authorityService: AuthorityService,
+    private _tagService: TagService
   ) {}
 
   public getDraftPosts(
@@ -115,7 +117,7 @@ export class PostAppService {
     postId: string,
     updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience, setting } = updatePostDto;
+    const { audience, setting, tags, series } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
@@ -145,6 +147,7 @@ export class PostAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+      await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
     const isUpdated = await this._postService.update(postBefore, user, updatePostDto);
@@ -256,5 +259,51 @@ export class PostAppService {
       user,
       post,
     };
+  }
+
+  public async isSeriesAndTagsValid(
+    groupIds: string[],
+    seriesIds: string[] = [],
+    tagIds: string[] = []
+  ): Promise<boolean> {
+    const seriesTagErrorData = {
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
+    };
+    if (seriesIds.length) {
+      const seriesGroups = await this._postService.getListWithGroupsByIds(seriesIds, true);
+      const invalidSeries = [];
+      seriesGroups.forEach((item) => {
+        const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
+        if (!isValid) {
+          invalidSeries.push(item);
+        }
+      });
+      if (invalidSeries.length) {
+        invalidSeries.forEach((e) => {
+          seriesTagErrorData.seriesIds.push(e.id);
+          seriesTagErrorData.seriesNames.push(e.title);
+        });
+      }
+    }
+    if (tagIds.length) {
+      const invalidTags = await this._tagService.getInvalidTagsByAudience(tagIds, groupIds);
+      if (invalidTags.length) {
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.id);
+          seriesTagErrorData.tagNames.push(e.name);
+        });
+      }
+    }
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.APP_ARTICLE_INVALID_PARAMETER,
+        message: 'Invalid series, tags',
+        errors: seriesTagErrorData,
+      });
+    }
+    return true;
   }
 }

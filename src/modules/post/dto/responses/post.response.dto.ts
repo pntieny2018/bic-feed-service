@@ -4,7 +4,7 @@ import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
-import { ArticleResponseDto } from '../../../article/dto/responses';
+import { ArticleResponseDto, SeriesSimpleResponseDto } from '../../../article/dto/responses';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 import { MediaService } from '../../../media';
@@ -332,6 +332,13 @@ export class PostResponseDto {
   })
   @Expose()
   public isHidden?: boolean;
+
+  @ApiProperty({
+    description: 'Series',
+    type: [SeriesSimpleResponseDto],
+  })
+  @Expose()
+  public series?: SeriesSimpleResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

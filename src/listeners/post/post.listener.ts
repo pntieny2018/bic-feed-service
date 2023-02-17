@@ -22,6 +22,11 @@ import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
+import { ArrayHelper } from '../../common/helpers';
+import { SeriesAddedArticlesEvent } from '../../events/series';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { TagService } from '../../modules/tag/tag.service';
+import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
 export class PostListener {
@@ -36,7 +41,9 @@ export class PostListener {
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _postHistoryService: PostHistoryService,
-    private readonly _filterUserService: FilterUserService
+    private readonly _filterUserService: FilterUserService,
+    private readonly _internalEventEmitter: InternalEventEmitterService,
+    private readonly _tagService: TagService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -220,10 +227,15 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (oldPost.status === PostStatus.PUBLISHED && status !== PostStatus.PUBLISHED) {
+    if (oldPost.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
+        if (tags.length) {
+          this._tagService
+            .decreaseTotalUsed(tags.map((e) => e.id))
+            .catch((ex) => this._logger.debug(ex));
+        }
       });
     }
 
@@ -309,6 +321,38 @@ export class PostListener {
         lang,
       },
     ]);
+
+    if (tags.length !== oldPost.tags.length) {
+      const oldTagIds = oldPost.tags.map((e) => e.id);
+      const newTagIds = tags.map((e) => e.id);
+      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+      if (deleteIds) {
+        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+      }
+      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+      if (addIds) {
+        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
+      }
+    }
+
+    const series = newPost.series?.map((s) => s.id) ?? [];
+
+    if (series && series.length > 0) {
+      const oldSeriesIds = oldPost.series?.map((s) => s.id) ?? [];
+
+      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+
+      for (const seriesId of newSeriesIds) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [newPost.id],
+            seriesId: seriesId,
+            actor: actor,
+          })
+        );
+      }
+    }
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(

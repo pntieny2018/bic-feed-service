@@ -7,7 +7,7 @@ import { CategoryResponseDto } from './category.response.dto';
 import { HashtagResponseDto } from '../../../hashtag/dto/responses/hashtag-response.dto';
 import { TagResponseDto } from '../../../tag/dto/responses/tag-response.dto';
 
-class SeriesSimpleResponseDto {
+export class SeriesSimpleResponseDto {
   @ApiProperty({
     type: String,
   })

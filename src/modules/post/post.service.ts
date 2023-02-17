@@ -59,6 +59,8 @@ import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
+import { TagService } from '../tag/tag.service';
+import { SeriesService } from '../series/series.service';
 
 @Injectable()
 export class PostService {
@@ -103,7 +105,10 @@ export class PostService {
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
+    protected readonly tagService: TagService,
+    @Inject(forwardRef(() => SeriesService))
+    protected readonly seriesService: SeriesService
   ) {}
 
   /**
@@ -490,12 +495,15 @@ export class PostService {
   public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = createPostDto;
+      const { content, media, setting, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-
+      let tagList = [];
+      if (tags) {
+        tagList = await this.tagService.getTagsByIds(tags);
+      }
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
@@ -509,6 +517,7 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
+          tagsJson: tagList,
         },
         { transaction }
       );
@@ -532,6 +541,15 @@ export class PostService {
           transaction
         );
       }
+
+      if (tags) {
+        await this.tagService.addToPost(tags, post.id, transaction);
+      }
+
+      if (series) {
+        await this.seriesService.addToPost(series, post.id, transaction);
+      }
+
       await transaction.commit();
 
       return post;
@@ -574,7 +592,7 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { media, mentions, audience, setting } = updatePostDto;
+      const { media, mentions, audience, setting, tags, series } = updatePostDto;
 
       let mediaListChanged = [];
       if (media) {
@@ -599,6 +617,25 @@ export class PostService {
       if (updatePostDto.linkPreview) {
         const linkPreview = await this.linkPreviewService.upsert(updatePostDto.linkPreview);
         dataUpdate.linkPreviewId = linkPreview?.id || null;
+      }
+
+      if (series) {
+        const filterSeriesExist = await this.postModel.findAll({
+          where: {
+            id: series,
+          },
+        });
+        await this.seriesService.updateToPost(
+          filterSeriesExist.map((series) => series.id),
+          post.id,
+          transaction
+        );
+      }
+
+      if (tags) {
+        const tagList = await this.tagService.getTagsByIds(tags);
+        await this.tagService.updateToPost(tags, post.id, transaction);
+        dataUpdate['tagsJson'] = tagList;
       }
 
       transaction = await this.sequelizeConnection.transaction();
