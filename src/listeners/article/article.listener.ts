@@ -9,9 +9,9 @@ import { PostStatus } from '../../database/models/post.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent
+  ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
-import { SeriesAddedArticlesEvent } from '../../events/series';
+import { SeriesAddedArticlesEvent, SeriesRemovedArticlesEvent } from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -332,6 +332,16 @@ export class ArticleListener {
               articleIds: [newArticle.id],
               seriesId: seriesId,
               actor: actor,
+            })
+          );
+        }
+
+        const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !newSeriesIds.includes(id));
+        for (const seriesId of seriesIdsShouldRemove) {
+          this._internalEventEmitter.emit(
+            new SeriesRemovedArticlesEvent({
+              seriesId,
+              articleIds: [newArticle.id],
             })
           );
         }

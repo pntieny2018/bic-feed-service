@@ -20,6 +20,11 @@ import { Sequelize } from 'sequelize-typescript';
 import { SearchService } from '../../modules/search/search.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
 import { GroupService } from '../../shared/group';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { MediaModel } from '../../database/models/media.model';
+import { CategoryModel } from '../../database/models/category.model';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -273,7 +278,7 @@ export class IndexPostCommand implements CommandRunner {
         successNumber += totalItemsIndexed;
         offset = offset + limitEach;
         total += posts.length;
-        console.log(`Indexed ${totalItemsIndexed}`);
+        console.log(`Indexed ${totalItemsIndexed}/${posts.length}`);
         console.log('-----------------------------------');
         await this.delay(1000);
       }
@@ -283,23 +288,67 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
-    const include = this.postService.getIncludeObj({
-      shouldIncludeCategory: true,
-      shouldIncludeGroup: true,
-      shouldIncludeMedia: true,
-      shouldIncludeMention: true,
-      shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
-      shouldIncludeArticlesInSeries: true,
-    });
-
     const attributes = {
       exclude: ['updatedBy'],
     };
     const rows = await this._postModel.findAll({
-      subQuery: false,
       attributes,
-      include,
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId', 'isArchived'],
+          where: { isArchived: false },
+        },
+        { model: MentionModel, as: 'mentions', required: false },
+        {
+          model: PostModel,
+          as: 'articles',
+          required: false,
+          through: { attributes: ['zindex', 'createdAt'] },
+          attributes: [
+            'id',
+            'title',
+            'summary',
+            'createdBy',
+            'canShare',
+            'canComment',
+            'canReact',
+            'importantExpiredAt',
+          ],
+          where: { status: 'PUBLISHED', isHidden: false },
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: [
+            'id',
+            'url',
+            'size',
+            'extension',
+            'type',
+            'name',
+            'originName',
+            'width',
+            'height',
+            'thumbnails',
+            'status',
+            'mimeType',
+            'createdAt',
+          ],
+        },
+        {
+          model: CategoryModel,
+          as: 'categories',
+          required: false,
+          through: { attributes: [] },
+          attributes: ['id', 'name'],
+        },
+        { model: LinkPreviewModel, as: 'linkPreview', required: false },
+        { model: MediaModel, as: 'coverMedia', required: false },
+      ],
       where: {
         status: PostStatus.PUBLISHED,
         isHidden: false,
