@@ -597,7 +597,6 @@ export class ArticleService extends PostService {
     } else {
       attributes['include'] = [['hashtags_json', 'hashtags']];
     }
-    console.log(JSON.stringify(attributes));
     return attributes;
   }
 
