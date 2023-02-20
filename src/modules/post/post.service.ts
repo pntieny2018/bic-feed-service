@@ -287,8 +287,8 @@ export class PostService {
       include.push(PostModel.loadSaved(options.authUserId));
     }
     include.push(['tags_json', 'tags']);
-    attributes.include = include;
 
+    attributes.include = include;
     return attributes;
   }
 
@@ -1421,10 +1421,18 @@ export class PostService {
           as: 'coverMedia',
           required: false,
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: { isArchived: false },
+        },
       ],
       where: {
         id: ids,
         isHidden: false,
+        status: PostStatus.PUBLISHED,
       },
     });
 
