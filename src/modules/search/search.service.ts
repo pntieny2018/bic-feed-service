@@ -471,7 +471,7 @@ export class SearchService {
     authUser: UserDto,
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
-    const { limit, offset, groupIds, contentSearch } = searchDto;
+    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
     const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<SeriesSearchResponseDto>([], {
@@ -480,18 +480,15 @@ export class SearchService {
         offset,
       });
     }
-    if (!groupIds || groupIds?.length === 0) {
-      return new PageDto<SeriesSearchResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
 
-    const filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+    let filterGroupIds = [];
+    if (groupIds && groupIds.length) {
+      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+    }
     const payload = await this.getPayloadSearchForSeries({
       contentSearch,
       groupIds: filterGroupIds,
+      itemIds,
       limit,
       offset,
     });
@@ -640,6 +637,7 @@ export class SearchService {
   public async getPayloadSearchForSeries(props: {
     contentSearch: string;
     groupIds: string[];
+    itemIds: string[];
     limit: number;
     offset: number;
   }): Promise<{
@@ -648,14 +646,20 @@ export class SearchService {
     from: number;
     size: number;
   }> {
-    const { contentSearch, groupIds, limit, offset } = props;
+    const { contentSearch, groupIds, itemIds, limit, offset } = props;
+    const bool = {
+      must: [],
+      filter: [...this._getTypeFilter(PostType.SERIES)],
+    };
+    if (groupIds.length) {
+      bool.filter.push(...this._getAudienceFilter(groupIds));
+    }
+    if (itemIds.length) {
+      bool.filter.push(...this._getItemInSeriesFilter(groupIds));
+    }
+
     const body: BodyES = {
-      query: {
-        bool: {
-          must: [...this._getMatchPrefixKeyword('title', contentSearch)],
-          filter: [...this._getTypeFilter(PostType.SERIES), ...this._getAudienceFilter(groupIds)],
-        },
-      },
+      query: { bool },
     };
 
     body['sort'] = [...this._getSort(contentSearch)];
@@ -831,11 +835,26 @@ export class SearchService {
 
   private _getAudienceFilter(filterGroupIds: string[]): any {
     const { groupIds } = ELASTIC_POST_MAPPING_PATH;
-    if (groupIds.length) {
+    if (filterGroupIds.length) {
       return [
         {
           terms: {
             [groupIds]: filterGroupIds,
+          },
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  private _getItemInSeriesFilter(filterItemIds: string[]): any {
+    const { items } = ELASTIC_POST_MAPPING_PATH;
+    if (filterItemIds.length) {
+      return [
+        {
+          terms: {
+            [items.id]: filterItemIds,
           },
         },
       ];

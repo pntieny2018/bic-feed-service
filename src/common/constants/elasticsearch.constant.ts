@@ -8,7 +8,7 @@ export const ELASTIC_POST_MAPPING_PATH = {
     name: 'tags.name',
     groupId: 'tags.groupId',
   },
-  articles: {
+  items: {
     id: 'articles.id',
     zindex: 'articles.zindex',
   },
