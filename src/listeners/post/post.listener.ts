@@ -203,7 +203,7 @@ export class PostListener {
       this._feedPublisherService.fanoutOnWrite(
         id,
         audience.groups.map((g) => g.id),
-        [],
+        []
       );
     } catch (error) {
       this._sentryService.captureException(error);
@@ -217,7 +217,7 @@ export class PostListener {
             itemIds: [post.id],
             seriesId: sr.id,
             actor: actor,
-          }),
+          })
         );
       }
     }
