@@ -24,6 +24,7 @@ import { ReactionService } from '../reaction';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
+import { PostService } from '../post/post.service';
 
 @Injectable()
 export class SeriesService {
@@ -60,7 +61,9 @@ export class SeriesService {
     private readonly _feedService: FeedService,
     private readonly _reactionService: ReactionService,
     @Inject(forwardRef(() => ArticleService))
-    private readonly _articleService: ArticleService
+    private readonly _articleService: ArticleService,
+    @Inject(forwardRef(() => PostService))
+    private readonly _postService: PostService
   ) {}
 
   /**
@@ -151,6 +154,7 @@ export class SeriesService {
     });
     result[0]['comments'] = comments;
     result[0].articles = await this._articleService.getArticlesInSeries(id, authUser);
+    result[0].posts = await this._postService.getPostsInSeries(id, authUser);
     return result[0];
   }
   /**
