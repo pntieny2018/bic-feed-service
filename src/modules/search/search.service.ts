@@ -61,7 +61,10 @@ export class SearchService {
     private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
-  public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
+  public async addPostsToSearch(
+    posts: IDataPostToAdd[],
+    defaultIndex?: string
+  ): Promise<{ totalCreated: number; totalUpdated: number }> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
@@ -76,18 +79,13 @@ export class SearchService {
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
-    if (body.length === 0) return 0;
+    if (body.length === 0) return { totalUpdated: 0, totalCreated: 0 };
     try {
-      const res = await this.elasticsearchService.bulk(
-        {
-          refresh: true,
-          body,
-          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        },
-        {
-          maxRetries: 5,
-        }
-      );
+      const res = await this.elasticsearchService.bulk({
+        refresh: true,
+        body,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      });
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
@@ -102,7 +100,16 @@ export class SearchService {
           .catch((err) => this.logger.error(JSON.stringify(err?.stack)));
       }
       await this._updateLangAfterIndexToES(res?.items || [], index);
-      return res.items.filter((item) => !item.index.error).length;
+      let totalCreated = 0;
+      let totalUpdated = 0;
+      res.items.map((item) => {
+        if (item.index.result === 'created') totalCreated++;
+        if (item.index.result === 'updated') totalUpdated++;
+      });
+      return {
+        totalCreated,
+        totalUpdated,
+      };
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
@@ -267,14 +274,14 @@ export class SearchService {
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
-    const articleIds = [];
+    const itemIds = []; //post or article
     const attrUserIds = [];
     const attrGroupIds = [];
     const posts = hits.map((item) => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const { _source: source } = item;
-      if (source.articles && source.articles.length) {
-        articleIds.push(...source.articles.map((article) => article.id));
+      if (source.items && source.items.length) {
+        itemIds.push(...source.items.map((item) => item.id));
       }
       attrUserIds.push(source.createdBy);
       if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
@@ -295,7 +302,7 @@ export class SearchService {
         title: source.title || null,
         summary: source.summary || null,
         categories: source.categories || [],
-        articles: source.articles || [],
+        items: source.items || [],
         tags: source.tags || [],
       };
 
@@ -325,18 +332,20 @@ export class SearchService {
     ]);
 
     let articlesFilterReport = [];
-    const articles = await this.postService.getSimpleArticlessByIds(
-      ArrayHelper.arrayUnique(articleIds)
+    const itemsInSeries = await this.postService.getSimplePostsByIds(
+      ArrayHelper.arrayUnique(itemIds)
     );
-    if (articles.length) {
+    if (itemsInSeries.length) {
       const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
         TargetType.ARTICLE,
+        TargetType.POST,
       ]);
-
       if (articleIdsReported.length) {
-        articlesFilterReport = articles.filter(
+        articlesFilterReport = itemsInSeries.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
+      } else {
+        articlesFilterReport = itemsInSeries;
       }
     }
     const result = this.bindResponseSearch(posts, {
@@ -418,7 +427,12 @@ export class SearchService {
       }
 
       if (post.articles) {
-        post.articles = articles;
+        const bindArticles = [];
+        for (const article of post.articles) {
+          const findArticle = articles.find((item) => item.id === article.id);
+          if (findArticle) bindArticles.push(findArticle);
+        }
+        post.articles = bindArticles;
       }
       if (post.reactionsCount) {
         post.reactionsCount.forEach(
@@ -457,8 +471,8 @@ export class SearchService {
     authUser: UserDto,
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
-    const { limit, offset, groupIds, contentSearch } = searchDto;
-    const user = authUser;
+    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
+    const user = authUser.profile;
     if (!user || user.groups.length === 0) {
       return new PageDto<SeriesSearchResponseDto>([], {
         total: 0,
@@ -466,18 +480,15 @@ export class SearchService {
         offset,
       });
     }
-    if (!groupIds || groupIds?.length === 0) {
-      return new PageDto<SeriesSearchResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
 
-    const filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+    let filterGroupIds = [];
+    if (groupIds && groupIds.length) {
+      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+    }
     const payload = await this.getPayloadSearchForSeries({
       contentSearch,
       groupIds: filterGroupIds,
+      itemIds,
       limit,
       offset,
     });
@@ -626,6 +637,7 @@ export class SearchService {
   public async getPayloadSearchForSeries(props: {
     contentSearch: string;
     groupIds: string[];
+    itemIds: string[];
     limit: number;
     offset: number;
   }): Promise<{
@@ -634,14 +646,20 @@ export class SearchService {
     from: number;
     size: number;
   }> {
-    const { contentSearch, groupIds, limit, offset } = props;
+    const { contentSearch, groupIds, itemIds, limit, offset } = props;
+    const bool = {
+      must: [],
+      filter: [...this._getTypeFilter(PostType.SERIES)],
+    };
+    if (groupIds.length) {
+      bool.filter.push(...this._getAudienceFilter(groupIds));
+    }
+    if (itemIds.length) {
+      bool.filter.push(...this._getItemInSeriesFilter(groupIds));
+    }
+
     const body: BodyES = {
-      query: {
-        bool: {
-          must: [...this._getMatchPrefixKeyword('title', contentSearch)],
-          filter: [...this._getTypeFilter(PostType.SERIES), ...this._getAudienceFilter(groupIds)],
-        },
-      },
+      query: { bool },
     };
 
     body['sort'] = [...this._getSort(contentSearch)];
@@ -817,11 +835,26 @@ export class SearchService {
 
   private _getAudienceFilter(filterGroupIds: string[]): any {
     const { groupIds } = ELASTIC_POST_MAPPING_PATH;
-    if (groupIds.length) {
+    if (filterGroupIds.length) {
       return [
         {
           terms: {
             [groupIds]: filterGroupIds,
+          },
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  private _getItemInSeriesFilter(filterItemIds: string[]): any {
+    const { items } = ELASTIC_POST_MAPPING_PATH;
+    if (filterItemIds.length) {
+      return [
+        {
+          terms: {
+            [items.id]: filterItemIds,
           },
         },
       ];

@@ -36,7 +36,7 @@ export const POST_JA_MAPPING = {
           },
         },
       },
-      articles: {
+      items: {
         properties: {
           id: {
             type: 'keyword',

@@ -20,6 +20,11 @@ import { Sequelize } from 'sequelize-typescript';
 import { SearchService } from '../../modules/search/search.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
 import { GroupService } from '../../shared/group';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { MentionModel } from '../../database/models/mention.model';
+import { MediaModel } from '../../database/models/media.model';
+import { CategoryModel } from '../../database/models/category.model';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -70,6 +75,7 @@ export class IndexPostCommand implements CommandRunner {
     const currentDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
     if (shouldUpdateIndex) {
+      await this._deleteIndex();
       console.log('updating index...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
@@ -82,7 +88,7 @@ export class IndexPostCommand implements CommandRunner {
 
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
-    await this._deleteAllDocuments();
+    //await this._deleteAllDocuments();
     await this._indexPost();
 
     process.exit();
@@ -162,11 +168,12 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 200;
+    const limitEach = 100;
     let offset = 0;
     let hasMore = true;
     let total = 0;
-    let successNumber = 0;
+    let created = 0;
+    let updated = 0;
     const index =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
     while (hasMore) {
@@ -245,7 +252,7 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.articles = post.articles.map((article) => ({
+            item.items = post.items.map((article) => ({
               id: article.id,
               zindex: article['PostSeriesModel'].zindex,
             }));
@@ -266,45 +273,93 @@ export class IndexPostCommand implements CommandRunner {
           }
           insertDataPosts.push(item);
         }
-        const totalItemsIndexed = await this.postSearchService.addPostsToSearch(
+        const { totalCreated, totalUpdated } = await this.postSearchService.addPostsToSearch(
           insertDataPosts,
           index
         );
-        successNumber += totalItemsIndexed;
+        created += totalCreated;
+        updated += totalUpdated;
         offset = offset + limitEach;
         total += posts.length;
-        console.log(`Indexed ${totalItemsIndexed}`);
+        console.log(`Created ${totalCreated}/${posts.length}`);
+        console.log(`Updated ${totalUpdated}/${posts.length}`);
         console.log('-----------------------------------');
         await this.delay(1000);
       }
     }
 
-    console.log(`DONE - index: ${successNumber} / ${total}`);
+    console.log(`Done. Total created: ${created} - total updated: ${updated} / ${total}`);
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
-    const include = this.postService.getIncludeObj({
-      shouldIncludeCategory: true,
-      shouldIncludeGroup: true,
-      shouldIncludeMedia: true,
-      shouldIncludeMention: true,
-      shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
-      shouldIncludeArticlesInSeries: true,
-    });
-
     const attributes = {
       exclude: ['updatedBy'],
     };
     const rows = await this._postModel.findAll({
       attributes,
-      include,
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: false,
+          attributes: ['groupId', 'isArchived'],
+          where: { isArchived: false },
+        },
+        { model: MentionModel, as: 'mentions', required: false },
+        {
+          model: PostModel,
+          as: 'items',
+          required: false,
+          through: { attributes: ['zindex', 'createdAt'] },
+          attributes: [
+            'id',
+            'title',
+            'summary',
+            'createdBy',
+            'canShare',
+            'canComment',
+            'canReact',
+            'importantExpiredAt',
+          ],
+          where: { status: 'PUBLISHED', isHidden: false },
+        },
+        {
+          model: MediaModel,
+          as: 'media',
+          required: false,
+          attributes: [
+            'id',
+            'url',
+            'size',
+            'extension',
+            'type',
+            'name',
+            'originName',
+            'width',
+            'height',
+            'thumbnails',
+            'status',
+            'mimeType',
+            'createdAt',
+          ],
+        },
+        {
+          model: CategoryModel,
+          as: 'categories',
+          required: false,
+          through: { attributes: [] },
+          attributes: ['id', 'name'],
+        },
+        { model: LinkPreviewModel, as: 'linkPreview', required: false },
+        { model: MediaModel, as: 'coverMedia', required: false },
+      ],
       where: {
         status: PostStatus.PUBLISHED,
         isHidden: false,
       },
       offset,
       limit,
+      order: [['createdAt', 'desc']],
     });
     return rows;
   }
@@ -316,5 +371,12 @@ export class IndexPostCommand implements CommandRunner {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     await this.elasticsearchService.deleteByQuery({ index, body: { query: { match_all: {} } } });
     console.log(`Deleted all documents`);
+  }
+
+  private async _deleteIndex(): Promise<void> {
+    const index =
+      this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts*';
+    await this.elasticsearchService.indices.delete({ index });
+    console.log(`Deleted Index`);
   }
 }

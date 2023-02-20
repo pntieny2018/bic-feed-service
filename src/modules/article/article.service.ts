@@ -53,7 +53,7 @@ import {
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
+import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -106,7 +106,7 @@ export class ArticleService extends PostService {
     private readonly _linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
-    private readonly _tagService: TagService
+    protected readonly tagService: TagService
   ) {
     super(
       sequelizeConnection,
@@ -128,48 +128,15 @@ export class ArticleService extends PostService {
       sentryService,
       articleBinding,
       _linkPreviewService,
-      reportContentDetailModel
+      reportContentDetailModel,
+      tagService
     );
   }
 
-  /**
-   * Get article list
-   */
-  public async getList(
-    authUser: UserDto,
-    getArticleListDto: GetListArticlesDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset } = getArticleListDto;
-
-    const articleIdsAndSorted = await this._getArticleIdsWithFilter(getArticleListDto, authUser);
-    if (articleIdsAndSorted.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
-        hasNextPage: false,
-        limit,
-        offset,
-      });
-    }
-    const hasNextPage = articleIdsAndSorted.length === limit + 1;
-    articleIdsAndSorted.pop();
-
-    const jsonarticles = await this._getArticlesByIds(articleIdsAndSorted, authUser);
-    const articles = this.classTransformer.plainToInstance(ArticleResponseDto, jsonarticles, {
-      excludeExtraneousValues: true,
-    });
-    return new PageDto<ArticleResponseDto>(articles, {
-      hasNextPage,
-      limit,
-      offset,
-    });
-  }
-
-  private async _getArticlesByIds(ids: string[], authUser): Promise<IPost[]> {
+  private async _getItemsInSeriesByIds(ids: string[], authUser): Promise<IPost[]> {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
-      shouldIncludeGroup: true,
       shouldIncludeMedia: true,
-      shouldIncludeMention: true,
-      shouldIncludeOwnerReaction: true,
       shouldIncludeCover: true,
       mustIncludeGroup: true,
       authUserId: authUser.id,
@@ -202,11 +169,11 @@ export class ArticleService extends PostService {
     return mappedPosts;
   }
 
-  public async getArticlesInSeries(
+  public async getItemsInSeries(
     seriesId: string,
     authUser: UserDto
-  ): Promise<ArticleInSeriesResponseDto[]> {
-    const articlesInSeries = await this.postSeriesModel.findAll({
+  ): Promise<ItemInSeriesResponseDto[]> {
+    const itemsInSeries = await this.postSeriesModel.findAll({
       where: {
         seriesId,
       },
@@ -216,21 +183,22 @@ export class ArticleService extends PostService {
       ],
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
+    const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
       TargetType.ARTICLE,
+      TargetType.POST,
     ]);
-    const articleIdsSorted = articlesInSeries
-      .filter((article) => !articleIdsReported.includes(article.postId))
-      .map((article) => article.postId);
-    const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
-    const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
+    const articleIdsSorted = itemsInSeries
+      .filter((item) => !postIdsReported.includes(item.postId))
+      .map((item) => item.postId);
+    const items = await this._getItemsInSeriesByIds(articleIdsSorted, authUser);
+    const itemsBindedData = await this.articleBinding.bindRelatedData(items, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
-    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
+    return this.classTransformer.plainToInstance(ItemInSeriesResponseDto, itemsBindedData, {
       excludeExtraneousValues: true,
     });
   }
@@ -514,7 +482,6 @@ export class ArticleService extends PostService {
     if (authUser) {
       condition = {
         id: articleId,
-        type: PostType.ARTICLE,
         [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
       };
     } else {
@@ -592,14 +559,10 @@ export class ArticleService extends PostService {
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = super.getAttributesObj(options);
 
-    if (attributes['includes'] && Array.isArray(attributes['includes'])) {
-      attributes['include'].push([['hashtags_json', 'hashtags']]);
-      attributes['include'].push([['tags_json', 'tags']]);
+    if (attributes['include'] && Array.isArray(attributes['include'])) {
+      attributes['include'].push(['hashtags_json', 'hashtags']);
     } else {
-      attributes['include'] = [
-        ['hashtags_json', 'hashtags'],
-        ['tags_json', 'tags'],
-      ];
+      attributes['include'] = [['hashtags_json', 'hashtags']];
     }
     return attributes;
   }
@@ -642,6 +605,7 @@ export class ArticleService extends PostService {
     const includes: Includeable[] = super.getIncludeObj({
       mustIncludeGroup,
       mustIncludeMedia,
+      mustInSeriesIds,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
       shouldIncludeMention,
@@ -650,42 +614,12 @@ export class ArticleService extends PostService {
       shouldIncludeCategory,
       shouldIncludeCover,
       shouldIncludeArticlesInSeries,
+      shouldIncludeSeries,
       filterMediaIds,
       filterCategoryIds,
       filterGroupIds,
       authUserId,
     });
-
-    if (shouldIncludeSeries) {
-      includes.push({
-        model: PostModel,
-        as: 'series',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'title'],
-        include: [
-          {
-            model: PostGroupModel,
-            required: true,
-            attributes: [],
-            where: { isArchived: false },
-          },
-        ],
-      });
-    }
-    if (mustInSeriesIds) {
-      includes.push({
-        model: PostSeriesModel,
-        required: true,
-        where: {
-          seriesId: mustInSeriesIds,
-        },
-        attributes: ['seriesId', 'zindex', 'createdAt'],
-      });
-    }
-
     return includes;
   }
 
@@ -731,7 +665,7 @@ export class ArticleService extends PostService {
       }
       let tagList = [];
       if (tags) {
-        tagList = await this._tagService.getTagsByIds(tags);
+        tagList = await this.tagService.getTagsByIds(tags);
       }
       const post = await this.postModel.create(
         {
@@ -767,7 +701,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
-        this._tagService.addToPost(tags, post.id, transaction),
+        this.tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -971,8 +905,8 @@ export class ArticleService extends PostService {
         dataUpdate['hashtagsJson'] = hashtagArr;
       }
       if (tags) {
-        const tagList = await this._tagService.getTagsByIds(tags);
-        await this._tagService.updateToPost(tags, post.id, transaction);
+        const tagList = await this.tagService.getTagsByIds(tags);
+        await this.tagService.updateToPost(tags, post.id, transaction);
         dataUpdate['tagsJson'] = tagList;
       }
 

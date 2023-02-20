@@ -7,19 +7,6 @@ import { CategoryResponseDto } from './category.response.dto';
 import { HashtagResponseDto } from '../../../hashtag/dto/responses/hashtag-response.dto';
 import { TagResponseDto } from '../../../tag/dto/responses/tag-response.dto';
 
-class SeriesSimpleResponseDto {
-  @ApiProperty({
-    type: String,
-  })
-  @Expose()
-  public id: string;
-  @ApiProperty({
-    type: String,
-  })
-  @Expose()
-  public title: string;
-}
-
 export class ArticleResponseDto extends PostResponseDto {
   @ApiProperty({
     description: 'Title',
@@ -46,25 +33,11 @@ export class ArticleResponseDto extends PostResponseDto {
   public categories: CategoryResponseDto[];
 
   @ApiProperty({
-    description: 'Series',
-    type: [SeriesSimpleResponseDto],
-  })
-  @Expose()
-  public series: SeriesSimpleResponseDto[];
-
-  @ApiProperty({
     description: 'Hashtags',
     type: [HashtagResponseDto],
   })
   @Expose()
   public hashtags: HashtagResponseDto[];
-
-  @ApiProperty({
-    description: 'tags',
-    type: [TagResponseDto],
-  })
-  @Expose()
-  public tags: TagResponseDto[];
 
   @ApiProperty({
     description: 'isLocked',

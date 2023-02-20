@@ -59,6 +59,9 @@ import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
+import { TagService } from '../tag/tag.service';
+import { ItemInSeriesResponseDto } from '../article/dto/responses';
+import { PostInSeriesResponseDto } from './dto/responses/post-in-series.response.dto';
 
 @Injectable()
 export class PostService {
@@ -103,7 +106,8 @@ export class PostService {
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
+    protected readonly tagService: TagService
   ) {}
 
   /**
@@ -208,6 +212,7 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludePreviewLink: true,
+      shouldIncludeSeries: true,
       authUserId: user?.id || null,
     });
     let condition;
@@ -248,7 +253,6 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-
     const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -282,6 +286,8 @@ export class PostService {
     if (options?.authUserId && options?.loadSaved) {
       include.push(PostModel.loadSaved(options.authUserId));
     }
+    include.push(['tags_json', 'tags']);
+
     attributes.include = include;
     return attributes;
   }
@@ -315,6 +321,7 @@ export class PostService {
   public getIncludeObj({
     mustIncludeGroup = false,
     mustIncludeMedia,
+    mustInSeriesIds,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
@@ -323,6 +330,7 @@ export class PostService {
     shouldIncludePreviewLink,
     shouldIncludeCover,
     shouldIncludeArticlesInSeries,
+    shouldIncludeSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -330,6 +338,7 @@ export class PostService {
   }: {
     mustIncludeGroup?: boolean;
     mustIncludeMedia?: boolean;
+    mustInSeriesIds?: string[];
     shouldIncludeCategory?: boolean;
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
@@ -338,6 +347,7 @@ export class PostService {
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
+    shouldIncludeSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -368,7 +378,7 @@ export class PostService {
     if (shouldIncludeArticlesInSeries) {
       includes.push({
         model: PostModel,
-        as: 'articles',
+        as: 'items',
         required: false,
         through: {
           attributes: ['zindex', 'createdAt'],
@@ -382,6 +392,7 @@ export class PostService {
           'canComment',
           'canReact',
           'importantExpiredAt',
+          'type',
         ],
         where: {
           status: PostStatus.PUBLISHED,
@@ -476,6 +487,37 @@ export class PostService {
 
       includes.push(obj);
     }
+
+    if (shouldIncludeSeries) {
+      includes.push({
+        model: PostModel,
+        as: 'series',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'title'],
+        include: [
+          {
+            model: PostGroupModel,
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
+        ],
+      });
+    }
+
+    if (mustInSeriesIds) {
+      includes.push({
+        model: PostSeriesModel,
+        required: true,
+        where: {
+          seriesId: mustInSeriesIds,
+        },
+        attributes: ['seriesId', 'zindex', 'createdAt'],
+      });
+    }
     return includes;
   }
 
@@ -489,12 +531,15 @@ export class PostService {
   public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = createPostDto;
+      const { content, media, setting, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-
+      let tagList = [];
+      if (tags) {
+        tagList = await this.tagService.getTagsByIds(tags);
+      }
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
@@ -508,6 +553,7 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
+          tagsJson: tagList,
         },
         { transaction }
       );
@@ -531,6 +577,15 @@ export class PostService {
           transaction
         );
       }
+
+      if (tags) {
+        await this.tagService.addToPost(tags, post.id, transaction);
+      }
+
+      if (series) {
+        await this._addSeriesToPost(series, post.id, transaction);
+      }
+
       await transaction.commit();
 
       return post;
@@ -573,7 +628,7 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { media, mentions, audience, setting } = updatePostDto;
+      const { media, mentions, audience, setting, tags, series } = updatePostDto;
 
       let mediaListChanged = [];
       if (media) {
@@ -598,6 +653,25 @@ export class PostService {
       if (updatePostDto.linkPreview) {
         const linkPreview = await this.linkPreviewService.upsert(updatePostDto.linkPreview);
         dataUpdate.linkPreviewId = linkPreview?.id || null;
+      }
+
+      if (series) {
+        const filterSeriesExist = await this.postModel.findAll({
+          where: {
+            id: series,
+          },
+        });
+        await this._updateSeriesToPost(
+          filterSeriesExist.map((series) => series.id),
+          post.id,
+          transaction
+        );
+      }
+
+      if (tags) {
+        const tagList = await this.tagService.getTagsByIds(tags);
+        await this.tagService.updateToPost(tags, post.id, transaction);
+        dataUpdate['tagsJson'] = tagList;
       }
 
       transaction = await this.sequelizeConnection.transaction();
@@ -1317,7 +1391,11 @@ export class PostService {
     return posts.map((post) => post.id);
   }
 
-  public async getPostsByIds(ids: string[], userId: string | null): Promise<IPost[]> {
+  public async getPostsByIds(
+    ids: string[],
+    userId: string | null,
+    isPostOnly = false
+  ): Promise<IPost[]> {
     if (ids.length === 0) return [];
 
     const include = this.getIncludeObj({
@@ -1332,35 +1410,45 @@ export class PostService {
       mustIncludeGroup: true,
       authUserId: userId,
     });
-
-    const attributes = {
-      include: [PostModel.loadMarkReadPost(userId), PostModel.loadSaved(userId)],
+    const conditions = {
+      id: ids,
     };
+
+    if (isPostOnly) {
+      conditions['type'] = PostType.POST;
+    }
+
     const rows = await this.postModel.findAll({
-      attributes,
-      include,
-      where: {
-        id: ids,
+      subQuery: false,
+      attributes: {
+        include: [
+          ['tags_json', 'tags'],
+          PostModel.loadMarkReadPost(userId),
+          PostModel.loadSaved(userId),
+        ],
       },
+      include,
+      where: conditions,
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
+    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [
+      TargetType.ARTICLE,
+      TargetType.POST,
+    ]);
 
     const mappedPosts = [];
     for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
-        postJson.articles = postJson.articles.filter(
-          (article) => !articleIdsReported.includes(article.id)
-        );
+        postJson.items = postJson.items.filter((item) => !articleIdsReported.includes(item.id));
         mappedPosts.push(postJson);
       }
     }
     return mappedPosts;
   }
 
-  public async getSimpleArticlessByIds(ids: string[]): Promise<IPost[]> {
+  public async getSimplePostsByIds(ids: string[]): Promise<IPost[]> {
     if (ids.length === 0) return [];
     const rows = await this.postModel.findAll({
       attributes: [
@@ -1379,10 +1467,18 @@ export class PostService {
           as: 'coverMedia',
           required: false,
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: { isArchived: false },
+        },
       ],
       where: {
         id: ids,
         isHidden: false,
+        status: PostStatus.PUBLISHED,
       },
     });
 
@@ -1662,5 +1758,56 @@ export class PostService {
       posts: affectedPosts,
       mappingPostIdGroupIds: postIndex,
     };
+  }
+
+  private async _addSeriesToPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    if (seriesIds.length === 0) return;
+    const dataCreate = seriesIds.map((seriesId) => ({
+      postId: postId,
+      seriesId,
+    }));
+    await this.postSeriesModel.bulkCreate(dataCreate, { transaction });
+  }
+
+  private async _updateSeriesToPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    const currentSeries = await this.postSeriesModel.findAll({
+      where: { postId },
+    });
+    const currentSeriesIds = currentSeries.map((i) => i.seriesId);
+
+    const deleteSeriesIds = ArrayHelper.arrDifferenceElements(currentSeriesIds, seriesIds);
+    if (deleteSeriesIds.length) {
+      await this.postSeriesModel.destroy({
+        where: { seriesId: deleteSeriesIds, postId },
+        transaction,
+      });
+    }
+
+    const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
+    if (addSeriesIds.length) {
+      const dataInsert = [];
+      for (const seriesId of addSeriesIds) {
+        const maxIndexArticlesInSeries: number = await this.postSeriesModel.max('zindex', {
+          where: {
+            seriesId,
+          },
+        });
+        dataInsert.push({
+          postId,
+          seriesId,
+          zindex: maxIndexArticlesInSeries + 1,
+        });
+      }
+
+      await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
+    }
   }
 }

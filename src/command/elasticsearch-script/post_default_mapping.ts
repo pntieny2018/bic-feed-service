@@ -47,7 +47,7 @@ export const POST_DEFAULT_MAPPING = {
           },
         },
       },
-      articles: {
+      items: {
         properties: {
           id: {
             type: 'keyword',
