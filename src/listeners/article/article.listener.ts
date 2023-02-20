@@ -9,9 +9,9 @@ import { PostStatus } from '../../database/models/post.model';
 import {
   ArticleHasBeenDeletedEvent,
   ArticleHasBeenPublishedEvent,
-  ArticleHasBeenUpdatedEvent
+  ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
-import { SeriesAddedArticlesEvent } from '../../events/series';
+import { SeriesAddedArticlesEvent, SeriesRemovedArticlesEvent } from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -22,6 +22,7 @@ import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
+import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
 
 @Injectable()
 export class ArticleListener {
@@ -130,12 +131,12 @@ export class ArticleListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    this._postServiceHistory
-      .saveEditedHistory(article.id, { oldData: null, newData: article })
-      .catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+    // this._postServiceHistory
+    //   .saveEditedHistory(article.id, { oldData: null, newData: article })
+    //   .catch((e) => {
+    //     this._logger.error(JSON.stringify(e?.stack));
+    //     this._sentryService.captureException(e);
+    //   });
 
     this._postSearchService
       .addPostsToSearch([
@@ -181,10 +182,9 @@ export class ArticleListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [NIL_UUID]
+        []
       );
     } catch (error) {
       this._logger.error(JSON.stringify(error?.stack));
@@ -250,12 +250,12 @@ export class ArticleListener {
     }
 
     if (status !== PostStatus.PUBLISHED) return;
-    this._postServiceHistory
-      .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
-      .catch((e) => {
-        this._logger.debug(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+    // this._postServiceHistory
+    //   .saveEditedHistory(id, { oldData: oldArticle, newData: oldArticle })
+    //   .catch((e) => {
+    //     this._logger.debug(JSON.stringify(e?.stack));
+    //     this._sentryService.captureException(e);
+    //   });
 
     this._postSearchService.updatePostsToSearch([
       {
@@ -320,29 +320,32 @@ export class ArticleListener {
       });
 
       const series = newArticle.series?.map((s) => s.id) ?? [];
-
-      if (series.length > 0) {
-        const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
-
-        const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
-
-        for (const seriesId of newSeriesIds) {
-          this._internalEventEmitter.emit(
-            new SeriesAddedArticlesEvent({
-              isAdded: false,
-              articleIds: [newArticle.id],
-              seriesId: seriesId,
-              actor: actor,
-            })
-          );
-        }
+      const oldSeriesIds = oldArticle.series?.map((s) => s.id) ?? [];
+      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+      for (const seriesId of newSeriesIds) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedArticlesEvent({
+            isAdded: false,
+            articleIds: [newArticle.id],
+            seriesId: seriesId,
+            actor: actor,
+          })
+        );
+      }
+      const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !series.includes(id));
+      for (const seriesId of seriesIdsShouldRemove) {
+        this._internalEventEmitter.emit(
+          new SeriesRemovedArticlesEvent({
+            seriesId,
+            articleIds: [newArticle.id],
+          })
+        );
       }
     }
 
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
         oldArticle.audience.groups.map((g) => g.id)

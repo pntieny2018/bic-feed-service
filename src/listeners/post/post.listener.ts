@@ -122,12 +122,12 @@ export class PostListener {
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
-    this._postHistoryService
-      .saveEditedHistory(post.id, { oldData: null, newData: post })
-      .catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+    // this._postHistoryService
+    //   .saveEditedHistory(post.id, { oldData: null, newData: post })
+    //   .catch((e) => {
+    //     this._logger.error(JSON.stringify(e?.stack));
+    //     this._sentryService.captureException(e);
+    //   });
 
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
@@ -181,10 +181,9 @@ export class PostListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
-        [NIL_UUID]
+        []
       );
     } catch (error) {
       this._sentryService.captureException(error);
@@ -227,11 +226,11 @@ export class PostListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    this._postHistoryService
-      .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
-      .catch((e) => {
-        this._sentryService.captureException(e);
-      });
+    // this._postHistoryService
+    //   .saveEditedHistory(id, { oldData: oldPost, newData: newPost })
+    //   .catch((e) => {
+    //     this._sentryService.captureException(e);
+    //   });
 
     const mentionUserIds = [];
     const mentionMap = new Map<string, UserSharedDto>();
@@ -309,7 +308,6 @@ export class PostListener {
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
-        actor.id,
         id,
         audience.groups.map((g) => g.id),
         oldPost.audience.groups.map((g) => g.id)
@@ -333,7 +331,10 @@ export class PostListener {
     await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updateStatus(post.id);
+      this._postService.updateStatus(post.id).catch((e) => {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      });
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -400,10 +401,9 @@ export class PostListener {
       ]);
       try {
         this._feedPublisherService.fanoutOnWrite(
-          actor.id,
           id,
           audience.groups.map((g) => g.id),
-          [NIL_UUID]
+          []
         );
       } catch (error) {
         this._logger.error(JSON.stringify(error?.stack));
@@ -426,7 +426,10 @@ export class PostListener {
     await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updateStatus(post.id);
+      this._postService.updateStatus(post.id).catch((e) => {
+        this._logger.error(JSON.stringify(e?.stack));
+        this._sentryService.captureException(e);
+      });
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -443,10 +446,11 @@ export class PostListener {
   public async onPostsArchivedOrRestoredByGroup(
     event: PostsArchivedOrRestoredByGroupEvent
   ): Promise<void> {
-    for (const post of event.payload.posts) {
-      await this._postSearchService.updateAttributePostToSearch(post, {
+    await this._postSearchService.updateAttributePostsToSearch(
+      event.payload.posts,
+      event.payload.posts.map((post) => ({
         groupIds: event.payload.mappingPostIdGroupIds[post.id],
-      });
-    }
+      }))
+    );
   }
 }

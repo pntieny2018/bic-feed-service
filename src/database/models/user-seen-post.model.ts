@@ -1,5 +1,6 @@
 import { IsUUID } from 'class-validator';
 import {
+  AfterBulkCreate,
   AfterCreate,
   Column,
   CreatedAt,
@@ -38,8 +39,9 @@ export class UserSeenPostModel extends Model implements IUserSeenPost {
   @Column
   public createdAt?: Date;
 
-  @AfterCreate
-  public static async onUserSeenPostCreated(userSeenPost: UserSeenPostModel): Promise<void> {
+  @AfterBulkCreate
+  public static async onUserSeenPostCreated(userSeenPosts: UserSeenPostModel[]): Promise<void> {
+    const userSeenPost = userSeenPosts[0];
     await UserSeenPostModel._updateTotalUsersSeenForPost(
       userSeenPost.sequelize,
       userSeenPost.postId,

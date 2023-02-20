@@ -329,7 +329,7 @@ export class ArticleService extends PostService {
       type: PostType.ARTICLE,
     };
 
-    if (isProcessing !== null) condition['isProcessing'] = isProcessing;
+    if (isProcessing) condition['status'] = PostStatus.PROCESSING;
 
     const result = await this.getsAndCount(condition, order, { limit, offset });
 
@@ -747,7 +747,6 @@ export class ArticleService extends PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
-          isProcessing: false,
           privacy: null,
           hashtagsJson: hashtagArr,
           tagsJson: tagList,
@@ -977,9 +976,6 @@ export class ArticleService extends PostService {
         dataUpdate['tagsJson'] = tagList;
       }
 
-      //if post is draft, isProcessing alway is true
-      if (dataUpdate.isProcessing && post.status === PostStatus.DRAFT)
-        dataUpdate.isProcessing = false;
       await this.postModel.update(dataUpdate, {
         where: {
           id: post.id,

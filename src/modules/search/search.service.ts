@@ -196,6 +196,37 @@ export class SearchService {
     }
   }
 
+  public async updateAttributePostsToSearch(posts: IPost[], dataUpdate: any): Promise<void> {
+    const updateOps = [];
+    posts.forEach((post, indexPost) => {
+      const index = ElasticsearchHelper.getIndexOfPostByLang(post.lang);
+      updateOps.push({
+        update: {
+          _index: index,
+          _id: post.id,
+        },
+      });
+      updateOps.push({
+        doc: dataUpdate[indexPost],
+      });
+    });
+    try {
+      await this.elasticsearchService.bulk(
+        {
+          refresh: true,
+          body: updateOps,
+          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+        },
+        {
+          maxRetries: 5,
+        }
+      );
+    } catch (e) {
+      this.logger.debug(JSON.stringify(e?.stack));
+      this.sentryService.captureException(e);
+    }
+  }
+
   /*
     Search posts, articles, series
   */
@@ -256,6 +287,7 @@ export class SearchService {
         mentionUserIds: source.mentionUserIds,
         type: source.type,
         createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
         createdBy: source.createdBy,
         coverMedia: source.coverMedia ?? null,
         media: source.media || [],
@@ -386,14 +418,12 @@ export class SearchService {
       }
 
       if (post.articles) {
-        post.articles = post.articles.map((article) => {
+        const bindArticles = [];
+        for (const article of post.articles) {
           const findArticle = articles.find((item) => item.id === article.id);
-          if (!findArticle) return article;
-          return {
-            ...article,
-            ...findArticle,
-          };
-        });
+          if (findArticle) bindArticles.push(findArticle);
+        }
+        post.articles = bindArticles;
       }
       if (post.reactionsCount) {
         post.reactionsCount.forEach(

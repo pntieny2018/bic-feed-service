@@ -508,7 +508,6 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
-          isProcessing: false,
         },
         { transaction }
       );
@@ -633,11 +632,13 @@ export class PostService {
           },
         });
         if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.create(
-            {
-              postId: post.id,
-              userId: authUserId,
-            },
+          await this.userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
             { ignoreDuplicates: true, transaction }
           );
         }
@@ -957,6 +958,7 @@ export class PostService {
   }
 
   public async findIdsByGroupId(groupIds: string[], take = 1000): Promise<string[]> {
+    if (groupIds.length === 0) return [];
     try {
       const posts = await this.postModel.findAll({
         attributes: ['id'],
@@ -1335,6 +1337,7 @@ export class PostService {
       include: [PostModel.loadMarkReadPost(userId), PostModel.loadSaved(userId)],
     };
     const rows = await this.postModel.findAll({
+      subQuery: false,
       attributes,
       include,
       where: {
@@ -1377,10 +1380,18 @@ export class PostService {
           as: 'coverMedia',
           required: false,
         },
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: [],
+          where: { isArchived: false },
+        },
       ],
       where: {
         id: ids,
         isHidden: false,
+        status: PostStatus.PUBLISHED,
       },
     });
 
@@ -1517,7 +1528,6 @@ export class PostService {
     const conditions = {
       id: id,
       status: PostStatus.PUBLISHED,
-      isProcessing: false,
     };
 
     if (returning) {

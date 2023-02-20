@@ -170,7 +170,6 @@ export class SeriesService {
           createdBy: authUserId,
           updatedBy: authUserId,
           status: PostStatus.PUBLISHED,
-          isProcessing: false,
           cover: coverMedia.id,
           type: PostType.SERIES,
           privacy,

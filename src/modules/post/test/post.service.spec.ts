@@ -275,7 +275,6 @@ describe('PostService', () => {
       expect(mentionService.create).not.toBeCalled();
       expect(postService.addGroup).toBeCalledTimes(1);
       expect(postModelMock.create.mock.calls[0][0]).toStrictEqual({
-        isDraft: true,
         type: PostType.POST,
         content: mockedCreatePostDto.content,
         createdBy: mockedUserAuth.id,
@@ -285,7 +284,6 @@ describe('PostService', () => {
         canShare: mockedCreatePostDto.setting.canShare,
         canComment: mockedCreatePostDto.setting.canComment,
         canReact: mockedCreatePostDto.setting.canReact,
-        isProcessing: false,
         // privacy: PostPrivacy.OPEN,
         hashtagsJson: [],
       });
@@ -406,7 +404,6 @@ describe('PostService', () => {
       expect(postModelMock.update).toHaveBeenCalledTimes(1);
 
       const [dataUpdate, condition]: any = postModelMock.update.mock.calls[0];
-      expect(dataUpdate.isDraft).toStrictEqual(false);
       expect(condition.where).toStrictEqual({
         id: mockedDataUpdatePost.id,
         createdBy: authUserId,
