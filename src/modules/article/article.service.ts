@@ -164,7 +164,11 @@ export class ArticleService extends PostService {
     });
   }
 
-  private async _getArticlesByIds(ids: string[], authUser): Promise<IPost[]> {
+  private async _getArticlesByIds(
+    ids: string[],
+    authUser,
+    isArticleOnly = false
+  ): Promise<IPost[]> {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
@@ -184,14 +188,18 @@ export class ArticleService extends PostService {
       attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
       attributes.include.push(PostModel.loadSaved(authUser.id));
     }
+    const conditions = {
+      id: ids,
+      isHidden: false,
+      status: PostStatus.PUBLISHED,
+    };
+
+    if (isArticleOnly) conditions['type'] = PostType.ARTICLE;
+
     const rows = await this.postModel.findAll({
       attributes,
       include,
-      where: {
-        id: ids,
-        isHidden: false,
-        status: PostStatus.PUBLISHED,
-      },
+      where: conditions,
     });
 
     const mappedPosts = [];
@@ -223,7 +231,7 @@ export class ArticleService extends PostService {
     const articleIdsSorted = articlesInSeries
       .filter((article) => !articleIdsReported.includes(article.postId))
       .map((article) => article.postId);
-    const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
+    const articles = await this._getArticlesByIds(articleIdsSorted, authUser, true);
     const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindActor: true,
       shouldBindMention: true,
