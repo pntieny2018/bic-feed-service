@@ -250,7 +250,7 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.articles = post.articles.map((article) => ({
+            item.items = post.items.map((article) => ({
               id: article.id,
               zindex: article['PostSeriesModel'].zindex,
             }));
@@ -304,7 +304,7 @@ export class IndexPostCommand implements CommandRunner {
         { model: MentionModel, as: 'mentions', required: false },
         {
           model: PostModel,
-          as: 'articles',
+          as: 'items',
           required: false,
           through: { attributes: ['zindex', 'createdAt'] },
           attributes: [

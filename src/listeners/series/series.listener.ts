@@ -108,7 +108,7 @@ export class SeriesListener {
         isHidden: false,
         communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
-        articles: series.articles.map((article) => ({ id: article.id, zindex: article.zindex })),
+        items: series.items.map((article) => ({ id: article.id, zindex: article.zindex })),
         coverMedia: {
           id: coverMedia.id,
           createdBy: coverMedia.createdBy,
@@ -176,7 +176,7 @@ export class SeriesListener {
       summary,
       title,
       coverMedia,
-      articles,
+      items,
     } = newSeries;
 
     const groupIds = audience.groups.map((group) => group.id);
@@ -194,7 +194,7 @@ export class SeriesListener {
         summary,
         title,
         type: PostType.SERIES,
-        articles: articles.map((article) => ({ id: article.id, zindex: article.zindex })),
+        items: items.map((article) => ({ id: article.id, zindex: article.zindex })),
         coverMedia: {
           id: coverMedia.id,
           url: coverMedia.url,

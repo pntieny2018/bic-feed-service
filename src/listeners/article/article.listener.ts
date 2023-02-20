@@ -11,7 +11,7 @@ import {
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
-import { SeriesAddedArticlesEvent, SeriesRemovedArticlesEvent } from '../../events/series';
+import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -204,9 +204,9 @@ export class ArticleListener {
     if (article.series && article.series.length) {
       for (const sr of article.series) {
         this._internalEventEmitter.emit(
-          new SeriesAddedArticlesEvent({
+          new SeriesAddedItemsEvent({
             isAdded: false,
-            articleIds: [article.id],
+            itemIds: [article.id],
             seriesId: sr.id,
             actor: actor,
           })
@@ -324,9 +324,9 @@ export class ArticleListener {
       const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
       for (const seriesId of newSeriesIds) {
         this._internalEventEmitter.emit(
-          new SeriesAddedArticlesEvent({
+          new SeriesAddedItemsEvent({
             isAdded: false,
-            articleIds: [newArticle.id],
+            itemIds: [newArticle.id],
             seriesId: seriesId,
             actor: actor,
           })
@@ -335,9 +335,9 @@ export class ArticleListener {
       const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !series.includes(id));
       for (const seriesId of seriesIdsShouldRemove) {
         this._internalEventEmitter.emit(
-          new SeriesRemovedArticlesEvent({
+          new SeriesRemovedItemsEvent({
             seriesId,
-            articleIds: [newArticle.id],
+            itemIds: [newArticle.id],
           })
         );
       }

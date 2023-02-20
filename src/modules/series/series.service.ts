@@ -150,7 +150,7 @@ export class SeriesService {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
-    result[0].articles = await this._articleService.getArticlesInSeries(id, authUser);
+    result[0].items = await this._articleService.getItemsInSeries(id, authUser);
     return result[0];
   }
   /**
@@ -333,9 +333,9 @@ export class SeriesService {
   }
 
   /**
-   * Add Article to Series
+   * Add Article/Post to Series
    */
-  public async addArticles(series: IPost, articleIds: string[]): Promise<IPost> {
+  public async addItems(series: IPost, postIds: string[]): Promise<IPost> {
     try {
       const dataInsert = [];
       const maxIndex: number = await this._postSeriesModel.max('zindex', {
@@ -344,11 +344,11 @@ export class SeriesService {
         },
       });
       let zindex = maxIndex || 0;
-      for (const articleId of articleIds) {
+      for (const postId of postIds) {
         zindex += 1;
         dataInsert.push({
           seriesId: series.id,
-          postId: articleId,
+          postId: postId,
           zindex,
         });
       }
@@ -362,15 +362,15 @@ export class SeriesService {
   }
 
   /**
-   * Remove articles From Series
+   * Remove articles/posts From Series
    */
-  public async removeArticles(series: IPost, articleIds: string[]): Promise<void> {
+  public async removeItems(series: IPost, postIds: string[]): Promise<void> {
     try {
-      for (const articleId of articleIds) {
+      for (const postId of postIds) {
         await this._postSeriesModel.destroy({
           where: {
             seriesId: series.id,
-            postId: articleId,
+            postId,
           },
         });
       }
@@ -477,16 +477,16 @@ export class SeriesService {
     return mappedPosts;
   }
 
-  public async reorderArticles(id: string, articleIds: string[]): Promise<void> {
+  public async reorderItems(id: string, postIds: string[]): Promise<void> {
     let zindex = 0;
-    for (const articleId of articleIds) {
+    for (const postId of postIds) {
       await this._postSeriesModel.update(
         {
           zindex,
         },
         {
           where: {
-            postId: articleId,
+            postId,
             seriesId: id,
           },
         }
@@ -499,7 +499,7 @@ export class SeriesService {
     id: string,
     options: {
       withGroups?: boolean;
-      withArticleId?: boolean;
+      withItemId?: boolean;
     }
   ): Promise<IPost> {
     const include = [];
@@ -510,10 +510,10 @@ export class SeriesService {
         attributes: ['groupId'],
       });
     }
-    if (options.withArticleId) {
+    if (options.withItemId) {
       include.push({
         model: PostModel,
-        as: 'articles',
+        as: 'items',
         required: false,
         through: {
           attributes: ['zindex', 'createdAt'],

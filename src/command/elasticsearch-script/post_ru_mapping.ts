@@ -39,7 +39,7 @@ export const POST_RU_MAPPING = {
           },
         },
       },
-      articles: {
+      items: {
         properties: {
           id: {
             type: 'keyword',

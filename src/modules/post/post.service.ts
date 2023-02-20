@@ -369,7 +369,7 @@ export class PostService {
     if (shouldIncludeArticlesInSeries) {
       includes.push({
         model: PostModel,
-        as: 'articles',
+        as: 'items',
         required: false,
         through: {
           attributes: ['zindex', 'createdAt'],
@@ -1349,23 +1349,24 @@ export class PostService {
       },
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
+    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [
+      TargetType.ARTICLE,
+      TargetType.POST,
+    ]);
 
     const mappedPosts = [];
     for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
-        postJson.articles = postJson.articles.filter(
-          (article) => !articleIdsReported.includes(article.id)
-        );
+        postJson.items = postJson.items.filter((item) => !articleIdsReported.includes(item.id));
         mappedPosts.push(postJson);
       }
     }
     return mappedPosts;
   }
 
-  public async getSimpleArticlessByIds(ids: string[]): Promise<IPost[]> {
+  public async getSimplePostsByIds(ids: string[]): Promise<IPost[]> {
     if (ids.length === 0) return [];
     const rows = await this.postModel.findAll({
       attributes: [

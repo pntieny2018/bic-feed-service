@@ -8,7 +8,7 @@ import { IsUUID } from 'class-validator';
 import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { PostType } from '../../../../database/models/post.model';
-import { ArticleInSeriesResponseDto } from '../../../article/dto/responses';
+import { ItemInSeriesResponseDto } from '../../../article/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 
 export class SeriesResponseDto {
@@ -186,11 +186,11 @@ export class SeriesResponseDto {
   public coverMedia?: MediaResponseDto;
 
   @ApiProperty({
-    type: [ArticleInSeriesResponseDto],
-    name: 'articles',
+    type: [ItemInSeriesResponseDto],
+    name: 'items',
   })
   @Expose()
-  public articles?: ArticleInSeriesResponseDto[];
+  public items?: ItemInSeriesResponseDto[];
 
   @ApiProperty({
     description: 'Setting post',

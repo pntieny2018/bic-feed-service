@@ -29,7 +29,7 @@ export const POST_ZH_MAPPING = {
           },
         },
       },
-      articles: {
+      items: {
         properties: {
           id: {
             type: 'keyword',

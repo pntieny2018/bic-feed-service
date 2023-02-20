@@ -267,14 +267,14 @@ export class SearchService {
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
-    const articleIds = [];
+    const itemIds = []; //post or article
     const attrUserIds = [];
     const attrGroupIds = [];
     const posts = hits.map((item) => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const { _source: source } = item;
-      if (source.articles && source.articles.length) {
-        articleIds.push(...source.articles.map((article) => article.id));
+      if (source.items && source.items.length) {
+        itemIds.push(...source.items.map((item) => item.id));
       }
       attrUserIds.push(source.createdBy);
       if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
@@ -295,7 +295,7 @@ export class SearchService {
         title: source.title || null,
         summary: source.summary || null,
         categories: source.categories || [],
-        articles: source.articles || [],
+        items: source.items || [],
         tags: source.tags || [],
       };
 
@@ -325,19 +325,20 @@ export class SearchService {
     ]);
 
     let articlesFilterReport = [];
-    const articles = await this.postService.getSimpleArticlessByIds(
-      ArrayHelper.arrayUnique(articleIds)
+    const itemsInSeries = await this.postService.getSimplePostsByIds(
+      ArrayHelper.arrayUnique(itemIds)
     );
-    if (articles.length) {
+    if (itemsInSeries.length) {
       const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
         TargetType.ARTICLE,
+        TargetType.POST,
       ]);
       if (articleIdsReported.length) {
-        articlesFilterReport = articles.filter(
+        articlesFilterReport = itemsInSeries.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
       } else {
-        articlesFilterReport = articles;
+        articlesFilterReport = itemsInSeries;
       }
     }
     const result = this.bindResponseSearch(posts, {

@@ -53,7 +53,7 @@ import {
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { ArticleInSeriesResponseDto, ArticleResponseDto } from './dto/responses';
+import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -132,44 +132,10 @@ export class ArticleService extends PostService {
     );
   }
 
-  /**
-   * Get article list
-   */
-  public async getList(
-    authUser: UserDto,
-    getArticleListDto: GetListArticlesDto
-  ): Promise<PageDto<ArticleResponseDto>> {
-    const { limit, offset } = getArticleListDto;
-
-    const articleIdsAndSorted = await this._getArticleIdsWithFilter(getArticleListDto, authUser);
-    if (articleIdsAndSorted.length === 0) {
-      return new PageDto<ArticleResponseDto>([], {
-        hasNextPage: false,
-        limit,
-        offset,
-      });
-    }
-    const hasNextPage = articleIdsAndSorted.length === limit + 1;
-    articleIdsAndSorted.pop();
-
-    const jsonarticles = await this._getArticlesByIds(articleIdsAndSorted, authUser);
-    const articles = this.classTransformer.plainToInstance(ArticleResponseDto, jsonarticles, {
-      excludeExtraneousValues: true,
-    });
-    return new PageDto<ArticleResponseDto>(articles, {
-      hasNextPage,
-      limit,
-      offset,
-    });
-  }
-
-  private async _getArticlesByIds(ids: string[], authUser): Promise<IPost[]> {
+  private async _getItemsInSeriesByIds(ids: string[], authUser): Promise<IPost[]> {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
-      shouldIncludeGroup: true,
       shouldIncludeMedia: true,
-      shouldIncludeMention: true,
-      shouldIncludeOwnerReaction: true,
       shouldIncludeCover: true,
       mustIncludeGroup: true,
       authUserId: authUser.id,
@@ -202,11 +168,11 @@ export class ArticleService extends PostService {
     return mappedPosts;
   }
 
-  public async getArticlesInSeries(
+  public async getItemsInSeries(
     seriesId: string,
     authUser: UserDto
-  ): Promise<ArticleInSeriesResponseDto[]> {
-    const articlesInSeries = await this.postSeriesModel.findAll({
+  ): Promise<ItemInSeriesResponseDto[]> {
+    const itemsInSeries = await this.postSeriesModel.findAll({
       where: {
         seriesId,
       },
@@ -216,13 +182,14 @@ export class ArticleService extends PostService {
       ],
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
+    const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
       TargetType.ARTICLE,
+      TargetType.POST,
     ]);
-    const articleIdsSorted = articlesInSeries
-      .filter((article) => !articleIdsReported.includes(article.postId))
-      .map((article) => article.postId);
-    const articles = await this._getArticlesByIds(articleIdsSorted, authUser);
+    const articleIdsSorted = itemsInSeries
+      .filter((item) => !postIdsReported.includes(item.postId))
+      .map((item) => item.postId);
+    const articles = await this._getItemsInSeriesByIds(articleIdsSorted, authUser);
     const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
       shouldBindActor: true,
       shouldBindMention: true,
@@ -230,7 +197,7 @@ export class ArticleService extends PostService {
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
-    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, articlesBindedData, {
+    return this.classTransformer.plainToInstance(ItemInSeriesResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
   }
@@ -514,7 +481,6 @@ export class ArticleService extends PostService {
     if (authUser) {
       condition = {
         id: articleId,
-        type: PostType.ARTICLE,
         [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
       };
     } else {
