@@ -106,7 +106,7 @@ export class ArticleService extends PostService {
     private readonly _linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
-    private readonly _tagService: TagService
+    protected readonly tagService: TagService
   ) {
     super(
       sequelizeConnection,
@@ -128,7 +128,8 @@ export class ArticleService extends PostService {
       sentryService,
       articleBinding,
       _linkPreviewService,
-      reportContentDetailModel
+      reportContentDetailModel,
+      tagService
     );
   }
 
@@ -604,6 +605,7 @@ export class ArticleService extends PostService {
     const includes: Includeable[] = super.getIncludeObj({
       mustIncludeGroup,
       mustIncludeMedia,
+      mustInSeriesIds,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
       shouldIncludeMention,
@@ -612,42 +614,12 @@ export class ArticleService extends PostService {
       shouldIncludeCategory,
       shouldIncludeCover,
       shouldIncludeArticlesInSeries,
+      shouldIncludeSeries,
       filterMediaIds,
       filterCategoryIds,
       filterGroupIds,
       authUserId,
     });
-
-    if (shouldIncludeSeries) {
-      includes.push({
-        model: PostModel,
-        as: 'series',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'title'],
-        include: [
-          {
-            model: PostGroupModel,
-            required: true,
-            attributes: [],
-            where: { isArchived: false },
-          },
-        ],
-      });
-    }
-    if (mustInSeriesIds) {
-      includes.push({
-        model: PostSeriesModel,
-        required: true,
-        where: {
-          seriesId: mustInSeriesIds,
-        },
-        attributes: ['seriesId', 'zindex', 'createdAt'],
-      });
-    }
-
     return includes;
   }
 
@@ -693,7 +665,7 @@ export class ArticleService extends PostService {
       }
       let tagList = [];
       if (tags) {
-        tagList = await this._tagService.getTagsByIds(tags);
+        tagList = await this.tagService.getTagsByIds(tags);
       }
       const post = await this.postModel.create(
         {
@@ -729,7 +701,7 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         ),
-        this._tagService.addToPost(tags, post.id, transaction),
+        this.tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
       ]);
@@ -933,8 +905,8 @@ export class ArticleService extends PostService {
         dataUpdate['hashtagsJson'] = hashtagArr;
       }
       if (tags) {
-        const tagList = await this._tagService.getTagsByIds(tags);
-        await this._tagService.updateToPost(tags, post.id, transaction);
+        const tagList = await this.tagService.getTagsByIds(tags);
+        await this.tagService.updateToPost(tags, post.id, transaction);
         dataUpdate['tagsJson'] = tagList;
       }
 

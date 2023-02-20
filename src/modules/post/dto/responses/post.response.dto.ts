@@ -31,6 +31,20 @@ export class CommunityResponseDto {
   @Expose()
   public name: string;
 }
+
+class SeriesSimpleResponseDto {
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public id: string;
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public title: string;
+}
+
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -332,6 +346,13 @@ export class PostResponseDto {
   })
   @Expose()
   public isHidden?: boolean;
+
+  @ApiProperty({
+    description: 'Series',
+    type: [SeriesSimpleResponseDto],
+  })
+  @Expose()
+  public series?: SeriesSimpleResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

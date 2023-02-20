@@ -24,6 +24,7 @@ import { ReactionService } from '../reaction';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
+import { PostService } from '../post/post.service';
 
 @Injectable()
 export class SeriesService {
@@ -50,7 +51,6 @@ export class SeriesService {
 
     @InjectModel(UserMarkReadPostModel)
     private _userMarkReadPostModel: typeof UserMarkReadPostModel,
-
     @InjectModel(PostGroupModel)
     private _postGroupModel: typeof PostGroupModel,
     private _authorityService: AuthorityService,
@@ -60,7 +60,9 @@ export class SeriesService {
     private readonly _feedService: FeedService,
     private readonly _reactionService: ReactionService,
     @Inject(forwardRef(() => ArticleService))
-    private readonly _articleService: ArticleService
+    private readonly _articleService: ArticleService,
+    @Inject(forwardRef(() => PostService))
+    private readonly _postService: PostService
   ) {}
 
   /**
