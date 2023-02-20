@@ -60,7 +60,7 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
-import { ArticleInSeriesResponseDto } from '../article/dto/responses';
+import { ItemInSeriesResponseDto } from '../article/dto/responses';
 import { PostInSeriesResponseDto } from './dto/responses/post-in-series.response.dto';
 
 @Injectable()
@@ -1808,36 +1808,5 @@ export class PostService {
 
       await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
     }
-  }
-
-  public async getPostsInSeries(
-    seriesId: string,
-    authUser: UserDto
-  ): Promise<PostInSeriesResponseDto[]> {
-    const postsInSeries = await this.postSeriesModel.findAll({
-      where: {
-        seriesId,
-      },
-      order: [
-        ['zindex', 'ASC'],
-        ['createdAt', 'ASC'],
-      ],
-    });
-
-    const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [TargetType.POST]);
-    const postIdsSorted = postsInSeries
-      .filter((post) => !postIdsReported.includes(post.postId))
-      .map((post) => post.postId);
-    const posts = await this.getPostsByIds(postIdsSorted, authUser.id, true);
-    const postsBindedData = await this.postBinding.bindRelatedData(posts, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, postsBindedData, {
-      excludeExtraneousValues: true,
-    });
   }
 }
