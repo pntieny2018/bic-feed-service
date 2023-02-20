@@ -352,7 +352,7 @@ export class IndexPostCommand implements CommandRunner {
       where: {
         status: PostStatus.PUBLISHED,
         isHidden: false,
-        type: PostType.SERIES,
+        type: [PostType.SERIES, PostType.ARTICLE],
       },
       offset,
       limit,
