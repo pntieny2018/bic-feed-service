@@ -325,20 +325,27 @@ export class SearchService {
     ]);
 
     let articlesFilterReport = [];
+    this.logger.debug(
+      `[DEBUG_SEARCH articleIds=] ${JSON.stringify(ArrayHelper.arrayUnique(articleIds))}`
+    );
     const articles = await this.postService.getSimpleArticlessByIds(
       ArrayHelper.arrayUnique(articleIds)
     );
+    this.logger.debug(`[DEBUG_SEARCH articles=] ${JSON.stringify(articles)}`);
     if (articles.length) {
       const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
         TargetType.ARTICLE,
       ]);
-
+      this.logger.debug(`[DEBUG_SEARCH articleIdsReported=] ${JSON.stringify(articleIdsReported)}`);
       if (articleIdsReported.length) {
         articlesFilterReport = articles.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
       }
     }
+    this.logger.debug(
+      `[DEBUG_SEARCH articlesFilterReport=] ${JSON.stringify(articlesFilterReport)}`
+    );
     const result = this.bindResponseSearch(posts, {
       groups,
       users,
@@ -419,10 +426,12 @@ export class SearchService {
 
       if (post.articles) {
         const bindArticles = [];
+        this.logger.debug(`[DEBUG_SEARCH post.articles=] ${JSON.stringify(post.articles)}`);
         for (const article of post.articles) {
           const findArticle = articles.find((item) => item.id === article.id);
           if (findArticle) bindArticles.push(findArticle);
         }
+        this.logger.debug(`[DEBUG_SEARCH bindArticles=] ${JSON.stringify(bindArticles)}`);
         post.articles = bindArticles;
       }
       if (post.reactionsCount) {
