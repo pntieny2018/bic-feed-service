@@ -60,7 +60,6 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
-import { SeriesService } from '../series/series.service';
 
 @Injectable()
 export class PostService {
@@ -106,9 +105,7 @@ export class PostService {
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
-    protected readonly tagService: TagService,
-    @Inject(forwardRef(() => SeriesService))
-    protected readonly seriesService: SeriesService
+    protected readonly tagService: TagService
   ) {}
 
   /**
@@ -213,6 +210,7 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludePreviewLink: true,
+      shouldIncludeSeries: true,
       authUserId: user?.id || null,
     });
     let condition;
@@ -321,6 +319,7 @@ export class PostService {
   public getIncludeObj({
     mustIncludeGroup = false,
     mustIncludeMedia,
+    mustInSeriesIds,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
@@ -329,6 +328,7 @@ export class PostService {
     shouldIncludePreviewLink,
     shouldIncludeCover,
     shouldIncludeArticlesInSeries,
+    shouldIncludeSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -336,6 +336,7 @@ export class PostService {
   }: {
     mustIncludeGroup?: boolean;
     mustIncludeMedia?: boolean;
+    mustInSeriesIds?: string[];
     shouldIncludeCategory?: boolean;
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
@@ -344,6 +345,7 @@ export class PostService {
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
+    shouldIncludeSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -482,6 +484,37 @@ export class PostService {
 
       includes.push(obj);
     }
+
+    if (shouldIncludeSeries) {
+      includes.push({
+        model: PostModel,
+        as: 'series',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'title'],
+        include: [
+          {
+            model: PostGroupModel,
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
+        ],
+      });
+    }
+
+    if (mustInSeriesIds) {
+      includes.push({
+        model: PostSeriesModel,
+        required: true,
+        where: {
+          seriesId: mustInSeriesIds,
+        },
+        attributes: ['seriesId', 'zindex', 'createdAt'],
+      });
+    }
     return includes;
   }
 
@@ -547,7 +580,7 @@ export class PostService {
       }
 
       if (series) {
-        await this.seriesService.addToPost(series, post.id, transaction);
+        await this._addSeriesToPost(series, post.id, transaction);
       }
 
       await transaction.commit();
@@ -625,7 +658,7 @@ export class PostService {
             id: series,
           },
         });
-        await this.seriesService.updateToPost(
+        await this._updateSeriesToPost(
           filterSeriesExist.map((series) => series.id),
           post.id,
           transaction
@@ -1712,5 +1745,56 @@ export class PostService {
       posts: affectedPosts,
       mappingPostIdGroupIds: postIndex,
     };
+  }
+
+  private async _addSeriesToPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    if (seriesIds.length === 0) return;
+    const dataCreate = seriesIds.map((seriesId) => ({
+      postId: postId,
+      seriesId,
+    }));
+    await this.postSeriesModel.bulkCreate(dataCreate, { transaction });
+  }
+
+  private async _updateSeriesToPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    const currentSeries = await this.postSeriesModel.findAll({
+      where: { postId },
+    });
+    const currentSeriesIds = currentSeries.map((i) => i.seriesId);
+
+    const deleteSeriesIds = ArrayHelper.arrDifferenceElements(currentSeriesIds, seriesIds);
+    if (deleteSeriesIds.length) {
+      await this.postSeriesModel.destroy({
+        where: { seriesId: deleteSeriesIds, postId },
+        transaction,
+      });
+    }
+
+    const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
+    if (addSeriesIds.length) {
+      const dataInsert = [];
+      for (const seriesId of addSeriesIds) {
+        const maxIndexArticlesInSeries: number = await this.postSeriesModel.max('zindex', {
+          where: {
+            seriesId,
+          },
+        });
+        dataInsert.push({
+          postId,
+          seriesId,
+          zindex: maxIndexArticlesInSeries + 1,
+        });
+      }
+
+      await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
+    }
   }
 }

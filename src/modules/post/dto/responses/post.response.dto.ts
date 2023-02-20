@@ -4,7 +4,7 @@ import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserSharedDto } from '../../../../shared/user/dto';
-import { ArticleResponseDto, SeriesSimpleResponseDto } from '../../../article/dto/responses';
+import { ArticleResponseDto } from '../../../article/dto/responses';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 import { MediaService } from '../../../media';
@@ -31,6 +31,20 @@ export class CommunityResponseDto {
   @Expose()
   public name: string;
 }
+
+class SeriesSimpleResponseDto {
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public id: string;
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public title: string;
+}
+
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',

@@ -101,7 +101,7 @@ export class ArticleService extends PostService {
     protected readonly articleBinding: ArticleBindingService,
     private readonly _hashtagService: HashtagService,
     @Inject(forwardRef(() => SeriesService))
-    protected readonly seriesService: SeriesService,
+    private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
     private readonly _linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
@@ -129,8 +129,7 @@ export class ArticleService extends PostService {
       articleBinding,
       _linkPreviewService,
       reportContentDetailModel,
-      tagService,
-      seriesService
+      tagService
     );
   }
 
@@ -640,6 +639,7 @@ export class ArticleService extends PostService {
     const includes: Includeable[] = super.getIncludeObj({
       mustIncludeGroup,
       mustIncludeMedia,
+      mustInSeriesIds,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
       shouldIncludeMention,
@@ -648,42 +648,12 @@ export class ArticleService extends PostService {
       shouldIncludeCategory,
       shouldIncludeCover,
       shouldIncludeArticlesInSeries,
+      shouldIncludeSeries,
       filterMediaIds,
       filterCategoryIds,
       filterGroupIds,
       authUserId,
     });
-
-    if (shouldIncludeSeries) {
-      includes.push({
-        model: PostModel,
-        as: 'series',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'title'],
-        include: [
-          {
-            model: PostGroupModel,
-            required: true,
-            attributes: [],
-            where: { isArchived: false },
-          },
-        ],
-      });
-    }
-    if (mustInSeriesIds) {
-      includes.push({
-        model: PostSeriesModel,
-        required: true,
-        where: {
-          seriesId: mustInSeriesIds,
-        },
-        attributes: ['seriesId', 'zindex', 'createdAt'],
-      });
-    }
-
     return includes;
   }
 
@@ -759,7 +729,7 @@ export class ArticleService extends PostService {
       }
 
       await Promise.all([
-        this.seriesService.addToPost(series, post.id, transaction),
+        this._seriesService.addToPost(series, post.id, transaction),
         this._hashtagService.addToPost(
           hashtagArr.map((h) => h.id),
           post.id,
@@ -953,7 +923,7 @@ export class ArticleService extends PostService {
             id: series,
           },
         });
-        await this.seriesService.updateToPost(
+        await this._seriesService.updateToPost(
           filterSeriesExist.map((series) => series.id),
           post.id,
           transaction
