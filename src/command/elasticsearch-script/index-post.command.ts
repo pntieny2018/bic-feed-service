@@ -87,7 +87,7 @@ export class IndexPostCommand implements CommandRunner {
 
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
-    //await this._deleteAllDocuments();
+    await this._deleteAllDocuments();
     await this._indexPost();
 
     process.exit();
