@@ -326,7 +326,7 @@ export class PostResponseDto {
     }
     return [];
   })
-  public articles?: ArticleResponseDto[];
+  public items?: ArticleResponseDto[];
 
   @ApiProperty({
     type: [CommunityResponseDto],

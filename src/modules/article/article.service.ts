@@ -190,15 +190,15 @@ export class ArticleService extends PostService {
     const articleIdsSorted = itemsInSeries
       .filter((item) => !postIdsReported.includes(item.postId))
       .map((item) => item.postId);
-    const articles = await this._getItemsInSeriesByIds(articleIdsSorted, authUser);
-    const articlesBindedData = await this.articleBinding.bindRelatedData(articles, {
+    const items = await this._getItemsInSeriesByIds(articleIdsSorted, authUser);
+    const itemsBindedData = await this.articleBinding.bindRelatedData(items, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
-    return this.classTransformer.plainToInstance(ItemInSeriesResponseDto, articlesBindedData, {
+    return this.classTransformer.plainToInstance(ItemInSeriesResponseDto, itemsBindedData, {
       excludeExtraneousValues: true,
     });
   }

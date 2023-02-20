@@ -8,6 +8,7 @@ import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceResponseDto } from '../../../post/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
+import { PostType } from '../../../../database/models/post.model';
 
 export class ItemInSeriesResponseDto {
   @ApiProperty({
@@ -24,6 +25,12 @@ export class ItemInSeriesResponseDto {
   })
   @Expose()
   public title: string;
+
+  @ApiProperty({
+    enum: PostType,
+  })
+  @Expose()
+  public type: PostType;
 
   @ApiProperty({
     type: Boolean,
