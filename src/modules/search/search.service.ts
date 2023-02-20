@@ -61,7 +61,10 @@ export class SearchService {
     private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
-  public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
+  public async addPostsToSearch(
+    posts: IDataPostToAdd[],
+    defaultIndex?: string
+  ): Promise<{ totalCreated: number; totalUpdated: number }> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
@@ -76,18 +79,13 @@ export class SearchService {
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
-    if (body.length === 0) return 0;
+    if (body.length === 0) return { totalUpdated: 0, totalCreated: 0 };
     try {
-      const res = await this.elasticsearchService.bulk(
-        {
-          refresh: true,
-          body,
-          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        },
-        {
-          maxRetries: 5,
-        }
-      );
+      const res = await this.elasticsearchService.bulk({
+        refresh: true,
+        body,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      });
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
@@ -102,7 +100,16 @@ export class SearchService {
           .catch((err) => this.logger.error(JSON.stringify(err?.stack)));
       }
       await this._updateLangAfterIndexToES(res?.items || [], index);
-      return res.items.filter((item) => !item.index.error).length;
+      let totalCreated = 0;
+      let totalUpdated = 0;
+      res.items.map((item) => {
+        if (item.index.result === 'created') totalCreated++;
+        if (item.index.result === 'updated') totalUpdated++;
+      });
+      return {
+        totalCreated,
+        totalUpdated,
+      };
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);

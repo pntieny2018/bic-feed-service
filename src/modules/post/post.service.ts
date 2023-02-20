@@ -392,6 +392,7 @@ export class PostService {
           'canComment',
           'canReact',
           'importantExpiredAt',
+          'type',
         ],
         where: {
           status: PostStatus.PUBLISHED,

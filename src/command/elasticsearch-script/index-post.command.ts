@@ -75,6 +75,7 @@ export class IndexPostCommand implements CommandRunner {
     const currentDate = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
 
     if (shouldUpdateIndex) {
+      await this._deleteIndex();
       console.log('updating index...');
       await this._createNewIndex(`${currentDefaultIndex}_${currentDate}`, POST_DEFAULT_MAPPING);
       await this._createNewIndex(`${currentDefaultIndex}_vi_${currentDate}`, POST_VI_MAPPING);
@@ -87,7 +88,7 @@ export class IndexPostCommand implements CommandRunner {
 
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
-    await this._deleteAllDocuments();
+    //await this._deleteAllDocuments();
     await this._indexPost();
 
     process.exit();
@@ -167,11 +168,12 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 10;
+    const limitEach = 100;
     let offset = 0;
     let hasMore = true;
     let total = 0;
-    let successNumber = 0;
+    let created = 0;
+    let updated = 0;
     const index =
       this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts';
     while (hasMore) {
@@ -271,20 +273,22 @@ export class IndexPostCommand implements CommandRunner {
           }
           insertDataPosts.push(item);
         }
-        const totalItemsIndexed = await this.postSearchService.addPostsToSearch(
+        const { totalCreated, totalUpdated } = await this.postSearchService.addPostsToSearch(
           insertDataPosts,
           index
         );
-        successNumber += totalItemsIndexed;
+        created += totalCreated;
+        updated += totalUpdated;
         offset = offset + limitEach;
         total += posts.length;
-        console.log(`Indexed ${totalItemsIndexed}/${posts.length}`);
+        console.log(`Created ${totalCreated}/${posts.length}`);
+        console.log(`Updated ${totalUpdated}/${posts.length}`);
         console.log('-----------------------------------');
         await this.delay(1000);
       }
     }
 
-    console.log(`DONE - index: ${successNumber} / ${total}`);
+    console.log(`Done. Total created: ${created} - total updated: ${updated} / ${total}`);
   }
 
   private async _getPostsToSync(offset: number, limit: number): Promise<IPost[]> {
@@ -355,6 +359,7 @@ export class IndexPostCommand implements CommandRunner {
       },
       offset,
       limit,
+      order: [['createdAt', 'desc']],
     });
     return rows;
   }
@@ -366,5 +371,12 @@ export class IndexPostCommand implements CommandRunner {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     await this.elasticsearchService.deleteByQuery({ index, body: { query: { match_all: {} } } });
     console.log(`Deleted all documents`);
+  }
+
+  private async _deleteIndex(): Promise<void> {
+    const index =
+      this._configService.get<IElasticsearchConfig>('elasticsearch').namespace + '_posts*';
+    await this.elasticsearchService.indices.delete({ index });
+    console.log(`Deleted Index`);
   }
 }
