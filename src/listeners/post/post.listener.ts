@@ -23,7 +23,7 @@ import { FilterUserService } from '../../modules/filter-user';
 import { UserSharedDto } from '../../shared/user/dto';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 import { ArrayHelper } from '../../common/helpers';
-import { SeriesAddedArticlesEvent } from '../../events/series';
+import { SeriesAddedItemsEvent } from '../../events/series';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { SeriesService } from '../../modules/series/series.service';
@@ -31,6 +31,7 @@ import { SeriesService } from '../../modules/series/series.service';
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
+
   public constructor(
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
@@ -211,9 +212,9 @@ export class PostListener {
     if (post.series && post.series.length) {
       for (const sr of post.series) {
         this._internalEventEmitter.emit(
-          new SeriesAddedArticlesEvent({
+          new SeriesAddedItemsEvent({
             isAdded: false,
-            articleIds: [post.id],
+            itemIds: [post.id],
             seriesId: sr.id,
             actor: actor,
           })
@@ -367,9 +368,9 @@ export class PostListener {
 
       for (const seriesId of newSeriesIds) {
         this._internalEventEmitter.emit(
-          new SeriesAddedArticlesEvent({
+          new SeriesAddedItemsEvent({
             isAdded: false,
-            articleIds: [newPost.id],
+            itemIds: [newPost.id],
             seriesId: seriesId,
             actor: actor,
           })

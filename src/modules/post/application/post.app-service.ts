@@ -29,6 +29,7 @@ import { ArticleResponseDto } from '../../article/dto/responses';
 @Injectable()
 export class PostAppService {
   private _logger = new Logger(PostAppService.name);
+
   public constructor(
     private _postService: PostService,
     private _postHistoryService: PostHistoryService,

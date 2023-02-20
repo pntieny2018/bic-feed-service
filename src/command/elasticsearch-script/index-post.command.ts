@@ -87,7 +87,7 @@ export class IndexPostCommand implements CommandRunner {
 
       await this._updateAlias(currentDefaultIndex, prevVersionDate, currentDate);
     }
-    //await this._deleteAllDocuments();
+    await this._deleteAllDocuments();
     await this._indexPost();
 
     process.exit();
@@ -250,7 +250,7 @@ export class IndexPostCommand implements CommandRunner {
           if (post.type === PostType.SERIES) {
             item.title = post.title;
             item.summary = post.summary;
-            item.articles = post.articles.map((article) => ({
+            item.items = post.items.map((article) => ({
               id: article.id,
               zindex: article['PostSeriesModel'].zindex,
             }));
@@ -304,7 +304,7 @@ export class IndexPostCommand implements CommandRunner {
         { model: MentionModel, as: 'mentions', required: false },
         {
           model: PostModel,
-          as: 'articles',
+          as: 'items',
           required: false,
           through: { attributes: ['zindex', 'createdAt'] },
           attributes: [
@@ -352,7 +352,6 @@ export class IndexPostCommand implements CommandRunner {
       where: {
         status: PostStatus.PUBLISHED,
         isHidden: false,
-        type: [PostType.SERIES, PostType.ARTICLE],
       },
       offset,
       limit,

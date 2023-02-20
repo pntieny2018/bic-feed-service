@@ -19,9 +19,9 @@ import { AuthUser, UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
-import { AddArticlesInSeriesDto } from './dto/requests/add-articles-in-series.dto';
-import { DeleteArticlesInSeriesDto } from './dto/requests/delete-articles-in-series.dto';
-import { ReorderArticlesDto } from './dto/requests/reorder-articles.dto';
+import { AddItemsInSeriesDto } from './dto/requests/add-items-in-series.dto';
+import { DeleteItemsInSeriesDto } from './dto/requests/delete-items-in-series.dto';
+import { ReorderItemsDto } from './dto/requests/reorder-items.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
@@ -111,38 +111,38 @@ export class SeriesController {
   public async reorder(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() reorderArticlesDto: ReorderArticlesDto
+    @Body() reorderItemsDto: ReorderItemsDto
   ): Promise<boolean> {
-    const { articleIds } = reorderArticlesDto;
-    await this._seriesAppService.reorderArticles(id, articleIds, user);
+    const { itemIds } = reorderItemsDto;
+    await this._seriesAppService.reorderItems(id, itemIds, user);
     return true;
   }
 
-  @ApiOperation({ summary: 'Remove article from series' })
+  @ApiOperation({ summary: 'Remove article or post from series' })
   @ApiOkResponse({
     description: 'Remove article successfully',
   })
-  @Delete('/:id/remove-articles')
+  @Delete('/:id/remove-items')
   public async removeArticle(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() deleteArticlesInSeriesDto: DeleteArticlesInSeriesDto,
+    @Body() deleteItemsInSeriesDto: DeleteItemsInSeriesDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    const { articleIds } = deleteArticlesInSeriesDto;
-    await this._seriesAppService.removeArticles(id, articleIds, user);
+    const { itemIds } = deleteItemsInSeriesDto;
+    await this._seriesAppService.removeItems(id, itemIds, user);
   }
 
-  @ApiOperation({ summary: 'Add article into series' })
+  @ApiOperation({ summary: 'Add item into series' })
   @ApiOkResponse({
     description: 'Add article successfully',
   })
   @Put('/:id/add-articles')
   public async addArticle(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() addArticlesInSeriesDto: AddArticlesInSeriesDto,
+    @Body() addItemsInSeriesDto: AddItemsInSeriesDto,
     @AuthUser() user: UserDto
   ): Promise<void> {
-    const { articleIds } = addArticlesInSeriesDto;
-    await this._seriesAppService.addArticles(id, articleIds, user);
+    const { itemIds } = addItemsInSeriesDto;
+    await this._seriesAppService.addItems(id, itemIds, user);
   }
 }

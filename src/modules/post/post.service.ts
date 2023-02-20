@@ -60,7 +60,7 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
-import { ArticleInSeriesResponseDto } from '../article/dto/responses';
+import { ItemInSeriesResponseDto } from '../article/dto/responses';
 import { PostInSeriesResponseDto } from './dto/responses/post-in-series.response.dto';
 
 @Injectable()
@@ -378,7 +378,7 @@ export class PostService {
     if (shouldIncludeArticlesInSeries) {
       includes.push({
         model: PostModel,
-        as: 'articles',
+        as: 'items',
         required: false,
         through: {
           attributes: ['zindex', 'createdAt'],
@@ -1430,23 +1430,24 @@ export class PostService {
       where: conditions,
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
+    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [
+      TargetType.ARTICLE,
+      TargetType.POST,
+    ]);
 
     const mappedPosts = [];
     for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
-        postJson.articles = postJson.articles.filter(
-          (article) => !articleIdsReported.includes(article.id)
-        );
+        postJson.items = postJson.items.filter((item) => !articleIdsReported.includes(item.id));
         mappedPosts.push(postJson);
       }
     }
     return mappedPosts;
   }
 
-  public async getSimpleArticlessByIds(ids: string[]): Promise<IPost[]> {
+  public async getSimplePostsByIds(ids: string[]): Promise<IPost[]> {
     if (ids.length === 0) return [];
     const rows = await this.postModel.findAll({
       attributes: [
@@ -1807,36 +1808,5 @@ export class PostService {
 
       await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
     }
-  }
-
-  public async getPostsInSeries(
-    seriesId: string,
-    authUser: UserDto
-  ): Promise<PostInSeriesResponseDto[]> {
-    const postsInSeries = await this.postSeriesModel.findAll({
-      where: {
-        seriesId,
-      },
-      order: [
-        ['zindex', 'ASC'],
-        ['createdAt', 'ASC'],
-      ],
-    });
-
-    const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [TargetType.POST]);
-    const postIdsSorted = postsInSeries
-      .filter((post) => !postIdsReported.includes(post.postId))
-      .map((post) => post.postId);
-    const posts = await this.getPostsByIds(postIdsSorted, authUser.id, true);
-    const postsBindedData = await this.postBinding.bindRelatedData(posts, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    return this.classTransformer.plainToInstance(ArticleInSeriesResponseDto, postsBindedData, {
-      excludeExtraneousValues: true,
-    });
   }
 }
