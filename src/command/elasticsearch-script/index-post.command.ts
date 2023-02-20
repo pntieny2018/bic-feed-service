@@ -167,7 +167,7 @@ export class IndexPostCommand implements CommandRunner {
   }
 
   private async _indexPost(): Promise<void> {
-    const limitEach = 50;
+    const limitEach = 10;
     let offset = 0;
     let hasMore = true;
     let total = 0;
@@ -280,7 +280,7 @@ export class IndexPostCommand implements CommandRunner {
         total += posts.length;
         console.log(`Indexed ${totalItemsIndexed}/${posts.length}`);
         console.log('-----------------------------------');
-        await this.delay(3000);
+        await this.delay(1000);
       }
     }
 
@@ -352,7 +352,7 @@ export class IndexPostCommand implements CommandRunner {
       where: {
         status: PostStatus.PUBLISHED,
         isHidden: false,
-        type: PostType.SERIES,
+        type: [PostType.SERIES, PostType.ARTICLE],
       },
       offset,
       limit,

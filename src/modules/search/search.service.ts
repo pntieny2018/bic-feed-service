@@ -332,11 +332,12 @@ export class SearchService {
       const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
         TargetType.ARTICLE,
       ]);
-
       if (articleIdsReported.length) {
         articlesFilterReport = articles.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
+      } else {
+        articlesFilterReport = articles;
       }
     }
     const result = this.bindResponseSearch(posts, {
