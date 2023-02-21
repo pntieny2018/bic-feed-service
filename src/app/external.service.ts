@@ -94,4 +94,17 @@ export class ExternalService {
       return {};
     }
   }
+
+  public async canCudTag(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          `${this._groupServiceEndpoint}/internal/users/${userId}/can-cud-tags/${rootGroupId}`
+        )
+      );
+      return response.data.data;
+    } catch (e) {
+      return false;
+    }
+  }
 }
