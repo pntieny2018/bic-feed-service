@@ -652,10 +652,14 @@ export class SearchService {
       must: [],
       filter: [...this._getTypeFilter(PostType.SERIES)],
     };
-    if (groupIds.length) {
+    if (contentSearch) {
+      bool.must = [...this._getMatchPrefixKeyword('title', contentSearch)];
+    }
+
+    if (groupIds && groupIds.length) {
       bool.filter.push(...this._getAudienceFilter(groupIds));
     }
-    if (itemIds.length) {
+    if (itemIds && itemIds.length) {
       bool.filter.push(...this._getItemInSeriesFilter(groupIds));
     }
 
