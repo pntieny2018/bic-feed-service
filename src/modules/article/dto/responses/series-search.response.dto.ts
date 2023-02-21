@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { AudienceResponseDto } from '../../../post/dto/responses';
+import { MediaResponseDto } from '../../../media/dto/response';
 
 export class SeriesSearchResponseDto {
   @ApiProperty({
@@ -22,6 +23,13 @@ export class SeriesSearchResponseDto {
   })
   @Expose()
   public audience: AudienceResponseDto;
+
+  @ApiProperty({
+    type: MediaResponseDto,
+    name: 'cover_media',
+  })
+  @Expose()
+  public coverMedia?: MediaResponseDto;
 
   public constructor(data: Partial<SeriesSearchResponseDto>) {
     Object.assign(this, data);

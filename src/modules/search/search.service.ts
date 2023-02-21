@@ -495,6 +495,7 @@ export class SearchService {
         id: item._source.id,
         groupIds: item._source.groupIds,
         title: item._source.title || null,
+        coverMedia: item._source.coverMedia,
       };
       return source;
     });
