@@ -94,7 +94,7 @@ export class TagService {
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
     const canCreateTag = await this._externalService.canCudTag(authUser.id, createTagDto.groupId);
     if (!canCreateTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_CREATE_PERMISSION);
     }
     const group = await this._groupService.get(createTagDto.groupId);
     if (!group) {
@@ -140,7 +140,7 @@ export class TagService {
     });
     const tag = tags.find((e) => e.id === tagId);
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_UPDATE_PERMISSION);
     }
 
     const canUpdateTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
@@ -176,7 +176,7 @@ export class TagService {
       },
     });
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION);
     }
 
     const canDeleteTag = await this._externalService.canCudTag(tag.createdBy, tag.groupId);
