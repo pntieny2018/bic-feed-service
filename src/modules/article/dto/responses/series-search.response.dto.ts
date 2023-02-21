@@ -19,6 +19,13 @@ export class SeriesSearchResponseDto {
   public title: string;
 
   @ApiProperty({
+    description: 'Summary',
+    type: String,
+  })
+  @Expose()
+  public summary: string;
+
+  @ApiProperty({
     type: AudienceResponseDto,
   })
   @Expose()

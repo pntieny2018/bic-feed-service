@@ -500,6 +500,8 @@ export class SearchService {
         groupIds: item._source.groupIds,
         coverMedia: item._source.coverMedia,
         title: item._source.title || null,
+        coverMedia: item._source.coverMedia,
+        summary: item._source.summary,
       };
       return source;
     });
@@ -652,11 +654,15 @@ export class SearchService {
       must: [],
       filter: [...this._getTypeFilter(PostType.SERIES)],
     };
-    if (groupIds.length) {
+    if (contentSearch) {
+      bool.must = [...this._getMatchPrefixKeyword('title', contentSearch)];
+    }
+
+    if (groupIds && groupIds.length) {
       bool.filter.push(...this._getAudienceFilter(groupIds));
     }
-    if (itemIds.length) {
-      bool.filter.push(...this._getItemInSeriesFilter(groupIds));
+    if (itemIds && itemIds.length) {
+      bool.filter.push(...this._getItemInSeriesFilter(itemIds));
     }
 
     const body: BodyES = {

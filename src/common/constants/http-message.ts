@@ -25,4 +25,10 @@ export const HTTP_MESSAGES = {
   [HTTP_STATUS_ID.APP_TAG_POST_ATTACH]: 'Tag is used',
   [HTTP_STATUS_ID.APP_GROUP_NOT_EXIST]: 'Group id is not existed',
   [HTTP_STATUS_ID.APP_ARTICLE_INVALID_PUBLISHED_AT]: 'Fail schedule',
+  [HTTP_STATUS_ID.APP_TAG_NOT_HAVE_CREATE_PERMISSION]:
+    "Failed to create tag: you don't have permission.",
+  [HTTP_STATUS_ID.APP_TAG_NOT_HAVE_UPDATE_PERMISSION]:
+    "Failed to update tag: you don't have permission.",
+  [HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION]:
+    "Failed to delete tag: you don't have permission.",
 };
