@@ -5,6 +5,6 @@ export type UpdateTagPayload = {
   name: string;
   userId: string;
 };
-export class UpdatetagCommand implements ICommand {
+export class UpdateTagCommand implements ICommand {
   public constructor(public readonly payload: UpdateTagPayload) {}
 }

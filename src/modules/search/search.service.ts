@@ -472,7 +472,7 @@ export class SearchService {
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
     const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<SeriesSearchResponseDto>([], {
         total: 0,
@@ -498,6 +498,7 @@ export class SearchService {
       const source = {
         id: item._source.id,
         groupIds: item._source.groupIds,
+        coverMedia: item._source.coverMedia,
         title: item._source.title || null,
       };
       return source;

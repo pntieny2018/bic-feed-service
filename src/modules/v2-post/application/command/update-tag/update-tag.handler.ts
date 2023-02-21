@@ -8,17 +8,17 @@ import {
 import { TagId, TagName } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
-import { UpdatetagCommand } from './update-tag.command';
+import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
 
-@CommandHandler(UpdatetagCommand)
-export class UpdateTagHandler implements ICommandHandler<UpdatetagCommand, UpdateTagDto> {
+@CommandHandler(UpdateTagCommand)
+export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, UpdateTagDto> {
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
 
-  public async execute(command: UpdatetagCommand): Promise<UpdateTagDto> {
+  public async execute(command: UpdateTagCommand): Promise<UpdateTagDto> {
     const { name, id, userId } = command.payload;
     const tag = await this._tagRepository.findOne({ id: TagId.fromString(id) });
     if (!tag) {

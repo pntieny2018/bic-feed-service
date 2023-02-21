@@ -22,7 +22,7 @@ import { CreateTagDto } from '../../../tag/dto/requests/create-tag.dto';
 import { UserDto } from '../../../v2-user/application';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
-import { UpdatetagCommand } from '../../application/command/update-tag/update-tag.command';
+import { UpdateTagCommand } from '../../application/command/update-tag/update-tag.command';
 import { UpdateTagDto } from '../../application/command/update-tag/update-tag.dto';
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../exception';
@@ -116,8 +116,8 @@ export class TagController {
   ): Promise<TagResponseDto> {
     const { name } = updateTagDto;
     try {
-      const tag = await this._commandBus.execute<UpdatetagCommand, UpdateTagDto>(
-        new UpdatetagCommand({ id: tagId, name, userId: user.id })
+      const tag = await this._commandBus.execute<UpdateTagCommand, UpdateTagDto>(
+        new UpdateTagCommand({ id: tagId, name, userId: user.id })
       );
       return this._classTransformer.plainToInstance(TagResponseDto, tag, {
         excludeExtraneousValues: true,

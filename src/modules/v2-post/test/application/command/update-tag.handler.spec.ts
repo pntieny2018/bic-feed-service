@@ -13,7 +13,7 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { UpdateTagHandler } from '../../../application/command/update-tag/update-tag.handler';
-import { UpdatetagCommand } from '../../../application/command/update-tag/update-tag.command';
+import { UpdateTagCommand } from '../../../application/command/update-tag/update-tag.command';
 import { I18nContext } from 'nestjs-i18n';
 import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
 
@@ -67,7 +67,7 @@ describe('UpdateTagHandler', () => {
         updatedAt: new Date(),
       });
       const newName = 'new name ' + name;
-      const command = new UpdatetagCommand({ id, name: newName, userId: userMock.id });
+      const command = new UpdateTagCommand({ id, name: newName, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
       await handler.execute(command);
       expect(domainService.updateTag).toBeCalledWith(tag, {
@@ -81,7 +81,7 @@ describe('UpdateTagHandler', () => {
       const id = v4();
       const name = StringHelper.randomStr(10);
       const newName = 'new name ' + name;
-      const command = new UpdatetagCommand({ id, name: newName, userId: userMock.id });
+      const command = new UpdateTagCommand({ id, name: newName, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(null);
       await expect(handler.execute(command)).rejects.toThrowError(TagNotFoundException);
     });
@@ -100,7 +100,7 @@ describe('UpdateTagHandler', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      const command = new UpdatetagCommand({ id: v4(), name: name, userId: userMock.id });
+      const command = new UpdateTagCommand({ id: v4(), name: name, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
       await expect(handler.execute(command)).rejects.toThrowError(TagDuplicateNameException);
     });
