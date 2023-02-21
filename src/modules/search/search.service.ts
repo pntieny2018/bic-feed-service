@@ -660,7 +660,7 @@ export class SearchService {
       bool.filter.push(...this._getAudienceFilter(groupIds));
     }
     if (itemIds && itemIds.length) {
-      bool.filter.push(...this._getItemInSeriesFilter(groupIds));
+      bool.filter.push(...this._getItemInSeriesFilter(itemIds));
     }
 
     const body: BodyES = {
