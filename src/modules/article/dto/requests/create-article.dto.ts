@@ -47,7 +47,7 @@ export class CreateArticleDto extends CreatePostDto {
     return value;
   })
   @IsUUID('4', { each: true })
-  @CanUseSeries()
+  // @CanUseSeries()
   public series?: string[] = [];
 
   @ApiProperty({
