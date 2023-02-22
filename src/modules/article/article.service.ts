@@ -853,7 +853,9 @@ export class ArticleService extends PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        dataUpdate['status'] = PostStatus.PROCESSING;
+        if (post.status !== PostStatus.PROCESSING) {
+          dataUpdate['status'] = PostStatus.PROCESSING;
+        }
       }
 
       dataUpdate.linkPreviewId = null;
