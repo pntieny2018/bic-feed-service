@@ -150,6 +150,6 @@ export class UpdatePostDto {
     return value;
   })
   @IsUUID('4', { each: true })
-  @CanUseSeries()
+  // @CanUseSeries()
   public series?: string[] = [];
 }
