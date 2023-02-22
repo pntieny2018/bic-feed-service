@@ -853,7 +853,7 @@ export class ArticleService extends PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        if (post.status !== PostStatus.PROCESSING) {
+        if (post.status !== PostStatus.DRAFT) {
           dataUpdate['status'] = PostStatus.PROCESSING;
         }
       }
