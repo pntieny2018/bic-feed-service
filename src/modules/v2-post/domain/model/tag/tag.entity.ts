@@ -1,50 +1,29 @@
-import { AggregateRoot, CreatedAt, EntityProps, IDomainEvent, UpdatedAt } from '@beincom/domain';
-import { TagId, TagName, TagSlug, TagTotalUsed } from '.';
+import { TagSlug } from '.';
 import { StringHelper } from '../../../../../common/helpers';
-import { GroupId } from '../../../../v2-group/domain/model/group';
-import { UserId } from '../../../../v2-user/domain/model/user';
+import { RULES } from '../../../constant';
+import { AggregateRoot } from '@nestjs/cqrs';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+
 export type TagProps = {
-  groupId: GroupId;
-  name: TagName;
-  createdBy: UserId;
-  updatedBy: UserId;
-  slug: TagSlug;
-  totalUsed: TagTotalUsed;
+  groupId: string;
+  name: string;
+  createdBy: string;
+  updatedBy: string;
+  slug: string;
+  totalUsed: number;
 };
 
-export class TagEntity extends AggregateRoot<TagId, TagProps> {
-  public static TAG_NAME_MAX_LENGTH = 32;
+export class TagEntity extends AggregateRoot {
+  private _props: TagProps;
 
-  protected _id: TagId;
-
-  public constructor(
-    entityProps: EntityProps<TagId, TagProps>,
-    domainEvent: IDomainEvent<unknown>[] = []
-  ) {
-    super(entityProps, domainEvent, { disablePropSetter: false });
-    this._id = entityProps.id;
+  public constructor() {
+    super();
   }
 
   public validate(): void {
-    //
-  }
-
-  public static fromJson(raw: any): TagEntity {
-    const props: EntityProps<TagId, TagProps> = {
-      id: TagId.fromString(raw.id),
-      props: {
-        groupId: GroupId.fromString(raw.groupId),
-        name: TagName.fromString(raw.name),
-        slug: TagSlug.fromString(raw.slug),
-        totalUsed: TagTotalUsed.fromString(raw.totalUsed),
-        createdBy: UserId.fromString(raw.createdBy),
-        updatedBy: UserId.fromString(raw.updatedBy),
-      },
-      createdAt: CreatedAt.fromDateString(raw.createdAt),
-      updatedAt: UpdatedAt.fromDateString(raw.updatedAt),
-    };
-
-    return new TagEntity(props);
+    if (this._props.name.length > RULES.TAG_MAX_NAME) {
+      throw new DomainModelException(`Tag name must not exceed ${RULES.TAG_MAX_NAME} characters`);
+    }
   }
 
   public update(properties: Partial<TagProps>): void {

@@ -33,7 +33,6 @@ export class TagDomainService implements ITagDomainService {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-
     return tagEntity;
   }
 
