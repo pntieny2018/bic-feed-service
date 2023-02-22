@@ -1,7 +1,7 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory';
-import { TagEntity, TagId } from '../model/tag';
+import { TagEntity } from '../model/tag';
 import {
   ITagRepository,
   TAG_REPOSITORY_TOKEN,

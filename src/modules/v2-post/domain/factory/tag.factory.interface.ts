@@ -1,11 +1,9 @@
-import { GroupId } from '../../../v2-group/domain/model/group';
-import { UserId } from '../../../v2-user/domain/model/user';
-import { TagEntity, TagName } from '../model/tag';
+import { TagEntity } from '../model/tag';
 
 export type CreateTagOptions = Readonly<{
-  name: TagName;
-  groupId: GroupId;
-  userId: UserId;
+  name: string;
+  groupId: string;
+  userId: string;
 }>;
 export interface ITagFactory {
   create(options: CreateTagOptions): TagEntity;
