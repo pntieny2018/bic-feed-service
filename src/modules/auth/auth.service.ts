@@ -44,7 +44,7 @@ export class AuthService {
       id: '',
       staffRole: payload['custom:bein_staff_role'],
     });
-    // user.profile = await this._userService.getByValue(user.username);
+    //user.profile = await this._userService.getByValue(user.username);
     user.profile = await this._userHttpService.getUserInfo(user.username);
     if (!user.profile) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);

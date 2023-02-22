@@ -649,11 +649,10 @@ export class PostService {
             m.status === MediaStatus.WAITING_PROCESS ||
             m.status === MediaStatus.PROCESSING ||
             m.status === MediaStatus.FAILED
-        ).length > 0
+        ).length > 0 &&
+        post.status !== PostStatus.DRAFT
       ) {
-        if (post.status !== PostStatus.DRAFT) {
-          dataUpdate['status'] = PostStatus.PROCESSING;
-        }
+        dataUpdate['status'] = PostStatus.PROCESSING;
       }
 
       dataUpdate.linkPreviewId = null;
