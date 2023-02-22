@@ -19,6 +19,7 @@ import { PostHistoryService } from './post-history.service';
 import { PostCronService } from './post-cron.service';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { PostAppService } from './application/post.app-service';
+import { TagModule } from '../tag';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -37,6 +38,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
     forwardRef(() => LinkPreviewModule),
+    TagModule,
   ],
   controllers: [PostController, PostConsumerController],
   providers: [

@@ -14,10 +14,10 @@ import { SeriesModule } from '../modules/series';
 import { ArticleListener } from './article';
 import { ArticleModule } from '../modules/article';
 import {
-  SeriesAddedArticlesListener,
+  SeriesAddedItemsListener,
   SeriesListener,
-  SeriesRemovedArticlesListener,
-  SeriesReorderArticlesListener,
+  SeriesRemovedItemsListener,
+  SeriesReorderItemsListener,
 } from './series';
 import { SearchModule } from '../modules/search';
 import { ReportContentListener } from './report';
@@ -50,9 +50,9 @@ import { FollowModule } from '../modules/follow';
     FollowListener,
     ArticleListener,
     SeriesListener,
-    SeriesAddedArticlesListener,
-    SeriesRemovedArticlesListener,
-    SeriesReorderArticlesListener,
+    SeriesAddedItemsListener,
+    SeriesRemovedItemsListener,
+    SeriesReorderItemsListener,
     ReportContentListener,
   ],
 })

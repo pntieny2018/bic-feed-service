@@ -8,8 +8,9 @@ import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceResponseDto } from '../../../post/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
+import { PostType } from '../../../../database/models/post.model';
 
-export class ArticleInSeriesResponseDto {
+export class ItemInSeriesResponseDto {
   @ApiProperty({
     description: 'Post ID',
     type: String,
@@ -24,6 +25,12 @@ export class ArticleInSeriesResponseDto {
   })
   @Expose()
   public title: string;
+
+  @ApiProperty({
+    enum: PostType,
+  })
+  @Expose()
+  public type: PostType;
 
   @ApiProperty({
     type: Boolean,
@@ -141,7 +148,7 @@ export class ArticleInSeriesResponseDto {
   })
   public setting: PostSettingDto;
 
-  public constructor(data: Partial<ArticleInSeriesResponseDto>) {
+  public constructor(data: Partial<ItemInSeriesResponseDto>) {
     Object.assign(this, data);
   }
 }

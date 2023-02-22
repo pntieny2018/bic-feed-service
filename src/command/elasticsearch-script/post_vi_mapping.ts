@@ -34,7 +34,7 @@ export const POST_VI_MAPPING = {
           },
         },
       },
-      articles: {
+      items: {
         properties: {
           id: {
             type: 'keyword',

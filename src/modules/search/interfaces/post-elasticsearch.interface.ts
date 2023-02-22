@@ -58,7 +58,7 @@ export interface IPostElasticsearch {
   summary?: string;
   content?: string;
   coverMedia?: ICoverMedia;
-  articles?: {
+  items?: {
     id: string;
     zindex: number;
   }[];
@@ -79,7 +79,7 @@ export interface IDataPostToAdd {
   media?: IMedia[];
   mentionUserIds?: string[];
   categories?: { id: string; name: string }[];
-  articles?: { id: string; zindex: number }[];
+  items?: { id: string; zindex: number }[];
   tags?: {
     id: string;
     groupId: string;
