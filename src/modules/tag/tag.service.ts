@@ -140,12 +140,12 @@ export class TagService {
     });
     const tag = tags.find((e) => e.id === tagId);
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_UPDATE_PERMISSION);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
 
     const canUpdateTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
     if (!canUpdateTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_UPDATE_PERMISSION);
     }
 
     if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
@@ -176,12 +176,12 @@ export class TagService {
       },
     });
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
 
     const canDeleteTag = await this._externalService.canCudTag(tag.createdBy, tag.groupId);
     if (!canDeleteTag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION);
     }
     if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);
