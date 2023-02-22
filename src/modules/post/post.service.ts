@@ -148,6 +148,8 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
+      shouldIncludeSeries: true,
+      notRequireMustHaveSeries: true,
     });
     const orderOption = [];
     if (
@@ -159,6 +161,7 @@ export class PostService {
       orderOption.push(['createdAt', order]);
     }
     const rows = await this.postModel.findAll<PostModel>({
+      attributes,
       where: condition,
       include,
       order: orderOption,
@@ -331,6 +334,7 @@ export class PostService {
     shouldIncludeCover,
     shouldIncludeArticlesInSeries,
     shouldIncludeSeries,
+    notRequireMustHaveSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -348,6 +352,7 @@ export class PostService {
     shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
+    notRequireMustHaveSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -497,14 +502,16 @@ export class PostService {
           attributes: [],
         },
         attributes: ['id', 'title'],
-        include: [
-          {
-            model: PostGroupModel,
-            required: true,
-            attributes: [],
-            where: { isArchived: false },
-          },
-        ],
+        include: notRequireMustHaveSeries
+          ? []
+          : [
+              {
+                model: PostGroupModel,
+                required: true,
+                attributes: [],
+                where: { isArchived: false },
+              },
+            ],
       });
     }
 
