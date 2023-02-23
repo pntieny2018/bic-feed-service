@@ -148,8 +148,6 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
-      shouldIncludeSeries: true,
-      notRequireMustHaveSeries: true,
     });
     const orderOption = [];
     if (
@@ -334,7 +332,6 @@ export class PostService {
     shouldIncludeCover,
     shouldIncludeArticlesInSeries,
     shouldIncludeSeries,
-    notRequireMustHaveSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -352,7 +349,6 @@ export class PostService {
     shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
-    notRequireMustHaveSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -502,16 +498,14 @@ export class PostService {
           attributes: [],
         },
         attributes: ['id', 'title'],
-        include: notRequireMustHaveSeries
-          ? []
-          : [
-              {
-                model: PostGroupModel,
-                required: true,
-                attributes: [],
-                where: { isArchived: false },
-              },
-            ],
+        include: [
+          {
+            model: PostGroupModel,
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
+        ],
       });
     }
 
