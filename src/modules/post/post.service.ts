@@ -60,8 +60,6 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
-import { ItemInSeriesResponseDto } from '../article/dto/responses';
-import { PostInSeriesResponseDto } from './dto/responses/post-in-series.response.dto';
 
 @Injectable()
 export class PostService {
@@ -148,8 +146,6 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludeCover: true,
-      shouldIncludeSeries: true,
-      notRequireMustHaveSeries: true,
     });
     const orderOption = [];
     if (
@@ -334,7 +330,6 @@ export class PostService {
     shouldIncludeCover,
     shouldIncludeArticlesInSeries,
     shouldIncludeSeries,
-    notRequireMustHaveSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -352,7 +347,6 @@ export class PostService {
     shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
-    notRequireMustHaveSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -502,16 +496,14 @@ export class PostService {
           attributes: [],
         },
         attributes: ['id', 'title'],
-        include: notRequireMustHaveSeries
-          ? []
-          : [
-              {
-                model: PostGroupModel,
-                required: true,
-                attributes: [],
-                where: { isArchived: false },
-              },
-            ],
+        include: [
+          {
+            model: PostGroupModel,
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
+        ],
       });
     }
 
@@ -651,7 +643,8 @@ export class PostService {
             m.status === MediaStatus.WAITING_PROCESS ||
             m.status === MediaStatus.PROCESSING ||
             m.status === MediaStatus.FAILED
-        ).length > 0
+        ).length > 0 &&
+        post.status === PostStatus.PUBLISHED
       ) {
         dataUpdate['status'] = PostStatus.PROCESSING;
       }
