@@ -22,8 +22,8 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, Creat
   public async execute(command: CreateTagCommand): Promise<CreateTagDto> {
     const { name, groupId, userId } = command.payload;
     const findTagNameInGroup = await this._tagRepository.findOne({
-      groupId: GroupId.fromString(groupId),
-      name: TagName.fromString(name),
+      groupId,
+      name,
     });
     if (findTagNameInGroup) {
       throw new TagDuplicateNameException();

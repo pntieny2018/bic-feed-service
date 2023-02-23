@@ -1,8 +1,13 @@
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../common/helpers';
-import { TagEntity } from '../model/tag';
+import { TagEntity, TagProps } from '../model/tag';
 import { CreateTagOptions } from './tag.factory.interface';
+import { Inject } from '@nestjs/common';
+import { EventPublisher } from '@nestjs/cqrs';
+
 export class TagFactory {
+  @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
+
   public create(options: CreateTagOptions): TagEntity {
     const { name, groupId, userId } = options;
     const now = new Date();
@@ -17,6 +22,10 @@ export class TagFactory {
       createdAt: now,
       updatedAt: now,
     });
-    return tagEntity;
+    return this._eventPublisher.mergeObjectContext(tagEntity);
+  }
+
+  public reconstitute(properties: TagProps): TagEntity {
+    return this._eventPublisher.mergeObjectContext(new TagEntity(properties));
   }
 }

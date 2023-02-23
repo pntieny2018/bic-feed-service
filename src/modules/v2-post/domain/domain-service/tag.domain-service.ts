@@ -54,7 +54,7 @@ export class TagDomainService implements ITagDomainService {
     return tag;
   }
 
-  public async deleteTag(tagId: TagId): Promise<void> {
+  public async deleteTag(tagId: string): Promise<void> {
     try {
       await this._tagRepository.delete(tagId);
     } catch (e) {

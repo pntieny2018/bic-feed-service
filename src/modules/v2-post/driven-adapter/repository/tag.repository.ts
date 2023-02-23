@@ -3,7 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../../../database/models/tag.model';
-import { TagEntity, TagId } from '../../domain/model/tag';
+import { TagEntity } from '../../domain/model/tag';
 import {
   FindAllTagsProps,
   FindOneTagProps,
@@ -21,37 +21,37 @@ export class TagRepository implements ITagRepository {
 
   public async create(data: TagEntity): Promise<void> {
     await this._tagModel.create({
-      id: data.get('id').value,
-      name: data.get('name').value,
-      slug: data.get('slug').value,
-      updatedBy: data.get('updatedBy').value,
-      createdBy: data.get('createdBy').value,
-      groupId: data.get('groupId').value,
-      totalUsed: data.get('totalUsed').value,
+      id: data.get('id'),
+      name: data.get('name'),
+      slug: data.get('slug'),
+      updatedBy: data.get('updatedBy'),
+      createdBy: data.get('createdBy'),
+      groupId: data.get('groupId'),
+      totalUsed: data.get('totalUsed'),
     });
   }
 
   public async update(data: TagEntity): Promise<void> {
     await this._tagModel.update(
       {
-        name: data.get('name').value,
-        slug: data.get('slug').value,
-        updatedBy: data.get('updatedBy').value,
-        createdBy: data.get('createdBy').value,
-        groupId: data.get('groupId').value,
-        totalUsed: data.get('totalUsed').value,
+        name: data.get('name'),
+        slug: data.get('slug'),
+        updatedBy: data.get('updatedBy'),
+        createdBy: data.get('createdBy'),
+        groupId: data.get('groupId'),
+        totalUsed: data.get('totalUsed'),
       },
       {
-        where: { id: data.get('id').value },
+        where: { id: data.get('id') },
       }
     );
   }
 
-  public async delete(id: TagId): Promise<void> {
+  public async delete(id: string): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      await this._postTagModel.destroy({ where: { tagId: id.value }, transaction });
-      await this._tagModel.destroy({ where: { id: id.value }, transaction });
+      await this._postTagModel.destroy({ where: { tagId: id }, transaction });
+      await this._tagModel.destroy({ where: { id: id }, transaction });
       await transaction.commit();
     } catch (e) {
       await transaction.rollback();
@@ -63,13 +63,13 @@ export class TagRepository implements ITagRepository {
   public async findOne(input: FindOneTagProps): Promise<TagEntity> {
     const findOptions: FindOptions = { where: {} };
     if (input.id) {
-      findOptions.where['id'] = input.id.value;
+      findOptions.where['id'] = input.id;
     }
     if (input.name) {
-      findOptions.where['name'] = input.name.value;
+      findOptions.where['name'] = input.name;
     }
     if (input.groupId) {
-      findOptions.where['groupId'] = input.groupId.value;
+      findOptions.where['groupId'] = input.groupId;
     }
     const entity = await this._tagModel.findOne(findOptions);
     return this._modelToEntity(entity);
@@ -77,9 +77,9 @@ export class TagRepository implements ITagRepository {
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
     const { groupIds, name } = input;
-    const condition: any = { groupId: groupIds.map((groupId) => groupId.value) };
+    const condition: any = { groupId: groupIds.map((groupId) => groupId) };
     if (name) {
-      condition.name = name.value.trim().toLowerCase();
+      condition.name = name.trim().toLowerCase();
     }
     const enties = await this._tagModel.findAll({
       where: condition,
@@ -91,6 +91,6 @@ export class TagRepository implements ITagRepository {
 
   private _modelToEntity(model: ITag): TagEntity {
     if (model === null) return null;
-    return TagEntity.fromJson(model);
+    return new TagEntity.fromJson(model);
   }
 }

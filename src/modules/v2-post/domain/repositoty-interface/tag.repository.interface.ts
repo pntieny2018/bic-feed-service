@@ -1,23 +1,26 @@
-import { GroupId } from '../../../v2-group/domain/model/group';
-import { TagEntity, TagId, TagName } from '../model/tag';
+import { TagEntity } from '../model/tag';
 
 export type FindOneTagProps = {
-  name?: TagName;
-  id?: TagId;
-  groupId?: GroupId;
+  name?: string;
+  id?: string;
+  groupId?: string;
 };
 
 export type FindAllTagsProps = {
-  groupIds: GroupId[];
-  name?: TagName;
+  groupIds: string[];
+  name?: string;
 };
 
 export interface ITagRepository {
   findOne(input: FindOneTagProps): Promise<TagEntity>;
+
   findAll(input: FindAllTagsProps): Promise<TagEntity[]>;
+
   update(data: TagEntity): Promise<void>;
+
   create(data: TagEntity): Promise<void>;
-  delete(id: TagId): Promise<void>;
+
+  delete(id: string): Promise<void>;
 }
 
 export const TAG_REPOSITORY_TOKEN = 'TAG_REPOSITORY_TOKEN';
