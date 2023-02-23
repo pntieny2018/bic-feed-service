@@ -7,7 +7,6 @@ import { NotificationModule } from '../notification';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { CommentModule } from '../modules/comment';
 import { MediaModule } from '../modules/media';
-import { FollowListener } from './follow/follow.listener';
 import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { SeriesModule } from '../modules/series';
@@ -47,7 +46,6 @@ import { FollowModule } from '../modules/follow';
     PostListener,
     CommentListener,
     ReactionListener,
-    FollowListener,
     ArticleListener,
     SeriesListener,
     SeriesAddedItemsListener,
