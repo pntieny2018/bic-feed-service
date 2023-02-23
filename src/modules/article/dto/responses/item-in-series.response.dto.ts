@@ -10,6 +10,7 @@ import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
 import { PostType } from '../../../../database/models/post.model';
 import { MediaService } from '../../../media';
+import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
 
 export class ItemInSeriesResponseDto {
   @ApiProperty({
@@ -26,6 +27,19 @@ export class ItemInSeriesResponseDto {
   })
   @Expose()
   public title: string;
+
+  @ApiProperty({
+    description: 'Content',
+    type: String,
+  })
+  @Expose()
+  @Transform(({ obj, value }) => {
+    if (obj.type === PostType.POST && obj.content) {
+      return obj.content.slice(0, 500) + '...';
+    }
+    return null;
+  })
+  public content: string;
 
   @ApiProperty({
     enum: PostType,

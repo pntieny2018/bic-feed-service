@@ -144,7 +144,6 @@ export class ArticleService extends PostService {
 
     const attributes = {
       include: [PostModel.loadSaved(authUser.id)],
-      exclude: ['content'],
     };
     if (authUser) {
       attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
