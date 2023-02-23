@@ -41,13 +41,17 @@ export class FollowService {
       await this._userNewsFeedModel.sequelize.query(
         `
           INSERT INTO ${schema}.${this._userNewsFeedModel.tableName} (user_id, post_id, is_seen_post) 
-          SELECT :userId as user_id, pg.post_id, false as is_seen_post
-          FROM ${schema}.${PostGroupModel.tableName} pg
-          INNER JOIN ${schema}.${PostModel.tableName} p ON p.id = pg.post_id
-          WHERE pg.group_id IN (:groupIds) 
-                AND pg.is_archived = :isArchived 
-                AND p.status = :status
+          SELECT :userId as user_id, p.id as post_id, false as is_seen_post
+          FROM ${schema}.${PostModel.tableName} p
+          WHERE p.status = :status
                 AND p.is_hidden = FALSE
+                AND EXIST (
+                    SELECT post_id
+                    FROM ${schema}.${PostGroupModel.tableName} pg
+                    WHERE pg.group_id IN (:groupIds) 
+                    AND pg.is_archived = :isArchived 
+                    AND pg.post_id = p.id
+                )
           ORDER BY p.created_at DESC
           LIMIT :limit
           ON CONFLICT (user_id, post_id) DO NOTHING
