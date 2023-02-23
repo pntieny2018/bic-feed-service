@@ -616,7 +616,7 @@ export class SearchService {
             ...this._getFilterTime(startTime, endTime),
             ...this._getTagFilter(tagName),
           ],
-          should: [...this._getMatchKeyword(contentSearch)],
+          should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
           minimum_should_match: contentSearch ? 1 : 0,
         },
@@ -885,16 +885,51 @@ export class SearchService {
     return [];
   }
 
-  private _getMatchKeyword(keyword: string): any {
-    if (keyword) {
-      const { content, title, summary } = ELASTIC_POST_MAPPING_PATH;
-      const queryContent = this._getQueryMatchKeyword(content, keyword);
-      const queryTitle = this._getQueryMatchKeyword(title, keyword);
-      const querySummary = this._getQueryMatchKeyword(summary, keyword);
-
-      return [...queryContent, ...querySummary, ...queryTitle];
+  private _getMatchKeyword(type: PostType, keyword: string): any {
+    if (!keyword) return [];
+    let queries;
+    let fields;
+    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
+    const isASCII = StringHelper.isASCII(keyword);
+    if (isASCII) {
+      //En
+      if (type === PostType.POST) {
+        fields = [title.ascii];
+      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
+        fields = [summary.ascii, content.ascii];
+      } else {
+        fields = [title.ascii, summary.ascii, content.ascii];
+      }
+      queries = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields,
+          },
+        },
+      ];
+    } else {
+      //Vi
+      if (type === PostType.POST) {
+        fields = [title.default];
+      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
+        fields = [summary.default, content.default];
+      } else {
+        fields = [title.default, summary.default, content.default];
+      }
+      queries = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields,
+          },
+        },
+      ];
     }
-    return [];
+
+    return queries;
   }
 
   private _getSort(textSearch: string): any {
@@ -905,60 +940,34 @@ export class SearchService {
     }
   }
 
-  private _getQueryMatchKeyword(field: FieldSearch, keyword: string): any[] {
+  private _getQueryMatchKeyword(keyword: string): any[] {
     let queries;
-    const isASCII = this._isASCIIKeyword(keyword);
+    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
+    const isASCII = StringHelper.isASCII(keyword);
     if (isASCII) {
+      //En
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.default, field.ascii],
-            type: 'phrase', //Match pharse with high priority
-          },
-        },
-        {
-          match: {
-            [field.default]: {
-              query: keyword,
-            },
-          },
-        },
-        {
-          match: {
-            [field.ascii]: {
-              query: keyword,
-            },
+            fields: [title.ascii, summary.ascii, content.ascii],
           },
         },
       ];
     } else {
+      //Vi
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.default],
-            type: 'phrase',
-          },
-        },
-        {
-          match: {
-            [field.default]: {
-              query: keyword,
-            },
+            fields: [title.default, summary.default, content.default],
           },
         },
       ];
     }
 
     return queries;
-  }
-
-  private _isASCIIKeyword(keyword: string): boolean {
-    const arrKeywords = keyword.split(' ');
-    const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
-    return isASCII;
   }
 }
