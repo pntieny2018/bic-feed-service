@@ -155,6 +155,7 @@ export class PostService {
       orderOption.push(['createdAt', order]);
     }
     const rows = await this.postModel.findAll<PostModel>({
+      attributes,
       where: condition,
       include,
       order: orderOption,
@@ -589,7 +590,8 @@ export class PostService {
             m.status === MediaStatus.WAITING_PROCESS ||
             m.status === MediaStatus.PROCESSING ||
             m.status === MediaStatus.FAILED
-        ).length > 0
+        ).length > 0 &&
+        post.status === PostStatus.PUBLISHED
       ) {
         dataUpdate['status'] = PostStatus.PROCESSING;
       }

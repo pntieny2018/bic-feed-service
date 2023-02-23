@@ -81,6 +81,9 @@ export const HTTP_STATUS_ID = {
   APP_TAG_NAME_EXISTING: 'app.tag.name_existing.app_error',
   APP_TAG_NOT_EXISTING: 'app.tag.not_existing.app_error',
   APP_TAG_POST_ATTACH: 'app.tag.post_attach.app_error',
+  APP_TAG_NOT_HAVE_CREATE_PERMISSION: 'app.tag.not_have_create_permission.app_error',
+  APP_TAG_NOT_HAVE_UPDATE_PERMISSION: 'app.tag.not_have_update_permission.app_error',
+  APP_TAG_NOT_HAVE_DELETE_PERMISSION: 'app.tag.not_have_delete_permission.app_error',
 
   APP_GROUP_NOT_EXIST: 'app.group.existing.app_error',
 };
