@@ -9,6 +9,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 @Injectable()
 export class UserHttpService {
   private readonly _logger = new Logger(UserHttpService.name);
+
   public constructor(private readonly _httpService: HttpService) {}
 
   public async getUserInfo(username: string): Promise<UserSharedDto> {
