@@ -169,7 +169,7 @@ export class TagService {
     });
   }
 
-  public async delete(tagId: string): Promise<boolean> {
+  public async delete(tagId: string, authUser: UserDto): Promise<boolean> {
     const tag = await this._tagModel.findOne({
       where: {
         id: tagId,
@@ -179,7 +179,7 @@ export class TagService {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
 
-    const canDeleteTag = await this._externalService.canCudTag(tag.createdBy, tag.groupId);
+    const canDeleteTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
     if (!canDeleteTag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION);
     }
