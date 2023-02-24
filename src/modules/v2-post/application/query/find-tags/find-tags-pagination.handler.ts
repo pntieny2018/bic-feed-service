@@ -5,7 +5,6 @@ import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { GroupId } from '../../../../v2-group/domain/model/group';
 import { ITagQuery, TAG_QUERY_TOKEN } from '../../../domain/query-interface';
 import { FindTagsPaginationQuery } from './find-tags-pagination.query';
 import { FindTagsPaginationDto } from './find-tags-pagination.dto';
@@ -27,24 +26,24 @@ export class FindTagsPaginationHandler
     }
     const { rows, total } = await this._tagQuery.getPagination({
       name,
-      groupIds: groupIds.map((groupId) => GroupId.fromString(groupId)),
+      groupIds,
       offset,
       limit,
     });
 
     const rootGroupIds = rows.map((r) => {
-      return r.get('groupId').value;
+      return r.get('groupId');
     });
 
     const groups = await this._getGroupsInfo(rootGroupIds);
     const result = {
       rows: rows.map((row) => ({
-        id: row.get('id').value,
-        name: row.get('name').value,
-        slug: row.get('slug').value,
-        groupId: row.get('groupId').value,
-        totalUsed: row.get('totalUsed').value,
-        groups: groups[row.get('groupId').value],
+        id: row.get('id'),
+        name: row.get('name'),
+        slug: row.get('slug'),
+        groupId: row.get('groupId'),
+        totalUsed: row.get('totalUsed'),
+        groups: groups[row.get('groupId')],
       })),
       total,
     };

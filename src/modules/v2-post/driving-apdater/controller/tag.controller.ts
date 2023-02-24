@@ -125,6 +125,7 @@ export class TagController {
     } catch (e) {
       switch (e.constructor) {
         case TagNotFoundException:
+          throw new NotFoundException(e);
         case TagDuplicateNameException:
         case TagUsedException:
           throw new BadRequestException(e);
@@ -150,6 +151,7 @@ export class TagController {
     } catch (e) {
       switch (e.constructor) {
         case TagNotFoundException:
+          throw new BadRequestException(e);
         case TagUsedException:
           throw new BadRequestException(e);
         default:

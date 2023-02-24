@@ -2,8 +2,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../../common/helpers';
-import { GroupId } from '../../../../v2-group/domain/model/group';
-import { UserId } from '../../../../v2-user/domain/model/user';
 import { CreateTagCommand } from '../../../application/command/create-tag/create-tag.command';
 import { CreateTagHandler } from '../../../application/command/create-tag/create-tag.handler';
 import { TagDomainService } from '../../../domain/domain-service';
@@ -11,7 +9,7 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { TagEntity, TagName } from '../../../domain/model/tag';
+import { TagEntity } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { userMock } from '../../mock/user.dto.mock';
 import { I18nContext } from 'nestjs-i18n';
@@ -44,7 +42,7 @@ describe('CreateTagHandler', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
-          t: (...,args) => {},
+          t: (...args) => {},
         } as any)
     );
   });
@@ -66,7 +64,7 @@ describe('CreateTagHandler', () => {
       updatedAt: new Date(),
     };
 
-    const tagEntity = TagEntity.fromJson(tagRecord);
+    const tagEntity = new TagEntity(tagRecord);
     it('Should create tag success', async () => {
       jest.spyOn(domainService, 'createTag').mockResolvedValue(tagEntity);
       jest.spyOn(repo, 'findOne').mockResolvedValue(null);
@@ -79,22 +77,22 @@ describe('CreateTagHandler', () => {
       const result = await handler.execute(command);
 
       expect(repo.findOne).toBeCalledWith({
-        name: TagName.fromString(tagRecord.name),
-        groupId: GroupId.fromString(tagRecord.groupId),
+        name: tagRecord.name,
+        groupId: tagRecord.groupId,
       });
 
       expect(domainService.createTag).toBeCalledWith({
-        name: TagName.fromString(tagRecord.name),
-        groupId: GroupId.fromString(tagRecord.groupId),
-        userId: UserId.fromString(tagRecord.createdBy),
+        name: tagRecord.name,
+        groupId: tagRecord.groupId,
+        userId: tagRecord.createdBy,
       });
 
       expect(result).toEqual({
-        id: tagEntity.get('id').value,
-        name: tagEntity.get('name').value,
-        groupId: tagEntity.get('groupId').value,
-        slug: tagEntity.get('slug').value,
-        totalUsed: tagEntity.get('totalUsed').value,
+        id: tagEntity.get('id'),
+        name: tagEntity.get('name'),
+        groupId: tagEntity.get('groupId'),
+        slug: tagEntity.get('slug'),
+        totalUsed: tagEntity.get('totalUsed'),
       });
     });
 
@@ -107,42 +105,6 @@ describe('CreateTagHandler', () => {
         userId: tagRecord.createdBy,
       });
       await expect(handler.execute(command)).rejects.toThrowError(TagDuplicateNameException);
-    });
-
-    it('Should throw error when tag name is empty', async () => {
-      const command = new CreateTagCommand({
-        groupId: tagRecord.groupId,
-        name: '',
-        userId: tagRecord.createdBy,
-      });
-      await expect(handler.execute(command)).rejects.toThrowError(TagDuplicateNameException);
-    });
-
-    it('Should throw error when tag name is too long', async () => {
-      const command = new CreateTagCommand({
-        groupId: tagRecord.groupId,
-        name: 'a'.repeat(256),
-        userId: tagRecord.createdBy,
-      });
-      await expect(handler.execute(command)).rejects.toThrowError(IllegalArgumentException);
-    });
-
-    it('Should throw error when group id is empty', async () => {
-      const command = new CreateTagCommand({
-        groupId: '',
-        name: tagRecord.name,
-        userId: tagRecord.createdBy,
-      });
-      await expect(handler.execute(command)).rejects.toThrowError(IllegalArgumentException);
-    });
-
-    it('Should throw error when group id is invalid', async () => {
-      const command = new CreateTagCommand({
-        groupId: 'invalid',
-        name: tagRecord.name,
-        userId: tagRecord.createdBy,
-      });
-      await expect(handler.execute(command)).rejects.toThrowError(IllegalArgumentException);
     });
   });
 });

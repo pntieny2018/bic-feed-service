@@ -24,10 +24,12 @@ describe('TagController', () => {
     command = module.get<CommandBus>(CommandBus);
     query = module.get<QueryBus>(QueryBus);
 
-    jest.spyOn(I18nContext, 'current').mockImplementation(() => ({
-      t: (...args) => {
-,      }
-    } as any));
+    jest.spyOn(I18nContext, 'current').mockImplementation(
+      () =>
+        ({
+          t: (...args) => {},
+        } as any)
+    );
   });
 
   afterEach(() => {
@@ -41,7 +43,7 @@ describe('TagController', () => {
     slug: 'tag-bbbdd12-ddffc-1dddf22',
     totalUsed: 0,
     createdBy: userMock.id,
-    updatedBy: user,Mock.id
+    updatedBy: userMock.id,
   };
 
   describe('Get', () => {
@@ -49,31 +51,30 @@ describe('TagController', () => {
       groupIds: ['452f371c-58c3-45cb-abca-d68c70b82df2'],
       name: 'tag',
       offset: 0,
-      limit: 10,;
-
-    }
+      limit: 10,
+    };
 
     it('Should get tags successfully', async () => {
       jest.spyOn(query, 'execute').mockResolvedValue({ rows: [tagMock], total: 1 });
       const result = await tagController.get(userMock, getTagDto);
       expect(result).toEqual({
- 'list' "list": [
+        list: [
           {
-     'groupId'ro'452f371c-58c3-45cb-abca-d68c70b82df2'b82df2",
-     'id'  'f2e60f9d-4e77-42f6-bb63-007e3a18ec67'18ec67",
-     'name' "'tag bbbdd12 ddffc 1dddf22'dddf22",
-     'slug' "'tag-bbbdd12-ddffc-1dddf22'dddf22",
-     'totalUsed'alU,sed": 0
-    ,      }
+            groupId: '452f371c-58c3-45cb-abca-d68c70b82df2',
+            id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+            name: 'tag bbbdd12 ddffc 1dddf22',
+            slug: 'tag-bbbdd12-ddffc-1dddf22',
+            totalUsed: 0,
+          },
         ],
- 'meta' "meta": {
-   'limit'"limit": 10,
-   'offset'offset": 0,
-   'total'"to,tal": 1
-  ,      }
+        meta: {
+          limit: 10,
+          offset: 0,
+          total: 1,
+        },
       });
-    };);
-  })
+    });
+  });
 
   describe('Create', () => {
     const createTagDto = {
@@ -92,7 +93,7 @@ describe('TagController', () => {
         totalUsed: tagMock.totalUsed,
         createdAt: undefined,
         updatedAt: undefined,
-        groups: un,defined
+        groups: undefined,
       });
     });
 
@@ -125,9 +126,9 @@ describe('TagController', () => {
         totalUsed: tagMock.totalUsed,
         createdAt: undefined,
         updatedAt: undefined,
-        groups: un,defined
-      });;
-    })
+        groups: undefined,
+      });
+    });
 
     it(`Should catch not found exception`, async () => {
       const err = new TagNotFoundException();
@@ -162,14 +163,14 @@ describe('TagController', () => {
 
   describe('Delete', () => {
     const deleteTagDto = {
-      id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67';,
-    }
+      id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+    };
 
     it('Should delete tag successfully', async () => {
       jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
       const result = await tagController.delete(userMock, deleteTagDto.id);
-      expect(result).not.toBeDefined();;
-    })
+      expect(result).not.toBeDefined();
+    });
 
     it(`Should catch not found exception`, async () => {
       const err = new TagNotFoundException();
@@ -189,6 +190,6 @@ describe('TagController', () => {
       } catch (e) {
         expect(e).toEqual(new BadRequestException(err));
       }
-    };);
-  })
+    });
+  });
 });

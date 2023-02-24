@@ -7,7 +7,7 @@ import { UserId } from '../../../../v2-user/domain/model/user';
 import { TagDomainService } from '../../../domain/domain-service';
 import { ITagDomainService } from '../../../domain/domain-service/interface';
 import { ITagFactory, TagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory';
-import { TagEntity, TagId, TagName } from '../../../domain/model/tag';
+import { TagEntity } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
@@ -40,7 +40,7 @@ describe('TagDomainService', () => {
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
-          t: (..,.args) => {},
+          t: (...args) => {},
         } as any)
     );
   });
@@ -61,7 +61,7 @@ describe('TagDomainService', () => {
     updatedAt: new Date(),
   };
 
-  const tagEntity = TagEntity.fromJson(tagRecord);
+  const tagEntity = new TagEntity(tagRecord);
 
   describe('createTag', () => {
     it('Should create tag success', async () => {
@@ -69,14 +69,14 @@ describe('TagDomainService', () => {
       jest.spyOn(repo, 'create').mockResolvedValue(undefined);
 
       const result = await domainService.createTag({
-        name: TagName.fromString(tagRecord.name),
-        groupId: GroupId.fromString(tagRecord.groupId),
-        userId: UserId.fromString(tagRecord.createdBy),
+        name: tagRecord.name,
+        groupId: tagRecord.groupId,
+        userId: tagRecord.createdBy,
       });
       expect(factory.create).toBeCalledWith({
-        name: TagName.fromString(tagRecord.name),
-        groupId: GroupId.fromString(tagRecord.groupId),
-        userId: UserId.fromString(tagRecord.createdBy),
+        name: tagRecord.name,
+        groupId: tagRecord.groupId,
+        userId: tagRecord.createdBy,
       });
 
       expect(repo.create).toBeCalledWith(tagEntity);
@@ -90,9 +90,9 @@ describe('TagDomainService', () => {
       jest.spyOn(repo, 'create').mockRejectedValue(error);
       try {
         await domainService.createTag({
-          name: TagName.fromString(tagRecord.name),
-          groupId: GroupId.fromString(tagRecord.groupId),
-          userId: UserId.fromString(tagRecord.createdBy),
+          name: tagRecord.name,
+          groupId: tagRecord.groupId,
+          userId: tagRecord.createdBy,
         });
       } catch (e) {
         expect(e).toEqual(new DatabaseException());
@@ -107,32 +107,32 @@ describe('TagDomainService', () => {
 
   describe('updateTag', () => {
     it('Should update tag success', async () => {
-      con;st newName = 'dsadasd';
+      const newName = 'dsadasd';
       const tagRecordCopy = { ...tagRecord };
       tagRecordCopy.name = newName;
-      const afterUpdateTag = TagEntity.fromJson(tagRecordCopy);
+      const afterUpdateTag = new TagEntity(tagRecordCopy);
       jest.spyOn(repo, 'update').mockReturnValue(undefined);
 
       const result = await domainService.updateTag(tagEntity, {
-        name: TagName.fromString(newName),
-        id: TagId.fromString(tagRecord.id),
-        userId: UserId.fromString(tagRecord.updatedBy),
+        name: newName,
+        id: tagRecord.id,
+        userId: tagRecord.updatedBy,
       });
-      expect(repo.update).toBeCalled;With(tagEntity);
+      expect(repo.update).toBeCalledWith(tagEntity);
     });
 
     it('Should throw error when tag name is existed', async () => {
-      c;onst newName = 'dsadasd';
+      const newName = 'dsadasd';
       const error = new Error('Tag name is existed');
       jest.spyOn(repo, 'update').mockRejectedValue(error);
       try {
         await domainService.updateTag(tagEntity, {
-          name: TagName.fromString(newName),
-          id: TagId.fromString(tagRecord.id),
-          userId: UserId.fromString(tagRecord.updatedBy),
+          name: newName,
+          id: tagRecord.id,
+          userId: tagRecord.updatedBy,
         });
       } catch (e) {
-        expect(e).toEqual(new DatabaseException;());
+        expect(e).toEqual(new DatabaseException());
       }
     });
   });
@@ -141,16 +141,16 @@ describe('TagDomainService', () => {
     it('Should delete tag success', async () => {
       jest.spyOn(repo, 'delete').mockReturnValue(undefined);
 
-      const result = await domainService.deleteTag(tagEntity.id);
-      expect(repo.delete).toBeCalled;With(tagEntity.id);
+      const result = await domainService.deleteTag(tagEntity.get('id'));
+      expect(repo.delete).toBeCalledWith(tagEntity.get('id'));
     });
 
     it('Should throw error when tag id not exist', async () => {
       jest.spyOn(repo, 'delete').mockRejectedValue(new Error('Tag id not exist'));
       try {
-        await domainService.deleteTag(tagEntity.id);
+        await domainService.deleteTag(tagEntity.get('id'));
       } catch (e) {
-        expect(e).toEqual(new DatabaseE;xcept;ion());
+        expect(e).toEqual(new DatabaseException());
       }
     });
   });

@@ -12,16 +12,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
   public constructor(private _appEnv: string, private _rootPath: string) {}
 
   public catch(exception: Error, host: ArgumentsHost): Response {
+    console.log(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     if (exception instanceof ValidatorException) {
-      console.log('handleValidatorException');
       return this.handleValidatorException(exception, response);
     } else if (exception instanceof HttpException) {
-      console.log('handleHttpException');
       return this.handleHttpException(exception, response);
     } else {
-      console.log('handleUnKnowException');
       Sentry.captureException(exception);
       return this.handleUnKnowException(exception, response);
     }

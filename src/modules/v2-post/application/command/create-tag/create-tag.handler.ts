@@ -6,7 +6,6 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { TagName } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagDuplicateNameException } from '../../../exception';
 import { CreateTagCommand } from './create-tag.command';
@@ -30,17 +29,17 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, Creat
     }
 
     const tagEntity = await this._tagDomainService.createTag({
-      name: TagName.fromString(name),
-      groupId: GroupId.fromString(groupId),
-      userId: UserId.fromString(userId),
+      name,
+      groupId,
+      userId,
     });
 
     return {
-      id: tagEntity.get('id').value,
-      name: tagEntity.get('name').value,
-      groupId: tagEntity.get('groupId').value,
-      slug: tagEntity.get('slug').value,
-      totalUsed: tagEntity.get('totalUsed').value,
+      id: tagEntity.get('id'),
+      name: tagEntity.get('name'),
+      groupId: tagEntity.get('groupId'),
+      slug: tagEntity.get('slug'),
+      totalUsed: tagEntity.get('totalUsed'),
     };
   }
 }

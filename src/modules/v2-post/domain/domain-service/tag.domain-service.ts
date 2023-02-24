@@ -29,6 +29,7 @@ export class TagDomainService implements ITagDomainService {
     });
     try {
       await this._tagRepository.create(tagEntity);
+      tagEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
@@ -44,8 +45,10 @@ export class TagDomainService implements ITagDomainService {
     });
 
     if (tag.isChanged()) {
+      console.log('changed');
       try {
         await this._tagRepository.update(tag);
+        tag.commit();
       } catch (e) {
         this._logger.error(JSON.stringify(e?.stack));
         throw new DatabaseException();

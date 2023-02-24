@@ -62,7 +62,7 @@ describe('FindTagsPaginationHandler', () => {
           updatedAt: new Date(),
         },
       ];
-      const tagEntities = tags.map((tag) => TagEntity.fromJson(tag));
+      const tagEntities = tags.map((tag) => new TagEntity(tag));
       jest.spyOn(tagQuery, 'getPagination').mockResolvedValue({ rows: tagEntities, total: 2 });
       const groupChildrenData = {
         id: v4(),

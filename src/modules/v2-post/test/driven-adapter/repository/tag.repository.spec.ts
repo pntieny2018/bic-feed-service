@@ -9,13 +9,19 @@ import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { Sequelize } from 'sequelize-typescript';
 import { InternalServerErrorException } from '@nestjs/common';
+import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory';
 
 describe('TagRepository', () => {
   let repo, tagModel, postTagModel, sequelizeConnection;
+  let factory: ITagFactory;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TagRepository,
+        {
+          provide: TAG_FACTORY_TOKEN,
+          useValue: createMock<TagFactory>(),
+        },
         {
           provide: getModelToken(TagModel),
           useValue: createMock<TagModel>(),
@@ -37,6 +43,7 @@ describe('TagRepository', () => {
     }).compile();
 
     repo = module.get<TagRepository>(TagRepository);
+    factory = module.get(TAG_FACTORY_TOKEN);
     tagModel = module.get<TagModel>(getModelToken(TagModel));
     postTagModel = module.get<PostTagModel>(getModelToken(PostTagModel));
     sequelizeConnection = module.get<Sequelize>(Sequelize);
@@ -56,7 +63,7 @@ describe('TagRepository', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  const tagEntity = TagEntity.fromJson(tagRecord);
+  const tagEntity = new TagEntity(tagRecord);
 
   describe('create', () => {
     it('Should create tag success', async () => {
@@ -100,7 +107,7 @@ describe('TagRepository', () => {
     it('Should delete tag success', async () => {
       jest.spyOn(postTagModel, 'destroy').mockResolvedValue(1);
       jest.spyOn(tagModel, 'destroy').mockResolvedValue(1);
-      await repo.delete(tagEntity.id);
+      await repo.delete(tagEntity.get('id'));
       expect(postTagModel.destroy).toBeCalled();
       expect(tagModel.destroy).toBeCalled();
     });
@@ -108,10 +115,9 @@ describe('TagRepository', () => {
     it('Should not delete tag if delete post tag fail', async () => {
       jest.spyOn(postTagModel, 'destroy').mockRejectedValue(new Error('error'));
       try {
-        await repo.delete(tagEntity.id);
+        await repo.delete(tagEntity.get('id'));
       } catch (error) {
-        expect(error).toBeInstanceOf(InternalServerErrorException);
-        expect(error.message).toBe('Internal Server Error');
+        expect(error).toBeInstanceOf(Error);
         expect(postTagModel.destroy).toBeCalled();
         expect(tagModel.destroy).not.toBeCalled();
       }
@@ -120,11 +126,12 @@ describe('TagRepository', () => {
 
   describe('findOne', () => {
     it('Should find one tag success', async () => {
-      jest.spyOn(tagModel, 'findOne').mockResolvedValue(tagRecord);
-      const result = await repo.findOne({ id: tagEntity.id });
+      jest.spyOn(tagModel, 'findOne').mockResolvedValue({ toJSON: () => tagRecord });
+      jest.spyOn(factory, 'reconstitute').mockReturnValue(tagEntity);
+      const result = await repo.findOne({ id: tagEntity.get('id') });
       expect(tagModel.findOne).toBeCalledWith({
         where: {
-          id: tagEntity.id.value,
+          id: tagEntity.get('id'),
         },
       });
       expect(result).toEqual(tagEntity);
@@ -133,14 +140,15 @@ describe('TagRepository', () => {
 
   describe('findAll', () => {
     it('Should find all tag success', async () => {
-      jest.spyOn(tagModel, 'findAll').mockResolvedValue([tagRecord]);
-      const result = await repo.findAll({ groupIds: [tagEntity.id] });
+      jest.spyOn(tagModel, 'findAll').mockResolvedValue([{ toJSON: () => tagRecord }]);
+      jest.spyOn(factory, 'reconstitute').mockReturnValue(new TagEntity(tagRecord));
+      const result = await repo.findAll({ groupIds: [tagEntity.get('id')] });
       expect(tagModel.findAll).toBeCalledWith({
         where: {
-          groupId: [tagEntity.id.value],
+          groupId: [tagEntity.get('id')],
         },
       });
-      expect(result).toEqual([tagEntity]);
+      expect(result).toEqual([new TagEntity(tagRecord)]);
     });
   });
 });

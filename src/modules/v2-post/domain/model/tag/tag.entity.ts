@@ -2,6 +2,7 @@ import { StringHelper } from '../../../../../common/helpers';
 import { RULES } from '../../../constant';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { v4, validate as isUUID } from 'uuid';
 
 export type TagProps = {
   id: string;
@@ -21,6 +22,18 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
   }
 
   public validate(): void {
+    if (!isUUID(this._props.groupId)) {
+      throw new DomainModelException(`Group ID is not UUID`);
+    }
+    if (!isUUID(this._props.createdBy)) {
+      throw new DomainModelException(`Created By is not UUID`);
+    }
+    if (!isUUID(this._props.updatedBy)) {
+      throw new DomainModelException(`Updated By is not UUID`);
+    }
+    if (!this._props.name) {
+      throw new DomainModelException(`Tag name is required`);
+    }
     if (this._props.name.length > RULES.TAG_MAX_NAME) {
       throw new DomainModelException(`Tag name must not exceed ${RULES.TAG_MAX_NAME} characters`);
     }

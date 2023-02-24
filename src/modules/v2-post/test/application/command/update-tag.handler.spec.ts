@@ -8,7 +8,7 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { TagEntity, TagId, TagName } from '../../../domain/model/tag';
+import { TagEntity } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
@@ -55,7 +55,7 @@ describe('UpdateTagHandler', () => {
     it('should update tag name success', async () => {
       const id = v4();
       const name = StringHelper.randomStr(10);
-      const tag = TagEntity.fromJson({
+      const tag = new TagEntity({
         id: id,
         groupId: v4(),
         name: name,
@@ -71,9 +71,9 @@ describe('UpdateTagHandler', () => {
       jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
       await handler.execute(command);
       expect(domainService.updateTag).toBeCalledWith(tag, {
-        id: TagId.fromString(id),
-        name: TagName.fromString(newName),
-        userId: UserId.fromString(userMock.id),
+        id,
+        name: newName,
+        userId: userMock.id,
       });
     });
 
@@ -89,7 +89,7 @@ describe('UpdateTagHandler', () => {
     it('should throw error when tag name is empty', async () => {
       const id = v4();
       const name = StringHelper.randomStr(10);
-      const tag = TagEntity.fromJson({
+      const tag = new TagEntity({
         id: id,
         groupId: v4(),
         name: name,

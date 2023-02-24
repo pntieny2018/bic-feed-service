@@ -46,7 +46,7 @@ describe('DeleteTagHandler', () => {
     it('should delete tag success', async () => {
       const id = v4();
       const name = StringHelper.randomStr(10);
-      const tag = TagEntity.fromJson({
+      const tag = new TagEntity({
         id: id,
         groupId: v4(),
         name: name,
@@ -60,7 +60,7 @@ describe('DeleteTagHandler', () => {
       const command = new DeleteTagCommand({ id, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
       await handler.execute(command);
-      expect(domainService.deleteTag).toBeCalledWith(tag.id);
+      expect(domainService.deleteTag).toBeCalledWith(tag.get('id'));
     });
 
     it('should throw error when tag not found', async () => {
@@ -73,7 +73,7 @@ describe('DeleteTagHandler', () => {
     it('should throw error when tag is used', async () => {
       const id = v4();
       const name = StringHelper.randomStr(10);
-      const tag = TagEntity.fromJson({
+      const tag = new TagEntity({
         id: id,
         groupId: v4(),
         name: name,

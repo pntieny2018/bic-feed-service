@@ -500,7 +500,6 @@ export class SearchService {
         groupIds: item._source.groupIds,
         coverMedia: item._source.coverMedia,
         title: item._source.title || null,
-        coverMedia: item._source.coverMedia,
         summary: item._source.summary,
       };
       return source;

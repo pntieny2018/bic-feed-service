@@ -1,5 +1,6 @@
-import { DeepEqual } from 'deep-equal';
+import equal from 'fast-deep-equal';
 import { AggregateRoot } from '@nestjs/cqrs';
+import { ClassTransformer } from 'class-transformer';
 
 export type EntityProperties<T> = {
   [K in keyof T]: T[K];
@@ -22,12 +23,12 @@ export abstract class DomainAggregateRoot<
 
   protected createSnapShot() {
     if (!this._snapshot) {
-      this._snapshot = this._props.toObject();
+      this._snapshot = { ...this._props };
     }
   }
 
   public isChanged(): boolean {
-    return !DeepEqual(this._props.toObject(), this._snapshot);
+    return !equal(this._props, this._snapshot);
   }
 
   public get<K extends keyof Props>(key: K): Props[K] {

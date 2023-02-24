@@ -22,10 +22,11 @@ export class TagFactory {
       createdAt: now,
       updatedAt: now,
     });
+
     return this._eventPublisher.mergeObjectContext(tagEntity);
   }
 
   public reconstitute(properties: TagProps): TagEntity {
-    return this._eventPublisher.mergeObjectContext(new TagEntity(properties));
+    return new TagEntity(properties);
   }
 }

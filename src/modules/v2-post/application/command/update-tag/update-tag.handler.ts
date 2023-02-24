@@ -5,7 +5,6 @@ import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { TagId, TagName } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
 import { UpdateTagCommand } from './update-tag.command';
@@ -20,31 +19,31 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
 
   public async execute(command: UpdateTagCommand): Promise<UpdateTagDto> {
     const { name, id, userId } = command.payload;
-    const tag = await this._tagRepository.findOne({ id: TagId.fromString(id) });
+    const tag = await this._tagRepository.findOne({ id });
     if (!tag) {
       throw new TagNotFoundException();
     }
 
     const findTagNameInGroup = await this._tagRepository.findOne({
       groupId: tag.get('groupId'),
-      name: TagName.fromString(name),
+      name,
     });
-    if (findTagNameInGroup && findTagNameInGroup.id.value !== id) {
+    if (findTagNameInGroup && findTagNameInGroup.get('id') !== id) {
       throw new TagDuplicateNameException();
     }
 
     await this._tagDomainService.updateTag(tag, {
       id: tag.get('id'),
-      name: TagName.fromString(name),
-      userId: UserId.fromString(userId),
+      name,
+      userId,
     });
 
     return {
-      id: tag.get('id').value,
-      name: tag.get('name').value,
-      groupId: tag.get('groupId').value,
-      slug: tag.get('slug').value,
-      totalUsed: tag.get('totalUsed').value,
+      id: tag.get('id'),
+      name: tag.get('name'),
+      groupId: tag.get('groupId'),
+      slug: tag.get('slug'),
+      totalUsed: tag.get('totalUsed'),
     };
   }
 }
