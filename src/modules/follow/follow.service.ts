@@ -2,15 +2,16 @@ import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
-import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { FollowModel, IFollow } from '../../database/models/follow.model';
-import { UsersHasBeenFollowedEvent, UsersHasBeenUnfollowedEvent } from '../../events/follow';
 import { FollowDto } from './dto/requests';
 import { FollowsDto } from './dto/response/follows.dto';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostModel, PostStatus } from '../../database/models/post.model';
+import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 
 @Injectable()
 export class FollowService {
@@ -19,6 +20,7 @@ export class FollowService {
   private _logger = new Logger(FollowService.name);
 
   public constructor(
+    @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
     @InjectConnection() private _sequelize: Sequelize,
     private _eventEmitter: InternalEventEmitterService,
     @InjectModel(FollowModel) private _followModel: typeof FollowModel,
@@ -30,16 +32,39 @@ export class FollowService {
    */
   public async follow(followDto: FollowDto): Promise<void> {
     const { userId, groupIds } = followDto;
+    const schema = this._databaseConfig.schema;
+    const MAX_POSTS_IN_NEWSFEED = 10000;
     try {
       const followedGroupIds = await this._filterGroupsUserJoined(userId, groupIds);
-
       await this._createFollowData(userId, followedGroupIds);
 
-      this._eventEmitter.emit(
-        new UsersHasBeenFollowedEvent({
-          userId,
-          followedGroupIds,
-        })
+      await this._userNewsFeedModel.sequelize.query(
+        `
+          INSERT INTO ${schema}.${this._userNewsFeedModel.tableName} (user_id, post_id, is_seen_post) 
+          SELECT :userId as user_id, p.id as post_id, false as is_seen_post
+          FROM ${schema}.${PostModel.tableName} p
+          WHERE p.status = :status
+                AND p.is_hidden = FALSE
+                AND EXISTS (
+                    SELECT post_id
+                    FROM ${schema}.${PostGroupModel.tableName} pg
+                    WHERE pg.group_id IN (:groupIds) 
+                    AND pg.is_archived = :isArchived 
+                    AND pg.post_id = p.id
+                )
+          ORDER BY p.created_at DESC
+          LIMIT :limit
+          ON CONFLICT (user_id, post_id) DO NOTHING
+          `,
+        {
+          replacements: {
+            userId,
+            groupIds,
+            status: PostStatus.PUBLISHED,
+            isArchived: false,
+            limit: MAX_POSTS_IN_NEWSFEED,
+          },
+        }
       );
     } catch (ex) {
       this._sentryService.captureException(ex);
@@ -70,21 +95,33 @@ export class FollowService {
    */
   public async unfollow(unfollowDto: FollowDto): Promise<void> {
     const { userId, groupIds } = unfollowDto;
+    const schema = this._databaseConfig.schema;
     try {
       await this._followModel.destroy({
         where: {
           groupId: {
-            [Op.in]: unfollowDto.groupIds,
+            [Op.in]: groupIds,
           },
-          userId: unfollowDto.userId,
+          userId,
         },
       });
 
-      this._eventEmitter.emit(
-        new UsersHasBeenUnfollowedEvent({
-          userId,
-          unfollowedGroupIds: groupIds,
-        })
+      await this._userNewsFeedModel.sequelize.query(
+        `
+        DELETE FROM ${schema}.user_newsfeed u 
+        WHERE user_id = :userId AND EXISTS(
+           SELECT null
+           FROM ${schema}.posts_groups pg
+             WHERE pg.group_id IN(:groupIds) AND  pg.post_id = u.post_id
+         )
+        `,
+        {
+          replacements: {
+            userId,
+            groupIds,
+          },
+          type: QueryTypes.DELETE,
+        }
       );
     } catch (ex) {
       this._sentryService.captureException(ex);
