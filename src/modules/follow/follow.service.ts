@@ -45,7 +45,7 @@ export class FollowService {
           FROM ${schema}.${PostModel.tableName} p
           WHERE p.status = :status
                 AND p.is_hidden = FALSE
-                AND EXIST (
+                AND EXISTS (
                     SELECT post_id
                     FROM ${schema}.${PostGroupModel.tableName} pg
                     WHERE pg.group_id IN (:groupIds) 
