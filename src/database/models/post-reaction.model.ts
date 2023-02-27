@@ -17,7 +17,7 @@ export interface IPostReaction {
   id: string;
   postId?: string;
   reactionName: string;
-  createdBy?: number;
+  createdBy?: string;
   createdAt?: Date;
 }
 @Table({
@@ -44,7 +44,7 @@ export class PostReactionModel
   public reactionName: string;
 
   @Column
-  public createdBy: number;
+  public createdBy: string;
 
   @Column
   @CreatedAt

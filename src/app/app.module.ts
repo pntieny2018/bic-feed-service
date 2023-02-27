@@ -52,7 +52,7 @@ import { I18nMiddleware } from 'nestjs-i18n';
     UserModule,
     GroupModule,
     MentionModule,
-    ReactionModule,
+    // ReactionModule,
     ListenerModule,
     AuthorityModule,
     RecentSearchModule,

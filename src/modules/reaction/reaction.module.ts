@@ -23,7 +23,7 @@ import { FeedModule } from '../feed';
     forwardRef(() => FeedModule),
   ],
 
-  controllers: [ReactionController],
+  // controllers: [ReactionController],
   providers: [ReactionService, ReactionActivityService],
   exports: [ReactionService, ReactionActivityService],
 })
