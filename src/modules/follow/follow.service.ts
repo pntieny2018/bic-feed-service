@@ -12,6 +12,7 @@ import { FollowsDto } from './dto/response/follows.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class FollowService {
@@ -30,7 +31,15 @@ export class FollowService {
   /**
    * Make user follow  group
    */
+  public sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   public async follow(followDto: FollowDto): Promise<void> {
+    // const id = v4();
+    // console.log(`--sleeping log ${id}`);
+    // await this.sleep(3000);
+    // console.log(`--wake log ${id}`);
     const { userId, groupIds } = followDto;
     const schema = this._databaseConfig.schema;
     const MAX_POSTS_IN_NEWSFEED = 10000;
@@ -66,6 +75,7 @@ export class FollowService {
           },
         }
       );
+      //console.log(`=======DONE update newsfeed ${id}===========`);
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
