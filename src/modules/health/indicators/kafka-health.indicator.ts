@@ -32,8 +32,8 @@ export class KafkaHealthIndicator extends HealthIndicator {
     // Consumer has no heartbeat, but maybe it's because the group is currently rebalancing
     try {
       const { state } = await this._consumer.describeGroup();
-      const isHealthy = ['CompletingRebalance', 'PreparingRebalance'].includes(state);
-      return this.getStatus(key, isHealthy, null);
+      const isNotHealthy = ['Unknown', 'Dead'].includes(state);
+      return this.getStatus(key, !isNotHealthy, null);
     } catch (ex) {
       throw new HealthCheckError(
         ex.message,
