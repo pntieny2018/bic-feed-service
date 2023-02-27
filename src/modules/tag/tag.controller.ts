@@ -88,9 +88,9 @@ export class TagController {
   @Delete('/:id')
   @ResponseMessages({ success: 'Tag deleted' })
   public async delete(
-    @AuthUser() _user: UserDto,
+    @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string
   ): Promise<boolean> {
-    return this._tagService.delete(tagId);
+    return this._tagService.delete(tagId, user);
   }
 }
