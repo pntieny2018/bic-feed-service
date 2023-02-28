@@ -96,35 +96,41 @@ export class FollowService {
    * Make user unfollow  group
    */
   public async unfollow(unfollowDto: FollowDto): Promise<void> {
-    const { userId, groupIds } = unfollowDto;
+    const { userId, groupIds: groupIdsUserLeft } = unfollowDto;
     const schema = this._databaseConfig.schema;
     try {
       await this._followModel.destroy({
         where: {
           groupId: {
-            [Op.in]: groupIds,
+            [Op.in]: groupIdsUserLeft,
           },
           userId,
         },
       });
 
-      await this._userNewsFeedModel.sequelize.query(
-        `
-        DELETE FROM ${schema}.user_newsfeed u 
+      const groupsUserJoin = await this._followModel.findAll({
+        where: {
+          userId,
+        },
+      });
+      const groupIdsUserJoined = []; //groupsUserJoin.map((group) => group.groupId);
+      let query = `DELETE FROM ${schema}.user_newsfeed u 
         WHERE user_id = :userId AND EXISTS(
            SELECT null
            FROM ${schema}.posts_groups pg
-             WHERE pg.group_id IN(:groupIds) AND  pg.post_id = u.post_id
-         )
-        `,
-        {
-          replacements: {
-            userId,
-            groupIds,
-          },
-          type: QueryTypes.DELETE,
-        }
-      );
+             WHERE pg.group_id IN(:groupIdsUserLeft) AND  pg.post_id = u.post_id
+         )`;
+      if (groupIdsUserJoined.length) {
+        query += ` AND pg.group_Id NOT IN(:groupIdsUserJoined)`;
+      }
+      await this._userNewsFeedModel.sequelize.query(query, {
+        replacements: {
+          userId,
+          groupIdsUserLeft,
+          groupIdsUserJoined,
+        },
+        type: QueryTypes.DELETE,
+      });
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
