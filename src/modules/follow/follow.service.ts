@@ -113,27 +113,26 @@ export class FollowService {
           userId,
         },
       });
-      const groupIdsUserJoined = groupsUserJoin.map((group) => group.groupId);
-      await this._userNewsFeedModel.sequelize.query(
-        `
-        DELETE FROM ${schema}.user_newsfeed u 
+      const groupIdsUserJoined = []; //groupsUserJoin.map((group) => group.groupId);
+      let query = `DELETE FROM ${schema}.user_newsfeed u 
         WHERE user_id = :userId AND EXISTS(
            SELECT null
            FROM ${schema}.posts_groups pg
              WHERE pg.group_id IN(:groupIdsUserLeft) AND  pg.post_id = u.post_id
-             AND pg.group_Id NOT IN(:groupIdsUserJoined)
-         )
-        `,
-        {
-          replacements: {
-            userId,
-            groupIdsUserLeft: groupIdsUserLeft,
-            groupIdsUserJoined: groupIdsUserJoined,
-          },
-          type: QueryTypes.DELETE,
-        }
-      );
+         )`;
+      if (groupIdsUserJoined.length) {
+        query += ` AND pg.group_Id NOT IN(:groupIdsUserJoined)`;
+      }
+      await this._userNewsFeedModel.sequelize.query(query, {
+        replacements: {
+          userId,
+          groupIdsUserLeft,
+          groupIdsUserJoined,
+        },
+        type: QueryTypes.DELETE,
+      });
     } catch (ex) {
+      console.log(ex);
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
     }
