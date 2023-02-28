@@ -132,7 +132,6 @@ export class FollowService {
         type: QueryTypes.DELETE,
       });
     } catch (ex) {
-      console.log(ex);
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
     }
