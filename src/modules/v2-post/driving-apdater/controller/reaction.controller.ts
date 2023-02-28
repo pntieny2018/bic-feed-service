@@ -40,7 +40,7 @@ export class ReactionController {
     const reactions = rows.map((row) => new ReactionResponseDto(row));
     return new ReactionsResponseDto({
       list: reactions,
-      latestId: null,
+      latestId: reactions[reactions.length - 1]?.id,
       limit,
       order,
     });
