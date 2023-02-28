@@ -3,12 +3,14 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsUUID } from 'class-validator';
 import { CategoryResponseDto } from '.';
 import { UserSharedDto } from '../../../../shared/user/dto';
-import { MediaResponseDto } from '../../../media/dto/response';
+import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceResponseDto } from '../../../post/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
 import { PostType } from '../../../../database/models/post.model';
+import { MediaService } from '../../../media';
+import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
 
 export class ItemInSeriesResponseDto {
   @ApiProperty({
@@ -27,6 +29,19 @@ export class ItemInSeriesResponseDto {
   public title: string;
 
   @ApiProperty({
+    description: 'Content',
+    type: String,
+  })
+  @Expose()
+  @Transform(({ obj, value }) => {
+    if (obj.type === PostType.POST && obj.content) {
+      return obj.content.slice(0, 500);
+    }
+    return null;
+  })
+  public content: string;
+
+  @ApiProperty({
     enum: PostType,
   })
   @Expose()
@@ -38,6 +53,27 @@ export class ItemInSeriesResponseDto {
   })
   @Expose()
   public isSaved?: boolean;
+
+  @ApiProperty({
+    description: 'Array of files, images, videos',
+    type: MediaFilterResponseDto,
+  })
+  @Expose()
+  @Transform(({ value }) => {
+    if (
+      typeof value === 'object' &&
+      value.hasOwnProperty('files') &&
+      value.hasOwnProperty('images') &&
+      value.hasOwnProperty('videos')
+    ) {
+      return value;
+    }
+    if (value && value.length) {
+      return MediaService.filterMediaType(value);
+    }
+    return new MediaFilterResponseDto([], [], []);
+  })
+  public media?: MediaFilterResponseDto;
 
   @ApiProperty({
     description: 'zindex',

@@ -120,7 +120,7 @@ export class SeriesController {
 
   @ApiOperation({ summary: 'Remove article or post from series' })
   @ApiOkResponse({
-    description: 'Remove article successfully',
+    description: 'Remove article/posts successfully',
   })
   @Delete('/:id/remove-items')
   public async removeArticle(
@@ -134,9 +134,9 @@ export class SeriesController {
 
   @ApiOperation({ summary: 'Add item into series' })
   @ApiOkResponse({
-    description: 'Add article successfully',
+    description: 'Add article/posts successfully',
   })
-  @Put('/:id/add-articles')
+  @Put('/:id/add-items')
   public async addArticle(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() addItemsInSeriesDto: AddItemsInSeriesDto,

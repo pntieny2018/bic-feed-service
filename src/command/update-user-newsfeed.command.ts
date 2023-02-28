@@ -28,15 +28,15 @@ export class UpdateNewsfeedCommand implements CommandRunner {
         group: 'group_id',
       });
       for (const group of groups) {
-        const postIds = await this._postService.findIdsByGroupId([group.groupId]);
-
-        if (postIds && postIds.length) {
-          await this._feedPublisherService.attachPostsForUsersNewsFeed(
-            group.userId.split(','),
-            postIds
-          );
-          console.log(`Updated for group ${group.groupId}, total ${postIds.length} posts`);
-        }
+        // const postIds = await this._postService.findIdsByGroupId([group.groupId]);
+        //
+        // if (postIds && postIds.length) {
+        //   await this._feedPublisherService.attachPostsForUsersNewsFeed(
+        //     group.userId.split(','),
+        //     postIds
+        //   );
+        //   console.log(`Updated for group ${group.groupId}, total ${postIds.length} posts`);
+        // }
       }
 
       console.log(`Done.`);

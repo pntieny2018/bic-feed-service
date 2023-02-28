@@ -10,12 +10,15 @@ import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { FollowService } from '../follow';
 import { FollowsDto } from '../follow/dto/response/follows.dto';
 import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { PostModel, PostStatus } from '../../database/models/post.model';
 
 @Injectable()
 export class FeedPublisherService {
   private _databaseConfig = getDatabaseConfig();
 
   private _logger = new Logger(FeedPublisherService.name);
+
   public constructor(
     private _followService: FollowService,
     @InjectModel(UserNewsFeedModel) private _userNewsFeedModel: typeof UserNewsFeedModel,
@@ -23,32 +26,38 @@ export class FeedPublisherService {
     private readonly _sentryService: SentryService
   ) {}
 
-  public async attachPostsForUsersNewsFeed(userIds: string[], postIds: string[]): Promise<void> {
+  public async attachPostsForUsersNewsFeed(
+    userId: string,
+    groupIds: string[],
+    limit = 1000
+  ): Promise<void> {
     const schema = this._databaseConfig.schema;
     try {
-      this._logger.debug(`[attachPostsForUsersNewsFeed]: userIds:${userIds} -- postIds:${postIds}`);
-      // const seenPostData = await this._userSeenPostModel.findAll({
-      //   where: { postId: { [Op.in]: postIds }, userId: { [Op.in]: userIds } },
-      // });
-      // const seenPostDataMap = seenPostData.reduce(
-      //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //   (_dataMap, _seenPostRecord) => ({ userId: true }),
-      //   {}
-      // );
+      this._logger.debug(`[attachPostsForUsersNewsFeed]: userId:${userId} -- groupIds:${groupIds}`);
 
-      const data = userIds
-        .map((userId) => {
-          //return postIds.map((postId) => `('${userId}','${postId}', ${!!seenPostDataMap[userId]})`);
-          return postIds.map((postId) => `('${userId}','${postId}', false)`);
-        })
-        .flat();
-
-      if (data && data.length) {
+      for (const groupId of groupIds) {
         await this._userNewsFeedModel.sequelize.query(
-          `INSERT INTO ${schema}.${
-            this._userNewsFeedModel.tableName
-          } (user_id,post_id, is_seen_post) 
-             VALUES ${data.join(',')} ON CONFLICT  (user_id,post_id) DO NOTHING;`
+          `
+          INSERT INTO ${schema}.${this._userNewsFeedModel.tableName} (user_id, post_id, is_seen_post) 
+          SELECT ${userId} as user_id, post_id, false as is_seen_post
+          FROM ${schema}.${PostGroupModel.tableName} pg
+          INNER JOIN ${schema}.${PostModel.tableName} p ON p.id = pg.post_id
+          WHERE pg.group_id = :groupId 
+                AND pg.is_archived = :isArchived 
+                AND p.status :status
+                AND p.is_hidden = FALSE
+          ORDER BY p.created_at DESC
+          LIMIT :limit
+          ON CONFLICT (user_id, post_id) DO NOTHING
+          `,
+          {
+            replacements: {
+              groupId,
+              status: PostStatus.PUBLISHED,
+              isArchived: false,
+              limit,
+            },
+          }
         );
       }
     } catch (ex) {

@@ -7,10 +7,10 @@ import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { UserService } from '../../shared/user';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
+import { UserHttpService, UserService } from '../../shared/user';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +19,7 @@ export class AuthService {
 
   public constructor(
     private _userService: UserService,
+    private _userHttpService: UserHttpService,
     private _httpService: HttpService,
     private _configService: ConfigService
   ) {}
@@ -31,7 +32,7 @@ export class AuthService {
       staffRole: payload['custom:bein_staff_role'],
     });
 
-    const userInfo = await this._userService.getByValue(user.username);
+    const userInfo = await this._userHttpService.getUserInfo(user.username);
     if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
