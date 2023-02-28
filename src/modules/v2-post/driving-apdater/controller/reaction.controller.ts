@@ -3,11 +3,12 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
-import { ReactionsResponseDto } from '../../../reaction/dto/response';
 import { AuthUser, UserDto } from '../../../auth';
 import { GetReactionPipe } from '../../../reaction/pipes';
 import { GetReactionDto } from '../../../reaction/dto/request';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
+import { ReactionsResponseDto } from '../dto/response/reactions-response.dto';
+import { ReactionResponseDto, TagResponseDto } from '../dto/response';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -36,6 +37,12 @@ export class ReactionController {
     const { rows, total } = await this._queryBus.execute(
       new FindReactionsQuery({ reactionName, target, targetId, latestId, order, limit })
     );
-    return this._classTransformer.plainToInstance(ReactionsResponseDto, { rows, total });
+    const reactions = rows.map((row) => new ReactionResponseDto(row));
+    return new ReactionsResponseDto({
+      list: reactions,
+      latestId: null,
+      limit,
+      order,
+    });
   }
 }

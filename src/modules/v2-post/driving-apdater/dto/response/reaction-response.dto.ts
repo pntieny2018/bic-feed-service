@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserDto } from '../../../../v2-user/application';
 
 export class ReactionResponseDto {
   @ApiProperty()
@@ -8,7 +9,7 @@ export class ReactionResponseDto {
   public reactionName: string;
 
   @ApiProperty()
-  public createdBy: string;
+  public actor: UserDto;
 
   @ApiProperty()
   public createdAt: Date;

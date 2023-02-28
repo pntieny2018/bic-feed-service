@@ -3,9 +3,13 @@ import { ArrayHelper } from '../../../../common/helpers';
 import { AppHelper } from '../../../../common/helpers/app.helper';
 import { UserEntity, UserId } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class UserRepository implements IUserRepository {
-  private readonly _store: RedisService;
+  // private readonly _store: RedisService;
+  public constructor(private _store: RedisService) {}
+
   private readonly _prefixRedis = `${AppHelper.getRedisEnv()}SU:`;
   public async findOne(id: UserId): Promise<UserEntity> {
     const group = await this._store.get(`${this._prefixRedis + id.value}`);
