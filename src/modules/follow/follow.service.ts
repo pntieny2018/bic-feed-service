@@ -113,7 +113,7 @@ export class FollowService {
           userId,
         },
       });
-      const groupIdsUserJoined = []; //groupsUserJoin.map((group) => group.groupId);
+      const groupIdsUserJoined = groupsUserJoin.map((group) => group.groupId);
       let query = `DELETE FROM ${schema}.user_newsfeed u 
         WHERE user_id = :userId AND EXISTS(
            SELECT null
