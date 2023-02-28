@@ -114,15 +114,17 @@ export class FollowService {
         },
       });
       const groupIdsUserJoined = groupsUserJoin.map((group) => group.groupId);
-      let query = `DELETE FROM ${schema}.user_newsfeed u 
+      let condition = '';
+      if (groupIdsUserJoined.length) {
+        condition += ` AND pg.group_Id NOT IN(:groupIdsUserJoined)`;
+      }
+      const query = `DELETE FROM ${schema}.user_newsfeed u 
         WHERE user_id = :userId AND EXISTS(
            SELECT null
            FROM ${schema}.posts_groups pg
-             WHERE pg.group_id IN(:groupIdsUserLeft) AND  pg.post_id = u.post_id
+             WHERE pg.group_id IN(:groupIdsUserLeft) AND  pg.post_id = u.post_id ${condition}
          )`;
-      if (groupIdsUserJoined.length) {
-        query += ` AND pg.group_Id NOT IN(:groupIdsUserJoined)`;
-      }
+
       await this._userNewsFeedModel.sequelize.query(query, {
         replacements: {
           userId,
