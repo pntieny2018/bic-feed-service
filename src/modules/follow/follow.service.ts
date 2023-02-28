@@ -31,15 +31,8 @@ export class FollowService {
   /**
    * Make user follow  group
    */
-  public sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
   public async follow(followDto: FollowDto): Promise<void> {
-    // const id = v4();
-    // console.log(`--sleeping log ${id}`);
-    // await this.sleep(3000);
-    // console.log(`--wake log ${id}`);
     const { userId, groupIds } = followDto;
     const schema = this._databaseConfig.schema;
     const MAX_POSTS_IN_NEWSFEED = 10000;
@@ -68,14 +61,13 @@ export class FollowService {
         {
           replacements: {
             userId,
-            groupIds,
+            groupIds: followedGroupIds,
             status: PostStatus.PUBLISHED,
             isArchived: false,
             limit: MAX_POSTS_IN_NEWSFEED,
           },
         }
       );
-      //console.log(`=======DONE update newsfeed ${id}===========`);
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
