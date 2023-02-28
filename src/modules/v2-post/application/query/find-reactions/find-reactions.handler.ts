@@ -7,7 +7,6 @@ import {
 import { FindReactionsQuery } from './find-reactions.query';
 import { FindReactionsDto } from './find-reactions.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { ReactionResponseDto } from '../../../../reaction/dto/response';
 import { ObjectHelper } from '../../../../../common/helpers';
 import { IReactionQuery, REACTION_QUERY_TOKEN } from '../../../domain/query-interface';
 import { ReactionEntity } from '../../../domain/model/reaction';

@@ -1,14 +1,15 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
 import { AuthUser, UserDto } from '../../../auth';
 import { GetReactionPipe } from '../../../reaction/pipes';
-import { GetReactionDto } from '../../../reaction/dto/request';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import { ReactionsResponseDto } from '../dto/response/reactions-response.dto';
-import { ReactionResponseDto, TagResponseDto } from '../dto/response';
+import { ReactionResponseDto } from '../dto/response';
+import { CreateReactionDto, GetReactionDto } from '../dto/request/reaction';
+import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -40,9 +41,26 @@ export class ReactionController {
     const reactions = rows.map((row) => new ReactionResponseDto(row));
     return new ReactionsResponseDto({
       list: reactions,
-      latestId: reactions[reactions.length - 1]?.id,
+      latestId: total > 0 ? reactions[reactions.length - 1].id : null,
       limit,
       order,
     });
+  }
+
+  @ApiOperation({ summary: 'Create new reaction' })
+  @ApiOkResponse({
+    type: ReactionResponseDto,
+    description: 'Create reaction successfully',
+  })
+  @Post('/')
+  public async create(
+    @AuthUser() user: UserDto,
+    @Body() createReactionDto: CreateReactionDto
+  ): Promise<ReactionResponseDto> {
+    const { target, targetId, reactionName } = createReactionDto;
+    const reaction = await this._commandBus.execute(
+      new CreateReactionCommand({ target, targetId, reactionName, createdBy: user.id })
+    );
+    return new ReactionResponseDto(reaction);
   }
 }
