@@ -114,6 +114,7 @@ export class FollowService {
         },
       });
       const groupIdsUserJoined = groupsUserJoin.map((group) => group.groupId);
+
       let query = `DELETE FROM ${schema}.user_newsfeed u 
         WHERE user_id = :userId AND EXISTS(
            SELECT null
@@ -121,8 +122,13 @@ export class FollowService {
              WHERE pg.group_id IN(:groupIdsUserLeft) AND  pg.post_id = u.post_id
          )`;
       if (groupIdsUserJoined.length) {
-        query += ` AND pg.group_Id NOT IN(:groupIdsUserJoined)`;
+        query += ` AND NOT EXISTS(
+           SELECT null
+           FROM ${schema}.posts_groups pg2
+             WHERE pg2.group_Id IN(:groupIdsUserJoined) AND pg2.post_id = u.post_id
+         )`;
       }
+
       await this._userNewsFeedModel.sequelize.query(query, {
         replacements: {
           userId,
@@ -216,24 +222,23 @@ export class FollowService {
     this._logger.debug(`[filterUserFollows]:groupIds: ${groupIds}`);
     this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
+      const schema = this._databaseConfig.schema;
       let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
       if (oldGroupIds && oldGroupIds.length > 0) {
-        condition += ` AND NOT EXISTS (
-            SELECT null
-            FROM bein_stream.follows AS "tmp"
-            WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:oldGroupIds)
-          )`;
+        condition += ' AND group_id NOT IN (:oldGroupIds)';
       }
       if (ignoreUserIds && ignoreUserIds.length > 0) {
-        condition += ' AND user_id NOT IN (:ignoreUserIds)';
+        condition += ` AND NOT EXISTS (
+        SELECT null
+        FROM ${schema}.${this._followModel.tableName} AS "tmp"
+        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:ignoreUserIds)
+        ) `;
       }
-      const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
-        `SELECT user_id, max(zindex) as zindex
+        `SELECT DISTINCT(user_id), zindex
           FROM ${schema}.${this._followModel.tableName} f
           WHERE  ${condition}
-          GROUP BY user_id
           ORDER BY zindex ASC limit :limit ;
              `,
         {
