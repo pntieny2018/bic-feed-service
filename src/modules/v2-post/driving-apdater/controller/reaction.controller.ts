@@ -1,5 +1,5 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
@@ -8,8 +8,9 @@ import { GetReactionPipe } from '../../../reaction/pipes';
 import { FindReactionsQuery } from '../../application/query/find-reactions/find-reactions.query';
 import { ReactionsResponseDto } from '../dto/response/reactions-response.dto';
 import { ReactionResponseDto } from '../dto/response';
-import { CreateReactionDto, GetReactionDto } from '../dto/request/reaction';
+import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from '../dto/request/reaction';
 import { CreateReactionCommand } from '../../application/command/create-reaction/create-reaction.command';
+import { DeleteReactionCommand } from '../../application/command/delete-reaction/delete-reaction.command';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')
@@ -62,5 +63,18 @@ export class ReactionController {
       new CreateReactionCommand({ target, targetId, reactionName, createdBy: user.id })
     );
     return new ReactionResponseDto(reaction);
+  }
+
+  @ApiOperation({ summary: 'Delete reaction.' })
+  @ApiOkResponse({
+    description: 'Delete reaction successfully',
+    type: Boolean,
+  })
+  @Delete('/')
+  public async delete(
+    @AuthUser() user: UserDto,
+    @Body() deleteReactionDto: DeleteReactionDto
+  ): Promise<void> {
+    await this._commandBus.execute(new DeleteReactionCommand(deleteReactionDto));
   }
 }

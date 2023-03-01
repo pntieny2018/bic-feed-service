@@ -1,0 +1,10 @@
+import { DomainException } from '@beincom/domain';
+import { I18nContext } from 'nestjs-i18n';
+import { ERRORS } from '../../../common/constants/errors';
+
+export class ReactionNotFoundException extends DomainException {
+  public constructor(message?: string) {
+    const i18n = I18nContext.current();
+    super(ERRORS.reaction.REACTION_DUPLICATE, message || i18n.t('error.reaction.not_found'));
+  }
+}

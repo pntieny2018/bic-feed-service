@@ -1,9 +1,10 @@
 import { CommentReactionEntity } from '../model/reaction';
 
 export type FindOneCommentReactionProps = {
-  reactionName: string;
-  createdBy: string;
-  commentId: string;
+  reactionName?: string;
+  createdBy?: string;
+  commentId?: string;
+  id?: string;
 };
 
 export interface ICommentReactionRepository {

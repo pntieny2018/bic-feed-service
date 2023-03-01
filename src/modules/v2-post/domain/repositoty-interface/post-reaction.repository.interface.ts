@@ -1,9 +1,10 @@
 import { PostReactionEntity } from '../model/reaction';
 
 export type FindOnePostReactionProps = {
-  reactionName: string;
-  createdBy: string;
-  postId: string;
+  reactionName?: string;
+  createdBy?: string;
+  postId?: string;
+  id?: string;
 };
 
 export interface IPostReactionRepository {

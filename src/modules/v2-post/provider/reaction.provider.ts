@@ -7,6 +7,7 @@ import { PostReactionRepository } from '../driven-adapter/repository/post-reacti
 import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/reaction.domain-service.interface';
 import { ReactionDomainService } from '../domain/domain-service';
 import { CreateReactionHandler } from '../application/command/create-reaction/create-reaction.handler';
+import { DeleteReactionHandler } from '../application/command/delete-reaction/delete-reaction.handler';
 
 export const reactionProvider = [
   {
@@ -35,4 +36,5 @@ export const reactionProvider = [
   },
   FindReactionsHandler,
   CreateReactionHandler,
+  DeleteReactionHandler,
 ];

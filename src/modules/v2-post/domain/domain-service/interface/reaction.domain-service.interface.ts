@@ -9,15 +9,8 @@ export type ReactionCreateProps = {
   target: ReactionEnum;
 };
 
-export type ReactionUpdateProps = {
-  reactionName: string;
-  id: string;
-};
-
 export interface IReactionDomainService {
   createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
-
-  updateReaction(reaction: ReactionEntity, data: ReactionUpdateProps): Promise<ReactionEntity>;
 
   deleteReaction(id: string): Promise<void>;
 }

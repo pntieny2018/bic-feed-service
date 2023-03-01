@@ -7,6 +7,7 @@ export const ERRORS = {
   },
   reaction: {
     REACTION_DUPLICATE: 'reaction.duplicate',
+    REACTION_NOT_FOUND: 'reaction.not_found',
   },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',

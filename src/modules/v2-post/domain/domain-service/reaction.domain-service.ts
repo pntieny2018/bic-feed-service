@@ -1,9 +1,5 @@
 import { Inject, Logger } from '@nestjs/common';
-import {
-  IReactionDomainService,
-  ReactionCreateProps,
-  ReactionUpdateProps,
-} from './interface/reaction.domain-service.interface';
+import { IReactionDomainService, ReactionCreateProps } from './interface';
 import {
   COMMENT_REACTION_FACTORY_TOKEN,
   ICommentReactionFactory,
@@ -14,9 +10,10 @@ import { IPostReactionRepository, POST_REACTION_REPOSITORY_TOKEN } from '../repo
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
-} from '../repositoty-interface/comment-reaction.repository.interface';
+} from '../repositoty-interface';
 import { ReactionEnum } from '../../../reaction/reaction.enum';
 import { ReactionEntity } from '../model/reaction/reaction.entity';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
@@ -56,14 +53,12 @@ export class ReactionDomainService implements IReactionDomainService {
     }
   }
 
-  public async updateReaction(
-    reaction: ReactionEntity,
-    input: ReactionUpdateProps
-  ): Promise<ReactionEntity> {
-    return null;
-  }
-
   public async deleteReaction(reactionId: string): Promise<void> {
-    return;
+    try {
+      await this._postReactionRepository.delete(reactionId);
+    } catch (e) {
+      this._logger.error(e.message);
+      throw new DatabaseException();
+    }
   }
 }
