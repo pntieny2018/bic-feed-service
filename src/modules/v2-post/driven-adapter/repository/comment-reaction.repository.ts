@@ -7,7 +7,8 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { Inject, Logger } from '@nestjs/common';
 import { ICommentReactionFactory, POST_REACTION_FACTORY_TOKEN } from '../../domain/factory';
-import { FindOptions, Sequelize } from 'sequelize';
+import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
+import { getDatabaseConfig } from '../../../../config/database';
 
 export class CommentReactionRepository implements ICommentReactionRepository {
   @Inject(POST_REACTION_FACTORY_TOKEN) private readonly _factory: ICommentReactionFactory;
@@ -23,12 +24,25 @@ export class CommentReactionRepository implements ICommentReactionRepository {
   }
 
   public async create(data: CommentReactionEntity): Promise<void> {
-    await this._commentReactionModel.create({
-      id: data.get('id'),
-      reactionName: data.get('reactionName'),
-      createdBy: data.get('createdBy'),
-      commentId: data.get('commentId'),
-    });
+    const { schema } = getDatabaseConfig();
+    const commentId = data.get('commentId');
+    const userId = data.get('createdBy');
+    const reactionName = data.get('reactionName');
+    await this._sequelizeConnection.transaction(
+      {
+        isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
+      },
+      (t) => {
+        return this._sequelizeConnection.query(
+          `CALL ${schema}.create_comment_reaction(?,?,?,null)`,
+          {
+            replacements: [commentId, userId, reactionName],
+            transaction: t,
+            type: QueryTypes.SELECT,
+          }
+        );
+      }
+    );
   }
 
   public async delete(id: string): Promise<void> {

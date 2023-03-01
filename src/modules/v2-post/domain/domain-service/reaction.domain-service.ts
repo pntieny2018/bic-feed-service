@@ -14,6 +14,7 @@ import {
 import { ReactionEnum } from '../../../reaction/reaction.enum';
 import { ReactionEntity } from '../model/reaction/reaction.entity';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { CreateReactionInternalEvent } from '../../../../events/reaction';
 
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
@@ -38,6 +39,15 @@ export class ReactionDomainService implements IReactionDomainService {
       });
       await this._postReactionRepository.create(postReactionEntity);
       await postReactionEntity.commit();
+
+      // TODO implement this
+      // this._emitter.emit(
+      //   new CreateReactionInternalEvent({
+      //     actor: userDto,
+      //     post: post,
+      //     reaction: reaction,
+      //   })
+      // );
       return postReactionEntity;
     } else if (target === ReactionEnum.COMMENT) {
       const commentReactionEntity = this._commentReactionFactory.create({
@@ -47,6 +57,15 @@ export class ReactionDomainService implements IReactionDomainService {
       });
       await this._commentReactionRepository.create(commentReactionEntity);
       await commentReactionEntity.commit();
+      // TODO implement this
+      // this._emitter.emit(
+      //   new CreateReactionInternalEvent({
+      //     actor: userDto,
+      //     post: post,
+      //     comment: comment,
+      //     reaction: reaction,
+      //   })
+      // );
       return commentReactionEntity;
     } else {
       throw new Error('Invalid target');

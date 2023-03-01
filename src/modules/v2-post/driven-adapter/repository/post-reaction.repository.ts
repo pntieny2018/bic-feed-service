@@ -7,7 +7,8 @@ import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { Inject, Logger } from '@nestjs/common';
 import { IPostReactionFactory, POST_REACTION_FACTORY_TOKEN } from '../../domain/factory';
-import { FindOptions, Sequelize } from 'sequelize';
+import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
+import { getDatabaseConfig } from '../../../../config/database';
 
 export class PostReactionRepository implements IPostReactionRepository {
   @Inject(POST_REACTION_FACTORY_TOKEN) private readonly _factory: IPostReactionFactory;
@@ -23,12 +24,22 @@ export class PostReactionRepository implements IPostReactionRepository {
   }
 
   public async create(data: PostReactionEntity): Promise<void> {
-    await this._postReactionModel.create({
-      id: data.get('id'),
-      reactionName: data.get('reactionName'),
-      createdBy: data.get('createdBy'),
-      postId: data.get('postId'),
-    });
+    const { schema } = getDatabaseConfig();
+    const postId = data.get('postId');
+    const userId = data.get('createdBy');
+    const reactionName = data.get('reactionName');
+    await this._sequelizeConnection.transaction(
+      {
+        isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
+      },
+      (t) => {
+        return this._sequelizeConnection.query(`CALL ${schema}.create_post_reaction(?,?,?,null)`, {
+          replacements: [postId, userId, reactionName],
+          transaction: t,
+          type: QueryTypes.SELECT,
+        });
+      }
+    );
   }
 
   public async delete(id: string): Promise<void> {
