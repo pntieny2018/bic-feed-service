@@ -1,4 +1,4 @@
-import { ReactionEntity } from '../model/reaction';
+import { PostReactionEntity } from '../model/reaction';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 
 export type GetReactionProps = {
@@ -10,7 +10,7 @@ export type GetReactionProps = {
   limit: number;
 };
 export interface IReactionQuery {
-  getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>>;
+  getPagination(input: GetReactionProps): Promise<PaginationResult<PostReactionEntity>>;
 }
 
 export const REACTION_QUERY_TOKEN = 'REACTION_QUERY_TOKEN';

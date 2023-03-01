@@ -1,9 +1,9 @@
 import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
-import { ReactionEnum } from '../../reaction.enum';
-import { OrderEnum } from '../../../../common/dto';
 import { IsOptional, IsUUID } from 'class-validator';
 import { NIL as NIL_UUID } from 'uuid';
 import { Expose } from 'class-transformer';
+import { ReactionEnum } from '../../../../../reaction/reaction.enum';
+import { OrderEnum } from '../../../../../../common/dto';
 
 export class GetReactionDto {
   @ApiProperty({

@@ -1,9 +1,9 @@
 import { emoji } from 'node-emoji';
 import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ReactionEnum } from '../../reaction.enum';
 import { IsIn, IsNotEmpty, IsUUID, ValidateIf } from 'class-validator';
-import { BIC_EMOJI } from '../../reaction.constant';
+import { ReactionEnum } from '../../../../../reaction/reaction.enum';
+import { BIC_EMOJI } from '../../../../../reaction/reaction.constant';
 
 export class DeleteReactionDto {
   @ApiProperty({ example: 'POST' })

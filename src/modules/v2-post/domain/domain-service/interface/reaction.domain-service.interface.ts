@@ -1,6 +1,12 @@
+import { CommentReactionEntity, PostReactionEntity } from '../../model/reaction';
+import { ReactionEnum } from '../../../../reaction/reaction.enum';
+import { ReactionEntity } from '../../model/reaction/reaction.entity';
+
 export type ReactionCreateProps = {
   reactionName: string;
   targetId: string;
+  createdBy: string;
+  target: ReactionEnum;
 };
 
 export type ReactionUpdateProps = {
@@ -9,9 +15,9 @@ export type ReactionUpdateProps = {
 };
 
 export interface IReactionDomainService {
-  createReaction(data: ReactionCreateProps): Promise<void>;
+  createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
 
-  updateReaction(data: ReactionUpdateProps): Promise<void>;
+  updateReaction(reaction: ReactionEntity, data: ReactionUpdateProps): Promise<ReactionEntity>;
 
   deleteReaction(id: string): Promise<void>;
 }

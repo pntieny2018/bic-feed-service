@@ -5,6 +5,9 @@ export const ERRORS = {
     TAG_NOT_FOUND: 'tag.not_found',
     TAG_IS_USED: 'tag.is_used',
   },
+  reaction: {
+    REACTION_DUPLICATE: 'reaction.duplicate',
+  },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',
   API_UNAUTHORIZED: 'api.unauthorized',

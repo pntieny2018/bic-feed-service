@@ -1,30 +1,38 @@
-import { REACTION_REPOSITORY_TOKEN } from '../domain/repositoty-interface/reaction.repository.interface';
 import { REACTION_QUERY_TOKEN } from '../domain/query-interface';
 import { FindReactionsHandler } from '../application/query/find-reactions/find-reactions.handler';
 import { ReactionQuery } from '../driven-adapter/query/reaction.query';
-import { ReactionFactory } from '../domain/factory/reaction.factory';
-import { REACTION_FACTORY_TOKEN } from '../domain/factory/reaction.factory.interface';
+import { PostReactionFactory } from '../domain/factory/post-reaction.factory';
+import { CommentReactionFactory } from '../domain/factory/comment-reaction.factory';
+import { PostReactionRepository } from '../driven-adapter/repository/post-reaction.repository';
+import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface/reaction.domain-service.interface';
+import { ReactionDomainService } from '../domain/domain-service';
+import { CreateReactionHandler } from '../application/command/create-reaction/create-reaction.handler';
 
 export const reactionProvider = [
-  // {
-  //   provide: REACTION_REPOSITORY_TOKEN,
-  //   useClass: ReactionRepository,
-  // },
   {
     provide: REACTION_QUERY_TOKEN,
     useClass: ReactionQuery,
   },
-  // {
-  //   provide: REACTION_DOMAIN_SERVICE_TOKEN,
-  //   useClass: ReactionDomainService,
-  // },
   {
-    provide: REACTION_FACTORY_TOKEN,
-    useClass: ReactionFactory,
+    provide: 'POST_REACTION_FACTORY_TOKEN',
+    useClass: PostReactionFactory,
   },
-  /** Application */
-  // CreateReactionHandler,
-  // UpdateReactionHandler,
-  // DeleteReactionHandler,
+  {
+    provide: 'COMMENT_REACTION_FACTORY_TOKEN',
+    useClass: CommentReactionFactory,
+  },
+  {
+    provide: 'POST_REACTION_REPOSITORY_TOKEN',
+    useClass: PostReactionRepository,
+  },
+  {
+    provide: 'COMMENT_REACTION_REPOSITORY_TOKEN',
+    useClass: CommentReactionFactory,
+  },
+  {
+    provide: 'REACTION_DOMAIN_SERVICE_TOKEN',
+    useClass: ReactionDomainService,
+  },
   FindReactionsHandler,
+  CreateReactionHandler,
 ];
