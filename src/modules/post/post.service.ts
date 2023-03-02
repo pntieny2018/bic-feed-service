@@ -60,6 +60,7 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class PostService {
@@ -90,7 +91,6 @@ export class PostService {
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
     protected userSavePostModel: typeof UserSavePostModel,
-    protected userService: UserService,
     protected groupService: GroupService,
     protected mediaService: MediaService,
     protected mentionService: MentionService,

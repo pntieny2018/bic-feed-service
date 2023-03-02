@@ -20,6 +20,7 @@ import { PostCronService } from './post-cron.service';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { PostAppService } from './application/post.app-service';
 import { TagModule } from '../tag';
+import { UserModuleV2 } from '../v2-user/user.module';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -29,7 +30,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 };
 @Module({
   imports: [
-    UserModule,
+    UserModuleV2,
     GroupModule,
     MediaModule,
     MentionModule,

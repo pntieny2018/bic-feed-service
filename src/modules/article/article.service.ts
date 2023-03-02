@@ -54,6 +54,7 @@ import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
+import { USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -86,7 +87,6 @@ export class ArticleService extends PostService {
     protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
-    protected userService: UserService,
     protected groupService: GroupService,
     protected mediaService: MediaService,
     protected mentionService: MentionService,
@@ -118,7 +118,6 @@ export class ArticleService extends PostService {
       postTagModel,
       userMarkReadPostModel,
       userSavePostModel,
-      userService,
       groupService,
       mediaService,
       mentionService,

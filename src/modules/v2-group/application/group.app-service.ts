@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { GroupEntity, GroupId } from '../domain/model/group';
+import { GroupEntity } from '../domain/model/group';
 import {
   GROUP_REPOSITORY_TOKEN,
   IGroupRepository,
@@ -11,13 +11,12 @@ export class GroupApplicationService implements IGroupApplicationService {
   @Inject(GROUP_REPOSITORY_TOKEN)
   private readonly _repo: IGroupRepository;
 
-  public async findOne(id: string): Promise<GroupDto> {
-    const data = await this._repo.findOne(GroupId.fromString(id));
+  public async findOne(groupId: string): Promise<GroupDto> {
+    const data = await this._repo.findOne(groupId);
     return this._toDto(data);
   }
 
-  public async findAllByIds(ids: string[]): Promise<GroupDto[]> {
-    const groupIds = ids.map((id) => GroupId.fromString(id));
+  public async findAllByIds(groupIds: string[]): Promise<GroupDto[]> {
     const rows = await this._repo.findAllByIds(groupIds);
 
     return rows.map((row) => this._toDto(row));
@@ -25,18 +24,18 @@ export class GroupApplicationService implements IGroupApplicationService {
 
   private _toDto(groupEntity: GroupEntity): GroupDto {
     return {
-      id: groupEntity.get('id').value,
-      name: groupEntity.get('name').value,
-      icon: groupEntity.get('icon').value,
-      communityId: groupEntity.get('communityId').value,
+      id: groupEntity.get('id'),
+      name: groupEntity.get('name'),
+      icon: groupEntity.get('icon'),
+      communityId: groupEntity.get('communityId'),
       isCommunity: groupEntity.get('isCommunity'),
-      privacy: groupEntity.get('privacy').value,
-      rootGroupId: groupEntity.get('rootGroupId').value,
+      privacy: groupEntity.get('privacy'),
+      rootGroupId: groupEntity.get('rootGroupId'),
       child: {
-        closed: groupEntity.get('child').closed.map((item) => item.value),
-        open: groupEntity.get('child').open.map((item) => item.value),
-        private: groupEntity.get('child').private.map((item) => item.value),
-        secret: groupEntity.get('child').secret.map((item) => item.value),
+        closed: groupEntity.get('child').closed.map((item) => item),
+        open: groupEntity.get('child').open.map((item) => item),
+        private: groupEntity.get('child').private.map((item) => item),
+        secret: groupEntity.get('child').secret.map((item) => item),
       },
     };
   }

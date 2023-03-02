@@ -2,7 +2,7 @@ import { StringHelper } from '../../../../../common/helpers';
 import { RULES } from '../../../constant';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { v4, validate as isUUID } from 'uuid';
+import { validate as isUUID } from 'uuid';
 
 export type TagProps = {
   id: string;

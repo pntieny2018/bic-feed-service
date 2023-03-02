@@ -6,11 +6,12 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
 import { TokenExpiredError } from 'jsonwebtoken';
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UserHttpService, UserService } from '../../shared/user';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class AuthService {
@@ -18,8 +19,8 @@ export class AuthService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    private _userService: UserService,
-    private _userHttpService: UserHttpService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _httpService: HttpService,
     private _configService: ConfigService
   ) {}
@@ -32,18 +33,19 @@ export class AuthService {
       staffRole: payload['custom:bein_staff_role'],
     });
 
-    const userInfo = await this._userHttpService.getUserInfo(user.username);
+    const userInfo = await this._userAppService.findByUserName(user.username, {
+      withPermission: true,
+    });
     if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
-    const permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
     return {
       id: userInfo.id,
       avatar: userInfo.avatar,
       email: userInfo.email,
       username: userInfo.username,
       fullname: userInfo.fullname,
-      permissions,
+      permissions: userInfo.permissions,
       groups: userInfo.groups || [],
     };
   }

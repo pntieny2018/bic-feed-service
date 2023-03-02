@@ -1,63 +1,39 @@
-import { AggregateRoot, EntityProps, IDomainEvent } from '@beincom/domain';
-import {
-  PostCommentsCount,
-  PostId,
-  PostImportantExpiredAt,
-  PostTitle,
-  PostTotalUsersSeen,
-} from '.';
-import { BooleanValueObject } from '../../../../../common/value-objects/boolean.value-object';
-import { UserId } from '../../../../v2-user/domain/model/user';
-import { PostLang } from './post-lang.value-object';
+import { POST_LANG } from '../../../data-type/post-lang.enum';
+import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { validate as isUUID } from 'uuid';
+import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+
 export type PostProps = {
-  createdBy: UserId;
-  updatedBy: UserId;
-  title: PostTitle;
+  id: string;
+  createdBy: string;
+  updatedBy: string;
   content: string;
-  lang: PostLang;
-  commentsCount: PostCommentsCount;
-  totalUsersSeen: PostTotalUsersSeen;
-  isImportant: BooleanValueObject;
-  importantExpiredAt?: PostImportantExpiredAt;
-  canReact: BooleanValueObject;
-  canShare: BooleanValueObject;
-  canComment: BooleanValueObject;
-  isReported: BooleanValueObject;
-  isHidden: BooleanValueObject;
+  lang: POST_LANG;
+  commentsCount: number;
+  totalUsersSeen: number;
+  isImportant: boolean;
+  importantExpiredAt: string;
+  canReact: boolean;
+  canShare: boolean;
+  canComment: boolean;
+  isReported: boolean;
+  isHidden: boolean;
 };
 
-export class PostEntity extends AggregateRoot<PostId, PostProps> {
-  public static TAG_NAME_MAX_LENGTH = 32;
-
-  protected _id: PostId;
-
-  public constructor(
-    entityProps: EntityProps<PostId, PostProps>,
-    domainEvent: IDomainEvent<unknown>[] = []
-  ) {
-    super(entityProps, domainEvent, { disablePropSetter: false });
-    this._id = entityProps.id;
+export class PostEntity extends DomainAggregateRoot<PostProps> {
+  public constructor(props: PostProps) {
+    super(props);
   }
 
   public validate(): void {
-    //
+    if (!isUUID(this._props.id)) {
+      throw new DomainModelException(`Group ID is not UUID`);
+    }
+    if (!isUUID(this._props.createdBy)) {
+      throw new DomainModelException(`Created By is not UUID`);
+    }
+    if (!isUUID(this._props.updatedBy)) {
+      throw new DomainModelException(`Updated By is not UUID`);
+    }
   }
-
-  // public static fromJson(raw: any): PostEntity {
-  //   const props: EntityProps<PostId, PostProps> = {
-  //     id: PostId.fromString(raw.id),
-  //     props: {
-  //       groupId: GroupId.fromString(raw.groupId),
-  //       name: PostName.fromString(raw.name),
-  //       slug: PostSlug.fromString(raw.slug),
-  //       totalUsed: PostTotalUsed.fromString(raw.totalUsed),
-  //       createdBy: UserId.fromString(raw.createdBy),
-  //       updatedBy: UserId.fromString(raw.updatedBy),
-  //     },
-  //     createdAt: CreatedAt.fromDateString(raw.createdAt),
-  //     updatedAt: UpdatedAt.fromDateString(raw.updatedAt),
-  //   };
-
-  //   return new PostEntity(props);
-  // }
 }

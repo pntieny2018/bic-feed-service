@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ArticleAppService } from './application/article.app-service';
 import { InjectModel } from '@nestjs/sequelize';
@@ -9,6 +9,7 @@ import { ArticleService } from './article.service';
 import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
 import { RedisService } from '@app/redis';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class ArticleCronService {
@@ -17,7 +18,8 @@ export class ArticleCronService {
   public constructor(
     private _articleAppService: ArticleAppService,
     private _articleService: ArticleService,
-    private _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _redisService: RedisService,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel
@@ -64,21 +66,16 @@ export class ArticleCronService {
         });
         for (const article of articles) {
           try {
-            const userProfile = await this._userService.get(article.createdBy);
-            const userPermission = await this._userService.getPermissions(
-              userProfile.id,
-              JSON.stringify({
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'cognito:username': userProfile.username,
-              })
-            );
+            const userProfile = await this._userAppService.findOne(article.createdBy, {
+              withPermission: true,
+            });
             const userDTO: UserDto = {
               id: userProfile.id,
               avatar: userProfile.avatar,
               email: userProfile.email,
               username: userProfile.username,
               fullname: userProfile.fullname,
-              permissions: userPermission,
+              permissions: userProfile.permissions,
               groups: userProfile.groups || [],
             };
             await this._articleAppService.publish(userDTO, article.id, true);

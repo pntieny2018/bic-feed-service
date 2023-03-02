@@ -13,6 +13,7 @@ import { MentionService } from '../mention';
 import { PostResponseDto } from './dto/responses';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { ArrayHelper } from '../../common/helpers';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class PostBindingService {
@@ -33,7 +34,8 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    protected userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected userAppService: IUserApplicationService,
     protected groupService: GroupService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
@@ -214,7 +216,7 @@ export class PostBindingService {
         userIds.push(...post.articles.map((article) => article.createdBy));
       }
     }
-    const users = await this.userService.getMany(userIds);
+    const users = await this.userAppService.findAllByIds(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
 

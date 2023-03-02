@@ -4,7 +4,10 @@ export class UserDto {
   public fullname: string;
   public email: string;
   public avatar: string;
-  public permissions?: any;
+  public permissions?: {
+    communities: Record<string, string[]>;
+    groups: Record<string, string[]>;
+  };
   public groups?: string[];
 
   public constructor(userInfo: Partial<UserDto>) {

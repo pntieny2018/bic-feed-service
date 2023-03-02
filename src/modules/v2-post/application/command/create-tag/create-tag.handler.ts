@@ -1,7 +1,5 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GroupId } from '../../../../v2-group/domain/model/group';
-import { UserId } from '../../../../v2-user/domain/model/user';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
