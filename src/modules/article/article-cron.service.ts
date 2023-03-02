@@ -66,13 +66,14 @@ export class ArticleCronService {
         for (const article of articles) {
           try {
             const userProfile = await this._userAppService.get(article.createdBy);
+            const permissions = await this._userAppService.getPermissions(article.createdBy);
             const userDTO: UserDto = {
               id: userProfile.id,
               avatar: userProfile.avatar,
               email: userProfile.email,
               username: userProfile.username,
               fullname: userProfile.fullname,
-              permissions: userProfile.permissions,
+              permissions: permissions,
               groups: userProfile.groups || [],
             };
             await this._articleAppService.publish(userDTO, article.id, true);
