@@ -18,8 +18,7 @@ export class ArticleCronService {
   public constructor(
     private _articleAppService: ArticleAppService,
     private _articleService: ArticleService,
-    @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService,
+    private _userAppService: UserService,
     private _redisService: RedisService,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel
@@ -66,9 +65,7 @@ export class ArticleCronService {
         });
         for (const article of articles) {
           try {
-            const userProfile = await this._userAppService.findOne(article.createdBy, {
-              withPermission: true,
-            });
+            const userProfile = await this._userAppService.get(article.createdBy);
             const userDTO: UserDto = {
               id: userProfile.id,
               avatar: userProfile.avatar,

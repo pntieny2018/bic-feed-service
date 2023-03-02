@@ -262,7 +262,6 @@ export class PostService {
     });
 
     await this.postBinding.bindCommunity(postsBindedData);
-
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });

@@ -34,8 +34,7 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    @Inject(USER_APPLICATION_TOKEN)
-    protected userAppService: IUserApplicationService,
+    protected userAppService: UserService,
     protected groupService: GroupService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
@@ -216,10 +215,9 @@ export class PostBindingService {
         userIds.push(...post.articles.map((article) => article.createdBy));
       }
     }
-    const users = await this.userAppService.findAllByIds(userIds);
+    const users = await this.userAppService.getMany(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
-
       if (post.articles?.length) {
         post.articles = post.articles.map((article) => {
           if (article.createdBy) {

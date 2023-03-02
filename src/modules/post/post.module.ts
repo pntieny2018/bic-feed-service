@@ -30,7 +30,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 };
 @Module({
   imports: [
-    UserModuleV2,
+    UserModule,
     GroupModule,
     MediaModule,
     MentionModule,
