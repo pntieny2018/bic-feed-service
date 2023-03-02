@@ -5,7 +5,7 @@ import { UserEntity } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { HttpStatus, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 
@@ -25,12 +25,16 @@ type UserDataInCache = {
 
 type UserDataInRest = UserDataInCache;
 
+@Injectable()
 export class UserRepository implements IUserRepository {
   private readonly _logger = new Logger(UserRepository.name);
-  private readonly _store: RedisService;
+
   private readonly _prefixRedis = `${AppHelper.getRedisEnv()}SU:`;
 
-  public constructor(private readonly _httpService: HttpService) {}
+  public constructor(
+    private readonly _httpService: HttpService,
+    private readonly _store: RedisService
+  ) {}
 
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
