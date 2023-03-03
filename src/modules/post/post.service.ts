@@ -716,8 +716,6 @@ export class PostService {
             { ignoreDuplicates: true, transaction }
           );
         }
-
-        post.markedReadPost = true;
       }
 
       await transaction.commit();
