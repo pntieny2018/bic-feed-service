@@ -16,12 +16,11 @@ import {
   StatisticsReportResponsesDto,
   UpdateStatusReportDto,
 } from './dto';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   IReportContentAttribute,
   ReportContentModel,
 } from '../../database/models/report-content.model';
-import { UserService } from '../../shared/user';
 import { getDatabaseConfig } from '../../config/database';
 import { plainToInstance } from 'class-transformer';
 import {
@@ -37,10 +36,10 @@ import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
-import { UserDataShareDto } from '../../shared/user/dto';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseDto } from '../comment/dto/response';
+import { IUserApplicationService } from '../v2-user/application';
 
 @Injectable()
 export class ReportContentService {
@@ -48,7 +47,8 @@ export class ReportContentService {
     @InjectConnection()
     private readonly _sequelize: Sequelize,
     private readonly _feedService: FeedService,
-    private readonly _userService: UserService,
+    @Inject()
+    private readonly _userAppService: IUserApplicationService,
     private readonly _postService: PostService,
     private readonly _groupService: GroupService,
     private readonly _articleService: ArticleService,
@@ -123,14 +123,14 @@ export class ReportContentService {
 
     const authorIds = results.map((rs) => rs['author_id']);
 
-    const authors = await this._userService.getMany(authorIds);
+    const authors = await this._userAppService.findAllByIds(authorIds);
 
     results = results.map((rs) => {
       const author = authors.find((a) => a.id === rs['author_id']);
       const details = reportStatisticsMap.get(`${rs['id']}`);
       delete author.groups;
       // const reason ?
-      return { ...rs, author: new UserDataShareDto(author), details: details };
+      return { ...rs, author: author, details: details };
     });
 
     return plainToInstance(ReportReviewResponsesDto, results, {
@@ -400,7 +400,7 @@ export class ReportContentService {
 
     const reporterIds = reports.map((report) => report.createdBy);
 
-    const userInfos = await this._userService.getMany(reporterIds);
+    const userInfos = await this._userAppService.findAllByIds(reporterIds);
     const reportByReasonTypeMap = new Map<string, StatisticsReportResponseDto>();
     const reasonTypes = await this._groupService.getReasonType();
 

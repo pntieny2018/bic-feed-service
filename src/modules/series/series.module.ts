@@ -6,7 +6,6 @@ import { CommentModule } from '../comment';
 import { ReactionModule } from '../reaction';
 import { FeedModule } from '../feed';
 import { PostModule } from '../post';
-import { UserModule } from '../../shared/user';
 import { GroupModule } from '../../shared/group';
 import { SeriesAppService } from './application/series.app-service';
 import { ArticleModule } from '../article';
@@ -16,7 +15,6 @@ import { SearchModule } from '../search';
   imports: [
     AuthorityModule,
     PostModule,
-    UserModule,
     GroupModule,
     SearchModule,
     forwardRef(() => ReactionModule),

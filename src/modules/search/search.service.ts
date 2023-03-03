@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -12,12 +12,9 @@ import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { GroupService } from '../../shared/group';
 import { GroupSharedDto } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
-import { UserDto } from '../auth';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -29,6 +26,7 @@ import {
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
+import { IUserApplicationService, UserDto } from '../v2-user/application';
 
 type FieldSearch = {
   default: string;
@@ -55,7 +53,8 @@ export class SearchService {
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly groupService: GroupService,
-    protected readonly userService: UserService,
+    @Inject()
+    protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
     private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
@@ -319,7 +318,7 @@ export class SearchService {
       }
       return data;
     });
-    const users = await this.userService.getMany(attrUserIds);
+    const users = await this.userAppService.findAllByIds(attrUserIds);
     const groups = await this.groupService.getMany(attrGroupIds);
     await Promise.all([
       this.reactionService.bindToPosts(posts),
@@ -364,7 +363,7 @@ export class SearchService {
     posts: any,
     dataBinding: {
       groups: GroupSharedDto[];
-      users: UserSharedDto[];
+      users: UserDto[];
       articles: any;
     }
   ): any {

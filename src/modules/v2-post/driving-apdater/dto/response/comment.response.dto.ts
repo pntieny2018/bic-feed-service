@@ -3,9 +3,9 @@ import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 import { IsUUID } from 'class-validator';
 import { FileResponseDto, ImageResponseDto, UserMentionResponseDto, VideoResponseDto } from '.';
 import { PageDto } from '../../../../../common/dto';
-import { UserDataShareDto } from '../../../../../shared/user/dto';
 import { MediaResponseDto } from './media.response.dto';
 import { ReactionResponseDto } from './reaction-response.dto';
+import { UserDto } from '../../../../v2-user/application';
 
 export class CommentResponseDto {
   @ApiProperty()
@@ -15,7 +15,7 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public actor: UserDataShareDto;
+  public actor: UserDto;
 
   @ApiProperty()
   @Expose()

@@ -17,7 +17,6 @@ import {
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { NotificationService } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
-import { UserService } from '../../shared/user';
 import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
@@ -35,6 +34,7 @@ import {
 import { ReactionEnum } from './reaction.enum';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class ReactionService {
@@ -43,7 +43,8 @@ export class ReactionService {
   public constructor(
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
-    private readonly _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userService: IUserApplicationService,
     @Inject(forwardRef(() => CommentService))
     private readonly _commentService: CommentService,
     private readonly _followService: FollowService,
@@ -144,7 +145,7 @@ export class ReactionService {
     reactions: IPostReaction[] | ICommentReaction[]
   ): Promise<ReactionResponseDto[]> {
     const actorIds = reactions.map((r) => r.createdBy);
-    const actors = await this._userService.getMany(actorIds);
+    const actors = await this._userService.findAllByIds(actorIds);
     return reactions.map(
       (r): ReactionResponseDto => ({
         id: r.id,

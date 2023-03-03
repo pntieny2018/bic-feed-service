@@ -15,7 +15,7 @@ import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';
 import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
@@ -25,6 +25,7 @@ import { ReorderItemsDto } from './dto/requests/reorder-items.dto';
 import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
+import { UserDto } from '../v2-user/application';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')

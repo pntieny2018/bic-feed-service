@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { COMMUNITY_ADMIN_PATH, GROUP_ADMIN_PATH } from '../../common/constants';
-import { UserSharedDto } from '../user/dto';
+import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
 export class GroupHttpService {
@@ -11,7 +11,7 @@ export class GroupHttpService {
   public constructor(private readonly _httpService: HttpService) {}
 
   public async getGroupAdminIds(
-    actor: UserSharedDto,
+    actor: UserDto,
     groupIds: string[],
     offset = 0,
     limit = 50

@@ -12,7 +12,6 @@ import {
 } from '../../../events/series';
 import { SeriesRemovedItemsEvent } from '../../../events/series/series-removed-items.event';
 import { SeriesSearchResponseDto } from '../../article/dto/responses/series-search.response.dto';
-import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { PostService } from '../../post/post.service';
@@ -22,6 +21,7 @@ import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
 import { PostStatus } from '../../../database/models/post.model';
+import { UserDto } from '../../v2-user/application';
 
 @Injectable()
 export class SeriesAppService {

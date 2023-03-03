@@ -10,9 +10,7 @@ import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/commo
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { UserHttpService, UserService } from '../../shared/user';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
-import { IAppConfig } from '../../config/app';
 
 @Injectable()
 export class AuthService {

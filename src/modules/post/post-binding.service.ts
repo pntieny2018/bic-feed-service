@@ -1,7 +1,6 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
@@ -34,7 +33,8 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    protected userAppService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected userAppService: IUserApplicationService,
     protected groupService: GroupService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
@@ -215,7 +215,7 @@ export class PostBindingService {
         userIds.push(...post.articles.map((article) => article.createdBy));
       }
     }
-    const users = await this.userAppService.getMany(userIds);
+    const users = await this.userAppService.findAllByIds(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
       if (post.articles?.length) {

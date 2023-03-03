@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PageDto } from '../../../../common/dto';
 import { Expose, Transform, Type } from 'class-transformer';
-import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
@@ -11,6 +10,7 @@ import { PostType } from '../../../../database/models/post.model';
 import { ItemInSeriesResponseDto } from '../../../article/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostInSeriesResponseDto } from '../../../post/dto/responses/post-in-series.response.dto';
+import { UserDto } from '../../../v2-user/application';
 
 export class SeriesResponseDto {
   @ApiProperty({
@@ -61,11 +61,11 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     description: 'Post creator information',
-    type: UserSharedDto,
+    type: UserDto,
   })
   @Expose()
-  @Type(() => UserSharedDto)
-  public actor: UserSharedDto;
+  @Type(() => UserDto)
+  public actor: UserDto;
 
   @ApiProperty({
     type: Boolean,

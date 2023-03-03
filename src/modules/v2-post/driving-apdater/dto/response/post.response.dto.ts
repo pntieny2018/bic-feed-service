@@ -9,13 +9,13 @@ import {
   VideoResponseDto,
 } from '.';
 import { PageDto } from '../../../../../common/dto';
-import { UserDataShareDto } from '../../../../../shared/user/dto';
 import { UserMentionDto } from '../../../../mention/dto';
 import { CommunityResponseDto } from '../../../../post/dto/responses';
 import { ReactionResponseDto } from '../../../../reaction/dto/response';
 import { AudienceResponseDto } from './audience.response.dto';
 import { MediaResponseDto } from './media.response.dto';
 import { PostSettingResponseDto } from './post-setting-response.dto';
+import { UserDto } from '../../../../v2-user/application';
 
 export class PostResponseDto {
   @ApiProperty()
@@ -78,7 +78,7 @@ export class PostResponseDto {
   public isProcessing: boolean;
 
   @ApiProperty()
-  public actor: UserDataShareDto;
+  public actor: UserDto;
 
   @ApiProperty({
     type: UserMentionDto,

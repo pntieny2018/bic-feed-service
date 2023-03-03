@@ -11,8 +11,6 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserDataShareDto } from '../../shared/user/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
@@ -21,13 +19,15 @@ import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
   private readonly _classTransformer = new ClassTransformer();
   public constructor(
-    private readonly _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userService: IUserApplicationService,
     private readonly _groupService: GroupService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
@@ -135,7 +135,7 @@ export class FeedService {
   public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
-  ): Promise<PageDto<UserDataShareDto>> {
+  ): Promise<PageDto<UserDto>> {
     try {
       const { postId } = getUserSeenPostDto;
 
@@ -169,9 +169,9 @@ export class FeedService {
         },
       });
 
-      const users = await this._userService.getMany(usersSeenPost.map((usp) => usp.userId));
+      const users = await this._userService.findAllByIds(usersSeenPost.map((usp) => usp.userId));
 
-      return new PageDto<UserDataShareDto>(
+      return new PageDto<UserDto>(
         users,
         new PageMetaDto({
           total: total ?? 0,

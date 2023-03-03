@@ -1,5 +1,4 @@
 import { MediaModule } from '../media';
-import { UserModule } from '../../shared/user';
 import { forwardRef, Module } from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostController } from './post.controller';
@@ -30,7 +29,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 };
 @Module({
   imports: [
-    UserModule,
+    UserModuleV2,
     GroupModule,
     MediaModule,
     MentionModule,

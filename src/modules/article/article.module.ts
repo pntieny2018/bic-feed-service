@@ -21,11 +21,12 @@ import { ArticleAppService } from './application/article.app-service';
 import { SearchModule } from '../search';
 import { TagModule } from '../tag';
 import { ArticleCronService } from './article-cron.service';
+import { UserModuleV2 } from '../v2-user/user.module';
 
 @Module({
   imports: [
     PostModule,
-    UserModule,
+    UserModuleV2,
     GroupModule,
     MediaModule,
     FeedModule,
