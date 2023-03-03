@@ -401,6 +401,9 @@ export class ArticleService extends PostService {
       filterGroupIds: groupIdsUserCanAccess,
       filterCategoryIds: categoryIds,
     });
+
+    const articleIdsReported = await this.getEntityIdsReportedByUser(user.id, [TargetType.ARTICLE]);
+
     const relatedRows = await this.postModel.findAll({
       attributes: [
         'id',
@@ -416,6 +419,10 @@ export class ArticleService extends PostService {
       where: {
         type: PostType.ARTICLE,
         status: PostStatus.PUBLISHED,
+        id: {
+          [Op.notIn]: articleIdsReported,
+        },
+        isHidden: false,
       },
       offset,
       limit,
