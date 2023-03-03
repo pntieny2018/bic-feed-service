@@ -422,6 +422,7 @@ export class ArticleService extends PostService {
         id: {
           [Op.notIn]: articleIdsReported,
         },
+        isHidden: false,
       },
       offset,
       limit,
