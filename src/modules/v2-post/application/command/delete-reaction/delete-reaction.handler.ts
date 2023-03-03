@@ -11,9 +11,10 @@ import {
   IPostReactionRepository,
   POST_REACTION_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface';
-import { ReactionEnum } from '../../../../reaction/reaction.enum';
-import { ReactionNotFoundException } from '../../../exception/reaction-not-found.exception';
+import { ReactionNotFoundException } from '../../../exception';
 import { ReactionEntity } from '../../../domain/model/reaction/reaction.entity';
+import { REACTION_TARGET } from '../../../data-type';
+import { ReactionNotHaveAuthorityException } from '../../../exception/reaction-not-have-authority.exception';
 
 @CommandHandler(DeleteReactionCommand)
 export class DeleteReactionHandler implements ICommandHandler<DeleteReactionCommand, void> {
@@ -25,25 +26,28 @@ export class DeleteReactionHandler implements ICommandHandler<DeleteReactionComm
   private readonly _commentReactionRepository: ICommentReactionRepository;
 
   public async execute(command: DeleteReactionCommand): Promise<void> {
-    const { target } = command.payload;
-    const conditions = {};
-    if (target === ReactionEnum.COMMENT) {
-      conditions['commentId'] = command.payload.targetId;
-    } else if (target === ReactionEnum.POST) {
-      conditions['postId'] = command.payload.targetId;
+    const { target, targetId, reactionName, reactionId, userId } = command.payload;
+    const conditions = {
+      reactionName,
+    };
+    if (target === REACTION_TARGET.COMMENT) {
+      conditions['commentId'] = targetId;
+    } else if (target === REACTION_TARGET.POST) {
+      conditions['postId'] = targetId;
     }
-    if (command.payload.reactionId) {
-      conditions['id'] = command.payload.reactionId;
-    }
-    if (command.payload.reactionName) {
-      conditions['reactionName'] = command.payload.reactionName;
+    if (reactionId) {
+      conditions['id'] = reactionId;
     }
     const reaction =
-      target === ReactionEnum.COMMENT
+      target === REACTION_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne(conditions)
         : await this._postReactionRepository.findOne(conditions);
     if (!reaction) {
       throw new ReactionNotFoundException();
+    }
+
+    if ((reaction as ReactionEntity).get('createdBy') !== userId) {
+      throw new ReactionNotHaveAuthorityException();
     }
 
     await this._reactionDomainService.deleteReaction((reaction as ReactionEntity).get('id'));

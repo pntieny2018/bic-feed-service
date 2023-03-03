@@ -2,14 +2,14 @@ import { emoji } from 'node-emoji';
 import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsUUID, ValidateIf } from 'class-validator';
-import { ReactionEnum } from '../../../../../reaction/reaction.enum';
 import { BIC_EMOJI } from '../../../../../reaction/reaction.constant';
+import { REACTION_TARGET } from '../../../../data-type';
 
 export class DeleteReactionDto {
   @ApiProperty({ example: 'POST' })
   @IsNotEmpty()
   @Expose()
-  public target: ReactionEnum;
+  public target: REACTION_TARGET;
 
   @ApiProperty({ example: 'dd41bad0-9699-493a-b8cd-c0cea072f373', name: 'target_id' })
   @IsUUID()

@@ -15,7 +15,7 @@ import {
 } from '../../domain/factory';
 import { getDatabaseConfig } from '../../../../config/database';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
-import { ReactionEnum } from '../../../reaction/reaction.enum';
+import { REACTION_TARGET } from '../../data-type';
 
 export class ReactionQuery implements IReactionQuery {
   @Inject(POST_REACTION_FACTORY_TOKEN) private readonly _postReactionFactory: IPostReactionFactory;
@@ -36,13 +36,13 @@ export class ReactionQuery implements IReactionQuery {
     const symbol = order === OrderEnum.DESC ? Op.lte : Op.gte;
 
     let executer = null;
-    if (target === ReactionEnum.POST || target === ReactionEnum.ARTICLE) {
+    if (target === REACTION_TARGET.POST || target === REACTION_TARGET.ARTICLE) {
       executer = {
         model: this._postReactionModel,
         paramIdName: 'postId',
         factory: this._postReactionFactory,
       };
-    } else if (target === ReactionEnum.COMMENT) {
+    } else if (target === REACTION_TARGET.COMMENT) {
       executer = {
         model: this._commentReactionModel,
         paramIdName: 'commentId',

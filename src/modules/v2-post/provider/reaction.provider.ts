@@ -8,6 +8,7 @@ import { REACTION_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interfac
 import { ReactionDomainService } from '../domain/domain-service';
 import { CreateReactionHandler } from '../application/command/create-reaction/create-reaction.handler';
 import { DeleteReactionHandler } from '../application/command/delete-reaction/delete-reaction.handler';
+import { CommentReactionRepository } from '../driven-adapter/repository/comment-reaction.repository';
 
 export const reactionProvider = [
   {
@@ -28,7 +29,7 @@ export const reactionProvider = [
   },
   {
     provide: 'COMMENT_REACTION_REPOSITORY_TOKEN',
-    useClass: CommentReactionFactory,
+    useClass: CommentReactionRepository,
   },
   {
     provide: 'REACTION_DOMAIN_SERVICE_TOKEN',

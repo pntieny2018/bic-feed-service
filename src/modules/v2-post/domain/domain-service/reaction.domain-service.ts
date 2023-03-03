@@ -11,10 +11,9 @@ import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../repositoty-interface';
-import { ReactionEnum } from '../../../reaction/reaction.enum';
 import { ReactionEntity } from '../model/reaction/reaction.entity';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { CreateReactionInternalEvent } from '../../../../events/reaction';
+import { REACTION_TARGET } from '../../data-type';
 
 export class ReactionDomainService implements IReactionDomainService {
   private readonly _logger = new Logger(ReactionDomainService.name);
@@ -31,7 +30,7 @@ export class ReactionDomainService implements IReactionDomainService {
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, createdBy, target, targetId } = input;
 
-    if (target === ReactionEnum.POST || target === ReactionEnum.ARTICLE) {
+    if (target === REACTION_TARGET.POST || target === REACTION_TARGET.ARTICLE) {
       const postReactionEntity = this._postReactionFactory.create({
         reactionName,
         createdBy,
@@ -49,7 +48,7 @@ export class ReactionDomainService implements IReactionDomainService {
       //   })
       // );
       return postReactionEntity;
-    } else if (target === ReactionEnum.COMMENT) {
+    } else if (target === REACTION_TARGET.COMMENT) {
       const commentReactionEntity = this._commentReactionFactory.create({
         reactionName,
         createdBy,

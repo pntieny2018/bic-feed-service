@@ -9,14 +9,14 @@ import {
 import {
   IReactionDomainService,
   REACTION_DOMAIN_SERVICE_TOKEN,
-} from '../../../domain/domain-service/interface/reaction.domain-service.interface';
-import { ReactionEnum } from '../../../../reaction/reaction.enum';
-import { ReactionDuplicateException } from '../../../exception/reaction-duplicate.exception';
+} from '../../../domain/domain-service/interface';
+import { ReactionDuplicateException } from '../../../exception';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../../../domain/repositoty-interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { REACTION_TARGET } from '../../../data-type';
 
 @CommandHandler(CreateReactionCommand)
 export class CreateReactionHandler
@@ -36,7 +36,7 @@ export class CreateReactionHandler
     );
 
     const reactionEntity =
-      command.payload.target === ReactionEnum.COMMENT
+      command.payload.target === REACTION_TARGET.COMMENT
         ? await this._commentReactionRepository.findOne({
             commentId: newCreateReactionDto.targetId,
             createdBy: newCreateReactionDto.createdBy,

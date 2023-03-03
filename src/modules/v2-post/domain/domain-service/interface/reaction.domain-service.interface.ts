@@ -1,12 +1,11 @@
-import { CommentReactionEntity, PostReactionEntity } from '../../model/reaction';
-import { ReactionEnum } from '../../../../reaction/reaction.enum';
 import { ReactionEntity } from '../../model/reaction/reaction.entity';
+import { REACTION_TARGET } from '../../../data-type';
 
 export type ReactionCreateProps = {
   reactionName: string;
   targetId: string;
   createdBy: string;
-  target: ReactionEnum;
+  target: REACTION_TARGET;
 };
 
 export interface IReactionDomainService {

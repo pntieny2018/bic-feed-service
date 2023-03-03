@@ -1,9 +1,9 @@
 import { ICommand } from '@nestjs/cqrs';
-import { ReactionEnum } from '../../../../reaction/reaction.enum';
+import { REACTION_TARGET } from '../../../data-type';
 
 export type CreateReactionCommandPayload = {
   reactionName: string;
-  target: ReactionEnum;
+  target: REACTION_TARGET;
   targetId: string;
   createdBy: string;
 };
