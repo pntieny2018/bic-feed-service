@@ -3,7 +3,6 @@ import { FeedModule } from '../modules/feed';
 import { PostModule } from '../modules/post';
 import { SeriesModule } from '../modules/series';
 import { ListenerModule } from '../listeners';
-import { GroupModule } from '../shared/group';
 import { MediaModule } from '../modules/media';
 import { UploadModule } from '../modules/upload';
 import { AppController } from './app.controller';
@@ -48,7 +47,6 @@ import { I18nMiddleware } from 'nestjs-i18n';
     PostModule,
     UploadModule,
     MediaModule,
-    GroupModule,
     MentionModule,
     ReactionModule,
     ListenerModule,

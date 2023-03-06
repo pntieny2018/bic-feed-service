@@ -4,7 +4,6 @@ import { FixCommentCountCommand } from './fix-comment-count.command';
 import { FixPostCommentCountCommand } from './fix-post-comment-count.command';
 import { DatabaseModule } from '../database';
 import { LibModule } from '../app/lib.module';
-import { GroupModule } from '../shared/group';
 import { PostModule } from '../modules/post';
 import { UpdatePrivacyPostCommand } from './update-post-privacy.command';
 import { MentionModule } from '../modules/mention';
@@ -29,6 +28,7 @@ import { UploadModule } from '../modules/upload';
 import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-vs-bulk-update.command';
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { GroupModuleV2 } from '../modules/v2-group/group.module';
 
 @Module({
   imports: [
@@ -40,7 +40,7 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
     DatabaseModule,
     LibModule,
     UserModuleV2,
-    GroupModule,
+    GroupModuleV2,
     PostModule,
     MentionModule,
     MediaModule,

@@ -19,17 +19,17 @@ import {
 } from './series';
 import { SearchModule } from '../modules/search';
 import { ReportContentListener } from './report';
-import { GroupModule } from '../shared/group';
 import { TagModule } from '../modules/tag';
 import { FilterUserModule } from '../modules/filter-user';
 import { FollowModule } from '../modules/follow';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { GroupModuleV2 } from '../modules/v2-group/group.module';
 
 @Module({
   imports: [
     FollowModule,
     FilterUserModule,
-    GroupModule,
+    GroupModuleV2,
     PostModule,
     CommentModule,
     NotificationModule,

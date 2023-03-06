@@ -8,6 +8,7 @@ import { IGroupApplicationService } from './group.app-service.interface';
 import { GroupDto } from './group.dto';
 import { ArrayHelper } from '../../../common/helpers';
 import { GROUP_PRIVACY } from '../data-type';
+import { UserDto } from '../../v2-user/application';
 
 export class GroupApplicationService implements IGroupApplicationService {
   @Inject(GROUP_REPOSITORY_TOKEN)
@@ -50,6 +51,23 @@ export class GroupApplicationService implements IGroupApplicationService {
       filterGroupIdsUserJoined.push(group.id);
     }
     return ArrayHelper.arrayUnique(filterGroupIdsUserJoined);
+  }
+
+  public getGroupAdminIds(
+    actor: UserDto,
+    groupIds: string[],
+    offset = 0,
+    limit = 50,
+  ): Promise<string[]> {
+    return this._repo.getGroupAdminIds(actor, groupIds, offset, limit);
+  }
+
+  public getAdminIds(
+    rootGroupIds: string[],
+    offset = 0,
+    limit = 50,
+  ): Promise<{ admins: Record<string, string[]>; owners: Record<string, string[]> }> {
+    return this._repo.getAdminIds(rootGroupIds, offset, limit);
   }
 
   private _hasJoinedCommunity(groupIdsUserJoined: string[], rootGroupId: string): boolean {

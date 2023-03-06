@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { FeedService } from 'src/modules/feed/feed.service';
 import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
@@ -14,8 +14,11 @@ import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
 import { PostActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
-import { GroupHttpService } from '../../shared/group';
 import { ArrayHelper } from '../../common/helpers';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../modules/v2-group/application';
 
 @Injectable()
 export class SeriesListener {
@@ -25,7 +28,8 @@ export class SeriesListener {
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _sentryService: SentryService,
     private readonly _postServiceHistory: PostHistoryService,
-    private readonly _groupHttpService: GroupHttpService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
     private readonly _postSearchService: SearchService,
     private readonly _feedService: FeedService,
     private readonly _postActivityService: PostActivityService,
@@ -134,7 +138,7 @@ export class SeriesListener {
     try {
       const activity = this._postActivityService.createPayload(series);
 
-      let groupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, groupIds);
+      let groupAdminIds = await this._groupAppService.getGroupAdminIds(actor, groupIds);
 
       groupAdminIds = groupAdminIds.filter((id) => id !== actor.id);
 
@@ -250,12 +254,12 @@ export class SeriesListener {
           return;
         }
 
-        const newGroupAdminIds = await this._groupHttpService.getGroupAdminIds(
+        const newGroupAdminIds = await this._groupAppService.getGroupAdminIds(
           actor,
           attachedGroupIds
         );
 
-        const oldGroupAdminIds = await this._groupHttpService.getGroupAdminIds(actor, oldGroupId);
+        const oldGroupAdminIds = await this._groupAppService.getGroupAdminIds(actor, oldGroupId);
 
         let filterGroupAdminIds = ArrayHelper.arrDifferenceElements<string>(
           newGroupAdminIds,
