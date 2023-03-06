@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { GroupSharedDto } from '../../../../shared/group/dto';
 import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
 import { UserDto } from '../../../v2-user/application';
+import { GroupDto } from '../../../v2-group/application';
 
 export class AudienceResponseDto {
   @ApiProperty({
@@ -19,13 +19,13 @@ export class AudienceResponseDto {
   public users?: UserDto[] = [];
 
   @ApiProperty({
-    type: GroupSharedDto,
+    type: GroupDto,
     isArray: true,
     description: 'Array of group',
   })
   @ValidateNested({ each: true })
   @IsNotEmpty()
   @ArrayNotEmpty()
-  @Type(() => GroupSharedDto)
-  public groups: GroupSharedDto[];
+  @Type(() => GroupDto)
+  public groups: GroupDto[];
 }

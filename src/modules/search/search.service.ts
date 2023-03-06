@@ -10,8 +10,6 @@ import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/hel
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
-import { GroupService } from '../../shared/group';
-import { GroupSharedDto } from '../../shared/group/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
@@ -27,6 +25,11 @@ import {
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
 
 type FieldSearch = {
   default: string;
@@ -52,7 +55,8 @@ export class SearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected readonly appGroupService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
     protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
@@ -252,11 +256,11 @@ export class SearchService {
 
     let groupIds = user.groups;
     if (groupId) {
-      const group = await this.groupService.get(groupId);
+      const group = await this.appGroupService.findOne(groupId);
       if (!group) {
         throw new BadRequestException(`Group ${groupId} not found`);
       }
-      groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
+      groupIds = this.appGroupService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
       if (groupIds.length === 0) {
         return new PageDto<any>([], {
           limit,
@@ -319,7 +323,7 @@ export class SearchService {
       return data;
     });
     const users = await this.userAppService.findAllByIds(attrUserIds);
-    const groups = await this.groupService.getMany(attrGroupIds);
+    const groups = await this.appGroupService.findAllByIds(attrGroupIds);
     await Promise.all([
       this.reactionService.bindToPosts(posts),
       this.postBindingService.bindAttributes(posts, [
@@ -362,7 +366,7 @@ export class SearchService {
   public bindResponseSearch(
     posts: any,
     dataBinding: {
-      groups: GroupSharedDto[];
+      groups: GroupDto[];
       users: UserDto[];
       articles: any;
     }
@@ -482,7 +486,7 @@ export class SearchService {
 
     let filterGroupIds = [];
     if (groupIds && groupIds.length) {
-      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
     }
     const payload = await this.getPayloadSearchForSeries({
       contentSearch,
@@ -542,7 +546,7 @@ export class SearchService {
 
     let filterGroupIds = authUser.groups;
     if (groupIds) {
-      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
     }
     const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
       TargetType.ARTICLE,

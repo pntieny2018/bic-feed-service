@@ -5,7 +5,6 @@ import { MentionModule } from '../mention';
 import { PostModule } from '../post';
 import { AuthorityModule } from '../authority';
 import { MediaModule } from '../media';
-import { GroupModule } from '../../shared/group';
 import { ReactionModule } from '../reaction';
 import { FollowModule } from '../follow';
 import { GiphyModule } from '../giphy';
@@ -21,7 +20,6 @@ import { UserModuleV2 } from '../v2-user/user.module';
     UserModuleV2,
     MentionModule,
     MediaModule,
-    GroupModule,
     ReactionModule,
     GiphyModule,
   ],

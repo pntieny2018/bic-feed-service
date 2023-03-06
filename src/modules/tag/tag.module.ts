@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TagController } from './tag.controller';
 import { TagService } from './tag.service';
-import { GroupModule } from '../../shared/group';
+import { GroupModuleV2 } from '../v2-group/group.module';
 
 @Module({
-  imports: [GroupModule],
+  imports: [GroupModuleV2],
   controllers: [TagController],
   providers: [TagService],
   exports: [TagService],

@@ -1,12 +1,12 @@
 import { OrderEnum } from '../../../../common/dto';
 import { ObjectHelper } from '../../../../common/helpers';
-import { GroupPrivacy } from '../../../../shared/group/dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionEnum } from '../../reaction.enum';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { UserDto } from '../../../v2-user/application';
+import { GROUP_PRIVACY } from '../../../v2-group/data-type';
 
 export const mockCreateReactionDto = {
   post: {
@@ -81,8 +81,10 @@ export const mockPostResponseDto: PostResponseDto = {
         id: 'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
-        privacy: GroupPrivacy.CLOSED,
+        privacy: GROUP_PRIVACY.CLOSED,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
+        isCommunity: false,
+        communityId: '11',
       },
     ],
   },

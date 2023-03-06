@@ -53,7 +53,7 @@ describe.skip('NotificationService', () => {
         {
           provide: KAFKA_PRODUCER,
           useValue: {
-            emit: jest.fn()
+            emit: jest.fn(),
           },
         },
         {
@@ -200,42 +200,6 @@ describe.skip('NotificationService', () => {
         mockCommentResponseWithParentDto
       );
       expect(rsp).toBeInstanceOf(NotificationActivity);
-    });
-  });
-
-  describe('CommentDissociationService', () => {
-    it('Func: dissociateComment', async () => {
-      sentryService.captureException = jest.fn();
-      commentModel.findOne = jest.fn().mockResolvedValue(mockCommentModel);
-      commentModel.findAll = jest.fn().mockResolvedValue([]);
-      commentDissociationService.getValidUserIds = jest.fn().mockResolvedValue(mockValidUserIds);
-
-      await commentDissociationService.dissociateComment(
-        mockUserDto.id,
-        mockCommentResponseDto.id,
-        mockPostResponseDto
-      );
-
-      expect(commentModel.findOne).toBeCalledTimes(1);
-      expect(sentryService.captureException).toBeCalledTimes(0);
-    });
-
-    it('Func: dissociateReplyComment', async () => {
-      commentModel.findOne = jest.fn().mockResolvedValue(mockCommentModel);
-      sentryService.captureException = jest.fn();
-      commentDissociationService.getValidUserIds = jest.fn().mockResolvedValue(mockValidUserIds);
-
-      await commentDissociationService.dissociateReplyComment(
-        mockUserDto.id,
-        mockCommentModel as unknown as CommentModel,
-        ['8e4d4988-0897-4854-8bbc-aef21dac7618', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e7', '0f253efd-4272-48c1-ab9e-9663c172a96e']
-      );
-    });
-
-    it('Func: getValidUserIds', async () => {
-      sequelizeConnection.query = jest.fn();
-      await commentDissociationService.getValidUserIds(['8e4d4988-0897-4854-8bbc-aef21dac7618', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e7', '0f253efd-4272-48c1-ab9e-9663c172a96e'], ['8e4d4988-0897-4854-8bbc-aef21dac7619', '6744ed1a-e91e-4d5c-9d9e-abde1aa6e6e8', '0f253efd-4272-48c1-ab9e-9663c172a96f']);
-      expect(sequelizeConnection.query).toBeCalledTimes(1);
     });
   });
 

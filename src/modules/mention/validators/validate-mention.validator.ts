@@ -7,12 +7,12 @@ import {
   registerDecorator,
 } from 'class-validator';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
-import { GroupService } from '../../../shared/group';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -29,7 +29,8 @@ export class ValidateMentionConstraint implements ValidatorConstraintInterface {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
-    private _groupService: GroupService
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private _groupAppService: IGroupApplicationService
   ) {}
 
   public async validate(mentions: string[], args?: ValidationArguments): Promise<boolean> {
@@ -40,7 +41,7 @@ export class ValidateMentionConstraint implements ValidatorConstraintInterface {
     const users = await this._userAppService.findAllByIds(mentions);
 
     for (const user of users) {
-      if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
+      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
         return false;
       }
     }

@@ -15,7 +15,7 @@ export class GroupDto {
   public isCommunity: boolean;
   public privacy: GROUP_PRIVACY;
   public rootGroupId: string;
-  public child: ChildGroup = {
+  public child?: ChildGroup = {
     closed: [],
     open: [],
     private: [],

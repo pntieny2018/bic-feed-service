@@ -17,7 +17,6 @@ import {
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
-import { GroupService } from '../../../shared/group';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { TargetType } from '../../report-content/contstants';
@@ -32,6 +31,7 @@ import {
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 
 @Injectable()
 export class PostAppService {
@@ -45,7 +45,8 @@ export class PostAppService {
     private _feedService: FeedService,
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
-    private _groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private _groupAppService: IGroupApplicationService,
     protected authorityService: AuthorityService,
     private _tagService: TagService
   ) {}
@@ -250,7 +251,7 @@ export class PostAppService {
 
   public async getUserGroup(groupId: string, userId: string, postId: string): Promise<any> {
     const user = await this._userAppService.findOne(userId);
-    const group = await this._groupService.get(groupId);
+    const group = await this._groupAppService.findOne(groupId);
     const post = await this._postService.findPost({ postId });
     return {
       group,

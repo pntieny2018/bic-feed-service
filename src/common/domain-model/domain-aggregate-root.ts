@@ -34,4 +34,8 @@ export abstract class DomainAggregateRoot<
   public get<K extends keyof Props>(key: K): Props[K] {
     return this._props[key];
   }
+
+  public toObject(): Props {
+    return this._props;
+  }
 }

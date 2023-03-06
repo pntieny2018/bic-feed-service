@@ -1,6 +1,7 @@
 import { UserDto } from '.';
 export type FindUserOption = {
-  withPermission: boolean;
+  withPermission?: boolean;
+  withGroupJoined?: boolean;
 };
 export interface IUserApplicationService {
   findByUserName(username: string, options?: FindUserOption): Promise<UserDto>;

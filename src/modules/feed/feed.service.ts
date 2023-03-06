@@ -9,8 +9,6 @@ import { ExceptionHelper } from '../../common/helpers';
 import { IPost } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { GroupService } from '../../shared/group';
-import { GroupPrivacy } from '../../shared/group/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostBindingService } from '../post/post-binding.service';
@@ -19,15 +17,19 @@ import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
+import { GROUP_PRIVACY } from '../v2-group/data-type';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
   private readonly _classTransformer = new ClassTransformer();
+
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userService: IUserApplicationService,
-    private readonly _groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: GroupApplicationService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
@@ -143,12 +145,12 @@ export class FeedService {
       });
       const groupsOfUser = user.groups;
       const groupIds = post.groups.map((g) => g.groupId);
-      const groupInfos = await this._groupService.getMany(groupIds);
+      const groupInfos = await this._groupAppService.findAllByIds(groupIds);
 
       const privacy = groupInfos.map((g) => g.privacy);
 
-      if (privacy.every((p) => p !== GroupPrivacy.CLOSED && p !== GroupPrivacy.OPEN)) {
-        if (!this._groupService.isMemberOfSomeGroups(groupIds, groupsOfUser)) {
+      if (privacy.every((p) => p !== GROUP_PRIVACY.CLOSED && p !== GROUP_PRIVACY.OPEN)) {
+        if (!groupIds.some((groupId) => groupsOfUser.includes(groupId))) {
           ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
         }
       }
@@ -224,11 +226,11 @@ export class FeedService {
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
     const { limit, offset, groupId, isImportant, type, isSaved } = getTimelineDto;
-    const group = await this._groupService.get(groupId);
+    const group = await this._groupAppService.findOne(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = this._groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
+    const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,

@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { GroupSharedDto } from '../../../../../shared/group/dto';
 import { UserDto } from '../../../../v2-user/application';
+import { GroupDto } from '../../../../v2-group/application';
 
 export class AudienceResponseDto {
   @ApiProperty({
@@ -14,9 +14,9 @@ export class AudienceResponseDto {
   public users?: UserDto[] = [];
 
   @ApiProperty({
-    type: GroupSharedDto,
+    type: GroupDto,
     isArray: true,
     description: 'Array of group',
   })
-  public groups: GroupSharedDto[];
+  public groups: GroupDto[];
 }

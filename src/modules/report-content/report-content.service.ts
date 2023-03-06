@@ -3,7 +3,6 @@ import { CommentService } from '../comment';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostService } from '../post/post.service';
 import { ReportStatus, TargetType } from './contstants';
-import { GroupHttpService, GroupService } from '../../shared/group';
 import { LogicException, ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
@@ -33,12 +32,17 @@ import { FeedService } from '../feed/feed.service';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
-import { HTTP_STATUS_ID } from '../../common/constants';
 import { ArticleService } from '../article/article.service';
-import { GroupSharedDto } from '../../shared/group/dto';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseDto } from '../comment/dto/response';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { AppHelper } from '../../common/helpers/app.helper';
+import { RedisService } from '@app/redis';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
 
 @Injectable()
 export class ReportContentService {
@@ -49,15 +53,16 @@ export class ReportContentService {
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userAppService: IUserApplicationService,
     private readonly _postService: PostService,
-    private readonly _groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
     private readonly _articleService: ArticleService,
     private readonly _commentService: CommentService,
-    private readonly _groupHttpService: GroupHttpService,
     private readonly _eventEmitter: InternalEventEmitterService,
     @InjectModel(ReportContentModel)
     private readonly _reportContentModel: typeof ReportContentModel,
     @InjectModel(ReportContentDetailModel)
-    private readonly _reportContentDetailModel: typeof ReportContentDetailModel
+    private readonly _reportContentDetailModel: typeof ReportContentDetailModel,
+    private _store: RedisService
   ) {}
 
   /**
@@ -175,7 +180,7 @@ export class ReportContentService {
       { total: number; reasonType: string; description: string; reason?: string }[]
     >();
 
-    const reasonTypes = await this._groupService.getReasonType();
+    const reasonTypes = await this.getReasonType();
 
     for (const reportStatistic of reportStatistics) {
       const { reportId, reasonType, total } = reportStatistic;
@@ -401,7 +406,7 @@ export class ReportContentService {
 
     const userInfos = await this._userAppService.findAllByIds(reporterIds);
     const reportByReasonTypeMap = new Map<string, StatisticsReportResponseDto>();
-    const reasonTypes = await this._groupService.getReasonType();
+    const reasonTypes = await this.getReasonType();
 
     for (const report of reports) {
       const userInfo = userInfos.find((u) => u.id === report.createdBy) ?? null;
@@ -437,9 +442,9 @@ export class ReportContentService {
   private async _getValidGroupIds(
     audienceIds: string[],
     groupIdsNeedValidate: string[]
-  ): Promise<GroupSharedDto[]> {
+  ): Promise<GroupDto[]> {
     //TODO: implement for Group later
-    const groups = await this._groupService.getMany(audienceIds);
+    const groups = await this._groupAppService.findAllByIds(audienceIds);
     const postRootGroupIds = groups.map((group) => group.rootGroupId);
     const isExistGroups = groupIdsNeedValidate.every((rootGroupId) => {
       return postRootGroupIds.includes(rootGroupId);
@@ -495,7 +500,7 @@ export class ReportContentService {
 
     const { groupIds, targetType, targetId, reasonType } = createReportDto;
 
-    const reasonTypes = await this._groupService.getReasonType();
+    const reasonTypes = await this.getReasonType();
 
     const isValidReasonType = reasonTypes.some((r) => r.id === reasonType);
 
@@ -777,16 +782,17 @@ export class ReportContentService {
   }
 
   public async canPerform(userId: string, rootGroupIds: string[]): Promise<void> {
-    const adminInfo = await this._groupHttpService.getAdminIds(rootGroupIds);
-
-    const adminIds = Object.values(adminInfo.admins).flat();
-    const ownerIds = Object.values(adminInfo.owners).flat();
-
-    const canView = adminIds.includes(userId) || ownerIds.includes(userId);
-
-    if (!canView) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
+    //TODO: need Group provide API to check admin
+    // const adminInfo = await this._groupHttpService.getAdminIds(rootGroupIds);
+    //
+    // const adminIds = Object.values(adminInfo.admins).flat();
+    // const ownerIds = Object.values(adminInfo.owners).flat();
+    //
+    // const canView = adminIds.includes(userId) || ownerIds.includes(userId);
+    //
+    // if (!canView) {
+    //   throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    // }
   }
 
   public async getCommentDetail(
@@ -857,5 +863,42 @@ export class ReportContentService {
       total: 1,
       hasNextPage: false,
     });
+  }
+
+  public async getReasonType(): Promise<{ id: string; description: string }[]> {
+    const raws: unknown[] = await this._store.get(`${AppHelper.getRedisEnv()}report_reason_type`);
+    if (!raws || !raws?.length) {
+      //FIX ME : it was blocked by group service
+      return [
+        {
+          id: 'spam',
+          description: 'Spam',
+        },
+        {
+          id: 'bullying_threatening_or_harassing',
+          description: 'Bullying, threatening or harassing',
+        },
+        {
+          id: 'violent_or_porn',
+          description: 'Violent, pornographic, or sexually explicit',
+        },
+        {
+          id: 'pretending_someone',
+          description: 'Pretending to be someone else',
+        },
+        {
+          id: 'illegal',
+          description: 'Illegal',
+        },
+        {
+          id: 'others',
+          description: 'Others',
+        },
+      ];
+    }
+    return raws.map((raw) => ({
+      id: raw['id'],
+      description: raw['value'],
+    }));
   }
 }

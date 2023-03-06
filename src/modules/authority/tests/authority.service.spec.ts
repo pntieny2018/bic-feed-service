@@ -25,8 +25,6 @@ describe.skip('AuthorityService', () => {
           provide: GroupService,
           useValue: {
             getMany: jest.fn(),
-            isMemberOfSomeGroups: jest.fn(),
-            isMemberOfGroups: jest.fn(),
           },
         },
       ],
@@ -64,54 +62,6 @@ describe.skip('AuthorityService', () => {
       },
     ],
   } as any;
-  describe('AuthorityService.checkCanReadPost', () => {
-    describe('when user is valid', () => {
-      it('next', async () => {
-        groupService.getMany.mockReturnValue([mockGroup]);
-        groupService.isMemberOfSomeGroups.mockReturnValue(true);
-        await service.checkCanReadPost(
-          {
-            id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
-            username: 'martine.baumbach',
-            avatar: 'https://bein.group/baumbach.png',
-            email: 'baumbach@tgm.vn',
-            fullname: 'Martine Baumbach',
-            groups: [
-              'a0ceb67b-1cf9-4f10-aa60-3ee6473017a3',
-              '54366eb1-b428-4265-a71b-1b923a311506',
-            ],
-          },
-          userDtoMock
-        );
-        expect(groupService.isMemberOfSomeGroups).toBeCalled();
-      });
-    });
-    describe('when user is invalid', () => {
-      it('should throw ForbiddenException', () => {
-        try {
-          groupService.isMemberOfSomeGroups.mockReturnValue(false);
-          service.checkCanReadPost(
-            {
-              id: '853ab699-ee44-42ab-b98d-d190c4af66ee',
-              username: 'martine.baumbach',
-              avatar: 'https://bein.group/baumbach.png',
-              email: 'baumbach@tgm.vn',
-              staffRole: 'normal',
-            },
-            {
-              groups: null,
-            } as any
-          );
-        } catch (e) {
-          expect(e).toBeInstanceOf(ForbiddenException);
-          expect((e as ForbiddenException).message).toEqual(
-            'You do not have permission to perform this action !'
-          );
-        }
-      });
-    });
-  });
-
   describe('AuthorityService.checkIsPublicPost', () => {
     it('pass if GroupPrivacy.OPEN', async () => {
       mockGroup.privacy = GroupPrivacy.OPEN;
@@ -178,7 +128,6 @@ describe.skip('AuthorityService', () => {
   };
   describe('AuthorityService.checkCanUpdatePost', () => {
     it('', async () => {
-      groupService.isMemberOfGroups.mockReturnValue(true);
       groupService.getMany.mockResolvedValue([{ id: 1, name: 'BIC to the moon' }]);
       authorityFactory.createForUser.mockResolvedValue(ability);
       ability.can.mockResolvedValue(true);
@@ -187,7 +136,6 @@ describe.skip('AuthorityService', () => {
         ['a0ceb67b-1cf9-4f10-aa60-3ee6473017a3'],
         false
       );
-      expect(groupService.isMemberOfGroups).toBeCalled();
       expect(groupService.getMany).toBeCalled();
       expect(authorityFactory.createForUser).toBeCalled();
       expect(ability.can).toBeCalled();

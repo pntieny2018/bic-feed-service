@@ -43,7 +43,6 @@ import { mockedArticleCreated } from './mocks/response/create-article.response.m
 import { mockedUserAuth } from './mocks/user-auth.mock';
 import { ArticleBindingService } from '../article-binding.service';
 
-
 describe.skip('ArticleService', () => {
   let articleService: ArticleService;
   let postService: PostService;
@@ -71,7 +70,7 @@ describe.skip('ArticleService', () => {
         {
           provide: AuthorityFactory,
           useValue: {
-            createForUser: jest.fn()
+            createForUser: jest.fn(),
           },
         },
         {
@@ -119,7 +118,6 @@ describe.skip('ArticleService', () => {
           useValue: {
             get: jest.fn(),
             getMany: jest.fn(),
-            isMemberOfGroups: jest.fn(),
             getGroupIdsCanAccess: jest.fn(),
           },
         },
@@ -225,12 +223,11 @@ describe.skip('ArticleService', () => {
     expect(articleService).toBeDefined();
   });
 
-
   describe.skip('get', () => {
     const getArticleDto: GetArticleDto = {
       commentLimit: 1,
       childCommentLimit: 1,
-      withComment: true
+      withComment: true,
     };
 
     it('Should get article successfully', async () => {
@@ -238,18 +235,14 @@ describe.skip('ArticleService', () => {
         ...mockedArticleResponse,
         toJSON: () => mockedArticleResponse,
       });
-      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
-      PostModel.loadLock = jest.fn().mockResolvedValue([])
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([]);
+      PostModel.loadLock = jest.fn().mockResolvedValue([]);
 
       authorityService.checkCanReadArticle = jest.fn().mockResolvedValue(Promise.resolve());
       commentService.getComments = jest.fn().mockResolvedValue(mockedPostResponse.comments);
       articleBindingService.bindRelatedData = jest.fn().mockResolvedValue(Promise.resolve());
 
-      const result = await articleService.get(
-        mockedArticleData.id,
-        mockedUserAuth,
-        getArticleDto
-      );
+      const result = await articleService.get(mockedArticleData.id, mockedUserAuth, getArticleDto);
 
       expect(result.comments).toStrictEqual(mockedArticleResponse.comments);
       expect(articleBindingService.bindRelatedData).toBeCalledTimes(1);
@@ -257,14 +250,10 @@ describe.skip('ArticleService', () => {
 
     it('Should catch exception if post not found', async () => {
       postModelMock.findOne = jest.fn();
-      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([])
+      PostModel.loadMarkReadPost = jest.fn().mockResolvedValue([]);
 
       try {
-        await articleService.get(
-          mockedArticleData.id,
-          mockedUserAuth,
-          getArticleDto
-        );
+        await articleService.get(mockedArticleData.id, mockedUserAuth, getArticleDto);
       } catch (e) {
         expect(e).toBeInstanceOf(LogicException);
       }
@@ -345,7 +334,6 @@ describe.skip('ArticleService', () => {
 
   describe('updateArticle', () => {
     it('Update article successfully', async () => {
-
       mediaService.sync = jest.fn().mockResolvedValue(Promise.resolve());
 
       mentionService.create = jest.fn().mockResolvedValue(Promise.resolve());
@@ -377,11 +365,7 @@ describe.skip('ArticleService', () => {
 
       postModelMock.update = jest.fn().mockResolvedValue(mockedArticleCreated);
 
-      await articleService.update(
-        mockedArticleResponse,
-        mockedUserAuth,
-        mockedUpdateArticleDto
-      );
+      await articleService.update(mockedArticleResponse, mockedUserAuth, mockedUpdateArticleDto);
 
       expect(sequelize.transaction).toBeCalledTimes(1);
       expect(transactionMock.commit).toBeCalledTimes(1);
@@ -431,11 +415,7 @@ describe.skip('ArticleService', () => {
         .mockRejectedValue(new Error('Any error when insert data to DB'));
 
       try {
-        await articleService.update(
-          mockedArticleResponse,
-          mockedUserAuth,
-          mockedUpdateArticleDto
-        );
+        await articleService.update(mockedArticleResponse, mockedUserAuth, mockedUpdateArticleDto);
       } catch (e) {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalledTimes(1);

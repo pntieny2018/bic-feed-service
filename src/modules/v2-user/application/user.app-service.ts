@@ -17,7 +17,12 @@ export class UserApplicationService implements IUserApplicationService {
       const permission = await this._repo.getPermissionsByUserId(user.get('id'));
       user.setPermission(permission);
     }
-    return this._toDto(user);
+    const result = this._toDto(user);
+    if (!options?.withGroupJoined) {
+      delete result.groups;
+    }
+
+    return result;
   }
 
   public async findOne(userId: string, options?: FindUserOption): Promise<UserDto> {
@@ -29,9 +34,15 @@ export class UserApplicationService implements IUserApplicationService {
     return this._toDto(user);
   }
 
-  public async findAllByIds(userIds: string[]): Promise<UserDto[]> {
+  public async findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
     const rows = await this._repo.findAllByIds(userIds);
-    return rows.map((row) => this._toDto(row));
+    return rows.map((row) => {
+      const user = this._toDto(row);
+      if (!options?.withGroupJoined) {
+        delete user.groups;
+      }
+      return user;
+    });
   }
 
   public async canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean> {

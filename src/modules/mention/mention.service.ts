@@ -1,14 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
-import { GroupService } from '../../shared/group';
 import { ArrayHelper } from '../../common/helpers';
-import { plainToInstance } from 'class-transformer';
-import { Op, QueryTypes, Transaction } from 'sequelize';
-import { RemoveMentionDto, UserMentionDto } from './dto';
+import { Transaction } from 'sequelize';
+import { UserMentionDto } from './dto';
 import { MentionableType } from '../../common/constants';
 import { LogicException } from '../../common/exceptions';
 import { MENTION_ERROR_ID } from './errors/mention.error';
-import { getDatabaseConfig } from '../../config/database';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IMention, MentionModel } from '../../database/models/mention.model';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
@@ -18,7 +15,6 @@ export class MentionService {
   public constructor(
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
-    private _groupService: GroupService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MentionModel) private _mentionModel: typeof MentionModel
   ) {}
@@ -32,7 +28,7 @@ export class MentionService {
   public async checkValid(groupIds: string[], userIds: string[]): Promise<void> {
     const users = await this._userAppService.findAllByIds(userIds);
     for (const user of users) {
-      if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
+      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
       }
     }
