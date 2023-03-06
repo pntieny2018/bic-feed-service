@@ -14,6 +14,7 @@ import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
 import { GroupService } from '../../shared/group';
 import { PostModel } from '../../database/models/post.model';
+import { ExternalService } from '../../app/external.service';
 
 @Injectable()
 export class TagService {
@@ -21,7 +22,8 @@ export class TagService {
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
     @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
-    private readonly _groupService: GroupService
+    private readonly _groupService: GroupService,
+    private readonly _externalService: ExternalService
   ) {}
 
   private _logger = new Logger(TagService.name);
@@ -90,6 +92,10 @@ export class TagService {
   }
 
   public async create(createTagDto: CreateTagDto, authUser: UserDto): Promise<TagResponseDto> {
+    const canCreateTag = await this._externalService.canCudTag(authUser.id, createTagDto.groupId);
+    if (!canCreateTag) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_CREATE_PERMISSION);
+    }
     const group = await this._groupService.get(createTagDto.groupId);
     if (!group) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_GROUP_NOT_EXIST);
@@ -136,6 +142,12 @@ export class TagService {
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
     }
+
+    const canUpdateTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
+    if (!canUpdateTag) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_UPDATE_PERMISSION);
+    }
+
     if (tags.find((e) => e.name === name && e.groupId === tag.groupId && e.id !== tag.id)) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NAME_EXISTING);
     }
@@ -157,7 +169,7 @@ export class TagService {
     });
   }
 
-  public async delete(tagId: string): Promise<boolean> {
+  public async delete(tagId: string, authUser: UserDto): Promise<boolean> {
     const tag = await this._tagModel.findOne({
       where: {
         id: tagId,
@@ -165,6 +177,11 @@ export class TagService {
     });
     if (!tag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+    }
+
+    const canDeleteTag = await this._externalService.canCudTag(authUser.id, tag.groupId);
+    if (!canDeleteTag) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_DELETE_PERMISSION);
     }
     if (tag.totalUsed) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_POST_ATTACH);

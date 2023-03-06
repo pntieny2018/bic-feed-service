@@ -33,9 +33,15 @@ export class HealthController {
   @Get('readyz')
   @HealthCheck()
   public async ready(): Promise<HealthCheckResult> {
+    const heapUsedThresholdInMB = process.env.HEALTH_CHECK_HEAP_SIZE
+      ? parseInt(process.env.HEALTH_CHECK_HEAP_SIZE)
+      : 256;
     return await this._healthCheckService.check([
       async (): Promise<HealthIndicatorResult> =>
-        this._memoryHealthIndicator.checkHeap(HealthLabel.MEMORY_HEAP_KEY, 150 * 1024 * 1024),
+        this._memoryHealthIndicator.checkHeap(
+          HealthLabel.MEMORY_HEAP_KEY,
+          heapUsedThresholdInMB * 1024 * 1024
+        ),
       async (): Promise<HealthIndicatorResult> =>
         this._sequelizeHealthIndicator.pingCheck(HealthLabel.DATABASE_KEY, {
           connection: this._connection,

@@ -823,7 +823,7 @@ export class SearchService {
 
   private _getAudienceFilter(filterGroupIds: string[]): any {
     const { groupIds } = ELASTIC_POST_MAPPING_PATH;
-    if (groupIds.length) {
+    if (filterGroupIds.length) {
       return [
         {
           terms: {
