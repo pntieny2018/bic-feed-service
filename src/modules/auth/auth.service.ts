@@ -11,6 +11,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UserHttpService, UserService } from '../../shared/user';
+import { IAppConfig } from '../../config/app';
 
 @Injectable()
 export class AuthService {
@@ -44,8 +45,13 @@ export class AuthService {
       id: '',
       staffRole: payload['custom:bein_staff_role'],
     });
+    const appConfig = this._configService.get<IAppConfig>('app');
+    if (appConfig.env === 'local') {
+      user.profile = await this._userService.getByValue(user.username);
+    } else {
+      user.profile = await this._userHttpService.getUserInfo(user.username);
+    }
 
-    user.profile = await this._userHttpService.getUserInfo(user.username);
     if (!user.profile) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
