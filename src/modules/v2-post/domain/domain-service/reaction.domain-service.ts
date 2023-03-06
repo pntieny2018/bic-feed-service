@@ -1,17 +1,12 @@
 import { Inject, Logger } from '@nestjs/common';
 import { IReactionDomainService, ReactionCreateProps } from './interface';
-import {
-  COMMENT_REACTION_FACTORY_TOKEN,
-  ICommentReactionFactory,
-  IPostReactionFactory,
-  POST_REACTION_FACTORY_TOKEN,
-} from '../factory';
+import { IReactionFactory, REACTION_FACTORY_TOKEN } from '../factory';
 import { IPostReactionRepository, POST_REACTION_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
   COMMENT_REACTION_REPOSITORY_TOKEN,
   ICommentReactionRepository,
 } from '../repositoty-interface';
-import { ReactionEntity } from '../model/reaction/reaction.entity';
+import { ReactionEntity } from '../model/reaction';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { REACTION_TARGET } from '../../data-type';
 
@@ -22,22 +17,19 @@ export class ReactionDomainService implements IReactionDomainService {
   private readonly _postReactionRepository: IPostReactionRepository;
   @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
   private readonly _commentReactionRepository: ICommentReactionRepository;
-  @Inject(POST_REACTION_FACTORY_TOKEN)
-  private readonly _postReactionFactory: IPostReactionFactory;
-  @Inject(COMMENT_REACTION_FACTORY_TOKEN)
-  private readonly _commentReactionFactory: ICommentReactionFactory;
+  @Inject(REACTION_FACTORY_TOKEN)
+  private readonly _postReactionFactory: IReactionFactory;
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, createdBy, target, targetId } = input;
-
+    const reactionEntity = this._postReactionFactory.create({
+      reactionName,
+      createdBy,
+      targetId: targetId,
+    });
     if (target === REACTION_TARGET.POST || target === REACTION_TARGET.ARTICLE) {
-      const postReactionEntity = this._postReactionFactory.create({
-        reactionName,
-        createdBy,
-        postId: targetId,
-      });
-      await this._postReactionRepository.create(postReactionEntity);
-      await postReactionEntity.commit();
+      await this._postReactionRepository.create(reactionEntity);
+      await reactionEntity.commit();
 
       // TODO implement this
       // this._emitter.emit(
@@ -47,15 +39,10 @@ export class ReactionDomainService implements IReactionDomainService {
       //     reaction: reaction,
       //   })
       // );
-      return postReactionEntity;
+      return reactionEntity;
     } else if (target === REACTION_TARGET.COMMENT) {
-      const commentReactionEntity = this._commentReactionFactory.create({
-        reactionName,
-        createdBy,
-        commentId: targetId,
-      });
-      await this._commentReactionRepository.create(commentReactionEntity);
-      await commentReactionEntity.commit();
+      await this._commentReactionRepository.create(reactionEntity);
+      await reactionEntity.commit();
       // TODO implement this
       // this._emitter.emit(
       //   new CreateReactionInternalEvent({
@@ -65,7 +52,7 @@ export class ReactionDomainService implements IReactionDomainService {
       //     reaction: reaction,
       //   })
       // );
-      return commentReactionEntity;
+      return reactionEntity;
     } else {
       throw new Error('Invalid target');
     }

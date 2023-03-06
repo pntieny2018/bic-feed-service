@@ -1,4 +1,4 @@
-import { PostReactionEntity } from '../model/reaction';
+import { ReactionEntity } from '../model/reaction';
 
 export type FindOnePostReactionProps = {
   reactionName?: string;
@@ -10,9 +10,9 @@ export type FindOnePostReactionProps = {
 export interface IPostReactionRepository {
   // findAll(input: FindAllReactionsProps): Promise<ReactionEntity[]>;
 
-  findOne(input: FindOnePostReactionProps): Promise<PostReactionEntity>;
+  findOne(input: FindOnePostReactionProps): Promise<ReactionEntity>;
 
-  create(data: PostReactionEntity): Promise<void>;
+  create(data: ReactionEntity): Promise<void>;
 
   delete(id: string): Promise<void>;
 }

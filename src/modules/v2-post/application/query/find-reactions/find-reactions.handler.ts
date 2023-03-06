@@ -9,7 +9,7 @@ import { FindReactionsDto } from './find-reactions.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ObjectHelper } from '../../../../../common/helpers';
 import { IReactionQuery, REACTION_QUERY_TOKEN } from '../../../domain/query-interface';
-import { PostReactionEntity } from '../../../domain/model/reaction';
+import { ReactionEntity } from '../../../domain/model/reaction';
 
 @QueryHandler(FindReactionsQuery)
 export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, FindReactionsDto> {
@@ -23,7 +23,7 @@ export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, F
     const actorIds = rows.map((r) => r.get('createdBy'));
     const actors = await this._userAppService.findAllByIds(actorIds);
     return {
-      rows: rows.map((r: PostReactionEntity) => ({
+      rows: rows.map((r: ReactionEntity) => ({
         id: r.get('id'),
         actor: ObjectHelper.omit(
           ['groups'],

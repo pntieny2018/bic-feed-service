@@ -46,5 +46,5 @@ export class CommentReactionModel
   public createdBy: string;
 
   @CreatedAt
-  public createdAt: Date;
+  public createdAt?: Date;
 }

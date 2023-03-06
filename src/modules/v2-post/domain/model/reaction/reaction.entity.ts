@@ -2,11 +2,10 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 
 export type ReactionProps = {
   id: string;
-  postId?: string;
-  commentId?: string;
+  targetId: string;
   reactionName: string;
   createdBy: string;
-  createdAt: Date;
+  createdAt?: Date;
 };
 export class ReactionEntity extends DomainAggregateRoot<ReactionProps> {
   public constructor(props: ReactionProps) {

@@ -75,6 +75,8 @@ export class ReactionController {
     @AuthUser() user: UserDto,
     @Body() deleteReactionDto: DeleteReactionDto
   ): Promise<void> {
-    await this._commandBus.execute(new DeleteReactionCommand(deleteReactionDto));
+    await this._commandBus.execute(
+      new DeleteReactionCommand({ ...deleteReactionDto, userId: user.id })
+    );
   }
 }

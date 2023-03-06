@@ -2,30 +2,30 @@ import {
   FindOnePostReactionProps,
   IPostReactionRepository,
 } from '../../domain/repositoty-interface';
-import { PostReactionEntity } from '../../domain/model/reaction';
+import { ReactionEntity } from '../../domain/model/reaction';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
 import { Inject, Logger } from '@nestjs/common';
-import { IPostReactionFactory, POST_REACTION_FACTORY_TOKEN } from '../../domain/factory';
+import { IReactionFactory, REACTION_FACTORY_TOKEN } from '../../domain/factory';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../../../config/database';
 
 export class PostReactionRepository implements IPostReactionRepository {
-  @Inject(POST_REACTION_FACTORY_TOKEN) private readonly _factory: IPostReactionFactory;
+  @Inject(REACTION_FACTORY_TOKEN) private readonly _factory: IReactionFactory;
   @InjectModel(PostReactionModel)
   private readonly _postReactionModel: typeof PostReactionModel;
   private _logger = new Logger(PostReactionRepository.name);
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async findOne(input: FindOnePostReactionProps): Promise<PostReactionEntity> {
+  public async findOne(input: FindOnePostReactionProps): Promise<ReactionEntity> {
     const findOptions: FindOptions = { where: input };
     const postReaction = await this._postReactionModel.findOne(findOptions);
     return this._modelToEntity(postReaction);
   }
 
-  public async create(data: PostReactionEntity): Promise<void> {
+  public async create(data: ReactionEntity): Promise<void> {
     const { schema } = getDatabaseConfig();
-    const postId = data.get('postId');
+    const postId = data.get('targetId');
     const userId = data.get('createdBy');
     const reactionName = data.get('reactionName');
     await this._sequelizeConnection.transaction(
@@ -54,8 +54,8 @@ export class PostReactionRepository implements IPostReactionRepository {
     }
   }
 
-  private _modelToEntity(postReaction: PostReactionModel): PostReactionEntity {
+  private _modelToEntity(postReaction: PostReactionModel): ReactionEntity {
     if (postReaction === null) return null;
-    return this._factory.reconstitute(postReaction.toJSON());
+    return this._factory.reconstitute({ ...postReaction.toJSON(), targetId: postReaction.postId });
   }
 }

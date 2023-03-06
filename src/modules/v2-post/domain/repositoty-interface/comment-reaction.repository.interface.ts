@@ -1,4 +1,4 @@
-import { CommentReactionEntity } from '../model/reaction';
+import { ReactionEntity } from '../model/reaction';
 
 export type FindOneCommentReactionProps = {
   reactionName?: string;
@@ -10,9 +10,9 @@ export type FindOneCommentReactionProps = {
 export interface ICommentReactionRepository {
   // findAll(input: FindAllReactionsProps): Promise<ReactionEntity[]>;
 
-  findOne(input: FindOneCommentReactionProps): Promise<CommentReactionEntity>;
+  findOne(input: FindOneCommentReactionProps): Promise<ReactionEntity>;
 
-  create(data: CommentReactionEntity): Promise<void>;
+  create(data: ReactionEntity): Promise<void>;
 
   delete(id: string): Promise<void>;
 }

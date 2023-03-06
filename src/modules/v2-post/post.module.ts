@@ -6,7 +6,7 @@ import { TagController } from './driving-apdater/controller/tag.controller';
 import { tagProvider } from './provider';
 import { ReactionController } from './driving-apdater/controller/reaction.controller';
 import { UserModuleV2 } from '../v2-user/user.module';
-import { reactionProvider } from './provider/reaction.provider';
+import { reactionProvider } from './provider';
 
 @Module({
   imports: [CqrsModule, DatabaseModule, GroupModuleV2, UserModuleV2],

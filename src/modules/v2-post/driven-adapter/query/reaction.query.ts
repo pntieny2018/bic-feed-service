@@ -1,5 +1,5 @@
 import { GetReactionProps, IReactionQuery } from '../../domain/query-interface';
-import { PostReactionEntity } from '../../domain/model/reaction';
+import { ReactionEntity } from '../../domain/model/reaction';
 import { InjectModel } from '@nestjs/sequelize';
 import { Inject, Logger } from '@nestjs/common';
 import { PostReactionModel } from '../../../../database/models/post-reaction.model';
@@ -7,28 +7,21 @@ import { OrderEnum } from '../../../../common/dto';
 import sequelize, { Op } from 'sequelize';
 import { NIL as NIL_UUID } from 'uuid';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
-import {
-  COMMENT_REACTION_FACTORY_TOKEN,
-  ICommentReactionFactory,
-  IPostReactionFactory,
-  POST_REACTION_FACTORY_TOKEN,
-} from '../../domain/factory';
+import { REACTION_FACTORY_TOKEN, IReactionFactory } from '../../domain/factory';
 import { getDatabaseConfig } from '../../../../config/database';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { REACTION_TARGET } from '../../data-type';
 
 export class ReactionQuery implements IReactionQuery {
-  @Inject(POST_REACTION_FACTORY_TOKEN) private readonly _postReactionFactory: IPostReactionFactory;
-  @Inject(COMMENT_REACTION_FACTORY_TOKEN)
-  private readonly _commentReactionFactory: ICommentReactionFactory;
+  @Inject(REACTION_FACTORY_TOKEN) private readonly _postReactionFactory: IReactionFactory;
+  @Inject(REACTION_FACTORY_TOKEN)
+  private readonly _commentReactionFactory: IReactionFactory;
   private _logger = new Logger(ReactionQuery.name);
   @InjectModel(PostReactionModel)
   private readonly _postReactionModel: typeof PostReactionModel;
   @InjectModel(CommentReactionModel)
   private readonly _commentReactionModel: typeof CommentReactionModel;
-  public async getPagination(
-    input: GetReactionProps
-  ): Promise<PaginationResult<PostReactionEntity>> {
+  public async getPagination(input: GetReactionProps): Promise<PaginationResult<ReactionEntity>> {
     const { schema } = getDatabaseConfig();
     const { target, targetId, latestId, limit, order, reactionName } = input;
 

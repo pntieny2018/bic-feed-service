@@ -2,30 +2,30 @@ import {
   FindOneCommentReactionProps,
   ICommentReactionRepository,
 } from '../../domain/repositoty-interface';
-import { CommentReactionEntity } from '../../domain/model/reaction';
+import { ReactionEntity } from '../../domain/model/reaction';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { Inject, Logger } from '@nestjs/common';
-import { ICommentReactionFactory, POST_REACTION_FACTORY_TOKEN } from '../../domain/factory';
+import { IReactionFactory, REACTION_FACTORY_TOKEN } from '../../domain/factory';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../../../config/database';
 
 export class CommentReactionRepository implements ICommentReactionRepository {
-  @Inject(POST_REACTION_FACTORY_TOKEN) private readonly _factory: ICommentReactionFactory;
+  @Inject(REACTION_FACTORY_TOKEN) private readonly _factory: IReactionFactory;
   @InjectModel(CommentReactionModel)
   private readonly _commentReactionModel: typeof CommentReactionModel;
   private _logger = new Logger(CommentReactionRepository.name);
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async findOne(input: FindOneCommentReactionProps): Promise<CommentReactionEntity> {
+  public async findOne(input: FindOneCommentReactionProps): Promise<ReactionEntity> {
     const findOptions: FindOptions = { where: input };
     const commentReaction = await this._commentReactionModel.findOne(findOptions);
     return this._modelToEntity(commentReaction);
   }
 
-  public async create(data: CommentReactionEntity): Promise<void> {
+  public async create(data: ReactionEntity): Promise<void> {
     const { schema } = getDatabaseConfig();
-    const commentId = data.get('commentId');
+    const commentId = data.get('targetId');
     const userId = data.get('createdBy');
     const reactionName = data.get('reactionName');
     await this._sequelizeConnection.transaction(
@@ -57,8 +57,11 @@ export class CommentReactionRepository implements ICommentReactionRepository {
     }
   }
 
-  private _modelToEntity(commentReaction: CommentReactionModel): CommentReactionEntity {
+  private _modelToEntity(commentReaction: CommentReactionModel): ReactionEntity {
     if (commentReaction === null) return null;
-    return this._factory.reconstitute(commentReaction.toJSON());
+    return this._factory.reconstitute({
+      ...commentReaction.toJSON(),
+      targetId: commentReaction.commentId,
+    });
   }
 }

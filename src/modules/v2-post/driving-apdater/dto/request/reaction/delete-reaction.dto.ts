@@ -39,5 +39,5 @@ export class DeleteReactionDto {
   @Expose({
     name: 'reaction_name',
   })
-  public reactionName?: string;
+  public reactionName: string;
 }

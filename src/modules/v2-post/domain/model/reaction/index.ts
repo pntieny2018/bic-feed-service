@@ -1,2 +1,1 @@
-export * from './post-reaction.entity';
-export * from './comment-reaction.entity';
+export * from './reaction.entity';
