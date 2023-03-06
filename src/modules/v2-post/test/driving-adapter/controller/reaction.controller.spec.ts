@@ -4,6 +4,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 import { REACTION_TARGET } from '../../../data-type';
+import { userMock } from '../../mock/user.dto.mock';
+import { OrderEnum } from '../../../../../common/dto';
 
 describe('ReactionController', () => {
   let reactionController: ReactionController;
@@ -32,10 +34,10 @@ describe('ReactionController', () => {
   });
 
   const reactionMock = {
-    id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+    id: 'c2e60f9d-4e77-42f6-bb63-007e3a18ec67',
     reactionName: 'like',
     actor: {
-      id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+      id: 'e2e60f9d-4e77-42f6-bb63-007e3a18ec67',
     },
     createdAt: new Date(),
   };
@@ -45,15 +47,70 @@ describe('ReactionController', () => {
       reactionName: 'like',
       target: REACTION_TARGET.POST,
       targetId: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+      limit: 25,
+      latestId: null,
+      order: OrderEnum.DESC,
     };
 
     it('Should get reactions successfully', async () => {
       jest.spyOn(query, 'execute').mockResolvedValue({ rows: [reactionMock], total: 1 });
-      const result = await reactionController.get(getReactionDto);
+      const result = await reactionController.get(userMock, getReactionDto);
       expect(result).toEqual({
-        list: [reactionMock],
-        total: 1,
+        "latestId": reactionMock.id,
+        "limit": 25,
+        "list": [
+          {
+            "actor": reactionMock.actor,
+            "createdAt": reactionMock.createdAt,
+            "id": reactionMock.id,
+            "reactionName": reactionMock.reactionName
+          }
+        ],
+        "order": getReactionDto.order
       });
+    });
+  });
+
+  describe('Create', () => {
+    const createReactionDto = {
+      target: REACTION_TARGET.POST,
+      targetId: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+      reactionName: 'like',
+    };
+
+    it('Should create reaction successfully', async () => {
+      jest.spyOn(command, 'execute').mockResolvedValue(reactionMock);
+      const result = await reactionController.create(userMock, createReactionDto);
+      expect(result).toEqual({
+        "actor": reactionMock.actor,
+        "createdAt": reactionMock.createdAt,
+        "id": reactionMock.id,
+        "reactionName": reactionMock.reactionName
+      });
+    });
+
+    it('Should throw error when create reaction failed', async () => {
+      jest.spyOn(command, 'execute').mockRejectedValue(new Error('error'));
+      await expect(reactionController.create(userMock, createReactionDto)).rejects.toThrowError('error');
+    });
+  });
+
+  describe('Delete', () => {
+    const deleteReactionDto = {
+      target: REACTION_TARGET.POST,
+      targetId: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+      reactionName: 'like',
+    };
+
+    it('Should delete reaction successfully', async () => {
+      jest.spyOn(command, 'execute').mockResolvedValue(true);
+      const result = await reactionController.delete(userMock, deleteReactionDto);
+      expect(result).toEqual(undefined);
+    });
+
+    it('Should throw error when delete reaction failed', async () => {
+      jest.spyOn(command, 'execute').mockRejectedValue(new Error('error'));
+      await expect(reactionController.delete(userMock, deleteReactionDto)).rejects.toThrowError('error');
     });
   });
 });

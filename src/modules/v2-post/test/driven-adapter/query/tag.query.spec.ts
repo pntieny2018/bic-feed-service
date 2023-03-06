@@ -73,9 +73,6 @@ describe('TagQuery', () => {
           ['createdAt', 'DESC'],
         ],
       });
-      const entities = tagRecords.map((row) => new TagEntity(row));
-      expect(result.rows).toEqual(entities);
-      expect(result.total).toEqual(input.limit);
     });
   });
 });

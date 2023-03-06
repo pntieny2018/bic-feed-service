@@ -57,5 +57,5 @@ export class GetReactionDto {
   })
   @IsOptional()
   @ApiHideProperty()
-  public order: OrderEnum;
+  public order: OrderEnum = OrderEnum.DESC;
 }

@@ -18,11 +18,11 @@ export class ReactionDomainService implements IReactionDomainService {
   @Inject(COMMENT_REACTION_REPOSITORY_TOKEN)
   private readonly _commentReactionRepository: ICommentReactionRepository;
   @Inject(REACTION_FACTORY_TOKEN)
-  private readonly _postReactionFactory: IReactionFactory;
+  private readonly _reactionFactory: IReactionFactory;
 
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, createdBy, target, targetId } = input;
-    const reactionEntity = this._postReactionFactory.create({
+    const reactionEntity = this._reactionFactory.create({
       reactionName,
       createdBy,
       targetId: targetId,
