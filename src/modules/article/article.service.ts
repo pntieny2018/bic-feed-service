@@ -401,6 +401,9 @@ export class ArticleService extends PostService {
       filterGroupIds: groupIdsUserCanAccess,
       filterCategoryIds: categoryIds,
     });
+
+    const articleIdsReported = await this.getEntityIdsReportedByUser(user.id, [TargetType.ARTICLE]);
+
     const relatedRows = await this.postModel.findAll({
       attributes: [
         'id',
@@ -416,6 +419,10 @@ export class ArticleService extends PostService {
       where: {
         type: PostType.ARTICLE,
         status: PostStatus.PUBLISHED,
+        id: {
+          [Op.notIn]: articleIdsReported,
+        },
+        isHidden: false,
       },
       offset,
       limit,
@@ -835,7 +842,8 @@ export class ArticleService extends PostService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags } = updateArticleDto;
+      const { media, mentions, audience, categories, series, hashtags, tags, setting } =
+        updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
@@ -917,6 +925,21 @@ export class ArticleService extends PostService {
         },
         transaction,
       });
+
+      if (setting && setting.isImportant) {
+        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+          where: {
+            postId: post.id,
+            userId: authUserId,
+          },
+        });
+        if (!checkMarkImportant) {
+          await this.userMarkReadPostModel.create({
+            postId: post.id,
+            userId: authUserId,
+          });
+        }
+      }
       await transaction.commit();
 
       return true;

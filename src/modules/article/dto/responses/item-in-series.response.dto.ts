@@ -35,7 +35,7 @@ export class ItemInSeriesResponseDto {
   @Expose()
   @Transform(({ obj, value }) => {
     if (obj.type === PostType.POST && obj.content) {
-      return obj.content.slice(0, 500);
+      return obj.content;
     }
     return null;
   })
