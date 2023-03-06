@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { UserService } from '../../shared/user';
+import { Inject, Injectable } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { GroupService } from '../../shared/group';
 import { ArrayHelper } from '../../common/helpers';
 import { plainToInstance } from 'class-transformer';
-import { UserSharedDto } from '../../shared/user/dto';
 import { Op, QueryTypes, Transaction } from 'sequelize';
 import { RemoveMentionDto, UserMentionDto } from './dto';
 import { MentionableType } from '../../common/constants';
@@ -13,11 +11,13 @@ import { MENTION_ERROR_ID } from './errors/mention.error';
 import { getDatabaseConfig } from '../../config/database';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IMention, MentionModel } from '../../database/models/mention.model';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class MentionService {
   public constructor(
-    private _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _groupService: GroupService,
     @InjectConnection() private _sequelizeConnection: Sequelize,
     @InjectModel(MentionModel) private _mentionModel: typeof MentionModel
@@ -30,7 +30,7 @@ export class MentionService {
    * @throws LogicException
    */
   public async checkValid(groupIds: string[], userIds: string[]): Promise<void> {
-    const users: UserSharedDto[] = await this._userService.getMany(userIds);
+    const users = await this._userAppService.findAllByIds(userIds);
     for (const user of users) {
       if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);
@@ -58,12 +58,10 @@ export class MentionService {
    * @param userIds number[]
    * @returns Promise resolve UserSharedDto[]
    */
-  public async resolve(userIds: string[]): Promise<UserSharedDto[]> {
+  public async resolve(userIds: string[]): Promise<UserDto[]> {
     if (!userIds.length) return [];
-    const users = await this._userService.getMany(userIds);
-    return plainToInstance(UserSharedDto, users, {
-      excludeExtraneousValues: true,
-    });
+    const users = await this._userAppService.findAllByIds(userIds);
+    return users;
   }
 
   /**

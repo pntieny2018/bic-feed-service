@@ -1,5 +1,5 @@
 import { IEvent } from '../../common/interfaces';
-import { UserDto } from '../../modules/auth';
+import { UserDto } from '../../modules/v2-user/application';
 
 export class SeriesAddedItemsEvent implements IEvent<ISeriesAddItemsPayload> {
   public payload: ISeriesAddItemsPayload;

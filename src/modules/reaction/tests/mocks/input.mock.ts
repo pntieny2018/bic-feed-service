@@ -1,12 +1,12 @@
 import { OrderEnum } from '../../../../common/dto';
 import { ObjectHelper } from '../../../../common/helpers';
 import { GroupPrivacy } from '../../../../shared/group/dto';
-import { UserDto } from '../../../auth';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionEnum } from '../../reaction.enum';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
+import { UserDto } from '../../../v2-user/application';
 
 export const mockCreateReactionDto = {
   post: {
@@ -49,18 +49,6 @@ export const mockUserDto: UserDto = {
   ],
 };
 
-export const mockUserSharedDto = {
-  id: '5772aaa2-a143-44b9-8898-6f670a678ecf',
-  username: 'vantt',
-  fullname: 'Than The Van',
-  avatar: 'http://google.com/vantt.png',
-  groups: [
-    '5772aaa2-a143-44b9-8898-6f670a678ece',
-    '5772aaa2-a143-44b9-8898-6f670a678ecd',
-    '5772aaa2-a143-44b9-8898-6f670a678ecc',
-  ],
-};
-
 export const mockPostResponseDto: PostResponseDto = {
   id: mockCreateReactionDto.post.targetId,
   content: 'hello world',
@@ -78,7 +66,7 @@ export const mockPostResponseDto: PostResponseDto = {
     importantExpiredAt: null,
   },
   status: PostStatus.PUBLISHED,
-  actor: mockUserSharedDto,
+  actor: mockUserDto,
   mentions: {},
   commentsCount: 0,
   totalUsersSeen: 0,
@@ -86,7 +74,7 @@ export const mockPostResponseDto: PostResponseDto = {
   markedReadPost: false,
   createdAt: new Date('2022-05-19T02:53:48.135Z'),
   updatedAt: null,
-  createdBy: mockUserSharedDto.id,
+  createdBy: mockUserDto.id,
   audience: {
     groups: [
       {
@@ -172,7 +160,7 @@ export const mockReactionResponseDto = {
 
 export const mockCommentResponseDto: CommentResponseDto = {
   id: mockCreateReactionDto.comment.targetId,
-  actor: mockUserSharedDto,
+  actor: mockUserDto,
   edited: false,
   parentId: NIL_UUID,
   postId: mockPostResponseDto.id,

@@ -6,7 +6,6 @@ import {
   CommentHasBeenDeletedEvent,
   CommentHasBeenUpdatedEvent,
 } from '../../../events/comment';
-import { UserDto } from '../../auth';
 import { CommentHistoryService } from '../comment-history.service';
 import { CommentService } from '../comment.service';
 import {
@@ -18,6 +17,7 @@ import {
 } from '../dto/requests';
 import { GetCommentLinkDto } from '../dto/requests/get-comment-link.dto';
 import { CommentEditedHistoryDto, CommentResponseDto } from '../dto/response';
+import { UserDto } from '../../v2-user/application';
 
 @Injectable()
 export class CommentAppService {

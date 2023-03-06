@@ -13,7 +13,7 @@ import { PostResponseDto } from '../../modules/post/dto/responses';
 import { ReactionResponseDto } from '../../modules/reaction/dto/response';
 import { NotificationService, TypeActivity } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
-import { UserSharedDto } from '../../shared/user/dto';
+import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
 export class ReactionListener {
@@ -62,7 +62,7 @@ export class ReactionListener {
     data: {
       post: PostResponseDto;
       reaction: ReactionResponseDto;
-      actor: UserSharedDto;
+      actor: UserDto;
     }
   ): Promise<void> {
     const { actor, reaction } = data;

@@ -17,7 +17,6 @@ import {
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { NotificationService } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
-import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { FollowService } from '../follow';
@@ -34,7 +33,7 @@ import {
 import { ReactionEnum } from './reaction.enum';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class ReactionService {
@@ -450,6 +449,7 @@ export class ReactionService {
 
       const actor = {
         id: userDto.id,
+        email: userDto.email,
         fullname: userDto.fullname,
         username: userDto.username,
         avatar: userDto.avatar,

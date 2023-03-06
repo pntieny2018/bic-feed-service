@@ -11,11 +11,10 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { CommentAppService } from './application/comment.app-service';
 import { CommentHistoryService } from './comment-history.service';
 import {
@@ -30,6 +29,7 @@ import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
 import { CommentDetailResponseDto } from './dto/response/comment-detail.response.dto';
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
 import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
+import { UserDto } from '../v2-user/application';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')

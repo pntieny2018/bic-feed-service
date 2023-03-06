@@ -20,7 +20,6 @@ import { IPost, PostModel } from './post.model';
 import { IMedia, MediaModel } from './media.model';
 import { StringHelper } from '../../common/helpers';
 import { IMention, MentionModel } from './mention.model';
-import { UserDataShareDto } from '../../shared/user/dto';
 import { MentionableType } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
@@ -32,6 +31,7 @@ import { OrderEnum } from '../../common/dto';
 import { GetCommentsDto } from '../../modules/comment/dto/requests';
 import { ReportContentDetailModel } from './report-content-detail.model';
 import { TargetType } from '../../modules/report-content/contstants';
+import { UserDto } from '../../modules/v2-user/application';
 
 export enum ActionEnum {
   INCREMENT = 'increment',
@@ -40,7 +40,7 @@ export enum ActionEnum {
 
 export interface IComment {
   id: string;
-  actor: UserDataShareDto;
+  actor: UserDto;
   postId: string;
   parentId?: string;
   edited?: boolean;
@@ -70,7 +70,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @Column
   public id: string;
 
-  public actor: UserDataShareDto;
+  public actor: UserDto;
 
   @AllowNull(false)
   @ForeignKey(() => CommentModel)

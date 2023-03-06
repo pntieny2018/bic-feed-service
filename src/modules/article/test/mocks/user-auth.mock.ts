@@ -1,6 +1,5 @@
-import { UserDto } from '../../../auth';
-import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ObjectHelper } from '../../../../common/helpers';
+import { UserDto } from '../../../v2-user/application';
 
 export const mockedUserAuth: UserDto = {
   id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
@@ -11,7 +10,7 @@ export const mockedUserAuth: UserDto = {
   groups: ['855bedeb-b708-4e13-8c68-131d92cd79b3', '855bedeb-b708-4e13-8c68-131d92cd79b4'],
 };
 
-export const actorComment: UserDataShareDto = {
+export const actorComment = {
   ...(ObjectHelper.omit(['groups'], mockedUserAuth) as any),
 };
 export const authUserNotInGroupContainPostMock: UserDto = {
@@ -22,14 +21,14 @@ export const authUserNotInGroupContainPostMock: UserDto = {
   fullname: 'John Kendy',
   groups: ['855bedeb-b708-4e13-8c68-131d92cd79b3', '855bedeb-b708-4e13-8c68-131d92cd79b4'],
 };
-export const userMentionInGroupMock: UserDataShareDto = {
+export const userMentionInGroupMock = {
   id: '855bedeb-b708-4e13-8c68-131d92cd79b2',
   fullname: 'Bret Josh',
   username: 'bret.josh',
   avatar: 'https://bein.group/josh.png',
 };
 
-export const userMentionNotInGroupMock: UserDataShareDto = {
+export const userMentionNotInGroupMock = {
   id: '855bedeb-b708-4e13-8c68-131d92cd79b3',
   fullname: 'Caitlyn Back',
   username: 'caitlyn.back',

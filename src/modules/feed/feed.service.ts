@@ -12,14 +12,13 @@ import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
-import { UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class FeedService {

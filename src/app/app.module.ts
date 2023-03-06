@@ -1,5 +1,4 @@
 import { LibModule } from './lib.module';
-import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { PostModule } from '../modules/post';
 import { SeriesModule } from '../modules/series';
@@ -49,7 +48,6 @@ import { I18nMiddleware } from 'nestjs-i18n';
     PostModule,
     UploadModule,
     MediaModule,
-    UserModule,
     GroupModule,
     MentionModule,
     ReactionModule,

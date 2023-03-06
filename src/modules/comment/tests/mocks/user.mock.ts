@@ -1,5 +1,4 @@
 import { UserDto } from '../../../auth';
-import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ObjectHelper } from '../../../../common/helpers';
 
 export const authUserMock: UserDto = {
@@ -11,7 +10,7 @@ export const authUserMock: UserDto = {
   groups: ['26799d29-189b-435d-b618-30fb70e9b09a', '26799d29-189b-435d-b618-30fb70e9b09b'],
 };
 
-export const actorComment: UserDataShareDto = {
+export const actorComment = {
   ...(ObjectHelper.omit(['groups'], authUserMock) as any),
 };
 export const authUserNotInGroupContainPostMock: UserDto = {
@@ -22,14 +21,14 @@ export const authUserNotInGroupContainPostMock: UserDto = {
   fullname: 'John Kendy',
   groups: ['26799d29-189b-435d-b618-30fb70e9b09c', '26799d29-189b-435d-b618-30fb70e9b09b'],
 };
-export const userMentionInGroupMock: UserDataShareDto = {
+export const userMentionInGroupMock = {
   id: '26799d29-189b-435d-b618-30fb70e9b09d',
   fullname: 'Bret Josh',
   username: 'bret.josh',
   avatar: 'https://bein.group/josh.png',
 };
 
-export const userMentionNotInGroupMock: UserDataShareDto = {
+export const userMentionNotInGroupMock = {
   id: '26799d29-189b-435d-b618-30fb70e9b09e',
   fullname: 'Caitlyn Back',
   username: 'caitlyn.back',

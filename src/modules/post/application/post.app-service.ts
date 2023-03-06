@@ -18,7 +18,6 @@ import {
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
 import { GroupService } from '../../../shared/group';
-import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { TargetType } from '../../report-content/contstants';
@@ -28,7 +27,11 @@ import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
 import { TagService } from '../../tag/tag.service';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../v2-user/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../v2-user/application';
 
 @Injectable()
 export class PostAppService {

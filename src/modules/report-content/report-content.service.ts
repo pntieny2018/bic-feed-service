@@ -1,4 +1,3 @@
-import { UserDto } from '../auth';
 import { Op, QueryTypes } from 'sequelize';
 import { CommentService } from '../comment';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
@@ -39,7 +38,7 @@ import { ArticleService } from '../article/article.service';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseDto } from '../comment/dto/response';
-import { IUserApplicationService } from '../v2-user/application';
+import { IUserApplicationService, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class ReportContentService {

@@ -1,21 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserMentionDto } from '../../../mention/dto';
-import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
-import { MediaFilterResponseDto } from '../../../media/dto/response';
-import { UserDataShareDto } from '../../../../shared/user/dto';
-import { ReactionResponseDto } from '../../../reaction/dto/response';
-import { MediaService } from '../../../media';
+import { Expose } from 'class-transformer';
 import { CommentResponseDto } from '.';
 import { PageDto } from '../../../../common/dto';
+import { UserDto } from '../../../v2-user/application';
 
 export class CommentDetailResponseDto {
   @ApiProperty({ type: CommentResponseDto })
   @Expose()
   public comment: CommentResponseDto;
 
-  @ApiProperty({ type: UserDataShareDto })
+  @ApiProperty({ type: UserDto })
   @Expose()
-  public actor: UserDataShareDto;
+  public actor: UserDto;
 
   @ApiProperty({
     example: {

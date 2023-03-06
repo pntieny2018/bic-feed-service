@@ -4,10 +4,10 @@ import { SeriesAddedItemsEvent } from '../../events/series';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { SeriesActivityService } from '../../notification/activities';
-import { UserSharedDto } from '../../shared/user/dto';
 import { ArticleService } from '../../modules/article/article.service';
 import { SeriesAddItem } from '../../common/constants';
 import { NotificationService } from '../../notification';
+import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
 export class SeriesAddedItemsListener {
@@ -48,7 +48,7 @@ export class SeriesAddedItemsListener {
   private async _notifyAddedItem(data: {
     seriesId: string;
     itemIds: string[];
-    actor: UserSharedDto;
+    actor: UserDto;
   }): Promise<void> {
     const { seriesId, itemIds, actor } = data;
 

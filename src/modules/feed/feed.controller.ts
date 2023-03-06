@@ -2,13 +2,13 @@ import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedService } from './feed.service';
 import { PostResponseDto } from '../post/dto/responses';
 import { APP_VERSION } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
-import { UserDataShareDto } from '../../shared/user/dto';
+import { UserDto } from '../v2-user/application';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -68,7 +68,7 @@ export class FeedController {
   public async getUserSeenPost(
     @AuthUser() user: UserDto,
     @Query() getUserSeenPostDto: GetUserSeenPostDto
-  ): Promise<PageDto<UserDataShareDto>> {
+  ): Promise<PageDto<UserDto>> {
     return this._feedService.getUsersSeenPosts(user, getUserSeenPostDto);
   }
 }

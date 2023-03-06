@@ -41,7 +41,6 @@ import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { GroupService } from '../../shared/group';
 import { GroupPrivacy } from '../../shared/group/dto';
-import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -59,6 +58,7 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class PostService {

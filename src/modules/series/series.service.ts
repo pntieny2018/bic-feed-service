@@ -15,7 +15,6 @@ import { PostSeriesModel } from '../../database/models/post-series.model';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { ArticleService } from '../article/article.service';
-import { UserDto } from '../auth';
 import { AuthorityService } from '../authority';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
@@ -25,6 +24,7 @@ import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from './dto/requests';
 import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class SeriesService {

@@ -27,8 +27,6 @@ import { ReportContentDetailModel } from '../../database/models/report-content-d
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { GroupService } from '../../shared/group';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
 import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
@@ -54,6 +52,7 @@ import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class ArticleService extends PostService {

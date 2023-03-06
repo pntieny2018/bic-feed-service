@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -8,9 +8,11 @@ import {
 } from 'class-validator';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { GroupService } from '../../../shared/group';
-import { UserService } from '../../../shared/user';
-import { UserSharedDto } from '../../../shared/user/dto';
-import { UserDto } from '../../auth';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../v2-user/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -24,14 +26,18 @@ export interface IExtendedValidationArguments extends ValidationArguments {
 @ValidatorConstraint({ async: true })
 @Injectable()
 export class ValidateMentionConstraint implements ValidatorConstraintInterface {
-  public constructor(private _userService: UserService, private _groupService: GroupService) {}
+  public constructor(
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
+    private _groupService: GroupService
+  ) {}
 
   public async validate(mentions: string[], args?: ValidationArguments): Promise<boolean> {
     if (mentions.length === 0) return true;
 
     const { groupIds } = args.object['audience'];
 
-    const users: UserSharedDto[] = await this._userService.getMany(mentions);
+    const users = await this._userAppService.findAllByIds(mentions);
 
     for (const user of users) {
       if (!this._groupService.isMemberOfSomeGroups(groupIds, user.groups)) {
