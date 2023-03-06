@@ -200,7 +200,7 @@ workflows:
       - stg:
           filters:
             branches:
-              only: release-34
+              only: staging
   Production:
     when: << pipeline.parameters.run_workflow_pro >>
     jobs:
