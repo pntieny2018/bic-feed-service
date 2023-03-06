@@ -14,7 +14,7 @@ import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { GetPostPipe } from '../post/pipes';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchArticlesDto } from './dto/requests';
@@ -29,6 +29,7 @@ import { ValidateSeriesTagDto } from './dto/requests/validate-series-tag.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
+import { UserDto } from '../v2-user/application';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')

@@ -7,7 +7,6 @@ import { NotificationModule } from '../notification';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { CommentModule } from '../modules/comment';
 import { MediaModule } from '../modules/media';
-import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { SeriesModule } from '../modules/series';
 import { ArticleListener } from './article';
@@ -24,6 +23,7 @@ import { GroupModule } from '../shared/group';
 import { TagModule } from '../modules/tag';
 import { FilterUserModule } from '../modules/filter-user';
 import { FollowModule } from '../modules/follow';
+import { UserModuleV2 } from '../modules/v2-user/user.module';
 
 @Module({
   imports: [
@@ -35,7 +35,7 @@ import { FollowModule } from '../modules/follow';
     NotificationModule,
     FeedPublisherModule,
     MediaModule,
-    UserModule,
+    UserModuleV2,
     FeedModule,
     SeriesModule,
     ArticleModule,

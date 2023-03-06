@@ -38,7 +38,7 @@ import { ArticleService } from '../article/article.service';
 import { GroupSharedDto } from '../../shared/group/dto';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseDto } from '../comment/dto/response';
-import { IUserApplicationService, UserDto } from '../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class ReportContentService {
@@ -46,7 +46,7 @@ export class ReportContentService {
     @InjectConnection()
     private readonly _sequelize: Sequelize,
     private readonly _feedService: FeedService,
-    @Inject()
+    @Inject(USER_APPLICATION_TOKEN)
     private readonly _userAppService: IUserApplicationService,
     private readonly _postService: PostService,
     private readonly _groupService: GroupService,
@@ -754,14 +754,9 @@ export class ReportContentService {
 
     const detailContentReportResponseDto = new DetailContentReportResponseDto();
 
+    const actor = await this._userAppService.findOne(reportStatus.authorId);
     if (reportStatus.targetType === TargetType.COMMENT) {
-      const comment = await this._commentService.getComment(
-        {
-          id: reportStatus.authorId,
-        },
-        targetId,
-        0
-      );
+      const comment = await this._commentService.getComment(actor, targetId, 0);
       detailContentReportResponseDto.setComment(comment);
 
       return detailContentReportResponseDto;

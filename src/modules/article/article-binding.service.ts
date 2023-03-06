@@ -11,7 +11,7 @@ import { MentionService } from '../mention';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { PostBindingService } from '../post/post-binding.service';
 import { ArticleResponseDto } from './dto/responses';
-import { UserService } from '../../shared/user';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class ArticleBindingService extends PostBindingService {
@@ -32,7 +32,8 @@ export class ArticleBindingService extends PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    protected userAppService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected userAppService: IUserApplicationService,
     protected groupService: GroupService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,

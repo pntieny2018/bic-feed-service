@@ -1,7 +1,6 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { FeedService } from 'src/modules/feed/feed.service';
-import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
@@ -48,6 +47,10 @@ export class SeriesListener {
     const activity = this._postActivityService.createPayload({
       actor: {
         id: series.createdBy,
+        username: 'unused',
+        email: 'unused',
+        avatar: 'unused',
+        fullname: 'unused',
       },
       type: PostType.SERIES,
       title: series.title,
@@ -78,6 +81,10 @@ export class SeriesListener {
       value: {
         actor: {
           id: series.createdBy,
+          username: 'unused',
+          email: 'unused',
+          avatar: 'unused',
+          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,

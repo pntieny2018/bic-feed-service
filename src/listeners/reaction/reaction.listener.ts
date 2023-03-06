@@ -122,7 +122,7 @@ export class ReactionListener {
       post: PostResponseDto;
       comment?: CommentResponseDto;
       reaction: ReactionResponseDto;
-      actor: UserSharedDto;
+      actor: UserDto;
     }
   ): void {
     const { post, comment, reaction } = data;

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '@app/redis';
 import { GroupPrivacy, GroupSharedDto } from './dto';
-import { UserDto } from '../../modules/auth';
 import { ArrayHelper } from '../../common/helpers';
 import { AppHelper } from '../../common/helpers/app.helper';
+import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
 export class GroupService {

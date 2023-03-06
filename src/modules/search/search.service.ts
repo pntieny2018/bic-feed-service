@@ -26,7 +26,7 @@ import {
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
-import { IUserApplicationService, UserDto } from '../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 type FieldSearch = {
   default: string;
@@ -53,7 +53,7 @@ export class SearchService {
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
     protected readonly groupService: GroupService,
-    @Inject()
+    @Inject(USER_APPLICATION_TOKEN)
     protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)

@@ -65,6 +65,10 @@ export class ArticleListener {
     const activity = this._postActivityService.createPayload({
       actor: {
         id: article.createdBy,
+        username: 'unused',
+        email: 'unused',
+        avatar: 'unused',
+        fullname: 'unused',
       },
       title: article.title,
       commentsCount: article.commentsCount,
@@ -95,6 +99,10 @@ export class ArticleListener {
       value: {
         actor: {
           id: article.createdBy,
+          username: 'unused',
+          email: 'unused',
+          avatar: 'unused',
+          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,

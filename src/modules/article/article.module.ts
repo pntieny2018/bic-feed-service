@@ -1,5 +1,4 @@
 import { MediaModule } from '../media';
-import { UserModule } from '../../shared/user';
 import { forwardRef, Module } from '@nestjs/common';
 import { MentionModule } from '../mention';
 import { GroupModule } from '../../shared/group';
