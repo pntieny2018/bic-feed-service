@@ -57,7 +57,7 @@ export class GroupApplicationService implements IGroupApplicationService {
     actor: UserDto,
     groupIds: string[],
     offset = 0,
-    limit = 50,
+    limit = 50
   ): Promise<string[]> {
     return this._repo.getGroupAdminIds(actor, groupIds, offset, limit);
   }
@@ -65,7 +65,7 @@ export class GroupApplicationService implements IGroupApplicationService {
   public getAdminIds(
     rootGroupIds: string[],
     offset = 0,
-    limit = 50,
+    limit = 50
   ): Promise<{ admins: Record<string, string[]>; owners: Record<string, string[]> }> {
     return this._repo.getAdminIds(rootGroupIds, offset, limit);
   }
