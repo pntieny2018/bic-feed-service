@@ -46,10 +46,10 @@ export class DeleteReactionHandler implements ICommandHandler<DeleteReactionComm
       throw new ReactionNotFoundException();
     }
 
-    if ((reaction as ReactionEntity).get('createdBy') !== userId) {
+    if (reaction.get('createdBy') !== userId) {
       throw new ReactionNotHaveAuthorityException();
     }
 
-    await this._reactionDomainService.deleteReaction((reaction as ReactionEntity).get('id'));
+    await this._reactionDomainService.deleteReaction(command.payload.target, reaction.get('id'));
   }
 }

@@ -9,6 +9,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { IReactionFactory, REACTION_FACTORY_TOKEN } from '../../domain/factory';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../../../config/database';
+import { REACTION_TARGET } from '../../data-type';
 
 export class PostReactionRepository implements IPostReactionRepository {
   @Inject(REACTION_FACTORY_TOKEN) private readonly _factory: IReactionFactory;
@@ -56,6 +57,10 @@ export class PostReactionRepository implements IPostReactionRepository {
 
   private _modelToEntity(postReaction: PostReactionModel): ReactionEntity {
     if (postReaction === null) return null;
-    return this._factory.reconstitute({ ...postReaction.toJSON(), targetId: postReaction.postId });
+    return this._factory.reconstitute({
+      ...postReaction.toJSON(),
+      targetId: postReaction.postId,
+      target: REACTION_TARGET.POST,
+    });
   }
 }

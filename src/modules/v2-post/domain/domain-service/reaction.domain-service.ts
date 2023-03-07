@@ -23,13 +23,14 @@ export class ReactionDomainService implements IReactionDomainService {
   public async createReaction(input: ReactionCreateProps): Promise<ReactionEntity> {
     const { reactionName, createdBy, target, targetId } = input;
     const reactionEntity = this._reactionFactory.create({
+      target,
       reactionName,
       createdBy,
       targetId: targetId,
     });
     if (target === REACTION_TARGET.POST || target === REACTION_TARGET.ARTICLE) {
       await this._postReactionRepository.create(reactionEntity);
-      await reactionEntity.commit();
+      reactionEntity.commit();
 
       // TODO implement this
       // this._emitter.emit(
@@ -42,7 +43,7 @@ export class ReactionDomainService implements IReactionDomainService {
       return reactionEntity;
     } else if (target === REACTION_TARGET.COMMENT) {
       await this._commentReactionRepository.create(reactionEntity);
-      await reactionEntity.commit();
+      reactionEntity.commit();
       // TODO implement this
       // this._emitter.emit(
       //   new CreateReactionInternalEvent({
@@ -54,13 +55,17 @@ export class ReactionDomainService implements IReactionDomainService {
       // );
       return reactionEntity;
     } else {
-      throw new Error('Invalid target');
+      throw new DatabaseException();
     }
   }
 
-  public async deleteReaction(reactionId: string): Promise<void> {
+  public async deleteReaction(target: REACTION_TARGET, reactionId: string): Promise<void> {
     try {
-      await this._postReactionRepository.delete(reactionId);
+      if (target === REACTION_TARGET.POST || target === REACTION_TARGET.ARTICLE) {
+        await this._postReactionRepository.delete(reactionId);
+      } else if (target === REACTION_TARGET.COMMENT) {
+        await this._commentReactionRepository.delete(reactionId);
+      }
     } catch (e) {
       this._logger.error(e.message);
       throw new DatabaseException();

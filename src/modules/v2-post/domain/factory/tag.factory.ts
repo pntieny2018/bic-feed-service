@@ -1,11 +1,11 @@
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../common/helpers';
 import { TagEntity, TagProps } from '../model/tag';
-import { CreateTagOptions } from './tag.factory.interface';
+import { CreateTagOptions, ITagFactory } from './tag.factory.interface';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 
-export class TagFactory {
+export class TagFactory implements ITagFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
   public create(options: CreateTagOptions): TagEntity {

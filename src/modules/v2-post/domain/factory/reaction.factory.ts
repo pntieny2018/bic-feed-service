@@ -7,9 +7,16 @@ import { CreateReactionOptions, IReactionFactory } from './reaction.factory.inte
 export class ReactionFactory implements IReactionFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public create(properties: CreateReactionOptions): ReactionEntity {
+  public create(options: CreateReactionOptions): ReactionEntity {
     return this._eventPublisher.mergeObjectContext(
-      new ReactionEntity({ id: v4(), createdAt: new Date(), ...properties })
+      new ReactionEntity({
+        id: v4(),
+        createdAt: new Date(),
+        target: options.target,
+        targetId: options.targetId,
+        reactionName: options.reactionName,
+        createdBy: options.createdBy,
+      })
     );
   }
   public reconstitute(properties: ReactionProps): ReactionEntity {

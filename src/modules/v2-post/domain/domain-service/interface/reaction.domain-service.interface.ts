@@ -11,7 +11,7 @@ export type ReactionCreateProps = {
 export interface IReactionDomainService {
   createReaction(data: ReactionCreateProps): Promise<ReactionEntity>;
 
-  deleteReaction(id: string): Promise<void>;
+  deleteReaction(target: REACTION_TARGET, id: string): Promise<void>;
 }
 
 export const REACTION_DOMAIN_SERVICE_TOKEN = 'REACTION_DOMAIN_SERVICE_TOKEN';

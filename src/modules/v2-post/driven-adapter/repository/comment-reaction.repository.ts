@@ -9,6 +9,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { IReactionFactory, REACTION_FACTORY_TOKEN } from '../../domain/factory';
 import { FindOptions, QueryTypes, Sequelize, Transaction } from 'sequelize';
 import { getDatabaseConfig } from '../../../../config/database';
+import { REACTION_TARGET } from '../../data-type';
 
 export class CommentReactionRepository implements ICommentReactionRepository {
   @Inject(REACTION_FACTORY_TOKEN) private readonly _factory: IReactionFactory;
@@ -62,6 +63,7 @@ export class CommentReactionRepository implements ICommentReactionRepository {
     return this._factory.reconstitute({
       ...commentReaction.toJSON(),
       targetId: commentReaction.commentId,
+      target: REACTION_TARGET.COMMENT,
     });
   }
 }
