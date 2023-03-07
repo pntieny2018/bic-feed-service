@@ -32,6 +32,7 @@ import { TagResponseDto } from '../dto/response';
 import { TagNoCreatePermissionException } from '../../exception/tag-no-create-permission.exception';
 import { TagNoUpdatePermissionException } from '../../exception/tag-no-update-permission.exception';
 import { TagNoDeletePermissionException } from '../../exception/tag-no-delete-permission.exception';
+import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -102,6 +103,8 @@ export class TagController {
           throw new BadRequestException(e);
         case TagNoCreatePermissionException:
           throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }
@@ -137,6 +140,8 @@ export class TagController {
           throw new BadRequestException(e);
         case TagNoUpdatePermissionException:
           throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }
@@ -164,6 +169,8 @@ export class TagController {
           throw new BadRequestException(e);
         case TagNoDeletePermissionException:
           throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
         default:
           throw e;
       }
