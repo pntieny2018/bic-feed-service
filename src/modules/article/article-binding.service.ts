@@ -1,9 +1,7 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
-import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
 import { UserDto } from '../auth';
@@ -12,6 +10,8 @@ import { MentionService } from '../mention';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { PostBindingService } from '../post/post-binding.service';
 import { ArticleResponseDto } from './dto/responses';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 
 @Injectable()
 export class ArticleBindingService extends PostBindingService {
@@ -32,8 +32,10 @@ export class ArticleBindingService extends PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    protected userService: UserService,
-    protected groupService: GroupService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected groupAppService: IGroupApplicationService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     protected mentionService: MentionService,
@@ -43,8 +45,8 @@ export class ArticleBindingService extends PostBindingService {
     super(
       sequelizeConnection,
       postModel,
-      userService,
-      groupService,
+      userAppService,
+      groupAppService,
       reactionService,
       mentionService,
       linkPreviewService,

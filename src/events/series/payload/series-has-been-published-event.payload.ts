@@ -1,7 +1,7 @@
 import { SeriesResponseDto } from '../../../modules/series/dto/responses';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../../modules/v2-user/application';
 
 export class SeriesHasBeenPublishedEventPayload {
   public series: SeriesResponseDto;
-  public actor: UserSharedDto;
+  public actor: UserDto;
 }

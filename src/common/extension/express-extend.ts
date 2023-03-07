@@ -1,4 +1,4 @@
-import { UserDto } from '../../modules/auth';
+import { UserDto } from '../../modules/v2-user/application';
 
 export interface IResponseMessage {
   validator?: {

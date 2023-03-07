@@ -16,6 +16,7 @@ import { ClientsModule, KafkaOptions, Transport } from '@nestjs/microservices';
 import { IKafkaConfig } from '../config/kafka';
 import { KAFKA_PRODUCER } from '../common/constants';
 import { ExternalService } from './external.service';
+import { DomainEventModule } from '@beincom/nest-domain-event';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -129,6 +130,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
       inject: [ConfigService],
     }),
     InternalEventEmitterModule,
+    DomainEventModule,
   ],
   providers: [ExternalService],
   exports: [ElasticsearchModule, ClientsModule, ExternalService],

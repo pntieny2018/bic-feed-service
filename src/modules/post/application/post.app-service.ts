@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -11,9 +17,6 @@ import {
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
-import { GroupService } from '../../../shared/group';
-import { UserService } from '../../../shared/user';
-import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { TargetType } from '../../report-content/contstants';
@@ -22,9 +25,13 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
-import { GetPostsByParamsDto } from '../dto/requests/get-posts-by-params.dto';
 import { TagService } from '../../tag/tag.service';
-import { ArticleResponseDto } from '../../article/dto/responses';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 
 @Injectable()
 export class PostAppService {
@@ -36,8 +43,10 @@ export class PostAppService {
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
-    private _userService: UserService,
-    private _groupService: GroupService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private _groupAppService: IGroupApplicationService,
     protected authorityService: AuthorityService,
     private _tagService: TagService
   ) {}
@@ -159,7 +168,7 @@ export class PostAppService {
         new PostHasBeenUpdatedEvent({
           oldPost: postBefore,
           newPost: postUpdated,
-          actor: user.profile,
+          actor: user,
         })
       );
 
@@ -180,7 +189,7 @@ export class PostAppService {
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
         post: postUpdated,
-        actor: user.profile,
+        actor: user,
       })
     );
 
@@ -207,7 +216,7 @@ export class PostAppService {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
           post: postDeleted,
-          actor: user.profile,
+          actor: user,
         })
       );
       return true;
@@ -241,8 +250,8 @@ export class PostAppService {
   }
 
   public async getUserGroup(groupId: string, userId: string, postId: string): Promise<any> {
-    const user = await this._userService.get(userId);
-    const group = await this._groupService.get(groupId);
+    const user = await this._userAppService.findOne(userId);
+    const group = await this._groupAppService.findOne(groupId);
     const post = await this._postService.findPost({ postId });
     return {
       group,

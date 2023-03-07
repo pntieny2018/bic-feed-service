@@ -1,8 +1,8 @@
 import { PostResponseDto } from '../../../modules/post/dto/responses';
-import { UserSharedDto } from '../../../shared/user/dto';
+import { UserDto } from '../../../modules/v2-user/application';
 
 export class PostHasBeenUpdatedEventPayload {
   public oldPost: PostResponseDto;
   public newPost: PostResponseDto;
-  public actor: UserSharedDto;
+  public actor: UserDto;
 }

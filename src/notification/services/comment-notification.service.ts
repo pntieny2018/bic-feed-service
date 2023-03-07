@@ -1,5 +1,4 @@
 import { NIL as NIL_UUID } from 'uuid';
-import { UserDto } from '../../modules/auth';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentService } from '../../modules/comment';
 import { CommentActivityService } from '../activities';
@@ -13,6 +12,7 @@ import { ReportContentModel } from '../../database/models/report-content.model';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../dto/response';
 import { NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
+import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
 export class CommentNotificationService {

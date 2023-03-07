@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -10,14 +10,9 @@ import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/hel
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
-import { GroupService } from '../../shared/group';
-import { GroupSharedDto } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
-import { UserDto } from '../auth';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -29,6 +24,12 @@ import {
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
 
 type FieldSearch = {
   default: string;
@@ -54,8 +55,10 @@ export class SearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly groupService: GroupService,
-    protected readonly userService: UserService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected readonly appGroupService: IGroupApplicationService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
     private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
@@ -242,7 +245,7 @@ export class SearchService {
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<any>> {
     const { contentSearch, limit, offset, groupId } = searchPostsDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<any>([], {
         total: 0,
@@ -253,11 +256,11 @@ export class SearchService {
 
     let groupIds = user.groups;
     if (groupId) {
-      const group = await this.groupService.get(groupId);
+      const group = await this.appGroupService.findOne(groupId);
       if (!group) {
         throw new BadRequestException(`Group ${groupId} not found`);
       }
-      groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
+      groupIds = this.appGroupService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
       if (groupIds.length === 0) {
         return new PageDto<any>([], {
           limit,
@@ -272,6 +275,7 @@ export class SearchService {
     ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
+    console.log(JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const itemIds = []; //post or article
@@ -319,8 +323,8 @@ export class SearchService {
       }
       return data;
     });
-    const users = await this.userService.getMany(attrUserIds);
-    const groups = await this.groupService.getMany(attrGroupIds);
+    const users = await this.userAppService.findAllByIds(attrUserIds);
+    const groups = await this.appGroupService.findAllByIds(attrGroupIds);
     await Promise.all([
       this.reactionService.bindToPosts(posts),
       this.postBindingService.bindAttributes(posts, [
@@ -364,8 +368,8 @@ export class SearchService {
   public bindResponseSearch(
     posts: any,
     dataBinding: {
-      groups: GroupSharedDto[];
-      users: UserSharedDto[];
+      groups: GroupDto[];
+      users: UserDto[];
       articles: any;
     }
   ): any {
@@ -473,7 +477,7 @@ export class SearchService {
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
     const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<SeriesSearchResponseDto>([], {
         total: 0,
@@ -484,7 +488,7 @@ export class SearchService {
 
     let filterGroupIds = [];
     if (groupIds && groupIds.length) {
-      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
     }
     const payload = await this.getPayloadSearchForSeries({
       contentSearch,
@@ -499,8 +503,8 @@ export class SearchService {
       const source = {
         id: item._source.id,
         groupIds: item._source.groupIds,
-        title: item._source.title || null,
         coverMedia: item._source.coverMedia,
+        title: item._source.title || null,
         summary: item._source.summary,
       };
       return source;
@@ -526,7 +530,7 @@ export class SearchService {
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
     const { limit, offset, groupIds, categoryIds, contentSearch } = searchDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleSearchResponseDto>([], {
         total: 0,
@@ -542,9 +546,9 @@ export class SearchService {
       });
     }
 
-    let filterGroupIds = authUser.profile.groups;
+    let filterGroupIds = authUser.groups;
     if (groupIds) {
-      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
     }
     const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
       TargetType.ARTICLE,

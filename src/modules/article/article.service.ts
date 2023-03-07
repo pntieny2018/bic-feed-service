@@ -26,9 +26,6 @@ import { IPost, PostModel, PostStatus, PostType } from '../../database/models/po
 import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { GroupService } from '../../shared/group';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
 import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
@@ -54,6 +51,8 @@ import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
+import { UserDto } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 
 @Injectable()
 export class ArticleService extends PostService {
@@ -86,8 +85,8 @@ export class ArticleService extends PostService {
     protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
-    protected userService: UserService,
-    protected groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected groupAppService: IGroupApplicationService,
     protected mediaService: MediaService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
@@ -118,8 +117,7 @@ export class ArticleService extends PostService {
       postTagModel,
       userMarkReadPostModel,
       userSavePostModel,
-      userService,
-      groupService,
+      groupAppService,
       mediaService,
       mentionService,
       commentService,
@@ -377,7 +375,7 @@ export class ArticleService extends PostService {
   ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, id } = getRelatedArticlesDto;
 
-    const groupIdsUserCanAccess: string[] = user.profile.groups;
+    const groupIdsUserCanAccess: string[] = user.groups;
     const includePostDetail = this.getIncludeObj({
       shouldIncludeCategory: true,
     });
@@ -444,11 +442,11 @@ export class ArticleService extends PostService {
   }
 
   private async _getGroupIdAndChildIdsUserCanAccess(groupId, authUser: UserDto): Promise<string[]> {
-    const group = await this.groupService.get(groupId);
+    const group = await this.groupAppService.findOne(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
+    const groupIds = this.groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
 
     return groupIds;
   }
@@ -806,7 +804,7 @@ export class ArticleService extends PostService {
    */
   public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
     const authUserId = authUser.id;
-    const creator = authUser.profile;
+    const creator = authUser;
     if (!creator) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
     }

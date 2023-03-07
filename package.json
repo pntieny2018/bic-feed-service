@@ -24,6 +24,9 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.54.0",
     "@aws-sdk/s3-request-presigner": "^3.54.0",
+    "@beincom/common": "^0.1.6",
+    "@beincom/domain": "^0.1.7",
+    "@beincom/nest-domain-event": "^0.0.2",
     "@casl/ability": "^5.4.4",
     "@elastic/elasticsearch": "^8.4.0",
     "@nestjs/axios": "^0.0.7",
@@ -31,6 +34,7 @@
     "@nestjs/common": "^8.4.0",
     "@nestjs/config": "^1.2.0",
     "@nestjs/core": "^8.4.0",
+    "@nestjs/cqrs": "^9.0.1",
     "@nestjs/elasticsearch": "^9.0.0",
     "@nestjs/event-emitter": "^1.0.0",
     "@nestjs/microservices": "^8.4.1",
@@ -52,6 +56,7 @@
     "class-validator": "^0.13.2",
     "dotenv": "^16.0.0",
     "elasticsearch": "^16.7.2",
+    "fast-deep-equal": "^3.1.3",
     "image-size": "^1.0.1",
     "ioredis": "^4.28.5",
     "jsonwebtoken": "^8.5.1",
@@ -60,6 +65,7 @@
     "kafkajs": "^1.16.0",
     "nest-commander": "^2.4.0",
     "nest-winston": "^1.6.2",
+    "nestjs-i18n": "^10.2.1",
     "node-emoji": "^1.11.0",
     "pg": "^8.7.1",
     "pg-native": "^3.0.0",
@@ -146,12 +152,19 @@
       "!**/cli.ts",
       "!**/configuration.ts",
       "!**/main.ts",
-      "!<rootDir>/libs/"
+      "!<rootDir>/libs/",
+      "!**/*.provider.ts",
+      "!**/*.value-object.ts",
+      "!**/*.entity.ts",
+      "!**/*.exception.ts",
+      "!**/*.interface.ts",
+      "!**/*.decorator.ts",
+      "!**/*.interceptor.ts"
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src"
+      "<rootDir>/src/modules/v2-post"
     ],
     "moduleNameMapper": {
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

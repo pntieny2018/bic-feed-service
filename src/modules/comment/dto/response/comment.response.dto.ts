@@ -2,12 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { UserMentionDto } from '../../../mention/dto';
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 import { MediaFilterResponseDto } from '../../../media/dto/response';
-import { UserDataShareDto } from '../../../../shared/user/dto';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { MediaService } from '../../../media';
 import { IPost } from '../../../../database/models/post.model';
 import { PageDto } from '../../../../common/dto';
 import { IsUUID } from 'class-validator';
+import { UserDto } from '../../../v2-user/application';
 
 export class CommentResponseDto {
   @ApiProperty()
@@ -17,7 +17,7 @@ export class CommentResponseDto {
 
   @ApiProperty()
   @Expose()
-  public actor: UserDataShareDto;
+  public actor: UserDto;
 
   @ApiProperty()
   @Expose()

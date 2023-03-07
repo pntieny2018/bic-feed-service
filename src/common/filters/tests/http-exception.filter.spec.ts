@@ -1,7 +1,6 @@
 import { HttpExceptionFilter } from '../http-exception.filter';
 import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { LogicException, ValidatorException } from '../../exceptions';
-import { StatusCode } from '../../enum';
 import { HTTP_STATUS_ID } from '../../constants';
 
 const mockJson = jest.fn();

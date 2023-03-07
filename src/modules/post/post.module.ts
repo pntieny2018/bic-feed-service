@@ -1,11 +1,9 @@
 import { MediaModule } from '../media';
-import { UserModule } from '../../shared/user';
 import { forwardRef, Module } from '@nestjs/common';
 import { PostService } from './post.service';
 import { PostController } from './post.controller';
 import { MentionModule } from '../mention';
 import { PostPolicyService } from './post-policy.service';
-import { GroupModule } from '../../shared/group';
 import { CommentModule } from '../comment';
 import { AuthorityModule } from '../authority';
 import { ReactionModule } from '../reaction';
@@ -20,6 +18,8 @@ import { PostCronService } from './post-cron.service';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
 import { PostAppService } from './application/post.app-service';
 import { TagModule } from '../tag';
+import { UserModuleV2 } from '../v2-user/user.module';
+import { GroupModuleV2 } from '../v2-group/group.module';
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -29,8 +29,8 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 };
 @Module({
   imports: [
-    UserModule,
-    GroupModule,
+    UserModuleV2,
+    GroupModuleV2,
     MediaModule,
     MentionModule,
     forwardRef(() => ReactionModule),

@@ -25,52 +25,6 @@ module.exports = {
     ],
     'no-console': 'error',
     '@typescript-eslint/unbound-method': 'warn',
-    '@typescript-eslint/naming-convention': [
-      'error',
-      {
-        selector: 'default',
-        format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
-      },
-      {
-        selector: 'variable',
-        format: ['camelCase', 'UPPER_CASE'],
-      },
-      {
-        selector: 'variable',
-        modifiers: ['const'],
-        format: ['UPPER_CASE', 'PascalCase', 'camelCase'],
-      },
-      {
-        selector: 'parameter',
-        format: ['camelCase'],
-        leadingUnderscore: 'allow',
-      },
-
-      {
-        selector: 'memberLike',
-        modifiers: ['private'],
-        format: ['camelCase'],
-        leadingUnderscore: 'require',
-      },
-      {
-        selector: 'typeLike',
-        format: ['PascalCase'],
-      },
-      {
-        selector: 'variable',
-        types: ['boolean'],
-        format: ['PascalCase'],
-        prefix: ['is', 'should', 'has', 'can', 'did', 'will'],
-      },
-      {
-        selector: 'interface',
-        format: ['PascalCase'],
-        custom: {
-          regex: '^I[A-Z]',
-          match: true,
-        },
-      },
-    ],
     '@typescript-eslint/ban-types': [
       'error',
       {

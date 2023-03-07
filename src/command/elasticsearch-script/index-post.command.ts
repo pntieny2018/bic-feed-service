@@ -1,7 +1,7 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IElasticsearchConfig } from '../../config/elasticsearch';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -19,12 +19,15 @@ import { POST_RU_MAPPING } from './post_ru_mapping';
 import { Sequelize } from 'sequelize-typescript';
 import { SearchService } from '../../modules/search/search.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
-import { GroupService } from '../../shared/group';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { CategoryModel } from '../../database/models/category.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../modules/v2-group/application';
 
 interface ICommandOptions {
   oldIndex?: string;
@@ -37,7 +40,8 @@ interface ICommandOptions {
 export class IndexPostCommand implements CommandRunner {
   private _logger = new Logger(IndexPostCommand.name);
   public constructor(
-    public readonly groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    public readonly groupAppService: IGroupApplicationService,
     public readonly postSearchService: SearchService,
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,
@@ -184,7 +188,7 @@ export class IndexPostCommand implements CommandRunner {
         const insertDataPosts = [];
         for (const post of posts) {
           const groupIds = post.groups.map((group) => group.groupId);
-          const groups = await this.groupService.getMany(groupIds);
+          const groups = await this.groupAppService.findAllByIds(groupIds);
           const communityIds = groups.map((group) => group.rootGroupId);
           const item: IDataPostToAdd = {
             id: post.id,

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { UserDataShareDto } from '../../../shared/user/dto';
+import { UserDto } from '../../v2-user/application';
 
 export class ReportReviewResponsesDto {
   @ApiProperty()
@@ -69,9 +69,8 @@ export class ReportReviewResponsesDto {
   public targetType: string;
 
   @ApiProperty()
-  @Type(() => UserDataShareDto)
   @Expose()
-  public author: UserDataShareDto;
+  public author: UserDto;
 
   @ApiProperty({
     name: 'group_id',

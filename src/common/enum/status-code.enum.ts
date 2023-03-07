@@ -1,7 +1,0 @@
-export enum StatusCode {
-  OK = 200,
-  CREATED = 200,
-  BAD_REQUEST = 1000,
-  UNAUTHORIZED = 1001,
-  INTERNAL_SERVER_ERROR = 1002,
-}

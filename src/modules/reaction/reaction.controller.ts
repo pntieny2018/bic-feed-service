@@ -1,5 +1,5 @@
 import { GetReactionPipe } from './pipes';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { CreateReactionDto, DeleteReactionDto, GetReactionDto } from './dto/request';
 import { ReactionService } from './reaction.service';
 import { APP_VERSION } from '../../common/constants';
@@ -8,6 +8,7 @@ import { ReactionResponseDto, ReactionsResponseDto } from './dto/response';
 import { ICommentReaction } from '../../database/models/comment-reaction.model';
 import { Body, Controller, Delete, Get, Logger, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { UserDto } from '../v2-user/application';
 
 @ApiTags('Reactions')
 @ApiSecurity('authorization')

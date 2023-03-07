@@ -9,26 +9,27 @@ import { ExceptionHelper } from '../../common/helpers';
 import { IPost } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
-import { GroupService } from '../../shared/group';
-import { GroupPrivacy } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserDataShareDto } from '../../shared/user/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
-import { UserDto } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { GetTimelineDto } from './dto/request';
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
+import { GROUP_PRIVACY } from '../v2-group/data-type';
 
 @Injectable()
 export class FeedService {
   private readonly _logger = new Logger(FeedService.name);
   private readonly _classTransformer = new ClassTransformer();
+
   public constructor(
-    private readonly _userService: UserService,
-    private readonly _groupService: GroupService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: GroupApplicationService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
     @InjectModel(UserNewsFeedModel)
@@ -135,21 +136,21 @@ export class FeedService {
   public async getUsersSeenPosts(
     user: UserDto,
     getUserSeenPostDto: GetUserSeenPostDto
-  ): Promise<PageDto<UserDataShareDto>> {
+  ): Promise<PageDto<UserDto>> {
     try {
       const { postId } = getUserSeenPostDto;
 
       const post = await this._postService.findPost({
         postId: postId,
       });
-      const groupsOfUser = user.profile.groups;
+      const groupsOfUser = user.groups;
       const groupIds = post.groups.map((g) => g.groupId);
-      const groupInfos = await this._groupService.getMany(groupIds);
+      const groupInfos = await this._groupAppService.findAllByIds(groupIds);
 
       const privacy = groupInfos.map((g) => g.privacy);
 
-      if (privacy.every((p) => p !== GroupPrivacy.CLOSED && p !== GroupPrivacy.OPEN)) {
-        if (!this._groupService.isMemberOfSomeGroups(groupIds, groupsOfUser)) {
+      if (privacy.every((p) => p !== GROUP_PRIVACY.CLOSED && p !== GROUP_PRIVACY.OPEN)) {
+        if (!groupIds.some((groupId) => groupsOfUser.includes(groupId))) {
           ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
         }
       }
@@ -169,9 +170,9 @@ export class FeedService {
         },
       });
 
-      const users = await this._userService.getMany(usersSeenPost.map((usp) => usp.userId));
+      const users = await this._userService.findAllByIds(usersSeenPost.map((usp) => usp.userId));
 
-      return new PageDto<UserDataShareDto>(
+      return new PageDto<UserDto>(
         users,
         new PageMetaDto({
           total: total ?? 0,
@@ -225,11 +226,11 @@ export class FeedService {
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
     const { limit, offset, groupId, isImportant, type, isSaved } = getTimelineDto;
-    const group = await this._groupService.get(groupId);
+    const group = await this._groupAppService.findOne(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
-    const groupIds = this._groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
+    const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,

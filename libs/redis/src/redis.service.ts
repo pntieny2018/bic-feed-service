@@ -34,6 +34,7 @@ export class RedisService {
   }
 
   public async mget(keys: string[]): Promise<any> {
+    if (keys.length === 0) return [];
     const result = await this._store.mget(keys);
     try {
       return result.map((r) => JSON.parse(r));
