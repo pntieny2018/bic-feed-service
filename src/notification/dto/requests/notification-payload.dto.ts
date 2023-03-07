@@ -1,5 +1,5 @@
-import { UserSharedDto } from '../../../shared/user/dto';
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../response';
+import { UserDto } from '../../../modules/v2-user/application';
 
 export class NotificationMetaPayloadDto<T> {
   public report?: {
@@ -25,7 +25,7 @@ export class NotificationMetaPayloadDto<T> {
 export class NotificationPayloadDto<T> {
   public key: string;
   public value: {
-    actor: UserSharedDto;
+    actor: UserDto;
     event: string;
     data: T;
     meta?: NotificationMetaPayloadDto<T>;

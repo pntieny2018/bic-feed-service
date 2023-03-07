@@ -10,6 +10,7 @@ export class FixTotalUsersSeenCommand implements CommandRunner {
     @InjectModel(PostModel) private _postModel: typeof PostModel,
     @InjectModel(UserSeenPostModel) private _userSeenPostModel: typeof UserSeenPostModel
   ) {}
+
   public async run(): Promise<any> {
     const usersSeenPosts = await ModelHelper.getAllRecursive<UserSeenPostModel>(
       this._userSeenPostModel,

@@ -5,13 +5,15 @@ import { FollowModel } from '../database/models/follow.model';
 import { UserNewsFeedModel } from '../database/models/user-newsfeed.model';
 import { FeedPublisherService } from '../modules/feed-publisher';
 import { PostService } from '../modules/post/post.service';
-import { UserService } from '../shared/user';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../modules/v2-user/application';
+import { Inject } from '@nestjs/common';
 
 @Command({ name: 'update-newsfeed', description: 'Fix processing status for all posts' })
 export class UpdateNewsfeedCommand implements CommandRunner {
   public constructor(
     private _postService: PostService,
-    private _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _feedPublisherService: FeedPublisherService,
     @InjectModel(UserNewsFeedModel) private _userNewsfeedModel: typeof UserNewsFeedModel,
     @InjectModel(FollowModel) private _followModel: typeof FollowModel

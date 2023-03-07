@@ -1,0 +1,6 @@
+export enum POST_PRIVACY {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  PRIVATE = 'PRIVATE',
+  SECRET = 'SECRET',
+}

@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsUUID } from 'class-validator';
 import { CategoryResponseDto } from '.';
-import { UserSharedDto } from '../../../../shared/user/dto';
 import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { AudienceResponseDto } from '../../../post/dto/responses';
@@ -11,6 +10,7 @@ import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting
 import { PostType } from '../../../../database/models/post.model';
 import { MediaService } from '../../../media';
 import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
+import { UserDto } from '../../../v2-user/application';
 
 export class ItemInSeriesResponseDto {
   @ApiProperty({
@@ -114,11 +114,11 @@ export class ItemInSeriesResponseDto {
 
   @ApiProperty({
     description: 'Post creator information',
-    type: UserSharedDto,
+    type: UserDto,
   })
   @Expose()
-  @Type(() => UserSharedDto)
-  public actor: UserSharedDto;
+  @Type(() => UserDto)
+  public actor: UserDto;
 
   @ApiProperty({
     type: [ReactionResponseDto],

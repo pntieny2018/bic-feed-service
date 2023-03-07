@@ -13,9 +13,6 @@ import { CommentReactionModel } from '../../database/models/comment-reaction.mod
 import { CommentModel, IComment } from '../../database/models/comment.model';
 import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
-import { UserService } from '../../shared/user';
-import { UserDataShareDto } from '../../shared/user/dto';
-import { UserDto } from '../auth';
 import { AuthorityService } from '../authority';
 import { GiphyService } from '../giphy';
 import { createUrlFromId } from '../giphy/giphy.util';
@@ -30,6 +27,7 @@ import { TargetType } from '../report-content/contstants';
 import { CreateCommentDto, GetCommentsDto, UpdateCommentDto } from './dto/requests';
 import { GetCommentLinkDto } from './dto/requests/get-comment-link.dto';
 import { CommentResponseDto } from './dto/response';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class CommentService {
@@ -39,7 +37,8 @@ export class CommentService {
   public constructor(
     @Inject(forwardRef(() => PostService))
     private _postService: PostService,
-    private _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _mediaService: MediaService,
     private _mentionService: MentionService,
     private _reactionService: ReactionService,
@@ -456,7 +455,7 @@ export class CommentService {
       });
     }
     const userId = user ? user.id : null;
-    const actor = await this._userService.get(post.createdBy);
+    const actor = await this._userAppService.findOne(post.createdBy);
 
     const isParentComment = checkComment.parentId === NIL_UUID;
 
@@ -647,8 +646,8 @@ export class CommentService {
   public async bindUserToComment(commentsResponse: any[]): Promise<void> {
     const actorIds = this._getActorIdsByComments(commentsResponse);
 
-    const usersInfo = await this._userService.getMany(actorIds);
-    const actorsInfo = plainToInstance(UserDataShareDto, usersInfo, {
+    const usersInfo = await this._userAppService.findAllByIds(actorIds);
+    const actorsInfo = plainToInstance(UserDto, usersInfo, {
       excludeExtraneousValues: true,
     });
     for (const comment of commentsResponse) {

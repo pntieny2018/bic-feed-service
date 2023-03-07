@@ -65,6 +65,10 @@ export class ArticleListener {
     const activity = this._postActivityService.createPayload({
       actor: {
         id: article.createdBy,
+        username: 'unused',
+        email: 'unused',
+        avatar: 'unused',
+        fullname: 'unused',
       },
       title: article.title,
       commentsCount: article.commentsCount,
@@ -95,6 +99,10 @@ export class ArticleListener {
       value: {
         actor: {
           id: article.createdBy,
+          username: 'unused',
+          email: 'unused',
+          avatar: 'unused',
+          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,
@@ -195,7 +203,7 @@ export class ArticleListener {
     this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
-        actor: actor.profile,
+        actor: actor,
         event: event.getEventName(),
         data: activity,
       },
@@ -308,7 +316,7 @@ export class ArticleListener {
       this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
-          actor: actor.profile,
+          actor: actor,
           event: event.getEventName(),
           data: updatedActivity,
           meta: {

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
-import { GroupSharedDto } from '../../../../shared/group/dto';
+import { GroupDto } from '../../../v2-group/application';
 
 export class TagResponseDto {
   @ApiProperty()
@@ -41,7 +41,7 @@ export class TagResponseDto {
 
   @ApiProperty()
   @Expose()
-  public groups?: GroupSharedDto[];
+  public groups?: GroupDto[];
 
   public constructor(data: Partial<TagResponseDto>) {
     Object.assign(this, data);

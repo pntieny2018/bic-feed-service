@@ -1,8 +1,6 @@
 import { MediaModule } from '../media';
-import { UserModule } from '../../shared/user';
 import { forwardRef, Module } from '@nestjs/common';
 import { MentionModule } from '../mention';
-import { GroupModule } from '../../shared/group';
 import { CommentModule } from '../comment';
 import { AuthorityModule } from '../authority';
 import { ReactionModule } from '../reaction';
@@ -21,11 +19,14 @@ import { ArticleAppService } from './application/article.app-service';
 import { SearchModule } from '../search';
 import { TagModule } from '../tag';
 import { ArticleCronService } from './article-cron.service';
+import { UserModuleV2 } from '../v2-user/user.module';
+import { GroupModuleV2 } from '../v2-group/group.module';
+
 @Module({
   imports: [
     PostModule,
-    UserModule,
-    GroupModule,
+    UserModuleV2,
+    GroupModuleV2,
     MediaModule,
     FeedModule,
     MentionModule,

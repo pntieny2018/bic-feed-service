@@ -1,6 +1,7 @@
 import { INestApplication, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { json } from 'express';
+import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import { HttpExceptionFilter } from '../common/filters';
 import { HandleResponseInterceptor } from '../common/interceptors';
 import { IAppConfig } from '../config/app';
@@ -19,8 +20,10 @@ export class AppBootstrap {
     });
 
     app.useGlobalInterceptors(new HandleResponseInterceptor());
-
+   // app.useGlobalPipes(new I18nValidationPipe());
     app.useGlobalFilters(new HttpExceptionFilter(appConfig.env, '/'));
+   // app.useGlobalFilters(new I18nValidationExceptionFilter());
+
     app.use(
       json({
         limit: 52428800, // maximum 50MB

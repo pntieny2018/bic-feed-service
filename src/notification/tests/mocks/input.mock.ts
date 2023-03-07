@@ -1,9 +1,9 @@
 import { MentionableType } from '../../../common/constants';
 import { PostPrivacy, PostStatus, PostType } from '../../../database/models/post.model';
-import { UserDto } from '../../../modules/auth';
 import { PostResponseDto } from '../../../modules/post/dto/responses';
-import { GroupPrivacy } from '../../../shared/group/dto';
 import { NIL } from 'uuid';
+import { UserDto } from '../../../modules/v2-user/application';
+import { GROUP_PRIVACY } from '../../../modules/v2-group/data-type';
 
 export const mockUserSharedDto = {
   id: '36d66fb6-5a24-4fb4-892e-1c38760da774',
@@ -64,8 +64,10 @@ export const mockPostResponseDto: PostResponseDto = {
         id: '36d66fb6-5a24-4fb4-892e-1c38760da777',
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
-        privacy: GroupPrivacy.CLOSED,
+        privacy: GROUP_PRIVACY.CLOSED,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
+        isCommunity: false,
+        communityId: 'sdf',
       },
     ],
   },
@@ -78,19 +80,13 @@ export const mockUserDto: UserDto = {
   email: 'vuquang@tgm.vn',
   avatar: 'https://google.com/vuquang.png',
   id: '36d66fb6-5a24-4fb4-892e-1c38760da778',
-  profile: {
-    id: '36d66fb6-5a24-4fb4-892e-1c38760da779',
-    username: 'vuquang23',
-    fullname: 'Vu Quang Le',
-    avatar: 'https://google.com/vuquang.png',
-    email: 'vuquang@tgm.vn',
-    groups: [
-      '36d66fb6-5a24-4fb4-892e-1c38760da770',
-      '36d66fb6-5a24-4fb4-892e-1c38760da771',
-      '36d66fb6-5a24-4fb4-892e-1c38760da772',
-      '36d66fb6-5a24-4fb4-892e-1c38760da773',
-    ],
-  },
+  fullname: 'Vu Quang Le',
+  groups: [
+    '36d66fb6-5a24-4fb4-892e-1c38760da770',
+    '36d66fb6-5a24-4fb4-892e-1c38760da771',
+    '36d66fb6-5a24-4fb4-892e-1c38760da772',
+    '36d66fb6-5a24-4fb4-892e-1c38760da773',
+  ],
 };
 
 export const mockReactionResponseDto = {

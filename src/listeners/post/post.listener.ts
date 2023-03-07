@@ -20,13 +20,13 @@ import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
-import { UserSharedDto } from '../../shared/user/dto';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 import { ArrayHelper } from '../../common/helpers';
 import { SeriesAddedItemsEvent } from '../../events/series';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { SeriesService } from '../../modules/series/series.service';
+import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
 export class PostListener {
@@ -272,7 +272,7 @@ export class PostListener {
     //   });
 
     const mentionUserIds = [];
-    const mentionMap = new Map<string, UserSharedDto>();
+    const mentionMap = new Map<string, UserDto>();
 
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);

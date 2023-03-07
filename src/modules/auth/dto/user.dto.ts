@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import { UserSharedDto } from '../../../shared/user/dto';
 
 export class UserDto {
   @Expose()
@@ -12,13 +11,14 @@ export class UserDto {
   public avatar?: string;
 
   @Expose()
+  public fullname?: string;
+
+  @Expose()
   public id: string;
 
-  public staffRole?: any;
-
-  public profile?: UserSharedDto;
-
   public permissions?: any;
+
+  public groups?: string[];
 
   public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);

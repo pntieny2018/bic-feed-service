@@ -17,8 +17,6 @@ import {
 import { IPostReaction, PostReactionModel } from '../../database/models/post-reaction.model';
 import { NotificationService } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { FollowService } from '../follow';
@@ -35,6 +33,7 @@ import {
 import { ReactionEnum } from './reaction.enum';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 
 @Injectable()
 export class ReactionService {
@@ -43,7 +42,8 @@ export class ReactionService {
   public constructor(
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService,
-    private readonly _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userService: IUserApplicationService,
     @Inject(forwardRef(() => CommentService))
     private readonly _commentService: CommentService,
     private readonly _followService: FollowService,
@@ -144,7 +144,7 @@ export class ReactionService {
     reactions: IPostReaction[] | ICommentReaction[]
   ): Promise<ReactionResponseDto[]> {
     const actorIds = reactions.map((r) => r.createdBy);
-    const actors = await this._userService.getMany(actorIds);
+    const actors = await this._userService.findAllByIds(actorIds);
     return reactions.map(
       (r): ReactionResponseDto => ({
         id: r.id,
@@ -229,7 +229,7 @@ export class ReactionService {
           reactionName: postReaction.reactionName,
           createdAt: postReaction.createdAt,
           actor: {
-            ...ObjectHelper.omit(['groups'], userDto.profile),
+            ...ObjectHelper.omit(['groups'], userDto),
             email: userDto.email,
           },
         });
@@ -325,7 +325,7 @@ export class ReactionService {
           reactionName: commentReaction.reactionName,
           createdAt: commentReaction.createdAt,
           actor: {
-            ...ObjectHelper.omit(['groups'], userDto.profile),
+            ...ObjectHelper.omit(['groups'], userDto),
             email: userDto.email,
           },
         });
@@ -448,10 +448,11 @@ export class ReactionService {
       await trx.commit();
 
       const actor = {
-        id: userDto.profile.id,
-        fullname: userDto.profile.fullname,
-        username: userDto.profile.username,
-        avatar: userDto.profile.avatar,
+        id: userDto.id,
+        email: userDto.email,
+        fullname: userDto.fullname,
+        username: userDto.username,
+        avatar: userDto.avatar,
       };
 
       this._emitter.emit(

@@ -1,12 +1,12 @@
 import { OrderEnum } from '../../../../common/dto';
 import { ObjectHelper } from '../../../../common/helpers';
-import { GroupPrivacy } from '../../../../shared/group/dto';
-import { UserDto } from '../../../auth';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { PostResponseDto } from '../../../post/dto/responses';
 import { ReactionEnum } from '../../reaction.enum';
 import { NIL as NIL_UUID } from 'uuid';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
+import { UserDto } from '../../../v2-user/application';
+import { GROUP_PRIVACY } from '../../../v2-group/data-type';
 
 export const mockCreateReactionDto = {
   post: {
@@ -34,36 +34,18 @@ export const mockUserDto: UserDto = {
   email: 'vuquang@tgm.vn',
   avatar: 'https://google.com/vuquang.png',
   id: '89eee543-5ad2-415d-adf4-7a89188f92bc',
-  profile: {
-    id: '89eee543-5ad2-415d-adf4-7a89188f92bc',
-    username: 'vuquang23',
-    fullname: 'Vu Quang Le',
-    avatar: 'https://google.com/vuquang.png',
-    email: 'vuquang@tgm.vn',
-    groups: [
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5638',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5637',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5636',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5635',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5634',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5633',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5632',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5631',
-      'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5630',
-    ],
-  },
-};
-
-export const mockUserSharedDto = {
-  id: '5772aaa2-a143-44b9-8898-6f670a678ecf',
-  username: 'vantt',
-  fullname: 'Than The Van',
-  avatar: 'http://google.com/vantt.png',
+  fullname: 'Vu Quang Le',
   groups: [
-    '5772aaa2-a143-44b9-8898-6f670a678ece',
-    '5772aaa2-a143-44b9-8898-6f670a678ecd',
-    '5772aaa2-a143-44b9-8898-6f670a678ecc',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5638',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5637',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5636',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5635',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5634',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5633',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5632',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5631',
+    'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5630',
   ],
 };
 
@@ -84,7 +66,7 @@ export const mockPostResponseDto: PostResponseDto = {
     importantExpiredAt: null,
   },
   status: PostStatus.PUBLISHED,
-  actor: mockUserSharedDto,
+  actor: mockUserDto,
   mentions: {},
   commentsCount: 0,
   totalUsersSeen: 0,
@@ -92,15 +74,17 @@ export const mockPostResponseDto: PostResponseDto = {
   markedReadPost: false,
   createdAt: new Date('2022-05-19T02:53:48.135Z'),
   updatedAt: null,
-  createdBy: mockUserSharedDto.id,
+  createdBy: mockUserDto.id,
   audience: {
     groups: [
       {
         id: 'ac2ca6ee-900e-40e2-b2b5-5e96c9bb5639',
         name: 'Bein Community',
         icon: 'http://bein.com/bein.png',
-        privacy: GroupPrivacy.CLOSED,
+        privacy: GROUP_PRIVACY.CLOSED,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
+        isCommunity: false,
+        communityId: '11',
       },
     ],
   },
@@ -158,7 +142,7 @@ export const mockCommentReactionModel = {
 export const mockReactionResponseDto = {
   post: {
     actor: {
-      ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+      ...ObjectHelper.omit(['groups'], mockUserDto),
       email: mockUserDto.email,
     },
     id: mockPostReactionModel.id,
@@ -167,7 +151,7 @@ export const mockReactionResponseDto = {
   },
   comment: {
     actor: {
-      ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+      ...ObjectHelper.omit(['groups'], mockUserDto),
       email: mockUserDto.email,
     },
     id: mockCommentReactionModel.id,
@@ -178,7 +162,7 @@ export const mockReactionResponseDto = {
 
 export const mockCommentResponseDto: CommentResponseDto = {
   id: mockCreateReactionDto.comment.targetId,
-  actor: mockUserSharedDto,
+  actor: mockUserDto,
   edited: false,
   parentId: NIL_UUID,
   postId: mockPostResponseDto.id,
@@ -245,7 +229,7 @@ export const mockReactionResponseDtos = {
     {
       id: mockCreatePostReactionProcedureReturn[0]['cpr_id'],
       actor: {
-        ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+        ...ObjectHelper.omit(['groups'], mockUserDto),
         email: mockUserDto.email,
       },
       reactionName: mockCreateReactionDto.post.reactionName,
@@ -256,7 +240,7 @@ export const mockReactionResponseDtos = {
     {
       id: mockCreateCommentReactionProcedureReturn[0]['ccr_id'],
       actor: {
-        ...ObjectHelper.omit(['groups'], mockUserDto.profile),
+        ...ObjectHelper.omit(['groups'], mockUserDto),
         email: mockUserDto.email,
       },
       reactionName: mockCreateReactionDto.comment.reactionName,

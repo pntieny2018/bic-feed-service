@@ -82,6 +82,7 @@ export interface IPost {
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
+  //
   comments?: IComment[];
   media?: IMedia[];
   groups?: IPostGroup[];

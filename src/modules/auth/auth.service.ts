@@ -1,4 +1,3 @@
-import { UserDto } from './dto';
 import jwkToPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
 import { lastValueFrom } from 'rxjs';
@@ -6,11 +5,11 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
 import { TokenExpiredError } from 'jsonwebtoken';
+import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { UserHttpService, UserService } from '../../shared/user';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { IAppConfig } from '../../config/app';
 
 @Injectable()
@@ -19,46 +18,36 @@ export class AuthService {
   private _classTransformer = new ClassTransformer();
 
   public constructor(
-    private _userService: UserService,
-    private _userHttpService: UserHttpService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _httpService: HttpService,
     private _configService: ConfigService
   ) {}
 
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
-    // const user = this._classTransformer.plainToInstance(UserDto, {
-    //   email: payload['email'],
-    //   username: payload['cognito:username'],
-    //   id: payload['custom:user_uuid'],
-    //   staffRole: payload['custom:bein_staff_role'],
-    // });
-    // user.profile = await this._userService.get(user.id);
-    // user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
-    // if (!user.profile) {
-    //   throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
-    // }
-    // user.avatar = user.profile.avatar;
-
-    const user = this._classTransformer.plainToInstance(UserDto, {
-      email: payload['email'],
-      username: payload['cognito:username'],
-      id: '',
-      staffRole: payload['custom:bein_staff_role'],
-    });
+    const username = payload['cognito:username'];
+    const userId = payload['custom:username'];
     const appConfig = this._configService.get<IAppConfig>('app');
+    let userInfo;
     if (appConfig.env === 'local') {
-      user.profile = await this._userService.getByValue(user.username);
+      userInfo = await this._userAppService.findOne(userId, { withPermission: true });
     } else {
-      user.profile = await this._userHttpService.getUserInfo(user.username);
+      userInfo = await this._userAppService.findByUserName(username, {
+        withPermission: true,
+      });
     }
-
-    if (!user.profile) {
+    if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }
-    user.id = user.profile.id;
-    user.avatar = user.profile.avatar;
-    user.permissions = await this._userService.getPermissions(user.id, JSON.stringify(payload));
-    return user;
+    return {
+      id: userInfo.id,
+      avatar: userInfo.avatar,
+      email: userInfo.email,
+      username: userInfo.username,
+      fullname: userInfo.fullname,
+      permissions: userInfo.permissions,
+      groups: userInfo.groups || [],
+    };
   }
 
   public async login(token: string): Promise<UserDto> {

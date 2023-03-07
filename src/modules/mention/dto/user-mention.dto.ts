@@ -1,5 +1,5 @@
-import { UserDataShareDto } from '../../../shared/user/dto';
+import { UserDto } from '../../v2-user/application';
 
 export class UserMentionDto {
-  [key: string]: UserDataShareDto;
+  [key: string]: UserDto;
 }

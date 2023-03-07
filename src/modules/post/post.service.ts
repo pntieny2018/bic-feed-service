@@ -39,10 +39,6 @@ import { ReportContentDetailModel } from '../../database/models/report-content-d
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { GroupService } from '../../shared/group';
-import { GroupPrivacy } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -60,6 +56,9 @@ import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
+import { UserDto } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
+import { GROUP_PRIVACY } from '../v2-group/data-type';
 
 @Injectable()
 export class PostService {
@@ -90,8 +89,8 @@ export class PostService {
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
     protected userSavePostModel: typeof UserSavePostModel,
-    protected userService: UserService,
-    protected groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected groupAppService: IGroupApplicationService,
     protected mediaService: MediaService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
@@ -262,7 +261,6 @@ export class PostService {
     });
 
     await this.postBinding.bindCommunity(postsBindedData);
-
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
@@ -606,15 +604,15 @@ export class PostService {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
     }
-    const groups = await this.groupService.getMany(groupIds);
+    const groups = await this.groupAppService.findAllByIds(groupIds);
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.OPEN) {
+      if (group.privacy === GROUP_PRIVACY.OPEN) {
         return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
-      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+      if (group.privacy === GROUP_PRIVACY.CLOSED) totalOpen++;
+      if (group.privacy === GROUP_PRIVACY.PRIVATE) totalPrivate++;
     }
 
     if (totalOpen > 0) return PostPrivacy.CLOSED;
@@ -1268,16 +1266,16 @@ export class PostService {
   }
 
   public getPostPrivacyByCompareGroupPrivacy(
-    groupPrivacy: GroupPrivacy,
+    groupPrivacy: GROUP_PRIVACY,
     postPrivacy: PostPrivacy
   ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
+    if (groupPrivacy === GROUP_PRIVACY.OPEN || postPrivacy === PostPrivacy.OPEN) {
       return PostPrivacy.OPEN;
     }
-    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
+    if (groupPrivacy === GROUP_PRIVACY.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
       return PostPrivacy.CLOSED;
     }
-    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
+    if (groupPrivacy === GROUP_PRIVACY.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
       return PostPrivacy.PRIVATE;
     }
     return PostPrivacy.SECRET;
@@ -1291,7 +1289,7 @@ export class PostService {
       where: { postId: { [Op.in]: postIds } },
     });
     const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
-    const groupInfos = await this.groupService.getMany(groupIds);
+    const groupInfos = await this.groupAppService.findAllByIds(groupIds);
     const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
       returnValue[elementValue.id] = elementValue.privacy;
       return returnValue;
