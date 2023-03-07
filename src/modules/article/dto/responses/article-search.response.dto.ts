@@ -45,7 +45,6 @@ export class ArticleSearchResponseDto {
     type: UserDto,
   })
   @Expose()
-  @Type(() => UserDto)
   public actor: UserDto;
 
   public constructor(data: Partial<ArticleSearchResponseDto>) {

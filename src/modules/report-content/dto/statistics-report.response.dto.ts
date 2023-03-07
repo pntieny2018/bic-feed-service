@@ -27,7 +27,6 @@ export class StatisticsReportResponseDto {
   public total: number;
 
   @ApiProperty()
-  @Type(() => UserDto)
   public reporters: UserDto[];
 
   public constructor(data: Partial<StatisticsReportResponseDto>) {

@@ -33,7 +33,12 @@ export class UserApplicationService implements IUserApplicationService {
       const permission = await this._repo.getPermissionsByUserId(user.get('id'));
       user.setPermission(permission);
     }
-    return this._toDto(user);
+    const result = this._toDto(user);
+    if (!options?.withGroupJoined) {
+      delete result.groups;
+    }
+
+    return result;
   }
 
   public async findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
