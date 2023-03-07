@@ -11,6 +11,7 @@ export class UserApplicationService implements IUserApplicationService {
   private readonly _repo: IUserRepository;
 
   public async findByUserName(username: string, options?: FindUserOption): Promise<UserDto> {
+    if (!username) return null;
     const user = await this._repo.findByUserName(username);
     if (!user) return null;
     if (options && options.withPermission) {
@@ -26,6 +27,7 @@ export class UserApplicationService implements IUserApplicationService {
   }
 
   public async findOne(userId: string, options?: FindUserOption): Promise<UserDto> {
+    if (!userId) return null;
     const user = await this._repo.findOne(userId);
     if (options && options.withPermission) {
       const permission = await this._repo.getPermissionsByUserId(user.get('id'));

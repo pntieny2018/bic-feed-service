@@ -64,7 +64,6 @@ export class SeriesResponseDto {
     type: UserDto,
   })
   @Expose()
-  @Type(() => UserDto)
   public actor: UserDto;
 
   @ApiProperty({

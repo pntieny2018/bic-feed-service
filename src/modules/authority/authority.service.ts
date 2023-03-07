@@ -196,6 +196,7 @@ export class AuthorityService {
     const notCreatableGroupInfos = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._buildAbility(user);
+    console.log('pemrission', user.permissions);
     for (const group of groups) {
       const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_SERIES,
