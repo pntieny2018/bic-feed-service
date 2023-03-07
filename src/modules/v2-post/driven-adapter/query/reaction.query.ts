@@ -13,9 +13,7 @@ import { CommentReactionModel } from '../../../../database/models/comment-reacti
 import { REACTION_TARGET } from '../../data-type';
 
 export class ReactionQuery implements IReactionQuery {
-  @Inject(REACTION_FACTORY_TOKEN) private readonly _postReactionFactory: IReactionFactory;
-  @Inject(REACTION_FACTORY_TOKEN)
-  private readonly _commentReactionFactory: IReactionFactory;
+  @Inject(REACTION_FACTORY_TOKEN) private readonly _reactionFactory: IReactionFactory;
   private _logger = new Logger(ReactionQuery.name);
   @InjectModel(PostReactionModel)
   private readonly _postReactionModel: typeof PostReactionModel;
@@ -33,13 +31,11 @@ export class ReactionQuery implements IReactionQuery {
       executer = {
         model: this._postReactionModel,
         paramIdName: 'postId',
-        factory: this._postReactionFactory,
       };
     } else if (target === REACTION_TARGET.COMMENT) {
       executer = {
         model: this._commentReactionModel,
         paramIdName: 'commentId',
-        factory: this._commentReactionFactory,
       };
     } else {
       return {
@@ -67,7 +63,7 @@ export class ReactionQuery implements IReactionQuery {
       limit: limit,
       order: [['createdAt', order]],
     });
-    const result = rows.map((row) => executer.factory.reconstitute(row));
+    const result = rows.map((row) => this._reactionFactory.reconstitute(row));
     return {
       rows: result,
       total: count,

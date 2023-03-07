@@ -13,7 +13,6 @@ import { ReactionEntity } from '../../../domain/model/reaction';
 
 @QueryHandler(FindReactionsQuery)
 export class FindReactionsHandler implements IQueryHandler<FindReactionsQuery, FindReactionsDto> {
-  @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(USER_APPLICATION_TOKEN) private readonly _userAppService: IUserApplicationService;
   @Inject(REACTION_QUERY_TOKEN) private readonly _reactionQuery: IReactionQuery;
 
