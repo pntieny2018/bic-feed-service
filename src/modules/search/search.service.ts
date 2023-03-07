@@ -275,6 +275,7 @@ export class SearchService {
     ]);
     searchPostsDto.notIncludeIds = notIncludeIds;
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
+    console.log(JSON.stringify(payload, null, 4));
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
     const itemIds = []; //post or article
