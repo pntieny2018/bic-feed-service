@@ -2,9 +2,9 @@ import { DomainException } from '@beincom/domain';
 import { I18nContext } from 'nestjs-i18n';
 import { ERRORS } from '../../../common/constants/errors';
 
-export class TagNotFoundException extends DomainException {
+export class TagNoUpdatePermissionException extends DomainException {
   public constructor(message?: string) {
     const i18n = I18nContext.current();
-    super(ERRORS.tag.TAG_NOT_FOUND, message || i18n.t(`error.${ERRORS.tag.TAG_NOT_FOUND}`));
+    super(ERRORS.tag.TAG_NO_UPDATE_PERMISSION, message || i18n.t(`error.tag.no_update_permission`));
   }
 }

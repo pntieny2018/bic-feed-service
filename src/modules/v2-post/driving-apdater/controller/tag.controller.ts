@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -28,6 +29,9 @@ import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-
 import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
 import { TagResponseDto } from '../dto/response';
+import { TagNoCreatePermissionException } from '../../exception/tag-no-create-permission.exception';
+import { TagNoUpdatePermissionException } from '../../exception/tag-no-update-permission.exception';
+import { TagNoDeletePermissionException } from '../../exception/tag-no-delete-permission.exception';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -96,6 +100,8 @@ export class TagController {
           throw new NotFoundException(e);
         case TagDuplicateNameException:
           throw new BadRequestException(e);
+        case TagNoCreatePermissionException:
+          throw new ForbiddenException(e);
         default:
           throw e;
       }
@@ -129,6 +135,8 @@ export class TagController {
         case TagDuplicateNameException:
         case TagUsedException:
           throw new BadRequestException(e);
+        case TagNoUpdatePermissionException:
+          throw new ForbiddenException(e);
         default:
           throw e;
       }
@@ -154,6 +162,8 @@ export class TagController {
           throw new BadRequestException(e);
         case TagUsedException:
           throw new BadRequestException(e);
+        case TagNoDeletePermissionException:
+          throw new ForbiddenException(e);
         default:
           throw e;
       }
