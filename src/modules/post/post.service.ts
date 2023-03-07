@@ -384,6 +384,12 @@ export class PostService {
           'id',
           'title',
           'summary',
+          [
+            Sequelize.literal(
+              `CASE WHEN "items".type = '${PostType.POST}' THEN "items".content ELSE null END`
+            ),
+            'content',
+          ],
           'createdBy',
           'canShare',
           'canComment',
@@ -714,8 +720,6 @@ export class PostService {
             { ignoreDuplicates: true, transaction }
           );
         }
-
-        post.markedReadPost = true;
       }
 
       await transaction.commit();
@@ -1429,17 +1433,18 @@ export class PostService {
       where: conditions,
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [
+    const articleOrPostIdsReported = await this.getEntityIdsReportedByUser(userId, [
       TargetType.ARTICLE,
       TargetType.POST,
     ]);
-
     const mappedPosts = [];
     for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
-        postJson.items = postJson.items.filter((item) => !articleIdsReported.includes(item.id));
+        postJson.items = postJson.items.filter(
+          (item) => !articleOrPostIdsReported.includes(item.id)
+        );
         mappedPosts.push(postJson);
       }
     }
@@ -1452,12 +1457,19 @@ export class PostService {
       attributes: [
         'id',
         'title',
+        [
+          Sequelize.literal(
+            `CASE WHEN "PostModel".type = '${PostType.POST}' THEN "PostModel".content ELSE null END`
+          ),
+          'content',
+        ],
         'summary',
         'createdBy',
         'canShare',
         'canComment',
         'canReact',
         'importantExpiredAt',
+        'type',
       ],
       include: [
         {

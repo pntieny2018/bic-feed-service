@@ -335,6 +335,7 @@ export class SearchService {
     ]);
 
     let articlesFilterReport = [];
+
     const itemsInSeries = await this.postService.getSimplePostsByIds(
       ArrayHelper.arrayUnique(itemIds)
     );
@@ -429,13 +430,13 @@ export class SearchService {
         mentions = mentionList.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
       }
 
-      if (post.articles) {
+      if (post.items) {
         const bindArticles = [];
-        for (const article of post.articles) {
-          const findArticle = articles.find((item) => item.id === article.id);
+        for (const itemInSeries of post.items) {
+          const findArticle = articles.find((item) => item.id === itemInSeries.id);
           if (findArticle) bindArticles.push(findArticle);
         }
-        post.articles = bindArticles;
+        post.items = bindArticles;
       }
       if (post.reactionsCount) {
         post.reactionsCount.forEach(

@@ -161,7 +161,7 @@ export class SeriesService {
   public async create(authUser: UserDto, createPostDto: CreateSeriesDto): Promise<IPost> {
     let transaction;
     try {
-      const { title, summary, audience, coverMedia } = createPostDto;
+      const { title, summary, audience, coverMedia, setting } = createPostDto;
       const authUserId = authUser.id;
       transaction = await this._sequelizeConnection.transaction();
       const privacy = await this._articleService.getPrivacy(audience.groupIds);
@@ -175,6 +175,11 @@ export class SeriesService {
           cover: coverMedia.id,
           type: PostType.SERIES,
           privacy,
+          isImportant: setting.isImportant,
+          importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
+          canShare: setting.canShare,
+          canComment: setting.canComment,
+          canReact: setting.canReact,
         },
         { transaction }
       );
@@ -218,25 +223,40 @@ export class SeriesService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { audience, title, summary, coverMedia } = updateSeriesDto;
+      const { audience, title, summary, coverMedia, setting } = updateSeriesDto;
       transaction = await this._sequelizeConnection.transaction();
       const privacy = await this._articleService.getPrivacy(audience.groupIds);
-      await this._postModel.update(
-        {
-          updatedBy: authUserId,
-          title,
-          summary,
-          cover: coverMedia.id,
-          privacy,
+      const dataUpdate = {
+        updatedBy: authUserId,
+        title,
+        summary,
+        cover: coverMedia.id,
+        privacy,
+      };
+      if (setting && setting.hasOwnProperty('canShare')) {
+        dataUpdate['canShare'] = setting.canShare;
+      }
+      if (setting && setting.hasOwnProperty('canComment')) {
+        dataUpdate['canComment'] = setting.canComment;
+      }
+      if (setting && setting.hasOwnProperty('canReact')) {
+        dataUpdate['canReact'] = setting.canReact;
+      }
+
+      if (setting && setting.hasOwnProperty('isImportant')) {
+        dataUpdate['isImportant'] = setting.isImportant;
+      }
+      if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
+        dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
+      }
+
+      await this._postModel.update(dataUpdate, {
+        where: {
+          id: post.id,
+          createdBy: authUserId,
         },
-        {
-          where: {
-            id: post.id,
-            createdBy: authUserId,
-          },
-          transaction,
-        }
-      );
+        transaction,
+      });
 
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {

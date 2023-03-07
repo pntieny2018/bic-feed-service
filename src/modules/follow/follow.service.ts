@@ -31,15 +31,8 @@ export class FollowService {
   /**
    * Make user follow  group
    */
-  public sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
   public async follow(followDto: FollowDto): Promise<void> {
-    // const id = v4();
-    // console.log(`--sleeping log ${id}`);
-    // await this.sleep(3000);
-    // console.log(`--wake log ${id}`);
     const { userId, groupIds } = followDto;
     const schema = this._databaseConfig.schema;
     const MAX_POSTS_IN_NEWSFEED = 10000;
@@ -68,14 +61,13 @@ export class FollowService {
         {
           replacements: {
             userId,
-            groupIds,
+            groupIds: followedGroupIds,
             status: PostStatus.PUBLISHED,
             isArchived: false,
             limit: MAX_POSTS_IN_NEWSFEED,
           },
         }
       );
-      //console.log(`=======DONE update newsfeed ${id}===========`);
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't follow");
@@ -104,35 +96,47 @@ export class FollowService {
    * Make user unfollow  group
    */
   public async unfollow(unfollowDto: FollowDto): Promise<void> {
-    const { userId, groupIds } = unfollowDto;
+    const { userId, groupIds: groupIdsUserLeft } = unfollowDto;
     const schema = this._databaseConfig.schema;
     try {
       await this._followModel.destroy({
         where: {
           groupId: {
-            [Op.in]: groupIds,
+            [Op.in]: groupIdsUserLeft,
           },
           userId,
         },
       });
 
-      await this._userNewsFeedModel.sequelize.query(
-        `
-        DELETE FROM ${schema}.user_newsfeed u 
+      const groupsUserJoin = await this._followModel.findAll({
+        where: {
+          userId,
+        },
+      });
+      const groupIdsUserJoined = groupsUserJoin.map((group) => group.groupId);
+
+      let query = `DELETE FROM ${schema}.user_newsfeed u 
         WHERE user_id = :userId AND EXISTS(
            SELECT null
            FROM ${schema}.posts_groups pg
-             WHERE pg.group_id IN(:groupIds) AND  pg.post_id = u.post_id
-         )
-        `,
-        {
-          replacements: {
-            userId,
-            groupIds,
-          },
-          type: QueryTypes.DELETE,
-        }
-      );
+             WHERE pg.group_id IN(:groupIdsUserLeft) AND  pg.post_id = u.post_id
+         )`;
+      if (groupIdsUserJoined.length) {
+        query += ` AND NOT EXISTS(
+           SELECT null
+           FROM ${schema}.posts_groups pg2
+             WHERE pg2.group_Id IN(:groupIdsUserJoined) AND pg2.post_id = u.post_id
+         )`;
+      }
+
+      await this._userNewsFeedModel.sequelize.query(query, {
+        replacements: {
+          userId,
+          groupIdsUserLeft,
+          groupIdsUserJoined,
+        },
+        type: QueryTypes.DELETE,
+      });
     } catch (ex) {
       this._sentryService.captureException(ex);
       throw new RpcException("Can't unfollow");
@@ -218,18 +222,22 @@ export class FollowService {
     this._logger.debug(`[filterUserFollows]:groupIds: ${groupIds}`);
     this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
+      const schema = this._databaseConfig.schema;
       let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
       if (oldGroupIds && oldGroupIds.length > 0) {
         condition += ' AND group_id NOT IN (:oldGroupIds)';
       }
       if (ignoreUserIds && ignoreUserIds.length > 0) {
-        condition += ' AND user_id NOT IN (:ignoreUserIds)';
+        condition += ` AND NOT EXISTS (
+        SELECT null
+        FROM ${schema}.${this._followModel.tableName} AS "tmp"
+        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:ignoreUserIds)
+        ) `;
       }
-      const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
         `SELECT DISTINCT(user_id), zindex
-          FROM ${schema}.${this._followModel.tableName} tb1
+          FROM ${schema}.${this._followModel.tableName} f
           WHERE  ${condition}
           ORDER BY zindex ASC limit :limit ;
              `,
