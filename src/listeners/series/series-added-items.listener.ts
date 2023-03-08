@@ -55,7 +55,7 @@ export class SeriesAddedItemsListener {
     const isSendToArticleCreator = series[0].createdBy === actor.id;
     const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
       series[0],
-      items[0],
+      items[0]
     );
 
     this._notificationService.publishPostNotification({
