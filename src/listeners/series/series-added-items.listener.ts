@@ -56,7 +56,7 @@ export class SeriesAddedItemsListener {
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
     if (items.length === 0 || series.length === 0) return;
     if (series[0].createdBy === items[0].createdBy) return;
-
+    console.log('1111111111111111111');
     const isSendToArticleCreator = series[0].createdBy === actor.id;
     const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
       series[0],

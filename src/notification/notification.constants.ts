@@ -14,4 +14,6 @@ export enum VerbActivity {
   COMMENT = 'COMMENT',
   REACT = 'REACT',
   REPORT = 'REPORT',
+  DELETE = 'DELETE', //delete series
+  REMOVE = 'REMOVE', //remove item of series
 }
