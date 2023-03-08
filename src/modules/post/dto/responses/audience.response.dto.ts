@@ -14,7 +14,6 @@ export class AudienceResponseDto {
   })
   @IsOptional()
   @IsArray()
-  @Type(() => UserDto)
   @ValidateNested({ each: true })
   public users?: UserDto[] = [];
 
@@ -26,6 +25,5 @@ export class AudienceResponseDto {
   @ValidateNested({ each: true })
   @IsNotEmpty()
   @ArrayNotEmpty()
-  @Type(() => GroupDto)
   public groups: GroupDto[];
 }

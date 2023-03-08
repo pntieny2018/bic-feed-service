@@ -117,7 +117,6 @@ export class ItemInSeriesResponseDto {
     type: UserDto,
   })
   @Expose()
-  @Type(() => UserDto)
   public actor: UserDto;
 
   @ApiProperty({

@@ -30,10 +30,14 @@ export class AuthService {
     const appConfig = this._configService.get<IAppConfig>('app');
     let userInfo;
     if (appConfig.env === 'local') {
-      userInfo = await this._userAppService.findOne(userId, { withPermission: true });
+      userInfo = await this._userAppService.findOne(userId, {
+        withPermission: true,
+        withGroupJoined: true,
+      });
     } else {
       userInfo = await this._userAppService.findByUserName(username, {
         withPermission: true,
+        withGroupJoined: true,
       });
     }
     if (!userInfo) {

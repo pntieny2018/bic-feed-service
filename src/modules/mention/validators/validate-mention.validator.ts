@@ -38,7 +38,7 @@ export class ValidateMentionConstraint implements ValidatorConstraintInterface {
 
     const { groupIds } = args.object['audience'];
 
-    const users = await this._userAppService.findAllByIds(mentions);
+    const users = await this._userAppService.findAllByIds(mentions, { withGroupJoined: true });
 
     for (const user of users) {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {

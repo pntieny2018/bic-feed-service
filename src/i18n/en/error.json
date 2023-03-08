@@ -1,6 +1,6 @@
 {
     "tag": {
-        "duplicate_name": "This tag is used, you can not delete",
+        "duplicate_name": "Name is existed",
         "not_found": "Tag not found",
         "tag_name_exceed_max_length": "Tag name must be less than or equal to {num} characters",
         "is_used": "The tag is used",
@@ -10,6 +10,6 @@
     },
     "common": {
         "database_error": "Database error",
-        "domain_model_error": "Domain model error"
+        "domain_model_validation": "Domain model invalidate"
     }
 }

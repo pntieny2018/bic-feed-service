@@ -14,7 +14,7 @@ export class TagFactory {
     const tagEntity = new TagEntity({
       id: v4(),
       groupId: groupId,
-      name: name,
+      name: name.toUpperCase(),
       slug: StringHelper.convertToSlug(name),
       totalUsed: 0,
       createdBy: userId,

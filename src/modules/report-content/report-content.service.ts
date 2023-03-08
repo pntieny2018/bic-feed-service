@@ -132,8 +132,6 @@ export class ReportContentService {
     results = results.map((rs) => {
       const author = authors.find((a) => a.id === rs['author_id']);
       const details = reportStatisticsMap.get(`${rs['id']}`);
-      delete author.groups;
-      // const reason ?
       return { ...rs, author: author, details: details };
     });
 
@@ -410,8 +408,6 @@ export class ReportContentService {
 
     for (const report of reports) {
       const userInfo = userInfos.find((u) => u.id === report.createdBy) ?? null;
-      // clean group;
-      delete userInfo.groups;
       if (reportByReasonTypeMap.has(report.reasonType)) {
         reportByReasonTypeMap.get(report.reasonType).reporters.push(userInfo);
       } else {

@@ -8,7 +8,7 @@ export interface IUserApplicationService {
 
   findOne(userId: string, options?: FindUserOption): Promise<UserDto>;
 
-  findAllByIds(userIds: string[]): Promise<UserDto[]>;
+  findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]>;
 
   canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean>;
 }

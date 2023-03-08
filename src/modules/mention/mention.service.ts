@@ -26,7 +26,7 @@ export class MentionService {
    * @throws LogicException
    */
   public async checkValid(groupIds: string[], userIds: string[]): Promise<void> {
-    const users = await this._userAppService.findAllByIds(userIds);
+    const users = await this._userAppService.findAllByIds(userIds, { withGroupJoined: true });
     for (const user of users) {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
         throw new LogicException(MENTION_ERROR_ID.USER_NOT_FOUND);

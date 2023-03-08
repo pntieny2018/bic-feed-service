@@ -646,10 +646,7 @@ export class CommentService {
   public async bindUserToComment(commentsResponse: any[]): Promise<void> {
     const actorIds = this._getActorIdsByComments(commentsResponse);
 
-    const usersInfo = await this._userAppService.findAllByIds(actorIds);
-    const actorsInfo = plainToInstance(UserDto, usersInfo, {
-      excludeExtraneousValues: true,
-    });
+    const actorsInfo = await this._userAppService.findAllByIds(actorIds);
     for (const comment of commentsResponse) {
       if (comment.parent) {
         comment.parent.actor = actorsInfo.find((u) => u.id === comment.parent.createdBy);

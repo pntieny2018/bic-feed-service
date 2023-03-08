@@ -69,7 +69,6 @@ export class ReportReviewResponsesDto {
   public targetType: string;
 
   @ApiProperty()
-  @Type(() => UserDto)
   @Expose()
   public author: UserDto;
 

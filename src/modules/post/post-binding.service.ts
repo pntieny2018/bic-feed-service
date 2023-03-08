@@ -229,7 +229,6 @@ export class PostBindingService {
         post.articles = post.articles.map((article) => {
           if (article.createdBy) {
             article.actor = users.find((i) => i.id === article.createdBy);
-            if (article.actor) delete article.actor.groups;
             return article;
           }
           return article;
