@@ -1,8 +1,12 @@
 {
-    "tag": {
-        "duplicate_name": "Trùng tên",
-        "not_found": "Không tìm thấy tag",
-        "tag_name_exceed_max_length": "Tên không vượt quá {num} kí tự",
-        "is_used": "Tag này đã được sử dụng"
-    }
+  "tag": {
+    "duplicate_name": "Trùng tên",
+    "not_found": "Không tìm thấy tag",
+    "tag_name_exceed_max_length": "Tên không vượt quá {num} kí tự",
+    "is_used": "Tag này đã được sử dụng"
+  },
+  "common": {
+    "database_error": "Database error",
+    "domain_model_validation": "Domain model invalidate"
+  }
 }

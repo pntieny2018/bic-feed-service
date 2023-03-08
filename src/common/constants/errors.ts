@@ -11,5 +11,6 @@ export const ERRORS = {
   API_FORBIDDEN: 'api.forbidden',
   API_SERVER_INTERNAL_ERROR: 'api.server_internal_error',
   DATABASE_ERROR: 'database_error',
-  INTERNAL_SERVER_ERROR: 'internal_server_error',
+  DOMAIN_MODEL_VALIDATION: 'domain_model_validation',
+  INTERNAL_SERVER_ERROR: 'api.internal_server_error',
 };
