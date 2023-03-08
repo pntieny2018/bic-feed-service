@@ -51,7 +51,7 @@ export class SeriesRemovedItemsListener {
     const isSendToArticleCreator = series[0].createdBy === actor.id;
     const activity = await this._seriesActivityService.getDeletingItemToSeriesActivity(
       series[0],
-      items[0],
+      items[0]
     );
 
     this._notificationService.publishPostNotification({
