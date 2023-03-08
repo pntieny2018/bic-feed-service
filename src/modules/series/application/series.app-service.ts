@@ -163,6 +163,7 @@ export class SeriesAppService {
       new SeriesRemovedItemsEvent({
         seriesId,
         itemIds,
+        actor: user,
       })
     );
   }
@@ -218,7 +219,6 @@ export class SeriesAppService {
     await this._seriesService.addItems(series[0], itemIds);
     this._eventEmitter.emit(
       new SeriesAddedItemsEvent({
-        isAdded: true,
         actor: user,
         seriesId,
         itemIds,

@@ -17,6 +17,8 @@ export class ActivityObject {
   public reaction?: ReactionObject;
   public report?: ReportObject;
   public article?: ActivityObject;
+  public item?: any;
+  public items?: any;
   public createdAt: Date;
   public updatedAt: Date;
 }
@@ -35,11 +37,12 @@ export class SettingObject {
   public isImportant: boolean;
   public importantExpiredAt?: Date;
 }
+
 export class ActorObject {
   public id: string;
-  public username: string;
-  public avatar: string;
-  public fullname: string;
+  public username?: string;
+  public avatar?: string;
+  public fullname?: string;
   public email?: string;
 }
 
@@ -57,9 +60,9 @@ export class ReactionsCountObject {
 }
 
 export class GroupAudienceObject {
-  public id: number;
-  public name: string;
-  public icon: string;
+  public id: string;
+  public name?: string;
+  public icon?: string;
   public communityId?: number;
   public isCommunity?: boolean;
 }

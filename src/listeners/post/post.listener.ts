@@ -22,10 +22,9 @@ import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
 import { ArrayHelper } from '../../common/helpers';
-import { SeriesAddedItemsEvent } from '../../events/series';
+import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
-import { SeriesService } from '../../modules/series/series.service';
 import { UserDto } from '../../modules/v2-user/application';
 
 @Injectable()
@@ -213,7 +212,6 @@ export class PostListener {
       for (const sr of post.series) {
         this._internalEventEmitter.emit(
           new SeriesAddedItemsEvent({
-            isAdded: false,
             itemIds: [post.id],
             seriesId: sr.id,
             actor: actor,
@@ -369,7 +367,17 @@ export class PostListener {
       for (const seriesId of newSeriesIds) {
         this._internalEventEmitter.emit(
           new SeriesAddedItemsEvent({
-            isAdded: false,
+            itemIds: [newPost.id],
+            seriesId: seriesId,
+            actor: actor,
+          })
+        );
+      }
+
+      const seriesIdsDeleted = oldSeriesIds.filter((id) => !newSeriesIds.includes(id));
+      for (const seriesId of seriesIdsDeleted) {
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
             itemIds: [newPost.id],
             seriesId: seriesId,
             actor: actor,

@@ -17,7 +17,6 @@ export class SeriesAddedItemsEvent implements IEvent<ISeriesAddItemsPayload> {
 }
 
 export interface ISeriesAddItemsPayload {
-  isAdded: boolean;
   seriesId: string;
   itemIds: string[];
   actor: UserDto;

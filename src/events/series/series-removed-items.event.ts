@@ -1,4 +1,5 @@
 import { IEvent } from '../../common/interfaces';
+import { UserDto } from '../../modules/v2-user/application';
 
 export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayload> {
   protected static event = SeriesRemovedItemsEvent.name;
@@ -19,4 +20,5 @@ export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayloa
 export interface ISeriesRemovedItemsPayload {
   seriesId: string;
   itemIds: string[];
+  actor: UserDto;
 }
