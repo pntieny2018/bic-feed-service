@@ -7,8 +7,5 @@ export class UpdateTagRequestDto {
   @Type(() => String)
   @IsNotEmpty()
   @MaxLength(32)
-  @Transform(({ value }) => {
-    return value.toLowerCase().trim();
-  })
   public name: string;
 }

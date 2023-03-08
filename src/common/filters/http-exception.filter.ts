@@ -15,7 +15,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     console.log(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-
     if (exception instanceof ValidatorException) {
       return this.handleValidatorException(exception, response);
     } else if (exception instanceof LogicException) {

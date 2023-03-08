@@ -1,4 +1,4 @@
-import { Inject, InternalServerErrorException, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
@@ -10,6 +10,11 @@ import {
   ITagRepository,
 } from '../../domain/repositoty-interface';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom } from 'rxjs';
+import { AxiosHelper } from '../../../../common/helpers';
+import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
+import { UserEntity } from '../../../v2-user/domain/model/user';
 
 export class TagRepository implements ITagRepository {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;
@@ -19,7 +24,10 @@ export class TagRepository implements ITagRepository {
   @InjectModel(PostTagModel)
   private readonly _postTagModel: typeof PostTagModel;
 
-  public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
+  public constructor(
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize,
+    private readonly _httpService: HttpService
+  ) {}
 
   public async create(data: TagEntity): Promise<void> {
     await this._tagModel.create({
@@ -89,6 +97,26 @@ export class TagRepository implements ITagRepository {
     const rows = enties.map((entity) => this._modelToEntity(entity));
 
     return rows;
+  }
+
+  public async canCUDTag(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
+            userId,
+            rootGroupId,
+          })
+        )
+      );
+      if (response.status !== HttpStatus.OK) {
+        return null;
+      }
+      return AxiosHelper.getDataResponse<boolean>(response);
+    } catch (ex) {
+      this._logger.debug(ex);
+      return false;
+    }
   }
 
   private _modelToEntity(tag: TagModel): TagEntity {
