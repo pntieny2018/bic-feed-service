@@ -1,12 +1,15 @@
 {
     "tag": {
-      "duplicate_name": "Name is existed",
-      "not_found": "Tag not found",
-      "tag_name_exceed_max_length": "Tag name must be less than or equal to {num} characters",
-      "is_used": "The tag is used"
+        "duplicate_name": "Name is existed",
+        "not_found": "Tag not found",
+        "tag_name_exceed_max_length": "Tag name must be less than or equal to {num} characters",
+        "is_used": "The tag is used",
+        "no_create_permission": "Failed to create tag: you don't have permission",
+        "no_update_permission": "Failed to update tag: you don't have permission",
+        "no_delete_permission": "Failed to delete tag: you don't have permission"
     },
     "common": {
         "database_error": "Database error",
-      "domain_model_validation": "Domain model invalidate"
+        "domain_model_validation": "Domain model invalidate"
     }
 }

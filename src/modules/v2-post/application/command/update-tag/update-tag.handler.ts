@@ -8,6 +8,9 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
 import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
+import { ExceptionHelper } from '../../../../../common/helpers';
+import { HTTP_STATUS_ID } from '../../../../../common/constants';
+import { TagNoUpdatePermissionException } from '../../../exception/tag-no-update-permission.exception';
 
 @CommandHandler(UpdateTagCommand)
 export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, UpdateTagDto> {
@@ -18,9 +21,15 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
 
   public async execute(command: UpdateTagCommand): Promise<UpdateTagDto> {
     const { name, id, userId } = command.payload;
+
     const tag = await this._tagRepository.findOne({ id });
     if (!tag) {
       throw new TagNotFoundException();
+    }
+
+    const canUpdateTag = await this._tagRepository.canCUDTag(userId, tag.get('groupId'));
+    if (!canUpdateTag) {
+      throw new TagNoUpdatePermissionException();
     }
 
     const findTagNameInGroup = await this._tagRepository.findOne({

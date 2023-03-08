@@ -8,6 +8,9 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagDuplicateNameException } from '../../../exception';
 import { CreateTagCommand } from './create-tag.command';
 import { CreateTagDto } from './create-tag.dto';
+import { ExceptionHelper } from '../../../../../common/helpers';
+import { HTTP_STATUS_ID } from '../../../../../common/constants';
+import { TagNoCreatePermissionException } from '../../../exception/tag-no-create-permission.exception';
 
 @CommandHandler(CreateTagCommand)
 export class CreateTagHandler implements ICommandHandler<CreateTagCommand, CreateTagDto> {
@@ -18,6 +21,12 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, Creat
 
   public async execute(command: CreateTagCommand): Promise<CreateTagDto> {
     const { name, groupId, userId } = command.payload;
+
+    const canCreateTag = await this._tagRepository.canCUDTag(userId, groupId);
+    if (!canCreateTag) {
+      throw new TagNoCreatePermissionException();
+    }
+
     const findTagNameInGroup = await this._tagRepository.findOne({
       groupId,
       name,
