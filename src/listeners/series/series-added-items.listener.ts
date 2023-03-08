@@ -31,7 +31,7 @@ export class SeriesAddedItemsListener {
       withItemId: true,
     });
 
-    this._notifyAddedItem(event.payload).catch((ex) => this._logger.error(ex, ex?.stack));
+    this._notifyAddedItem(event).catch((ex) => this._logger.error(ex, ex?.stack));
 
     if (series) {
       const items = series.items.map((item) => ({
@@ -45,29 +45,24 @@ export class SeriesAddedItemsListener {
     }
   }
 
-  private async _notifyAddedItem(data: {
-    seriesId: string;
-    itemIds: string[];
-    actor: UserDto;
-  }): Promise<void> {
-    const { seriesId, itemIds, actor } = data;
+  private async _notifyAddedItem(event: SeriesAddedItemsEvent): Promise<void> {
+    const { seriesId, itemIds, actor } = event.payload;
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
     if (items.length === 0 || series.length === 0) return;
     if (series[0].createdBy === items[0].createdBy) return;
-    console.log('1111111111111111111');
     const isSendToArticleCreator = series[0].createdBy === actor.id;
     const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
       series[0],
-      items[0]
+      items[0],
     );
 
     this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
         actor,
-        event: SeriesAddedItemsEvent.name,
+        event: event.getEventName(),
         data: activity,
         meta: {
           series: {

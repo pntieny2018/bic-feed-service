@@ -25,7 +25,7 @@ export class NotificationMetaPayloadDto<T> {
 export class NotificationPayloadDto<T> {
   public key: string;
   public value: {
-    actor: UserDto;
+    actor: { id: string };
     event: string;
     data: T;
     meta?: NotificationMetaPayloadDto<T>;

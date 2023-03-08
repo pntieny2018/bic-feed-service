@@ -98,10 +98,6 @@ export class ArticleListener {
       value: {
         actor: {
           id: article.createdBy,
-          username: 'unused',
-          email: 'unused',
-          avatar: 'unused',
-          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,

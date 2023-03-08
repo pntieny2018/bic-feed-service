@@ -5,6 +5,7 @@ import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import {
+  SeriesAddedItemsEvent,
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
   SeriesHasBeenUpdatedEvent,
@@ -12,13 +13,14 @@ import {
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
-import { PostActivityService } from '../../notification/activities';
+import { PostActivityService, SeriesActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
 import { ArrayHelper } from '../../common/helpers';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../modules/v2-group/application';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class SeriesListener {
@@ -32,8 +34,10 @@ export class SeriesListener {
     private readonly _groupAppService: IGroupApplicationService,
     private readonly _postSearchService: SearchService,
     private readonly _feedService: FeedService,
+    private readonly _postService: PostService,
     private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _seriesActivityService: SeriesActivityService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
@@ -48,47 +52,19 @@ export class SeriesListener {
 
     this._postSearchService.deletePostsToSearch([series]);
 
-    const activity = this._postActivityService.createPayload({
-      actor: {
-        id: series.createdBy,
-        username: 'unused',
-        email: 'unused',
-        avatar: 'unused',
-        fullname: 'unused',
-      },
-      type: PostType.SERIES,
-      title: series.title,
-      commentsCount: series.commentsCount,
-      totalUsersSeen: series.totalUsersSeen,
-      content: series.content,
-      createdAt: series.createdAt,
-      updatedAt: series.updatedAt,
-      createdBy: series.createdBy,
-      status: series.status,
-      setting: {
-        canComment: series.canComment,
-        canReact: series.canReact,
-        canShare: series.canShare,
-      },
-      id: series.id,
-      audience: {
-        users: [],
-        groups: (series?.groups ?? []).map((g) => ({
-          id: g.groupId,
-        })) as any,
-      },
-      privacy: series.privacy,
-    });
+    const seriesData = await this._postService.getListWithGroupsByIds([series.id], true);
+    const items = await this._postService.getListWithGroupsByIds(
+      series.items.map((item) => item.id),
+      true
+    );
+    if (seriesData.length === 0) return;
+    const activity = this._seriesActivityService.getDeletingSeriesActivity(seriesData[0], items);
 
     this._notificationService.publishPostNotification({
       key: `${series.id}`,
       value: {
         actor: {
           id: series.createdBy,
-          username: 'unused',
-          email: 'unused',
-          avatar: 'unused',
-          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,

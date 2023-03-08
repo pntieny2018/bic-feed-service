@@ -37,20 +37,12 @@ export class SeriesRemovedItemsListener {
         items,
       });
 
-      this._notifyDeletedItems({
-        seriesId,
-        itemIds,
-        actor,
-      }).catch((ex) => this._logger.error(ex, ex?.stack));
+      this._notifyDeletedItems(event).catch((ex) => this._logger.error(ex, ex?.stack));
     }
   }
 
-  private async _notifyDeletedItems(data: {
-    seriesId: string;
-    itemIds: string[];
-    actor: UserDto;
-  }): Promise<void> {
-    const { seriesId, itemIds, actor } = data;
+  private async _notifyDeletedItems(event: SeriesRemovedItemsEvent): Promise<void> {
+    const { seriesId, itemIds, actor } = event.payload;
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
@@ -59,14 +51,14 @@ export class SeriesRemovedItemsListener {
     const isSendToArticleCreator = series[0].createdBy === actor.id;
     const activity = await this._seriesActivityService.getDeletingItemToSeriesActivity(
       series[0],
-      items[0]
+      items[0],
     );
 
     this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
         actor,
-        event: SeriesRemovedItemsEvent.name,
+        event: event.getEventName(),
         data: activity,
         meta: {
           series: {

@@ -8,6 +8,7 @@ export const PostHasBeenUpdated = 'post.has.been.updated';
 export const PostHasBeenDeleted = 'post.has.been.deleted';
 export const PostVideoHasBeenPublished = 'post_video.has.been.published';
 export const PostVideoHasBeenFailed = 'post_video.has.been.failed';
+export const PostsArchivedOrRestoredByGroup = 'post.archived_or_restored_by_group';
 
 export const ArticleHasBeenUpdated = 'article.has.been.updated';
 export const ArticleHasBeenPublished = 'article.has.been.published';
@@ -19,6 +20,7 @@ export const SeriesHasBeenUpdated = 'series.has.been.updated';
 export const SeriesHasBeenPublished = 'series.has.been.published';
 export const SeriesHasBeenDeleted = 'series.has.been.deleted';
 export const SeriesAddItem = 'series.has.been.added_item';
+export const SeriesRemoveItem = 'series.has.been.removed_item';
 // comment
 export const CommentWillBeCreated = 'comment.will.be.created';
 export const CommentWillBeUpdated = 'comment.will.be.updated';

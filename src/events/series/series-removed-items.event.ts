@@ -1,8 +1,9 @@
 import { IEvent } from '../../common/interfaces';
 import { UserDto } from '../../modules/v2-user/application';
+import { SeriesAddItem } from '../../common/constants';
 
 export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayload> {
-  protected static event = SeriesRemovedItemsEvent.name;
+  protected static event = SeriesAddItem;
 
   public payload: ISeriesRemovedItemsPayload;
 
