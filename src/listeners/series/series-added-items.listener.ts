@@ -59,7 +59,6 @@ export class SeriesAddedItemsListener {
       series[0],
       items[0]
     );
-    console.log('222222222222222', JSON.stringify(activity, null, 4));
     this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
