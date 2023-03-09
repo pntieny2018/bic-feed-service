@@ -359,13 +359,13 @@ export class SeriesService {
           force: true,
         });
       } else {
-        // await this._postModel.destroy({
-        //   where: {
-        //     id: seriesId,
-        //     createdBy: authUser.id,
-        //   },
-        //   transaction: transaction,
-        // });
+        await this._postModel.destroy({
+          where: {
+            id: seriesId,
+            createdBy: authUser.id,
+          },
+          transaction: transaction,
+        });
       }
       await transaction.commit();
 
