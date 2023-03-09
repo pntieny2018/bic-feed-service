@@ -188,6 +188,7 @@ export class SeriesService {
       if (audience.groupIds.length > 0) {
         await this.addGroup(audience.groupIds, post.id, transaction);
       }
+      await transaction.commit();
 
       if (setting && setting.isImportant) {
         const checkMarkImportant = await this._userMarkReadPostModel.findOne({
@@ -204,12 +205,10 @@ export class SeriesService {
                 userId: authUserId,
               },
             ],
-            { ignoreDuplicates: true, transaction }
+            { ignoreDuplicates: true }
           );
         }
       }
-      await transaction.commit();
-
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
@@ -283,6 +282,8 @@ export class SeriesService {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
+      await transaction.commit();
+
       if (setting && setting.isImportant) {
         const checkMarkImportant = await this._userMarkReadPostModel.findOne({
           where: {
@@ -298,13 +299,10 @@ export class SeriesService {
                 userId: authUserId,
               },
             ],
-            { ignoreDuplicates: true, transaction }
+            { ignoreDuplicates: true }
           );
         }
       }
-
-      await transaction.commit();
-
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
