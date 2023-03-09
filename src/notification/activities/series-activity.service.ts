@@ -1,6 +1,7 @@
 import { NotificationActivity } from '../dto/requests/notification-activity.dto';
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { IPost, PostType } from '../../database/models/post.model';
+import { StringHelper } from '../../common/helpers';
 
 export class SeriesActivityService {
   public getDeletingSeriesActivity(series: IPost, items: IPost[]): NotificationActivity {
@@ -16,7 +17,8 @@ export class SeriesActivityService {
           audience: {
             groups: item.groups.map((group) => ({ id: group.groupId })),
           },
-          content: item.type === PostType.POST ? item.content : null,
+          content:
+            item.type === PostType.POST ? StringHelper.removeMarkdownCharacter(item.content) : null,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         });
@@ -62,7 +64,8 @@ export class SeriesActivityService {
         audience: {
           groups: item.groups.map((group) => ({ id: group.groupId })),
         },
-        content: item.type === PostType.POST ? item.content : null,
+        content:
+          item.type === PostType.POST ? StringHelper.removeMarkdownCharacter(item.content) : null,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       },
@@ -96,7 +99,8 @@ export class SeriesActivityService {
         audience: {
           groups: item.groups.map((group) => ({ id: group.groupId })),
         },
-        content: item.type === PostType.POST ? item.content : null,
+        content:
+          item.type === PostType.POST ? StringHelper.removeMarkdownCharacter(item.content) : null,
         createdAt: item.createdAt,
         updatedAt: item.createdAt,
       },

@@ -124,7 +124,9 @@ export class SeriesListener {
         this._notificationService.publishPostNotification({
           key: `${series.id}`,
           value: {
-            actor,
+            actor: {
+              id: series.createdBy,
+            },
             event: event.getEventName(),
             data: activity,
             meta: {
@@ -258,7 +260,9 @@ export class SeriesListener {
         this._notificationService.publishPostNotification({
           key: `${id}`,
           value: {
-            actor,
+            actor: {
+              id: newSeries.createdBy,
+            },
             event: event.getEventName(),
             data: updatedActivity,
             meta: {

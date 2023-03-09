@@ -90,7 +90,9 @@ export class PostListener {
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
-          actor,
+          actor: {
+            id: post.createdBy,
+          },
           event: event.getEventName(),
           data: activity,
         },
@@ -144,7 +146,9 @@ export class PostListener {
     this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
-        actor,
+        actor: {
+          id: post.createdBy,
+        },
         event: event.getEventName(),
         data: activity,
       },
@@ -293,7 +297,9 @@ export class PostListener {
       this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
-          actor,
+          actor: {
+            id: newPost.createdBy,
+          },
           event: event.getEventName(),
           data: updatedActivity,
           meta: {
@@ -419,7 +425,9 @@ export class PostListener {
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
-          actor: post.actor,
+          actor: {
+            id: post.actor.id,
+          },
           event: event.getEventName(),
           data: postActivity,
         },
@@ -516,7 +524,9 @@ export class PostListener {
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
-          actor: post.actor,
+          actor: {
+            id: post.actor.id,
+          },
           event: event.getEventName(),
           data: postActivity,
         },

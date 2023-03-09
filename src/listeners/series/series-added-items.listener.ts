@@ -62,7 +62,9 @@ export class SeriesAddedItemsListener {
     this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
-        actor,
+        actor: {
+          id: actor.id,
+        },
         event: event.getEventName(),
         data: activity,
         meta: {
