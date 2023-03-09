@@ -9,12 +9,12 @@ import { GetTagDto } from './dto/requests/get-tag.dto';
 import { TagResponseDto } from './dto/responses/tag-response.dto';
 import { ArrayHelper, ExceptionHelper, StringHelper } from '../../common/helpers';
 import { CreateTagDto } from './dto/requests/create-tag.dto';
-import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
 import { PostModel } from '../../database/models/post.model';
 import { ExternalService } from '../../app/external.service';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class TagService {

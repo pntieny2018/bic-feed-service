@@ -133,7 +133,9 @@ export class FeedPublisherService {
       //for ex: old: 12, new: 2,3 => notchange is 2, attach: 3
       const groupIdsNotChange = ArrayHelper.arrDifferenceElements(newGroupIds, attachedGroupIds);
       this._logger.debug(
-        `[fanoutOnWrite]: attachedGroupIds: ${attachedGroupIds} and keep: ${groupIdsNotChange}`
+        `[fanoutOnWrite]: attachedGroupIds: ${JSON.stringify(
+          attachedGroupIds
+        )} and keep: ${JSON.stringify(groupIdsNotChange)}`
       );
       while (true) {
         const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(
@@ -158,7 +160,9 @@ export class FeedPublisherService {
       //for ex: old: 12, new: 2,3 => notchange is 2, detach: 1
       const groupIdsNotChange = ArrayHelper.arrDifferenceElements(oldGroupIds, detachedGroupIds);
       this._logger.debug(
-        `[fanoutOnWrite]: detachedGroupIds: ${detachedGroupIds} and keep: ${groupIdsNotChange}`
+        `[fanoutOnWrite]: detachedGroupIds: ${JSON.stringify(
+          detachedGroupIds
+        )} and keep: ${JSON.stringify(groupIdsNotChange)}`
       );
       while (true) {
         const { userIds, latestFollowId: lastId } = await this._followService.getUserFollowGroupIds(

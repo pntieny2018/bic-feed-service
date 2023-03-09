@@ -5,6 +5,7 @@ import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import {
+  SeriesAddedItemsEvent,
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
   SeriesHasBeenUpdatedEvent,
@@ -12,13 +13,15 @@ import {
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { PostHistoryService } from '../../modules/post/post-history.service';
 import { SearchService } from '../../modules/search/search.service';
-import { PostActivityService } from '../../notification/activities';
+import { PostActivityService, SeriesActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
 import { ArrayHelper } from '../../common/helpers';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../modules/v2-group/application';
+import { PostService } from '../../modules/post/post.service';
+import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
 export class SeriesListener {
@@ -32,12 +35,16 @@ export class SeriesListener {
     private readonly _groupAppService: IGroupApplicationService,
     private readonly _postSearchService: SearchService,
     private readonly _feedService: FeedService,
+    private readonly _postService: PostService,
+    private readonly _seriesService: SeriesService,
     private readonly _postActivityService: PostActivityService,
-    private readonly _notificationService: NotificationService
+    private readonly _notificationService: NotificationService,
+    private readonly _seriesActivityService: SeriesActivityService
   ) {}
 
   @On(SeriesHasBeenDeletedEvent)
   public async onSeriesDeleted(event: SeriesHasBeenDeletedEvent): Promise<void> {
+    this._logger.debug(`[SeriesHasBeenDeletedEvent] ${JSON.stringify(event.payload.series)}`);
     const { series } = event.payload;
     if (series.status !== PostStatus.PUBLISHED) return;
 
@@ -48,47 +55,17 @@ export class SeriesListener {
 
     this._postSearchService.deletePostsToSearch([series]);
 
-    const activity = this._postActivityService.createPayload({
-      actor: {
-        id: series.createdBy,
-        username: 'unused',
-        email: 'unused',
-        avatar: 'unused',
-        fullname: 'unused',
-      },
-      type: PostType.SERIES,
-      title: series.title,
-      commentsCount: series.commentsCount,
-      totalUsersSeen: series.totalUsersSeen,
-      content: series.content,
-      createdAt: series.createdAt,
-      updatedAt: series.updatedAt,
-      createdBy: series.createdBy,
-      status: series.status,
-      setting: {
-        canComment: series.canComment,
-        canReact: series.canReact,
-        canShare: series.canShare,
-      },
-      id: series.id,
-      audience: {
-        users: [],
-        groups: (series?.groups ?? []).map((g) => ({
-          id: g.groupId,
-        })) as any,
-      },
-      privacy: series.privacy,
-    });
-
+    if (!series) return;
+    const items = await this._postService.getListWithGroupsByIds(
+      series.items.map((item) => item.id),
+      true
+    );
+    const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
     this._notificationService.publishPostNotification({
       key: `${series.id}`,
       value: {
         actor: {
           id: series.createdBy,
-          username: 'unused',
-          email: 'unused',
-          avatar: 'unused',
-          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,
@@ -103,6 +80,7 @@ export class SeriesListener {
 
   @On(SeriesHasBeenPublishedEvent)
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
+    this._logger.debug(`[onSeriesPublished] ${JSON.stringify(event.payload.series)}`);
     const { series, actor } = event.payload;
     const { id, createdBy, audience, createdAt, updatedAt, title, summary, coverMedia } = series;
     const groupIds = audience.groups.map((group) => group.id);
@@ -146,7 +124,9 @@ export class SeriesListener {
         this._notificationService.publishPostNotification({
           key: `${series.id}`,
           value: {
-            actor,
+            actor: {
+              id: series.createdBy,
+            },
             event: event.getEventName(),
             data: activity,
             meta: {
@@ -176,6 +156,11 @@ export class SeriesListener {
 
   @On(SeriesHasBeenUpdatedEvent)
   public async onSeriesUpdated(event: SeriesHasBeenUpdatedEvent): Promise<void> {
+    this._logger.debug(
+      `[SeriesHasBeenUpdatedEvent] old:${JSON.stringify(
+        event.payload.oldSeries
+      )} --new:${JSON.stringify(event.payload.newSeries)}`
+    );
     const { newSeries, oldSeries, actor } = event.payload;
     const {
       id,
@@ -275,7 +260,9 @@ export class SeriesListener {
         this._notificationService.publishPostNotification({
           key: `${id}`,
           value: {
-            actor,
+            actor: {
+              id: newSeries.createdBy,
+            },
             event: event.getEventName(),
             data: updatedActivity,
             meta: {

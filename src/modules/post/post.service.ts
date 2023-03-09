@@ -291,7 +291,17 @@ export class PostService {
 
   public async getListWithGroupsByIds(postIds: string[], must: boolean): Promise<IPost[]> {
     const postGroups = await this.postModel.findAll({
-      attributes: ['id', 'title', 'lang', 'status', 'createdBy'],
+      attributes: [
+        'id',
+        'title',
+        'type',
+        'content',
+        'lang',
+        'status',
+        'createdBy',
+        'createdAt',
+        'updatedAt',
+      ],
       include: [
         {
           model: PostGroupModel,
@@ -810,10 +820,15 @@ export class PostService {
           },
         });
         if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.create({
-            postId: post.id,
-            userId: authUserId,
-          });
+          await this.userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
+            { ignoreDuplicates: true }
+          );
         }
         post.markedReadPost = true;
       }
@@ -1081,10 +1096,15 @@ export class PostService {
       },
     });
     if (!readPost) {
-      await this.userMarkReadPostModel.create({
-        postId,
-        userId,
-      });
+      await this.userMarkReadPostModel.bulkCreate(
+        [
+          {
+            postId,
+            userId,
+          },
+        ],
+        { ignoreDuplicates: true }
+      );
     }
   }
 

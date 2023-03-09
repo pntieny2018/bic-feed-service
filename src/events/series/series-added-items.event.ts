@@ -1,9 +1,10 @@
 import { IEvent } from '../../common/interfaces';
 import { UserDto } from '../../modules/v2-user/application';
+import { SeriesAddItem } from '../../common/constants';
 
 export class SeriesAddedItemsEvent implements IEvent<ISeriesAddItemsPayload> {
   public payload: ISeriesAddItemsPayload;
-  protected static event = SeriesAddedItemsEvent.name;
+  protected static event = SeriesAddItem;
 
   public constructor(payload: ISeriesAddItemsPayload) {
     Object.assign(this, {
@@ -17,7 +18,6 @@ export class SeriesAddedItemsEvent implements IEvent<ISeriesAddItemsPayload> {
 }
 
 export interface ISeriesAddItemsPayload {
-  isAdded: boolean;
   seriesId: string;
   itemIds: string[];
   actor: UserDto;

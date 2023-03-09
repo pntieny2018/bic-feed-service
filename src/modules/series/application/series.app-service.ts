@@ -121,20 +121,23 @@ export class SeriesAppService {
   }
 
   public async deleteSeries(user: UserDto, seriesId: string): Promise<boolean> {
-    const series = await this._postService.getListWithGroupsByIds([seriesId], false);
-    if (series.length === 0) {
+    const series = await this._seriesService.findSeriesById(seriesId, {
+      withItemId: true,
+      withGroups: true,
+    });
+    if (!series) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
     }
-    await this._authorityService.checkPostOwner(series[0], user.id);
+    await this._authorityService.checkPostOwner(series, user.id);
 
-    if (series[0].status === PostStatus.PUBLISHED) {
+    if (series.status === PostStatus.PUBLISHED) {
       await this._authorityService.checkCanDeleteSeries(
         user,
-        series[0].groups.map((g) => g.groupId)
+        series.groups.map((g) => g.groupId)
       );
     }
 
-    const seriesDeleted = await this._seriesService.delete(user, series[0]);
+    const seriesDeleted = await this._seriesService.delete(user, series);
     if (seriesDeleted) {
       this._eventEmitter.emit(
         new SeriesHasBeenDeletedEvent({
@@ -163,6 +166,7 @@ export class SeriesAppService {
       new SeriesRemovedItemsEvent({
         seriesId,
         itemIds,
+        actor: user,
       })
     );
   }
@@ -218,7 +222,6 @@ export class SeriesAppService {
     await this._seriesService.addItems(series[0], itemIds);
     this._eventEmitter.emit(
       new SeriesAddedItemsEvent({
-        isAdded: true,
         actor: user,
         seriesId,
         itemIds,

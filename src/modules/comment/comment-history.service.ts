@@ -4,9 +4,9 @@ import { plainToInstance } from 'class-transformer';
 import { FindAndCountOptions } from 'sequelize';
 import { PageDto } from '../../common/dto';
 import { CommentEditedHistoryModel } from '../../database/models/comment-edited-history.model';
-import { UserDto } from '../auth';
 import { GetCommentEditedHistoryDto } from './dto/requests';
 import { CommentEditedHistoryDto, CommentResponseDto } from './dto/response';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class CommentHistoryService {

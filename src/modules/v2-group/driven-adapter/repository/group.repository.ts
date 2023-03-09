@@ -83,7 +83,6 @@ export class GroupRepository implements IGroupRepository {
           if (response.status !== HttpStatus.OK) {
             return [];
           }
-          this._logger.debug(JSON.stringify(response.data));
 
           const admins = response.data['data']['group_admin']['data'];
           return admins.map((admin) => admin.id);

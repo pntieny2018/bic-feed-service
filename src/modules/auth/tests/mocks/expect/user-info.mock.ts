@@ -1,4 +1,4 @@
-import { UserDto } from '../../../dto';
+import { UserDto } from '../../../../v2-user/application';
 
 export const userInfoExpect: UserDto = {
   avatar:

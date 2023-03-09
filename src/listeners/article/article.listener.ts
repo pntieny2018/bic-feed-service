@@ -22,7 +22,6 @@ import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
-import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
 
 @Injectable()
 export class ArticleListener {
@@ -99,10 +98,6 @@ export class ArticleListener {
       value: {
         actor: {
           id: article.createdBy,
-          username: 'unused',
-          email: 'unused',
-          avatar: 'unused',
-          fullname: 'unused',
         },
         event: event.getEventName(),
         data: activity,
@@ -213,7 +208,6 @@ export class ArticleListener {
       for (const sr of article.series) {
         this._internalEventEmitter.emit(
           new SeriesAddedItemsEvent({
-            isAdded: false,
             itemIds: [article.id],
             seriesId: sr.id,
             actor: actor,
@@ -333,7 +327,6 @@ export class ArticleListener {
       for (const seriesId of newSeriesIds) {
         this._internalEventEmitter.emit(
           new SeriesAddedItemsEvent({
-            isAdded: false,
             itemIds: [newArticle.id],
             seriesId: seriesId,
             actor: actor,
@@ -346,6 +339,7 @@ export class ArticleListener {
           new SeriesRemovedItemsEvent({
             seriesId,
             itemIds: [newArticle.id],
+            actor,
           })
         );
       }

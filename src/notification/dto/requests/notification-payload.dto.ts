@@ -18,14 +18,14 @@ export class NotificationMetaPayloadDto<T> {
     prevCommentActivities?: T[];
   };
   public series?: {
-    isSendToArticleCreator?: boolean;
+    isSendToContentCreator?: boolean;
     targetUserIds?: string[];
   };
 }
 export class NotificationPayloadDto<T> {
   public key: string;
   public value: {
-    actor: UserDto;
+    actor: { id: string };
     event: string;
     data: T;
     meta?: NotificationMetaPayloadDto<T>;

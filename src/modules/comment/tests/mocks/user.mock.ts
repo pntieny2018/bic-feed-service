@@ -1,5 +1,5 @@
-import { UserDto } from '../../../auth';
 import { ObjectHelper } from '../../../../common/helpers';
+import { UserDto } from '../../../v2-user/application';
 
 export const authUserMock: UserDto = {
   id: '26799d29-189b-435d-b618-30fb70e9b09e',

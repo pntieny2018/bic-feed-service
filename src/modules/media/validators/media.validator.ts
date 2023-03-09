@@ -10,8 +10,8 @@ import {
 import { ExternalService } from '../../../app/external.service';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { MediaModel } from '../../../database/models/media.model';
-import { UserDto } from '../../auth';
 import { MediaDto } from '../dto';
+import { UserDto } from '../../v2-user/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {

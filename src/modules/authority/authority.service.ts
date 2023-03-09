@@ -1,4 +1,3 @@
-import { UserDto } from '../auth';
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
@@ -17,6 +16,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class AuthorityService {

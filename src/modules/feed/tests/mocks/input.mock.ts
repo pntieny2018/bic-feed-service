@@ -1,7 +1,7 @@
-import { UserDto } from '../../../auth';
 import { GetTimelineDto } from '../../dto/request';
 import { GroupDto } from '../../../v2-group/application';
 import { GROUP_PRIVACY } from '../../../v2-group/data-type';
+import { UserDto } from '../../../v2-user/application';
 
 export const mockedUserAuth: UserDto = {
   id: '26799d29-189b-435d-b618-30fb70e9b09e',

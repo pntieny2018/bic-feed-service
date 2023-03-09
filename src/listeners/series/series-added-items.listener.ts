@@ -4,17 +4,17 @@ import { SeriesAddedItemsEvent } from '../../events/series';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { SeriesActivityService } from '../../notification/activities';
-import { ArticleService } from '../../modules/article/article.service';
 import { SeriesAddItem } from '../../common/constants';
 import { NotificationService } from '../../notification';
 import { UserDto } from '../../modules/v2-user/application';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class SeriesAddedItemsListener {
   private _logger = new Logger(SeriesAddedItemsListener.name);
 
   public constructor(
-    private readonly _articleService: ArticleService,
+    private readonly _postService: PostService,
     private readonly _seriesService: SeriesService,
     private readonly _postSearchService: SearchService,
     private readonly _notificationService: NotificationService,
@@ -23,7 +23,9 @@ export class SeriesAddedItemsListener {
 
   @On(SeriesAddedItemsEvent)
   public async handler(event: SeriesAddedItemsEvent): Promise<void> {
-    this._logger.debug(`[SeriesAddedItemsListener] ${JSON.stringify(event.payload)}`);
+    this._logger.debug(
+      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.itemIds[0]}`
+    );
 
     const { seriesId } = event.payload;
 
@@ -31,7 +33,7 @@ export class SeriesAddedItemsListener {
       withItemId: true,
     });
 
-    this._notifyAddedItem(event.payload).catch((ex) => this._logger.error(ex, ex?.stack));
+    this._notifyAddedItem(event).catch((ex) => this._logger.error(ex, ex?.stack));
 
     if (series) {
       const items = series.items.map((item) => ({
@@ -45,35 +47,32 @@ export class SeriesAddedItemsListener {
     }
   }
 
-  private async _notifyAddedItem(data: {
-    seriesId: string;
-    itemIds: string[];
-    actor: UserDto;
-  }): Promise<void> {
-    const { seriesId, itemIds, actor } = data;
+  private async _notifyAddedItem(event: SeriesAddedItemsEvent): Promise<void> {
+    const { seriesId, itemIds, actor } = event.payload;
 
-    const series = await this._seriesService.get(seriesId, actor, { withComment: false });
-    const article = await this._articleService.get(itemIds[0], actor, { withComment: false });
-
-    if (series.createdBy === article.createdBy) {
-      return;
-    } else {
-      const isSendToArticleCreator = series.createdBy === actor.id;
-      const activity = await this._seriesActivityService.createAddedActivity(series, article);
-
-      this._notificationService.publishPostNotification({
-        key: `${series.id}`,
-        value: {
-          actor,
-          event: SeriesAddItem,
-          data: activity,
-          meta: {
-            series: {
-              isSendToArticleCreator: isSendToArticleCreator,
-            },
+    const series = await this._postService.getListWithGroupsByIds([seriesId], true);
+    const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
+    if (items.length === 0 || series.length === 0) return;
+    if (series[0].createdBy === items[0].createdBy) return;
+    const isSendToArticleCreator = series[0].createdBy === actor.id;
+    const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
+      series[0],
+      items[0]
+    );
+    this._notificationService.publishPostNotification({
+      key: `${series[0].id}`,
+      value: {
+        actor: {
+          id: actor.id,
+        },
+        event: event.getEventName(),
+        data: activity,
+        meta: {
+          series: {
+            isSendToContentCreator: isSendToArticleCreator,
           },
         },
-      });
-    }
+      },
+    });
   }
 }

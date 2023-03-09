@@ -1,9 +1,8 @@
 import { MediaStatus, MediaType } from '../../../../database/models/media.model';
-import { UserDto } from '../../../auth';
 import { VideoProcessStatus } from '../../post.constants';
 import { GROUP_PRIVACY } from '../../../v2-group/data-type';
 
-export const mockUserDto: UserDto = {
+export const mockUserDto = {
   id: '7251dac7-5088-4a33-b900-d1b058edaf98',
 };
 
