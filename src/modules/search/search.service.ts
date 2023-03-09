@@ -898,7 +898,7 @@ export class SearchService {
     if (isASCII) {
       //En
       if (type === PostType.POST) {
-        fields = [title.ascii];
+        fields = [content.ascii];
       } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
         fields = [summary.ascii, content.ascii];
       } else {
