@@ -929,6 +929,8 @@ export class ArticleService extends PostService {
         transaction,
       });
 
+      await transaction.commit();
+
       if (setting && setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -944,12 +946,10 @@ export class ArticleService extends PostService {
                 userId: authUserId,
               },
             ],
-            { ignoreDuplicates: true, transaction }
+            { ignoreDuplicates: true }
           );
         }
       }
-      await transaction.commit();
-
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();

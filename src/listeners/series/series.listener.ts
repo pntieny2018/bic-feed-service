@@ -60,6 +60,7 @@ export class SeriesListener {
       series.items.map((item) => item.id),
       true
     );
+    if (items.every((item) => item.createdBy === series.createdBy)) return;
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
     this._notificationService.publishPostNotification({
       key: `${series.id}`,

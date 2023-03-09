@@ -712,6 +712,8 @@ export class PostService {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
+      await transaction.commit();
+
       if (setting && setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -727,12 +729,10 @@ export class PostService {
                 userId: authUserId,
               },
             ],
-            { ignoreDuplicates: true, transaction }
+            { ignoreDuplicates: true }
           );
         }
       }
-
-      await transaction.commit();
 
       return true;
     } catch (error) {
