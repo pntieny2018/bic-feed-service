@@ -552,7 +552,7 @@ export class SeriesService {
       include.push({
         model: PostGroupModel,
         as: 'groups',
-        required: true,
+        required: false,
         where: {
           isArchived: false,
         },

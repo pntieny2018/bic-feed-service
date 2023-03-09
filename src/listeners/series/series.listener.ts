@@ -55,17 +55,12 @@ export class SeriesListener {
 
     this._postSearchService.deletePostsToSearch([series]);
 
-    const seriesData = await this._seriesService.findSeriesById(series.id, {
-      withItemId: true,
-      withGroups: true,
-    });
-    if (!seriesData) return;
+    if (!series) return;
     const items = await this._postService.getListWithGroupsByIds(
-      seriesData.items.map((item) => item.id),
+      series.items.map((item) => item.id),
       true
     );
-    const activity = this._seriesActivityService.getDeletingSeriesActivity(seriesData, items);
-
+    const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
     this._notificationService.publishPostNotification({
       key: `${series.id}`,
       value: {

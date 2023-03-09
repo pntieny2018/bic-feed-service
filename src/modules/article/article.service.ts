@@ -774,17 +774,22 @@ export class ArticleService extends PostService {
       );
       article.status = status;
       if (article.setting.isImportant) {
-        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
             postId: article.id,
             userId: authUserId,
           },
         });
         if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.create({
-            postId: article.id,
-            userId: authUserId,
-          });
+          await this.userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: article.id,
+                userId: authUserId,
+              },
+            ],
+            { ignoreDuplicates: true }
+          );
         }
         article.markedReadPost = true;
       }
@@ -925,17 +930,22 @@ export class ArticleService extends PostService {
       });
 
       if (setting && setting.isImportant) {
-        const checkMarkImportant = this.userMarkReadPostModel.findOne({
+        const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
             postId: post.id,
             userId: authUserId,
           },
         });
         if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.create({
-            postId: post.id,
-            userId: authUserId,
-          });
+          await this.userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
+            { ignoreDuplicates: true, transaction }
+          );
         }
       }
       await transaction.commit();
