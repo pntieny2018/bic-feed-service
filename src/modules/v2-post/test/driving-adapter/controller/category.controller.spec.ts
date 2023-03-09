@@ -26,13 +26,13 @@ describe('CategoryController', () => {
       "id": "6b9fbc18-04c3-4a4a-bd64-453add6724dd",
       "name": "Outdoors",
       "slug": "outdoors",
-      "created_at": "2022-09-21T08:33:18.881Z"
+      "createdAt": "2022-09-21T08:33:18.881Z"
     },
     {
       "id": "ce8c7613-426d-48e4-8d74-c2a12adc05f9",
       "name": "Fashion & Beauty",
       "slug": "fashion-beauty",
-      "created_at": "2022-09-21T08:33:18.881Z"
+      "createdAt": "2022-09-21T08:33:18.881Z"
     }
   ]
 
@@ -47,11 +47,13 @@ describe('CategoryController', () => {
             "id": "6b9fbc18-04c3-4a4a-bd64-453add6724dd",
             "name": "Outdoors",
             "slug": "outdoors",
+            "createdAt": "2022-09-21T08:33:18.881Z",
           },
           {
             "id": "ce8c7613-426d-48e4-8d74-c2a12adc05f9",
             "name": "Fashion & Beauty",
             "slug": "fashion-beauty",
+            "createdAt": "2022-09-21T08:33:18.881Z",
           }
         ],
         "meta": {

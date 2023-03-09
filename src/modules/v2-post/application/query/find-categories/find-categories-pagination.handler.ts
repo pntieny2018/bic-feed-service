@@ -15,7 +15,6 @@ import { FindCategoriesPaginationQuery } from './find-categories-pagination.quer
 export class FindCategoriesPaginationHandler
   implements IQueryHandler<FindCategoriesPaginationQuery, FindCategoriesPaginationDto>
 {
-  @Inject(GROUP_APPLICATION_TOKEN) private readonly _groupAppService: IGroupApplicationService;
   @Inject(CATEGORY_QUERY_TOKEN) private readonly _categoryQuery: ICategoryQuery;
   public async execute(query: FindCategoriesPaginationQuery): Promise<FindCategoriesPaginationDto> {
     const { rows, total } = await this._categoryQuery.getPagination(query.payload);
