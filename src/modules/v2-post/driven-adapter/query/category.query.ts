@@ -34,10 +34,7 @@ export class CategoryQuery implements ICategoryQuery {
       where: conditions,
       offset,
       limit,
-      order: [
-        ['totalUsed', 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
+      order: [['zindex', 'DESC']],
     });
     const result = rows.map((row) => this._factory.reconstitute(row));
 

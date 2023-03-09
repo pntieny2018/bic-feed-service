@@ -8,6 +8,8 @@ import { UserModuleV2 } from '../v2-user/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { IAxiosConfig } from '../../config/axios';
+import { CategoryController } from './driving-apdater/controller/category.controller';
+import { categoryProvider } from './provider';
 
 @Module({
   imports: [
@@ -27,7 +29,7 @@ import { IAxiosConfig } from '../../config/axios';
     GroupModuleV2,
     UserModuleV2,
   ],
-  controllers: [TagController],
-  providers: [...tagProvider],
+  controllers: [TagController, CategoryController],
+  providers: [...tagProvider, ...categoryProvider],
 })
 export class PostModuleV2 {}
