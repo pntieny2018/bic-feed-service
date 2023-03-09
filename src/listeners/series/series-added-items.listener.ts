@@ -68,7 +68,7 @@ export class SeriesAddedItemsListener {
         data: activity,
         meta: {
           series: {
-            isSendToArticleCreator: isSendToArticleCreator,
+            isSendToContentCreator: isSendToArticleCreator,
           },
         },
       },

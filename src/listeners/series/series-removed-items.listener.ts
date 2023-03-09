@@ -64,7 +64,7 @@ export class SeriesRemovedItemsListener {
         data: activity,
         meta: {
           series: {
-            isSendToArticleCreator: isSendToArticleCreator,
+            isSendToContentCreator: isSendToArticleCreator,
           },
         },
       },

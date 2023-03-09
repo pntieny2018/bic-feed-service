@@ -18,7 +18,7 @@ export class NotificationMetaPayloadDto<T> {
     prevCommentActivities?: T[];
   };
   public series?: {
-    isSendToArticleCreator?: boolean;
+    isSendToContentCreator?: boolean;
     targetUserIds?: string[];
   };
 }
