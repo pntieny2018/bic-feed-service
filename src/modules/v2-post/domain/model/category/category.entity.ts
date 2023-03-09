@@ -4,16 +4,16 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 
 export type CategoryProps = {
   id: string;
+  parentId: string;
   name: string;
+  slug?: string;
   level: number;
-  parentId?: string;
+  zindex: number;
+  isActive: boolean;
   createdBy: string;
   updatedBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-  active: boolean;
-  slug: string;
-  totalUsed: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class CategoryEntity extends DomainAggregateRoot<CategoryProps> {

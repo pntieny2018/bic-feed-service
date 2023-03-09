@@ -6,6 +6,7 @@ export type GetPaginationCategoryProps = PaginationProps & {
   name?: string;
   level?: number;
   isCreatedByMe?: boolean;
+  userId?: string;
 };
 
 export interface ICategoryQuery {
