@@ -14,11 +14,10 @@ export class UserApplicationService implements IUserApplicationService {
     if (!username) return null;
     const user = await this._repo.findByUserName(username);
     if (!user) return null;
-    if (options && options.withPermission) {
-      const permission = await this._repo.getPermissionsByUserId(user.get('id'));
-      user.setPermission(permission);
-    }
     const result = this._toDto(user);
+    if (!options?.withPermission) {
+      delete result.permissions;
+    }
     if (!options?.withGroupJoined) {
       delete result.groups;
     }
@@ -30,8 +29,8 @@ export class UserApplicationService implements IUserApplicationService {
     if (!userId) return null;
     const user = await this._repo.findOne(userId);
     if (options && options.withPermission) {
-      const permission = await this._repo.getPermissionsByUserId(user.get('id'));
-      user.setPermission(permission);
+      const permissions = await this._repo.getPermissionsByUserId(user.get('id'));
+      user.setPermissions(permissions);
     }
     const result = this._toDto(user);
     if (!options?.withGroupJoined) {
@@ -64,7 +63,7 @@ export class UserApplicationService implements IUserApplicationService {
       email: user.get('email'),
       avatar: user.get('avatar'),
       groups: user.get('groups'),
-      permissions: user.get('permission'),
+      permissions: user.get('permissions'),
     };
   }
 }
