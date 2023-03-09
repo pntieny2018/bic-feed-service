@@ -189,6 +189,25 @@ export class SeriesService {
         await this.addGroup(audience.groupIds, post.id, transaction);
       }
 
+      if (setting && setting.isImportant) {
+        const checkMarkImportant = await this._userMarkReadPostModel.findOne({
+          where: {
+            postId: post.id,
+            userId: authUserId,
+          },
+        });
+        if (!checkMarkImportant) {
+          await this._userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
+            { ignoreDuplicates: true, transaction }
+          );
+        }
+      }
       await transaction.commit();
 
       return post;
