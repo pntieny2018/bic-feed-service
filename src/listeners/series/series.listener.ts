@@ -21,6 +21,7 @@ import {
   IGroupApplicationService,
 } from '../../modules/v2-group/application';
 import { PostService } from '../../modules/post/post.service';
+import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
 export class SeriesListener {
@@ -35,6 +36,7 @@ export class SeriesListener {
     private readonly _postSearchService: SearchService,
     private readonly _feedService: FeedService,
     private readonly _postService: PostService,
+    private readonly _seriesService: SeriesService,
     private readonly _postActivityService: PostActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _seriesActivityService: SeriesActivityService
@@ -42,6 +44,7 @@ export class SeriesListener {
 
   @On(SeriesHasBeenDeletedEvent)
   public async onSeriesDeleted(event: SeriesHasBeenDeletedEvent): Promise<void> {
+    this._logger.debug(`[SeriesHasBeenDeletedEvent] ${JSON.stringify(event.payload.series)}`);
     const { series } = event.payload;
     if (series.status !== PostStatus.PUBLISHED) return;
 
@@ -52,13 +55,16 @@ export class SeriesListener {
 
     this._postSearchService.deletePostsToSearch([series]);
 
-    const seriesData = await this._postService.getListWithGroupsByIds([series.id], true);
+    const seriesData = await this._seriesService.findSeriesById(series.id, {
+      withItemId: true,
+      withGroups: true,
+    });
+    if (!seriesData) return;
     const items = await this._postService.getListWithGroupsByIds(
-      series.items.map((item) => item.id),
+      seriesData.items.map((item) => item.id),
       true
     );
-    if (seriesData.length === 0) return;
-    const activity = this._seriesActivityService.getDeletingSeriesActivity(seriesData[0], items);
+    const activity = this._seriesActivityService.getDeletingSeriesActivity(seriesData, items);
 
     this._notificationService.publishPostNotification({
       key: `${series.id}`,
@@ -79,6 +85,7 @@ export class SeriesListener {
 
   @On(SeriesHasBeenPublishedEvent)
   public async onSeriesPublished(event: SeriesHasBeenPublishedEvent): Promise<void> {
+    this._logger.debug(`[onSeriesPublished] ${JSON.stringify(event.payload.series)}`);
     const { series, actor } = event.payload;
     const { id, createdBy, audience, createdAt, updatedAt, title, summary, coverMedia } = series;
     const groupIds = audience.groups.map((group) => group.id);
@@ -152,6 +159,11 @@ export class SeriesListener {
 
   @On(SeriesHasBeenUpdatedEvent)
   public async onSeriesUpdated(event: SeriesHasBeenUpdatedEvent): Promise<void> {
+    this._logger.debug(
+      `[SeriesHasBeenUpdatedEvent] old:${JSON.stringify(
+        event.payload.oldSeries
+      )} --new:${JSON.stringify(event.payload.newSeries)}`
+    );
     const { newSeries, oldSeries, actor } = event.payload;
     const {
       id,

@@ -25,6 +25,7 @@ import { SeriesResponseDto } from './dto/responses';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
 import { UserDto } from '../v2-user/application';
+import { PostTagModel } from '../../database/models/post-tag.model';
 
 @Injectable()
 export class SeriesService {
@@ -43,12 +44,12 @@ export class SeriesService {
   public constructor(
     @InjectConnection()
     private _sequelizeConnection: Sequelize,
-
+    @InjectModel(PostTagModel)
+    private _postTagModel: typeof PostTagModel,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel,
     @InjectModel(PostSeriesModel)
     private _postSeriesModel: typeof PostSeriesModel,
-
     @InjectModel(UserMarkReadPostModel)
     private _userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(PostGroupModel)
@@ -262,6 +263,27 @@ export class SeriesService {
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
+
+      if (setting && setting.isImportant) {
+        const checkMarkImportant = await this._userMarkReadPostModel.findOne({
+          where: {
+            postId: post.id,
+            userId: authUserId,
+          },
+        });
+        if (!checkMarkImportant) {
+          await this._userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
+            { ignoreDuplicates: true, transaction }
+          );
+        }
+      }
+
       await transaction.commit();
 
       return true;
@@ -320,12 +342,13 @@ export class SeriesService {
               postId: seriesId,
             },
           }),
+          this._postTagModel.destroy({ where: { postId: seriesId } }),
           this._reactionService.deleteByPostIds([seriesId]),
           this._commentService.deleteCommentsByPost(seriesId, transaction),
           this._feedService.deleteNewsFeedByPost(seriesId, transaction),
           this._feedService.deleteUserSeenByPost(seriesId, transaction),
           this._postSeriesModel.destroy({ where: { postId: seriesId }, transaction }),
-          this._userMarkReadPostModel.destroy({ where: { seriesId }, transaction }),
+          this._userMarkReadPostModel.destroy({ where: { postId: seriesId }, transaction }),
         ]);
         await this._postModel.destroy({
           where: {
@@ -336,13 +359,13 @@ export class SeriesService {
           force: true,
         });
       } else {
-        await this._postModel.destroy({
-          where: {
-            id: seriesId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-        });
+        // await this._postModel.destroy({
+        //   where: {
+        //     id: seriesId,
+        //     createdBy: authUser.id,
+        //   },
+        //   transaction: transaction,
+        // });
       }
       await transaction.commit();
 
@@ -529,6 +552,10 @@ export class SeriesService {
       include.push({
         model: PostGroupModel,
         as: 'groups',
+        required: true,
+        where: {
+          isArchived: false,
+        },
         attributes: ['groupId'],
       });
     }
@@ -549,6 +576,10 @@ export class SeriesService {
           'canComment',
           'canReact',
           'status',
+          'type',
+          'content',
+          'createdAt',
+          'updated_at',
           'importantExpiredAt',
         ],
       });

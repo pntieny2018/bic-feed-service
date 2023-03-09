@@ -23,7 +23,9 @@ export class SeriesAddedItemsListener {
 
   @On(SeriesAddedItemsEvent)
   public async handler(event: SeriesAddedItemsEvent): Promise<void> {
-    this._logger.debug(`[SeriesAddedItemsListener] ${JSON.stringify(event.payload)}`);
+    this._logger.debug(
+      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.itemIds[0]}`
+    );
 
     const { seriesId } = event.payload;
 
@@ -57,7 +59,7 @@ export class SeriesAddedItemsListener {
       series[0],
       items[0]
     );
-
+    console.log('222222222222222', JSON.stringify(activity, null, 4));
     this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
