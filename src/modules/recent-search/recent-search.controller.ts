@@ -4,8 +4,9 @@ import { CreateRecentSearchDto, GetRecentSearchPostDto } from './dto/requests';
 import { CleanRecentSearchesDto } from './dto/requests/clean-recent-searches.dto';
 import { ApiTags, ApiSecurity, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { Controller, Delete, Get, Post, Query, Body, Param, ParseUUIDPipe } from '@nestjs/common';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { APP_VERSION } from '../../common/constants';
+import { UserDto } from '../v2-user/application';
 
 @ApiSecurity('authorization')
 @ApiTags('Recent Searches')

@@ -6,13 +6,13 @@ import { CategoryModel } from '../../database/models/category.model';
 import { NIL as NIL_UUID } from 'uuid';
 import { ArrayHelper, ExceptionHelper, StringHelper } from '../../common/helpers';
 import { HTTP_STATUS_ID } from '../../common/constants';
-import { UserDto } from '../auth';
 import { PageDto } from '../../common/dto';
 import { GetCategoryDto } from './dto/requests/get-category.dto';
 import { Op, Transaction } from 'sequelize';
 import { LogicException } from '../../common/exceptions';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { ClassTransformer } from 'class-transformer';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class CategoryService {

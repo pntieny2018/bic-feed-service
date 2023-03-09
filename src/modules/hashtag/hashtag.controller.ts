@@ -3,11 +3,12 @@ import { Body, Controller, Get, Logger, Post, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { HashtagResponseDto } from './dto/responses/hashtag-response.dto';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { CreateHashtagDto } from './dto/requests/create-hashtag.dto';
 import { HashtagService } from './hashtag.service';
 import { PageDto } from '../../common/dto';
 import { GetHashtagDto } from './dto/requests/get-hashtag.dto';
+import { UserDto } from '../v2-user/application';
 
 @ApiTags('Hashtag')
 @ApiSecurity('authorization')

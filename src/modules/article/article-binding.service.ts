@@ -4,13 +4,12 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
-import { UserDto } from '../auth';
 import { ReactionService } from '../reaction';
 import { MentionService } from '../mention';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { PostBindingService } from '../post/post-binding.service';
 import { ArticleResponseDto } from './dto/responses';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 
 @Injectable()

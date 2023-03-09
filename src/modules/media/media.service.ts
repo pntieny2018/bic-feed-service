@@ -26,7 +26,6 @@ import {
 } from '../../database/models/media.model';
 import { PostMediaModel } from '../../database/models/post-media.model';
 import { PostModel } from '../../database/models/post.model';
-import { UserDto } from '../auth';
 import { UploadType } from '../upload/dto/requests/upload.dto';
 import { MediaDto } from './dto';
 import { MediaFilterResponseDto } from './dto/response';
@@ -34,6 +33,7 @@ import { FileMetadataResponseDto } from './dto/response/file-metadata-response.d
 import { ImageMetadataResponseDto } from './dto/response/image-metadata-response.dto';
 import { VideoMetadataResponseDto } from './dto/response/video-metadata-response.dto';
 import { EntityType } from './media.constants';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class MediaService {

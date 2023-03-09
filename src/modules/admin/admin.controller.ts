@@ -6,9 +6,10 @@ import { PostResponseDto } from '../post/dto/responses';
 import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
 import { AdminService } from './admin.service';
 import { ArticleResponseDto } from '../article/dto/responses';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { GetPostPipe } from '../post/pipes';
 import { GetArticleDto } from '../article/dto/requests';
+import { UserDto } from '../v2-user/application';
 
 @ApiSecurity('authorization')
 @ApiTags('Admin')

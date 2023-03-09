@@ -3,12 +3,12 @@ import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer, plainToInstance } from 'class-transformer';
 import { PageDto } from '../../common/dto';
 import { PostEditedHistoryModel } from '../../database/models/post-edited-history.model';
-import { UserDto } from '../auth';
 import { AuthorityService } from '../authority';
 import { GetPostEditedHistoryDto } from './dto/requests';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { PostService } from './post.service';
 import { PostStatus } from '../../database/models/post.model';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class PostHistoryService {

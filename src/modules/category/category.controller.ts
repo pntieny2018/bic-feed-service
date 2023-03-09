@@ -3,11 +3,12 @@ import { Body, Controller, Get, Logger, Param, ParseUUIDPipe, Post, Query } from
 import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { CategoryResponseDto } from './dto/responses/category-response.dto';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { CreateCategoryDto } from './dto/requests/create-category.dto';
 import { CategoryService } from './category.service';
 import { PageDto } from '../../common/dto';
 import { GetCategoryDto } from './dto/requests/get-category.dto';
+import { UserDto } from '../v2-user/application';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')

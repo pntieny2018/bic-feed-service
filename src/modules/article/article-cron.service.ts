@@ -6,7 +6,6 @@ import { IPost, PostModel, PostStatus } from '../../database/models/post.model';
 import { Op, WhereOptions } from 'sequelize';
 import moment from 'moment/moment';
 import { ArticleService } from './article.service';
-import { UserDto } from '../auth';
 import { RedisService } from '@app/redis';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
