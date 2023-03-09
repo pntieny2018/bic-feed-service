@@ -14,7 +14,7 @@ export type UserProps = {
   avatar: string;
   email: string;
   groups: string[];
-  permission?: UserPermission;
+  permissions?: UserPermission;
 };
 
 export class UserEntity extends DomainAggregateRoot<UserProps> {
@@ -31,7 +31,7 @@ export class UserEntity extends DomainAggregateRoot<UserProps> {
     }
   }
 
-  public setPermission(permission: UserPermission): void {
-    this._props.permission = permission;
+  public setPermissions(permissions: UserPermission): void {
+    this._props.permissions = permissions;
   }
 }
