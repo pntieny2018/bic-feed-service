@@ -528,7 +528,7 @@ export class PostListener {
         this._feedPublisherService.fanoutOnWrite(
           id,
           audience.groups.map((g) => g.id),
-          [],
+          []
         );
       } catch (error) {
         this._logger.error(JSON.stringify(error?.stack));
@@ -538,7 +538,7 @@ export class PostListener {
 
     const postWithSeries = await this._postService.getListWithGroupsByIds(
       posts.map((post) => post.id),
-      false,
+      false
     );
     for (const post of postWithSeries) {
       if (post['postSeries']?.length > 0) {
@@ -550,7 +550,7 @@ export class PostListener {
               actor: {
                 id: post.createdBy,
               },
-            }),
+            })
           );
         }
       }
