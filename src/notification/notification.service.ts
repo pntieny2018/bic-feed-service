@@ -10,6 +10,7 @@ export class NotificationService {
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public async publishPostNotification<T>(payload: NotificationPayloadDto<T>): Promise<void> {
+    this._logger.debug(`Sent event--- ${JSON.stringify(payload.value)}`);
     await this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
       key: payload.key,
       value: payload.value,

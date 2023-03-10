@@ -161,11 +161,20 @@ export class SeriesAppService {
       series[0].groups.map((group) => group.groupId)
     );
     await this._seriesService.removeItems(series[0], itemIds);
-
+    const items = await this._postService.getListWithGroupsByIds(itemIds, false);
     this._eventEmitter.emit(
       new SeriesRemovedItemsEvent({
         seriesId,
-        itemIds,
+        items: items.map((item) => ({
+          id: item.id,
+          title: item.title,
+          content: item.content,
+          type: item.type,
+          createdBy: item.createdBy,
+          groupIds: item.groups.map((group) => group.groupId),
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+        })),
         actor: user,
       })
     );

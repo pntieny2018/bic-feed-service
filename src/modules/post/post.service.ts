@@ -316,6 +316,12 @@ export class PostService {
           required: false,
           attributes: ['tagId'],
         },
+        {
+          model: PostSeriesModel,
+          required: false,
+          as: 'postSeries',
+          attributes: ['seriesId'],
+        },
       ],
       where: {
         id: postIds,
@@ -1224,7 +1230,12 @@ export class PostService {
       shouldIncludeMention: true,
       filterMediaIds: [id],
     });
-    const posts = await this.postModel.findAll({ include });
+    const posts = await this.postModel.findAll({
+      attributes: {
+        include: [['tags_json', 'tags']],
+      },
+      include,
+    });
 
     const jsonPosts = posts.map((p) => p.toJSON());
 

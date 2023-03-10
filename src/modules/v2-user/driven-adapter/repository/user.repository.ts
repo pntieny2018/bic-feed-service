@@ -63,7 +63,7 @@ export class UserRepository implements IUserRepository {
 
   public async findAllByIds(ids: string[]): Promise<UserEntity[]> {
     const keys = [...new Set(ArrayHelper.arrayUnique(ids.map((id) => id)))].map(
-      (groupId) => `${this._prefixRedis + groupId}`
+      (userId) => `${this._prefixRedis + userId}`
     );
 
     const users = await this._store.mget(keys);

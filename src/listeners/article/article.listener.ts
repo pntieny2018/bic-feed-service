@@ -44,7 +44,7 @@ export class ArticleListener {
 
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
-    const { article } = event.payload;
+    const { article, actor } = event.payload;
     if (article.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
@@ -103,6 +103,28 @@ export class ArticleListener {
         data: activity,
       },
     });
+
+    const seriesIds = article.series.map((series) => series.id) ?? [];
+    for (const seriesId of seriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesRemovedItemsEvent({
+          items: [
+            {
+              id: article.id,
+              title: article.title,
+              content: article.content,
+              type: article.type,
+              createdBy: article.createdBy,
+              groupIds: article.groups.map((group) => group.groupId),
+              createdAt: article.createdAt,
+              updatedAt: article.updatedAt,
+            },
+          ],
+          seriesId: seriesId,
+          actor,
+        })
+      );
+    }
   }
 
   @On(ArticleHasBeenPublishedEvent)
@@ -338,7 +360,18 @@ export class ArticleListener {
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
             seriesId,
-            itemIds: [newArticle.id],
+            items: [
+              {
+                id: newArticle.id,
+                title: newArticle.title,
+                content: newArticle.content,
+                type: newArticle.type,
+                createdBy: newArticle.createdBy,
+                groupIds: newArticle.audience.groups.map((group) => group.id),
+                createdAt: newArticle.createdAt,
+                updatedAt: newArticle.updatedAt,
+              },
+            ],
             actor,
           })
         );

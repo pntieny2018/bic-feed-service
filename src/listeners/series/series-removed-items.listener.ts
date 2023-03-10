@@ -24,9 +24,9 @@ export class SeriesRemovedItemsListener {
   @On(SeriesRemovedItemsEvent)
   public async handler(event: SeriesRemovedItemsEvent): Promise<void> {
     this._logger.debug(
-      `[SeriesRemovedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.itemIds[0]}`
+      `[SeriesRemovedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.items[0]}`
     );
-    const { seriesId, itemIds, actor } = event.payload;
+    const { seriesId } = event.payload;
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
     });
@@ -44,13 +44,12 @@ export class SeriesRemovedItemsListener {
   }
 
   private async _notifyDeletedItems(event: SeriesRemovedItemsEvent): Promise<void> {
-    const { seriesId, itemIds, actor } = event.payload;
+    const { seriesId, items, actor } = event.payload;
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
-    const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
     if (items.length === 0 || series.length === 0) return;
     if (series[0].createdBy === items[0].createdBy) return;
-    const isSendToArticleCreator = series[0].createdBy === actor.id;
+    const isSendToArticleCreator = items[0].createdBy !== actor.id;
     const activity = await this._seriesActivityService.getDeletingItemToSeriesActivity(
       series[0],
       items[0]
