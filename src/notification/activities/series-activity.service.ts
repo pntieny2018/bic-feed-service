@@ -79,13 +79,13 @@ export class SeriesActivityService {
       VerbActivity.ADD,
       TypeActivity.SERIES,
       new Date(),
-      new Date(),
+      new Date()
     );
   }
 
   public getDeletingItemToSeriesActivity(
     series: IPost,
-    item: ItemRemovedInSeriesEvent,
+    item: ItemRemovedInSeriesEvent
   ): NotificationActivity {
     const activityObject = {
       id: series.id,
