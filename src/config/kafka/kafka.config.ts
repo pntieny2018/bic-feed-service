@@ -21,9 +21,5 @@ export const getKafkaConfig = (): IKafkaConfig => ({
   },
   consumer: {
     groupId: process.env.KAFKA_CONSUMER_GROUP_ID,
-    sessionTimeout: 60000,
-    maxWaitTimeInMs: 200, // 0.2 second
-    minBytes: 1, // 1 bytes
-    maxBytes: 100000, //100KB
   },
 });

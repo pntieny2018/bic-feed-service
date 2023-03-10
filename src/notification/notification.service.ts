@@ -9,8 +9,8 @@ export class NotificationService {
 
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
-  public publishPostNotification<T>(payload: NotificationPayloadDto<T>): any {
-    return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
+  public async publishPostNotification<T>(payload: NotificationPayloadDto<T>): Promise<void> {
+    await this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
       key: payload.key,
       value: payload.value,
     });
