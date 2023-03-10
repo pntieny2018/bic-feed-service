@@ -316,6 +316,12 @@ export class PostService {
           required: false,
           attributes: ['tagId'],
         },
+        {
+          model: PostSeriesModel,
+          required: false,
+          as: 'postSeries',
+          attributes: ['seriesId'],
+        },
       ],
       where: {
         id: postIds,

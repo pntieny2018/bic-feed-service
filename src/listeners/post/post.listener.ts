@@ -98,11 +98,22 @@ export class PostListener {
         },
       });
 
-      const seriesIds = post.series.map((series) => series.id) ?? [];
+      const seriesIds = post['postSeries']?.map((postSeries) => postSeries.seriesId) ?? [];
       for (const seriesId of seriesIds) {
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
-            itemIds: [post.id],
+            items: [
+              {
+                id: post.id,
+                title: null,
+                content: post.content,
+                type: post.type,
+                createdBy: post.createdBy,
+                groupIds: post.groups.map((group) => group.groupId),
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
+              },
+            ],
             seriesId: seriesId,
             actor: actor,
           })
@@ -222,7 +233,6 @@ export class PostListener {
     } catch (error) {
       this._sentryService.captureException(error);
     }
-
     if (post.series && post.series.length) {
       for (const sr of post.series) {
         this._internalEventEmitter.emit(
@@ -394,7 +404,18 @@ export class PostListener {
       for (const seriesId of seriesIdsDeleted) {
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
-            itemIds: [newPost.id],
+            items: [
+              {
+                id: newPost.id,
+                title: null,
+                content: newPost.content,
+                type: newPost.type,
+                createdBy: newPost.createdBy,
+                groupIds: newPost.audience.groups.map((group) => group.id),
+                createdAt: newPost.createdAt,
+                updatedAt: newPost.updatedAt,
+              },
+            ],
             seriesId: seriesId,
             actor: actor,
           })

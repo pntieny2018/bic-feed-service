@@ -108,7 +108,18 @@ export class ArticleListener {
     for (const seriesId of seriesIds) {
       this._internalEventEmitter.emit(
         new SeriesRemovedItemsEvent({
-          itemIds: [article.id],
+          items: [
+            {
+              id: article.id,
+              title: article.title,
+              content: article.content,
+              type: article.type,
+              createdBy: article.createdBy,
+              groupIds: article.groups.map((group) => group.groupId),
+              createdAt: article.createdAt,
+              updatedAt: article.updatedAt,
+            },
+          ],
           seriesId: seriesId,
           actor,
         })
@@ -349,7 +360,18 @@ export class ArticleListener {
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
             seriesId,
-            itemIds: [newArticle.id],
+            items: [
+              {
+                id: newArticle.id,
+                title: newArticle.title,
+                content: newArticle.content,
+                type: newArticle.type,
+                createdBy: newArticle.createdBy,
+                groupIds: newArticle.audience.groups.map((group) => group.id),
+                createdAt: newArticle.createdAt,
+                updatedAt: newArticle.updatedAt,
+              },
+            ],
             actor,
           })
         );
