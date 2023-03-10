@@ -44,7 +44,7 @@ export class ArticleListener {
 
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
-    const { article } = event.payload;
+    const { article, actor } = event.payload;
     if (article.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
@@ -103,6 +103,17 @@ export class ArticleListener {
         data: activity,
       },
     });
+
+    const seriesIds = article.series.map((series) => series.id) ?? [];
+    for (const seriesId of seriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesRemovedItemsEvent({
+          itemIds: [article.id],
+          seriesId: seriesId,
+          actor,
+        }),
+      );
+    }
   }
 
   @On(ArticleHasBeenPublishedEvent)

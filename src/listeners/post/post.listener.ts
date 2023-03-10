@@ -98,6 +98,17 @@ export class PostListener {
         },
       });
 
+      const seriesIds = post.series.map((series) => series.id) ?? [];
+      for (const seriesId of seriesIds) {
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
+            itemIds: [post.id],
+            seriesId: seriesId,
+            actor: actor,
+          })
+        );
+      }
+
       return;
     } catch (error) {
       this._logger.error(JSON.stringify(error?.stack));
