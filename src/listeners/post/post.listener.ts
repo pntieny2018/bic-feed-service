@@ -26,6 +26,7 @@ import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/ser
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
+import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
 export class PostListener {
@@ -43,7 +44,8 @@ export class PostListener {
     private readonly _postHistoryService: PostHistoryService,
     private readonly _filterUserService: FilterUserService,
     private readonly _internalEventEmitter: InternalEventEmitterService,
-    private readonly _tagService: TagService
+    private readonly _tagService: TagService,
+    private readonly _seriesService: SeriesService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -521,17 +523,38 @@ export class PostListener {
           updatedAt,
         },
       ]);
+
       try {
         this._feedPublisherService.fanoutOnWrite(
           id,
           audience.groups.map((g) => g.id),
-          []
+          [],
         );
       } catch (error) {
         this._logger.error(JSON.stringify(error?.stack));
         this._sentryService.captureException(error);
       }
     });
+
+    const postWithSeries = await this._postService.getListWithGroupsByIds(
+      posts.map((post) => post.id),
+      false,
+    );
+    for (const post of postWithSeries) {
+      if (post['postSeries']?.length > 0) {
+        for (const seriesItem of post['postSeries']) {
+          this._internalEventEmitter.emit(
+            new SeriesAddedItemsEvent({
+              itemIds: [post.id],
+              seriesId: seriesItem.id,
+              actor: {
+                id: post.createdBy,
+              },
+            }),
+          );
+        }
+      }
+    }
   }
 
   @On(PostVideoFailedEvent)
