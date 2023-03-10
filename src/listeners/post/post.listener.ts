@@ -364,10 +364,8 @@ export class PostListener {
     }
 
     const series = newPost.series?.map((s) => s.id) ?? [];
-
+    const oldSeriesIds = oldPost.series?.map((s) => s.id) ?? [];
     if (series && series.length > 0) {
-      const oldSeriesIds = oldPost.series?.map((s) => s.id) ?? [];
-
       const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
 
       for (const seriesId of newSeriesIds) {
@@ -379,8 +377,9 @@ export class PostListener {
           })
         );
       }
-
-      const seriesIdsDeleted = oldSeriesIds.filter((id) => !newSeriesIds.includes(id));
+    }
+    if (oldSeriesIds && oldSeriesIds.length > 0) {
+      const seriesIdsDeleted = oldSeriesIds.filter((id) => !series.includes(id));
       for (const seriesId of seriesIdsDeleted) {
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
@@ -391,6 +390,7 @@ export class PostListener {
         );
       }
     }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
