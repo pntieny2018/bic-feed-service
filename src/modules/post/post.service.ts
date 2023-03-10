@@ -1230,7 +1230,12 @@ export class PostService {
       shouldIncludeMention: true,
       filterMediaIds: [id],
     });
-    const posts = await this.postModel.findAll({ include });
+    const posts = await this.postModel.findAll({
+      attributes: {
+        include: [['tags_json', 'tags']],
+      },
+      include,
+    });
 
     const jsonPosts = posts.map((p) => p.toJSON());
 
