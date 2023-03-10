@@ -21,6 +21,7 @@ export class NotificationMetaPayloadDto<T> {
     isSendToContentCreator?: boolean;
     targetUserIds?: string[];
   };
+  public contentIsDeleted?: boolean;
 }
 export class NotificationPayloadDto<T> {
   public key: string;

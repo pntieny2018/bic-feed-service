@@ -176,6 +176,7 @@ export class SeriesAppService {
           updatedAt: item.updatedAt,
         })),
         actor: user,
+        contentIsDeleted: false,
       })
     );
   }

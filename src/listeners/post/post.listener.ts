@@ -118,6 +118,7 @@ export class PostListener {
             ],
             seriesId: seriesId,
             actor: actor,
+            contentIsDeleted: true,
           })
         );
       }
@@ -420,6 +421,7 @@ export class PostListener {
             ],
             seriesId: seriesId,
             actor: actor,
+            contentIsDeleted: false,
           })
         );
       }
