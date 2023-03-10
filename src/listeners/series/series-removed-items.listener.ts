@@ -50,7 +50,7 @@ export class SeriesRemovedItemsListener {
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
     if (items.length === 0 || series.length === 0) return;
     if (series[0].createdBy === items[0].createdBy) return;
-    const isSendToArticleCreator = series[0].createdBy === actor.id;
+    const isSendToArticleCreator = series[0].createdBy === items[0].createdBy;
     const activity = await this._seriesActivityService.getDeletingItemToSeriesActivity(
       series[0],
       items[0]
