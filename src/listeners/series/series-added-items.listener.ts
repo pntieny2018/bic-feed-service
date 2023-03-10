@@ -59,7 +59,7 @@ export class SeriesAddedItemsListener {
       series[0],
       items[0]
     );
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
         actor: {
