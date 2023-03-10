@@ -20,7 +20,7 @@ export class TagQuery implements ITagQuery {
       conditions['groupId'] = groupIds;
     }
     if (name) {
-      conditions['name'] = { [Op.iLike]: '%' + name };
+      conditions['name'] = { [Op.iLike]: name + '%' };
     }
     const { rows, count } = await this._tagModel.findAndCountAll({
       where: conditions,
