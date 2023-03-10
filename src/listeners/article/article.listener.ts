@@ -111,7 +111,7 @@ export class ArticleListener {
           itemIds: [article.id],
           seriesId: seriesId,
           actor,
-        }),
+        })
       );
     }
   }
