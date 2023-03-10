@@ -66,8 +66,8 @@ export class SeriesRemovedItemsListener {
         meta: {
           series: {
             isSendToContentCreator: isSendToArticleCreator,
+            contentIsDeleted,
           },
-          contentIsDeleted,
         },
       },
     });
