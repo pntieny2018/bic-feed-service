@@ -59,9 +59,14 @@ export class SeriesAppService {
   }
 
   public async createSeries(user: UserDto, createSeriesDto: CreateSeriesDto): Promise<any> {
-    const { audience } = createSeriesDto;
+    const { audience, setting } = createSeriesDto;
     if (audience.groupIds?.length > 0) {
-      await this._authorityService.checkCanCreateSeries(user, audience.groupIds);
+      const isEnableSetting =
+        setting.isImportant ||
+        setting.canComment === false ||
+        setting.canReact === false ||
+        setting.canShare === false;
+      await this._authorityService.checkCanCreateSeries(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
@@ -83,7 +88,7 @@ export class SeriesAppService {
     postId: string,
     updateSeriesDto: UpdateSeriesDto
   ): Promise<SeriesResponseDto> {
-    const { audience } = updateSeriesDto;
+    const { audience, setting } = updateSeriesDto;
     const seriesBefore = await this._seriesService.get(postId, user, new GetSeriesDto());
 
     if (!seriesBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
@@ -92,13 +97,23 @@ export class SeriesAppService {
     if (audience.groupIds.length === 0) {
       throw new BadRequestException('Audience is required');
     }
+    let isEnableSetting = false;
+    if (
+      setting &&
+      (setting.isImportant ||
+        setting.canComment === false ||
+        setting.canReact === false ||
+        setting.canShare === false)
+    ) {
+      isEnableSetting = true;
+    }
 
     const oldGroupIds = seriesBefore.audience.groups.map((group) => group.id);
-    await this._authorityService.checkCanUpdateSeries(user, oldGroupIds);
+    await this._authorityService.checkCanUpdateSeries(user, oldGroupIds, false);
     this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
     const newAudienceIds = audience.groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
     if (newAudienceIds.length) {
-      await this._authorityService.checkCanCreateSeries(user, newAudienceIds);
+      await this._authorityService.checkCanCreateSeries(user, newAudienceIds, isEnableSetting);
     }
     const removeGroupIds = oldGroupIds.filter((id) => !audience.groupIds.includes(id));
     if (removeGroupIds.length) {
@@ -158,7 +173,8 @@ export class SeriesAppService {
     await this._authorityService.checkPostOwner(series[0], user.id);
     await this._authorityService.checkCanUpdateSeries(
       user,
-      series[0].groups.map((group) => group.groupId)
+      series[0].groups.map((group) => group.groupId),
+      false
     );
     await this._seriesService.removeItems(series[0], itemIds);
     const items = await this._postService.getListWithGroupsByIds(itemIds, false);
@@ -206,7 +222,8 @@ export class SeriesAppService {
 
     await this._authorityService.checkCanUpdateSeries(
       user,
-      series[0].groups.map((group) => group.groupId)
+      series[0].groups.map((group) => group.groupId),
+      false
     );
 
     const invalidItems = [];
@@ -247,7 +264,8 @@ export class SeriesAppService {
     await this._authorityService.checkPostOwner(series, user.id);
     await this._authorityService.checkCanUpdateSeries(
       user,
-      series.groups.map((group) => group.groupId)
+      series.groups.map((group) => group.groupId),
+      false
     );
     await this._seriesService.reorderItems(seriesId, itemIds);
     this._eventEmitter.emit(
