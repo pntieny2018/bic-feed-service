@@ -122,6 +122,7 @@ export class ArticleListener {
           ],
           seriesId: seriesId,
           actor,
+          contentIsDeleted: true,
         })
       );
     }
@@ -373,6 +374,7 @@ export class ArticleListener {
               },
             ],
             actor,
+            contentIsDeleted: false,
           })
         );
       }

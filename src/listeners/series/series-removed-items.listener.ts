@@ -44,7 +44,7 @@ export class SeriesRemovedItemsListener {
   }
 
   private async _notifyDeletedItems(event: SeriesRemovedItemsEvent): Promise<void> {
-    const { seriesId, items, actor } = event.payload;
+    const { seriesId, items, actor, contentIsDeleted } = event.payload;
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
     if (items.length === 0 || series.length === 0) return;
@@ -66,6 +66,7 @@ export class SeriesRemovedItemsListener {
         meta: {
           series: {
             isSendToContentCreator: isSendToArticleCreator,
+            contentIsDeleted,
           },
         },
       },

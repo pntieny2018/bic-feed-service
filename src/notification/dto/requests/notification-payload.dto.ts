@@ -20,6 +20,7 @@ export class NotificationMetaPayloadDto<T> {
   public series?: {
     isSendToContentCreator?: boolean;
     targetUserIds?: string[];
+    contentIsDeleted?: boolean;
   };
 }
 export class NotificationPayloadDto<T> {

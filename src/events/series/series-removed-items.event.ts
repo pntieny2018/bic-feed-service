@@ -33,4 +33,5 @@ export interface ISeriesRemovedItemsPayload {
   seriesId: string;
   items: ItemRemovedInSeriesEvent[];
   actor: UserDto;
+  contentIsDeleted: boolean;
 }
