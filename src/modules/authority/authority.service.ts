@@ -143,32 +143,16 @@ export class AuthorityService {
   }
 
   public async checkCanDeletePost(user: UserDto, groupAudienceIds: string[]): Promise<void> {
-    const notCreatableInGroups = [];
-    const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
-    const ability = await this._buildAbility(user);
-    for (const group of groups) {
-      const canCreatePost = ability.can(
-        PERMISSION_KEY.CRUD_POST_ARTICLE,
-        subject(SUBJECT.GROUP, { id: group.id })
-      );
-      if (!canCreatePost) {
-        notCreatableInGroups.push(group);
-      }
-    }
-
-    if (notCreatableInGroups.length) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.CRUD_POST_ARTICLE
-        )} permission at group ${notCreatableInGroups.map((e) => e.name).join(', ')}`,
-        errors: { groupsDenied: notCreatableInGroups.map((e) => e.id) },
-      });
-    }
+    return this.checkCanCreatePost(user, groupAudienceIds, false);
   }
 
-  public async checkCanUpdateSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
+  public async checkCanUpdateSeries(
+    user: UserDto,
+    groupAudienceIds: string[],
+    needEnableSetting: boolean
+  ): Promise<void> {
     const notCreatableGroupInfos = [];
+    const notEditSettingInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._buildAbility(user);
     for (const group of groups) {
@@ -178,6 +162,15 @@ export class AuthorityService {
       );
       if (!canCreatePost) {
         notCreatableGroupInfos.push(group);
+      }
+      if (canCreatePost && needEnableSetting) {
+        const canEditPostSetting = ability.can(
+          PERMISSION_KEY.EDIT_POST_SETTING,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canEditPostSetting) {
+          notEditSettingInGroups.push(group);
+        }
       }
     }
 
@@ -190,13 +183,27 @@ export class AuthorityService {
         errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
       });
     }
+
+    if (notEditSettingInGroups.length > 0 && notEditSettingInGroups.length === groups.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have ${permissionToCommonName(
+          PERMISSION_KEY.EDIT_POST_SETTING
+        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
+      });
+    }
   }
 
-  public async checkCanCreateSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
+  public async checkCanCreateSeries(
+    user: UserDto,
+    groupAudienceIds: string[],
+    needEnableSetting: boolean
+  ): Promise<void> {
     const notCreatableGroupInfos = [];
+    const notEditSettingInGroups: GroupDto[] = [];
     const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
     const ability = await this._buildAbility(user);
-    console.log('pemrission', user.permissions);
     for (const group of groups) {
       const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_SERIES,
@@ -204,6 +211,16 @@ export class AuthorityService {
       );
       if (!canCreatePost) {
         notCreatableGroupInfos.push(group);
+      }
+
+      if (canCreatePost && needEnableSetting) {
+        const canEditPostSetting = ability.can(
+          PERMISSION_KEY.EDIT_POST_SETTING,
+          subject(SUBJECT.GROUP, { id: group.id })
+        );
+        if (!canEditPostSetting) {
+          notEditSettingInGroups.push(group);
+        }
       }
     }
 
@@ -216,10 +233,20 @@ export class AuthorityService {
         errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
       });
     }
+
+    if (notEditSettingInGroups.length > 0) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: `You don't have ${permissionToCommonName(
+          PERMISSION_KEY.EDIT_POST_SETTING
+        )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
+        errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
+      });
+    }
   }
 
   public async checkCanDeleteSeries(user: UserDto, groupAudienceIds: string[]): Promise<void> {
-    return this.checkCanCreateSeries(user, groupAudienceIds);
+    return this.checkCanCreateSeries(user, groupAudienceIds, false);
   }
 
   public async checkPostOwner(
