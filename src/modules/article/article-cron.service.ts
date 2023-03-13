@@ -52,11 +52,9 @@ export class ArticleCronService {
 
   @Cron('33 */30 * * * *')
   private async _jobSchedulePublishArticle(): Promise<void> {
+    const redisKeyName = 'isRunningArticleSchedule';
+    const isRunningArticleSchedule = await this._redisService.setNxEx(redisKeyName, true);
     try {
-      const isRunningArticleSchedule = await this._redisService.setNxEx(
-        'isRunningArticleSchedule',
-        true
-      );
       if (isRunningArticleSchedule === 1) {
         const articles = await this._getsRecursive({
           status: PostStatus.WAITING_SCHEDULE,
@@ -81,5 +79,6 @@ export class ArticleCronService {
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
     }
+    await this._redisService.del(redisKeyName);
   }
 }
