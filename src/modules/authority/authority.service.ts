@@ -149,7 +149,7 @@ export class AuthorityService {
   public async checkCanUpdateSeries(
     user: UserDto,
     groupAudienceIds: string[],
-    needEnableSetting: boolean,
+    needEnableSetting: boolean
   ): Promise<void> {
     const notCreatableGroupInfos = [];
     const notEditSettingInGroups: GroupDto[] = [];
@@ -158,7 +158,7 @@ export class AuthorityService {
     for (const group of groups) {
       const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_SERIES,
-        subject(SUBJECT.GROUP, { id: group.id }),
+        subject(SUBJECT.GROUP, { id: group.id })
       );
       if (!canCreatePost) {
         notCreatableGroupInfos.push(group);
@@ -166,7 +166,7 @@ export class AuthorityService {
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
           PERMISSION_KEY.EDIT_POST_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id }),
+          subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
           notEditSettingInGroups.push(group);
@@ -178,7 +178,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.CRUD_SERIES,
+          PERMISSION_KEY.CRUD_SERIES
         )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
       });
@@ -188,7 +188,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_POST_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
@@ -198,7 +198,7 @@ export class AuthorityService {
   public async checkCanCreateSeries(
     user: UserDto,
     groupAudienceIds: string[],
-    needEnableSetting: boolean,
+    needEnableSetting: boolean
   ): Promise<void> {
     const notCreatableGroupInfos = [];
     const notEditSettingInGroups: GroupDto[] = [];
@@ -207,7 +207,7 @@ export class AuthorityService {
     for (const group of groups) {
       const canCreatePost = ability.can(
         PERMISSION_KEY.CRUD_SERIES,
-        subject(SUBJECT.GROUP, { id: group.id }),
+        subject(SUBJECT.GROUP, { id: group.id })
       );
       if (!canCreatePost) {
         notCreatableGroupInfos.push(group);
@@ -216,7 +216,7 @@ export class AuthorityService {
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
           PERMISSION_KEY.EDIT_POST_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id }),
+          subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
           notEditSettingInGroups.push(group);
@@ -228,7 +228,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.CRUD_SERIES,
+          PERMISSION_KEY.CRUD_SERIES
         )} permission at group ${notCreatableGroupInfos.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notCreatableGroupInfos.map((e) => e.id) },
       });
@@ -238,7 +238,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_POST_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
