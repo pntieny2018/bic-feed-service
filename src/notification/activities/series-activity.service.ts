@@ -9,7 +9,7 @@ export class SeriesActivityService {
     const existingCreator = new Set([]);
     const filterItems = [];
     for (const item of items) {
-      if (!existingCreator.has(item.createdBy)) {
+      if (!existingCreator.has(item.createdBy) && item.createdBy !== series.createdBy) {
         filterItems.push({
           id: item.id,
           title: item.title,
