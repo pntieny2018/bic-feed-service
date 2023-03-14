@@ -3,6 +3,7 @@ import { Expose, Type } from 'class-transformer';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { CategoryResponseDto } from './category.response.dto';
 import { UserDto } from '../../../v2-user/application';
+import { AudienceResponseDto } from '../../../post/dto/responses';
 
 export class ArticleSearchResponseDto {
   @ApiProperty({
@@ -25,6 +26,12 @@ export class ArticleSearchResponseDto {
   })
   @Expose()
   public summary: string;
+
+  @ApiProperty({
+    type: AudienceResponseDto,
+  })
+  @Expose()
+  public audience: AudienceResponseDto;
 
   @ApiProperty({
     description: 'Categories',
