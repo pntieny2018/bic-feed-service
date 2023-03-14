@@ -566,6 +566,7 @@ export class SearchService {
     const articles = hits.map((item) => {
       const source = {
         id: item._source.id,
+        groupIds: item._source.groupIds,
         summary: item._source.summary,
         coverMedia: item._source.coverMedia,
         createdBy: item._source.createdBy,
@@ -576,7 +577,9 @@ export class SearchService {
     });
 
     await this.postBindingService.bindActor(articles);
-
+    await this.postBindingService.bindAudience(articles, {
+      shouldHideSecretAudienceCanNotAccess: true,
+    });
     const result = this.classTransformer.plainToInstance(ArticleSearchResponseDto, articles, {
       excludeExtraneousValues: true,
     });
