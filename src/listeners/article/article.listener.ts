@@ -104,7 +104,7 @@ export class ArticleListener {
       },
     });
 
-    const seriesIds = article.series.map((series) => series.id) ?? [];
+    const seriesIds = article['postSeries'].map((series) => series.seriesId) ?? [];
     for (const seriesId of seriesIds) {
       this._internalEventEmitter.emit(
         new SeriesRemovedItemsEvent({
