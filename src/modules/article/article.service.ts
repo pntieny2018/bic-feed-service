@@ -131,41 +131,6 @@ export class ArticleService extends PostService {
     );
   }
 
-  private async _getItemsInSeriesByIds(ids: string[], authUser): Promise<IPost[]> {
-    const include = this.getIncludeObj({
-      shouldIncludeCategory: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCover: true,
-      mustIncludeGroup: true,
-      authUserId: authUser.id,
-    });
-
-    const attributes = {
-      include: [PostModel.loadSaved(authUser.id)],
-    };
-    if (authUser) {
-      attributes.include.push(PostModel.loadMarkReadPost(authUser.id));
-      attributes.include.push(PostModel.loadSaved(authUser.id));
-    }
-    const rows = await this.postModel.findAll({
-      attributes,
-      include,
-      where: {
-        id: ids,
-        isHidden: false,
-        status: PostStatus.PUBLISHED,
-      },
-    });
-
-    const mappedPosts = [];
-    for (const id of ids) {
-      const post = rows.find((row) => row.id === id);
-      if (post) mappedPosts.push(post.toJSON());
-    }
-
-    return mappedPosts;
-  }
-
   public async getItemsInSeries(
     seriesId: string,
     authUser: UserDto
@@ -187,7 +152,7 @@ export class ArticleService extends PostService {
     const articleIdsSorted = itemsInSeries
       .filter((item) => !postIdsReported.includes(item.postId))
       .map((item) => item.postId);
-    const items = await this._getItemsInSeriesByIds(articleIdsSorted, authUser);
+    const items = await this.getItemsInSeriesByIds(articleIdsSorted, authUser);
     const itemsBindedData = await this.articleBinding.bindRelatedData(items, {
       shouldBindActor: true,
       shouldBindMention: true,

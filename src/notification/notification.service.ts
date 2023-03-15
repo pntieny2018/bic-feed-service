@@ -10,7 +10,7 @@ export class NotificationService {
   public constructor(@Inject(KAFKA_PRODUCER) private _kafkaProducer: ClientKafka) {}
 
   public async publishPostNotification<T>(payload: NotificationPayloadDto<T>): Promise<void> {
-    this._logger.debug(`Sent event--- ${JSON.stringify(payload.value)}`);
+    this._logger.debug(`Sent event[${payload.value.event}]--- ${JSON.stringify(payload.value)}`);
     await this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.POST, {
       key: payload.key,
       value: payload.value,
@@ -18,6 +18,7 @@ export class NotificationService {
   }
 
   public publishCommentNotification<T>(payload: NotificationPayloadDto<T>): any {
+    this._logger.debug(`Sent event[${payload.value.event}]--- ${JSON.stringify(payload.value)}`);
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.COMMENT, {
       key: payload.key,
       value: payload.value,
@@ -25,6 +26,7 @@ export class NotificationService {
   }
 
   public publishReactionNotification<T>(payload: NotificationPayloadDto<T>): any {
+    this._logger.debug(`Sent event[${payload.value.event}]--- ${JSON.stringify(payload.value)}`);
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REACTION, {
       key: payload.key,
       value: payload.value,
@@ -32,6 +34,7 @@ export class NotificationService {
   }
 
   public publishReportNotification<T>(payload: NotificationPayloadDto<T>): any {
+    this._logger.debug(`Sent event[${payload.value.event}]--- ${JSON.stringify(payload.value)}`);
     return this._kafkaProducer.emit(KAFKA_TOPIC.STREAM.REPORT, {
       key: payload.key,
       value: payload.value,
