@@ -24,7 +24,9 @@ export class SeriesAddedItemsListener {
   @On(SeriesAddedItemsEvent)
   public async handler(event: SeriesAddedItemsEvent): Promise<void> {
     this._logger.debug(
-      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.itemIds[0]}`
+      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${JSON.stringify(
+        event.payload.itemIds[0]
+      )}`
     );
 
     const { seriesId } = event.payload;
@@ -54,7 +56,7 @@ export class SeriesAddedItemsListener {
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
     if (items.length === 0 || series.length === 0) return;
     if (series[0].createdBy === items[0].createdBy) return;
-    const isSendToArticleCreator = series[0].createdBy === actor.id;
+    const isSendToArticleCreator = items[0].createdBy !== actor.id;
     const activity = await this._seriesActivityService.getAddingItemToSeriesActivity(
       series[0],
       items[0]

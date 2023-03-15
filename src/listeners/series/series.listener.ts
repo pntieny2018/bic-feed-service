@@ -54,12 +54,11 @@ export class SeriesListener {
     });
 
     this._postSearchService.deletePostsToSearch([series]);
-
     if (!series) return;
-    const items = await this._postService.getListWithGroupsByIds(
-      series.items.map((item) => item.id),
-      true
+    const itemsSorted = series.items.sort(
+      (a, b) => a['PostSeriesModel'].zindex - b['PostSeriesModel'].zindex
     );
+    const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
     if (items.every((item) => item.createdBy === series.createdBy)) return;
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
     this._notificationService.publishPostNotification({

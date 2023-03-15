@@ -9,6 +9,7 @@ export class UserDto {
     groups: Record<string, string[]>;
   };
   public groups?: string[];
+  public isDeactivated?: boolean;
 
   public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);

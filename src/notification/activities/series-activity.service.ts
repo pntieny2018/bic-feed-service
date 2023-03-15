@@ -2,13 +2,14 @@ import { NotificationActivity } from '../dto/requests/notification-activity.dto'
 import { TypeActivity, VerbActivity } from '../notification.constants';
 import { IPost, PostType } from '../../database/models/post.model';
 import { StringHelper } from '../../common/helpers';
+import { ItemRemovedInSeriesEvent } from '../../events/series';
 
 export class SeriesActivityService {
   public getDeletingSeriesActivity(series: IPost, items: IPost[]): NotificationActivity {
     const existingCreator = new Set([]);
     const filterItems = [];
     for (const item of items) {
-      if (!existingCreator.has(item.createdBy)) {
+      if (!existingCreator.has(item.createdBy) && item.createdBy !== series.createdBy) {
         filterItems.push({
           id: item.id,
           title: item.title,
@@ -82,7 +83,10 @@ export class SeriesActivityService {
     );
   }
 
-  public getDeletingItemToSeriesActivity(series: IPost, item: IPost): NotificationActivity {
+  public getDeletingItemToSeriesActivity(
+    series: IPost,
+    item: ItemRemovedInSeriesEvent
+  ): NotificationActivity {
     const activityObject = {
       id: series.id,
       title: series.title,
@@ -97,7 +101,7 @@ export class SeriesActivityService {
         contentType: item.type.toLowerCase(),
         actor: { id: item.createdBy },
         audience: {
-          groups: item.groups.map((group) => ({ id: group.groupId })),
+          groups: item.groupIds,
         },
         content:
           item.type === PostType.POST ? StringHelper.removeMarkdownCharacter(item.content) : null,

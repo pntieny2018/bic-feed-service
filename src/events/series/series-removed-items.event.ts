@@ -1,6 +1,7 @@
 import { IEvent } from '../../common/interfaces';
 import { UserDto } from '../../modules/v2-user/application';
 import { SeriesRemoveItem } from '../../common/constants';
+import { PostType } from '../../database/models/post.model';
 
 export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayload> {
   protected static event = SeriesRemoveItem;
@@ -18,8 +19,19 @@ export class SeriesRemovedItemsEvent implements IEvent<ISeriesRemovedItemsPayloa
   }
 }
 
+export type ItemRemovedInSeriesEvent = {
+  id: string;
+  title: string;
+  content: string;
+  type: PostType;
+  createdBy: string;
+  groupIds: string[];
+  createdAt: Date;
+  updatedAt: Date;
+};
 export interface ISeriesRemovedItemsPayload {
   seriesId: string;
-  itemIds: string[];
+  items: ItemRemovedInSeriesEvent[];
   actor: UserDto;
+  contentIsDeleted: boolean;
 }

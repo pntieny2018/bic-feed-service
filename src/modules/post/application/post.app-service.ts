@@ -134,7 +134,9 @@ export class PostAppService {
 
     await this._authorityService.checkPostOwner(postBefore, user.id);
     if (postBefore.status === PostStatus.PUBLISHED) {
-      if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      if (audience.groupIds.length === 0) {
+        throw new BadRequestException('Audience is required');
+      }
 
       let isEnableSetting = false;
       if (

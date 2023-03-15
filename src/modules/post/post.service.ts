@@ -316,6 +316,12 @@ export class PostService {
           required: false,
           attributes: ['tagId'],
         },
+        {
+          model: PostSeriesModel,
+          required: false,
+          as: 'postSeries',
+          attributes: ['seriesId'],
+        },
       ],
       where: {
         id: postIds,
@@ -323,6 +329,42 @@ export class PostService {
     });
 
     return postGroups;
+  }
+
+  public async getItemsInSeriesByIds(ids: string[], authUserId = null): Promise<IPost[]> {
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCover: true,
+      mustIncludeGroup: true,
+      authUserId: authUserId ?? null,
+    });
+
+    const attributes = {
+      include: [],
+    };
+    if (authUserId) {
+      attributes.include.push(PostModel.loadSaved(authUserId));
+      attributes.include.push(PostModel.loadMarkReadPost(authUserId));
+      attributes.include.push(PostModel.loadSaved(authUserId));
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        id: ids,
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+      },
+    });
+
+    const mappedPosts = [];
+    for (const id of ids) {
+      const post = rows.find((row) => row.id === id);
+      if (post) mappedPosts.push(post.toJSON());
+    }
+
+    return mappedPosts;
   }
 
   public getIncludeObj({
