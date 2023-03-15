@@ -24,7 +24,9 @@ export class SeriesAddedItemsListener {
   @On(SeriesAddedItemsEvent)
   public async handler(event: SeriesAddedItemsEvent): Promise<void> {
     this._logger.debug(
-      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.itemIds[0]}`
+      `[SeriesAddedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${JSON.stringify(
+        event.payload.itemIds[0]
+      )}`
     );
 
     const { seriesId } = event.payload;

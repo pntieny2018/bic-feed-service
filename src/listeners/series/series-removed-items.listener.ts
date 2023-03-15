@@ -24,7 +24,9 @@ export class SeriesRemovedItemsListener {
   @On(SeriesRemovedItemsEvent)
   public async handler(event: SeriesRemovedItemsEvent): Promise<void> {
     this._logger.debug(
-      `[SeriesRemovedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${event.payload.items[0]}`
+      `[SeriesRemovedItemsListener] seriesId=${event.payload.seriesId} -- itemId=${JSON.stringify(
+        event.payload.items[0]
+      )}`
     );
     const { seriesId } = event.payload;
     const series = await this._seriesService.findSeriesById(seriesId, {

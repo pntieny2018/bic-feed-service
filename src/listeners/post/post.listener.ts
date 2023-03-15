@@ -392,19 +392,19 @@ export class PostListener {
     if (series && series.length > 0) {
       const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
 
-      for (const seriesId of newSeriesIds) {
+      newSeriesIds.forEach((seriesId) =>
         this._internalEventEmitter.emit(
           new SeriesAddedItemsEvent({
             itemIds: [newPost.id],
             seriesId: seriesId,
             actor: actor,
           })
-        );
-      }
+        )
+      );
     }
     if (oldSeriesIds && oldSeriesIds.length > 0) {
       const seriesIdsDeleted = oldSeriesIds.filter((id) => !series.includes(id));
-      for (const seriesId of seriesIdsDeleted) {
+      seriesIdsDeleted.forEach((seriesId) =>
         this._internalEventEmitter.emit(
           new SeriesRemovedItemsEvent({
             items: [
@@ -423,8 +423,8 @@ export class PostListener {
             actor: actor,
             contentIsDeleted: false,
           })
-        );
-      }
+        )
+      );
     }
 
     try {
