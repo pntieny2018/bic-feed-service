@@ -225,14 +225,15 @@ export class FollowService {
       const schema = this._databaseConfig.schema;
       let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
       if (oldGroupIds && oldGroupIds.length > 0) {
-        condition += ' AND group_id NOT IN (:oldGroupIds)';
-      }
-      if (ignoreUserIds && ignoreUserIds.length > 0) {
         condition += ` AND NOT EXISTS (
         SELECT null
         FROM ${schema}.${this._followModel.tableName} AS "tmp"
-        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:ignoreUserIds)
+        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:oldGroupIds)
         ) `;
+      }
+
+      if (ignoreUserIds && ignoreUserIds.length > 0) {
+        condition += ` AND user_id NOT IN (:ignoreUserIds) `;
       }
 
       const rows = await this._sequelize.query(
