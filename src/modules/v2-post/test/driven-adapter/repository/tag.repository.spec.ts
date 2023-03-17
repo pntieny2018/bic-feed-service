@@ -8,16 +8,18 @@ import { TagEntity } from '../../../domain/model/tag';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { Sequelize } from 'sequelize-typescript';
-import { InternalServerErrorException } from '@nestjs/common';
 import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory';
+import { HttpService } from '@nestjs/axios';
 
 describe('TagRepository', () => {
   let repo, tagModel, postTagModel, sequelizeConnection;
   let factory: ITagFactory;
+  let httpService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TagRepository,
+        HttpService,
         {
           provide: TAG_FACTORY_TOKEN,
           useValue: createMock<TagFactory>(),
@@ -29,6 +31,10 @@ describe('TagRepository', () => {
         {
           provide: getModelToken(PostTagModel),
           useValue: createMock<PostTagModel>(),
+        },
+        {
+          provide: HttpService,
+          useValue: createMock<HttpService>(),
         },
         {
           provide: Sequelize,
@@ -43,6 +49,7 @@ describe('TagRepository', () => {
     }).compile();
 
     repo = module.get<TagRepository>(TagRepository);
+    httpService = module.get<HttpService>(HttpService);
     factory = module.get(TAG_FACTORY_TOKEN);
     tagModel = module.get<TagModel>(getModelToken(TagModel));
     postTagModel = module.get<PostTagModel>(getModelToken(PostTagModel));

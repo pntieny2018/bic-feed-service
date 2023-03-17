@@ -1,4 +1,4 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
@@ -9,7 +9,6 @@ import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory';
 
 export class TagQuery implements ITagQuery {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;
-  private _logger = new Logger(TagQuery.name);
   @InjectModel(TagModel)
   private readonly _tagModel: typeof TagModel;
 

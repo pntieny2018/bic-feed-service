@@ -8,7 +8,6 @@ import { ArticleService } from './article.service';
 import { PostModule } from '../post';
 import { ArticleController } from './article.controller';
 import { CategoryModule } from '../category';
-import { HashtagModule } from '../hashtag';
 import { SeriesModule } from '../series';
 import { CanUseCategoryConstraint } from './validators/can-use-category.validator';
 import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
@@ -31,7 +30,6 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     FeedModule,
     MentionModule,
     CategoryModule,
-    HashtagModule,
     TagModule,
     SearchModule,
     forwardRef(() => ReactionModule),

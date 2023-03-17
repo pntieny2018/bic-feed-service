@@ -4,8 +4,6 @@ import { PostResponseDto } from '../../../post/dto/responses';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { CategoryResponseDto } from './category.response.dto';
-import { HashtagResponseDto } from '../../../hashtag/dto/responses/hashtag-response.dto';
-import { TagResponseDto } from '../../../tag/dto/responses/tag-response.dto';
 
 export class ArticleResponseDto extends PostResponseDto {
   @ApiProperty({
@@ -31,13 +29,6 @@ export class ArticleResponseDto extends PostResponseDto {
   })
   @Expose()
   public categories: CategoryResponseDto[];
-
-  @ApiProperty({
-    description: 'Hashtags',
-    type: [HashtagResponseDto],
-  })
-  @Expose()
-  public hashtags: HashtagResponseDto[];
 
   @ApiProperty({
     description: 'isLocked',

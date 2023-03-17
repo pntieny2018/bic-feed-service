@@ -14,7 +14,6 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { AxiosHelper } from '../../../../common/helpers';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
-import { UserEntity } from '../../../v2-user/domain/model/user';
 
 export class TagRepository implements ITagRepository {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;

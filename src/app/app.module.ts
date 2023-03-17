@@ -21,7 +21,6 @@ import { DatabaseModule } from '../database';
 import { GiphyModule } from '../modules/giphy';
 import { ArticleModule } from '../modules/article';
 import { CategoryModule } from '../modules/category';
-import { HashtagModule } from '../modules/hashtag';
 import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from '../modules/health/health.module';
 import { InternalModule } from '../modules/internal';
@@ -60,7 +59,6 @@ import { I18nMiddleware } from 'nestjs-i18n';
     ArticleModule,
     SeriesModule,
     CategoryModule,
-    HashtagModule,
     //TagModule,
     ScheduleModule.forRoot(),
     HealthModule,
