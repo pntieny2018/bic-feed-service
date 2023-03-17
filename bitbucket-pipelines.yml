@@ -33,7 +33,8 @@ pipelines:
       - step: *unit-test
       - step: *analyze-on-sonarcloud
   branches:
+    develop:
+      - step: *analyze-on-sonarcloud
     master:
-      - step: *unit-test
       - step: *analyze-on-sonarcloud
 
