@@ -93,7 +93,7 @@ export class ArticleListener {
       privacy: article.privacy,
     });
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
         actor: {
@@ -218,7 +218,7 @@ export class ArticleListener {
     }
 
     const activity = this._postActivityService.createPayload(article);
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
         actor: actor,
@@ -330,7 +330,7 @@ export class ArticleListener {
       const updatedActivity = this._postActivityService.createPayload(newArticle);
       const oldActivity = this._postActivityService.createPayload(oldArticle);
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
           actor: actor,

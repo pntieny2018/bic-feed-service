@@ -57,7 +57,7 @@ export class SeriesRemovedItemsListener {
       items[0]
     );
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
         actor: {
