@@ -26,8 +26,7 @@ export class AuthService {
 
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
     const username = payload['cognito:username'];
-    // const userId = payload['custom:username'];
-    const userId = payload['custom:user_uuid'];
+    const userId = payload['custom:username'];
     const appConfig = this._configService.get<IAppConfig>('app');
     let userInfo;
     if (appConfig.env === 'local') {
