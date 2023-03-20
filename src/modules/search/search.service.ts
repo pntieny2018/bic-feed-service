@@ -220,6 +220,7 @@ export class SearchService {
         doc: dataUpdate[indexPost],
       });
     });
+    if (updateOps.length === 0) return;
     try {
       await this.elasticsearchService.bulk(
         {
