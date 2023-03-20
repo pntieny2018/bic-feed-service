@@ -1,9 +1,8 @@
 import { MediaStatus, MediaType } from '../../../../database/models/media.model';
-import { GroupPrivacy } from '../../../../shared/group/dto';
-import { UserDto } from '../../../auth';
 import { VideoProcessStatus } from '../../post.constants';
+import { GROUP_PRIVACY } from '../../../v2-group/data-type';
 
-export const mockUserDto: UserDto = {
+export const mockUserDto = {
   id: '7251dac7-5088-4a33-b900-d1b058edaf98',
 };
 
@@ -79,7 +78,7 @@ export const mockedGroups = [
     id: 1,
     name: 'Name of group',
     icon: 'icon link',
-    privacy: GroupPrivacy.OPEN,
+    privacy: GROUP_PRIVACY.OPEN,
     child: {
       public: [],
       open: [],

@@ -9,7 +9,6 @@ import {
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../../events/article';
-import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { PostService } from '../../post/post.service';
 import { TargetType } from '../../report-content/contstants';
@@ -32,6 +31,7 @@ import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params
 import { ClassTransformer } from 'class-transformer';
 import { PostHelper } from '../../post/post.helper';
 import { ArticleBindingService } from '../article-binding.service';
+import { UserDto } from '../../v2-user/application';
 
 @Injectable()
 export class ArticleAppService {

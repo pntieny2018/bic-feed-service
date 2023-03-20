@@ -7,35 +7,35 @@ import { NotificationModule } from '../notification';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { CommentModule } from '../modules/comment';
 import { MediaModule } from '../modules/media';
-import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { SeriesModule } from '../modules/series';
 import { ArticleListener } from './article';
 import { ArticleModule } from '../modules/article';
 import {
-  SeriesAddedArticlesListener,
+  SeriesAddedItemsListener,
   SeriesListener,
-  SeriesRemovedArticlesListener,
-  SeriesReorderArticlesListener,
+  SeriesRemovedItemsListener,
+  SeriesReorderItemsListener,
 } from './series';
 import { SearchModule } from '../modules/search';
 import { ReportContentListener } from './report';
-import { GroupModule } from '../shared/group';
 import { TagModule } from '../modules/tag';
 import { FilterUserModule } from '../modules/filter-user';
 import { FollowModule } from '../modules/follow';
+import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { GroupModuleV2 } from '../modules/v2-group/group.module';
 
 @Module({
   imports: [
     FollowModule,
     FilterUserModule,
-    GroupModule,
+    GroupModuleV2,
     PostModule,
     CommentModule,
     NotificationModule,
     FeedPublisherModule,
     MediaModule,
-    UserModule,
+    UserModuleV2,
     FeedModule,
     SeriesModule,
     ArticleModule,
@@ -48,9 +48,9 @@ import { FollowModule } from '../modules/follow';
     ReactionListener,
     ArticleListener,
     SeriesListener,
-    SeriesAddedArticlesListener,
-    SeriesRemovedArticlesListener,
-    SeriesReorderArticlesListener,
+    SeriesAddedItemsListener,
+    SeriesRemovedItemsListener,
+    SeriesReorderItemsListener,
     ReportContentListener,
   ],
 })

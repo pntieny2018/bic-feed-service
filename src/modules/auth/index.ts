@@ -4,7 +4,6 @@
  * @copyright 2021
  */
 
-export * from './dto';
 export * from './auth.module';
 export * from './auth.service';
 export * from './decorators';

@@ -1,18 +1,21 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { UserService } from '../../shared/user';
 import { Sequelize } from 'sequelize-typescript';
-import { GroupService } from '../../shared/group';
 import { ClassTransformer } from 'class-transformer';
 import { SentryService } from '@app/sentry';
-import { GroupPrivacy, GroupSharedDto } from '../../shared/group/dto';
-import { UserDto } from '../auth';
 import { ReactionService } from '../reaction';
 import { MentionService } from '../mention';
 import { PostResponseDto } from './dto/responses';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { ArrayHelper } from '../../common/helpers';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
+import { GROUP_PRIVACY } from '../v2-group/data-type';
 
 @Injectable()
 export class PostBindingService {
@@ -33,8 +36,10 @@ export class PostBindingService {
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    protected userService: UserService,
-    protected groupService: GroupService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected groupAppService: IGroupApplicationService,
     @Inject(forwardRef(() => ReactionService))
     protected reactionService: ReactionService,
     protected mentionService: MentionService,
@@ -116,11 +121,11 @@ export class PostBindingService {
           const isPostOutOfScope = !postGroupIds.includes(dataGroup.id);
           if (isPostOutOfScope) return false;
 
-          const isUserNotInGroup = !options?.authUser?.profile.groups.includes(dataGroup.id);
+          const isUserNotInGroup = !options?.authUser?.groups.includes(dataGroup.id);
           const isGuest = !options?.authUser;
           if (
             options?.shouldHideSecretAudienceCanNotAccess &&
-            dataGroup.privacy === GroupPrivacy.SECRET &&
+            dataGroup.privacy === GROUP_PRIVACY.SECRET &&
             (isUserNotInGroup || isGuest)
           ) {
             return false;
@@ -162,7 +167,7 @@ export class PostBindingService {
     return [];
   }
 
-  private async _getGroupsByPosts(posts: any[]): Promise<GroupSharedDto[]> {
+  private async _getGroupsByPosts(posts: any[]): Promise<GroupDto[]> {
     const groupIds = [];
     for (const post of posts) {
       if (post.groupIds) groupIds.push(...post.groupIds);
@@ -170,12 +175,12 @@ export class PostBindingService {
         groupIds.push(...post.groups.map((m) => m.groupId || m.id));
       }
     }
-    return this.groupService.getMany(groupIds);
+    return this.groupAppService.findAllByIds(groupIds);
   }
 
   private async _getCommunitiesByPosts(
     posts: any[]
-  ): Promise<Pick<GroupSharedDto, 'id' | 'icon' | 'name' | 'privacy'>[]> {
+  ): Promise<Pick<GroupDto, 'id' | 'icon' | 'name' | 'privacy'>[]> {
     const rootGroupIds = [];
     for (const post of posts) {
       let groups = [];
@@ -183,7 +188,9 @@ export class PostBindingService {
 
       rootGroupIds.push(...this._getRootGroupIdsByGroups(groups));
     }
-    const communities = await this.groupService.getMany(ArrayHelper.arrayUnique(rootGroupIds));
+    const communities = await this.groupAppService.findAllByIds(
+      ArrayHelper.arrayUnique(rootGroupIds)
+    );
     return communities.map((community) => ({
       id: community.id,
       icon: community.icon,
@@ -193,7 +200,7 @@ export class PostBindingService {
     }));
   }
 
-  private _getRootGroupIdsByGroups(groups: GroupSharedDto[]): string[] {
+  private _getRootGroupIdsByGroups(groups: GroupDto[]): string[] {
     const rootGroupIds = [];
     for (const group of groups) {
       if (!rootGroupIds.includes(group.rootGroupId)) {
@@ -214,15 +221,13 @@ export class PostBindingService {
         userIds.push(...post.articles.map((article) => article.createdBy));
       }
     }
-    const users = await this.userService.getMany(userIds);
+    const users = await this.userAppService.findAllByIds(userIds);
     for (const post of posts) {
       post.actor = users.find((i) => i.id === post.createdBy);
-
       if (post.articles?.length) {
         post.articles = post.articles.map((article) => {
           if (article.createdBy) {
             article.actor = users.find((i) => i.id === article.createdBy);
-            if (article.actor) delete article.actor.groups;
             return article;
           }
           return article;

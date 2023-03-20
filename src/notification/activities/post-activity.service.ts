@@ -19,7 +19,7 @@ export class PostActivityService {
       title: title,
       contentType: targetType.toLowerCase(),
       setting: post.setting as any,
-      actor: ObjectHelper.omit(['groups', 'email'], post.actor) as any,
+      actor: post.actor as any,
       audience: {
         groups: post.audience.groups.map((g) => ObjectHelper.omit(['child'], g)) as any,
       },

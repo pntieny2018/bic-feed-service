@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
 import { ApproveReportEvent } from '../../events/report/approve-report.event';
 import { CreateReportEvent } from '../../events/report/create-report.event';
@@ -10,13 +10,17 @@ import { NotificationService, TypeActivity, VerbActivity } from '../../notificat
 import { ReportActivityService } from '../../notification/activities';
 import { NotificationActivity } from '../../notification/dto/requests/notification-activity.dto';
 import { NotificationPayloadDto } from '../../notification/dto/requests/notification-payload.dto';
-import { GroupHttpService } from '../../shared/group';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../modules/v2-group/application';
 
 @Injectable()
 export class ReportContentListener {
   private readonly _logger = new Logger(ReportContentListener.name);
   public constructor(
-    private readonly _groupService: GroupHttpService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
     private readonly _reportActivityService: ReportActivityService,
     private readonly _notificationService: NotificationService,
     private readonly _postService: PostService,
@@ -42,13 +46,13 @@ export class ReportContentListener {
       });
     }
 
-    const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
+    const adminInfos = await this._groupAppService.getAdminIds(payload.groupIds);
 
     const actor = {
       id: payload.actor.id,
       email: payload.actor.email,
       username: payload.actor.username,
-      fullname: payload.actor.profile.fullname,
+      fullname: payload.actor.fullname,
       avatar: payload.actor.avatar,
     };
 
@@ -94,13 +98,13 @@ export class ReportContentListener {
     this._logger.debug('[onReportApproved]');
     const { payload } = event;
     try {
-      const adminInfos = await this._groupService.getAdminIds(payload.groupIds);
+      const adminInfos = await this._groupAppService.getAdminIds(payload.groupIds);
 
       const actor = {
         id: payload.actor.id,
         email: payload.actor.email,
         username: payload.actor.username,
-        fullname: payload.actor.profile.fullname,
+        fullname: payload.actor.fullname,
         avatar: payload.actor.avatar,
       };
 

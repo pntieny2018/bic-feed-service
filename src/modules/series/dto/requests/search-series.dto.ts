@@ -23,4 +23,17 @@ export class SearchSeriesDto extends PageOptionsDto {
   @IsOptional()
   @IsUUID('4', { each: true })
   public groupIds?: string[];
+
+  @ApiProperty({
+    description: 'Item IDs',
+    required: false,
+    name: 'item_ids',
+  })
+  @Expose({
+    name: 'item_ids',
+  })
+  @IsArray()
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  public itemIds?: string[];
 }

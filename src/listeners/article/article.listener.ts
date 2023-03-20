@@ -11,7 +11,7 @@ import {
   ArticleHasBeenPublishedEvent,
   ArticleHasBeenUpdatedEvent,
 } from '../../events/article';
-import { SeriesAddedArticlesEvent, SeriesRemovedArticlesEvent } from '../../events/series';
+import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
 import { ArticleService } from '../../modules/article/article.service';
 import { FeedPublisherService } from '../../modules/feed-publisher';
 import { FeedService } from '../../modules/feed/feed.service';
@@ -22,7 +22,6 @@ import { SeriesService } from '../../modules/series/series.service';
 import { TagService } from '../../modules/tag/tag.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
-import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
 
 @Injectable()
 export class ArticleListener {
@@ -45,7 +44,7 @@ export class ArticleListener {
 
   @On(ArticleHasBeenDeletedEvent)
   public async onArticleDeleted(event: ArticleHasBeenDeletedEvent): Promise<void> {
-    const { article } = event.payload;
+    const { article, actor } = event.payload;
     if (article.status !== PostStatus.PUBLISHED) return;
 
     this._postServiceHistory.deleteEditedHistory(article.id).catch((e) => {
@@ -65,6 +64,10 @@ export class ArticleListener {
     const activity = this._postActivityService.createPayload({
       actor: {
         id: article.createdBy,
+        username: 'unused',
+        email: 'unused',
+        avatar: 'unused',
+        fullname: 'unused',
       },
       title: article.title,
       commentsCount: article.commentsCount,
@@ -90,7 +93,7 @@ export class ArticleListener {
       privacy: article.privacy,
     });
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
         actor: {
@@ -100,6 +103,29 @@ export class ArticleListener {
         data: activity,
       },
     });
+
+    const seriesIds = article['postSeries'].map((series) => series.seriesId) ?? [];
+    for (const seriesId of seriesIds) {
+      this._internalEventEmitter.emit(
+        new SeriesRemovedItemsEvent({
+          items: [
+            {
+              id: article.id,
+              title: article.title,
+              content: article.content,
+              type: article.type,
+              createdBy: article.createdBy,
+              groupIds: article.groups.map((group) => group.groupId),
+              createdAt: article.createdAt,
+              updatedAt: article.updatedAt,
+            },
+          ],
+          seriesId: seriesId,
+          actor,
+          contentIsDeleted: true,
+        })
+      );
+    }
   }
 
   @On(ArticleHasBeenPublishedEvent)
@@ -192,10 +218,10 @@ export class ArticleListener {
     }
 
     const activity = this._postActivityService.createPayload(article);
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
-        actor: actor.profile,
+        actor: actor,
         event: event.getEventName(),
         data: activity,
       },
@@ -204,9 +230,8 @@ export class ArticleListener {
     if (article.series && article.series.length) {
       for (const sr of article.series) {
         this._internalEventEmitter.emit(
-          new SeriesAddedArticlesEvent({
-            isAdded: false,
-            articleIds: [article.id],
+          new SeriesAddedItemsEvent({
+            itemIds: [article.id],
             seriesId: sr.id,
             actor: actor,
           })
@@ -305,10 +330,10 @@ export class ArticleListener {
       const updatedActivity = this._postActivityService.createPayload(newArticle);
       const oldActivity = this._postActivityService.createPayload(oldArticle);
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
-          actor: actor.profile,
+          actor: actor,
           event: event.getEventName(),
           data: updatedActivity,
           meta: {
@@ -324,9 +349,8 @@ export class ArticleListener {
       const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
       for (const seriesId of newSeriesIds) {
         this._internalEventEmitter.emit(
-          new SeriesAddedArticlesEvent({
-            isAdded: false,
-            articleIds: [newArticle.id],
+          new SeriesAddedItemsEvent({
+            itemIds: [newArticle.id],
             seriesId: seriesId,
             actor: actor,
           })
@@ -335,9 +359,22 @@ export class ArticleListener {
       const seriesIdsShouldRemove = oldSeriesIds.filter((id) => !series.includes(id));
       for (const seriesId of seriesIdsShouldRemove) {
         this._internalEventEmitter.emit(
-          new SeriesRemovedArticlesEvent({
+          new SeriesRemovedItemsEvent({
             seriesId,
-            articleIds: [newArticle.id],
+            items: [
+              {
+                id: newArticle.id,
+                title: newArticle.title,
+                content: newArticle.content,
+                type: newArticle.type,
+                createdBy: newArticle.createdBy,
+                groupIds: newArticle.audience.groups.map((group) => group.id),
+                createdAt: newArticle.createdAt,
+                updatedAt: newArticle.updatedAt,
+              },
+            ],
+            actor,
+            contentIsDeleted: false,
           })
         );
       }

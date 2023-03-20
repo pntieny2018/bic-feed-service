@@ -1,0 +1,6 @@
+export enum GROUP_PRIVACY {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  PRIVATE = 'PRIVATE',
+  SECRET = 'SECRET',
+}

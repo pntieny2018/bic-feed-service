@@ -1,7 +1,7 @@
 import { MediaStatus } from '../../../../../database/models/media.model';
 import { PostPrivacy, PostStatus, PostType } from '../../../../../database/models/post.model';
-import { GroupPrivacy } from '../../../../../shared/group/dto';
 import { PostResponseDto } from '../../../dto/responses';
+import { GROUP_PRIVACY } from '../../../../v2-group/data-type';
 
 export const mockedPostResponse: PostResponseDto = {
   ownerReactions: [],
@@ -52,8 +52,10 @@ export const mockedPostResponse: PostResponseDto = {
         id: '7251dac7-5088-4a33-b900-d1b058edaf99',
         name: 'EVOL Community',
         icon: 'https://bein-entity-attribute-sandbox.s3.ap-southeast-1.amazonaws.com/group/avatar/images/original/e55a5e2f-5f61-4a1b-ad3f-623f08eec1a1',
-        privacy: GroupPrivacy.OPEN,
+        privacy: GROUP_PRIVACY.OPEN,
         rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
+        isCommunity: false,
+        communityId: '11',
       },
     ],
   },

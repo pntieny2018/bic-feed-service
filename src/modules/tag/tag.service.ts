@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../database/models/tag.model';
@@ -9,12 +9,12 @@ import { GetTagDto } from './dto/requests/get-tag.dto';
 import { TagResponseDto } from './dto/responses/tag-response.dto';
 import { ArrayHelper, ExceptionHelper, StringHelper } from '../../common/helpers';
 import { CreateTagDto } from './dto/requests/create-tag.dto';
-import { UserDto } from '../auth';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { UpdateTagDto } from './dto/requests/update-tag.dto';
-import { GroupService } from '../../shared/group';
 import { PostModel } from '../../database/models/post.model';
 import { ExternalService } from '../../app/external.service';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class TagService {
@@ -22,7 +22,8 @@ export class TagService {
     @InjectModel(TagModel) private _tagModel: typeof TagModel,
     @InjectModel(PostTagModel) private _postTagModel: typeof PostTagModel,
     @InjectModel(PostModel) private _postModel: typeof PostModel,
-    private readonly _groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupAppService: IGroupApplicationService,
     private readonly _externalService: ExternalService
   ) {}
 
@@ -58,7 +59,7 @@ export class TagService {
 
     const groups = {};
     const groupIdMap = {};
-    const rootGroupInfos = await this._groupService.getMany(rootGroupIds);
+    const rootGroupInfos = await this._groupAppService.findAllByIds(rootGroupIds);
     const childGroupIds = rootGroupInfos.reduce<string[]>((ids, rootGroupInfo) => {
       const childIds = [
         ...rootGroupInfo.child.private,
@@ -69,7 +70,7 @@ export class TagService {
       groupIdMap[rootGroupInfo.id] = childIds;
       return ids.concat(childIds);
     }, []);
-    const childGroupInfos = await this._groupService.getMany(childGroupIds);
+    const childGroupInfos = await this._groupAppService.findAllByIds(childGroupIds);
     for (const rootGroupInfo of rootGroupInfos) {
       delete rootGroupInfo.child;
       groups[rootGroupInfo.id] = [rootGroupInfo];
@@ -96,7 +97,7 @@ export class TagService {
     if (!canCreateTag) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_HAVE_CREATE_PERMISSION);
     }
-    const group = await this._groupService.get(createTagDto.groupId);
+    const group = await this._groupAppService.findOne(createTagDto.groupId);
     if (!group) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_GROUP_NOT_EXIST);
     }
@@ -275,7 +276,7 @@ export class TagService {
     audienceGroupIds: string[]
   ): Promise<ITag[]> {
     const tagsInfos = await this._tagModel.findAll({ where: { id: tagIds } });
-    const audienceGroupInfos = await this._groupService.getMany(audienceGroupIds);
+    const audienceGroupInfos = await this._groupAppService.findAllByIds(audienceGroupIds);
     const audienceRootGroupIds = audienceGroupInfos.map((e) => e.rootGroupId);
     const invalidTags = tagsInfos.filter(
       (tagInfo) => !audienceRootGroupIds.includes(tagInfo.groupId)

@@ -39,10 +39,6 @@ import { ReportContentDetailModel } from '../../database/models/report-content-d
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSavePostModel } from '../../database/models/user-save-post.model';
-import { GroupService } from '../../shared/group';
-import { GroupPrivacy } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
@@ -59,6 +55,10 @@ import { PostBindingService } from './post-binding.service';
 import { PostHelper } from './post.helper';
 import { PostsArchivedOrRestoredByGroupEventPayload } from '../../events/post/payload/posts-archived-or-restored-by-group-event.payload';
 import { ModelHelper } from '../../common/helpers/model.helper';
+import { TagService } from '../tag/tag.service';
+import { UserDto } from '../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
+import { GROUP_PRIVACY } from '../v2-group/data-type';
 
 @Injectable()
 export class PostService {
@@ -89,8 +89,8 @@ export class PostService {
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @InjectModel(UserSavePostModel)
     protected userSavePostModel: typeof UserSavePostModel,
-    protected userService: UserService,
-    protected groupService: GroupService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected groupAppService: IGroupApplicationService,
     protected mediaService: MediaService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
@@ -103,7 +103,8 @@ export class PostService {
     protected readonly postBinding: PostBindingService,
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel
+    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
+    protected readonly tagService: TagService
   ) {}
 
   /**
@@ -209,6 +210,7 @@ export class PostService {
       shouldIncludeMention: true,
       shouldIncludeMedia: true,
       shouldIncludePreviewLink: true,
+      shouldIncludeSeries: true,
       authUserId: user?.id || null,
     });
     let condition;
@@ -249,7 +251,6 @@ export class PostService {
       );
     }
     const jsonPost = post.toJSON();
-
     const postsBindedData = await this.postBinding.bindRelatedData([jsonPost], {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -260,7 +261,6 @@ export class PostService {
     });
 
     await this.postBinding.bindCommunity(postsBindedData);
-
     const result = this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
@@ -283,13 +283,25 @@ export class PostService {
     if (options?.authUserId && options?.loadSaved) {
       include.push(PostModel.loadSaved(options.authUserId));
     }
+    include.push(['tags_json', 'tags']);
+
     attributes.include = include;
     return attributes;
   }
 
   public async getListWithGroupsByIds(postIds: string[], must: boolean): Promise<IPost[]> {
     const postGroups = await this.postModel.findAll({
-      attributes: ['id', 'title', 'lang', 'status', 'createdBy'],
+      attributes: [
+        'id',
+        'title',
+        'type',
+        'content',
+        'lang',
+        'status',
+        'createdBy',
+        'createdAt',
+        'updatedAt',
+      ],
       include: [
         {
           model: PostGroupModel,
@@ -304,6 +316,12 @@ export class PostService {
           required: false,
           attributes: ['tagId'],
         },
+        {
+          model: PostSeriesModel,
+          required: false,
+          as: 'postSeries',
+          attributes: ['seriesId'],
+        },
       ],
       where: {
         id: postIds,
@@ -313,9 +331,46 @@ export class PostService {
     return postGroups;
   }
 
+  public async getItemsInSeriesByIds(ids: string[], authUserId = null): Promise<IPost[]> {
+    const include = this.getIncludeObj({
+      shouldIncludeCategory: true,
+      shouldIncludeMedia: true,
+      shouldIncludeCover: true,
+      mustIncludeGroup: true,
+      authUserId: authUserId ?? null,
+    });
+
+    const attributes = {
+      include: [],
+    };
+    if (authUserId) {
+      attributes.include.push(PostModel.loadSaved(authUserId));
+      attributes.include.push(PostModel.loadMarkReadPost(authUserId));
+      attributes.include.push(PostModel.loadSaved(authUserId));
+    }
+    const rows = await this.postModel.findAll({
+      attributes,
+      include,
+      where: {
+        id: ids,
+        isHidden: false,
+        status: PostStatus.PUBLISHED,
+      },
+    });
+
+    const mappedPosts = [];
+    for (const id of ids) {
+      const post = rows.find((row) => row.id === id);
+      if (post) mappedPosts.push(post.toJSON());
+    }
+
+    return mappedPosts;
+  }
+
   public getIncludeObj({
     mustIncludeGroup = false,
     mustIncludeMedia,
+    mustInSeriesIds,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
@@ -324,6 +379,7 @@ export class PostService {
     shouldIncludePreviewLink,
     shouldIncludeCover,
     shouldIncludeArticlesInSeries,
+    shouldIncludeSeries,
     filterMediaIds,
     filterCategoryIds,
     authUserId,
@@ -331,6 +387,7 @@ export class PostService {
   }: {
     mustIncludeGroup?: boolean;
     mustIncludeMedia?: boolean;
+    mustInSeriesIds?: string[];
     shouldIncludeCategory?: boolean;
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
@@ -339,6 +396,7 @@ export class PostService {
     shouldIncludePreviewLink?: boolean;
     shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
+    shouldIncludeSeries?: boolean;
     filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
@@ -369,7 +427,7 @@ export class PostService {
     if (shouldIncludeArticlesInSeries) {
       includes.push({
         model: PostModel,
-        as: 'articles',
+        as: 'items',
         required: false,
         through: {
           attributes: ['zindex', 'createdAt'],
@@ -378,11 +436,18 @@ export class PostService {
           'id',
           'title',
           'summary',
+          [
+            Sequelize.literal(
+              `CASE WHEN "items".type = '${PostType.POST}' THEN "items".content ELSE null END`
+            ),
+            'content',
+          ],
           'createdBy',
           'canShare',
           'canComment',
           'canReact',
           'importantExpiredAt',
+          'type',
         ],
         where: {
           status: PostStatus.PUBLISHED,
@@ -477,6 +542,37 @@ export class PostService {
 
       includes.push(obj);
     }
+
+    if (shouldIncludeSeries) {
+      includes.push({
+        model: PostModel,
+        as: 'series',
+        required: false,
+        through: {
+          attributes: [],
+        },
+        attributes: ['id', 'title'],
+        include: [
+          {
+            model: PostGroupModel,
+            required: true,
+            attributes: [],
+            where: { isArchived: false },
+          },
+        ],
+      });
+    }
+
+    if (mustInSeriesIds) {
+      includes.push({
+        model: PostSeriesModel,
+        required: true,
+        where: {
+          seriesId: mustInSeriesIds,
+        },
+        attributes: ['seriesId', 'zindex', 'createdAt'],
+      });
+    }
     return includes;
   }
 
@@ -490,12 +586,15 @@ export class PostService {
   public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
-      const { content, media, setting, mentions, audience } = createPostDto;
+      const { content, media, setting, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-
+      let tagList = [];
+      if (tags) {
+        tagList = await this.tagService.getTagsByIds(tags);
+      }
       transaction = await this.sequelizeConnection.transaction();
       const post = await this.postModel.create(
         {
@@ -509,6 +608,7 @@ export class PostService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
+          tagsJson: tagList,
         },
         { transaction }
       );
@@ -532,6 +632,15 @@ export class PostService {
           transaction
         );
       }
+
+      if (tags) {
+        await this.tagService.addToPost(tags, post.id, transaction);
+      }
+
+      if (series) {
+        await this._addSeriesToPost(series, post.id, transaction);
+      }
+
       await transaction.commit();
 
       return post;
@@ -547,15 +656,15 @@ export class PostService {
     if (groupIds.length === 0) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_GROUP_REQUIRED);
     }
-    const groups = await this.groupService.getMany(groupIds);
+    const groups = await this.groupAppService.findAllByIds(groupIds);
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GroupPrivacy.OPEN) {
+      if (group.privacy === GROUP_PRIVACY.OPEN) {
         return PostPrivacy.OPEN;
       }
-      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
-      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
+      if (group.privacy === GROUP_PRIVACY.CLOSED) totalOpen++;
+      if (group.privacy === GROUP_PRIVACY.PRIVATE) totalPrivate++;
     }
 
     if (totalOpen > 0) return PostPrivacy.CLOSED;
@@ -574,7 +683,7 @@ export class PostService {
     const authUserId = authUser.id;
     let transaction;
     try {
-      const { media, mentions, audience, setting } = updatePostDto;
+      const { media, mentions, audience, setting, tags, series } = updatePostDto;
 
       let mediaListChanged = [];
       if (media) {
@@ -602,6 +711,25 @@ export class PostService {
         dataUpdate.linkPreviewId = linkPreview?.id || null;
       }
 
+      if (series) {
+        const filterSeriesExist = await this.postModel.findAll({
+          where: {
+            id: series,
+          },
+        });
+        await this._updateSeriesToPost(
+          filterSeriesExist.map((series) => series.id),
+          post.id,
+          transaction
+        );
+      }
+
+      if (tags) {
+        const tagList = await this.tagService.getTagsByIds(tags);
+        await this.tagService.updateToPost(tags, post.id, transaction);
+        dataUpdate['tagsJson'] = tagList;
+      }
+
       transaction = await this.sequelizeConnection.transaction();
       await this.postModel.update(dataUpdate, {
         where: {
@@ -626,6 +754,8 @@ export class PostService {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
+      await transaction.commit();
+
       if (setting && setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -641,14 +771,10 @@ export class PostService {
                 userId: authUserId,
               },
             ],
-            { ignoreDuplicates: true, transaction }
+            { ignoreDuplicates: true }
           );
         }
-
-        post.markedReadPost = true;
       }
-
-      await transaction.commit();
 
       return true;
     } catch (error) {
@@ -736,10 +862,15 @@ export class PostService {
           },
         });
         if (!checkMarkImportant) {
-          await this.userMarkReadPostModel.create({
-            postId: post.id,
-            userId: authUserId,
-          });
+          await this.userMarkReadPostModel.bulkCreate(
+            [
+              {
+                postId: post.id,
+                userId: authUserId,
+              },
+            ],
+            { ignoreDuplicates: true }
+          );
         }
         post.markedReadPost = true;
       }
@@ -1007,10 +1138,15 @@ export class PostService {
       },
     });
     if (!readPost) {
-      await this.userMarkReadPostModel.create({
-        postId,
-        userId,
-      });
+      await this.userMarkReadPostModel.bulkCreate(
+        [
+          {
+            postId,
+            userId,
+          },
+        ],
+        { ignoreDuplicates: true }
+      );
     }
   }
 
@@ -1130,7 +1266,12 @@ export class PostService {
       shouldIncludeMention: true,
       filterMediaIds: [id],
     });
-    const posts = await this.postModel.findAll({ include });
+    const posts = await this.postModel.findAll({
+      attributes: {
+        include: [['tags_json', 'tags']],
+      },
+      include,
+    });
 
     const jsonPosts = posts.map((p) => p.toJSON());
 
@@ -1192,16 +1333,16 @@ export class PostService {
   }
 
   public getPostPrivacyByCompareGroupPrivacy(
-    groupPrivacy: GroupPrivacy,
+    groupPrivacy: GROUP_PRIVACY,
     postPrivacy: PostPrivacy
   ): PostPrivacy {
-    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
+    if (groupPrivacy === GROUP_PRIVACY.OPEN || postPrivacy === PostPrivacy.OPEN) {
       return PostPrivacy.OPEN;
     }
-    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
+    if (groupPrivacy === GROUP_PRIVACY.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
       return PostPrivacy.CLOSED;
     }
-    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
+    if (groupPrivacy === GROUP_PRIVACY.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
       return PostPrivacy.PRIVATE;
     }
     return PostPrivacy.SECRET;
@@ -1215,7 +1356,7 @@ export class PostService {
       where: { postId: { [Op.in]: postIds } },
     });
     const groupIds = [...new Set(relationInfo.map((e) => e.groupId))];
-    const groupInfos = await this.groupService.getMany(groupIds);
+    const groupInfos = await this.groupAppService.findAllByIds(groupIds);
     const groupPrivacyMapping = groupInfos.reduce((returnValue, elementValue) => {
       returnValue[elementValue.id] = elementValue.privacy;
       return returnValue;
@@ -1319,7 +1460,11 @@ export class PostService {
     return posts.map((post) => post.id);
   }
 
-  public async getPostsByIds(ids: string[], userId: string | null): Promise<IPost[]> {
+  public async getPostsByIds(
+    ids: string[],
+    userId: string | null,
+    isPostOnly = false
+  ): Promise<IPost[]> {
     if (ids.length === 0) return [];
 
     const include = this.getIncludeObj({
@@ -1334,28 +1479,38 @@ export class PostService {
       mustIncludeGroup: true,
       authUserId: userId,
     });
-
-    const attributes = {
-      include: [PostModel.loadMarkReadPost(userId), PostModel.loadSaved(userId)],
+    const conditions = {
+      id: ids,
     };
+
+    if (isPostOnly) {
+      conditions['type'] = PostType.POST;
+    }
+
     const rows = await this.postModel.findAll({
       subQuery: false,
-      attributes,
-      include,
-      where: {
-        id: ids,
+      attributes: {
+        include: [
+          ['tags_json', 'tags'],
+          PostModel.loadMarkReadPost(userId),
+          PostModel.loadSaved(userId),
+        ],
       },
+      include,
+      where: conditions,
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(userId, [TargetType.ARTICLE]);
-
+    const articleOrPostIdsReported = await this.getEntityIdsReportedByUser(userId, [
+      TargetType.ARTICLE,
+      TargetType.POST,
+    ]);
     const mappedPosts = [];
     for (const postId of ids) {
       const post = rows.find((row) => row.id === postId);
       if (post) {
         const postJson = post.toJSON();
-        postJson.articles = postJson.articles.filter(
-          (article) => !articleIdsReported.includes(article.id)
+        postJson.items = postJson.items.filter(
+          (item) => !articleOrPostIdsReported.includes(item.id)
         );
         mappedPosts.push(postJson);
       }
@@ -1363,18 +1518,25 @@ export class PostService {
     return mappedPosts;
   }
 
-  public async getSimpleArticlessByIds(ids: string[]): Promise<IPost[]> {
+  public async getSimplePostsByIds(ids: string[]): Promise<IPost[]> {
     if (ids.length === 0) return [];
     const rows = await this.postModel.findAll({
       attributes: [
         'id',
         'title',
+        [
+          Sequelize.literal(
+            `CASE WHEN "PostModel".type = '${PostType.POST}' THEN "PostModel".content ELSE null END`
+          ),
+          'content',
+        ],
         'summary',
         'createdBy',
         'canShare',
         'canComment',
         'canReact',
         'importantExpiredAt',
+        'type',
       ],
       include: [
         {
@@ -1673,5 +1835,56 @@ export class PostService {
       posts: affectedPosts,
       mappingPostIdGroupIds: postIndex,
     };
+  }
+
+  private async _addSeriesToPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    if (seriesIds.length === 0) return;
+    const dataCreate = seriesIds.map((seriesId) => ({
+      postId: postId,
+      seriesId,
+    }));
+    await this.postSeriesModel.bulkCreate(dataCreate, { transaction });
+  }
+
+  private async _updateSeriesToPost(
+    seriesIds: string[],
+    postId: string,
+    transaction: Transaction
+  ): Promise<void> {
+    const currentSeries = await this.postSeriesModel.findAll({
+      where: { postId },
+    });
+    const currentSeriesIds = currentSeries.map((i) => i.seriesId);
+
+    const deleteSeriesIds = ArrayHelper.arrDifferenceElements(currentSeriesIds, seriesIds);
+    if (deleteSeriesIds.length) {
+      await this.postSeriesModel.destroy({
+        where: { seriesId: deleteSeriesIds, postId },
+        transaction,
+      });
+    }
+
+    const addSeriesIds = ArrayHelper.arrDifferenceElements(seriesIds, currentSeriesIds);
+    if (addSeriesIds.length) {
+      const dataInsert = [];
+      for (const seriesId of addSeriesIds) {
+        const maxIndexArticlesInSeries: number = await this.postSeriesModel.max('zindex', {
+          where: {
+            seriesId,
+          },
+        });
+        dataInsert.push({
+          postId,
+          seriesId,
+          zindex: maxIndexArticlesInSeries + 1,
+        });
+      }
+
+      await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
+    }
   }
 }

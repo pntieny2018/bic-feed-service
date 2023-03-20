@@ -13,9 +13,9 @@ import { Op } from 'sequelize';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostHelper } from '../post/post.helper';
-import { UserDto } from '../auth';
 import { ClassTransformer } from 'class-transformer';
 import { ArticleBindingService } from '../article/article-binding.service';
+import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class AdminService {

@@ -1,6 +1,6 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
+import { IsNotEmpty, IsOptional, ValidateNested, ValidateIf, IsUUID } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { MediaDto } from '../../../media/dto';
 import { AudienceRequestDto } from './audience.request.dto';
@@ -8,6 +8,7 @@ import { UserMentionDto } from '../../../mention/dto';
 import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
+import { CanUseSeries } from '../../../article/validators/can-use-series.validator';
 
 export class UpdatePostDto {
   @ApiProperty({
@@ -122,4 +123,33 @@ export class UpdatePostDto {
     name: 'link_preview',
   })
   public linkPreview?: LinkPreviewDto;
+
+  @ApiProperty({
+    type: [String],
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  @IsUUID('4', { each: true })
+  public tags?: string[] = [];
+
+  @ApiProperty({
+    type: [String],
+    example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) {
+      return value.map((v) => v.trim());
+    }
+    return value;
+  })
+  @IsUUID('4', { each: true })
+  // @CanUseSeries()
+  public series?: string[] = [];
 }

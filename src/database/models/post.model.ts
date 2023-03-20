@@ -82,6 +82,7 @@ export interface IPost {
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date;
+  //
   comments?: IComment[];
   media?: IMedia[];
   groups?: IPostGroup[];
@@ -106,7 +107,7 @@ export interface IPost {
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
   cover?: string;
-  articles?: Partial<IPost>[];
+  items?: Partial<IPost>[];
   userSavePosts?: IUserSavePost[];
   status: PostStatus;
   publishedAt?: Date;
@@ -265,7 +266,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public postSeries?: PostSeriesModel[];
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
-  public articles?: PostModel[];
+  public items?: PostModel[];
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',

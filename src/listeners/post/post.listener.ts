@@ -20,12 +20,18 @@ import { SearchService } from '../../modules/search/search.service';
 import { NotificationService } from '../../notification';
 import { PostActivityService } from '../../notification/activities';
 import { FilterUserService } from '../../modules/filter-user';
-import { UserSharedDto } from '../../shared/user/dto';
 import { PostsArchivedOrRestoredByGroupEvent } from '../../events/post/posts-archived-or-restored-by-group.event';
+import { ArrayHelper } from '../../common/helpers';
+import { SeriesAddedItemsEvent, SeriesRemovedItemsEvent } from '../../events/series';
+import { InternalEventEmitterService } from '../../app/custom/event-emitter';
+import { TagService } from '../../modules/tag/tag.service';
+import { UserDto } from '../../modules/v2-user/application';
+import { SeriesService } from '../../modules/series/series.service';
 
 @Injectable()
 export class PostListener {
   private _logger = new Logger(PostListener.name);
+
   public constructor(
     private readonly _feedPublisherService: FeedPublisherService,
     private readonly _postActivityService: PostActivityService,
@@ -36,7 +42,10 @@ export class PostListener {
     private readonly _mediaService: MediaService,
     private readonly _feedService: FeedService,
     private readonly _postHistoryService: PostHistoryService,
-    private readonly _filterUserService: FilterUserService
+    private readonly _filterUserService: FilterUserService,
+    private readonly _internalEventEmitter: InternalEventEmitterService,
+    private readonly _tagService: TagService,
+    private readonly _seriesService: SeriesService
   ) {}
 
   @On(PostHasBeenDeletedEvent)
@@ -48,6 +57,10 @@ export class PostListener {
       this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
     });
+
+    this._tagService
+      .decreaseTotalUsed(post.postTags.map((e) => e.tagId))
+      .catch((ex) => this._logger.debug(ex));
 
     try {
       this._postSearchService.deletePostsToSearch([post]);
@@ -76,14 +89,39 @@ export class PostListener {
         privacy: PostPrivacy.OPEN,
       });
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
-          actor,
+          actor: {
+            id: post.createdBy,
+          },
           event: event.getEventName(),
           data: activity,
         },
       });
+
+      const seriesIds = post['postSeries']?.map((postSeries) => postSeries.seriesId) ?? [];
+      for (const seriesId of seriesIds) {
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
+            items: [
+              {
+                id: post.id,
+                title: null,
+                content: post.content,
+                type: post.type,
+                createdBy: post.createdBy,
+                groupIds: post.groups.map((group) => group.groupId),
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
+              },
+            ],
+            seriesId: seriesId,
+            actor: actor,
+            contentIsDeleted: true,
+          })
+        );
+      }
 
       return;
     } catch (error) {
@@ -108,6 +146,7 @@ export class PostListener {
       updatedAt,
       type,
       isHidden,
+      tags,
     } = post;
     const mediaIds = media.videos
       .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
@@ -129,10 +168,12 @@ export class PostListener {
     //     this._sentryService.captureException(e);
     //   });
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
-        actor,
+        actor: {
+          id: post.createdBy,
+        },
         event: event.getEventName(),
         data: activity,
       },
@@ -172,11 +213,18 @@ export class PostListener {
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         createdBy,
         createdAt,
         updatedAt,
       },
     ]);
+
+    if (post.tags.length) {
+      this._tagService
+        .increaseTotalUsed(post.tags.map((e) => e.id))
+        .catch((ex) => this._logger.debug(ex));
+    }
 
     try {
       // Fanout to write post to all news feed of user follow group audience
@@ -187,6 +235,17 @@ export class PostListener {
       );
     } catch (error) {
       this._sentryService.captureException(error);
+    }
+    if (post.series && post.series.length) {
+      for (const sr of post.series) {
+        this._internalEventEmitter.emit(
+          new SeriesAddedItemsEvent({
+            itemIds: [post.id],
+            seriesId: sr.id,
+            actor: actor,
+          })
+        );
+      }
     }
   }
 
@@ -206,6 +265,7 @@ export class PostListener {
       createdAt,
       updatedAt,
       isHidden,
+      tags,
     } = newPost;
 
     if (oldPost.status === PostStatus.PUBLISHED) {
@@ -217,10 +277,15 @@ export class PostListener {
         .catch((e) => this._sentryService.captureException(e));
     }
 
-    if (oldPost.status === PostStatus.PUBLISHED && status !== PostStatus.PUBLISHED) {
+    if (oldPost.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
       this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
         this._logger.error(JSON.stringify(e?.stack));
         this._sentryService.captureException(e);
+        if (tags.length) {
+          this._tagService
+            .decreaseTotalUsed(tags.map((e) => e.id))
+            .catch((ex) => this._logger.debug(ex));
+        }
       });
     }
 
@@ -233,7 +298,7 @@ export class PostListener {
     //   });
 
     const mentionUserIds = [];
-    const mentionMap = new Map<string, UserSharedDto>();
+    const mentionMap = new Map<string, UserDto>();
 
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);
@@ -253,10 +318,12 @@ export class PostListener {
       const updatedActivity = this._postActivityService.createPayload(newPost);
       const oldActivity = this._postActivityService.createPayload(oldPost);
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
-          actor,
+          actor: {
+            id: newPost.createdBy,
+          },
           event: event.getEventName(),
           data: updatedActivity,
           meta: {
@@ -299,12 +366,67 @@ export class PostListener {
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
+        tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         createdBy,
         createdAt,
         updatedAt,
         lang,
       },
     ]);
+
+    if (tags.length !== oldPost.tags.length) {
+      const oldTagIds = oldPost.tags.map((e) => e.id);
+      const newTagIds = tags.map((e) => e.id);
+      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+      if (deleteIds) {
+        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+      }
+      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+      if (addIds) {
+        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
+      }
+    }
+
+    const series = newPost.series?.map((s) => s.id) ?? [];
+    const oldSeriesIds = oldPost.series?.map((s) => s.id) ?? [];
+    if (series && series.length > 0) {
+      const newSeriesIds = series.filter((id) => !oldSeriesIds.includes(id));
+
+      newSeriesIds.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesAddedItemsEvent({
+            itemIds: [newPost.id],
+            seriesId: seriesId,
+            actor: actor,
+          })
+        )
+      );
+    }
+    if (oldSeriesIds && oldSeriesIds.length > 0) {
+      const seriesIdsDeleted = oldSeriesIds.filter((id) => !series.includes(id));
+      seriesIdsDeleted.forEach((seriesId) =>
+        this._internalEventEmitter.emit(
+          new SeriesRemovedItemsEvent({
+            items: [
+              {
+                id: newPost.id,
+                title: null,
+                content: newPost.content,
+                type: newPost.type,
+                createdBy: newPost.createdBy,
+                groupIds: newPost.audience.groups.map((group) => group.id),
+                createdAt: newPost.createdAt,
+                updatedAt: newPost.updatedAt,
+              },
+            ],
+            seriesId: seriesId,
+            actor: actor,
+            contentIsDeleted: false,
+          })
+        )
+      );
+    }
+
     try {
       // Fanout to write post to all news feed of user follow group audience
       this._feedPublisherService.fanoutOnWrite(
@@ -339,7 +461,9 @@ export class PostListener {
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
-          actor: post.actor,
+          actor: {
+            id: post.actor.id,
+          },
           event: event.getEventName(),
           data: postActivity,
         },
@@ -357,6 +481,7 @@ export class PostListener {
         updatedAt,
         type,
         isHidden,
+        tags,
       } = post;
 
       const mentionUserIds = [];
@@ -394,11 +519,13 @@ export class PostListener {
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
+          tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
           createdBy,
           createdAt,
           updatedAt,
         },
       ]);
+
       try {
         this._feedPublisherService.fanoutOnWrite(
           id,
@@ -410,6 +537,26 @@ export class PostListener {
         this._sentryService.captureException(error);
       }
     });
+
+    const postWithSeries = await this._postService.getListWithGroupsByIds(
+      posts.map((post) => post.id),
+      false
+    );
+    for (const post of postWithSeries) {
+      if (post['postSeries']?.length > 0) {
+        for (const seriesItem of post['postSeries']) {
+          this._internalEventEmitter.emit(
+            new SeriesAddedItemsEvent({
+              itemIds: [post.id],
+              seriesId: seriesItem.id,
+              actor: {
+                id: post.createdBy,
+              },
+            })
+          );
+        }
+      }
+    }
   }
 
   @On(PostVideoFailedEvent)
@@ -434,7 +581,9 @@ export class PostListener {
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
-          actor: post.actor,
+          actor: {
+            id: post.actor.id,
+          },
           event: event.getEventName(),
           data: postActivity,
         },

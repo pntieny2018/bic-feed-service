@@ -1,15 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PageDto } from '../../../../common/dto';
 import { Expose, Transform, Type } from 'class-transformer';
-import { UserSharedDto } from '../../../../shared/user/dto';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';
 import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { PostType } from '../../../../database/models/post.model';
-import { ArticleInSeriesResponseDto } from '../../../article/dto/responses';
+import { ItemInSeriesResponseDto } from '../../../article/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
+import { PostInSeriesResponseDto } from '../../../post/dto/responses/post-in-series.response.dto';
+import { UserDto } from '../../../v2-user/application';
 
 export class SeriesResponseDto {
   @ApiProperty({
@@ -60,11 +61,10 @@ export class SeriesResponseDto {
 
   @ApiProperty({
     description: 'Post creator information',
-    type: UserSharedDto,
+    type: UserDto,
   })
   @Expose()
-  @Type(() => UserSharedDto)
-  public actor: UserSharedDto;
+  public actor: UserDto;
 
   @ApiProperty({
     type: Boolean,
@@ -186,11 +186,18 @@ export class SeriesResponseDto {
   public coverMedia?: MediaResponseDto;
 
   @ApiProperty({
-    type: [ArticleInSeriesResponseDto],
-    name: 'articles',
+    type: [ItemInSeriesResponseDto],
+    name: 'items',
   })
   @Expose()
-  public articles?: ArticleInSeriesResponseDto[];
+  public items?: ItemInSeriesResponseDto[];
+
+  @ApiProperty({
+    type: [PostInSeriesResponseDto],
+    name: 'posts',
+  })
+  @Expose()
+  public posts?: PostInSeriesResponseDto[];
 
   @ApiProperty({
     description: 'Setting post',

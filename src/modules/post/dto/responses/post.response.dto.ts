@@ -3,7 +3,6 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
-import { UserSharedDto } from '../../../../shared/user/dto';
 import { ArticleResponseDto } from '../../../article/dto/responses';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
@@ -15,6 +14,7 @@ import { TagResponseDto } from '../../../tag/dto/responses/tag-response.dto';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { AudienceResponseDto } from './audience.response.dto';
 import { PostSettingResponseDto } from './post-setting-response.dto';
+import { UserDto } from '../../../v2-user/application';
 
 export class CommunityResponseDto {
   @ApiProperty({
@@ -31,6 +31,20 @@ export class CommunityResponseDto {
   @Expose()
   public name: string;
 }
+
+class SeriesSimpleResponseDto {
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public id: string;
+  @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public title: string;
+}
+
 export class PostResponseDto {
   @ApiProperty({
     description: 'Post ID',
@@ -46,6 +60,13 @@ export class PostResponseDto {
   })
   @Expose()
   public content: string;
+
+  @ApiProperty({
+    description: 'tags',
+    type: [TagResponseDto],
+  })
+  @Expose()
+  public tags?: TagResponseDto[];
 
   @Expose()
   public lang?: string;
@@ -121,11 +142,10 @@ export class PostResponseDto {
 
   @ApiProperty({
     description: 'Post creator information',
-    type: UserSharedDto,
+    type: UserDto,
   })
   @Expose()
-  @Type(() => UserSharedDto)
-  public actor: UserSharedDto;
+  public actor: UserDto;
 
   @ApiProperty({
     type: UserMentionDto,
@@ -305,7 +325,7 @@ export class PostResponseDto {
     }
     return [];
   })
-  public articles?: ArticleResponseDto[];
+  public items?: ArticleResponseDto[];
 
   @ApiProperty({
     type: [CommunityResponseDto],
@@ -313,16 +333,6 @@ export class PostResponseDto {
   })
   @Expose()
   public communities?: CommunityResponseDto[];
-
-  @ApiProperty({
-    type: [TagResponseDto],
-  })
-  @Expose()
-  @Transform(({ obj }) => {
-    if (obj.tagsJson === null) return [];
-    return obj.tagsJson;
-  })
-  public tags?: TagResponseDto[];
 
   @ApiProperty({
     type: Boolean,
@@ -335,6 +345,13 @@ export class PostResponseDto {
   })
   @Expose()
   public isHidden?: boolean;
+
+  @ApiProperty({
+    description: 'Series',
+    type: [SeriesSimpleResponseDto],
+  })
+  @Expose()
+  public series?: SeriesSimpleResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);

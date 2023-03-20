@@ -1,22 +1,21 @@
 import { MentionModule } from '../mention/mention.module';
-import { GroupModule } from '../../shared/group/group.module';
 import { PostModule } from '../post/post.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { FeedService } from './feed.service';
 import { FeedController } from './feed.controller';
-import { CanReadTimelineConstraint } from './validations/decorators';
-import { UserModule } from '../../shared/user';
 import { ReactionModule } from '../reaction';
+import { UserModuleV2 } from '../v2-user/user.module';
+import { GroupModuleV2 } from '../v2-group/group.module';
 
 @Module({
   imports: [
-    UserModule,
+    UserModuleV2,
     forwardRef(() => PostModule),
-    GroupModule,
+    GroupModuleV2,
     MentionModule,
     forwardRef(() => ReactionModule),
   ],
-  providers: [FeedService, CanReadTimelineConstraint],
+  providers: [FeedService],
   controllers: [FeedController],
   exports: [FeedService],
 })

@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { UserSharedDto } from '../../../../shared/user/dto';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { CategoryResponseDto } from './category.response.dto';
+import { UserDto } from '../../../v2-user/application';
+import { AudienceResponseDto } from '../../../post/dto/responses';
 
 export class ArticleSearchResponseDto {
   @ApiProperty({
@@ -27,6 +28,12 @@ export class ArticleSearchResponseDto {
   public summary: string;
 
   @ApiProperty({
+    type: AudienceResponseDto,
+  })
+  @Expose()
+  public audience: AudienceResponseDto;
+
+  @ApiProperty({
     description: 'Categories',
     type: [CategoryResponseDto],
   })
@@ -42,11 +49,10 @@ export class ArticleSearchResponseDto {
 
   @ApiProperty({
     description: 'Post creator information',
-    type: UserSharedDto,
+    type: UserDto,
   })
   @Expose()
-  @Type(() => UserSharedDto)
-  public actor: UserSharedDto;
+  public actor: UserDto;
 
   public constructor(data: Partial<ArticleSearchResponseDto>) {
     Object.assign(this, data);

@@ -8,9 +8,9 @@ export const ELASTIC_POST_MAPPING_PATH = {
     name: 'tags.name',
     groupId: 'tags.groupId',
   },
-  articles: {
-    id: 'articles.id',
-    zindex: 'articles.zindex',
+  items: {
+    id: 'items.id',
+    zindex: 'items.zindex',
   },
   groupIds: 'groupIds',
   title: {

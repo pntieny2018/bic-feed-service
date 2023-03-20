@@ -13,13 +13,6 @@ export class AuthMiddleware implements NestMiddleware {
       const payload = JSON.parse(req.headers?.user as string);
 
       req.user = await this._authService.getUser(payload);
-    } else if (req.headers?.secret) {
-      // temp for push to build new version app
-      req.user = await this._authService.getUser({
-        email: 'bicbot@maildrop.cc',
-        ['cognito:username']: req.headers.bot_id,
-        ['custom:bein_staff_role']: 'BOT',
-      });
     } else {
       req.user = null;
       const token = req.headers.authorization;

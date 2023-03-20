@@ -5,11 +5,12 @@ import { UploadService } from '../upload';
 import { UploadDto, UploadType } from '../upload/dto/requests/upload.dto';
 import { APP_VERSION } from '../../common/constants';
 import { MediaService } from './media.service';
-import { AuthUser, UserDto } from '../auth';
+import { AuthUser } from '../auth';
 import { MediaHelper } from './media.helper';
 import { MediaStatus } from '../../database/models/media.model';
 import { ValidatorException } from '../../common/exceptions';
 import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
+import { UserDto } from '../v2-user/application';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')

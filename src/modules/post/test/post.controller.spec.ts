@@ -180,12 +180,6 @@ describe.skip('PostController', () => {
       expect(postService.delete).toBeCalledTimes(1);
       expect(postService.delete).toBeCalledWith(mockedPostData.id, userDto);
       expect(result).toBe(true);
-
-      // expect(eventEmitter.emit).toBeCalledTimes(1);
-      // expect(eventEmitter.emit).toBeCalledWith(
-      //   DeletedPostEvent.event,
-      //   new DeletedPostEvent(mockedPostDeleted, userDto.profile)
-      // );
     });
   });
 });

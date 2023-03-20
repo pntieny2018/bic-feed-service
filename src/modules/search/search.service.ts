@@ -1,5 +1,5 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
@@ -10,14 +10,9 @@ import { ArrayHelper, ElasticsearchHelper, StringHelper } from '../../common/hel
 import { BodyES } from '../../common/interfaces/body-ealsticsearch.interface';
 import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
-import { GroupService } from '../../shared/group';
-import { GroupSharedDto } from '../../shared/group/dto';
-import { UserService } from '../../shared/user';
-import { UserSharedDto } from '../../shared/user/dto';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
 import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
-import { UserDto } from '../auth';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -29,6 +24,12 @@ import {
   IDataPostToUpdate,
   IPostElasticsearch,
 } from './interfaces/post-elasticsearch.interface';
+import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../v2-group/application';
 
 type FieldSearch = {
   default: string;
@@ -54,14 +55,19 @@ export class SearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
-    protected readonly groupService: GroupService,
-    protected readonly userService: UserService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected readonly appGroupService: IGroupApplicationService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected readonly userAppService: IUserApplicationService,
     protected readonly postBindingService: PostBindingService,
     @InjectModel(FailedProcessPostModel)
     private readonly _failedProcessingPostModel: typeof FailedProcessPostModel
   ) {}
 
-  public async addPostsToSearch(posts: IDataPostToAdd[], defaultIndex?: string): Promise<number> {
+  public async addPostsToSearch(
+    posts: IDataPostToAdd[],
+    defaultIndex?: string
+  ): Promise<{ totalCreated: number; totalUpdated: number }> {
     const index = defaultIndex ? defaultIndex : ElasticsearchHelper.ALIAS.POST.default.name;
     const body = [];
     for (const post of posts) {
@@ -76,18 +82,13 @@ export class SearchService {
       body.push({ index: { _index: index, _id: post.id } });
       body.push(post);
     }
-    if (body.length === 0) return 0;
+    if (body.length === 0) return { totalUpdated: 0, totalCreated: 0 };
     try {
-      const res = await this.elasticsearchService.bulk(
-        {
-          refresh: true,
-          body,
-          pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
-        },
-        {
-          maxRetries: 5,
-        }
-      );
+      const res = await this.elasticsearchService.bulk({
+        refresh: true,
+        body,
+        pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
+      });
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
@@ -102,7 +103,16 @@ export class SearchService {
           .catch((err) => this.logger.error(JSON.stringify(err?.stack)));
       }
       await this._updateLangAfterIndexToES(res?.items || [], index);
-      return res.items.filter((item) => !item.index.error).length;
+      let totalCreated = 0;
+      let totalUpdated = 0;
+      res.items.map((item) => {
+        if (item.index.result === 'created') totalCreated++;
+        if (item.index.result === 'updated') totalUpdated++;
+      });
+      return {
+        totalCreated,
+        totalUpdated,
+      };
     } catch (e) {
       this.logger.debug(JSON.stringify(e?.stack));
       this.sentryService.captureException(e);
@@ -235,7 +245,7 @@ export class SearchService {
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<any>> {
     const { contentSearch, limit, offset, groupId } = searchPostsDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<any>([], {
         total: 0,
@@ -246,11 +256,11 @@ export class SearchService {
 
     let groupIds = user.groups;
     if (groupId) {
-      const group = await this.groupService.get(groupId);
+      const group = await this.appGroupService.findOne(groupId);
       if (!group) {
         throw new BadRequestException(`Group ${groupId} not found`);
       }
-      groupIds = this.groupService.getGroupIdAndChildIdsUserJoined(group, authUser);
+      groupIds = this.appGroupService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
       if (groupIds.length === 0) {
         return new PageDto<any>([], {
           limit,
@@ -267,14 +277,14 @@ export class SearchService {
     const payload = await this.getPayloadSearchForPost(searchPostsDto, groupIds);
     const response = await this.searchService.search<IPostElasticsearch>(payload);
     const hits = response.hits.hits;
-    const articleIds = [];
+    const itemIds = []; //post or article
     const attrUserIds = [];
     const attrGroupIds = [];
     const posts = hits.map((item) => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const { _source: source } = item;
-      if (source.articles && source.articles.length) {
-        articleIds.push(...source.articles.map((article) => article.id));
+      if (source.items && source.items.length) {
+        itemIds.push(...source.items.map((item) => item.id));
       }
       attrUserIds.push(source.createdBy);
       if (source.mentionUserIds) attrUserIds.push(...source.mentionUserIds);
@@ -295,7 +305,7 @@ export class SearchService {
         title: source.title || null,
         summary: source.summary || null,
         categories: source.categories || [],
-        articles: source.articles || [],
+        items: source.items || [],
         tags: source.tags || [],
       };
 
@@ -312,8 +322,8 @@ export class SearchService {
       }
       return data;
     });
-    const users = await this.userService.getMany(attrUserIds);
-    const groups = await this.groupService.getMany(attrGroupIds);
+    const users = await this.userAppService.findAllByIds(attrUserIds);
+    const groups = await this.appGroupService.findAllByIds(attrGroupIds);
     await Promise.all([
       this.reactionService.bindToPosts(posts),
       this.postBindingService.bindAttributes(posts, [
@@ -325,19 +335,21 @@ export class SearchService {
     ]);
 
     let articlesFilterReport = [];
-    const articles = await this.postService.getSimpleArticlessByIds(
-      ArrayHelper.arrayUnique(articleIds)
+
+    const itemsInSeries = await this.postService.getSimplePostsByIds(
+      ArrayHelper.arrayUnique(itemIds)
     );
-    if (articles.length) {
+    if (itemsInSeries.length) {
       const articleIdsReported = await this.postService.getEntityIdsReportedByUser(authUser.id, [
         TargetType.ARTICLE,
+        TargetType.POST,
       ]);
       if (articleIdsReported.length) {
-        articlesFilterReport = articles.filter(
+        articlesFilterReport = itemsInSeries.filter(
           (article) => !articleIdsReported.includes(article.id)
         );
       } else {
-        articlesFilterReport = articles;
+        articlesFilterReport = itemsInSeries;
       }
     }
     const result = this.bindResponseSearch(posts, {
@@ -355,8 +367,8 @@ export class SearchService {
   public bindResponseSearch(
     posts: any,
     dataBinding: {
-      groups: GroupSharedDto[];
-      users: UserSharedDto[];
+      groups: GroupDto[];
+      users: UserDto[];
       articles: any;
     }
   ): any {
@@ -418,13 +430,13 @@ export class SearchService {
         mentions = mentionList.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});
       }
 
-      if (post.articles) {
+      if (post.items) {
         const bindArticles = [];
-        for (const article of post.articles) {
-          const findArticle = articles.find((item) => item.id === article.id);
+        for (const itemInSeries of post.items) {
+          const findArticle = articles.find((item) => item.id === itemInSeries.id);
           if (findArticle) bindArticles.push(findArticle);
         }
-        post.articles = bindArticles;
+        post.items = bindArticles;
       }
       if (post.reactionsCount) {
         post.reactionsCount.forEach(
@@ -463,8 +475,8 @@ export class SearchService {
     authUser: UserDto,
     searchDto: SearchSeriesDto
   ): Promise<PageDto<SeriesSearchResponseDto>> {
-    const { limit, offset, groupIds, contentSearch } = searchDto;
-    const user = authUser.profile;
+    const { limit, offset, groupIds, contentSearch, itemIds } = searchDto;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<SeriesSearchResponseDto>([], {
         total: 0,
@@ -472,18 +484,15 @@ export class SearchService {
         offset,
       });
     }
-    if (!groupIds || groupIds?.length === 0) {
-      return new PageDto<SeriesSearchResponseDto>([], {
-        limit,
-        offset,
-        hasNextPage: false,
-      });
-    }
 
-    const filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+    let filterGroupIds = [];
+    if (groupIds && groupIds.length) {
+      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
+    }
     const payload = await this.getPayloadSearchForSeries({
       contentSearch,
       groupIds: filterGroupIds,
+      itemIds,
       limit,
       offset,
     });
@@ -493,7 +502,9 @@ export class SearchService {
       const source = {
         id: item._source.id,
         groupIds: item._source.groupIds,
+        coverMedia: item._source.coverMedia,
         title: item._source.title || null,
+        summary: item._source.summary,
       };
       return source;
     });
@@ -518,7 +529,7 @@ export class SearchService {
     searchDto: SearchArticlesDto
   ): Promise<PageDto<ArticleSearchResponseDto>> {
     const { limit, offset, groupIds, categoryIds, contentSearch } = searchDto;
-    const user = authUser.profile;
+    const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<ArticleSearchResponseDto>([], {
         total: 0,
@@ -534,9 +545,9 @@ export class SearchService {
       });
     }
 
-    let filterGroupIds = authUser.profile.groups;
+    let filterGroupIds = authUser.groups;
     if (groupIds) {
-      filterGroupIds = this.groupService.filterGroupIdsUsersJoined(groupIds, authUser);
+      filterGroupIds = groupIds.filter((groupId) => authUser.groups.includes(groupId));
     }
     const notIncludeIds = await this.postService.getEntityIdsReportedByUser(authUser.id, [
       TargetType.ARTICLE,
@@ -555,6 +566,7 @@ export class SearchService {
     const articles = hits.map((item) => {
       const source = {
         id: item._source.id,
+        groupIds: item._source.groupIds,
         summary: item._source.summary,
         coverMedia: item._source.coverMedia,
         createdBy: item._source.createdBy,
@@ -565,7 +577,9 @@ export class SearchService {
     });
 
     await this.postBindingService.bindActor(articles);
-
+    await this.postBindingService.bindAudience(articles, {
+      shouldHideSecretAudienceCanNotAccess: true,
+    });
     const result = this.classTransformer.plainToInstance(ArticleSearchResponseDto, articles, {
       excludeExtraneousValues: true,
     });
@@ -609,7 +623,7 @@ export class SearchService {
             ...this._getFilterTime(startTime, endTime),
             ...this._getTagFilter(tagName),
           ],
-          should: [...this._getMatchKeyword(contentSearch)],
+          should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
           minimum_should_match: contentSearch ? 1 : 0,
         },
@@ -632,6 +646,7 @@ export class SearchService {
   public async getPayloadSearchForSeries(props: {
     contentSearch: string;
     groupIds: string[];
+    itemIds: string[];
     limit: number;
     offset: number;
   }): Promise<{
@@ -640,14 +655,24 @@ export class SearchService {
     from: number;
     size: number;
   }> {
-    const { contentSearch, groupIds, limit, offset } = props;
+    const { contentSearch, groupIds, itemIds, limit, offset } = props;
+    const bool = {
+      must: [],
+      filter: [...this._getTypeFilter(PostType.SERIES)],
+    };
+    if (contentSearch) {
+      bool.must = [...this._getMatchPrefixKeyword('title', contentSearch)];
+    }
+
+    if (groupIds && groupIds.length) {
+      bool.filter.push(...this._getAudienceFilter(groupIds));
+    }
+    if (itemIds && itemIds.length) {
+      bool.filter.push(...this._getItemInSeriesFilter(itemIds));
+    }
+
     const body: BodyES = {
-      query: {
-        bool: {
-          must: [...this._getMatchPrefixKeyword('title', contentSearch)],
-          filter: [...this._getTypeFilter(PostType.SERIES), ...this._getAudienceFilter(groupIds)],
-        },
-      },
+      query: { bool },
     };
 
     body['sort'] = [...this._getSort(contentSearch)];
@@ -836,6 +861,21 @@ export class SearchService {
     return [];
   }
 
+  private _getItemInSeriesFilter(filterItemIds: string[]): any {
+    const { items } = ELASTIC_POST_MAPPING_PATH;
+    if (filterItemIds.length) {
+      return [
+        {
+          terms: {
+            [items.id]: filterItemIds,
+          },
+        },
+      ];
+    }
+
+    return [];
+  }
+
   private _getMatchPrefixKeyword(key: string, keyword: string): any {
     if (keyword) {
       return [
@@ -852,16 +892,58 @@ export class SearchService {
     return [];
   }
 
-  private _getMatchKeyword(keyword: string): any {
-    if (keyword) {
-      const { content, title, summary } = ELASTIC_POST_MAPPING_PATH;
-      const queryContent = this._getQueryMatchKeyword(content, keyword);
-      const queryTitle = this._getQueryMatchKeyword(title, keyword);
-      const querySummary = this._getQueryMatchKeyword(summary, keyword);
-
-      return [...queryContent, ...querySummary, ...queryTitle];
+  private _getMatchKeyword(type: PostType, keyword: string): any {
+    if (!keyword) return [];
+    let queries;
+    let fields;
+    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
+    const isASCII = StringHelper.isASCII(keyword);
+    if (isASCII) {
+      //En
+      if (type === PostType.POST) {
+        fields = [content.ascii, content.default];
+      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
+        fields = [summary.ascii, summary.default, content.ascii, content.default];
+      } else {
+        fields = [
+          title.ascii,
+          title.default,
+          summary.ascii,
+          summary.default,
+          content.ascii,
+          content.default,
+        ];
+      }
+      queries = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields,
+          },
+        },
+      ];
+    } else {
+      //Vi
+      if (type === PostType.POST) {
+        fields = [title.default];
+      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
+        fields = [summary.default, content.default];
+      } else {
+        fields = [title.default, summary.default, content.default];
+      }
+      queries = [
+        {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          multi_match: {
+            query: keyword,
+            fields,
+          },
+        },
+      ];
     }
-    return [];
+
+    return queries;
   }
 
   private _getSort(textSearch: string): any {
@@ -872,60 +954,34 @@ export class SearchService {
     }
   }
 
-  private _getQueryMatchKeyword(field: FieldSearch, keyword: string): any[] {
+  private _getQueryMatchKeyword(keyword: string): any[] {
     let queries;
-    const isASCII = this._isASCIIKeyword(keyword);
+    const { title, summary, content } = ELASTIC_POST_MAPPING_PATH;
+    const isASCII = StringHelper.isASCII(keyword);
     if (isASCII) {
+      //En
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.default, field.ascii],
-            type: 'phrase', //Match pharse with high priority
-          },
-        },
-        {
-          match: {
-            [field.default]: {
-              query: keyword,
-            },
-          },
-        },
-        {
-          match: {
-            [field.ascii]: {
-              query: keyword,
-            },
+            fields: [title.ascii, summary.ascii, content.ascii],
           },
         },
       ];
     } else {
+      //Vi
       queries = [
         {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           multi_match: {
             query: keyword,
-            fields: [field.default],
-            type: 'phrase',
-          },
-        },
-        {
-          match: {
-            [field.default]: {
-              query: keyword,
-            },
+            fields: [title.default, summary.default, content.default],
           },
         },
       ];
     }
 
     return queries;
-  }
-
-  private _isASCIIKeyword(keyword: string): boolean {
-    const arrKeywords = keyword.split(' ');
-    const isASCII = arrKeywords.every((i) => StringHelper.isASCII(i));
-    return isASCII;
   }
 }

@@ -1,0 +1,7 @@
+{
+    "tag": {
+        "created_success": "Created tag successfully",
+        "updated_success": "Updated tag successfully",
+        "deleted_success": "Deleted tag successfully"
+    }
+}

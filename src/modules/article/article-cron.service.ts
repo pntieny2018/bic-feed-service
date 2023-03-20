@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ArticleAppService } from './application/article.app-service';
 import { InjectModel } from '@nestjs/sequelize';
@@ -6,9 +6,8 @@ import { IPost, PostModel, PostStatus } from '../../database/models/post.model';
 import { Op, WhereOptions } from 'sequelize';
 import moment from 'moment/moment';
 import { ArticleService } from './article.service';
-import { UserService } from '../../shared/user';
-import { UserDto } from '../auth';
 import { RedisService } from '@app/redis';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../v2-user/application';
 
 @Injectable()
 export class ArticleCronService {
@@ -17,7 +16,8 @@ export class ArticleCronService {
   public constructor(
     private _articleAppService: ArticleAppService,
     private _articleService: ArticleService,
-    private _userService: UserService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
     private _redisService: RedisService,
     @InjectModel(PostModel)
     private _postModel: typeof PostModel
@@ -52,11 +52,9 @@ export class ArticleCronService {
 
   @Cron('33 */30 * * * *')
   private async _jobSchedulePublishArticle(): Promise<void> {
+    const redisKeyName = 'isRunningArticleSchedule';
+    const isRunningArticleSchedule = await this._redisService.setNxEx(redisKeyName, true);
     try {
-      const isRunningArticleSchedule = await this._redisService.setNxEx(
-        'isRunningArticleSchedule',
-        true
-      );
       if (isRunningArticleSchedule === 1) {
         const articles = await this._getsRecursive({
           status: PostStatus.WAITING_SCHEDULE,
@@ -64,20 +62,11 @@ export class ArticleCronService {
         });
         for (const article of articles) {
           try {
-            const userProfile = await this._userService.get(article.createdBy);
-            const userPermission = await this._userService.getPermissions(
-              userProfile.id,
-              JSON.stringify({
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                'cognito:username': userProfile.username,
-              })
-            );
-            const userDTO: UserDto = {
-              id: userProfile.id,
-              profile: userProfile,
-              permissions: userPermission,
-            };
-            await this._articleAppService.publish(userDTO, article.id, true);
+            const userAuth = await this._userAppService.findOne(article.createdBy, {
+              withPermission: true,
+            });
+
+            await this._articleAppService.publish(userAuth, article.id, true);
           } catch (e) {
             await this._articleService.updateArticleStatusAndLog(
               article.id,
@@ -90,5 +79,6 @@ export class ArticleCronService {
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
     }
+    await this._redisService.del(redisKeyName);
   }
 }

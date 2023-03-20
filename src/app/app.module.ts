@@ -1,10 +1,8 @@
 import { LibModule } from './lib.module';
-import { UserModule } from '../shared/user';
 import { FeedModule } from '../modules/feed';
 import { PostModule } from '../modules/post';
 import { SeriesModule } from '../modules/series';
 import { ListenerModule } from '../listeners';
-import { GroupModule } from '../shared/group';
 import { MediaModule } from '../modules/media';
 import { UploadModule } from '../modules/upload';
 import { AppController } from './app.controller';
@@ -30,8 +28,13 @@ import { InternalModule } from '../modules/internal';
 import { SearchModule } from '../modules/search';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
 import { TagModule } from '../modules/tag';
+import { PostModuleV2 } from '../modules/v2-post/post.module';
 import { FilterUserModule } from '../modules/filter-user';
 import { AdminModule } from '../modules/admin/admin.module';
+import { GroupModuleV2 } from '../modules/v2-group/group.module';
+import { UserModuleV2 } from '../modules/v2-user/user.module';
+import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
+import { I18nMiddleware } from 'nestjs-i18n';
 
 @Module({
   imports: [
@@ -44,8 +47,6 @@ import { AdminModule } from '../modules/admin/admin.module';
     PostModule,
     UploadModule,
     MediaModule,
-    UserModule,
-    GroupModule,
     MentionModule,
     ReactionModule,
     ListenerModule,
@@ -60,14 +61,18 @@ import { AdminModule } from '../modules/admin/admin.module';
     SeriesModule,
     CategoryModule,
     HashtagModule,
-    TagModule,
+    //TagModule,
     ScheduleModule.forRoot(),
     HealthModule,
     SeriesModule,
     InternalModule,
     SearchModule,
     ReportContentModule,
+    PostModuleV2,
+    GroupModuleV2,
+    UserModuleV2,
     AdminModule,
+    I18nGlobalModule,
   ],
   controllers: [AppController],
   providers: [],
@@ -75,6 +80,6 @@ import { AdminModule } from '../modules/admin/admin.module';
 })
 export class AppModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).forRoutes('*');
+    consumer.apply(I18nMiddleware, AuthMiddleware).forRoutes('*');
   }
 }

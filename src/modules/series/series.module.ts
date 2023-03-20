@@ -6,18 +6,16 @@ import { CommentModule } from '../comment';
 import { ReactionModule } from '../reaction';
 import { FeedModule } from '../feed';
 import { PostModule } from '../post';
-import { UserModule } from '../../shared/user';
-import { GroupModule } from '../../shared/group';
 import { SeriesAppService } from './application/series.app-service';
 import { ArticleModule } from '../article';
 import { SearchModule } from '../search';
+import { GroupModuleV2 } from '../v2-group/group.module';
 
 @Module({
   imports: [
     AuthorityModule,
     PostModule,
-    UserModule,
-    GroupModule,
+    GroupModuleV2,
     SearchModule,
     forwardRef(() => ReactionModule),
     forwardRef(() => CommentModule),

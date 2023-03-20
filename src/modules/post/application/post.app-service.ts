@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
@@ -11,9 +17,6 @@ import {
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
-import { GroupService } from '../../../shared/group';
-import { UserService } from '../../../shared/user';
-import { UserDto } from '../../auth';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { TargetType } from '../../report-content/contstants';
@@ -22,20 +25,30 @@ import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
 import { PostHistoryService } from '../post-history.service';
 import { PostService } from '../post.service';
-import { GetPostsByParamsDto } from '../dto/requests/get-posts-by-params.dto';
+import { TagService } from '../../tag/tag.service';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../v2-user/application';
+import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 
 @Injectable()
 export class PostAppService {
   private _logger = new Logger(PostAppService.name);
+
   public constructor(
     private _postService: PostService,
     private _postHistoryService: PostHistoryService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
-    private _userService: UserService,
-    private _groupService: GroupService,
-    protected authorityService: AuthorityService
+    @Inject(USER_APPLICATION_TOKEN)
+    private _userAppService: IUserApplicationService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private _groupAppService: IGroupApplicationService,
+    protected authorityService: AuthorityService,
+    private _tagService: TagService
   ) {}
 
   public getDraftPosts(
@@ -115,13 +128,15 @@ export class PostAppService {
     postId: string,
     updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience, setting } = updatePostDto;
+    const { audience, setting, tags, series } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
 
     await this._authorityService.checkPostOwner(postBefore, user.id);
     if (postBefore.status === PostStatus.PUBLISHED) {
-      if (audience.groupIds.length === 0) throw new BadRequestException('Audience is required');
+      if (audience.groupIds.length === 0) {
+        throw new BadRequestException('Audience is required');
+      }
 
       let isEnableSetting = false;
       if (
@@ -145,6 +160,7 @@ export class PostAppService {
       if (removeGroupIds.length) {
         await this._authorityService.checkCanDeletePost(user, removeGroupIds);
       }
+      await this.isSeriesAndTagsValid(audience.groupIds, series, tags);
     }
 
     const isUpdated = await this._postService.update(postBefore, user, updatePostDto);
@@ -154,7 +170,7 @@ export class PostAppService {
         new PostHasBeenUpdatedEvent({
           oldPost: postBefore,
           newPost: postUpdated,
-          actor: user.profile,
+          actor: user,
         })
       );
 
@@ -167,19 +183,7 @@ export class PostAppService {
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     if (post.status === PostStatus.PUBLISHED) return post;
 
-    await this._authorityService.checkPostOwner(post, user.id);
-    const { audience, setting } = post;
-    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
-
-    const groupIds = audience.groups.map((group) => group.id);
-    const isEnableSetting =
-      setting.isImportant ||
-      setting.canComment === false ||
-      setting.canReact === false ||
-      setting.canShare === false;
-    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
-
-    this._postService.checkContent(post.content, post.media);
+    await this._preCheck(post, user);
 
     const postUpdated = await this._postService.publish(post, user);
     this._feedService.markSeenPosts(postUpdated.id, user.id);
@@ -187,7 +191,7 @@ export class PostAppService {
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
         post: postUpdated,
-        actor: user.profile,
+        actor: user,
       })
     );
 
@@ -214,7 +218,7 @@ export class PostAppService {
       this._eventEmitter.emit(
         new PostHasBeenDeletedEvent({
           post: postDeleted,
-          actor: user.profile,
+          actor: user,
         })
       );
       return true;
@@ -248,13 +252,82 @@ export class PostAppService {
   }
 
   public async getUserGroup(groupId: string, userId: string, postId: string): Promise<any> {
-    const user = await this._userService.get(userId);
-    const group = await this._groupService.get(groupId);
+    const user = await this._userAppService.findOne(userId);
+    const group = await this._groupAppService.findOne(groupId);
     const post = await this._postService.findPost({ postId });
     return {
       group,
       user,
       post,
     };
+  }
+
+  public async isSeriesAndTagsValid(
+    groupIds: string[],
+    seriesIds: string[] = [],
+    tagIds: string[] = []
+  ): Promise<boolean> {
+    const seriesTagErrorData = {
+      seriesIds: [],
+      tagIds: [],
+      seriesNames: [],
+      tagNames: [],
+    };
+    if (seriesIds.length) {
+      const seriesGroups = await this._postService.getListWithGroupsByIds(seriesIds, true);
+      const invalidSeries = [];
+      seriesGroups.forEach((item) => {
+        const isValid = item.groups.some((group) => groupIds.includes(group.groupId));
+        if (!isValid) {
+          invalidSeries.push(item);
+        }
+      });
+      if (invalidSeries.length) {
+        invalidSeries.forEach((e) => {
+          seriesTagErrorData.seriesIds.push(e.id);
+          seriesTagErrorData.seriesNames.push(e.title);
+        });
+      }
+    }
+    if (tagIds.length) {
+      const invalidTags = await this._tagService.getInvalidTagsByAudience(tagIds, groupIds);
+      if (invalidTags.length) {
+        invalidTags.forEach((e) => {
+          seriesTagErrorData.tagIds.push(e.id);
+          seriesTagErrorData.tagNames.push(e.name);
+        });
+      }
+    }
+    if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.APP_POST_AS_READ_INVALID_PARAMETER,
+        message: 'Invalid series, tags',
+        errors: seriesTagErrorData,
+      });
+    }
+    return true;
+  }
+
+  private async _preCheck(post: PostResponseDto, user: UserDto): Promise<void> {
+    await this._authorityService.checkPostOwner(post, user.id);
+
+    const { audience, setting } = post;
+    if (audience.groups.length === 0) throw new BadRequestException('Audience is required');
+    const groupIds = audience.groups.map((group) => group.id);
+
+    const isEnableSetting =
+      setting.isImportant ||
+      setting.canComment === false ||
+      setting.canReact === false ||
+      setting.canShare === false;
+    await this._authorityService.checkCanCreatePost(user, groupIds, isEnableSetting);
+
+    await this.isSeriesAndTagsValid(
+      audience.groups.map((e) => e.id),
+      post.series.map((item) => item.id),
+      post.tags.map((e) => e.id)
+    );
+
+    this._postService.checkContent(post.content, post.media);
   }
 }

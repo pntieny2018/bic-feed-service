@@ -18,11 +18,11 @@ export interface ITag {
   groupId: string;
   name: string;
   slug: string;
-  createdBy?: string;
-  updatedBy?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  totalUsed?: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  totalUsed: number;
 }
 
 @Table({
@@ -60,9 +60,9 @@ export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag 
 
   @CreatedAt
   @Column
-  public createdAt?: Date;
+  public createdAt: Date;
 
   @UpdatedAt
   @Column
-  public updatedAt?: Date;
+  public updatedAt: Date;
 }

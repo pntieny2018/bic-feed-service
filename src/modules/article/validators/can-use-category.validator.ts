@@ -10,7 +10,7 @@ import {
 import { Op } from 'sequelize';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { CategoryModel } from '../../../database/models/category.model';
-import { UserDto } from '../../auth';
+import { UserDto } from '../../v2-user/application';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {

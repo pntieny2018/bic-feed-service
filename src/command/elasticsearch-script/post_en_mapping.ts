@@ -43,7 +43,7 @@ export const POST_EN_MAPPING = {
           },
         },
       },
-      articles: {
+      items: {
         properties: {
           id: {
             type: 'keyword',

@@ -1,7 +1,7 @@
-import { UserDto } from '../../auth';
 import { TargetType } from '../contstants';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { UserDto } from '../../v2-user/application';
 
 export class StatisticsReportResponseDto {
   @ApiProperty({
@@ -27,7 +27,6 @@ export class StatisticsReportResponseDto {
   public total: number;
 
   @ApiProperty()
-  @Type(() => UserDto)
   public reporters: UserDto[];
 
   public constructor(data: Partial<StatisticsReportResponseDto>) {

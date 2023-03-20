@@ -38,6 +38,8 @@ export class FollowService {
     const MAX_POSTS_IN_NEWSFEED = 10000;
     try {
       const followedGroupIds = await this._filterGroupsUserJoined(userId, groupIds);
+      if (followedGroupIds.length === 0) return;
+
       await this._createFollowData(userId, followedGroupIds);
 
       await this._userNewsFeedModel.sequelize.query(
@@ -222,18 +224,23 @@ export class FollowService {
     this._logger.debug(`[filterUserFollows]:groupIds: ${groupIds}`);
     this._logger.debug(`[filterUserFollows]:oldGroupIds: ${oldGroupIds}`);
     try {
+      const schema = this._databaseConfig.schema;
       let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
       if (oldGroupIds && oldGroupIds.length > 0) {
-        condition += ' AND group_id NOT IN (:oldGroupIds)';
+        condition += ` AND NOT EXISTS (
+        SELECT null
+        FROM ${schema}.${this._followModel.tableName} AS "tmp"
+        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:oldGroupIds)
+        ) `;
       }
+
       if (ignoreUserIds && ignoreUserIds.length > 0) {
-        condition += ' AND user_id NOT IN (:ignoreUserIds)';
+        condition += ` AND user_id NOT IN (:ignoreUserIds) `;
       }
-      const schema = this._databaseConfig.schema;
 
       const rows = await this._sequelize.query(
         `SELECT DISTINCT(user_id), zindex
-          FROM ${schema}.${this._followModel.tableName} tb1
+          FROM ${schema}.${this._followModel.tableName} f
           WHERE  ${condition}
           ORDER BY zindex ASC limit :limit ;
              `,
