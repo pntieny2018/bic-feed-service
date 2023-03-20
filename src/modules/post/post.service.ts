@@ -549,7 +549,7 @@ export class PostService {
         as: 'series',
         required: false,
         through: {
-          attributes: [],
+          attributes: ['zindex'],
         },
         attributes: ['id', 'title'],
         include: [
