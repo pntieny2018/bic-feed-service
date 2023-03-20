@@ -38,6 +38,8 @@ export class FollowService {
     const MAX_POSTS_IN_NEWSFEED = 10000;
     try {
       const followedGroupIds = await this._filterGroupsUserJoined(userId, groupIds);
+      if (followedGroupIds.length === 0) return;
+
       await this._createFollowData(userId, followedGroupIds);
 
       await this._userNewsFeedModel.sequelize.query(
