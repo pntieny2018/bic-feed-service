@@ -89,7 +89,7 @@ export class PostListener {
         privacy: PostPrivacy.OPEN,
       });
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
           actor: {
@@ -168,7 +168,7 @@ export class PostListener {
     //     this._sentryService.captureException(e);
     //   });
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
         actor: {
@@ -318,7 +318,7 @@ export class PostListener {
       const updatedActivity = this._postActivityService.createPayload(newPost);
       const oldActivity = this._postActivityService.createPayload(oldPost);
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
           actor: {
