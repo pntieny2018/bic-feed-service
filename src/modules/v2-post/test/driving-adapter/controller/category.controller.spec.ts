@@ -2,6 +2,7 @@ import { CategoryController } from '../../../driving-apdater/controller/category
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { userMock } from '../../mock/user.dto.mock';
+import { FindCategoriesPaginationDto } from '../../../application/query/find-categories/find-categories-pagination.dto';
 
 describe('CategoryController', () => {
   let controller: CategoryController;
@@ -21,39 +22,46 @@ describe('CategoryController', () => {
     jest.clearAllMocks();
   });
 
-  const categoryMocks = [
-    {
-      "id": "6b9fbc18-04c3-4a4a-bd64-453add6724dd",
-      "name": "Outdoors",
-      "slug": "outdoors",
-      "createdAt": "2022-09-21T08:33:18.881Z"
-    },
-    {
-      "id": "ce8c7613-426d-48e4-8d74-c2a12adc05f9",
-      "name": "Fashion & Beauty",
-      "slug": "fashion-beauty",
-      "createdAt": "2022-09-21T08:33:18.881Z"
-    }
-  ]
+  const categoryMocks: FindCategoriesPaginationDto = {
+    rows: [
+      {
+        'id': '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+        'name': 'Outdoors',
+        'slug': 'outdoors',
+        'level': 1,
+        'parentId': null,
+        'active': true,
+        'createdBy': '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+      },
+      {
+        'id': 'ce8c7613-426d-48e4-8d74-c2a12adc05f9',
+        'name': 'Fashion & Beauty',
+        'slug': 'fashion-beauty',
+        'level': 1,
+        'parentId': null,
+        'active': true,
+        'createdBy': '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+      },
+    ],
+    total: 0,
+  }
 
   describe('Get', () => {
 
     it('Should get categories successfully', async () => {
-      jest.spyOn(query, 'execute').mockResolvedValue({ rows: categoryMocks, total: 0 });
+      jest.spyOn(query, 'execute').mockResolvedValue(categoryMocks);
       const result = await controller.get(userMock, {});
       expect(result).toEqual({
         list: [
           {
             "id": "6b9fbc18-04c3-4a4a-bd64-453add6724dd",
             "name": "Outdoors",
-            "slug": "outdoors",
-            "createdAt": "2022-09-21T08:33:18.881Z",
+            "slug": "outdoors"
           },
           {
             "id": "ce8c7613-426d-48e4-8d74-c2a12adc05f9",
             "name": "Fashion & Beauty",
-            "slug": "fashion-beauty",
-            "createdAt": "2022-09-21T08:33:18.881Z",
+            "slug": "fashion-beauty"
           }
         ],
         "meta": {

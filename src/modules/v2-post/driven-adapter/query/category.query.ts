@@ -19,16 +19,16 @@ export class CategoryQuery implements ICategoryQuery {
   public async getPagination(
     input: GetPaginationCategoryProps
   ): Promise<PaginationResult<CategoryEntity>> {
-    const { offset, limit, name, level, isCreatedByMe, userId } = input;
+    const { offset, limit, name, level, createdBy } = input;
     const conditions = {};
     if (name) {
-      conditions['name'] = { [Op.iLike]: '%' + name };
+      conditions['name'] = { [Op.iLike]: '%' + name + '%' };
     }
     if (level) {
       conditions['level'] = level;
     }
-    if (isCreatedByMe && userId) {
-      conditions['createdBy'] = userId;
+    if (createdBy) {
+      conditions['createdBy'] = createdBy;
     }
     const { rows, count } = await this._categoryModel.findAndCountAll({
       where: conditions,

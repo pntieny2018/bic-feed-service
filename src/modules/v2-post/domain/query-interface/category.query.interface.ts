@@ -5,8 +5,7 @@ import { CategoryEntity } from '../model/category';
 export type GetPaginationCategoryProps = PaginationProps & {
   name?: string;
   level?: number;
-  isCreatedByMe?: boolean;
-  userId?: string;
+  createdBy?: string;
 };
 
 export interface ICategoryQuery {

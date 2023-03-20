@@ -5,6 +5,8 @@ import { getModelToken } from '@nestjs/sequelize';
 import { createMock } from '@golevelup/ts-jest';
 import { CategoryFactory } from '../../../domain/factory/category.factory';
 import { CATEGORY_FACTORY_TOKEN } from '../../../domain/factory/category.factory.interface';
+import { Op } from 'sequelize';
+import { v4 } from 'uuid';
 
 describe('CategoryQuery', () => {
   let query: CategoryQuery;
@@ -49,11 +51,53 @@ describe('CategoryQuery', () => {
   ];
 
   describe('getPagination', () => {
-    it('Should get categories success', async () => {
+    it('Should get categories success when request just limit off set', async () => {
       jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
       const result = await query.getPagination({limit: 20, offset: 0});
       expect(categoryModel.findAndCountAll).toBeCalledWith({
         where: {},
+        limit: 20,
+        offset: 0,
+        order: [['zindex', 'DESC']],
+      });
+    });
+
+    it('Should get categories success when request with name', async () => {
+      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
+      const result = await query.getPagination({limit: 20, offset: 0, name: 'outdoors'});
+      expect(categoryModel.findAndCountAll).toBeCalledWith({
+        where: {
+          name: {
+            [Op.iLike]: '%outdoors%'
+          }
+        },
+        limit: 20,
+        offset: 0,
+        order: [['zindex', 'DESC']],
+      });
+    });
+
+    it('Should get categories success when request with level', async () => {
+      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
+      const result = await query.getPagination({limit: 20, offset: 0, level: 1});
+      expect(categoryModel.findAndCountAll).toBeCalledWith({
+        where: {
+          level: 1
+        },
+        limit: 20,
+        offset: 0,
+        order: [['zindex', 'DESC']],
+      });
+    });
+
+    it('Should get categories success when request with createdBy', async () => {
+      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
+      const userId = v4();
+      const result = await query.getPagination({limit: 20, offset: 0, createdBy: userId});
+      expect(categoryModel.findAndCountAll).toBeCalledWith({
+        where: {
+          createdBy: userId
+        },
         limit: 20,
         offset: 0,
         order: [['zindex', 'DESC']],
