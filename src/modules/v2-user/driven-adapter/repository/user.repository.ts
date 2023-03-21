@@ -20,6 +20,7 @@ type UserDataInCache = {
   avatar: string;
   email: string;
   groups: string[];
+  isDeactivated?: boolean;
   permission?: Permission;
 };
 
@@ -57,7 +58,23 @@ export class UserRepository implements IUserRepository {
   }
 
   public async findOne(id: string): Promise<UserEntity> {
-    const user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    let user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    if (!user) {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+            ids: id,
+          })
+        )
+      );
+      if (response.status !== HttpStatus.OK) {
+        return null;
+      }
+      user = AxiosHelper.getDataResponse<UserDataInRest[]>(response)[0];
+      if (!user) {
+        return null;
+      }
+    }
     return new UserEntity(user);
   }
 
@@ -66,7 +83,22 @@ export class UserRepository implements IUserRepository {
       (userId) => `${this._prefixRedis + userId}`
     );
 
-    const users = await this._store.mget(keys);
+    let users = await this._store.mget(keys);
+    const notFoundUserIds = ids.filter((id) => !users.find((user) => user?.id === id));
+    if (notFoundUserIds.length > 0) {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+            ids: notFoundUserIds.join(','),
+          })
+        )
+      );
+      if (response.status !== HttpStatus.OK) {
+        return [];
+      }
+      users = AxiosHelper.getDataResponse<UserDataInRest[]>(response);
+    }
+
     const result = [];
     for (const user of users) {
       if (user) {
