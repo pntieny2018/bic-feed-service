@@ -1145,9 +1145,41 @@ export class PostService {
             userId,
           },
         ],
-        { ignoreDuplicates: true }
+        { ignoreDuplicates: true },
       );
     }
+  }
+
+  public async getListByUserId(
+    userId: string,
+    search: {
+      offset: number;
+      limit: number;
+      type?: PostType;
+    },
+  ): Promise<string[]> {
+    if (!userId) return [];
+    const { type, offset, limit } = search;
+    const condition = {
+      status: PostStatus.PUBLISHED,
+      isHidden: false,
+      createdBy: userId,
+    };
+
+    if (type) {
+      condition['type'] = type;
+    }
+
+    const posts = await this.postModel.findAll({
+      attributes: ['id'],
+      subQuery: false,
+      where: condition,
+      order: [['createdAt', 'DESC']],
+      offset,
+      limit: limit + 1,
+    });
+
+    return posts.map((post) => post.id);
   }
 
   public async getListSavedByUserId(
@@ -1155,13 +1187,12 @@ export class PostService {
     search: {
       offset: number;
       limit: number;
-      isImportant?: boolean;
       type?: PostType;
       groupIds?: string[];
-    }
+    },
   ): Promise<string[]> {
     if (!userId) return [];
-    const { groupIds, type, isImportant, offset, limit } = search;
+    const { groupIds, type, offset, limit } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
@@ -1169,10 +1200,6 @@ export class PostService {
 
     if (type) {
       condition['type'] = type;
-    }
-
-    if (isImportant) {
-      condition['isImportant'] = true;
     }
 
     const include: any = [
