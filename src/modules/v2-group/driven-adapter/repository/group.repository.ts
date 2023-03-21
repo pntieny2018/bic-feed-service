@@ -72,7 +72,7 @@ export class GroupRepository implements IGroupRepository {
       if (response.status !== HttpStatus.OK) {
         return [];
       }
-      groups = AxiosHelper.getDataResponse<GroupDataInCache[]>(response);
+      groups = groups.concat(AxiosHelper.getDataResponse<GroupDataInCache[]>(response));
     }
     const result = [];
     for (const group of groups) {

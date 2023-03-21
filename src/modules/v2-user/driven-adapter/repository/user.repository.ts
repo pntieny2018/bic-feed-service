@@ -96,7 +96,7 @@ export class UserRepository implements IUserRepository {
       if (response.status !== HttpStatus.OK) {
         return [];
       }
-      users = AxiosHelper.getDataResponse<UserDataInRest[]>(response);
+      users = users.concat(AxiosHelper.getDataResponse<UserDataInRest[]>(response));
     }
 
     const result = [];
