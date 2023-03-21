@@ -60,8 +60,6 @@ export class SeriesService {
     private readonly _postBinding: PostBindingService,
     private readonly _feedService: FeedService,
     private readonly _reactionService: ReactionService,
-    @Inject(forwardRef(() => ArticleService))
-    private readonly _articleService: ArticleService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService
   ) {}
@@ -153,7 +151,7 @@ export class SeriesService {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
-    result[0].items = await this._articleService.getItemsInSeries(id, authUser);
+    result[0].items = await this._postService.getItemsInSeries(id, authUser);
     return result[0];
   }
   /**
@@ -165,7 +163,7 @@ export class SeriesService {
       const { title, summary, audience, coverMedia, setting } = createPostDto;
       const authUserId = authUser.id;
       transaction = await this._sequelizeConnection.transaction();
-      const privacy = await this._articleService.getPrivacy(audience.groupIds);
+      const privacy = await this._postService.getPrivacy(audience.groupIds);
       const post = await this._postModel.create(
         {
           title,
@@ -244,7 +242,7 @@ export class SeriesService {
     try {
       const { audience, title, summary, coverMedia, setting } = updateSeriesDto;
       transaction = await this._sequelizeConnection.transaction();
-      const privacy = await this._articleService.getPrivacy(audience.groupIds);
+      const privacy = await this._postService.getPrivacy(audience.groupIds);
       const dataUpdate = {
         updatedBy: authUserId,
         title,

@@ -13,6 +13,7 @@ export class LinkPreviewService {
   private _logger = new Logger(LinkPreviewService.name);
 
   public async upsert(linkPreviewDto: LinkPreviewDto): Promise<ILinkPreview> {
+    console.log('1111111111111linkPreviewDto=', linkPreviewDto);
     try {
       if (linkPreviewDto && linkPreviewDto.url) {
         let linkPreview = await this._linkPreviewModel.findOne({

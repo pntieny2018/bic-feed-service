@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsUUID } from 'class-validator';
-import { CategoryResponseDto } from '.';
+import { CategoryResponseDto } from '../../../article/dto/responses';
 import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
-import { AudienceResponseDto } from '../../../post/dto/responses';
-import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
-import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
+import { AudienceResponseDto } from './index';
+import { PostSettingDto } from '../common/post-setting.dto';
+import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostType } from '../../../../database/models/post.model';
 import { MediaService } from '../../../media';
 import { UserDto } from '../../../v2-user/application';

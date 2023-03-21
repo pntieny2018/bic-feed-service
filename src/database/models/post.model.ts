@@ -25,13 +25,11 @@ import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto
 import { CategoryModel, ICategory } from './category.model';
 import { CommentModel, IComment } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
-import { HashtagModel, IHashtag } from './hashtag.model';
 import { ILinkPreview, LinkPreviewModel } from './link-preview.model';
 import { IMedia, MediaModel } from './media.model';
 import { IMention, MentionModel } from './mention.model';
 import { PostCategoryModel } from './post-category.model';
 import { IPostGroup, PostGroupModel } from './post-group.model';
-import { PostHashtagModel } from './post-hashtag.model';
 import { PostMediaModel } from './post-media.model';
 import { PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
@@ -97,7 +95,6 @@ export interface IPost {
   views: number;
   categories?: ICategory[];
   series?: IPost[];
-  hashtags?: IHashtag[];
   tags?: ITag[];
   postTags?: IPostTag[];
   privacy?: PostPrivacy;
@@ -239,12 +236,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @HasMany(() => PostCategoryModel)
   public postCategories?: PostCategoryModel[];
-
-  @BelongsToMany(() => HashtagModel, () => PostHashtagModel)
-  public hashtags?: HashtagModel[];
-
-  @HasMany(() => PostHashtagModel)
-  public postHashtags?: PostHashtagModel[];
 
   @BelongsToMany(() => TagModel, () => PostTagModel)
   public tags?: TagModel[];
