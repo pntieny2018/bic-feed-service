@@ -11,7 +11,7 @@ import {
   SeriesReoderItemsEvent,
 } from '../../../events/series';
 import { SeriesRemovedItemsEvent } from '../../../events/series/series-removed-items.event';
-import { SeriesSearchResponseDto } from '../../article/dto/responses/series-search.response.dto';
+import { SeriesSearchResponseDto } from '../dto/responses/series-search.response.dto';
 import { AuthorityService } from '../../authority';
 import { FeedService } from '../../feed/feed.service';
 import { PostService } from '../../post/post.service';

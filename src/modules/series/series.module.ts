@@ -20,7 +20,6 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     forwardRef(() => ReactionModule),
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
-    forwardRef(() => ArticleModule),
   ],
   controllers: [SeriesController],
   providers: [SeriesService, SeriesAppService],

@@ -24,7 +24,6 @@ import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
-import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
@@ -59,6 +58,7 @@ import { TagService } from '../tag/tag.service';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { GROUP_PRIVACY } from '../v2-group/data-type';
+import { ItemInSeriesResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class PostService {
@@ -81,8 +81,6 @@ export class PostService {
     protected postSeriesModel: typeof PostSeriesModel,
     @InjectModel(PostCategoryModel)
     protected postCategoryModel: typeof PostCategoryModel,
-    @InjectModel(PostHashtagModel)
-    protected postHashtagModel: typeof PostHashtagModel,
     @InjectModel(PostTagModel)
     protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
@@ -270,7 +268,7 @@ export class PostService {
     return result[0];
   }
 
-  protected getAttributesObj(options?: {
+  public getAttributesObj(options?: {
     loadMarkRead?: boolean;
     loadSaved?: boolean;
     authUserId?: string;
@@ -329,6 +327,40 @@ export class PostService {
     });
 
     return postGroups;
+  }
+
+  public async getItemsInSeries(
+    seriesId: string,
+    authUser: UserDto,
+  ): Promise<ItemInSeriesResponseDto[]> {
+    const itemsInSeries = await this.postSeriesModel.findAll({
+      where: {
+        seriesId,
+      },
+      order: [
+        ['zindex', 'ASC'],
+        ['createdAt', 'ASC'],
+      ],
+    });
+
+    const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
+      TargetType.ARTICLE,
+      TargetType.POST,
+    ]);
+    const articleIdsSorted = itemsInSeries
+      .filter((item) => !postIdsReported.includes(item.postId))
+      .map((item) => item.postId);
+    const items = await this.getItemsInSeriesByIds(articleIdsSorted, authUser.id);
+    const itemsBindedData = await this.postBinding.bindRelatedData(items, {
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+    });
+
+    return this.classTransformer.plainToInstance(ItemInSeriesResponseDto, itemsBindedData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   public async getItemsInSeriesByIds(ids: string[], authUserId = null): Promise<IPost[]> {
@@ -523,14 +555,6 @@ export class PostService {
       }
 
       includes.push(obj);
-    }
-
-    if (shouldIncludePreviewLink) {
-      includes.push({
-        model: LinkPreviewModel,
-        as: 'linkPreview',
-        required: false,
-      });
     }
 
     if (shouldIncludeCover) {
@@ -934,7 +958,6 @@ export class PostService {
       this.feedService.deleteUserSeenByPost(postId, transaction),
       this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
       this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
-      this.postHashtagModel.destroy({ where: { postId: postId }, transaction }),
       this.postTagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
     ]);
@@ -1150,18 +1173,49 @@ export class PostService {
     }
   }
 
+  public async getListByUserId(
+    userId: string,
+    search: {
+      offset: number;
+      limit: number;
+      type?: PostType;
+    }
+  ): Promise<string[]> {
+    if (!userId) return [];
+    const { type, offset, limit } = search;
+    const condition = {
+      status: PostStatus.PUBLISHED,
+      isHidden: false,
+      createdBy: userId,
+    };
+
+    if (type) {
+      condition['type'] = type;
+    }
+
+    const posts = await this.postModel.findAll({
+      attributes: ['id'],
+      subQuery: false,
+      where: condition,
+      order: [['createdAt', 'DESC']],
+      offset,
+      limit: limit + 1,
+    });
+
+    return posts.map((post) => post.id);
+  }
+
   public async getListSavedByUserId(
     userId: string,
     search: {
       offset: number;
       limit: number;
-      isImportant?: boolean;
       type?: PostType;
       groupIds?: string[];
     }
   ): Promise<string[]> {
     if (!userId) return [];
-    const { groupIds, type, isImportant, offset, limit } = search;
+    const { groupIds, type, offset, limit } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
@@ -1169,10 +1223,6 @@ export class PostService {
 
     if (type) {
       condition['type'] = type;
-    }
-
-    if (isImportant) {
-      condition['isImportant'] = true;
     }
 
     const include: any = [

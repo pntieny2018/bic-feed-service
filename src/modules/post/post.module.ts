@@ -38,7 +38,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     AuthorityModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
-    forwardRef(() => LinkPreviewModule),
+    LinkPreviewModule,
     TagModule,
   ],
   controllers: [PostController, PostConsumerController],

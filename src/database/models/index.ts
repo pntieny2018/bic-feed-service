@@ -6,14 +6,12 @@ import { CommentModel } from './comment.model';
 import { FailedProcessPostModel } from './failed-process-post.model';
 import { FollowModel } from './follow.model';
 import { GiphyModel } from './giphy.model';
-import { HashtagModel } from './hashtag.model';
 import { LinkPreviewModel } from './link-preview.model';
 import { MediaModel } from './media.model';
 import { MentionModel } from './mention.model';
 import { PostCategoryModel } from './post-category.model';
 import { PostEditedHistoryModel } from './post-edited-history.model';
 import { PostGroupModel } from './post-group.model';
-import { PostHashtagModel } from './post-hashtag.model';
 import { PostMediaModel } from './post-media.model';
 import { PostReactionModel } from './post-reaction.model';
 import { PostSeriesModel } from './post-series.model';
@@ -47,10 +45,8 @@ export default [
   UserSeenPostModel,
   GiphyModel,
   CategoryModel,
-  HashtagModel,
   PostCategoryModel,
   PostSeriesModel,
-  PostHashtagModel,
   LinkPreviewModel,
   UserSavePostModel,
   ReportContentModel,
