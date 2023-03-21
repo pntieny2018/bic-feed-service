@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PageDto } from '../../common/dto';
-import { ArticleService } from '../article/article.service';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
@@ -14,15 +13,23 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { PostHelper } from '../post/post.helper';
 import { ClassTransformer } from 'class-transformer';
-import { ArticleBindingService } from '../article/article-binding.service';
 import { UserDto } from '../v2-user/application';
+import { PostService } from '../post/post.service';
+import { PostBindingService } from '../post/post-binding.service';
+import { LogicException } from '../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../common/constants';
+import { InjectModel } from '@nestjs/sequelize';
+import { PostResponseDto } from '../post/dto/responses';
 
 @Injectable()
 export class AdminService {
   public constructor(
-    private _articleService: ArticleService,
-    private _articleBinding: ArticleBindingService
+    private _postService: PostService,
+    private _postBindingService: PostBindingService,
+    @InjectModel(PostModel)
+    protected postModel: typeof PostModel
   ) {}
+
   private readonly _classTransformer = new ClassTransformer();
   public async getPostsByParamsInGroups(
     getsByAdminDto: GetsByAdminDto,
@@ -33,7 +40,7 @@ export class AdminService {
     if (status) {
       condition['status'] = status;
     }
-    const postsSorted = await this._articleService.getPostsByFilter(
+    const postsSorted = await this._postService.getPostsByFilter(
       {
         groupIds,
         status,
@@ -54,12 +61,12 @@ export class AdminService {
       hasNextPage = true;
     }
 
-    const postsInfo = await this._articleService.getPostsByIds(
+    const postsInfo = await this._postService.getPostsByIds(
       postsSorted.map((post) => post.id),
       authUser.id
     );
 
-    const postsBindedData = await this._articleBinding.bindRelatedData(postsInfo, {
+    const postsBindedData = await this._postBindingService.bindRelatedData(postsInfo, {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -81,8 +88,8 @@ export class AdminService {
 
   public async getPostDetail(
     articleId: string,
-    getArticleDto: GetArticleDto
-  ): Promise<ArticleResponseDto> {
+    getPostDto: GetArticleDto
+  ): Promise<PostResponseDto> {
     const attributes = {
       exclude: ['updatedBy'],
     };
@@ -161,14 +168,33 @@ export class AdminService {
     ];
 
     const condition = { id: articleId, status: { [Op.not]: PostStatus.DRAFT } };
-    return this._articleService.getDetail(
-      attributes,
-      condition,
-      include,
-      articleId,
-      null,
-      getArticleDto,
-      false
+
+    const post = PostHelper.filterArchivedPost(
+      await this.postModel.findOne({
+        attributes,
+        where: condition,
+        include,
+      })
     );
+
+    if (!post) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+
+    const jsonPost = post.toJSON();
+    const articlesBindedData = await this._postBindingService.bindRelatedData([jsonPost], {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: false,
+      authUser: null,
+    });
+    await this._postBindingService.bindCommunity(articlesBindedData);
+    const result = this._classTransformer.plainToInstance(PostResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
+
+    return result[0];
   }
 }

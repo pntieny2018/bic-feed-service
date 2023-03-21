@@ -12,7 +12,7 @@ import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
-import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
+import { SeriesSearchResponseDto } from '../series/dto/responses/series-search.response.dto';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';

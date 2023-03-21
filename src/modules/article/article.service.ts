@@ -19,7 +19,6 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { PostHashtagModel } from '../../database/models/post-hashtag.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
@@ -39,7 +38,6 @@ import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
-import { ArticleBindingService } from './article-binding.service';
 import {
   CreateArticleDto,
   GetArticleDto,
@@ -52,34 +50,31 @@ import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
+import { PostBindingService } from '../post/post-binding.service';
 
 @Injectable()
-export class ArticleService extends PostService {
+export class ArticleService {
   /**
    * Logger
    * @private
    */
-  private _logger = new Logger(ArticleService.name);
+  private logger = new Logger(ArticleService.name);
 
   /**
    *  ClassTransformer
    * @private
    */
-  private _classTransformer = new ClassTransformer();
+  private classTransformer = new ClassTransformer();
 
   public constructor(
     @InjectConnection()
     protected sequelizeConnection: Sequelize,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel,
-    @InjectModel(PostGroupModel)
-    protected postGroupModel: typeof PostGroupModel,
     @InjectModel(PostSeriesModel)
     protected postSeriesModel: typeof PostSeriesModel,
     @InjectModel(PostCategoryModel)
     protected postCategoryModel: typeof PostCategoryModel,
-    @InjectModel(PostHashtagModel)
-    protected postHashtagModel: typeof PostHashtagModel,
     @InjectModel(PostTagModel)
     protected postTagModel: typeof PostTagModel,
     @InjectModel(UserMarkReadPostModel)
@@ -90,78 +85,17 @@ export class ArticleService extends PostService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    protected reactionService: ReactionService,
     @Inject(forwardRef(() => FeedService))
     protected feedService: FeedService,
-    @InjectModel(UserSavePostModel)
-    protected userSavePostModel: typeof UserSavePostModel,
     protected readonly sentryService: SentryService,
-    protected readonly articleBinding: ArticleBindingService,
+    protected readonly postBindingService: PostBindingService,
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
-    private readonly _categoryService: CategoryService,
     private readonly _linkPreviewService: LinkPreviewService,
-    @InjectModel(ReportContentDetailModel)
-    protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
-    protected readonly tagService: TagService
-  ) {
-    super(
-      sequelizeConnection,
-      postModel,
-      postGroupModel,
-      postSeriesModel,
-      postCategoryModel,
-      postHashtagModel,
-      postTagModel,
-      userMarkReadPostModel,
-      userSavePostModel,
-      groupAppService,
-      mediaService,
-      mentionService,
-      commentService,
-      reactionService,
-      feedService,
-      sentryService,
-      articleBinding,
-      _linkPreviewService,
-      reportContentDetailModel,
-      tagService
-    );
-  }
-
-  public async getItemsInSeries(
-    seriesId: string,
-    authUser: UserDto
-  ): Promise<ItemInSeriesResponseDto[]> {
-    const itemsInSeries = await this.postSeriesModel.findAll({
-      where: {
-        seriesId,
-      },
-      order: [
-        ['zindex', 'ASC'],
-        ['createdAt', 'ASC'],
-      ],
-    });
-
-    const postIdsReported = await this.getEntityIdsReportedByUser(authUser.id, [
-      TargetType.ARTICLE,
-      TargetType.POST,
-    ]);
-    const articleIdsSorted = itemsInSeries
-      .filter((item) => !postIdsReported.includes(item.postId))
-      .map((item) => item.postId);
-    const items = await this.getItemsInSeriesByIds(articleIdsSorted, authUser.id);
-    const itemsBindedData = await this.articleBinding.bindRelatedData(items, {
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-    });
-
-    return this.classTransformer.plainToInstance(ItemInSeriesResponseDto, itemsBindedData, {
-      excludeExtraneousValues: true,
-    });
-  }
+    protected readonly tagService: TagService,
+    private readonly _categoryService: CategoryService,
+    private readonly _postService: PostService
+  ) {}
 
   private async _getArticleIdsWithFilter(
     getListArticleDto: GetListArticlesDto,
@@ -201,17 +135,6 @@ export class ArticleService extends PostService {
         attributes: [],
         where: {
           seriesId: series,
-        },
-      });
-    }
-
-    if (hashtags && hashtags.length > 0) {
-      include.push({
-        model: PostHashtagModel,
-        required: true,
-        attributes: [],
-        where: {
-          hashtagId: hashtags,
         },
       });
     }
@@ -274,7 +197,7 @@ export class ArticleService extends PostService {
     otherParams?: FindOptions
   ): Promise<{ data: ArticleResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });
-    const include = this.getIncludeObj({
+    const include = this._postService.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
@@ -300,14 +223,14 @@ export class ArticleService extends PostService {
       ...otherParams,
     });
     const jsonArticles = rows.map((r) => r.toJSON());
-    const articlesBindedData = await this.articleBinding.bindRelatedData(jsonArticles, {
+    const articlesBindedData = await this.postBindingService.bindRelatedData(jsonArticles, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
-    await this.articleBinding.bindCommunity(articlesBindedData);
+    await this.postBindingService.bindCommunity(articlesBindedData);
 
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
@@ -363,7 +286,9 @@ export class ArticleService extends PostService {
       filterCategoryIds: categoryIds,
     });
 
-    const articleIdsReported = await this.getEntityIdsReportedByUser(user.id, [TargetType.ARTICLE]);
+    const articleIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+      TargetType.ARTICLE,
+    ]);
 
     const relatedRows = await this.postModel.findAll({
       attributes: [
@@ -390,7 +315,7 @@ export class ArticleService extends PostService {
     });
 
     const rowsJson = relatedRows.map((row) => row.toJSON());
-    const articlesBindedData = await this.articleBinding.bindRelatedData(rowsJson, {
+    const articlesBindedData = await this.postBindingService.bindRelatedData(rowsJson, {
       shouldBindActor: true,
     });
 
@@ -502,7 +427,7 @@ export class ArticleService extends PostService {
       );
     }
     const jsonArticle = article.toJSON();
-    const articlesBindedData = await this.articleBinding.bindRelatedData([jsonArticle], {
+    const articlesBindedData = await this.postBindingService.bindRelatedData([jsonArticle], {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -510,7 +435,7 @@ export class ArticleService extends PostService {
       shouldHideSecretAudienceCanNotAccess: shouldHideSecretAudienceCanNotAccess ?? true,
       authUser,
     });
-    await this.articleBinding.bindCommunity(articlesBindedData);
+    await this.postBindingService.bindCommunity(articlesBindedData);
     const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
       excludeExtraneousValues: true,
     });
@@ -524,7 +449,7 @@ export class ArticleService extends PostService {
     loadSaved?: boolean;
     authUserId?: string;
   }): FindAttributeOptions {
-    const attributes: FindAttributeOptions = super.getAttributesObj(options);
+    const attributes: FindAttributeOptions = this._postService.getAttributesObj(options);
 
     if (attributes['include'] && Array.isArray(attributes['include'])) {
       attributes['include'].push(['hashtags_json', 'hashtags']);
@@ -569,7 +494,7 @@ export class ArticleService extends PostService {
     filterGroupIds?: string[];
     authUserId?: string;
   }): Includeable[] {
-    const includes: Includeable[] = super.getIncludeObj({
+    const includes: Includeable[] = this._postService.getIncludeObj({
       mustIncludeGroup,
       mustIncludeMedia,
       mustInSeriesIds,
@@ -610,7 +535,6 @@ export class ArticleService extends PostService {
         audience,
         categories,
         tags,
-        hashtags,
         series,
       } = createArticleDto;
       const authUserId = authUser.id;
@@ -623,7 +547,7 @@ export class ArticleService extends PostService {
       const { files, images, videos } = media;
       const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
 
-      const linkPreview = await this.linkPreviewService.upsert(createArticleDto.linkPreview);
+      const linkPreview = await this._linkPreviewService.upsert(createArticleDto.linkPreview);
 
       transaction = await this.sequelizeConnection.transaction();
       let tagList = [];
@@ -660,7 +584,7 @@ export class ArticleService extends PostService {
         this._seriesService.addToPost(series, post.id, transaction),
         this.tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
-        this.addGroup(groupIds, post.id, transaction),
+        this._postService.addGroup(groupIds, post.id, transaction),
       ]);
 
       if (mentions.length) {
@@ -679,7 +603,7 @@ export class ArticleService extends PostService {
       return post;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(JSON.stringify(error?.stack));
+      this.logger.error(JSON.stringify(error?.stack));
       this.sentryService.captureException(error);
       throw error;
     }
@@ -711,7 +635,7 @@ export class ArticleService extends PostService {
       ) {
         status = PostStatus.PROCESSING;
       }
-      const postPrivacy = await this.getPrivacy(groupIds);
+      const postPrivacy = await this._postService.getPrivacy(groupIds);
       await this.postModel.update(
         {
           status,
@@ -776,7 +700,7 @@ export class ArticleService extends PostService {
       });
       return true;
     } catch (error) {
-      this._logger.error(JSON.stringify(error?.stack));
+      this.logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -822,7 +746,7 @@ export class ArticleService extends PostService {
 
       dataUpdate.linkPreviewId = null;
       if (updateArticleDto.linkPreview) {
-        const linkPreview = await this.linkPreviewService.upsert(updateArticleDto.linkPreview);
+        const linkPreview = await this._linkPreviewService.upsert(updateArticleDto.linkPreview);
         dataUpdate.linkPreviewId = linkPreview?.id || null;
       }
 
@@ -841,7 +765,7 @@ export class ArticleService extends PostService {
       const oldGroupIds = post.audience?.groups.map((group) => group.id) ?? [];
 
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
-        await this.setGroupByPost(audience.groupIds, post.id, transaction);
+        await this._postService.setGroupByPost(audience.groupIds, post.id, transaction);
       }
 
       if (categories) {
@@ -897,7 +821,7 @@ export class ArticleService extends PostService {
       return true;
     } catch (error) {
       if (typeof transaction !== 'undefined') await transaction.rollback();
-      this._logger.error(JSON.stringify(error?.stack));
+      this.logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }
@@ -906,8 +830,35 @@ export class ArticleService extends PostService {
     updateArticleDto: UpdateArticleDto,
     authUserId: string
   ): Promise<Partial<IPost>> {
-    const dataUpdate = await super.getDataUpdate(updateArticleDto, authUserId);
-    const { title, summary, coverMedia } = updateArticleDto;
+    const { content, setting, audience, title, summary, coverMedia } = updateArticleDto;
+    const dataUpdate = {
+      updatedBy: authUserId,
+    };
+    if (audience.groupIds.length) {
+      const postPrivacy = await this._postService.getPrivacy(audience.groupIds);
+      dataUpdate['privacy'] = postPrivacy;
+    }
+
+    if (content !== null) {
+      dataUpdate['content'] = content;
+    }
+    if (setting && setting.hasOwnProperty('canShare')) {
+      dataUpdate['canShare'] = setting.canShare;
+    }
+    if (setting && setting.hasOwnProperty('canComment')) {
+      dataUpdate['canComment'] = setting.canComment;
+    }
+    if (setting && setting.hasOwnProperty('canReact')) {
+      dataUpdate['canReact'] = setting.canReact;
+    }
+
+    if (setting && setting.hasOwnProperty('isImportant')) {
+      dataUpdate['isImportant'] = setting.isImportant;
+    }
+    if (setting && setting.hasOwnProperty('importantExpiredAt') && setting.isImportant === true) {
+      dataUpdate['importantExpiredAt'] = setting.importantExpiredAt;
+    }
+
     if (title !== null) {
       dataUpdate['title'] = title;
     }
@@ -921,7 +872,7 @@ export class ArticleService extends PostService {
   }
 
   public async getsByMedia(id: string): Promise<ArticleResponseDto[]> {
-    const include = this.getIncludeObj({
+    const include = this._postService.getIncludeObj({
       mustIncludeMedia: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
@@ -931,7 +882,7 @@ export class ArticleService extends PostService {
 
     const jsonArticles = articles.map((p) => p.toJSON());
 
-    const result = await this.articleBinding.bindRelatedData(jsonArticles, {
+    const result = await this.postBindingService.bindRelatedData(jsonArticles, {
       shouldBindAudience: true,
       shouldBindMention: true,
       shouldBindActor: true,
