@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FeedService } from '../feed.service';
-import { PostModel } from '../../../database/models/post.model';
 import { FeedController } from '../feed.controller';
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { GetTimelineDto } from '../dto/request';
 import { mockedUserAuth } from './mocks/input.mock';
 

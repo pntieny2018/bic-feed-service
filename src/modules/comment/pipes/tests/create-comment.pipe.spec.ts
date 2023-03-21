@@ -12,7 +12,7 @@ describe('CreateCommentPipe', function () {
       postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       mentions: null,
       content: null,
-      media: {        
+      media: {
         images: null,
         videos: null,
         files: null,
@@ -23,7 +23,7 @@ describe('CreateCommentPipe', function () {
       postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       mentions: [],
       content: null,
-      media: {        
+      media: {
         images: [],
         videos: [],
         files: [],
@@ -44,7 +44,7 @@ describe('CreateCommentPipe', function () {
       postId: '5aa47b25-14d9-429e-9afa-5512071313ca',
       mentions: [],
       content: null,
-      media: {        
+      media: {
         images: [],
         videos: [],
         files: [],

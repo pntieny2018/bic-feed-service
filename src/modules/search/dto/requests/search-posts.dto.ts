@@ -4,7 +4,6 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
-  IsInt,
   IsOptional,
   IsString,
   IsUUID,
@@ -12,6 +11,7 @@ import {
 } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
 import { PostType } from '../../../../database/models/post.model';
+
 export class SearchPostsDto extends PageOptionsDto {
   @ApiPropertyOptional({
     type: 'string',

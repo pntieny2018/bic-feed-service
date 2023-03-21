@@ -1,9 +1,6 @@
-import { groupMock } from '../mocks/group.mock';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GroupApplicationService } from '../../application';
-import { TAG_REPOSITORY_TOKEN } from '../../../v2-post/domain/repositoty-interface';
 import { createMock } from '@golevelup/ts-jest';
-import { TagRepository } from '../../../v2-post/driven-adapter/repository';
 import {
   GROUP_REPOSITORY_TOKEN,
   IGroupRepository,

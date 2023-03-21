@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsBoolean, IsDateString, ValidateIf, IsNotEmpty } from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional, ValidateIf } from 'class-validator';
 import { Expose } from 'class-transformer';
 
 export class PostSettingDto {

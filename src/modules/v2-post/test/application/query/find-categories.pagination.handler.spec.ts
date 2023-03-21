@@ -1,7 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  FindCategoriesPaginationHandler
-} from '../../../application/query/find-categories/find-categories-pagination.handler';
+import { FindCategoriesPaginationHandler } from '../../../application/query/find-categories/find-categories-pagination.handler';
 import { CATEGORY_QUERY_TOKEN } from '../../../domain/query-interface/category.query.interface';
 import { CategoryQuery } from '../../../driven-adapter/query';
 import { createMock } from '@golevelup/ts-jest';
@@ -51,15 +49,22 @@ describe('FindCategoriesPaginationHandler', () => {
       createdBy: v4(),
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
-  ]
+    },
+  ];
 
   const categoryEntities = categoryRecords.map((categoryRecord) => {
-    return new CategoryEntity({ ...categoryRecord, updatedBy: categoryRecord.createdBy, zindex: 0, isActive: categoryRecord.active });
+    return new CategoryEntity({
+      ...categoryRecord,
+      updatedBy: categoryRecord.createdBy,
+      zindex: 0,
+      isActive: categoryRecord.active,
+    });
   });
   describe('execute', () => {
     it('should find categories success', async () => {
-      jest.spyOn(categoryQuery, 'getPagination').mockResolvedValue({ rows: categoryEntities, total: 2 });
+      jest
+        .spyOn(categoryQuery, 'getPagination')
+        .mockResolvedValue({ rows: categoryEntities, total: 2 });
       const result = await handler.execute({ page: 0, limit: 10 });
       expect(result).toEqual({ rows: categoryRecords, total: 2 });
     });

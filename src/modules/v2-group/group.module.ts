@@ -1,6 +1,5 @@
 import { Module, Provider } from '@nestjs/common';
-import { RedisModule } from '../../../libs/redis/src';
-import { GroupApplicationService, GROUP_APPLICATION_TOKEN } from './application';
+import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from './application';
 import { GROUP_REPOSITORY_TOKEN } from './domain/repositoty-interface/group.repository.interface';
 import { GroupRepository } from './driven-adapter/repository/group.repository';
 import { HttpModule } from '@nestjs/axios';

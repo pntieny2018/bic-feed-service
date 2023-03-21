@@ -1,4 +1,4 @@
-import { Global, Module, Provider } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 import { UserApplicationService } from './application/user.app-service';
 import { USER_APPLICATION_TOKEN } from './application/user.app-service.interface';
 import { USER_REPOSITORY_TOKEN } from './domain/repositoty-interface/user.repository.interface';

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { GroupDto } from '../../../../v2-group/application';
 
 export class TagResponseDto {

@@ -3,7 +3,7 @@ import { CommentService } from '../comment';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { PostService } from '../post/post.service';
 import { ReportStatus, TargetType } from './contstants';
-import { LogicException, ValidatorException } from '../../common/exceptions';
+import { ValidatorException } from '../../common/exceptions';
 import {
   CreateReportDto,
   GetBlockedContentOfMeDto,

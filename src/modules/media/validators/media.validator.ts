@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import {
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
+  registerDecorator,
   ValidationArguments,
   ValidationOptions,
-  registerDecorator,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { ExternalService } from '../../../app/external.service';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';

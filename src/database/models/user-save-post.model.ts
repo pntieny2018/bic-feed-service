@@ -1,7 +1,6 @@
 import { IsUUID } from 'class-validator';
 import {
   BelongsTo,
-  BelongsToMany,
   Column,
   CreatedAt,
   ForeignKey,

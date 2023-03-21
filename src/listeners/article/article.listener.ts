@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
-import { NIL as NIL_UUID } from 'uuid';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';

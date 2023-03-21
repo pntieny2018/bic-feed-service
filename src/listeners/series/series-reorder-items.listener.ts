@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { On } from '../../common/decorators';
-import { SeriesRemovedItemsEvent, SeriesReoderItemsEvent } from '../../events/series';
+import { SeriesReoderItemsEvent } from '../../events/series';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 
