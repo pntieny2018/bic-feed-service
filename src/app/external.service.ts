@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SentryService } from '@app/sentry';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { AxiosHelper } from '../common/helpers';
+
 @Injectable()
 export class ExternalService {
   /**

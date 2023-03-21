@@ -1,4 +1,4 @@
-import { IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { FileMetadataDto } from './file-metadata.dto';
 import { ImageMetadataDto } from './image-metadata.dto';

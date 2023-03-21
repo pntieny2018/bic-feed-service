@@ -167,7 +167,7 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src/modules/v2-post"
+      "<rootDir>/src"
     ],
     "moduleNameMapper": {
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

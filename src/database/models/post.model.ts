@@ -20,7 +20,6 @@ import { v4 as uuid_v4 } from 'uuid';
 import { MentionableType } from '../../common/constants';
 import { StringHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
-import { HashtagResponseDto } from '../../modules/hashtag/dto/responses/hashtag-response.dto';
 import { TargetType } from '../../modules/report-content/contstants';
 import { TagResponseDto } from '../../modules/tag/dto/responses/tag-response.dto';
 import { CategoryModel, ICategory } from './category.model';
@@ -102,7 +101,6 @@ export interface IPost {
   tags?: ITag[];
   postTags?: IPostTag[];
   privacy?: PostPrivacy;
-  hashtagsJson?: HashtagResponseDto[];
   tagsJson?: TagResponseDto[];
   linkPreviewId?: string;
   linkPreview?: ILinkPreview;
@@ -182,11 +180,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @Column
   public privacy: PostPrivacy;
-
-  @Column({
-    type: DataTypes.JSONB,
-  })
-  public hashtagsJson: HashtagResponseDto[];
 
   @Column({
     type: DataTypes.JSONB,

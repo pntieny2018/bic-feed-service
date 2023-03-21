@@ -1,7 +1,7 @@
 import { SentryService } from '@app/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { ClassTransformer, plainToInstance } from 'class-transformer';
+import { ClassTransformer } from 'class-transformer';
 import { Op, Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL as NIL_UUID } from 'uuid';

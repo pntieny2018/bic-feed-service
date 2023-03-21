@@ -8,7 +8,7 @@ import { MentionModel } from '../../database/models/mention.model';
 import { MediaModel } from '../../database/models/media.model';
 import { CategoryModel } from '../../database/models/category.model';
 import { GetArticleDto } from '../article/dto/requests';
-import { PostModel, PostStatus, PostType } from '../../database/models/post.model';
+import { PostModel, PostStatus } from '../../database/models/post.model';
 import { Op } from 'sequelize';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';

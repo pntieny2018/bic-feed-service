@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel } from '../database/models/media.model';
 import { Op } from 'sequelize';
 import { ConfigService } from '@nestjs/config';
+
 interface ICommandOptions {
   updateThumbnail: boolean;
 }

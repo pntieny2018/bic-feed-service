@@ -2,14 +2,11 @@ import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
-import { NIL as NIL_UUID } from 'uuid';
 import { ArrayHelper } from '../../common/helpers';
 import { getDatabaseConfig } from '../../config/database';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { FollowService } from '../follow';
-import { FollowsDto } from '../follow/dto/response/follows.dto';
-import { ChangeGroupAudienceDto } from './dto/change-group-audience.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 

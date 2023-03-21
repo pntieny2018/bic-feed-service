@@ -2,7 +2,6 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Response } from 'express';
 import { ResponseDto } from '../dto';
 import { map, Observable } from 'rxjs';
-import { HTTP_STATUS_ID } from '../constants';
 import snakecaseKeys from 'snakecase-keys';
 import { ERRORS } from '../constants/errors';
 

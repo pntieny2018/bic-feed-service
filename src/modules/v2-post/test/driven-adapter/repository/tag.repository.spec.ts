@@ -8,16 +8,21 @@ import { TagEntity } from '../../../domain/model/tag';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { Sequelize } from 'sequelize-typescript';
-import { InternalServerErrorException } from '@nestjs/common';
 import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory';
+import { HttpService } from '@nestjs/axios';
+import { Transaction } from 'sequelize';
+
+const transaction = createMock<Transaction>();
 
 describe('TagRepository', () => {
   let repo, tagModel, postTagModel, sequelizeConnection;
   let factory: ITagFactory;
+  let httpService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TagRepository,
+        HttpService,
         {
           provide: TAG_FACTORY_TOKEN,
           useValue: createMock<TagFactory>(),
@@ -31,22 +36,23 @@ describe('TagRepository', () => {
           useValue: createMock<PostTagModel>(),
         },
         {
+          provide: HttpService,
+          useValue: createMock<HttpService>(),
+        },
+        {
           provide: Sequelize,
-          useValue: {
-            transaction: jest.fn(async () => ({
-              commit: jest.fn(),
-              rollback: jest.fn(),
-            })),
-          },
+          useValue: createMock<Sequelize>(),
         },
       ],
     }).compile();
 
     repo = module.get<TagRepository>(TagRepository);
+    httpService = module.get<HttpService>(HttpService);
     factory = module.get(TAG_FACTORY_TOKEN);
     tagModel = module.get<TagModel>(getModelToken(TagModel));
     postTagModel = module.get<PostTagModel>(getModelToken(PostTagModel));
     sequelizeConnection = module.get<Sequelize>(Sequelize);
+    sequelizeConnection.transaction.mockResolvedValue(transaction);
   });
 
   afterEach(() => {
@@ -64,7 +70,6 @@ describe('TagRepository', () => {
     updatedAt: new Date(),
   };
   const tagEntity = new TagEntity(tagRecord);
-
   describe('create', () => {
     it('Should create tag success', async () => {
       jest.spyOn(tagModel, 'create').mockResolvedValue(tagRecord);
@@ -105,21 +110,26 @@ describe('TagRepository', () => {
 
   describe('delete', () => {
     it('Should delete tag success', async () => {
-      jest.spyOn(postTagModel, 'destroy').mockResolvedValue(1);
-      jest.spyOn(tagModel, 'destroy').mockResolvedValue(1);
+      const postTagSpy = jest.spyOn(postTagModel, 'destroy').mockResolvedValue(1);
+      const tagSpy = jest.spyOn(tagModel, 'destroy').mockResolvedValue(1);
       await repo.delete(tagEntity.get('id'));
-      expect(postTagModel.destroy).toBeCalled();
-      expect(tagModel.destroy).toBeCalled();
+      expect(postTagSpy).toBeCalledWith({ where: { tagId: tagEntity.get('id') }, transaction });
+      expect(tagSpy).toBeCalledWith({ where: { id: tagEntity.get('id') }, transaction });
+      expect(transaction.commit).toBeCalled();
     });
 
     it('Should not delete tag if delete post tag fail', async () => {
-      jest.spyOn(postTagModel, 'destroy').mockRejectedValue(new Error('error'));
+      const logErrorSpy = jest.spyOn(repo['_logger'], 'error').mockReturnThis();
+      const postTagSpy = jest.spyOn(postTagModel, 'destroy').mockReturnValue(new Error());
       try {
         await repo.delete(tagEntity.get('id'));
       } catch (error) {
+        expect(postTagSpy).toBeCalledWith({ where: { tagId: tagEntity.get('id') } });
+        expect(logErrorSpy).toBeCalled();
         expect(error).toBeInstanceOf(Error);
         expect(postTagModel.destroy).toBeCalled();
         expect(tagModel.destroy).not.toBeCalled();
+        expect(transaction.rollback).toBeCalled();
       }
     });
   });

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Language, LANGUAGE_HEADER } from '../../common/constants';
 import * as path from 'path';
+
 @Global()
 @Module({
   imports: [

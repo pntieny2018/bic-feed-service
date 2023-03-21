@@ -29,7 +29,6 @@ import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
-import { HashtagService } from '../hashtag/hashtag.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
@@ -98,7 +97,6 @@ export class ArticleService extends PostService {
     protected userSavePostModel: typeof UserSavePostModel,
     protected readonly sentryService: SentryService,
     protected readonly articleBinding: ArticleBindingService,
-    private readonly _hashtagService: HashtagService,
     @Inject(forwardRef(() => SeriesService))
     private readonly _seriesService: SeriesService,
     private readonly _categoryService: CategoryService,
@@ -628,10 +626,6 @@ export class ArticleService extends PostService {
       const linkPreview = await this.linkPreviewService.upsert(createArticleDto.linkPreview);
 
       transaction = await this.sequelizeConnection.transaction();
-      let hashtagArr = [];
-      if (hashtags) {
-        hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
-      }
       let tagList = [];
       if (tags) {
         tagList = await this.tagService.getTagsByIds(tags);
@@ -651,7 +645,6 @@ export class ArticleService extends PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           privacy: null,
-          hashtagsJson: hashtagArr,
           tagsJson: tagList,
           views: 0,
           linkPreviewId: linkPreview?.id || null,
@@ -665,11 +658,6 @@ export class ArticleService extends PostService {
 
       await Promise.all([
         this._seriesService.addToPost(series, post.id, transaction),
-        this._hashtagService.addToPost(
-          hashtagArr.map((h) => h.id),
-          post.id,
-          transaction
-        ),
         this.tagService.addToPost(tags, post.id, transaction),
         this._categoryService.addToPost(categories, post.id, transaction),
         this.addGroup(groupIds, post.id, transaction),
@@ -870,15 +858,6 @@ export class ArticleService extends PostService {
           post.id,
           transaction
         );
-      }
-      if (hashtags) {
-        const hashtagArr = await this._hashtagService.findOrCreateHashtags(hashtags);
-        await this._hashtagService.updateToPost(
-          hashtagArr.map((i) => i.id),
-          post.id,
-          transaction
-        );
-        dataUpdate['hashtagsJson'] = hashtagArr;
       }
       if (tags) {
         const tagList = await this.tagService.getTagsByIds(tags);

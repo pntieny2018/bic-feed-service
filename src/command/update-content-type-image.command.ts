@@ -2,6 +2,7 @@ import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel, MediaType } from '../database/models/media.model';
 import { UploadService } from '../modules/upload';
+
 ///post/images/
 @Command({ name: 'update-content-type-image', description: 'Update domain of media url' })
 export class UpdateContentTypeImageCommand implements CommandRunner {

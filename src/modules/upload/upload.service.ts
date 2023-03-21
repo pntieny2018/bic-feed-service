@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as uuid from 'uuid';
 import { IS3Config } from '../../config/s3';
 import { UploadPrefix } from './dto/requests/upload.dto';
+
 @Injectable()
 export class UploadService {
   private _storage: S3Client;

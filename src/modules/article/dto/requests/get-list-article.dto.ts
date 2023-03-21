@@ -1,11 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { Expose } from 'class-transformer';
 import { PageOptionsDto } from '../../../../common/dto';
+
 export enum OrderField {
   VIEWS = 'views',
   CREATED_AT = 'createdAt',
 }
+
 export class GetListArticlesDto extends PageOptionsDto {
   @ApiProperty({
     type: [String],

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PageDto } from '../../../../common/dto';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
 import { IsUUID } from 'class-validator';

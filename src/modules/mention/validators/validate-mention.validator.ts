@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
+  registerDecorator,
   ValidationArguments,
   ValidationOptions,
-  registerDecorator,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import {

@@ -2,7 +2,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../../common/helpers';
-import { UserId } from '../../../../v2-user/domain/model/user';
 import { TagDomainService } from '../../../domain/domain-service';
 import {
   ITagDomainService,

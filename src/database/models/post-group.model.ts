@@ -3,7 +3,6 @@ import {
   BelongsTo,
   Column,
   CreatedAt,
-  Default,
   ForeignKey,
   Model,
   PrimaryKey,

@@ -1,6 +1,5 @@
 import equal from 'fast-deep-equal';
 import { AggregateRoot } from '@nestjs/cqrs';
-import { ClassTransformer } from 'class-transformer';
 
 export type EntityProperties<T> = {
   [K in keyof T]: T[K];

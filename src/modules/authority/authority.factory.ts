@@ -4,6 +4,7 @@ import { SentryService } from '@app/sentry';
 import { SUBJECT } from '../../common/constants/casl.constant';
 import { UserPermission } from '../v2-user/domain/model/user';
 import { UserDto } from '../v2-user/application';
+
 @Injectable()
 export class AuthorityFactory {
   public constructor(private _sentryService: SentryService) {}
