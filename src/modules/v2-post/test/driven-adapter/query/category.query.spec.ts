@@ -23,7 +23,7 @@ describe('CategoryQuery', () => {
         {
           provide: CATEGORY_FACTORY_TOKEN,
           useValue: createMock<CategoryFactory>(),
-        }
+        },
       ],
     }).compile();
 
@@ -37,23 +37,25 @@ describe('CategoryQuery', () => {
 
   const categoryRecords = [
     {
-      "id": "6b9fbc18-04c3-4a4a-bd64-453add6724dd",
-      "name": "Outdoors",
-      "slug": "outdoors",
-      "createdAt": "2022-09-21T08:33:18.881Z"
+      id: '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+      name: 'Outdoors',
+      slug: 'outdoors',
+      createdAt: '2022-09-21T08:33:18.881Z',
     },
     {
-      "id": "ce8c7613-426d-48e4-8d74-c2a12adc05f9",
-      "name": "Fashion & Beauty",
-      "slug": "fashion-beauty",
-      "createdAt": "2022-09-21T08:33:18.881Z"
-    }
+      id: 'ce8c7613-426d-48e4-8d74-c2a12adc05f9',
+      name: 'Fashion & Beauty',
+      slug: 'fashion-beauty',
+      createdAt: '2022-09-21T08:33:18.881Z',
+    },
   ];
 
   describe('getPagination', () => {
     it('Should get categories success when request just limit off set', async () => {
-      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
-      const result = await query.getPagination({limit: 20, offset: 0});
+      jest
+        .spyOn(categoryModel, 'findAndCountAll')
+        .mockResolvedValue({ rows: categoryRecords, count: 2 });
+      const result = await query.getPagination({ limit: 20, offset: 0 });
       expect(categoryModel.findAndCountAll).toBeCalledWith({
         where: {},
         limit: 20,
@@ -63,13 +65,15 @@ describe('CategoryQuery', () => {
     });
 
     it('Should get categories success when request with name', async () => {
-      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
-      const result = await query.getPagination({limit: 20, offset: 0, name: 'outdoors'});
+      jest
+        .spyOn(categoryModel, 'findAndCountAll')
+        .mockResolvedValue({ rows: categoryRecords, count: 2 });
+      const result = await query.getPagination({ limit: 20, offset: 0, name: 'outdoors' });
       expect(categoryModel.findAndCountAll).toBeCalledWith({
         where: {
           name: {
-            [Op.iLike]: '%outdoors%'
-          }
+            [Op.iLike]: '%outdoors%',
+          },
         },
         limit: 20,
         offset: 0,
@@ -78,11 +82,13 @@ describe('CategoryQuery', () => {
     });
 
     it('Should get categories success when request with level', async () => {
-      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
-      const result = await query.getPagination({limit: 20, offset: 0, level: 1});
+      jest
+        .spyOn(categoryModel, 'findAndCountAll')
+        .mockResolvedValue({ rows: categoryRecords, count: 2 });
+      const result = await query.getPagination({ limit: 20, offset: 0, level: 1 });
       expect(categoryModel.findAndCountAll).toBeCalledWith({
         where: {
-          level: 1
+          level: 1,
         },
         limit: 20,
         offset: 0,
@@ -91,12 +97,14 @@ describe('CategoryQuery', () => {
     });
 
     it('Should get categories success when request with createdBy', async () => {
-      jest.spyOn(categoryModel, 'findAndCountAll').mockResolvedValue({ rows: categoryRecords, count: 2 });
+      jest
+        .spyOn(categoryModel, 'findAndCountAll')
+        .mockResolvedValue({ rows: categoryRecords, count: 2 });
       const userId = v4();
-      const result = await query.getPagination({limit: 20, offset: 0, createdBy: userId});
+      const result = await query.getPagination({ limit: 20, offset: 0, createdBy: userId });
       expect(categoryModel.findAndCountAll).toBeCalledWith({
         where: {
-          createdBy: userId
+          createdBy: userId,
         },
         limit: 20,
         offset: 0,

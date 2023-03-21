@@ -1,6 +1,5 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { CommentModel } from '../database/models/comment.model';
 import { TagModel } from '../database/models/tag.model';
 
 @Command({ name: 'migrate-tag-name', description: 'Conver tag name to Uppercase' })

@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PageOptionsDto } from '../../../../common/dto/pagination/page-options.dto';
+
 export class SearchArticlesDto extends PageOptionsDto {
   @ApiProperty({ description: 'filter content', required: false, name: 'content_search' })
   @IsOptional()

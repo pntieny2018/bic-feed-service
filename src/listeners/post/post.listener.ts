@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
-import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';

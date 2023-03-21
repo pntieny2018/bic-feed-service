@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
 import { GetTotalPostsInGroupDto } from './dto/requests';

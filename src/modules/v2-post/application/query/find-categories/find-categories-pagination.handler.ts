@@ -1,9 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindCategoriesPaginationDto } from './find-categories-pagination.dto';
-import {
-  GROUP_APPLICATION_TOKEN,
-  IGroupApplicationService,
-} from '../../../../v2-group/application';
 import { Inject } from '@nestjs/common';
 import {
   CATEGORY_QUERY_TOKEN,

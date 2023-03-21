@@ -1,4 +1,5 @@
 import { Node } from 'slate';
+
 export class StringHelper {
   /**
    * Convert camel case string to snake case string

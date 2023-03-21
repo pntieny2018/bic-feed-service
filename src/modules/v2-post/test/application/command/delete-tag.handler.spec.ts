@@ -13,7 +13,6 @@ import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { DeleteTagHandler } from '../../../application/command/delete-tag/delete-tag.handler';
 import { DeleteTagCommand } from '../../../application/command/delete-tag/delete-tag.command';
-import { HttpService } from '@nestjs/axios';
 
 describe('DeleteTagHandler', () => {
   let handler: DeleteTagHandler;

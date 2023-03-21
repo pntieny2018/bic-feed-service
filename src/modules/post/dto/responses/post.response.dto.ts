@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';

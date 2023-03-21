@@ -1,4 +1,3 @@
-import { ValidatorException } from '../validator.exception';
 import { LogicException } from '../logic.exception';
 
 describe('LogicException', () => {
