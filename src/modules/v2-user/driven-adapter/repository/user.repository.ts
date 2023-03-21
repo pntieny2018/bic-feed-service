@@ -70,7 +70,7 @@ export class UserRepository implements IUserRepository {
       if (response.status !== HttpStatus.OK) {
         return null;
       }
-      user = AxiosHelper.getDataResponse<UserDataInRest[]>(response)[0];
+      user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
       if (!user) {
         return null;
       }
@@ -96,7 +96,7 @@ export class UserRepository implements IUserRepository {
       if (response.status !== HttpStatus.OK) {
         return [];
       }
-      users = users.concat(AxiosHelper.getDataResponse<UserDataInRest[]>(response));
+      users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
     }
 
     const result = [];
