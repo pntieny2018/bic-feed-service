@@ -1145,7 +1145,7 @@ export class PostService {
             userId,
           },
         ],
-        { ignoreDuplicates: true },
+        { ignoreDuplicates: true }
       );
     }
   }
@@ -1156,7 +1156,7 @@ export class PostService {
       offset: number;
       limit: number;
       type?: PostType;
-    },
+    }
   ): Promise<string[]> {
     if (!userId) return [];
     const { type, offset, limit } = search;
@@ -1189,7 +1189,7 @@ export class PostService {
       limit: number;
       type?: PostType;
       groupIds?: string[];
-    },
+    }
   ): Promise<string[]> {
     if (!userId) return [];
     const { groupIds, type, offset, limit } = search;
