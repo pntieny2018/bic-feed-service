@@ -1,11 +1,6 @@
 import { Command, CommandRunner } from 'nest-commander';
 import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
 import { SearchService } from '../../modules/search/search.service';
-import {
-  ICoverMedia,
-  IDataPostToUpdate,
-  IMedia,
-} from '../../modules/search/interfaces/post-elasticsearch.interface';
 
 @Command({ name: 'es-verify-bulk-update', description: 'Multi update vs bulk update' })
 export class MultiUpdateVsBulkUpdateCommand implements CommandRunner {

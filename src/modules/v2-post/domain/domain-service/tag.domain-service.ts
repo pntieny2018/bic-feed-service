@@ -45,7 +45,6 @@ export class TagDomainService implements ITagDomainService {
     });
 
     if (tag.isChanged()) {
-      console.log('changed');
       try {
         await this._tagRepository.update(tag);
         tag.commit();

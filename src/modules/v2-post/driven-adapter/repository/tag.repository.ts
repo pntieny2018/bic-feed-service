@@ -1,8 +1,8 @@
-import { HttpStatus, Inject, InternalServerErrorException, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
-import { ITag, TagModel } from '../../../../database/models/tag.model';
+import { TagModel } from '../../../../database/models/tag.model';
 import { TagEntity } from '../../domain/model/tag';
 import {
   FindAllTagsProps,

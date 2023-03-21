@@ -66,5 +66,4 @@ describe('ArrayHelper', function () {
       expect(result).toEqual([]);
     });
   });
-  
 });

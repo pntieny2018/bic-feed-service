@@ -26,7 +26,6 @@ import { HealthModule } from '../modules/health/health.module';
 import { InternalModule } from '../modules/internal';
 import { SearchModule } from '../modules/search';
 import { ReportContentModule } from '../modules/report-content/report-content.module';
-import { TagModule } from '../modules/tag';
 import { PostModuleV2 } from '../modules/v2-post/post.module';
 import { FilterUserModule } from '../modules/filter-user';
 import { AdminModule } from '../modules/admin/admin.module';

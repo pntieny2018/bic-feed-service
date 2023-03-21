@@ -1,11 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserApplicationService } from '../../application';
-import {
-  GROUP_REPOSITORY_TOKEN,
-  IGroupRepository,
-} from '../../../v2-group/domain/repositoty-interface/group.repository.interface';
+import { IGroupRepository } from '../../../v2-group/domain/repositoty-interface/group.repository.interface';
 import { createMock } from '@golevelup/ts-jest';
-import { GroupRepository } from '../../../v2-group/driven-adapter/repository/group.repository';
 import { USER_REPOSITORY_TOKEN } from '../../domain/repositoty-interface/user.repository.interface';
 import { UserRepository } from '../../driven-adapter/repository/user.repository';
 

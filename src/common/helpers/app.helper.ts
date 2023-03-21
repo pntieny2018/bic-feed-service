@@ -1,5 +1,6 @@
 import { StringHelper } from './string.helper';
 import { APP_SERVICE_KEY } from '../constants';
+
 export class AppHelper {
   /**
    * Get app processors key header to call api from Bein Backend

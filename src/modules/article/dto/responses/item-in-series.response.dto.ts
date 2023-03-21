@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsUUID } from 'class-validator';
 import { CategoryResponseDto } from '.';
 import { MediaFilterResponseDto, MediaResponseDto } from '../../../media/dto/response';
@@ -9,7 +9,6 @@ import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostSettingResponseDto } from '../../../post/dto/responses/post-setting-response.dto';
 import { PostType } from '../../../../database/models/post.model';
 import { MediaService } from '../../../media';
-import { createNestWinstonLogger } from 'nest-winston/dist/winston.providers';
 import { UserDto } from '../../../v2-user/application';
 
 export class ItemInSeriesResponseDto {

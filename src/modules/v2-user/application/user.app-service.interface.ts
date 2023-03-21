@@ -1,4 +1,5 @@
 import { UserDto } from '.';
+
 export type FindUserOption = {
   withPermission?: boolean;
   withGroupJoined?: boolean;

@@ -12,7 +12,6 @@ import { FollowsDto } from './dto/response/follows.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { v4 } from 'uuid';
 
 @Injectable()
 export class FollowService {

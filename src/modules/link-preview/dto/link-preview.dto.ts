@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class LinkPreviewDto {

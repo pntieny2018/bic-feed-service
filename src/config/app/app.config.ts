@@ -1,4 +1,5 @@
 import { IAppConfig } from './app-config.interface';
+
 export const getAppConfig = (): IAppConfig => ({
   name: process.env.APP_NAME || 'Bein Feed',
   version: process.env.APP_VERSION || '1',

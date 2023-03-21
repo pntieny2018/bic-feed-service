@@ -1,6 +1,5 @@
-import { createMock } from '@golevelup/ts-jest';
 import { BadRequestException, INestApplication, NotFoundException } from '@nestjs/common';
-import { CommandBus, QueryBus, QueryHandlerNotFoundException } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nContext } from 'nestjs-i18n';
 import { TagController } from '../../../driving-apdater/controller/tag.controller';
@@ -10,6 +9,7 @@ import {
   TagUsedException,
 } from '../../../exception';
 import { userMock } from '../../mock/user.dto.mock';
+
 describe('TagController', () => {
   let tagController: TagController;
   let command: CommandBus;

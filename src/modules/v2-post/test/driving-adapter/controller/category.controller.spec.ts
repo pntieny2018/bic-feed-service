@@ -25,49 +25,48 @@ describe('CategoryController', () => {
   const categoryMocks: FindCategoriesPaginationDto = {
     rows: [
       {
-        'id': '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
-        'name': 'Outdoors',
-        'slug': 'outdoors',
-        'level': 1,
-        'parentId': null,
-        'active': true,
-        'createdBy': '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+        id: '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+        name: 'Outdoors',
+        slug: 'outdoors',
+        level: 1,
+        parentId: null,
+        active: true,
+        createdBy: '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
       },
       {
-        'id': 'ce8c7613-426d-48e4-8d74-c2a12adc05f9',
-        'name': 'Fashion & Beauty',
-        'slug': 'fashion-beauty',
-        'level': 1,
-        'parentId': null,
-        'active': true,
-        'createdBy': '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+        id: 'ce8c7613-426d-48e4-8d74-c2a12adc05f9',
+        name: 'Fashion & Beauty',
+        slug: 'fashion-beauty',
+        level: 1,
+        parentId: null,
+        active: true,
+        createdBy: '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
       },
     ],
     total: 0,
-  }
+  };
 
   describe('Get', () => {
-
     it('Should get categories successfully', async () => {
       jest.spyOn(query, 'execute').mockResolvedValue(categoryMocks);
       const result = await controller.get(userMock, {});
       expect(result).toEqual({
         list: [
           {
-            "id": "6b9fbc18-04c3-4a4a-bd64-453add6724dd",
-            "name": "Outdoors",
-            "slug": "outdoors"
+            id: '6b9fbc18-04c3-4a4a-bd64-453add6724dd',
+            name: 'Outdoors',
+            slug: 'outdoors',
           },
           {
-            "id": "ce8c7613-426d-48e4-8d74-c2a12adc05f9",
-            "name": "Fashion & Beauty",
-            "slug": "fashion-beauty"
-          }
+            id: 'ce8c7613-426d-48e4-8d74-c2a12adc05f9',
+            name: 'Fashion & Beauty',
+            slug: 'fashion-beauty',
+          },
         ],
-        "meta": {
-          "hasNextPage": false,
-          "total": 0
-        }
+        meta: {
+          hasNextPage: false,
+          total: 0,
+        },
       });
     });
   });

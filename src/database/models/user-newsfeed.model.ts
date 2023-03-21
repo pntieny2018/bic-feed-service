@@ -9,6 +9,7 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { PostModel } from './post.model';
+
 export interface IUserNewsFeed {
   userId: string;
   postId: string;

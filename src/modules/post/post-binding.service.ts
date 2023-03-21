@@ -1,5 +1,5 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ClassTransformer } from 'class-transformer';
