@@ -1,6 +1,6 @@
 {
   "name": "bic-feed-service",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "",
   "author": "",
   "private": true,
@@ -167,7 +167,7 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src/modules/v2-post"
+      "<rootDir>/src"
     ],
     "moduleNameMapper": {
       "^@app/redis(|/.*)$": "<rootDir>/libs/redis/src/$1",

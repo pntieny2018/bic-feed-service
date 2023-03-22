@@ -1,5 +1,4 @@
 import { CommentRecipientDto, ReplyCommentRecipientDto } from '../response';
-import { UserDto } from '../../../modules/v2-user/application';
 
 export class NotificationMetaPayloadDto<T> {
   public report?: {

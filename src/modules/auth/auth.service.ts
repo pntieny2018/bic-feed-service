@@ -1,10 +1,10 @@
 import jwkToPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
+import { TokenExpiredError } from 'jsonwebtoken';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
-import { TokenExpiredError } from 'jsonwebtoken';
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';

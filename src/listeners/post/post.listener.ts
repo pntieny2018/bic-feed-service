@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
-import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
@@ -89,7 +88,7 @@ export class PostListener {
         privacy: PostPrivacy.OPEN,
       });
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
           actor: {
@@ -168,7 +167,7 @@ export class PostListener {
     //     this._sentryService.captureException(e);
     //   });
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${post.id}`,
       value: {
         actor: {
@@ -318,7 +317,7 @@ export class PostListener {
       const updatedActivity = this._postActivityService.createPayload(newPost);
       const oldActivity = this._postActivityService.createPayload(oldPost);
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
           actor: {

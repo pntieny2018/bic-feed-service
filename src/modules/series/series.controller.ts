@@ -14,7 +14,7 @@ import { APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
-import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
+import { SeriesSearchResponseDto } from './dto/responses/series-search.response.dto';
 import { AuthUser } from '../auth';
 import { PostResponseDto } from '../post/dto/responses';
 import { SeriesAppService } from './application/series.app-service';

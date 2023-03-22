@@ -12,7 +12,7 @@ import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
-import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
+import { SeriesSearchResponseDto } from '../series/dto/responses/series-search.response.dto';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -220,6 +220,7 @@ export class SearchService {
         doc: dataUpdate[indexPost],
       });
     });
+    if (updateOps.length === 0) return;
     try {
       await this.elasticsearchService.bulk(
         {
@@ -901,11 +902,18 @@ export class SearchService {
     if (isASCII) {
       //En
       if (type === PostType.POST) {
-        fields = [content.ascii];
+        fields = [content.ascii, content.default];
       } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.ascii, content.ascii];
+        fields = [summary.ascii, summary.default, content.ascii, content.default];
       } else {
-        fields = [title.ascii, summary.ascii, content.ascii];
+        fields = [
+          title.ascii,
+          title.default,
+          summary.ascii,
+          summary.default,
+          content.ascii,
+          content.default,
+        ];
       }
       queries = [
         {

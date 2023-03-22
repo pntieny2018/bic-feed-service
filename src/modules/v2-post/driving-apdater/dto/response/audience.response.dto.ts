@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserDto } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';

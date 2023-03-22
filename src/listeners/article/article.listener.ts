@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
-import { NIL as NIL_UUID } from 'uuid';
 import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { On } from '../../common/decorators';
 import { ArrayHelper } from '../../common/helpers';
@@ -93,7 +92,7 @@ export class ArticleListener {
       privacy: article.privacy,
     });
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
         actor: {
@@ -218,7 +217,7 @@ export class ArticleListener {
     }
 
     const activity = this._postActivityService.createPayload(article);
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
         actor: actor,
@@ -330,7 +329,7 @@ export class ArticleListener {
       const updatedActivity = this._postActivityService.createPayload(newArticle);
       const oldActivity = this._postActivityService.createPayload(oldArticle);
 
-      this._notificationService.publishPostNotification({
+      await this._notificationService.publishPostNotification({
         key: `${id}`,
         value: {
           actor: actor,

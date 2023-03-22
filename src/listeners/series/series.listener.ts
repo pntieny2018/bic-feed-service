@@ -5,7 +5,6 @@ import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
 import {
-  SeriesAddedItemsEvent,
   SeriesHasBeenDeletedEvent,
   SeriesHasBeenPublishedEvent,
   SeriesHasBeenUpdatedEvent,
@@ -61,7 +60,7 @@ export class SeriesListener {
     const items = await this._postService.getItemsInSeriesByIds(itemsSorted.map((item) => item.id));
     if (items.every((item) => item.createdBy === series.createdBy)) return;
     const activity = this._seriesActivityService.getDeletingSeriesActivity(series, items);
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${series.id}`,
       value: {
         actor: {
@@ -121,7 +120,7 @@ export class SeriesListener {
       groupAdminIds = groupAdminIds.filter((id) => id !== actor.id);
 
       if (groupAdminIds.length) {
-        this._notificationService.publishPostNotification({
+        await this._notificationService.publishPostNotification({
           key: `${series.id}`,
           value: {
             actor: {
@@ -257,7 +256,7 @@ export class SeriesListener {
           return;
         }
 
-        this._notificationService.publishPostNotification({
+        await this._notificationService.publishPostNotification({
           key: `${id}`,
           value: {
             actor: {

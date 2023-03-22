@@ -1,8 +1,8 @@
-import { HttpStatus, Inject, InternalServerErrorException, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { FindOptions, Sequelize } from 'sequelize';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
-import { ITag, TagModel } from '../../../../database/models/tag.model';
+import { TagModel } from '../../../../database/models/tag.model';
 import { TagEntity } from '../../domain/model/tag';
 import {
   FindAllTagsProps,
@@ -14,7 +14,6 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { AxiosHelper } from '../../../../common/helpers';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
-import { UserEntity } from '../../../v2-user/domain/model/user';
 
 export class TagRepository implements ITagRepository {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;

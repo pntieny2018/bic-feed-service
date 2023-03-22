@@ -12,7 +12,6 @@ import { FollowsDto } from './dto/response/follows.dto';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
-import { v4 } from 'uuid';
 
 @Injectable()
 export class FollowService {
@@ -38,6 +37,8 @@ export class FollowService {
     const MAX_POSTS_IN_NEWSFEED = 10000;
     try {
       const followedGroupIds = await this._filterGroupsUserJoined(userId, groupIds);
+      if (followedGroupIds.length === 0) return;
+
       await this._createFollowData(userId, followedGroupIds);
 
       await this._userNewsFeedModel.sequelize.query(
@@ -225,14 +226,15 @@ export class FollowService {
       const schema = this._databaseConfig.schema;
       let condition = 'group_id IN (:groupIds) AND zindex > :zindex';
       if (oldGroupIds && oldGroupIds.length > 0) {
-        condition += ' AND group_id NOT IN (:oldGroupIds)';
-      }
-      if (ignoreUserIds && ignoreUserIds.length > 0) {
         condition += ` AND NOT EXISTS (
         SELECT null
         FROM ${schema}.${this._followModel.tableName} AS "tmp"
-        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:ignoreUserIds)
+        WHERE "tmp".user_id = "f".user_id AND tmp.group_id IN (:oldGroupIds)
         ) `;
+      }
+
+      if (ignoreUserIds && ignoreUserIds.length > 0) {
+        condition += ` AND user_id NOT IN (:ignoreUserIds) `;
       }
 
       const rows = await this._sequelize.query(

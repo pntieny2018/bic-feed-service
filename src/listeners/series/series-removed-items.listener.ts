@@ -3,8 +3,6 @@ import { On } from '../../common/decorators';
 import { SeriesRemovedItemsEvent } from '../../events/series';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
-import { UserDto } from '../../modules/v2-user/application';
-import { SeriesAddItem } from '../../common/constants';
 import { PostService } from '../../modules/post/post.service';
 import { SeriesActivityService } from '../../notification/activities';
 import { NotificationService } from '../../notification';
@@ -57,7 +55,7 @@ export class SeriesRemovedItemsListener {
       items[0]
     );
 
-    this._notificationService.publishPostNotification({
+    await this._notificationService.publishPostNotification({
       key: `${series[0].id}`,
       value: {
         actor: {

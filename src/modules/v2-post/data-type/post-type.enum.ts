@@ -1,4 +1,4 @@
-export enum POST_TYPE {
+export enum PostType {
   POST = 'POST',
   ARTICLE = 'ARTICLE',
   SERIES = 'SERIES',

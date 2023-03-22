@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { ArticleAppService } from './application/article.app-service';
 import { InjectModel } from '@nestjs/sequelize';
 import { IPost, PostModel, PostStatus } from '../../database/models/post.model';

@@ -7,7 +7,7 @@ import {
 import { IGroupApplicationService } from './group.app-service.interface';
 import { GroupDto } from './group.dto';
 import { ArrayHelper } from '../../../common/helpers';
-import { GROUP_PRIVACY } from '../data-type';
+import { GroupPrivacy } from '../data-type';
 import { UserDto } from '../../v2-user/application';
 
 export class GroupApplicationService implements IGroupApplicationService {
@@ -41,11 +41,11 @@ export class GroupApplicationService implements IGroupApplicationService {
       groupIdsUserJoined.includes(groupId)
     );
 
-    if (group.privacy === GROUP_PRIVACY.OPEN) {
+    if (group.privacy === GroupPrivacy.OPEN) {
       filterGroupIdsUserJoined.push(group.id);
     }
     if (
-      group.privacy === GROUP_PRIVACY.CLOSED &&
+      group.privacy === GroupPrivacy.CLOSED &&
       this._hasJoinedCommunity(groupIdsUserJoined, group.rootGroupId)
     ) {
       filterGroupIdsUserJoined.push(group.id);
