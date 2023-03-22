@@ -8,7 +8,7 @@ import { RecentSearchesResponseDto } from '../dto/response/recent-search.respons
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { CreateRecentSearchRequestDto } from '../dto/request/tag/create-recent-search.request.dto';
-import { POST_TYPE } from '../../data-type';
+import { PostType } from '../../data-type';
 import { CleanRecentSearchRequestDto } from '../dto/request/tag/clean-recent-search.request.dto';
 import { CleanRecentSearchesDto } from '../../../recent-search/dto/requests/clean-recent-searches.dto';
 
@@ -51,7 +51,7 @@ export class RecentSearchController {
     @Body() createRecentSearchRequestDto: CreateRecentSearchRequestDto
   ): Promise<RecentSearchesResponseDto> {
     return new RecentSearchesResponseDto({
-      target: createRecentSearchRequestDto.target as POST_TYPE,
+      target: createRecentSearchRequestDto.target as PostType,
       recentSearches: [],
     });
   }

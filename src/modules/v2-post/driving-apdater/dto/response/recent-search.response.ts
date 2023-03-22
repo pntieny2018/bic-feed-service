@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { POST_TYPE } from '../../../data-type';
+import { PostType } from '../../../data-type';
 export class RecentSearchesResponseDto {
   @ApiProperty({
-    enum: POST_TYPE,
+    enum: PostType,
     description: 'Target entity',
   })
   @Expose()
-  public target: POST_TYPE;
+  public target: PostType;
 
   @ApiProperty({
     description: 'List recent search',

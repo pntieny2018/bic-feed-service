@@ -2,18 +2,18 @@ import { PageOptionsDto } from '../../../../../../common/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { POST_TYPE } from '../../../../data-type';
+import { PostType } from '../../../../data-type';
 
 export class GetRecentSearchRequestDto extends PageOptionsDto {
   @ApiProperty({
     description: 'Target entity. Support[all,post,article,user]',
-    default: POST_TYPE.POST,
+    default: PostType.POST,
     required: false,
-    enum: POST_TYPE,
+    enum: PostType,
   })
   @IsOptional()
   @Transform((params) => {
-    return params.value ?? POST_TYPE.POST;
+    return params.value ?? PostType.POST;
   })
-  public target?: POST_TYPE = POST_TYPE.ALL;
+  public target?: PostType = PostType.ALL;
 }

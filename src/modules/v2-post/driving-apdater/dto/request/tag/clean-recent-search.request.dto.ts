@@ -1,16 +1,16 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { POST_TYPE } from '../../../../data-type';
+import { PostType } from '../../../../data-type';
 
 export class CleanRecentSearchRequestDto {
   @ApiProperty({
     description: 'Target entity. Support [all,post,article,user]',
-    default: POST_TYPE.POST,
-    enum: POST_TYPE,
+    default: PostType.POST,
+    enum: PostType,
   })
-  @IsEnum(POST_TYPE, {
+  @IsEnum(PostType, {
     message: 'Target must be "post" | "article"  | "all"',
   })
   @IsNotEmpty()
-  public target: POST_TYPE;
+  public target: PostType;
 }
