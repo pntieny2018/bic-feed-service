@@ -44,13 +44,18 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { isImportant, type, isSaved, limit, offset } = getNewsFeedDto;
+    const { isImportant, type, isSaved, isMine, limit, offset } = getNewsFeedDto;
     let postIdsAndSorted = [];
-    if (isSaved) {
+    if (isMine) {
+      postIdsAndSorted = await this._postService.getListByUserId(authUser.id, {
+        limit: limit + 1, //1 is next row
+        offset,
+        type,
+      });
+    } else if (isSaved) {
       postIdsAndSorted = await this._postService.getListSavedByUserId(authUser.id, {
         limit: limit + 1, //1 is next row
         offset,
-        isImportant,
         type,
       });
     } else {
@@ -245,7 +250,6 @@ export class FeedService {
       postIdsAndSorted = await this._postService.getListSavedByUserId(authUserId, {
         limit: limit + 1, //1 is next row
         offset,
-        isImportant,
         type,
         groupIds,
       });

@@ -13,7 +13,6 @@ import { CanUseCategoryConstraint } from './validators/can-use-category.validato
 import { CanUseSeriesConstraint } from './validators/can-use-series.validator';
 import { FeedModule } from '../feed';
 import { LinkPreviewModule } from '../link-preview/link-preview.module';
-import { ArticleBindingService } from './article-binding.service';
 import { ArticleAppService } from './application/article.app-service';
 import { SearchModule } from '../search';
 import { TagModule } from '../tag';
@@ -34,19 +33,18 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     SearchModule,
     forwardRef(() => ReactionModule),
     AuthorityModule,
+    LinkPreviewModule,
     forwardRef(() => CommentModule),
-    forwardRef(() => LinkPreviewModule),
     forwardRef(() => SeriesModule),
   ],
   controllers: [ArticleController],
   providers: [
     ArticleService,
     ArticleAppService,
-    ArticleBindingService,
     CanUseCategoryConstraint,
     CanUseSeriesConstraint,
     ArticleCronService,
   ],
-  exports: [ArticleService, ArticleBindingService],
+  exports: [ArticleService],
 })
 export class ArticleModule {}
