@@ -26,13 +26,13 @@ export class GroupEntity extends DomainAggregateRoot<GroupProps> {
 
   public validate(): void {
     if (!isUUID(this._props.id)) {
-      throw new DomainModelException(`Group ID is not UUID`);
+      throw new DomainModelException(`Group ID must be UUID`);
     }
     if (!isUUID(this._props.communityId)) {
-      throw new DomainModelException(`Community ID By is not UUID`);
+      throw new DomainModelException(`Community ID By must be UUID`);
     }
     if (!isUUID(this._props.rootGroupId)) {
-      throw new DomainModelException(`Root group ID By is not UUID`);
+      throw new DomainModelException(`Root group ID By must be UUID`);
     }
     if (!this._props.name) {
       throw new DomainModelException(`Group name is required`);

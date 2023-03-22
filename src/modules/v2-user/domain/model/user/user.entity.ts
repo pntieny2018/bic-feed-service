@@ -25,7 +25,7 @@ export class UserEntity extends DomainAggregateRoot<UserProps> {
 
   public validate(): void {
     if (!isUUID(this._props.id)) {
-      throw new DomainModelException(`User ID is not UUID`);
+      throw new DomainModelException(`User ID must be UUID`);
     }
     if (!this._props.username) {
       throw new DomainModelException(`username is required`);

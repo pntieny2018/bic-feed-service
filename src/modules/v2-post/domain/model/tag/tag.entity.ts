@@ -23,13 +23,13 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
 
   public validate(): void {
     if (!isUUID(this._props.groupId)) {
-      throw new DomainModelException(`Group ID is not UUID`);
+      throw new DomainModelException(`Group ID must be UUID`);
     }
     if (!isUUID(this._props.createdBy)) {
-      throw new DomainModelException(`Created By is not UUID`);
+      throw new DomainModelException(`Created By must be UUID`);
     }
     if (!isUUID(this._props.updatedBy)) {
-      throw new DomainModelException(`Updated By is not UUID`);
+      throw new DomainModelException(`Updated By must be UUID`);
     }
     if (!this._props.name) {
       throw new DomainModelException(`Tag name is required`);

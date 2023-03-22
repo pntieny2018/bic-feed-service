@@ -37,10 +37,10 @@ export class MediaEntity extends DomainAggregateRoot<MediaProps> {
 
   public validate(): void {
     if (!isUUID(this._props.id)) {
-      throw new DomainModelException(`Group ID is not UUID`);
+      throw new DomainModelException(`Group ID must be UUID`);
     }
     if (!isUUID(this._props.createdBy)) {
-      throw new DomainModelException(`Created By is not UUID`);
+      throw new DomainModelException(`Created By must be UUID`);
     }
   }
 }

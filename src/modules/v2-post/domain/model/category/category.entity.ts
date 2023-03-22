@@ -23,10 +23,10 @@ export class CategoryEntity extends DomainAggregateRoot<CategoryProps> {
 
   public validate(): void {
     if (!isUUID(this._props.id)) {
-      throw new DomainModelException(`Category ID is not UUID`);
+      throw new DomainModelException(`Category ID must be UUID`);
     }
     if (!isUUID(this._props.parentId)) {
-      throw new DomainModelException(`Parent ID is not UUID`);
+      throw new DomainModelException(`Parent ID must be UUID`);
     }
   }
 }
