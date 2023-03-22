@@ -230,7 +230,7 @@ export class FeedService {
    * Get Timeline
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { limit, offset, groupId, isImportant, type, isSaved } = getTimelineDto;
+    const { limit, offset, groupId, isImportant, type, isSaved, isMine } = getTimelineDto;
     const group = await this._groupAppService.findOne(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -246,7 +246,13 @@ export class FeedService {
 
     const authUserId = authUser?.id || null;
     let postIdsAndSorted = [];
-    if (isSaved) {
+    if (isMine) {
+      postIdsAndSorted = await this._postService.getListByUserId(authUserId, {
+        limit: limit + 1, //1 is next row
+        offset,
+        type,
+      });
+    } else if (isSaved) {
       postIdsAndSorted = await this._postService.getListSavedByUserId(authUserId, {
         limit: limit + 1, //1 is next row
         offset,
