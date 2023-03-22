@@ -6,6 +6,7 @@ import { PostStatus } from '../../../data-type/post-status.enum';
 import { TagEntity } from '../tag';
 import { LinkPreviewEntity } from '../link-preview';
 import { MediaEntity } from '../media';
+import camelcase from 'camelcase';
 
 export type ArticleProps = {
   id: string;
@@ -32,8 +33,8 @@ export type ArticleProps = {
   isHidden: boolean;
 };
 
-export class PostEntity extends DomainAggregateRoot<PostProps> {
-  public constructor(props: PostProps) {
+export class ArticleEntity extends DomainAggregateRoot<ArticleProps> {
+  public constructor(props: ArticleProps) {
     super(props);
   }
 
@@ -45,6 +46,7 @@ export class PostEntity extends DomainAggregateRoot<PostProps> {
       throw new DomainModelException(`Created By must be UUID`);
     }
     if (!isUUID(this._props.updatedBy)) {
+      camelcase(['asfsdf']);
       throw new DomainModelException(`Updated By must be UUID`);
     }
   }

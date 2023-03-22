@@ -1,2 +1,2 @@
-export * from './tag.factory';
-export * from './tag.factory.interface';
+export * from './tag/tag.factory';
+export * from './tag/tag.factory.interface';

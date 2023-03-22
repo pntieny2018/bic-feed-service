@@ -1,12 +1,12 @@
-import { TagEntity, TagProps } from '../model/tag';
+import { TagEntity, TagProps } from '../../model/tag';
 
-export type CreateTagOptions = Readonly<{
+export type CreateTagProps = Readonly<{
   name: string;
   groupId: string;
   userId: string;
 }>;
 export interface ITagFactory {
-  create(options: CreateTagOptions): TagEntity;
+  create(props: CreateTagProps): TagEntity;
 
   reconstitute(props: TagProps): TagEntity;
 }
