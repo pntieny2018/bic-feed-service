@@ -44,10 +44,9 @@ export class GroupRepository implements IGroupRepository {
           })
         )
       );
-      if (response.status !== HttpStatus.OK) {
-        return null;
+      if (response.status === HttpStatus.OK) {
+        group = AxiosHelper.getDataArrayResponse<GroupDataInCache>(response)[0];
       }
-      group = AxiosHelper.getDataArrayResponse<GroupDataInCache>(response)[0];
       if (!group) {
         return null;
       }
@@ -69,10 +68,9 @@ export class GroupRepository implements IGroupRepository {
           })
         )
       );
-      if (response.status !== HttpStatus.OK) {
-        return [];
+      if (response.status === HttpStatus.OK) {
+        groups = groups.concat(AxiosHelper.getDataArrayResponse<GroupDataInCache>(response));
       }
-      groups = groups.concat(AxiosHelper.getDataArrayResponse<GroupDataInCache>(response));
     }
     const result = [];
     for (const group of groups) {

@@ -39,17 +39,21 @@ export class UserRepository implements IUserRepository {
 
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
-      const response = await lastValueFrom(
-        this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
-            username: username,
-          })
-        )
-      );
-      if (response.status !== HttpStatus.OK) {
-        return null;
+      const cacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
+      let user = await this._store.get<UserDataInCache>(cacheKey);
+      if (!user) {
+        const response = await lastValueFrom(
+          this._httpService.get(
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
+              username: username,
+            })
+          )
+        );
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
+        user = AxiosHelper.getDataResponse<UserDataInRest>(response);
       }
-      const user = AxiosHelper.getDataResponse<UserDataInRest>(response);
       return new UserEntity(user);
     } catch (ex) {
       this._logger.debug(ex);
@@ -67,10 +71,9 @@ export class UserRepository implements IUserRepository {
           })
         )
       );
-      if (response.status !== HttpStatus.OK) {
-        return null;
+      if (response.status === HttpStatus.OK) {
+        user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
       }
-      user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
       if (!user) {
         return null;
       }
@@ -93,10 +96,9 @@ export class UserRepository implements IUserRepository {
           })
         )
       );
-      if (response.status !== HttpStatus.OK) {
-        return [];
+      if (response.status === HttpStatus.OK) {
+        users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
       }
-      users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
     }
 
     const result = [];
