@@ -1,7 +1,7 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { MEDIA_STATUS, MEDIA_TYPE } from '../../../data-type';
+import { MediaStatus, MediaType } from '../../../data-type';
 
 export interface MediaThumbnailProps {
   url: string;
@@ -13,11 +13,11 @@ export type MediaProps = {
   id: string;
   createdBy: string;
   url: string;
-  type: MEDIA_TYPE;
+  type: MediaType;
   name: string;
   originName: string;
   extension: string;
-  status: MEDIA_STATUS;
+  status: MediaStatus;
   mimeType: string;
   width?: number;
   height?: number;

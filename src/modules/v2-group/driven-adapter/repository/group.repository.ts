@@ -4,7 +4,7 @@ import { ArrayHelper } from '../../../../common/helpers';
 import { AppHelper } from '../../../../common/helpers/app.helper';
 import { GroupEntity } from '../../domain/model/group';
 import { IGroupRepository } from '../../domain/repositoty-interface/group.repository.interface';
-import { GROUP_PRIVACY } from '../../data-type';
+import { GroupPrivacy } from '../../data-type';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { UserDto } from '../../../v2-user/application';
@@ -14,7 +14,7 @@ type GroupDataInCache = {
   id: string;
   name: string;
   icon: string;
-  privacy: GROUP_PRIVACY;
+  privacy: GroupPrivacy;
   communityId: string;
   rootGroupId: string;
   isCommunity: boolean;
@@ -63,6 +63,7 @@ export class GroupRepository implements IGroupRepository {
     const response: string[][] = await Promise.all(
       groupIds.map(async (groupId): Promise<string[]> => {
         try {
+          //TODO: Need Group provide API for this
           const response = await lastValueFrom(
             this._httpService.get(ENDPOINT.GROUP.GROUP_ADMIN_PATH.replace(':groupId', groupId), {
               headers: {

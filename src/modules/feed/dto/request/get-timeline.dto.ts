@@ -26,6 +26,19 @@ export class GetTimelineDto extends PageOptionsDto {
   })
   public isImportant?: boolean;
 
+  @ApiProperty({ name: 'is_mine', example: false })
+  @IsOptional()
+  @Expose({
+    name: 'is_mine',
+  })
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return null;
+  })
+  public isMine?: boolean;
+
   @ApiProperty({ name: 'is_saved', example: true })
   @IsOptional()
   @Expose({

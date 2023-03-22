@@ -1,12 +1,12 @@
 import { GroupDto } from '../../application';
-import { GROUP_PRIVACY } from '../../data-type';
+import { GroupPrivacy } from '../../data-type';
 
 export const groupMock: GroupDto[] = [
   {
     id: '22ccce09-0cea-4984-be0f-44e8839ac52b',
     name: 'Love TS',
     icon: 'ts',
-    privacy: GROUP_PRIVACY.OPEN,
+    privacy: GroupPrivacy.OPEN,
     rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     communityId: '855bedeb-b708-4e13-8c68-131d92cd7912',
     isCommunity: false,
@@ -21,7 +21,7 @@ export const groupMock: GroupDto[] = [
     id: 'cc5df28b-885b-45a5-b44d-389b0f827c8a',
     name: 'Love Golang',
     icon: 'gl',
-    privacy: GROUP_PRIVACY.CLOSED,
+    privacy: GroupPrivacy.CLOSED,
     rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     communityId: '855bedeb-b708-4e13-8c68-131d92cd7912',
     isCommunity: false,
@@ -36,7 +36,7 @@ export const groupMock: GroupDto[] = [
     id: '94cc5afd-eaa9-4bb7-9150-5fde275e3cef',
     name: 'Love Golang',
     icon: 'gl',
-    privacy: GROUP_PRIVACY.PRIVATE,
+    privacy: GroupPrivacy.PRIVATE,
     rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     communityId: '855bedeb-b708-4e13-8c68-131d92cd7912',
     isCommunity: false,
@@ -51,7 +51,7 @@ export const groupMock: GroupDto[] = [
     id: '36d66fb6-5a24-4fb4-892e-1c38760da774',
     name: 'Love Golang',
     icon: 'gl',
-    privacy: GROUP_PRIVACY.SECRET,
+    privacy: GroupPrivacy.SECRET,
     rootGroupId: '855bedeb-b708-4e13-8c68-131d92cd7911',
     communityId: '855bedeb-b708-4e13-8c68-131d92cd7912',
     isCommunity: false,

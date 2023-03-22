@@ -1,4 +1,4 @@
-export enum POST_PRIVACY {
+export enum PostPrivacy {
   OPEN = 'OPEN',
   CLOSED = 'CLOSED',
   PRIVATE = 'PRIVATE',
