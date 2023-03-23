@@ -20,7 +20,7 @@ export class UserApplicationService implements IUserApplicationService {
     }
     if (options?.withPermission && !result.permissions) {
       const permissions = await this._repo.getPermissionsByUserId(user.get('id'));
-      user.setPermissions(permissions);
+      result.permissions = permissions;
     }
     if (!options?.withGroupJoined) {
       delete result.groups;
