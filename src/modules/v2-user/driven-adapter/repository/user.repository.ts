@@ -42,6 +42,7 @@ export class UserRepository implements IUserRepository {
       const cacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
       let user = await this._store.get<UserDataInCache>(cacheKey);
       if (!user) {
+        this._logger.debug('ENDPOINT.GROUP.INTERNAL.GET_USER=', ENDPOINT.GROUP.INTERNAL.GET_USER);
         const response = await lastValueFrom(
           this._httpService.get(
             AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
