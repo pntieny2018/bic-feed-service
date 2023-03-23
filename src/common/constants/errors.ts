@@ -1,5 +1,5 @@
 export const ERRORS = {
-  tag: {
+  TAG: {
     TAG_NAME_EXCEED_MAX_LENGTH: 'tag.tag_name_exceed_max_length',
     TAG_DUPLICATE_NAME: 'tag.duplicate_name',
     TAG_NOT_FOUND: 'tag.not_found',
@@ -7,6 +7,24 @@ export const ERRORS = {
     TAG_NO_UPDATE_PERMISSION: 'tag.no_update_permission',
     TAG_NO_CREATE_PERMISSION: 'tag.no_create_permission',
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
+  },
+  POST: {
+    POST_NOT_FOUND: 'post.not_found',
+    POST_NO_UPDATE_PERMISSION: 'post.no_update_permission',
+    POST_NO_CREATE_PERMISSION: 'post.no_create_permission',
+    POST_NO_DELETE_PERMISSION: 'post.no_delete_permission',
+  },
+  ARTICLE: {
+    ARTICLE_NOT_FOUND: 'article.not_found',
+    ARTICLE_NO_UPDATE_PERMISSION: 'article.no_update_permission',
+    ARTICLE_NO_CREATE_PERMISSION: 'article.no_create_permission',
+    ARTICLE_NO_DELETE_PERMISSION: 'article.no_delete_permission',
+  },
+  SERIES: {
+    SERIES_NOT_FOUND: 'post.not_found',
+    SERIES_NO_UPDATE_PERMISSION: 'series.no_update_permission',
+    SERIES_NO_CREATE_PERMISSION: 'series.no_create_permission',
+    SERIES_NO_DELETE_PERMISSION: 'series.no_delete_permission',
   },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',

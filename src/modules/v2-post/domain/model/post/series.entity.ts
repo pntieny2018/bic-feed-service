@@ -2,17 +2,20 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { ImageEntity } from '../media';
-import { PostProps } from './post.entity';
-import { CategoryEntity } from '../category';
+import { PostEntity, PostProps } from './post.entity';
+import { ArticleEntity, ArticleProps } from './article.entity';
 
-export type ArticleProps = Omit<PostProps, 'mentionUserIds' | 'media'> & {
+export type SeriesProps = Omit<
+  PostProps,
+  'mentionUserIds' | 'content' | 'series' | 'tags' | 'media'
+> & {
   title: string;
-  summary: string[];
-  categories: CategoryEntity[];
+  summary: string;
+  items?: PostEntity[] | ArticleEntity[];
   cover: ImageEntity;
 };
 
-export class ArticleEntity extends DomainAggregateRoot<ArticleProps> {
+export class SeriesEntity extends DomainAggregateRoot<ArticleProps> {
   public constructor(props: ArticleProps) {
     super(props);
   }

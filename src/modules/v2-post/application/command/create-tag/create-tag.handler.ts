@@ -8,7 +8,7 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagDuplicateNameException } from '../../../exception';
 import { CreateTagCommand } from './create-tag.command';
 import { CreateTagDto } from './create-tag.dto';
-import { TagNoCreatePermissionException } from '../../../exception/tag-no-create-permission.exception';
+import { TagNoCreatePermissionException } from '../../../exception/tag/tag-no-create-permission.exception';
 
 @CommandHandler(CreateTagCommand)
 export class CreateTagHandler implements ICommandHandler<CreateTagCommand, CreateTagDto> {

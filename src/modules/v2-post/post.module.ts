@@ -9,6 +9,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { IAxiosConfig } from '../../config/axios';
 import { CategoryController } from './driving-apdater/controller/category.controller';
+import { AuthorityModule } from '../authority';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CategoryController } from './driving-apdater/controller/category.contro
     }),
     CqrsModule,
     DatabaseModule,
+    AuthorityModule,
     GroupModuleV2,
     UserModuleV2,
   ],

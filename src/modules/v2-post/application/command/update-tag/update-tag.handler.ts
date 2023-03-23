@@ -8,7 +8,7 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
 import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
-import { TagNoUpdatePermissionException } from '../../../exception/tag-no-update-permission.exception';
+import { TagNoUpdatePermissionException } from '../../../exception/tag/tag-no-update-permission.exception';
 
 @CommandHandler(UpdateTagCommand)
 export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, UpdateTagDto> {

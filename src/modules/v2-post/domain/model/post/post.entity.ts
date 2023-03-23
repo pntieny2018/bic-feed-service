@@ -4,30 +4,40 @@ import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { PostStatus } from '../../../data-type/post-status.enum';
 import { TagEntity } from '../tag';
-import { MediaEntity } from '../media';
+import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { LinkPreviewEntity } from '../link-preview';
 import { PostSettingAttributes } from './attributes/post-setting.entity';
+import { PostPrivacy } from '../../../data-type';
 
 export type PostProps = {
   id: string;
-  groupIds: string[];
-  media: MediaEntity[];
-  mentionUserIds: string[];
-  linkPreview: LinkPreviewEntity;
-  series: any;
-  tags: TagEntity[];
+  media: {
+    videos: VideoEntity[];
+    files: FileEntity[];
+    images: ImageEntity[];
+  }[];
   aggregation: {
     commentsCount: number;
     totalUsersSeen: number;
   };
+  isReported: boolean;
+  isHidden: boolean;
   createdBy: string;
   updatedBy: string;
-  content: string;
-  lang?: PostLang;
+  privacy: PostPrivacy;
   status: PostStatus;
   setting: PostSettingAttributes;
   createdAt: Date;
   updatedAt: Date;
+  errorLog?: any;
+  publishedAt?: Date;
+  content?: string;
+  lang?: PostLang;
+  groupIds?: string[];
+  mentionUserIds?: string[];
+  linkPreview?: LinkPreviewEntity;
+  series?: any;
+  tags?: TagEntity[];
 };
 
 export class PostEntity extends DomainAggregateRoot<PostProps> {

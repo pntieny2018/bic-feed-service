@@ -27,6 +27,6 @@ export class TagFactory {
   }
 
   public reconstitute(properties: TagProps): TagEntity {
-    return new TagEntity(properties);
+    return this._eventPublisher.mergeObjectContext(new TagEntity(properties));
   }
 }

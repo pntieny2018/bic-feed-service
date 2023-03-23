@@ -7,7 +7,7 @@ import {
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagNotFoundException, TagUsedException } from '../../../exception';
 import { DeleteTagCommand } from './delete-tag.command';
-import { TagNoDeletePermissionException } from '../../../exception/tag-no-delete-permission.exception';
+import { TagNoDeletePermissionException } from '../../../exception/tag/tag-no-delete-permission.exception';
 
 @CommandHandler(DeleteTagCommand)
 export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void> {

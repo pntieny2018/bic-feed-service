@@ -29,9 +29,9 @@ import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-
 import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
 import { TagResponseDto } from '../dto/response';
-import { TagNoCreatePermissionException } from '../../exception/tag-no-create-permission.exception';
-import { TagNoUpdatePermissionException } from '../../exception/tag-no-update-permission.exception';
-import { TagNoDeletePermissionException } from '../../exception/tag-no-delete-permission.exception';
+import { TagNoCreatePermissionException } from '../../exception/tag/tag-no-create-permission.exception';
+import { TagNoUpdatePermissionException } from '../../exception/tag/tag-no-update-permission.exception';
+import { TagNoDeletePermissionException } from '../../exception/tag/tag-no-delete-permission.exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 
 @ApiTags('Tags')

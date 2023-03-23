@@ -51,6 +51,9 @@ export class UserApplicationService implements IUserApplicationService {
     });
   }
 
+  public async checkMemberOfGroupIds(user: UserDto, groupIds: string[]): Promise<void> {
+  }
+
   private _toDto(user: UserEntity): UserDto {
     return {
       id: user.get('id'),
