@@ -39,17 +39,21 @@ export class UserRepository implements IUserRepository {
 
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
-      const response = await lastValueFrom(
-        this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
-            username: username,
-          })
-        )
-      );
-      if (response.status !== HttpStatus.OK) {
-        return null;
+      const cacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
+      let user = await this._store.get<UserDataInCache>(cacheKey);
+      if (!user) {
+        const response = await lastValueFrom(
+          this._httpService.get(
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
+              username: username,
+            })
+          )
+        );
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
+        user = AxiosHelper.getDataResponse<UserDataInRest>(response);
       }
-      const user = AxiosHelper.getDataResponse<UserDataInRest>(response);
       return new UserEntity(user);
     } catch (ex) {
       this._logger.debug(ex);
@@ -58,7 +62,22 @@ export class UserRepository implements IUserRepository {
   }
 
   public async findOne(id: string): Promise<UserEntity> {
-    const user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    let user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    if (!user) {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+            ids: id,
+          })
+        )
+      );
+      if (response.status === HttpStatus.OK) {
+        user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
+      }
+      if (!user) {
+        return null;
+      }
+    }
     return new UserEntity(user);
   }
 
@@ -67,7 +86,21 @@ export class UserRepository implements IUserRepository {
       (userId) => `${this._prefixRedis + userId}`
     );
 
-    const users = await this._store.mget(keys);
+    let users = await this._store.mget(keys);
+    const notFoundUserIds = ids.filter((id) => !users.find((user) => user?.id === id));
+    if (notFoundUserIds.length > 0) {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+            ids: notFoundUserIds.join(','),
+          })
+        )
+      );
+      if (response.status === HttpStatus.OK) {
+        users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
+      }
+    }
+
     const result = [];
     for (const user of users) {
       if (user) {
