@@ -1,7 +1,7 @@
 import { v4 } from 'uuid';
-import { StringHelper } from '../../../../../common/helpers';
-import { TagEntity, TagProps } from '../../model/tag';
-import { CreateTagProps } from './tag.factory.interface';
+import { StringHelper } from '../../../../common/helpers';
+import { TagEntity, TagProps } from '../model/tag';
+import { CreateTagProps } from './interface/tag.factory.interface';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 

@@ -7,7 +7,7 @@ import { TagEntity } from '../../../domain/model/tag';
 import { GetPaginationTagProps } from '../../../domain/query-interface';
 import { TagQuery } from '../../../driven-adapter/query';
 import { userMock } from '../../mock/user.dto.mock';
-import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory';
+import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory/interface';
 
 describe('TagQuery', () => {
   let query, tagModel;

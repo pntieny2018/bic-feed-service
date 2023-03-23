@@ -4,21 +4,19 @@ import { UpdateTagHandler } from '../application/command/update-tag/update-tag.h
 import { FindTagsPaginationHandler } from '../application/query/find-tags/find-tags-pagination.handler';
 import { TAG_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { TAG_FACTORY_TOKEN } from '../domain/factory/interface';
-import { TAG_QUERY_TOKEN } from '../domain/query-interface';
-import { TAG_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
-import { TagQuery } from '../driven-adapter/query';
-import { TagRepository } from '../driven-adapter/repository';
-import { TagFactory } from '../domain/factory';
-import { TagDomainService } from '../domain/domain-service';
+import { POST_VALIDATOR_TOKEN } from '../domain/validator/interface/post.validator.interface';
+import { PostValidator } from '../domain/validator/post.validator';
+import { POST_FACTORY_TOKEN } from '../domain/factory/interface/post.factory.interface';
+import { PostFactory } from '../domain/factory/post.factory';
 
-export const tagProvider = [
+export const postProvider = [
   {
-    provide: TAG_REPOSITORY_TOKEN,
-    useClass: TagRepository,
+    provide: POST_VALIDATOR_TOKEN,
+    useClass: PostValidator,
   },
   {
-    provide: TAG_QUERY_TOKEN,
-    useClass: TagQuery,
+    provide: POST_FACTORY_TOKEN,
+    useClass: PostFactory,
   },
   {
     provide: TAG_DOMAIN_SERVICE_TOKEN,

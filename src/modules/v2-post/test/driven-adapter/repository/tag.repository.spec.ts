@@ -8,7 +8,7 @@ import { TagEntity } from '../../../domain/model/tag';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { Sequelize } from 'sequelize-typescript';
-import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory';
+import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory/interface';
 import { HttpService } from '@nestjs/axios';
 import { Transaction } from 'sequelize';
 

@@ -4,7 +4,7 @@ import { v4 } from 'uuid';
 import { StringHelper } from '../../../../../common/helpers';
 import { CreateTagCommand } from '../../../application/command/create-tag/create-tag.command';
 import { CreateTagHandler } from '../../../application/command/create-tag/create-tag.handler';
-import { TagDomainService } from '../../../domain/domain-service';
+import { TagDomainService } from '../../../domain/domain-service/interface';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,

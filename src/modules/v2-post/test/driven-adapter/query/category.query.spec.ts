@@ -3,8 +3,8 @@ import { CategoryModel } from '../../../../../database/models/category.model';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/sequelize';
 import { createMock } from '@golevelup/ts-jest';
-import { CategoryFactory } from '../../../domain/factory/category/category.factory';
-import { CATEGORY_FACTORY_TOKEN } from '../../../domain/factory/category/category.factory.interface';
+import { CategoryFactory } from '../../../domain/factory/category.factory';
+import { CATEGORY_FACTORY_TOKEN } from '../../../domain/factory/interface/category.factory.interface';
 import { Op } from 'sequelize';
 import { v4 } from 'uuid';
 

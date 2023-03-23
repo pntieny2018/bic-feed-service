@@ -1,10 +1,10 @@
 import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { CreatePostDraftProps } from './post.factory.interface';
-import { PostEntity, PostProps } from '../../model/post';
-import { PostStatus } from '../../../data-type/post-status.enum';
-import { PostPrivacy } from '../../../data-type';
+import { CreatePostDraftProps } from './interface/post.factory.interface';
+import { PostEntity, PostProps } from '../model/post';
+import { PostStatus } from '../../data-type/post-status.enum';
+import { PostPrivacy } from '../../data-type';
 
 export class PostFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;

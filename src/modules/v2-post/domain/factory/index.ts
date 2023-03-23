@@ -1,2 +1,3 @@
-export * from './tag/tag.factory';
-export * from './tag/tag.factory.interface';
+export * from './tag.factory';
+export * from './post.factory';
+export * from './category.factory';

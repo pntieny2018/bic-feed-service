@@ -5,7 +5,7 @@ import { PaginationResult } from '../../../../common/types/pagination-result.typ
 import { TagModel } from '../../../../database/models/tag.model';
 import { TagEntity } from '../../domain/model/tag';
 import { GetPaginationTagProps, ITagQuery } from '../../domain/query-interface';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
 
 export class TagQuery implements ITagQuery {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;

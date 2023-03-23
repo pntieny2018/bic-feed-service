@@ -1,29 +1,31 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
-import { LogicException } from '../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../common/constants';
-import { Ability, subject } from '@casl/ability';
-import {
-  PERMISSION_KEY,
-  permissionToCommonName,
-  SUBJECT,
-} from '../../common/constants/casl.constant';
-import { AuthorityFactory } from './authority.factory';
-import { PostResponseDto } from '../post/dto/responses';
-import { SeriesResponseDto } from '../series/dto/responses';
-import {
-  GROUP_APPLICATION_TOKEN,
-  GroupDto,
-  IGroupApplicationService,
-} from '../v2-group/application';
-import { UserDto } from '../v2-user/application';
+import { subject } from '@casl/ability';
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
+import { IPost, PostModel } from '../../../../database/models/post.model';
+import { HTTP_STATUS_ID } from '../../../../common/constants';
+import { LogicException } from '../../../../common/exceptions';
+import { UserDto } from '../../../v2-user/application';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../../../v2-group/application';
+import {
+  PERMISSION_KEY,
+  permissionToCommonName,
+  SUBJECT,
+} from '../../../../common/constants/casl.constant';
+import { PostPrivacy } from '../../data-type';
+import { PostStatus } from '../../data-type/post-status.enum';
+import { SeriesResponseDto } from '../../../series/dto/responses';
+import { PostResponseDto } from '../../../post/dto/responses';
+import { IPostValidator } from './interface/post.validator.interface';
 
 @Injectable()
-export class AuthorityService {
+export class PostValidator implements IPostValidator {
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,

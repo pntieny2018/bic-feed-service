@@ -5,6 +5,8 @@ import {
   IUserRepository,
   USER_REPOSITORY_TOKEN,
 } from '../domain/repositoty-interface/user.repository.interface';
+import { LogicException } from '../../../common/exceptions';
+import { HTTP_STATUS_ID } from '../../../common/constants';
 
 export class UserApplicationService implements IUserApplicationService {
   @Inject(USER_REPOSITORY_TOKEN)
@@ -49,9 +51,6 @@ export class UserApplicationService implements IUserApplicationService {
       }
       return user;
     });
-  }
-
-  public async checkMemberOfGroupIds(user: UserDto, groupIds: string[]): Promise<void> {
   }
 
   private _toDto(user: UserEntity): UserDto {

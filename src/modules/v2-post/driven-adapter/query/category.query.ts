@@ -7,7 +7,7 @@ import { CategoryEntity } from '../../domain/model/category';
 import {
   CATEGORY_FACTORY_TOKEN,
   ICategoryFactory,
-} from '../../domain/factory/category/category.factory.interface';
+} from '../../domain/factory/interface/category.factory.interface';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CategoryModel } from '../../../../database/models/category.model';

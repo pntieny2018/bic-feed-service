@@ -9,7 +9,7 @@ import {
   FindOneTagProps,
   ITagRepository,
 } from '../../domain/repositoty-interface';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { AxiosHelper } from '../../../../common/helpers';
