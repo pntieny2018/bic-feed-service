@@ -36,7 +36,6 @@ export class AuthService {
       });
     } else {
       userInfo = await this._userAppService.findByUserName(username, {
-        withPermission: true,
         withGroupJoined: true,
       });
     }
