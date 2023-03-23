@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../../../../../libs/redis/src';
-import { ArrayHelper } from '../../../../common/helpers';
+import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
 import { AppHelper } from '../../../../common/helpers/app.helper';
 import { GroupEntity } from '../../domain/model/group';
 import { IGroupRepository } from '../../domain/repositoty-interface/group.repository.interface';
@@ -35,8 +35,22 @@ export class GroupRepository implements IGroupRepository {
   private readonly _prefixRedis = `${AppHelper.getRedisEnv()}SG:`;
 
   public async findOne(groupId: string): Promise<GroupEntity> {
-    const group = await this._store.get<GroupDataInCache>(`${this._prefixRedis}${groupId}`);
-    if (group === null) return null;
+    let group = await this._store.get<GroupDataInCache>(`${this._prefixRedis}${groupId}`);
+    if (group === null) {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {
+            ids: groupId,
+          })
+        )
+      );
+      if (response.status === HttpStatus.OK) {
+        group = AxiosHelper.getDataArrayResponse<GroupDataInCache>(response)[0];
+      }
+      if (!group) {
+        return null;
+      }
+    }
     return new GroupEntity(group);
   }
 
@@ -44,7 +58,20 @@ export class GroupRepository implements IGroupRepository {
     const keys = [...new Set(ArrayHelper.arrayUnique(groupIds.map((id) => id)))].map(
       (groupId) => `${this._prefixRedis + groupId}`
     );
-    const groups = await this._store.mget(keys);
+    let groups = await this._store.mget(keys);
+    const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group?.id === id));
+    if (notFoundGroupIds.length > 0) {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {
+            ids: notFoundGroupIds.join(','),
+          })
+        )
+      );
+      if (response.status === HttpStatus.OK) {
+        groups = groups.concat(AxiosHelper.getDataArrayResponse<GroupDataInCache>(response));
+      }
+    }
     const result = [];
     for (const group of groups) {
       if (group) {
