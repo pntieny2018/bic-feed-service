@@ -1179,10 +1179,11 @@ export class PostService {
       offset: number;
       limit: number;
       type?: PostType;
+      groupIds?: string[];
     }
   ): Promise<string[]> {
     if (!userId) return [];
-    const { type, offset, limit } = search;
+    const { type, offset, limit, groupIds } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
@@ -1192,10 +1193,23 @@ export class PostService {
     if (type) {
       condition['type'] = type;
     }
-
+    const include = [];
+    if (groupIds) {
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: [],
+        where: {
+          groupId: groupIds,
+          isArchived: false,
+        },
+      });
+    }
     const posts = await this.postModel.findAll({
       attributes: ['id'],
       subQuery: false,
+      include,
       where: condition,
       order: [['createdAt', 'DESC']],
       offset,

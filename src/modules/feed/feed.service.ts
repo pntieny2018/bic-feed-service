@@ -251,6 +251,7 @@ export class FeedService {
         limit: limit + 1, //1 is next row
         offset,
         type,
+        groupIds,
       });
     } else if (isSaved) {
       postIdsAndSorted = await this._postService.getListSavedByUserId(authUserId, {
