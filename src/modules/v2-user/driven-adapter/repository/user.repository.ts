@@ -46,6 +46,7 @@ export class UserRepository implements IUserRepository {
         user.permissions = await this._store.get<Permission>(permissionCacheKey);
       }
       if (!user || (user && !user.permissions)) {
+        this._logger.debug('ENDPOINT.GROUP.INTERNAL.GET_USER=', ENDPOINT.GROUP.INTERNAL.GET_USER);
         const response = await lastValueFrom(
           this._httpService.get(
             AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
