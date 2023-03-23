@@ -14,10 +14,6 @@ export class AppBootstrap {
    */
   public static async init(app: INestApplication, configService: ConfigService): Promise<void> {
     const appConfig = configService.get<IAppConfig>('app');
-    console.log('debug', configService.get('redis'));
-    console.log('debug', configService.get('kafka'));
-    console.log('debug', configService.get('database'));
-    console.log('debug', configService.get('elasticsearch'));
     app.enableCors({
       origin: '*',
     });
