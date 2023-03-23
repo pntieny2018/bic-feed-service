@@ -1,4 +1,4 @@
-export enum POST_STATUS {
+export enum PostStatus {
   DRAFT = 'DRAFT',
   PROCESSING = 'PROCESSING',
   PUBLISHED = 'PUBLISHED',

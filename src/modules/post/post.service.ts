@@ -57,7 +57,7 @@ import { ModelHelper } from '../../common/helpers/model.helper';
 import { TagService } from '../tag/tag.service';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
-import { GROUP_PRIVACY } from '../v2-group/data-type';
+import { GroupPrivacy } from '../v2-group/data-type';
 import { ItemInSeriesResponseDto } from '../article/dto/responses';
 
 @Injectable()
@@ -331,7 +331,7 @@ export class PostService {
 
   public async getItemsInSeries(
     seriesId: string,
-    authUser: UserDto,
+    authUser: UserDto
   ): Promise<ItemInSeriesResponseDto[]> {
     const itemsInSeries = await this.postSeriesModel.findAll({
       where: {
@@ -684,11 +684,11 @@ export class PostService {
     let totalPrivate = 0;
     let totalOpen = 0;
     for (const group of groups) {
-      if (group.privacy === GROUP_PRIVACY.OPEN) {
+      if (group.privacy === GroupPrivacy.OPEN) {
         return PostPrivacy.OPEN;
       }
-      if (group.privacy === GROUP_PRIVACY.CLOSED) totalOpen++;
-      if (group.privacy === GROUP_PRIVACY.PRIVATE) totalPrivate++;
+      if (group.privacy === GroupPrivacy.CLOSED) totalOpen++;
+      if (group.privacy === GroupPrivacy.PRIVATE) totalPrivate++;
     }
 
     if (totalOpen > 0) return PostPrivacy.CLOSED;
@@ -1179,10 +1179,11 @@ export class PostService {
       offset: number;
       limit: number;
       type?: PostType;
+      groupIds?: string[];
     }
   ): Promise<string[]> {
     if (!userId) return [];
-    const { type, offset, limit } = search;
+    const { type, offset, limit, groupIds } = search;
     const condition = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
@@ -1192,10 +1193,23 @@ export class PostService {
     if (type) {
       condition['type'] = type;
     }
-
+    const include = [];
+    if (groupIds) {
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: true,
+        attributes: [],
+        where: {
+          groupId: groupIds,
+          isArchived: false,
+        },
+      });
+    }
     const posts = await this.postModel.findAll({
       attributes: ['id'],
       subQuery: false,
+      include,
       where: condition,
       order: [['createdAt', 'DESC']],
       offset,
@@ -1383,16 +1397,16 @@ export class PostService {
   }
 
   public getPostPrivacyByCompareGroupPrivacy(
-    groupPrivacy: GROUP_PRIVACY,
+    groupPrivacy: GroupPrivacy,
     postPrivacy: PostPrivacy
   ): PostPrivacy {
-    if (groupPrivacy === GROUP_PRIVACY.OPEN || postPrivacy === PostPrivacy.OPEN) {
+    if (groupPrivacy === GroupPrivacy.OPEN || postPrivacy === PostPrivacy.OPEN) {
       return PostPrivacy.OPEN;
     }
-    if (groupPrivacy === GROUP_PRIVACY.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
+    if (groupPrivacy === GroupPrivacy.CLOSED || postPrivacy === PostPrivacy.CLOSED) {
       return PostPrivacy.CLOSED;
     }
-    if (groupPrivacy === GROUP_PRIVACY.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
+    if (groupPrivacy === GroupPrivacy.PRIVATE || postPrivacy === PostPrivacy.PRIVATE) {
       return PostPrivacy.PRIVATE;
     }
     return PostPrivacy.SECRET;

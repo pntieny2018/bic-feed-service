@@ -1,4 +1,4 @@
-export enum POST_LANG {
+export enum PostLang {
   VI = 'vi',
   EN = 'en',
 }
