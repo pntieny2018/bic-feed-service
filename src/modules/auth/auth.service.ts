@@ -26,20 +26,10 @@ export class AuthService {
 
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
     const username = payload['cognito:username'];
-    const userId = payload['custom:username'];
-    const appConfig = this._configService.get<IAppConfig>('app');
-    let userInfo;
-    if (appConfig.env === 'local') {
-      userInfo = await this._userAppService.findOne(userId, {
-        withPermission: true,
-        withGroupJoined: true,
-      });
-    } else {
-      userInfo = await this._userAppService.findByUserName(username, {
-        withPermission: true,
-        withGroupJoined: true,
-      });
-    }
+    const userInfo = await this._userAppService.findByUserName(username, {
+      withPermission: true,
+      withGroupJoined: true,
+    });
     if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }

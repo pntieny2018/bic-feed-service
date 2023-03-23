@@ -15,9 +15,6 @@ export class UserApplicationService implements IUserApplicationService {
     const user = await this._repo.findByUserName(username);
     if (!user) return null;
     const result = this._toDto(user);
-    if (!options?.withPermission) {
-      delete result.permissions;
-    }
     if (!options?.withGroupJoined) {
       delete result.groups;
     }
