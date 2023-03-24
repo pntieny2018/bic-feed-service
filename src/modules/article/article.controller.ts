@@ -137,6 +137,9 @@ export class ArticleController {
   })
   @Post('/')
   @InjectUserToBody()
+  @ResponseMessages({
+    success: 'message.article.created_success',
+  })
   public async create(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
@@ -162,6 +165,9 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Update article successfully',
   })
+  @ResponseMessages({
+    success: 'message.article.updated_success',
+  })
   @Put('/:id')
   @ResponseMessages({ success: 'Article updated' })
   @InjectUserToBody()
@@ -178,6 +184,9 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Publish article successfully',
   })
+  @ResponseMessages({
+    success: 'message.article.published_success',
+  })
   @Put('/:id/publish')
   public async publish(
     @AuthUser() user: UserDto,
@@ -190,6 +199,9 @@ export class ArticleController {
   @ApiOkResponse({
     type: ArticleResponseDto,
     description: 'Schedule article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.scheduled_success',
   })
   @Put('/:id/schedule')
   public async schedule(
@@ -204,6 +216,9 @@ export class ArticleController {
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.deleted_success',
   })
   @Delete('/:id')
   public async delete(
