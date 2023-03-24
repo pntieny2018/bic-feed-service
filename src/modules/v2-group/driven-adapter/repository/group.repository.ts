@@ -37,7 +37,6 @@ export class GroupRepository implements IGroupRepository {
   public async findOne(groupId: string): Promise<GroupEntity> {
     let group = await this._store.get<GroupDataInCache>(`${this._prefixRedis}${groupId}`);
     if (group === null) {
-      this._logger.debug(`CALL ${ENDPOINT.GROUP.INTERNAL.GROUPS_PATH}`);
       const response = await lastValueFrom(
         this._httpService.get(
           AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GROUPS_PATH, {

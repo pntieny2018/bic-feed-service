@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { FindUserOption, IUserApplicationService, UserDto } from '.';
+import { FindByUsernameOption, FindUserOption, IUserApplicationService, UserDto } from '.';
 import { UserEntity } from '../domain/model/user';
 import {
   IUserRepository,
@@ -10,7 +10,7 @@ export class UserApplicationService implements IUserApplicationService {
   @Inject(USER_REPOSITORY_TOKEN)
   private readonly _repo: IUserRepository;
 
-  public async findByUserName(username: string, options?: FindUserOption): Promise<UserDto> {
+  public async findByUserName(username: string, options?: FindByUsernameOption): Promise<UserDto> {
     if (!username) return null;
     const user = await this._repo.findByUserName(username);
     if (!user) return null;
