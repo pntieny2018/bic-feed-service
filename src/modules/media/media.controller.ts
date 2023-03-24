@@ -50,8 +50,9 @@ export class MediaController {
     let height = 0;
     if (file.mimetype.includes('image') || file.mimetype.includes('video')) {
       const des = await MediaHelper.getDimensions(file.buffer);
-      width = des.width;
-      height = des.height;
+      const isRotated = des.orientation && des.orientation === 6;
+      width = isRotated ? des.height : des.width;
+      height = isRotated ? des.width : des.height;
     }
     const result = await this._mediaService.create(user, {
       url,
