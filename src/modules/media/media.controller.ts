@@ -50,7 +50,8 @@ export class MediaController {
     let height = 0;
     if (file.mimetype.includes('image') || file.mimetype.includes('video')) {
       const des = await MediaHelper.getDimensions(file.buffer);
-      const isRotated = des.orientation && des.orientation === 6;
+      const arrOrientationRotate = [5, 6, 7, 8];
+      const isRotated = des.orientation && arrOrientationRotate.includes(des.orientation);
       width = isRotated ? des.height : des.width;
       height = isRotated ? des.width : des.height;
     }
