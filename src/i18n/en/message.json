@@ -9,6 +9,7 @@
         "updated_success": "Edited post successfully",
         "deleted_success": "Deleted post successfully",
         "published_success": "Published post successfully",
+        "published_success_with_video_waiting_process": "Video will be ready soon",
         "saved_success": "Saved post successfully",
         "unsaved_success": "Unsaved post successfully"
     },
@@ -17,6 +18,7 @@
         "updated_success": "Edited article successfully",
         "deleted_success": "Deleted article successfully",
         "published_success": "Published article successfully",
+        "published_success_with_video_waiting_process": "Video will be ready soon",
         "scheduled_success": "Scheduled article successfully",
         "saved_success": "Saved article successfully",
         "unsaved_success": "Unsaved article successfully"
