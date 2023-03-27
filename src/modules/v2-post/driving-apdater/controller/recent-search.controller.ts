@@ -11,6 +11,7 @@ import { CreateRecentSearchRequestDto } from '../dto/request/tag/create-recent-s
 import { PostType } from '../../data-type';
 import { CleanRecentSearchRequestDto } from '../dto/request/tag/clean-recent-search.request.dto';
 import { CleanRecentSearchesDto } from '../../../recent-search/dto/requests/clean-recent-searches.dto';
+import { FindRecentSearchesPaginationQuery } from '../../application/query/find-recent-searches/find-recent-searches-pagination.query';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')
@@ -34,9 +35,19 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Query() getRecentSearchRequestDto: GetRecentSearchRequestDto
   ): Promise<RecentSearchesResponseDto> {
+    const { target, offset, limit } = getRecentSearchRequestDto;
+    const { rows } = await this._queryBus.execute(
+      new FindRecentSearchesPaginationQuery({ target, offset, limit })
+    );
+    const recentSearches = rows.map((row) =>
+      this._classTransformer.plainToInstance(RecentSearchesResponseDto, row, {
+        excludeExtraneousValues: true,
+      })
+    );
+
     return new RecentSearchesResponseDto({
-      target: getRecentSearchRequestDto.target,
-      recentSearches: [],
+      target: target as PostType,
+      recentSearches,
     });
   }
 
@@ -50,6 +61,7 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Body() createRecentSearchRequestDto: CreateRecentSearchRequestDto
   ): Promise<RecentSearchesResponseDto> {
+    // const { target, keyword } = createRecentSearchRequestDto;
     return new RecentSearchesResponseDto({
       target: createRecentSearchRequestDto.target as PostType,
       recentSearches: [],

@@ -1,8 +1,8 @@
 import { IQuery } from '@nestjs/cqrs';
 
 type Props = {
-  keyword: string;
-  target: string;
+  keyword?: string;
+  target?: string;
   offset: number;
   limit: number;
 };
