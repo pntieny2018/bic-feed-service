@@ -236,9 +236,6 @@ export class FeedService {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
     const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
-    this._logger.debug('[authUser.groups=]', JSON.stringify(authUser));
-    this._logger.debug('[groups=]', JSON.stringify(group));
-    this._logger.debug('[GROUP_IDS=]', JSON.stringify(groupIds));
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,

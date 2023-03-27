@@ -73,7 +73,6 @@ export class AuthorityService {
     }
 
     if (notCreatableInGroups.length > 0 && notCreatableInGroups.length === groups.length) {
-      this._logger.debug(`[NO_PERMISSION - ${user.username}] ${JSON.stringify(user)}`);
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
@@ -124,7 +123,6 @@ export class AuthorityService {
     }
 
     if (notCreatableInGroups.length > 0) {
-      this._logger.debug(`[NO_PERMISSION - ${user.username}] ${JSON.stringify(user)}`);
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
