@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
@@ -20,6 +20,7 @@ import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class AuthorityService {
+  private readonly _logger = new Logger(AuthorityService.name);
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
@@ -72,6 +73,7 @@ export class AuthorityService {
     }
 
     if (notCreatableInGroups.length > 0 && notCreatableInGroups.length === groups.length) {
+      this._logger.debug(`[NO_PERMISSION - ${user.username}] ${JSON.stringify(user)}`);
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
@@ -122,6 +124,7 @@ export class AuthorityService {
     }
 
     if (notCreatableInGroups.length > 0) {
+      this._logger.debug(`[NO_PERMISSION - ${user.username}] ${JSON.stringify(user)}`);
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(

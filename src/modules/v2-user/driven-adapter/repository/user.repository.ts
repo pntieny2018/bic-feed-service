@@ -64,6 +64,9 @@ export class UserRepository implements IUserRepository {
           return null;
         }
         userWithGroups = AxiosHelper.getDataResponse<UserDataInRest>(response);
+        this._logger.debug(
+          `[CALL GROUP API - shared-users/${username}] - response ${JSON.stringify(userWithGroups)}`
+        );
       }
       return new UserEntity(userWithGroups);
     } catch (ex) {

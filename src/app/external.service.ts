@@ -93,19 +93,4 @@ export class ExternalService {
       return false;
     }
   }
-
-  public async getPermission(payload: string): Promise<any> {
-    try {
-      const response = await lastValueFrom(
-        this._httpService.get(`${this._groupServiceEndpoint}/me/permissions`, {
-          headers: {
-            user: payload,
-          },
-        })
-      );
-      return response.data.data;
-    } catch (e) {
-      return {};
-    }
-  }
 }
