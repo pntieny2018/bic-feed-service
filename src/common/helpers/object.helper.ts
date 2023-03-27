@@ -1,4 +1,5 @@
 import { StringHelper } from './string.helper';
+import { NodePlateContent } from '../types/node-image.type ';
 
 export class ObjectHelper {
   public static omit<T extends object = object>(keys: string[], obj: T): Partial<T> {
@@ -16,6 +17,19 @@ export class ObjectHelper {
     });
     return camelCaseObj;
   }
+
+  public static nodeToUrlImages = (node: Partial<NodePlateContent>) => {
+    let urls = [];
+    if (node.type === 'img' && node.url) {
+      urls.push(node.url);
+    }
+    if (Array.isArray(node.children)) {
+      node.children.forEach((children) => {
+        urls = urls.concat(ObjectHelper.nodeToUrlImages(children));
+      });
+    }
+    return urls;
+  };
 }
 
 export type ClassConstructor<T> = {

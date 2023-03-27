@@ -2,12 +2,15 @@ import {
   Body,
   Controller,
   Delete,
+  ExecutionContext,
   Get,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  Req,
+  SetMetadata,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
@@ -21,6 +24,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
+import { request, Request } from 'express';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -108,11 +112,15 @@ export class PostController {
     description: 'Create post successfully',
   })
   @Post('/')
+  @ResponseMessages({ success: 'Post has been published successfully' })
   @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
-    @Body() createPostDto: CreatePostDto
+    @Body() createPostDto: CreatePostDto,
+    @Req() req: Request
   ): Promise<any> {
+    req.message = 'abcde';
+    // console.log('context=', req);
     return this._postAppService.createPost(user, createPostDto);
   }
 
