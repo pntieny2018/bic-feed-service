@@ -433,6 +433,9 @@ export class SearchService {
 
       if (post.items) {
         const bindArticles = [];
+        post.items.sort((a, b) => {
+          return a.zindex - b.zindex;
+        });
         for (const itemInSeries of post.items) {
           const findArticle = articles.find((item) => item.id === itemInSeries.id);
           if (findArticle) bindArticles.push(findArticle);
