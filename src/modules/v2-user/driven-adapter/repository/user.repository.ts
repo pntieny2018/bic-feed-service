@@ -49,8 +49,10 @@ export class UserRepository implements IUserRepository {
           permissionCacheKey,
           userGroupCacheKey,
         ]);
-        userWithGroups = userGroups;
-        userWithGroups.permissions = permissions;
+        if (userGroups && permissions) {
+          userWithGroups = userGroups;
+          userWithGroups.permissions = permissions;
+        }
       }
       if (!userWithGroups) {
         const response = await lastValueFrom(
