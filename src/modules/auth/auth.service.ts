@@ -27,7 +27,6 @@ export class AuthService {
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
     const username = payload['cognito:username'];
     const userInfo = await this._userAppService.findByUserName(username, {
-      withPermission: true,
       withGroupJoined: true,
     });
     if (!userInfo) {

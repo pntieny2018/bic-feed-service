@@ -4,6 +4,7 @@ export class MediaHelper {
   public static async getDimensions(buffer: Buffer): Promise<{
     width: number;
     height: number;
+    orientation?: number;
   }> {
     try {
       return sizeOf(buffer);

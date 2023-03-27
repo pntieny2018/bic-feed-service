@@ -903,9 +903,10 @@ export class SearchService {
       //En
       if (type === PostType.POST) {
         fields = [content.ascii, content.default];
-      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.ascii, summary.default, content.ascii, content.default];
+      } else if (type === PostType.SERIES) {
+        fields = [title.ascii, title.default, summary.ascii, summary.default];
       } else {
+        // for article or all
         fields = [
           title.ascii,
           title.default,
@@ -928,8 +929,8 @@ export class SearchService {
       //Vi
       if (type === PostType.POST) {
         fields = [title.default];
-      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.default, content.default];
+      } else if (type === PostType.SERIES) {
+        fields = [title.default, summary.default];
       } else {
         fields = [title.default, summary.default, content.default];
       }

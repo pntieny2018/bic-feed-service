@@ -40,12 +40,19 @@ export class UserRepository implements IUserRepository {
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
       const userCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
-      let user = await this._store.get<UserDataInCache>(userCacheKey);
+      const user = await this._store.get<UserDataInCache>(userCacheKey);
+      let userWithGroups = null;
       if (user) {
         const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${user.id}`;
-        user.permissions = await this._store.get<Permission>(permissionCacheKey);
+        const userGroupCacheKey = `${this._prefixRedis + user.id}`;
+        const [permissions, userGroups] = await this._store.mget([
+          permissionCacheKey,
+          userGroupCacheKey,
+        ]);
+        userWithGroups = userGroups;
+        userWithGroups.permissions = permissions;
       }
-      if (!user || (user && !user.permissions)) {
+      if (!userWithGroups) {
         const response = await lastValueFrom(
           this._httpService.get(
             AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
@@ -56,9 +63,9 @@ export class UserRepository implements IUserRepository {
         if (response.status !== HttpStatus.OK) {
           return null;
         }
-        user = AxiosHelper.getDataResponse<UserDataInRest>(response);
+        userWithGroups = AxiosHelper.getDataResponse<UserDataInRest>(response);
       }
-      return new UserEntity(user);
+      return new UserEntity(userWithGroups);
     } catch (ex) {
       this._logger.debug(ex);
       return null;
@@ -113,6 +120,7 @@ export class UserRepository implements IUserRepository {
     } catch (e) {
       this._logger.debug(e);
     }
+
     const result = [];
     for (const user of users) {
       if (user) {

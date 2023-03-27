@@ -234,13 +234,13 @@ export class ReactionService {
           },
         });
 
-        this._emitter.emit(
-          new CreateReactionInternalEvent({
-            actor: userDto,
-            post: post,
-            reaction: reaction,
-          })
-        );
+        // this._emitter.emit(
+        //   new CreateReactionInternalEvent({
+        //     actor: userDto,
+        //     post: post,
+        //     reaction: reaction,
+        //   })
+        // );
 
         return reaction;
       }
@@ -330,14 +330,14 @@ export class ReactionService {
           },
         });
 
-        this._emitter.emit(
-          new CreateReactionInternalEvent({
-            actor: userDto,
-            post: post,
-            comment: comment,
-            reaction: reaction,
-          })
-        );
+        // this._emitter.emit(
+        //   new CreateReactionInternalEvent({
+        //     actor: userDto,
+        //     post: post,
+        //     comment: comment,
+        //     reaction: reaction,
+        //   })
+        // );
 
         return reaction;
       }
@@ -451,18 +451,18 @@ export class ReactionService {
         avatar: userDto.avatar,
       };
 
-      this._emitter.emit(
-        new DeleteReactionInternalEvent({
-          actor: userDto,
-          post: post,
-          reaction: new ReactionResponseDto(
-            response.id,
-            response.reactionName,
-            actor,
-            response.createdAt
-          ),
-        })
-      );
+      // this._emitter.emit(
+      //   new DeleteReactionInternalEvent({
+      //     actor: userDto,
+      //     post: post,
+      //     reaction: new ReactionResponseDto(
+      //       response.id,
+      //       response.reactionName,
+      //       actor,
+      //       response.createdAt
+      //     ),
+      //   })
+      // );
 
       return response;
     } catch (ex) {
@@ -547,19 +547,19 @@ export class ReactionService {
 
       await trx.commit();
 
-      this._emitter.emit(
-        new DeleteReactionInternalEvent({
-          actor: actor,
-          post: post,
-          reaction: new ReactionResponseDto(
-            response.id,
-            response.reactionName,
-            actor,
-            response.createdAt
-          ),
-          comment: comment,
-        })
-      );
+      // this._emitter.emit(
+      //   new DeleteReactionInternalEvent({
+      //     actor: actor,
+      //     post: post,
+      //     reaction: new ReactionResponseDto(
+      //       response.id,
+      //       response.reactionName,
+      //       actor,
+      //       response.createdAt
+      //     ),
+      //     comment: comment,
+      //   })
+      // );
 
       return response;
     } catch (ex) {
