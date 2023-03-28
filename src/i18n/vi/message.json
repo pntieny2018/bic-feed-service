@@ -9,6 +9,7 @@
         "updated_success": "Cập nhật bài viết thành công",
         "deleted_success": "Xóa bài viết thành công",
         "published_success": "Đăng bài viết thành công",
+        "published_success_with_video_waiting_process": "Đăng bài viết thành công. Video của bạn đang được xử lý. Vui lòng đợi trong giây lát.",
         "saved_success": "Lưu bài viết thành công",
         "unsaved_success": "Bỏ lưu bài viết thành công"
     },
@@ -17,6 +18,7 @@
         "updated_success": "Cập nhật bài viết thành công",
         "deleted_success": "Xóa bài viết thành công",
         "published_success": "Đăng bài viết thành công",
+        "published_success_with_video_waiting_process": "Đăng bài viết thành công. Video của bạn đang được xử lý. Vui lòng đợi trong giây lát.",
         "scheduled_success": "Đặt lịch bài viết thành công",
         "saved_success": "Lưu bài viết thành công",
         "unsaved_success": "Bỏ lưu bài viết thành công"
