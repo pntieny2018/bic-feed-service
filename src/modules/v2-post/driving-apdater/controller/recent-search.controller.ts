@@ -1,6 +1,16 @@
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../../../common/constants';
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
 import { GetRecentSearchRequestDto } from '../dto/request/tag/get-recent-search.request.dto';
@@ -11,6 +21,8 @@ import { CreateRecentSearchRequestDto } from '../dto/request/tag/create-recent-s
 import { PostType } from '../../data-type';
 import { CleanRecentSearchesDto } from '../../../recent-search/dto/requests/clean-recent-searches.dto';
 import { FindRecentSearchesPaginationQuery } from '../../application/query/find-recent-searches/find-recent-searches-pagination.query';
+import { DeleteRecentSearchCommand } from '../../application/command/delete-recent-search/delete-recent-search.command';
+import { RecentSearchNotFoundException } from '../../exception/recent-search-not-found.exception';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')
@@ -79,26 +91,44 @@ export class RecentSearchController {
   @ApiOperation({ summary: 'Delete recent search' })
   @ApiOkResponse({
     description: 'Delete recent search successfully',
-    type: Boolean,
   })
   @Delete('/:id/delete')
   public async deleteRecentSearch(
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<boolean> {
+    try {
+      await this._commandBus.execute(new DeleteRecentSearchCommand({ id }));
+    } catch (e) {
+      switch (e.constructor) {
+        case RecentSearchNotFoundException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
     return true;
   }
 
   @ApiOperation({ summary: 'Clean recent search' })
   @ApiOkResponse({
     description: 'Clean recent search successfully',
-    type: Boolean,
   })
   @Delete('/:target/clean')
   public async cleanRecentSearch(
     @AuthUser() user: UserDto,
     @Param() cleanRecentSearchesDto: CleanRecentSearchesDto
   ): Promise<boolean> {
+    try {
+      await this._commandBus.execute(new DeleteRecentSearchCommand(cleanRecentSearchesDto));
+    } catch (e) {
+      switch (e.constructor) {
+        case RecentSearchNotFoundException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
     return true;
   }
 }

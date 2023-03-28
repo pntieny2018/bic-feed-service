@@ -18,6 +18,9 @@ export class RecentSearchRepository implements IRecentSearchRepository {
     const findOneOptions = {
       where: {},
     };
+    if (id.id) {
+      findOneOptions.where['id'] = id.id;
+    }
     if (id.keyword) {
       findOneOptions.where['keyword'] = id.keyword;
     }
@@ -50,6 +53,12 @@ export class RecentSearchRepository implements IRecentSearchRepository {
         where: { id: data.get('id') },
       }
     );
+  }
+
+  public async delete(data: RecentSearchEntity): Promise<void> {
+    await this._recentSearchModel.destroy({
+      where: { id: data.get('id') },
+    });
   }
 
   private _modelToEntity(model: RecentSearchModel): RecentSearchEntity {

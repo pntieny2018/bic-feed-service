@@ -8,6 +8,9 @@ export const ERRORS = {
     TAG_NO_CREATE_PERMISSION: 'tag.no_create_permission',
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
   },
+  recent_search: {
+    RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
+  },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',
   API_UNAUTHORIZED: 'api.unauthorized',

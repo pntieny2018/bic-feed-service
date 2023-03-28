@@ -54,4 +54,13 @@ export class RecentSearchDomainService implements IRecentSearchDomainService {
     }
     return entity;
   }
+
+  public async deleteRecentSearch(entity: RecentSearchEntity): Promise<void> {
+    try {
+      await this._recentSearchRepository.delete(entity);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
+  }
 }

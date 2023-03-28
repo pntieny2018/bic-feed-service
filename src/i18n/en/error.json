@@ -8,6 +8,9 @@
         "no_update_permission": "Failed to update tag: you don't have permission",
         "no_delete_permission": "Failed to delete tag: you don't have permission"
     },
+    "recent_search": {
+        "not_found": "Recent search not found"
+    },
     "common": {
         "database_error": "Database error",
         "domain_model_validation": "Domain model invalidate"
