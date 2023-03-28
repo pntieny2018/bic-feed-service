@@ -7,8 +7,6 @@ export type RecentSearchCreateProps = {
 };
 
 export type RecentSearchUpdateProps = {
-  keyword: string;
-  id: string;
   userId: string;
 };
 

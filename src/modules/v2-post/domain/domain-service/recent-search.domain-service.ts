@@ -38,9 +38,8 @@ export class RecentSearchDomainService implements IRecentSearchDomainService {
     entity: RecentSearchEntity,
     input: RecentSearchUpdateProps
   ): Promise<RecentSearchEntity> {
-    const { keyword, userId } = input;
+    const { userId } = input;
     entity.update({
-      keyword,
       updatedBy: userId,
       totalSearched: entity.get('totalSearched') + 1,
     });

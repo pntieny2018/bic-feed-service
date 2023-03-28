@@ -28,8 +28,13 @@ export class CreateRecentSearchHandler
       keyword,
     });
     if (findRecentSearch) {
+      await this._recentSearchDomainService.updateRecentSearch(findRecentSearch, { userId });
     } else {
-      // create new recent search with totalUsed = 1
+      await this._recentSearchDomainService.createRecentSearch({
+        target,
+        keyword,
+        userId,
+      });
     }
     return {
       id: findRecentSearch.get('id'),
