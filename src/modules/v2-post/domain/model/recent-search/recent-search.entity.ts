@@ -22,4 +22,11 @@ export class RecentSearchEntity extends DomainAggregateRoot<RecentSearchProps> {
       throw new DomainModelException(`Recent Search ID is not UUID`);
     }
   }
+
+  public update(props: Partial<RecentSearchProps>): void {
+    const { keyword, totalSearched, updatedBy } = props;
+    this._props.keyword = keyword;
+    this._props.totalSearched = totalSearched;
+    this._props.updatedBy = updatedBy;
+  }
 }
