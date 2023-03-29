@@ -1,7 +1,8 @@
 import { RecentSearchEntity } from '../model/recent-search/recent-search.entity';
 import {
   IRecentSearchDomainService,
-  RecentSearchCreateProps, RecentSearchDeleteProps,
+  RecentSearchCreateProps,
+  RecentSearchDeleteProps,
   RecentSearchUpdateProps,
 } from './interface';
 import { Inject, Logger } from '@nestjs/common';
