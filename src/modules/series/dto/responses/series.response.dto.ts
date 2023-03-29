@@ -3,10 +3,10 @@ import { PageDto } from '../../../../common/dto';
 import { Expose, Transform } from 'class-transformer';
 import { CommentResponseDto } from '../../../comment/dto/response';
 import { ReactionResponseDto } from '../../../reaction/dto/response';
-import { IsUUID } from 'class-validator';
+import { IsEnum, IsUUID } from 'class-validator';
 import { AudienceResponseDto, CommunityResponseDto } from '../../../post/dto/responses';
 import { MediaResponseDto } from '../../../media/dto/response';
-import { PostType } from '../../../../database/models/post.model';
+import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
 import { ItemInSeriesResponseDto } from '../../../article/dto/responses';
 import { PostSettingDto } from '../../../post/dto/common/post-setting.dto';
 import { PostInSeriesResponseDto } from '../../../post/dto/responses/post-in-series.response.dto';
@@ -224,6 +224,26 @@ export class SeriesResponseDto {
   })
   @Expose()
   public communities?: CommunityResponseDto[];
+
+  @ApiProperty({
+    type: Boolean,
+  })
+  @Expose()
+  public isHidden?: boolean;
+
+  @ApiProperty({
+    description: 'To know post status',
+    enum: PostStatus,
+  })
+  @Expose()
+  @IsEnum(PostStatus)
+  public status: PostStatus;
+
+  @ApiProperty({
+    enum: PostPrivacy,
+  })
+  @Expose()
+  public privacy: PostPrivacy;
 
   public constructor(data: Partial<SeriesResponseDto>) {
     Object.assign(this, data);

@@ -369,19 +369,9 @@ export class ArticleService {
       shouldIncludeSeries: true,
       authUserId: authUser?.id || null,
     });
-
-    let condition;
-    if (authUser) {
-      condition = {
-        id: articleId,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
-      };
-    } else {
-      condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
-    }
     return this.getDetail(
       attributes,
-      condition,
+      { id: articleId },
       include,
       articleId,
       authUser,
