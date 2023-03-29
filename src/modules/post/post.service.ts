@@ -211,20 +211,11 @@ export class PostService {
       shouldIncludeSeries: true,
       authUserId: user?.id || null,
     });
-    let condition;
-    if (user) {
-      condition = {
-        id: postId,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: user.id }],
-      };
-    } else {
-      condition = { id: postId, isHidden: false };
-    }
 
     const post = PostHelper.filterArchivedPost(
       await this.postModel.findOne({
         attributes,
-        where: condition,
+        where: { id: postId },
         include,
       })
     );

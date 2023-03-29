@@ -358,16 +358,6 @@ export class PostResponseDto {
     type: [SeriesSimpleResponseDto],
   })
   @Expose()
-  @Transform((data) => {
-    if (data.obj.series) {
-      return data.obj.series.map((series) => ({
-        id: series.id,
-        title: series.title,
-        zindex: series['PostSeriesModel'].zindex || 1,
-      }));
-    }
-    return [];
-  })
   public series?: SeriesSimpleResponseDto[];
 
   public constructor(data: Partial<PostResponseDto>) {
