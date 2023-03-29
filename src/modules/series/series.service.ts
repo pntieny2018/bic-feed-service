@@ -72,23 +72,12 @@ export class SeriesService {
     authUser: UserDto,
     getSeriesDto?: GetSeriesDto
   ): Promise<SeriesResponseDto> {
-    let condition;
-    if (authUser) {
-      condition = {
-        id,
-        type: PostType.SERIES,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
-      };
-    } else {
-      condition = { id, type: PostType.SERIES };
-    }
-
     const series = PostHelper.filterArchivedPost(
       await this._postModel.findOne({
         attributes: {
           include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
         },
-        where: condition,
+        where: { id, type: PostType.SERIES },
         include: [
           {
             model: PostGroupModel,
@@ -116,11 +105,6 @@ export class SeriesService {
 
     if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-    if (authUser) {
-      await this._authorityService.checkCanReadSeries(authUser, series);
-    } else {
-      await this._authorityService.checkIsPublicSeries(series);
     }
     let comments = null;
     if (getSeriesDto.withComment) {

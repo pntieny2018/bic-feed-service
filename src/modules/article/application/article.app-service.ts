@@ -119,6 +119,12 @@ export class ArticleAppService {
   ): Promise<ArticleResponseDto> {
     const articleResponseDto = await this._articleService.get(articleId, user, getArticleDto);
 
+    if (
+      (articleResponseDto.isHidden || articleResponseDto.status !== PostStatus.PUBLISHED) &&
+      articleResponseDto.createdBy !== user?.id
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
     const article = {
       privacy: articleResponseDto.privacy,
       createdBy: articleResponseDto.createdBy,

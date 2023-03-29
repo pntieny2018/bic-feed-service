@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
 import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
@@ -20,6 +20,7 @@ import { UserDto } from '../v2-user/application';
 
 @Injectable()
 export class AuthorityService {
+  private readonly _logger = new Logger(AuthorityService.name);
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
