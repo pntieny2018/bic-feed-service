@@ -1,7 +1,7 @@
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { PostType } from '../../../../data-type';
+import { RecentSearchType } from '../../../../data-type/recent-search-type.enum';
 
 export class CreateRecentSearchRequestDto {
   @ApiProperty({
@@ -16,12 +16,12 @@ export class CreateRecentSearchRequestDto {
   @ApiProperty({
     description: 'Target entity. Support: [post,user,article]',
     required: false,
-    default: PostType.POST,
-    example: PostType.POST,
+    default: RecentSearchType.POST,
+    example: RecentSearchType.POST,
   })
-  @IsEnum(PostType, {
+  @IsEnum(RecentSearchType, {
     message: 'Target must be "post" | "article" | "artical" | "all"',
   })
-  @Transform((params) => params.value ?? PostType.POST)
-  public target: string = PostType.POST;
+  @Transform((params) => params.value ?? RecentSearchType.POST)
+  public target: string = RecentSearchType.POST;
 }

@@ -1,31 +1,36 @@
 import {
+  DeleteRecentSearchOptions,
   FindRecentSearchOptions,
   IRecentSearchRepository,
 } from '../../domain/repositoty-interface';
 import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
 import { InjectModel } from '@nestjs/sequelize';
 import { RecentSearchModel } from '../../../../database/models/recent-search.model';
-import { RecentSearchFactory } from '../../domain/factory';
+import { RECENT_SEARCH_FACTORY_TOKEN, RecentSearchFactory } from '../../domain/factory';
 import { Inject } from '@nestjs/common';
+import { RecentSearchType } from '../../data-type/recent-search-type.enum';
 
 export class RecentSearchRepository implements IRecentSearchRepository {
   @InjectModel(RecentSearchModel)
   private readonly _recentSearchModel: typeof RecentSearchModel;
-  @Inject(RecentSearchFactory)
+  @Inject(RECENT_SEARCH_FACTORY_TOKEN)
   private readonly _recentSearchFactory: RecentSearchFactory;
 
-  public async findOne(id: FindRecentSearchOptions): Promise<RecentSearchEntity> {
+  public async findOne(options: FindRecentSearchOptions): Promise<RecentSearchEntity> {
     const findOneOptions = {
       where: {},
     };
-    if (id.id) {
-      findOneOptions.where['id'] = id.id;
+    if (options.id) {
+      findOneOptions.where['id'] = options.id;
     }
-    if (id.keyword) {
-      findOneOptions.where['keyword'] = id.keyword;
+    if (options.keyword) {
+      findOneOptions.where['keyword'] = options.keyword;
     }
-    if (id.target) {
-      findOneOptions.where['target'] = id.target;
+    if (options.target && options.target !== RecentSearchType.ALL) {
+      findOneOptions.where['target'] = options.target;
+    }
+    if (options.userId) {
+      findOneOptions.where['createdBy'] = options.userId;
     }
     const recentSearch = await this._recentSearchModel.findOne(findOneOptions);
     return this._modelToEntity(recentSearch);
@@ -55,10 +60,23 @@ export class RecentSearchRepository implements IRecentSearchRepository {
     );
   }
 
-  public async delete(data: RecentSearchEntity): Promise<void> {
-    await this._recentSearchModel.destroy({
-      where: { id: data.get('id') },
-    });
+  public async delete(options: DeleteRecentSearchOptions): Promise<void> {
+    const deleteOptions = {
+      where: {},
+    };
+    if (options.id) {
+      deleteOptions.where['id'] = options.id;
+    }
+    if (options.keyword) {
+      deleteOptions.where['keyword'] = options.keyword;
+    }
+    if (options.target && options.target !== RecentSearchType.ALL) {
+      deleteOptions.where['target'] = options.target;
+    }
+    if (options.userId) {
+      deleteOptions.where['createdBy'] = options.userId;
+    }
+    await this._recentSearchModel.destroy(deleteOptions);
   }
 
   private _modelToEntity(model: RecentSearchModel): RecentSearchEntity {

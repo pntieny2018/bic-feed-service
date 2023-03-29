@@ -4,6 +4,7 @@ import { ICommand } from '@nestjs/cqrs';
 export type DeleteRecentSearchCommandPayload = {
   id?: string;
   target?: RecentSearchType;
+  userId?: string;
 };
 
 export class DeleteRecentSearchCommand implements ICommand {

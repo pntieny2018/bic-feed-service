@@ -20,14 +20,16 @@ export class DeleteRecentSearchHandler {
   private readonly _recentSearchRepository: IRecentSearchRepository;
 
   public async execute(command: DeleteRecentSearchCommand): Promise<void> {
-    const { id, target } = command.payload;
-    const findRecentSearch = await this._recentSearchRepository.findOne({
-      id,
-      target,
-    });
-    if (!findRecentSearch) {
-      throw new RecentSearchNotFoundException();
+    const { id, userId } = command.payload;
+    if (id) {
+      const findRecentSearch = await this._recentSearchRepository.findOne({
+        id,
+        userId,
+      });
+      if (!findRecentSearch) {
+        throw new RecentSearchNotFoundException();
+      }
     }
-    await this._recentSearchDomainService.deleteRecentSearch(findRecentSearch);
+    await this._recentSearchDomainService.deleteRecentSearch(command.payload);
   }
 }

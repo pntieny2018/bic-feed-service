@@ -1,7 +1,7 @@
 import { RecentSearchEntity } from '../model/recent-search/recent-search.entity';
 import {
   IRecentSearchDomainService,
-  RecentSearchCreateProps,
+  RecentSearchCreateProps, RecentSearchDeleteProps,
   RecentSearchUpdateProps,
 } from './interface';
 import { Inject, Logger } from '@nestjs/common';
@@ -55,9 +55,9 @@ export class RecentSearchDomainService implements IRecentSearchDomainService {
     return entity;
   }
 
-  public async deleteRecentSearch(entity: RecentSearchEntity): Promise<void> {
+  public async deleteRecentSearch(props: RecentSearchDeleteProps): Promise<void> {
     try {
-      await this._recentSearchRepository.delete(entity);
+      await this._recentSearchRepository.delete(props);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

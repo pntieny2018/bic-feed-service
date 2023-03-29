@@ -1,9 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { RecentSearchType } from '../../../data-type/recent-search-type.enum';
 
 export type CreateRecentSearchCommandPayload = {
   keyword: string;
-  target: RecentSearchType;
+  target: string;
   userId: string;
 };
 

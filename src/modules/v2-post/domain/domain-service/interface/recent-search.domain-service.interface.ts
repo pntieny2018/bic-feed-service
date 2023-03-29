@@ -6,6 +6,13 @@ export type RecentSearchCreateProps = {
   userId: string;
 };
 
+export type RecentSearchDeleteProps = {
+  id?: string;
+  keyword?: string;
+  target?: string;
+  userId?: string;
+};
+
 export type RecentSearchUpdateProps = {
   userId: string;
 };
@@ -16,7 +23,7 @@ export interface IRecentSearchDomainService {
     entity: RecentSearchEntity,
     input: RecentSearchUpdateProps
   ): Promise<RecentSearchEntity>;
-  deleteRecentSearch(entity: RecentSearchEntity): Promise<void>;
+  deleteRecentSearch(props: RecentSearchDeleteProps): Promise<void>;
 }
 
 export const RECENT_SEARCH_DOMAIN_SERVICE_TOKEN = 'RECENT_SEARCH_DOMAIN_SERVICE_TOKEN';

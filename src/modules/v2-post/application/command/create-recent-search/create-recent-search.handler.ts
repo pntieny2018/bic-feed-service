@@ -23,14 +23,18 @@ export class CreateRecentSearchHandler
   public async execute(command: CreateRecentSearchCommand): Promise<CreateRecentSearchDto> {
     const { target, keyword, userId } = command.payload;
 
-    const findRecentSearch = await this._recentSearchRepository.findOne({
+    let findRecentSearch = await this._recentSearchRepository.findOne({
       target,
       keyword,
+      userId,
     });
     if (findRecentSearch) {
-      await this._recentSearchDomainService.updateRecentSearch(findRecentSearch, { userId });
+      findRecentSearch = await this._recentSearchDomainService.updateRecentSearch(
+        findRecentSearch,
+        { userId }
+      );
     } else {
-      await this._recentSearchDomainService.createRecentSearch({
+      findRecentSearch = await this._recentSearchDomainService.createRecentSearch({
         target,
         keyword,
         userId,
@@ -38,7 +42,7 @@ export class CreateRecentSearchHandler
     }
     return {
       id: findRecentSearch.get('id'),
-      keyword: findRecentSearch.get('keyword'),
+      keyword: keyword,
     };
   }
 }

@@ -1,23 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
-import { PostType } from '../../../data-type';
+import { RecentSearchResponseDto } from './recent-search.response.dto';
+import { RecentSearchType } from '../../../data-type/recent-search-type.enum';
 export class RecentSearchesResponseDto {
   @ApiProperty({
-    enum: PostType,
+    enum: RecentSearchType,
     description: 'Target entity',
   })
   @Expose()
-  public target: PostType;
+  public target: RecentSearchType;
 
   @ApiProperty({
     description: 'List recent search',
-    type: RecentSearchesResponseDto,
+    type: RecentSearchResponseDto,
     isArray: true,
     name: 'recent_searches',
   })
-  @Type(() => RecentSearchesResponseDto)
+  @Type(() => RecentSearchResponseDto)
   @Expose()
-  public recentSearches: RecentSearchesResponseDto[];
+  public recentSearches: RecentSearchResponseDto[];
 
   public constructor(data: Partial<RecentSearchesResponseDto>) {
     Object.assign(this, data);

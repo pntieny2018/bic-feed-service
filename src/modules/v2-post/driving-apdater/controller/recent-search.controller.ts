@@ -14,15 +14,17 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
 import { GetRecentSearchRequestDto } from '../dto/request/tag/get-recent-search.request.dto';
-import { RecentSearchesResponseDto } from '../dto/response/recent-search.response';
+import { RecentSearchesResponseDto } from '../dto/response/recent-searches.response.dto';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { CreateRecentSearchRequestDto } from '../dto/request/tag/create-recent-search.request.dto';
-import { PostType } from '../../data-type';
 import { CleanRecentSearchesDto } from '../../../recent-search/dto/requests/clean-recent-searches.dto';
 import { FindRecentSearchesPaginationQuery } from '../../application/query/find-recent-searches/find-recent-searches-pagination.query';
 import { DeleteRecentSearchCommand } from '../../application/command/delete-recent-search/delete-recent-search.command';
 import { RecentSearchNotFoundException } from '../../exception/recent-search-not-found.exception';
+import { RecentSearchResponseDto } from '../dto/response/recent-search.response.dto';
+import { CreateRecentSearchCommand } from '../../application/command/create-recent-search/create-recent-search.command';
+import { CreateRecentSearchDto } from '../../application/command/create-recent-search/create-recent-search.dto';
 
 @ApiTags('Recent Searches')
 @ApiSecurity('authorization')
@@ -46,18 +48,18 @@ export class RecentSearchController {
     @AuthUser() user: UserDto,
     @Query() getRecentSearchRequestDto: GetRecentSearchRequestDto
   ): Promise<RecentSearchesResponseDto> {
-    const { target, offset, limit } = getRecentSearchRequestDto;
+    const { target, offset, limit, order } = getRecentSearchRequestDto;
     const { rows } = await this._queryBus.execute(
-      new FindRecentSearchesPaginationQuery({ target, offset, limit })
+      new FindRecentSearchesPaginationQuery({ target, offset, order, limit, userId: user.id })
     );
     const recentSearches = rows.map((row) =>
-      this._classTransformer.plainToInstance(RecentSearchesResponseDto, row, {
+      this._classTransformer.plainToInstance(RecentSearchResponseDto, row, {
         excludeExtraneousValues: true,
       })
     );
 
     return new RecentSearchesResponseDto({
-      target: target as PostType,
+      target: target,
       recentSearches,
     });
   }
@@ -65,26 +67,20 @@ export class RecentSearchController {
   @ApiOperation({ summary: 'Create recent search' })
   @ApiOkResponse({
     description: 'Create recent search successfully',
-    type: RecentSearchesResponseDto,
+    type: RecentSearchResponseDto,
   })
   @Post('/')
   public async createRecentSearch(
     @AuthUser() user: UserDto,
     @Body() createRecentSearchRequestDto: CreateRecentSearchRequestDto
-  ): Promise<RecentSearchesResponseDto> {
+  ): Promise<RecentSearchResponseDto> {
     const { target, keyword } = createRecentSearchRequestDto;
-    const { rows } = await this._queryBus.execute(
-      new FindRecentSearchesPaginationQuery({ keyword, target, offset: 0, limit: 1 })
-    );
-    const recentSearches = rows.map((row) =>
-      this._classTransformer.plainToInstance(RecentSearchesResponseDto, row, {
-        excludeExtraneousValues: true,
-      })
-    );
-
-    return new RecentSearchesResponseDto({
-      target: target as PostType,
-      recentSearches,
+    const recentSearch = await this._commandBus.execute<
+      CreateRecentSearchCommand,
+      CreateRecentSearchDto
+    >(new CreateRecentSearchCommand({ target, keyword, userId: user.id }));
+    return this._classTransformer.plainToInstance(RecentSearchResponseDto, recentSearch, {
+      excludeExtraneousValues: true,
     });
   }
 

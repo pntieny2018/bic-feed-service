@@ -9,6 +9,7 @@ import {
 } from '../../domain/query-interface/recent-search.query.interface';
 import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
 import { IRecentSearchFactory, RECENT_SEARCH_FACTORY_TOKEN } from '../../domain/factory';
+import { RecentSearchType } from '../../data-type/recent-search-type.enum';
 
 export class RecentSearchQuery implements IRecentSearchQuery {
   @Inject(RECENT_SEARCH_FACTORY_TOKEN) private readonly _factory: IRecentSearchFactory;
@@ -17,22 +18,19 @@ export class RecentSearchQuery implements IRecentSearchQuery {
   public async getPagination(
     input: GetPaginationRecentSearchProps
   ): Promise<PaginationResult<RecentSearchEntity>> {
-    const { offset, limit, keyword, target } = input;
-    const conditions = {};
+    const { offset, limit, keyword, target, userId, order } = input;
+    const conditions = { createdBy: userId };
     if (keyword) {
       conditions['keyword'] = { [Op.iLike]: keyword + '%' };
     }
-    if (target) {
+    if (target && target !== RecentSearchType.ALL) {
       conditions['target'] = target;
     }
     const { rows, count } = await this._recentSearchModel.findAndCountAll({
       where: conditions,
       offset,
       limit,
-      order: [
-        ['totalSearched', 'DESC'],
-        ['createdAt', 'DESC'],
-      ],
+      order: [['updatedAt', order]],
     });
 
     const result = rows.map((row) => this._factory.reconstitute(row));
