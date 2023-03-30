@@ -29,6 +29,7 @@ import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
+import { MigrateMediaServiceCommand } from './migrate-media-service.command';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { GroupModuleV2 } from '../modules/v2-group/group.module';
     UpdateContentTypeImageCommand,
     MultiUpdateVsBulkUpdateCommand,
     FixTotalUsersSeenCommand,
+    MigrateMediaServiceCommand,
   ],
 })
 export class CommandModule {}

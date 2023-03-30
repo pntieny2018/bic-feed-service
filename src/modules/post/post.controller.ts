@@ -116,11 +116,8 @@ export class PostController {
   @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
-    @Body() createPostDto: CreatePostDto,
-    @Req() req: Request
+    @Body() createPostDto: CreatePostDto
   ): Promise<any> {
-    req.message = 'abcde';
-    // console.log('context=', req);
     return this._postAppService.createPost(user, createPostDto);
   }
 

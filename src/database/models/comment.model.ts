@@ -24,7 +24,13 @@ import { MentionableType } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
-import { BelongsToManyAddAssociationsMixin, Optional, QueryTypes, Sequelize } from 'sequelize';
+import {
+  BelongsToManyAddAssociationsMixin,
+  DataTypes,
+  Optional,
+  QueryTypes,
+  Sequelize,
+} from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 import { OrderEnum } from '../../common/dto';
@@ -58,6 +64,7 @@ export interface IComment {
   child?: IComment[];
   totalReply?: number;
   reactionsCount?: string;
+  mediaJson?: any;
 }
 
 @Table({
@@ -114,6 +121,12 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @UpdatedAt
   @Column
   public updatedAt?: Date;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mediaJson: any;
 
   @BelongsTo(() => PostModel)
   public post: PostModel;

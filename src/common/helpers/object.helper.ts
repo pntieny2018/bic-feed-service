@@ -19,16 +19,37 @@ export class ObjectHelper {
   }
 
   public static nodeToUrlImages = (node: Partial<NodePlateContent>) => {
-    let urls = [];
+    const result = [];
     if (node.type === 'img' && node.url) {
-      urls.push(node.url);
+      result.push({
+        plateId: node.id,
+        url: node.url,
+      });
     }
     if (Array.isArray(node.children)) {
       node.children.forEach((children) => {
-        urls = urls.concat(ObjectHelper.nodeToUrlImages(children));
+        result.push(...ObjectHelper.nodeToUrlImages(children));
       });
     }
-    return urls;
+    return result;
+  };
+
+  public static contentReplaceUrl = (
+    content: any,
+    replaceList: { plateId: string; url: string }[]
+  ) => {
+    for (const item of content) {
+      if (item.type === 'img') {
+        const imageToUpdate = replaceList.find((image) => image.plateId === item.id);
+        if (imageToUpdate) {
+          item.url = imageToUpdate.url;
+        }
+      }
+      if (item.children) {
+        ObjectHelper.contentReplaceUrl(item.children, replaceList);
+      }
+    }
+    return content;
   };
 }
 

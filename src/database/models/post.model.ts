@@ -107,6 +107,8 @@ export interface IPost {
   status: PostStatus;
   publishedAt?: Date;
   errorLog?: any;
+  mediaJson?: any;
+  coverJson?: any;
 }
 
 @Table({
@@ -212,6 +214,18 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     type: DataTypes.JSONB,
   })
   public errorLog: any;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public coverJson: any;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mediaJson: any;
 
   @CreatedAt
   @Column

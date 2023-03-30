@@ -93,4 +93,39 @@ export class ExternalService {
       return false;
     }
   }
+
+  public async updateMedia(
+    id: string,
+    data: {
+      userId: string;
+      type: string;
+    }
+  ): Promise<any> {
+    try {
+      const { userId, type } = data;
+      const response = await lastValueFrom(
+        this._httpService.post(`${this._uploadServiceEndpoint}/internal/${id}`, {
+          userId,
+          type,
+        })
+      );
+
+      this._logger.debug('response.data', JSON.stringify(response.data));
+      const result = response.data.data
+        ? response.data.data.map((i) => ({
+            id: i.id,
+            url: i.origin_url,
+            name: i.properties.name,
+            originName: i.properties.name,
+            mimeType: i.properties.mime_type,
+            size: i.properties.size,
+            createdAt: i.created_at ? new Date(i.created_at) : new Date(),
+          }))
+        : [];
+
+      return result;
+    } catch (e) {
+      throw e;
+    }
+  }
 }
