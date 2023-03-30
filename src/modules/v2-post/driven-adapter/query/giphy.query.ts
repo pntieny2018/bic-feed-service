@@ -7,8 +7,11 @@ import {
   GiphyHelper,
 } from '../../../../common/helpers/giphy.helper';
 import { lastValueFrom } from 'rxjs';
+import { Injectable, Logger } from '@nestjs/common';
 
+@Injectable()
 export class GiphyQuery implements IGiphyQuery {
+  private _logger = new Logger(GiphyQuery.name);
   public constructor(private readonly _httpService: HttpService) {}
 
   public async getTrendingGifs(props: GetTrendingGifsProps): Promise<GiphyEntity[]> {
@@ -36,7 +39,9 @@ export class GiphyQuery implements IGiphyQuery {
           });
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      this._logger.error(e);
+    }
     return [];
   }
 
@@ -68,7 +73,9 @@ export class GiphyQuery implements IGiphyQuery {
           });
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      this._logger.error(e);
+    }
     return [];
   }
 }
