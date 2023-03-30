@@ -3,6 +3,9 @@ export enum GifType {
   PREVIEW_GIF = 'preview_gif',
   PREVIEW_WEBP = 'preview_webp',
 }
+
+export const DEFAULT_GIPHY_REQUEST_TIME_OUT = 4500; // 4,5s
+
 // move from giphy.util.ts
 export class GiphyHelper {
   public static createUrlFromId(id?: string, type: GifType = GifType.ORIGINAL): string {

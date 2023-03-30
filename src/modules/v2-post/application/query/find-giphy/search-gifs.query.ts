@@ -3,7 +3,7 @@ import { IQuery } from '@nestjs/cqrs';
 type Props = {
   limit?: number;
   rating?: string;
-  type?: string;
+  type: string;
   q: string;
   offset?: number;
   lang?: string;

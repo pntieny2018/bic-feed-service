@@ -3,7 +3,7 @@ import { GiphyEntity } from '../model/giphy/giphy.entity';
 export type GetTrendingGifsProps = {
   limit?: number;
   rating?: string;
-  type?: string;
+  type: string;
 };
 
 export type SearchGifsProps = GetTrendingGifsProps & {
@@ -13,8 +13,8 @@ export type SearchGifsProps = GetTrendingGifsProps & {
 };
 
 export interface IGiphyQuery {
-  getTrendingGifs(): Promise<GiphyEntity[]>;
-  searchGifs(query: string): Promise<GiphyEntity[]>;
+  getTrendingGifs(props: GetTrendingGifsProps): Promise<GiphyEntity[]>;
+  searchGifs(props: SearchGifsProps): Promise<GiphyEntity[]>;
 }
 
 export const GIPHY_QUERY_TOKEN = 'GIPHY_QUERY_TOKEN';

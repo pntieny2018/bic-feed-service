@@ -6,6 +6,8 @@ import { GetTrendingGifRequestDto } from '../dto/request/giphy/get-trending-gif.
 import { SearchGifRequestDto } from '../dto/request/giphy/search-gif.request.dto';
 import { GiphyResponseDto } from '../dto/response/giphy.response.dto';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { GetTrendingGifsQuery } from '../../application/query/find-giphy/get-trending-gifs.query';
+import { SearchGifsQuery } from '../../application/query/find-giphy/search-gifs.query';
 
 @ApiTags('Giphy')
 @Controller({
@@ -23,14 +25,14 @@ export class GiphyController {
   public async getTrendingGif(
     @Query() getTrendingGifRequestDto: GetTrendingGifRequestDto
   ): Promise<GiphyResponseDto[]> {
-    return null;
+    return this._queryBus.execute(new GetTrendingGifsQuery(getTrendingGifRequestDto));
   }
 
-@ApiOperation({ summary: 'Search gif' })
+  @ApiOperation({ summary: 'Search gif' })
   @Get('/search')
   public async searchGif(
     @Query() searchGifRequestDto: SearchGifRequestDto
   ): Promise<GiphyResponseDto[]> {
-    return null;
+    return this._queryBus.execute(new SearchGifsQuery(searchGifRequestDto));
   }
 }

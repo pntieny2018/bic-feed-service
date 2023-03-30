@@ -26,5 +26,5 @@ export class GetTrendingGifRequestDto {
   @ApiProperty({ enum: GifType, default: GifType.PREVIEW_GIF, required: false })
   @IsEnum(GifType)
   @IsOptional()
-  public type?: GifType = GifType.PREVIEW_GIF;
+  public type: GifType = GifType.PREVIEW_GIF;
 }
