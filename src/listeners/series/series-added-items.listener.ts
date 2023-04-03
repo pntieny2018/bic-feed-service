@@ -4,9 +4,7 @@ import { SeriesAddedItemsEvent } from '../../events/series';
 import { SearchService } from '../../modules/search/search.service';
 import { SeriesService } from '../../modules/series/series.service';
 import { SeriesActivityService } from '../../notification/activities';
-import { SeriesAddItem } from '../../common/constants';
 import { NotificationService } from '../../notification';
-import { UserDto } from '../../modules/v2-user/application';
 import { PostService } from '../../modules/post/post.service';
 
 @Injectable()

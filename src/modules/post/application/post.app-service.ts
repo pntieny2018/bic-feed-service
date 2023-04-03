@@ -68,6 +68,13 @@ export class PostAppService {
 
     const postResponseDto = await this._postService.get(postId, user, getPostDto);
 
+    if (
+      (postResponseDto.isHidden || postResponseDto.status !== PostStatus.PUBLISHED) &&
+      postResponseDto.createdBy !== user?.id
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
+
     if (user) {
       const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
         TargetType.POST,

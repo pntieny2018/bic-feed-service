@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import {
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
+  registerDecorator,
   ValidationArguments,
   ValidationOptions,
-  registerDecorator,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
-import { CategoryModel } from '../../../database/models/category.model';
 import { PostModel } from '../../../database/models/post.model';
 import { UserDto } from '../../v2-user/application';
 

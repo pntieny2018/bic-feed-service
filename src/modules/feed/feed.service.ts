@@ -18,7 +18,7 @@ import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
-import { GROUP_PRIVACY } from '../v2-group/data-type';
+import { GroupPrivacy } from '../v2-group/data-type';
 
 @Injectable()
 export class FeedService {
@@ -44,13 +44,18 @@ export class FeedService {
    * Get NewsFeed
    */
   public async getNewsFeed(authUser: UserDto, getNewsFeedDto: GetNewsFeedDto): Promise<any> {
-    const { isImportant, type, isSaved, limit, offset } = getNewsFeedDto;
+    const { isImportant, type, isSaved, isMine, limit, offset } = getNewsFeedDto;
     let postIdsAndSorted = [];
-    if (isSaved) {
+    if (isMine) {
+      postIdsAndSorted = await this._postService.getListByUserId(authUser.id, {
+        limit: limit + 1, //1 is next row
+        offset,
+        type,
+      });
+    } else if (isSaved) {
       postIdsAndSorted = await this._postService.getListSavedByUserId(authUser.id, {
         limit: limit + 1, //1 is next row
         offset,
-        isImportant,
         type,
       });
     } else {
@@ -149,7 +154,7 @@ export class FeedService {
 
       const privacy = groupInfos.map((g) => g.privacy);
 
-      if (privacy.every((p) => p !== GROUP_PRIVACY.CLOSED && p !== GROUP_PRIVACY.OPEN)) {
+      if (privacy.every((p) => p !== GroupPrivacy.CLOSED && p !== GroupPrivacy.OPEN)) {
         if (!groupIds.some((groupId) => groupsOfUser.includes(groupId))) {
           ExceptionHelper.throwLogicException(HTTP_STATUS_ID.API_FORBIDDEN);
         }
@@ -225,7 +230,7 @@ export class FeedService {
    * Get Timeline
    */
   public async getTimeline(authUser: UserDto, getTimelineDto: GetTimelineDto): Promise<any> {
-    const { limit, offset, groupId, isImportant, type, isSaved } = getTimelineDto;
+    const { limit, offset, groupId, isImportant, type, isSaved, isMine } = getTimelineDto;
     const group = await this._groupAppService.findOne(groupId);
     if (!group) {
       throw new BadRequestException(`Group ${groupId} not found`);
@@ -241,11 +246,17 @@ export class FeedService {
 
     const authUserId = authUser?.id || null;
     let postIdsAndSorted = [];
-    if (isSaved) {
+    if (isMine) {
+      postIdsAndSorted = await this._postService.getListByUserId(authUserId, {
+        limit: limit + 1, //1 is next row
+        offset,
+        type,
+        groupIds,
+      });
+    } else if (isSaved) {
       postIdsAndSorted = await this._postService.getListSavedByUserId(authUserId, {
         limit: limit + 1, //1 is next row
         offset,
-        isImportant,
         type,
         groupIds,
       });

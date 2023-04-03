@@ -10,8 +10,6 @@ export interface IUserRepository {
   getPermissionsByUserId(id: string): Promise<UserPermission>;
 
   canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean>;
-
-  canCUDTag(userId: string, rootGroupId: string): Promise<boolean>;
 }
 
 export const USER_REPOSITORY_TOKEN = 'USER_REPOSITORY_TOKEN';

@@ -23,7 +23,7 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, Creat
   public async execute(command: CreateTagCommand): Promise<CreateTagDto> {
     const { name, groupId, userId } = command.payload;
 
-    const canCreateTag = await this._userAppService.canCUDTag(userId, groupId);
+    const canCreateTag = await this._userAppService.canCudTagInCommunityByUserId(userId, groupId);
     if (!canCreateTag) {
       throw new TagNoCreatePermissionException();
     }

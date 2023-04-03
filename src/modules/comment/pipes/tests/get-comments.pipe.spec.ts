@@ -19,7 +19,7 @@ describe('GetCommentsPipe', function () {
       order: OrderEnum.DESC,
       childOrder: OrderEnum.DESC,
       childLimit: 0,
-      parentId: "00000000-0000-0000-0000-000000000000",
+      parentId: '00000000-0000-0000-0000-000000000000',
     });
   });
 });

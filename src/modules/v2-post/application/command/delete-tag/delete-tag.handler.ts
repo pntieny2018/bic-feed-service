@@ -30,7 +30,10 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
       throw new TagUsedException();
     }
 
-    const canDeleteTag = await this._userAppService.canCUDTag(userId, tag.get('groupId'));
+    const canDeleteTag = await this._userAppService.canCudTagInCommunityByUserId(
+      userId,
+      tag.get('groupId'),
+    );
     if (!canDeleteTag) {
       throw new TagNoDeletePermissionException();
     }

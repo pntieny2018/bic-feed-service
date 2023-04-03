@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsBoolean, IsDateString, ValidateIf, IsNotEmpty } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
 import { PostSettingDto } from '../common/post-setting.dto';
 
 export class PostSettingResponseDto extends PostSettingDto {

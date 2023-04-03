@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 import { UpdatePostDto } from '../../../post/dto/requests';
-import { Expose, Transform } from 'class-transformer';
-import { CanUseSeries } from '../../validators/can-use-series.validator';
+import { Expose } from 'class-transformer';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
 import { PostStatus } from '../../../../database/models/post.model';
 

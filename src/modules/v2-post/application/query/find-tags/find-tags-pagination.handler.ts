@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import {
-  GroupDto,
   GROUP_APPLICATION_TOKEN,
+  GroupDto,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { ITagQuery, TAG_QUERY_TOKEN } from '../../../domain/query-interface';

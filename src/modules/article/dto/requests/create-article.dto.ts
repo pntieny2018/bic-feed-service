@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsUUID } from 'class-validator';
 import { CreatePostDto } from '../../../post/dto/requests';
 import { Transform } from 'class-transformer';
-import { CanUseSeries } from '../../validators/can-use-series.validator';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
+
 export class CreateArticleDto extends CreatePostDto {
   @ApiProperty({
     type: String,

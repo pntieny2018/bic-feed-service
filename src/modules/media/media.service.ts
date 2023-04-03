@@ -315,7 +315,7 @@ export class MediaService {
     };
     mediaList
       .sort((a, b) => {
-        return b.createdAt.getTime() - a.createdAt.getTime();
+        return a.createdAt.getTime() - b.createdAt.getTime();
       })
       .forEach((media: IMedia) => {
         const TypeMediaDto =

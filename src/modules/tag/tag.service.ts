@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { ITag, TagModel } from '../../database/models/tag.model';

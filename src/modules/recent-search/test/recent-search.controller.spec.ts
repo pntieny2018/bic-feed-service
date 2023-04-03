@@ -5,7 +5,6 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass } from 'class-transformer';
 import { RecentSearchModel } from '../../../database/models/recent-search.model';
-import { mockUserDto } from '../../post/test/mocks/input.mock';
 import { RecentSearchesDto } from '../dto/responses';
 import { RecentSearchController } from '../recent-search.controller';
 import { RecentSearchService } from '../recent-search.service';
@@ -15,6 +14,7 @@ import {
   getRecentSearchesDto,
   mockedRecentSearchList,
 } from './mocks/recent-search-list.mock';
+import { userMock } from '../../v2-user/test/mock/user.dto.mock';
 
 describe('RecentSearchController', () => {
   let recentSearchController: RecentSearchController;
@@ -65,17 +65,14 @@ describe('RecentSearchController', () => {
   describe('Create recent search', () => {
     it('Create recent search successfully', async () => {
       recentSearchService.create = jest.fn().mockResolvedValue(createRecentSearchDto);
-      const rsp = await recentSearchController.createRecentSearch(
-        mockUserDto,
-        createRecentSearchDto
-      );
+      const rsp = await recentSearchController.createRecentSearch(userMock, createRecentSearchDto);
       expect(rsp).toEqual(createRecentSearchDto);
     });
 
     it(`Can catch exception`, async () => {
       recentSearchModel.findOne.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchController.createRecentSearch(mockUserDto, createRecentSearchDto);
+        await recentSearchController.createRecentSearch(userMock, createRecentSearchDto);
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -86,7 +83,7 @@ describe('RecentSearchController', () => {
   describe('Delete recent search', () => {
     it('Delete recent search successfully', async () => {
       const rsp = await recentSearchController.deleteRecentSearch(
-        mockUserDto,
+        userMock,
         mockedRecentSearchList[0].id
       );
       expect(rsp).toEqual(true);
@@ -95,7 +92,7 @@ describe('RecentSearchController', () => {
     it(`Can catch exception`, async () => {
       recentSearchModel.destroy.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchController.deleteRecentSearch(mockUserDto, mockedRecentSearchList[0].id);
+        await recentSearchController.deleteRecentSearch(userMock, mockedRecentSearchList[0].id);
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -105,17 +102,14 @@ describe('RecentSearchController', () => {
 
   describe('Clean recent search', () => {
     it('Clean recent search successfully', async () => {
-      const rsp = await recentSearchController.cleanRecentSearches(
-        mockUserDto,
-        cleanRecentSearchDto
-      );
+      const rsp = await recentSearchController.cleanRecentSearches(userMock, cleanRecentSearchDto);
       expect(rsp).toEqual(true);
       expect(recentSearchModel.destroy).toBeCalledTimes(1);
     });
     it(`Can catch exception`, async () => {
       recentSearchModel.destroy.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchController.cleanRecentSearches(mockUserDto, cleanRecentSearchDto);
+        await recentSearchController.cleanRecentSearches(userMock, cleanRecentSearchDto);
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -126,7 +120,7 @@ describe('RecentSearchController', () => {
   describe('Get recent search', () => {
     it('Should successfully', async () => {
       recentSearchModel.findAll.mockResolvedValue(mockedRecentSearchList);
-      const rsp = await recentSearchController.getRecentSearches(mockUserDto, getRecentSearchesDto);
+      const rsp = await recentSearchController.getRecentSearches(userMock, getRecentSearchesDto);
       expect(rsp).toEqual(
         plainToClass(
           RecentSearchesDto,
