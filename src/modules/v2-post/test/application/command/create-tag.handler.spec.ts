@@ -80,9 +80,13 @@ describe('CreateTagHandler', () => {
 
     const tagEntity = new TagEntity(tagRecord);
     it('Should create tag success', async () => {
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
-      jest.spyOn(domainService, 'createTag').mockResolvedValue(tagEntity);
-      jest.spyOn(repo, 'findOne').mockResolvedValue(null);
+      const spyCanCUDTag = jest
+        .spyOn(userAppService, 'canCudTagInCommunityByUserId')
+        .mockResolvedValue(true);
+      const spyServiceCreateTag = jest
+        .spyOn(domainService, 'createTag')
+        .mockResolvedValue(tagEntity);
+      const spyRepoFindOne = jest.spyOn(repo, 'findOne').mockResolvedValue(null);
 
       const command = new CreateTagCommand({
         groupId: tagRecord.groupId,
@@ -90,8 +94,13 @@ describe('CreateTagHandler', () => {
         userId: tagRecord.createdBy,
       });
       const result = await handler.execute(command);
-      expect(userAppService.canCUDTag).toBeCalledWith(userMock.id, tagEntity.get('groupId'));
-      expect(repo.findOne).toBeCalledWith({
+      expect(spyCanCUDTag).toBeCalledWith(userMock.id, tagEntity.get('groupId'));
+      expect(spyServiceCreateTag).toBeCalledWith({
+        name,
+        groupId: tagRecord.groupId,
+        userId: tagRecord.createdBy,
+      });
+      expect(spyRepoFindOne).toBeCalledWith({
         name: tagRecord.name,
         groupId: tagRecord.groupId,
       });
@@ -120,13 +129,13 @@ describe('CreateTagHandler', () => {
         userId: userMock.id,
       });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(false);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(false);
       await expect(handler.execute(command)).rejects.toThrowError(TagNoCreatePermissionException);
     });
 
     it('Should throw error when tag name is duplicate', async () => {
       jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(true);
       const command = new CreateTagCommand({
         groupId: tagRecord.groupId,
         name: tagRecord.name,

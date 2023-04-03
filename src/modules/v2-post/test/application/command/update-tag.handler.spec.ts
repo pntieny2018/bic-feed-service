@@ -79,10 +79,14 @@ describe('UpdateTagHandler', () => {
     it('should update tag name success', async () => {
       const newName = 'new name ' + name;
       const command = new UpdateTagCommand({ id, name: newName, userId: userMock.id });
-      jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
+      const spyRepoFindOne = jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
+      const spyCanCUDTag = jest
+        .spyOn(userAppService, 'canCudTagInCommunityByUserId')
+        .mockResolvedValue(true);
       await handler.execute(command);
-      expect(userAppService.canCUDTag).toBeCalledWith(userMock.id, tag.get('groupId'));
+
+      expect(spyRepoFindOne).toBeCalledWith({ id });
+      expect(spyCanCUDTag).toBeCalledWith(userMock.id, tag.get('groupId'));
       expect(domainService.updateTag).toBeCalledWith(tag, {
         id,
         name: newName,
@@ -96,7 +100,7 @@ describe('UpdateTagHandler', () => {
       const newName = 'new name ' + name;
       const command = new UpdateTagCommand({ id, name: newName, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tag);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(false);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(false);
       await expect(handler.execute(command)).rejects.toThrowError(TagNoUpdatePermissionException);
     });
 
