@@ -100,7 +100,6 @@ export const mockedArticleResponse: ArticleResponseDto = {
       totalUsed: 0,
     },
   ],
-  views: 0,
 };
 
 export const mockedArticleData = {

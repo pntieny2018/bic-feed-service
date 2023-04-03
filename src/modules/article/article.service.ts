@@ -653,7 +653,6 @@ export class ArticleService extends PostService {
           privacy: null,
           hashtagsJson: hashtagArr,
           tagsJson: tagList,
-          views: 0,
           linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
@@ -761,34 +760,6 @@ export class ArticleService extends PostService {
       return article;
     } catch (error) {
       this.logger.error(error, error?.stack);
-      throw error;
-    }
-  }
-
-  /**
-   * Update view article
-   * @param postId postID
-   * @param authUser UserDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
-    const authUserId = authUser.id;
-    const creator = authUser;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-    try {
-      const dataUpdate = { views: 1 };
-      await this.postModel.increment(dataUpdate, {
-        where: {
-          id: postId,
-          createdBy: authUserId,
-        },
-      });
-      return true;
-    } catch (error) {
-      this._logger.error(JSON.stringify(error?.stack));
       throw error;
     }
   }

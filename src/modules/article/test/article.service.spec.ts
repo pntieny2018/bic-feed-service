@@ -303,7 +303,6 @@ describe.skip('ArticleService', () => {
         title: mockedCreateArticleDto.title,
         summary: mockedCreateArticleDto.summary,
         privacy: PostPrivacy.OPEN,
-        views: 0,
       });
     });
 
@@ -420,30 +419,6 @@ describe.skip('ArticleService', () => {
         expect(sequelize.transaction).toBeCalledTimes(1);
         expect(transactionMock.commit).not.toBeCalledTimes(1);
         expect(transactionMock.rollback).toBeCalledTimes(1);
-      }
-    });
-  });
-
-  describe('updateView', () => {
-    it('Update view successfully', async () => {
-      postModelMock.increment = jest.fn();
-      await articleService.updateView(mockedArticleCreated.id, mockedUserAuth);
-      const dataUpdate = { views: 1 };
-      expect(postModelMock.increment).toBeCalledWith(dataUpdate, {
-        where: {
-          id: mockedArticleCreated.id,
-          createdBy: mockedUserAuth.id,
-        },
-      });
-    });
-
-    it('Should catch exception if creator not found in cache', async () => {
-      try {
-        await articleService.updateView(mockedArticleCreated.id, {
-          ...mockedUserAuth,
-        });
-      } catch (e) {
-        expect(e).toBeInstanceOf(LogicException);
       }
     });
   });

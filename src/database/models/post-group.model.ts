@@ -21,7 +21,7 @@ export interface IPostGroup {
   updatedAt?: Date;
   isArchived?: boolean;
   isPinned?: boolean;
-  pinedIndex?: number;
+  pinnedIndex?: number;
 }
 @Table({
   tableName: 'posts_groups',
@@ -55,5 +55,5 @@ export class PostGroupModel extends Model<IPostGroup, IPostGroup> implements IPo
   public isPinned?: boolean;
 
   @Column
-  public pinedIndex?: number;
+  public pinnedIndex?: number;
 }

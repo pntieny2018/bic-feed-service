@@ -95,7 +95,6 @@ export interface IPost {
   type: PostType;
   title?: string;
   summary?: string;
-  views: number;
   categories?: ICategory[];
   series?: IPost[];
   hashtags?: IHashtag[];
@@ -172,9 +171,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public lang: string;
-
-  @Column
-  public views: number;
 
   @AllowNull(true)
   @Column

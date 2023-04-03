@@ -47,13 +47,6 @@ export class ArticleResponseDto extends PostResponseDto {
   public isLocked: boolean;
 
   @ApiProperty({
-    description: 'views',
-    type: Number,
-  })
-  @Expose()
-  public views: number;
-
-  @ApiProperty({
     description: 'zindex',
     type: Number,
   })

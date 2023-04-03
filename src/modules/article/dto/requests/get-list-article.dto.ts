@@ -3,7 +3,6 @@ import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 import { PageOptionsDto } from '../../../../common/dto';
 export enum OrderField {
-  VIEWS = 'views',
   CREATED_AT = 'createdAt',
 }
 export class GetListArticlesDto extends PageOptionsDto {

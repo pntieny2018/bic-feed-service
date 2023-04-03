@@ -149,7 +149,6 @@ describe.skip('PostListener', () => {
         type: PostType.POST,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
-        views: 0,
         groups: [
           {
             postId: 'fcaa3c4b-d4d8-4082-bda3-858dda6d42c7',

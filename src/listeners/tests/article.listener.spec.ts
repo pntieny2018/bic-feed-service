@@ -126,7 +126,6 @@ describe.skip('ArticleListener', () => {
         status: PostStatus.PUBLISHED,
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
-        views: 0,
         groups: [
           {
             postId: 'b0d0287a-3ec9-4b9b-8032-2c491d954945',
