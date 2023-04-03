@@ -74,18 +74,6 @@ export class FeedController {
     return this._feedService.getUsersSeenPosts(user, getUserSeenPostDto);
   }
 
-  @ApiOperation({ summary: 'Pin/unpin content' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Put('/pin/:postId')
-  public async update(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return true;
-  }
-
   @ApiOperation({ summary: 'Get list pinned' })
   @ApiOkResponse({
     type: PostResponseDto,
