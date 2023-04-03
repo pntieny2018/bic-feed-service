@@ -79,10 +79,13 @@ describe('DeleteTagHandler', () => {
     it('should delete tag success', async () => {
       const tagEntity = new TagEntity(tagRecord);
       const command = new DeleteTagCommand({ id, userId: userMock.id });
-      jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
+      const spyRepoFindOne = jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
+      const spyCanCUDTag = jest
+        .spyOn(userAppService, 'canCudTagInCommunityByUserId')
+        .mockResolvedValue(true);
       await handler.execute(command);
-      expect(userAppService.canCUDTag).toBeCalledWith(userMock.id, tagEntity.get('groupId'));
+      expect(spyRepoFindOne).toBeCalledWith({ id });
+      expect(spyCanCUDTag).toBeCalledWith(userMock.id, tagEntity.get('groupId'));
       expect(domainService.deleteTag).toBeCalledWith(tagEntity.get('id'));
     });
 
@@ -90,24 +93,24 @@ describe('DeleteTagHandler', () => {
       const tagEntity = new TagEntity(tagRecord);
       const command = new DeleteTagCommand({ id, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(false);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(false);
       await expect(handler.execute(command)).rejects.toThrowError(TagNoDeletePermissionException);
     });
 
     it('should throw error when tag not found', async () => {
       const command = new DeleteTagCommand({ id, userId: userMock.id });
-      jest.spyOn(repo, 'findOne').mockResolvedValue(null);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
+      const spyRepoFindOne = jest.spyOn(repo, 'findOne').mockResolvedValue(null);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(true);
       await expect(handler.execute(command)).rejects.toThrowError(TagNotFoundException);
     });
 
     it('should throw error when tag is used', async () => {
       tagRecord.totalUsed = 1;
       const tagEntity = new TagEntity(tagRecord);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(true);
       const command = new DeleteTagCommand({ id, userId: userMock.id });
       jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
-      jest.spyOn(userAppService, 'canCUDTag').mockResolvedValue(true);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(true);
       await expect(handler.execute(command)).rejects.toThrowError(TagUsedException);
     });
   });
