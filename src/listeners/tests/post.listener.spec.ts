@@ -3,7 +3,11 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Sequelize } from 'sequelize-typescript';
 import { PostStatus, PostType } from '../../database/models/post.model';
-import { PostHasBeenDeletedEvent, PostHasBeenPublishedEvent, PostHasBeenUpdatedEvent } from '../../events/post';
+import {
+  PostHasBeenDeletedEvent,
+  PostHasBeenPublishedEvent,
+  PostHasBeenUpdatedEvent,
+} from '../../events/post';
 import { PostVideoFailedEvent } from '../../events/post/post-video-failed.event';
 import { PostVideoSuccessEvent } from '../../events/post/post-video-success.event';
 import { FeedPublisherService } from '../../modules/feed-publisher';
@@ -146,7 +150,12 @@ describe.skip('PostListener', () => {
         isImportant: false,
         updatedBy: '00000000-0000-0000-0000-000000000000',
         views: 0,
-        groups: [{ postId: 'fcaa3c4b-d4d8-4082-bda3-858dda6d42c7', groupId: 'b113788a-c7fa-45f1-98a8-5e2c135dc1da' }],
+        groups: [
+          {
+            postId: 'fcaa3c4b-d4d8-4082-bda3-858dda6d42c7',
+            groupId: 'b113788a-c7fa-45f1-98a8-5e2c135dc1da',
+          },
+        ],
         status: PostStatus.PUBLISHED,
       },
     });
@@ -195,7 +204,7 @@ describe.skip('PostListener', () => {
 
   describe.skip('PostListener.onPostPublished', () => {
     const postHasBeenPublishedEvent = new PostHasBeenPublishedEvent({
-      actor: {id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d'},
+      actor: { id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d' },
       post: mockPostResponseDto,
     });
     it('should success', async () => {
@@ -227,7 +236,7 @@ describe.skip('PostListener', () => {
 
   describe.skip('PostListener.onPostUpdated', () => {
     const postHasBeenUpdatedEvent = new PostHasBeenUpdatedEvent({
-      actor: { id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d'},
+      actor: { id: 'be4c6274-31a3-4c5f-84fa-6222ca6a185d' },
       oldPost: mockPostResponseDto,
       newPost: mockPostResponseDto,
     });
@@ -248,11 +257,11 @@ describe.skip('PostListener', () => {
 
   describe.skip('PostListener.onPostVideoSuccess', () => {
     const postVideoSuccessEvent = new PostVideoSuccessEvent(new VideoProcessingEndDto());
-    postVideoSuccessEvent.payload.properties = {}
-    postVideoSuccessEvent.payload.properties.name = '123'
-    postVideoSuccessEvent.payload.properties.size = 12
-    postVideoSuccessEvent.payload.properties.mimeType = '1212'
-    postVideoSuccessEvent.payload.properties.codec = '1212'
+    postVideoSuccessEvent.payload.properties = {};
+    postVideoSuccessEvent.payload.properties.name = '123';
+    postVideoSuccessEvent.payload.properties.size = 12;
+    postVideoSuccessEvent.payload.properties.mimeType = '1212';
+    postVideoSuccessEvent.payload.properties.codec = '1212';
     it('should success', async () => {
       const loggerSpy = jest.spyOn(postListener['_logger'], 'debug').mockReturnThis();
       postService.getsByMedia.mockResolvedValue([
@@ -261,7 +270,7 @@ describe.skip('PostListener', () => {
       ]);
       postService.updatePostStatus.mockResolvedValue();
       elasticsearchService.index.mockResolvedValue();
-      postSearchService.addPostsToSearch = jest.fn().mockResolvedValue(null)
+      postSearchService.addPostsToSearch = jest.fn().mockResolvedValue(null);
       await postListener.onPostVideoSuccess(postVideoSuccessEvent);
       expect(loggerSpy).toBeCalled();
       expect(postService.getsByMedia).toBeCalled();
@@ -272,11 +281,11 @@ describe.skip('PostListener', () => {
 
   describe('PostListener.onPostVideoFailed', () => {
     const postVideoFailedEvent = new PostVideoFailedEvent(new VideoProcessingEndDto());
-    postVideoFailedEvent.payload.properties = {}
-    postVideoFailedEvent.payload.properties.name = '123'
-    postVideoFailedEvent.payload.properties.size = 12
-    postVideoFailedEvent.payload.properties.mimeType = '1212'
-    postVideoFailedEvent.payload.properties.codec = '1212'
+    postVideoFailedEvent.payload.properties = {};
+    postVideoFailedEvent.payload.properties.name = '123';
+    postVideoFailedEvent.payload.properties.size = 12;
+    postVideoFailedEvent.payload.properties.mimeType = '1212';
+    postVideoFailedEvent.payload.properties.codec = '1212';
     it('should success', async () => {
       postService.getsByMedia.mockResolvedValue([
         { id: '6020620d-142d-4f63-89f0-b63d24d60916' },

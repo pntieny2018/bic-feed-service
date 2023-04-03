@@ -1573,16 +1573,16 @@ export class PostService {
 
   public async getIdsPinnedInGroup(groupId: string, userId: string) {
     const { schema } = getDatabaseConfig();
-    let condition = ` pg.group_id = :groupId AND pg.is_archived = false`;
+    let condition = ` pg.group_id =:groupId AND pg.is_archived = false`;
     if (userId) {
       condition += ` AND is_pinned = TRUE
             AND NOT EXISTS(
            SELECT null
            FROM ${schema}.report_content_details r
-             WHERE t2.created_by = :userId AND r.targetId = p.id
+             WHERE r.created_by =:userId AND r.target_id = p.id
            )`;
     }
-    const posts = await this.sequelizeConnection.query(
+    const posts = await this.sequelizeConnection.query<{ id: string }>(
       `
     SELECT id
     FROM ${schema}.posts p
@@ -1591,10 +1591,8 @@ export class PostService {
     ORDER BY pg.pinned_index ASC
     `,
       {
-        mapToModel: true,
-        model: PostModel,
         type: QueryTypes.SELECT,
-        bind: {
+        replacements: {
           userId,
           groupId,
         },

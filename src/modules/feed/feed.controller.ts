@@ -90,7 +90,7 @@ export class FeedController {
   @ApiOkResponse({
     type: PostResponseDto,
   })
-  @Get('/group/:groupId')
+  @Get('group/:groupId/pinned')
   public getPinnedList(
     @Param('groupId', ParseUUIDPipe) groupId: string,
     @AuthUser() user: UserDto

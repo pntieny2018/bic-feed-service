@@ -58,6 +58,7 @@ export class UserRepository implements IUserRepository {
 
   public async findOne(id: string): Promise<UserEntity> {
     const user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    if (!user) return null;
     return new UserEntity(user);
   }
 

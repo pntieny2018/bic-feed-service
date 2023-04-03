@@ -175,7 +175,9 @@ describe.skip('ArticleListener', () => {
     it('should success even processVideo and saveEditedHistory', async () => {
       articleHasBeenPublishedEvent.payload.article.status = PostStatus.PUBLISHED;
       const loggerSpy = jest.spyOn(articleListener['_logger'], 'debug').mockReturnThis();
-      mediaService.processVideo.mockRejectedValue(new Error('b0d0287a-3ec9-4b9b-8032-2c491d954945'));
+      mediaService.processVideo.mockRejectedValue(
+        new Error('b0d0287a-3ec9-4b9b-8032-2c491d954945')
+      );
       postService.saveEditedHistory.mockRejectedValue(new Error('2'));
       elasticsearchService.index.mockResolvedValue();
       feedPublisherService.fanoutOnWrite.mockResolvedValue();
