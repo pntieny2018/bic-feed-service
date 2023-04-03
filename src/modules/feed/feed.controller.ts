@@ -9,6 +9,8 @@ import { PostResponseDto } from '../post/dto/responses';
 import { APP_VERSION } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserDto } from '../v2-user/application';
+import { GetDraftPostDto } from '../post/dto/requests/get-draft-posts.dto';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -70,5 +72,29 @@ export class FeedController {
     @Query() getUserSeenPostDto: GetUserSeenPostDto
   ): Promise<PageDto<UserDto>> {
     return this._feedService.getUsersSeenPosts(user, getUserSeenPostDto);
+  }
+
+  @ApiOperation({ summary: 'Pin/unpin content' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Put('/pin/:postId')
+  public async update(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return true;
+  }
+
+  @ApiOperation({ summary: 'Get list pinned' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Get('/group/:groupId')
+  public getPinnedList(
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @AuthUser() user: UserDto
+  ): Promise<ArticleResponseDto[]> {
+    return this._feedService.getPinnedList(groupId, user);
   }
 }

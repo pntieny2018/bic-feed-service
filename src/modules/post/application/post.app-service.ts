@@ -32,6 +32,7 @@ import {
   UserDto,
 } from '../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
+import { ArticleResponseDto } from '../../article/dto/responses';
 
 @Injectable()
 export class PostAppService {
@@ -329,5 +330,9 @@ export class PostAppService {
     );
 
     this._postService.checkContent(post.content, post.media);
+  }
+
+  public async getPinnedList(groupId: string, user: UserDto) {
+    return await this._postService.getPinnedList(groupId, user);
   }
 }

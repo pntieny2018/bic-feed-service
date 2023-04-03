@@ -7,6 +7,7 @@ import {
   FindOptions,
   Includeable,
   Op,
+  QueryTypes,
   Transaction,
   WhereOptions,
 } from 'sequelize';
@@ -47,7 +48,7 @@ import { MediaDto } from '../media/dto';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { ReactionService } from '../reaction';
-import { ReportTo, TargetType } from '../report-content/contstants';
+import { ReportStatus, ReportTo, TargetType } from '../report-content/contstants';
 import { CreatePostDto, GetPostDto, UpdatePostDto } from './dto/requests';
 import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostResponseDto } from './dto/responses';
@@ -59,6 +60,8 @@ import { TagService } from '../tag/tag.service';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { GROUP_PRIVACY } from '../v2-group/data-type';
+import { getDatabaseConfig } from '../../config/database';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @Injectable()
 export class PostService {
@@ -1568,6 +1571,38 @@ export class PostService {
     return mappedPosts;
   }
 
+  public async getIdsPinnedInGroup(groupId: string, userId: string) {
+    const { schema } = getDatabaseConfig();
+    let condition = ` pg.group_id = :groupId AND pg.is_archived = false`;
+    if (userId) {
+      condition += ` AND is_pinned = TRUE
+            AND NOT EXISTS(
+           SELECT null
+           FROM ${schema}.report_content_details r
+             WHERE t2.created_by = :userId AND r.targetId = p.id
+           )`;
+    }
+    const posts = await this.sequelizeConnection.query(
+      `
+    SELECT id
+    FROM ${schema}.posts p
+    INNER JOIN ${schema}.posts_groups pg ON pg.post_id = p.id
+    WHERE ${condition}
+    ORDER BY pg.pinned_index ASC
+    `,
+      {
+        mapToModel: true,
+        model: PostModel,
+        type: QueryTypes.SELECT,
+        bind: {
+          userId,
+          groupId,
+        },
+      }
+    );
+    return posts.map((post) => post.id);
+  }
+
   public async getPostIdsInGroupIds(
     groupIds: string[],
     filters: {
@@ -1886,5 +1921,24 @@ export class PostService {
 
       await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
     }
+  }
+
+  public async getPinnedList(groupId: string, user: UserDto) {
+    const ids = await this.getIdsPinnedInGroup(groupId, user?.id || null);
+    if (ids.length === 0) return [];
+    const posts = await this.getPostsByIds(ids, user?.id || null);
+    const postsBindedData = await this.postBinding.bindRelatedData(posts, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser: user,
+    });
+
+    await this.postBinding.bindCommunity(posts);
+    return this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
   }
 }
