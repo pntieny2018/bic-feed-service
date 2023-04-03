@@ -80,7 +80,7 @@ export class PostController {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 
-  @ApiOperation({ summary: 'Get total draft' })
+  @ApiOperation({ summary: 'Get total draft posts' })
   @ApiOkResponse({
     type: Number,
   })
