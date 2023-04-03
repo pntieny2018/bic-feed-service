@@ -11,6 +11,7 @@ import { UpdateTagDto } from './update-tag.dto';
 import { ExceptionHelper } from '../../../../../common/helpers';
 import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import { TagNoUpdatePermissionException } from '../../../exception/tag-no-update-permission.exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(UpdateTagCommand)
 export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, UpdateTagDto> {
@@ -18,6 +19,8 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
+  @Inject(USER_APPLICATION_TOKEN)
+  private readonly _userAppService: IUserApplicationService;
 
   public async execute(command: UpdateTagCommand): Promise<UpdateTagDto> {
     const { name, id, userId } = command.payload;
@@ -27,7 +30,7 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
       throw new TagNotFoundException();
     }
 
-    const canUpdateTag = await this._tagRepository.canCUDTag(userId, tag.get('groupId'));
+    const canUpdateTag = await this._userAppService.canCUDTag(userId, tag.get('groupId'));
     if (!canUpdateTag) {
       throw new TagNoUpdatePermissionException();
     }

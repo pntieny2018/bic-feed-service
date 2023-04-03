@@ -103,4 +103,24 @@ export class UserRepository implements IUserRepository {
       return false;
     }
   }
+
+  public async canCUDTag(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
+            userId,
+            rootGroupId,
+          })
+        )
+      );
+      if (response.status !== HttpStatus.OK) {
+        return null;
+      }
+      return AxiosHelper.getDataResponse<boolean>(response);
+    } catch (ex) {
+      this._logger.debug(ex);
+      return false;
+    }
+  }
 }

@@ -56,6 +56,10 @@ export class UserApplicationService implements IUserApplicationService {
     return this._repo.canCudTagInCommunityByUserId(userId, communityId);
   }
 
+  public async canCUDTag(userId: string, rootGroupId: string): Promise<boolean> {
+    return this._repo.canCUDTag(userId, rootGroupId);
+  }
+
   private _toDto(user: UserEntity): UserDto {
     return {
       id: user.get('id'),

@@ -3,7 +3,6 @@ import { getModelToken } from '@nestjs/sequelize';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 import { TagModel } from '../../../../../database/models/tag.model';
-import { GroupId } from '../../../../v2-group/domain/model/group';
 import { TagEntity } from '../../../domain/model/tag';
 import { GetPaginationTagProps } from '../../../domain/query-interface';
 import { TagQuery } from '../../../driven-adapter/query';
@@ -60,6 +59,7 @@ describe('TagQuery', () => {
       jest
         .spyOn(tagModel, 'findAndCountAll')
         .mockResolvedValue({ rows: tagRecords, count: input.limit });
+      jest.spyOn(factory, 'reconstitute').mockImplementation((entity) => new TagEntity(entity));
       const result = await query.getPagination(input);
 
       expect(tagModel.findAndCountAll).toBeCalledWith({
