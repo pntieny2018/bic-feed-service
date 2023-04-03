@@ -44,7 +44,7 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
 
   public update(props: Partial<TagProps>): void {
     const { name, updatedBy } = props;
-    this._props.name = name;
+    this._props.name = name.toUpperCase();
     this._props.updatedBy = updatedBy;
     this._props.slug = StringHelper.convertToSlug(name);
   }

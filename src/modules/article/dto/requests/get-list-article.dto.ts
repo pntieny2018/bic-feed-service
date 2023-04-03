@@ -4,7 +4,6 @@ import { Expose } from 'class-transformer';
 import { PageOptionsDto } from '../../../../common/dto';
 
 export enum OrderField {
-  VIEWS = 'views',
   CREATED_AT = 'createdAt',
 }
 

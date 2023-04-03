@@ -560,7 +560,6 @@ export class ArticleService {
           canReact: setting.canReact,
           privacy: null,
           tagsJson: tagList,
-          views: 0,
           linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
@@ -667,42 +666,6 @@ export class ArticleService {
     }
   }
 
-  /**
-   * Update view article
-   * @param postId postID
-   * @param authUser UserDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
-    const authUserId = authUser.id;
-    const creator = authUser;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-    try {
-      const dataUpdate = { views: 1 };
-      await this.postModel.increment(dataUpdate, {
-        where: {
-          id: postId,
-          createdBy: authUserId,
-        },
-      });
-      return true;
-    } catch (error) {
-      this.logger.error(JSON.stringify(error?.stack));
-      throw error;
-    }
-  }
-
-  /**
-   * Update Post except status === DRAFT
-   * @param postId postID
-   * @param authUser UserDto
-   * @param UpdateArticleDto UpdateArticleDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
   public async update(
     post: ArticleResponseDto,
     authUser: UserDto,
@@ -712,8 +675,7 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags, setting } =
-        updateArticleDto;
+      const { media, mentions, audience, categories, series, tags, setting } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);

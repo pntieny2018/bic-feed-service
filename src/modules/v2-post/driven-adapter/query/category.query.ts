@@ -16,6 +16,7 @@ import { Op } from 'sequelize';
 export class CategoryQuery implements ICategoryQuery {
   @Inject(CATEGORY_FACTORY_TOKEN) private readonly _factory: ICategoryFactory;
   @InjectModel(CategoryModel) private readonly _categoryModel: typeof CategoryModel;
+
   public async getPagination(
     input: GetPaginationCategoryProps
   ): Promise<PaginationResult<CategoryEntity>> {

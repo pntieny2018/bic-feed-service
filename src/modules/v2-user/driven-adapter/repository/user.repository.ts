@@ -142,4 +142,20 @@ export class UserRepository implements IUserRepository {
       groups: {},
     };
   }
+
+  public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
+            userId,
+            rootGroupId,
+          })
+        )
+      );
+      return AxiosHelper.getDataResponse<boolean>(response);
+    } catch (e) {
+      return false;
+    }
+  }
 }

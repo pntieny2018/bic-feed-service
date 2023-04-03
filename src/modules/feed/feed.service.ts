@@ -82,12 +82,12 @@ export class FeedService {
     }
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
 
-    const postsBindedData = await this._bindAndTransformData({
+    const postsBoundData = await this._bindAndTransformData({
       posts: posts,
       authUser,
     });
 
-    return new PageDto<PostResponseDto>(postsBindedData, {
+    return new PageDto<PostResponseDto>(postsBoundData, {
       limit,
       offset,
       hasNextPage,
@@ -309,6 +309,7 @@ export class FeedService {
       return new PageDto<PostResponseDto>([], paging);
     }
   }
+
   /**
    * Delete newsfeed by post
    */
@@ -318,5 +319,17 @@ export class FeedService {
 
   public deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
     return this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
+  }
+
+  public async getPinnedList(groupId: string, authUser: UserDto) {
+    const ids = await this._postService.getIdsPinnedInGroup(groupId, authUser?.id || null);
+    if (ids.length === 0) return [];
+    const posts = await this._postService.getPostsByIds(ids, authUser?.id || null);
+    const postsBoundData = await this._bindAndTransformData({
+      posts,
+      authUser,
+    });
+
+    return postsBoundData;
   }
 }

@@ -182,10 +182,6 @@ export class ArticleAppService {
     }
   }
 
-  public async updateView(user: UserDto, articleId: string): Promise<boolean> {
-    return this._articleService.updateView(articleId, user);
-  }
-
   public async update(
     user: UserDto,
     articleId: string,
