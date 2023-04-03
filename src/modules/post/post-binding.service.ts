@@ -1,5 +1,5 @@
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { IPost, PostModel } from '../../database/models/post.model';
+import { PostModel } from '../../database/models/post.model';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import { ClassTransformer } from 'class-transformer';
@@ -15,7 +15,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
-import { GROUP_PRIVACY } from '../v2-group/data-type';
+import { GroupPrivacy } from '../v2-group/data-type';
 
 @Injectable()
 export class PostBindingService {
@@ -125,7 +125,7 @@ export class PostBindingService {
           const isGuest = !options?.authUser;
           if (
             options?.shouldHideSecretAudienceCanNotAccess &&
-            dataGroup.privacy === GROUP_PRIVACY.SECRET &&
+            dataGroup.privacy === GroupPrivacy.SECRET &&
             (isUserNotInGroup || isGuest)
           ) {
             return false;

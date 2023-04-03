@@ -11,6 +11,7 @@ import { MediaModel } from '../../database/models/media.model';
 import { PostModel, PostStatus } from '../../database/models/post.model';
 import { MediaService } from '../media';
 import { PostService } from './post.service';
+
 @Injectable()
 export class PostCronService {
   private _logger = new Logger(PostCronService.name);

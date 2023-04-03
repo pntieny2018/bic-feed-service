@@ -30,15 +30,15 @@ import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
 import { ClassTransformer } from 'class-transformer';
 import { PostHelper } from '../../post/post.helper';
-import { ArticleBindingService } from '../article-binding.service';
 import { UserDto } from '../../v2-user/application';
+import { PostBindingService } from '../../post/post-binding.service';
 
 @Injectable()
 export class ArticleAppService {
   private readonly _classTransformer = new ClassTransformer();
   public constructor(
     private _articleService: ArticleService,
-    private _articleBindingService: ArticleBindingService,
+    private _postBindingService: PostBindingService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _postService: PostService,
@@ -73,7 +73,7 @@ export class ArticleAppService {
     if (status) {
       condition['status'] = status;
     }
-    const postsSorted = await this._articleService.getPostsByFilter(condition, {
+    const postsSorted = await this._postService.getPostsByFilter(condition, {
       sortColumn: PostHelper.scheduleTypeStatus.some((e) => condition['status'].includes(e))
         ? 'publishedAt'
         : 'createdAt',
@@ -88,12 +88,12 @@ export class ArticleAppService {
       hasNextPage = true;
     }
 
-    const postsInfo = await this._articleService.getPostsByIds(
+    const postsInfo = await this._postService.getPostsByIds(
       postsSorted.map((post) => post.id),
       authUser.id
     );
 
-    const postsBindedData = await this._articleBindingService.bindRelatedData(postsInfo, {
+    const postsBindedData = await this._postBindingService.bindRelatedData(postsInfo, {
       shouldBindReaction: true,
       shouldBindActor: true,
       shouldBindMention: true,
@@ -119,6 +119,12 @@ export class ArticleAppService {
   ): Promise<ArticleResponseDto> {
     const articleResponseDto = await this._articleService.get(articleId, user, getArticleDto);
 
+    if (
+      (articleResponseDto.isHidden || articleResponseDto.status !== PostStatus.PUBLISHED) &&
+      articleResponseDto.createdBy !== user?.id
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
+    }
     const article = {
       privacy: articleResponseDto.privacy,
       createdBy: articleResponseDto.createdBy,

@@ -22,7 +22,7 @@ import { UpdateTagTotalUsedCommand } from './update-tag-total-used.command';
 import { FixProcessingStatusPostCommand } from './fix-processing-status-post.command';
 import { UpdateNewsfeedCommand } from './update-user-newsfeed.command';
 import { FeedPublisherModule, FeedPublisherService } from '../modules/feed-publisher';
-import { FollowModule, FollowService } from '../modules/follow';
+import { FollowModule } from '../modules/follow';
 import { UpdateContentTypeImageCommand } from './update-content-type-image.command';
 import { UploadModule } from '../modules/upload';
 import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-vs-bulk-update.command';

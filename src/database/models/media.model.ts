@@ -1,9 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { DataTypes, Optional } from 'sequelize';
 import {
   AllowNull,
-  BelongsToMany,
   Column,
   CreatedAt,
   Default,

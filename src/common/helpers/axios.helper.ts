@@ -1,4 +1,6 @@
 import { AxiosResponse } from 'axios';
+import { ArrayHelper } from './array.helper';
+import { ObjectHelper } from './object.helper';
 
 export class AxiosHelper {
   /**
@@ -8,10 +10,16 @@ export class AxiosHelper {
    */
   public static getDataResponse<T>(response: AxiosResponse): T {
     if (response) {
-      return response.data['data'] as unknown as T;
+      return ObjectHelper.convertKeysToCamelCase(response.data['data']) as unknown as T;
     }
 
     return null;
+  }
+
+  public static getDataArrayResponse<T>(response: AxiosResponse): T[] {
+    if (response) {
+      return ArrayHelper.convertObjectKeysToCamelCase(response.data['data']) as unknown as T[];
+    }
   }
 
   /**

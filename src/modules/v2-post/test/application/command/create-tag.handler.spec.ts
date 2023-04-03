@@ -15,7 +15,6 @@ import { userMock } from '../../mock/user.dto.mock';
 import { I18nContext } from 'nestjs-i18n';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { TagDuplicateNameException } from '../../../exception';
-import { IllegalArgumentException } from '@beincom/common';
 
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;

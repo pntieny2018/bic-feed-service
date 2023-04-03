@@ -12,7 +12,7 @@ import { MediaType } from '../../database/models/media.model';
 import { IPost, PostType } from '../../database/models/post.model';
 import { SearchArticlesDto } from '../article/dto/requests';
 import { ArticleSearchResponseDto } from '../article/dto/responses/article-search.response.dto';
-import { SeriesSearchResponseDto } from '../article/dto/responses/series-search.response.dto';
+import { SeriesSearchResponseDto } from '../series/dto/responses/series-search.response.dto';
 import { PostBindingService } from '../post/post-binding.service';
 import { PostService } from '../post/post.service';
 import { ReactionService } from '../reaction';
@@ -220,6 +220,7 @@ export class SearchService {
         doc: dataUpdate[indexPost],
       });
     });
+    if (updateOps.length === 0) return;
     try {
       await this.elasticsearchService.bulk(
         {
@@ -432,6 +433,9 @@ export class SearchService {
 
       if (post.items) {
         const bindArticles = [];
+        post.items.sort((a, b) => {
+          return a.zindex - b.zindex;
+        });
         for (const itemInSeries of post.items) {
           const findArticle = articles.find((item) => item.id === itemInSeries.id);
           if (findArticle) bindArticles.push(findArticle);
@@ -902,9 +906,10 @@ export class SearchService {
       //En
       if (type === PostType.POST) {
         fields = [content.ascii, content.default];
-      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.ascii, summary.default, content.ascii, content.default];
+      } else if (type === PostType.SERIES) {
+        fields = [title.ascii, title.default, summary.ascii, summary.default];
       } else {
+        // for article or all
         fields = [
           title.ascii,
           title.default,
@@ -927,8 +932,8 @@ export class SearchService {
       //Vi
       if (type === PostType.POST) {
         fields = [title.default];
-      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.default, content.default];
+      } else if (type === PostType.SERIES) {
+        fields = [title.default, summary.default];
       } else {
         fields = [title.default, summary.default, content.default];
       }

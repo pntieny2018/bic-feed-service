@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayNotEmpty, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsArray, IsOptional } from 'class-validator';
 import { Expose } from 'class-transformer';
 
 export class AudienceRequestDto {

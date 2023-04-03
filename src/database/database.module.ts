@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { IDatabaseConfig } from '../config/database';
+
 @Global()
 @Module({
   imports: [

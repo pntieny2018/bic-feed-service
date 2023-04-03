@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SentryService } from '@app/sentry';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { AxiosHelper } from '../common/helpers';
+
 @Injectable()
 export class ExternalService {
   /**
@@ -91,21 +91,6 @@ export class ExternalService {
       return response.data.data;
     } catch (e) {
       return false;
-    }
-  }
-
-  public async getPermission(payload: string): Promise<any> {
-    try {
-      const response = await lastValueFrom(
-        this._httpService.get(`${this._groupServiceEndpoint}/me/permissions`, {
-          headers: {
-            user: payload,
-          },
-        })
-      );
-      return response.data.data;
-    } catch (e) {
-      return {};
     }
   }
 }

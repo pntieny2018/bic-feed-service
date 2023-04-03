@@ -1,4 +1,4 @@
-import { GROUP_PRIVACY } from '../../../data-type';
+import { GroupPrivacy } from '../../../data-type';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
@@ -7,7 +7,7 @@ export type GroupProps = {
   id: string;
   name: string;
   icon: string;
-  privacy: GROUP_PRIVACY;
+  privacy: GroupPrivacy;
   communityId: string;
   rootGroupId: string;
   isCommunity: boolean;
@@ -44,18 +44,18 @@ export class GroupEntity extends DomainAggregateRoot<GroupProps> {
   }
 
   public isOpenGroup(): boolean {
-    return this._props.privacy === GROUP_PRIVACY.OPEN;
+    return this._props.privacy === GroupPrivacy.OPEN;
   }
 
   public isPrivateGroup(): boolean {
-    return this._props.privacy === GROUP_PRIVACY.PRIVATE;
+    return this._props.privacy === GroupPrivacy.PRIVATE;
   }
 
   public isSecretGroup(): boolean {
-    return this._props.privacy === GROUP_PRIVACY.SECRET;
+    return this._props.privacy === GroupPrivacy.SECRET;
   }
 
   public isClosedGroup(): boolean {
-    return this._props.privacy === GROUP_PRIVACY.CLOSED;
+    return this._props.privacy === GroupPrivacy.CLOSED;
   }
 }

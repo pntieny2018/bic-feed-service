@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { MediaResponseDto } from '../../../media/dto/response';
 import { CategoryResponseDto } from './category.response.dto';
 import { UserDto } from '../../../v2-user/application';

@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { CanUseSeries } from '../../validators/can-use-series.validator';
-import { CanUseCategory } from '../../validators/can-use-category.validator';
+
 export class ValidateSeriesTagDto {
   @ApiProperty({
     type: [String],

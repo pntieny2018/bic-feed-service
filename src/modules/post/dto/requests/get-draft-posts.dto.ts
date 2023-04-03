@@ -1,7 +1,7 @@
 import { PageOptionsDto } from '../../../../common/dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional } from 'class-validator';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export class GetDraftPostDto extends PageOptionsDto {
   @ApiProperty({

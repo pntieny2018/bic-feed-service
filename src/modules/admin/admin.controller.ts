@@ -31,13 +31,14 @@ export class AdminController {
 
   @ApiOperation({ summary: 'Get post detail' })
   @ApiOkResponse({
-    type: ArticleResponseDto,
+    type: PostResponseDto,
   })
   @Get('/posts/:id')
   public get(
     @Param('id', ParseUUIDPipe) articleId: string,
-    @Query(GetPostPipe) getArticleDto: GetArticleDto
-  ): Promise<ArticleResponseDto> {
-    return this._adminService.getPostDetail(articleId, getArticleDto);
+    @Query(GetPostPipe) getArticleDto: GetArticleDto,
+    @AuthUser() user: UserDto
+  ): Promise<any> {
+    return this._adminService.getPostDetail(articleId, user);
   }
 }

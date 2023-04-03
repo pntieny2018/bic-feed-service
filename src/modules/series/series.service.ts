@@ -60,8 +60,6 @@ export class SeriesService {
     private readonly _postBinding: PostBindingService,
     private readonly _feedService: FeedService,
     private readonly _reactionService: ReactionService,
-    @Inject(forwardRef(() => ArticleService))
-    private readonly _articleService: ArticleService,
     @Inject(forwardRef(() => PostService))
     private readonly _postService: PostService
   ) {}
@@ -74,23 +72,12 @@ export class SeriesService {
     authUser: UserDto,
     getSeriesDto?: GetSeriesDto
   ): Promise<SeriesResponseDto> {
-    let condition;
-    if (authUser) {
-      condition = {
-        id,
-        type: PostType.SERIES,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
-      };
-    } else {
-      condition = { id, type: PostType.SERIES };
-    }
-
     const series = PostHelper.filterArchivedPost(
       await this._postModel.findOne({
         attributes: {
           include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
         },
-        where: condition,
+        where: { id, type: PostType.SERIES },
         include: [
           {
             model: PostGroupModel,
@@ -118,11 +105,6 @@ export class SeriesService {
 
     if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-    if (authUser) {
-      await this._authorityService.checkCanReadSeries(authUser, series);
-    } else {
-      await this._authorityService.checkIsPublicSeries(series);
     }
     let comments = null;
     if (getSeriesDto.withComment) {
@@ -153,7 +135,7 @@ export class SeriesService {
       excludeExtraneousValues: true,
     });
     result[0]['comments'] = comments;
-    result[0].items = await this._articleService.getItemsInSeries(id, authUser);
+    result[0].items = await this._postService.getItemsInSeries(id, authUser);
     return result[0];
   }
   /**
@@ -165,7 +147,7 @@ export class SeriesService {
       const { title, summary, audience, coverMedia, setting } = createPostDto;
       const authUserId = authUser.id;
       transaction = await this._sequelizeConnection.transaction();
-      const privacy = await this._articleService.getPrivacy(audience.groupIds);
+      const privacy = await this._postService.getPrivacy(audience.groupIds);
       const post = await this._postModel.create(
         {
           title,
@@ -244,7 +226,7 @@ export class SeriesService {
     try {
       const { audience, title, summary, coverMedia, setting } = updateSeriesDto;
       transaction = await this._sequelizeConnection.transaction();
-      const privacy = await this._articleService.getPrivacy(audience.groupIds);
+      const privacy = await this._postService.getPrivacy(audience.groupIds);
       const dataUpdate = {
         updatedBy: authUserId,
         title,

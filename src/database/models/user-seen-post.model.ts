@@ -1,7 +1,6 @@
 import { IsUUID } from 'class-validator';
 import {
   AfterBulkCreate,
-  AfterCreate,
   Column,
   CreatedAt,
   ForeignKey,

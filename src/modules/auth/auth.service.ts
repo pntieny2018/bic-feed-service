@@ -1,10 +1,10 @@
 import jwkToPem from 'jwk-to-pem';
 import * as jwt from 'jsonwebtoken';
+import { TokenExpiredError } from 'jsonwebtoken';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ICognitoConfig } from '../../config/cognito';
-import { TokenExpiredError } from 'jsonwebtoken';
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ClassTransformer } from 'class-transformer';
 import { LogicException } from '../../common/exceptions';
@@ -26,20 +26,9 @@ export class AuthService {
 
   public async getUser(payload: Record<string, any>): Promise<UserDto> {
     const username = payload['cognito:username'];
-    const userId = payload['custom:username'];
-    const appConfig = this._configService.get<IAppConfig>('app');
-    let userInfo;
-    if (appConfig.env === 'local') {
-      userInfo = await this._userAppService.findOne(userId, {
-        withPermission: true,
-        withGroupJoined: true,
-      });
-    } else {
-      userInfo = await this._userAppService.findByUserName(username, {
-        withPermission: true,
-        withGroupJoined: true,
-      });
-    }
+    const userInfo = await this._userAppService.findByUserName(username, {
+      withGroupJoined: true,
+    });
     if (!userInfo) {
       throw new LogicException(HTTP_STATUS_ID.API_UNAUTHORIZED);
     }

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReactionCountService } from '../reaction-count.service';
 import { RedisService } from '@app/redis';
-import { mockedUserAuth } from '../../../modules/post/test/mocks/user.mock';
 import { SentryService } from '@app/sentry';
 
 describe('ReactionCountService', () => {
@@ -47,10 +46,10 @@ describe('ReactionCountService', () => {
     });
 
     it('should fail', async () => {
-      redisService.get.mockRejectedValue(new Error('1'))
+      redisService.get.mockRejectedValue(new Error('1'));
       const data = await service.getTotalKind('1', 1);
-      expect(sentryService.captureException).toBeCalled()
-    })
+      expect(sentryService.captureException).toBeCalled();
+    });
   });
 
   describe('ReactionCountService.increment', () => {
@@ -61,10 +60,10 @@ describe('ReactionCountService', () => {
     });
 
     it('should fail', async () => {
-      redisService.set.mockRejectedValue(new Error('2'))
+      redisService.set.mockRejectedValue(new Error('2'));
       const data = await service.increment('1', 1);
-      expect(sentryService.captureException).toBeCalled()
-    })
+      expect(sentryService.captureException).toBeCalled();
+    });
   });
 
   describe('ReactionCountService.decrement', () => {
@@ -74,9 +73,9 @@ describe('ReactionCountService', () => {
     });
 
     it('should fail', async () => {
-      redisService.set.mockRejectedValue(new Error('3'))
+      redisService.set.mockRejectedValue(new Error('3'));
       const data = await service.decrement('1', 1);
-      expect(sentryService.captureException).toBeCalled()
-    })
+      expect(sentryService.captureException).toBeCalled();
+    });
   });
 });

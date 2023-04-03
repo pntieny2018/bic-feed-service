@@ -1,14 +1,24 @@
-import { POST_LANG } from '../../../data-type/post-lang.enum';
+import { PostLang } from '../../../data-type/post-lang.enum';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
+import { PostStatus } from '../../../data-type/post-status.enum';
+import { TagEntity } from '../tag';
 
 export type PostProps = {
   id: string;
+  groupIds: string[];
+  media: any;
+  mentions: any;
+  linkPreview: any;
+  series: any;
+  tags: TagEntity[];
+
   createdBy: string;
   updatedBy: string;
   content: string;
-  lang: POST_LANG;
+  lang: PostLang;
+  status: PostStatus;
   commentsCount: number;
   totalUsersSeen: number;
   isImportant: boolean;

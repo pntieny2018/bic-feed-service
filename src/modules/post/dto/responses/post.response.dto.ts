@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsEnum, IsUUID } from 'class-validator';
 import { PageDto } from '../../../../common/dto';
 import { PostPrivacy, PostStatus, PostType } from '../../../../database/models/post.model';
@@ -38,11 +38,18 @@ class SeriesSimpleResponseDto {
   })
   @Expose()
   public id: string;
+
   @ApiProperty({
     type: String,
   })
   @Expose()
   public title: string;
+
+  @ApiProperty({
+    type: Number,
+  })
+  @Expose()
+  public zindex?: string;
 }
 
 export class PostResponseDto {

@@ -8,7 +8,6 @@ import { IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { ValidateMedia } from '../../../media/validators/media.validator';
 import { ValidateMention } from '../../../mention/validators/validate-mention.validator';
 import { LinkPreviewDto } from '../../../link-preview/dto/link-preview.dto';
-import { CanUseSeries } from '../../../article/validators/can-use-series.validator';
 
 export class CreatePostDto {
   @ApiProperty({

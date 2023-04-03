@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Injectable, Logger } from '@nestjs/common';
-import { NIL as NIL_UUID } from 'uuid';
 import { On } from '../../common/decorators';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostPrivacy, PostStatus, PostType } from '../../database/models/post.model';
@@ -374,17 +373,15 @@ export class PostListener {
       },
     ]);
 
-    if (tags.length !== oldPost.tags.length) {
-      const oldTagIds = oldPost.tags.map((e) => e.id);
-      const newTagIds = tags.map((e) => e.id);
-      const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
-      if (deleteIds) {
-        this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
-      }
-      const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
-      if (addIds) {
-        this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
-      }
+    const oldTagIds = (oldPost.tags || []).map((e) => e.id);
+    const newTagIds = (tags || []).map((e) => e.id);
+    const deleteIds = ArrayHelper.arrDifferenceElements(oldTagIds, newTagIds);
+    if (deleteIds) {
+      this._tagService.decreaseTotalUsed(deleteIds).catch((ex) => this._logger.debug(ex));
+    }
+    const addIds = ArrayHelper.arrDifferenceElements(newTagIds, oldTagIds);
+    if (addIds) {
+      this._tagService.increaseTotalUsed(addIds).catch((ex) => this._logger.debug(ex));
     }
 
     const series = newPost.series?.map((s) => s.id) ?? [];

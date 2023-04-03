@@ -20,6 +20,7 @@ import { PostAppService } from './application/post.app-service';
 import { TagModule } from '../tag';
 import { UserModuleV2 } from '../v2-user/user.module';
 import { GroupModuleV2 } from '../v2-group/group.module';
+
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
   return {
@@ -37,7 +38,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
     AuthorityModule,
     forwardRef(() => CommentModule),
     forwardRef(() => FeedModule),
-    forwardRef(() => LinkPreviewModule),
+    LinkPreviewModule,
     TagModule,
   ],
   controllers: [PostController, PostConsumerController],

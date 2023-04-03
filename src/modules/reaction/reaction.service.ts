@@ -234,13 +234,13 @@ export class ReactionService {
           },
         });
 
-        this._emitter.emit(
-          new CreateReactionInternalEvent({
-            actor: userDto,
-            post: post,
-            reaction: reaction,
-          })
-        );
+        // this._emitter.emit(
+        //   new CreateReactionInternalEvent({
+        //     actor: userDto,
+        //     post: post,
+        //     reaction: reaction,
+        //   })
+        // );
 
         return reaction;
       }
@@ -330,14 +330,14 @@ export class ReactionService {
           },
         });
 
-        this._emitter.emit(
-          new CreateReactionInternalEvent({
-            actor: userDto,
-            post: post,
-            comment: comment,
-            reaction: reaction,
-          })
-        );
+        // this._emitter.emit(
+        //   new CreateReactionInternalEvent({
+        //     actor: userDto,
+        //     post: post,
+        //     comment: comment,
+        //     reaction: reaction,
+        //   })
+        // );
 
         return reaction;
       }
@@ -345,17 +345,13 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
-        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
-      }
-      if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
-        this._sentryService.captureException(e);
+      } else if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
         throw new LogicException(e.message);
-      }
-
-      if (e.message === SERIALIZE_TRANSACTION_ERROR) {
-        this._sentryService.captureException(e);
+      } else if (e.message === SERIALIZE_TRANSACTION_ERROR) {
         return this._createCommentReaction(userDto, createReactionDto, attempt + 1);
+      } else {
+        this._sentryService.captureException(e);
       }
 
       throw e;
@@ -455,18 +451,18 @@ export class ReactionService {
         avatar: userDto.avatar,
       };
 
-      this._emitter.emit(
-        new DeleteReactionInternalEvent({
-          actor: userDto,
-          post: post,
-          reaction: new ReactionResponseDto(
-            response.id,
-            response.reactionName,
-            actor,
-            response.createdAt
-          ),
-        })
-      );
+      // this._emitter.emit(
+      //   new DeleteReactionInternalEvent({
+      //     actor: userDto,
+      //     post: post,
+      //     reaction: new ReactionResponseDto(
+      //       response.id,
+      //       response.reactionName,
+      //       actor,
+      //       response.createdAt
+      //     ),
+      //   })
+      // );
 
       return response;
     } catch (ex) {
@@ -551,19 +547,19 @@ export class ReactionService {
 
       await trx.commit();
 
-      this._emitter.emit(
-        new DeleteReactionInternalEvent({
-          actor: actor,
-          post: post,
-          reaction: new ReactionResponseDto(
-            response.id,
-            response.reactionName,
-            actor,
-            response.createdAt
-          ),
-          comment: comment,
-        })
-      );
+      // this._emitter.emit(
+      //   new DeleteReactionInternalEvent({
+      //     actor: actor,
+      //     post: post,
+      //     reaction: new ReactionResponseDto(
+      //       response.id,
+      //       response.reactionName,
+      //       actor,
+      //       response.createdAt
+      //     ),
+      //     comment: comment,
+      //   })
+      // );
 
       return response;
     } catch (ex) {
