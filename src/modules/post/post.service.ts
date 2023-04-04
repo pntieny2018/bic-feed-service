@@ -433,7 +433,7 @@ export class PostService {
         model: PostGroupModel,
         as: 'groups',
         required: mustIncludeGroup,
-        attributes: ['groupId', 'isArchived'],
+        attributes: ['groupId', 'isArchived', 'isPinned'],
         where: { isArchived: false },
       };
       if (filterGroupIds) {
@@ -1992,5 +1992,24 @@ export class PostService {
     return this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
+  }
+
+  public async pinPostToGroupIds(
+    postId: string,
+    groupIds: string[],
+    isPinned: boolean
+  ): Promise<void> {
+    if (groupIds.length === 0) return;
+    await this.postGroupModel.update(
+      {
+        isPinned,
+      },
+      {
+        where: {
+          postId,
+          groupId: groupIds,
+        },
+      }
+    );
   }
 }

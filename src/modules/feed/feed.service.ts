@@ -1,12 +1,19 @@
 import { SentryService } from '@app/sentry';
-import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto, PageMetaDto } from '../../common/dto';
 import { ExceptionHelper } from '../../common/helpers';
-import { IPost } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -19,6 +26,10 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
+import { PostGroupModel } from '../../database/models/post-group.model';
+import { AuthorityService } from '../authority';
+import { ContentNotFoundException } from '../v2-post/exception/content-not-found.exception';
+import { AudienceNoBelongContentException } from '../v2-post/exception/audience-no-belong-content.exception';
 
 @Injectable()
 export class FeedService {
@@ -37,7 +48,10 @@ export class FeedService {
     @InjectModel(UserSeenPostModel)
     private _userSeenPostModel: typeof UserSeenPostModel,
     private _sentryService: SentryService,
-    private _postBindingService: PostBindingService
+    private _postBindingService: PostBindingService,
+    @InjectModel(PostModel)
+    protected postModel: typeof PostModel,
+    private _authorityService: AuthorityService
   ) {}
 
   /**
@@ -101,6 +115,7 @@ export class FeedService {
     posts: IPost[];
     authUser: UserDto;
   }): Promise<ArticleResponseDto[]> {
+    console.log('xxxx=', JSON.stringify(posts, null, 4));
     const postsBindedData = await this._postBindingService.bindRelatedData(posts, {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -331,5 +346,46 @@ export class FeedService {
     });
 
     return postsBoundData;
+  }
+
+  public async pinContent(postId: string, groupIds: string[], authUser: UserDto): Promise<void> {
+    const post = await this.postModel.findOne({
+      attributes: ['id'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId', 'isPinned', 'pinnedIndex'],
+          where: { isArchived: false },
+        },
+      ],
+      where: {
+        id: postId,
+        isHidden: false,
+      },
+    });
+
+    if (!post || post.groups?.length === 0) {
+      throw new ContentNotFoundException();
+    }
+
+    const postGroupIds = post.groups.map((group) => group.groupId);
+    const oldGroupIds = post.groups.filter((group) => group.isPinned).map((group) => group.groupId);
+    const removeGroupIds = oldGroupIds.filter((groupId) => !groupIds.includes(groupId));
+    const addGroupIds = groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+
+    const groupIdsNotBelong = groupIds.filter((groupId) => !postGroupIds.includes(groupId));
+    if (groupIdsNotBelong.length) {
+      throw new AudienceNoBelongContentException({ groupsDenied: groupIdsNotBelong });
+    }
+    await this._authorityService.checkPinPermission(authUser, [...removeGroupIds, ...addGroupIds]);
+
+    try {
+      await this._postService.pinPostToGroupIds(postId, removeGroupIds, false);
+      await this._postService.pinPostToGroupIds(postId, addGroupIds, true);
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex?.stack));
+    }
   }
 }

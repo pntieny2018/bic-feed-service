@@ -5,6 +5,7 @@ export const PERMISSION_KEY = {
   //EDIT_POST_OF_INACTIVE_USER: 'edit_post_of_inactive_user',
   EDIT_POST_SETTING: 'edit_post_setting',
   //PUBLISH_UNPUBLISH_POST: 'publish_unpublish_post',
+  PIN_CONTENT: 'pin_content',
 };
 
 export const SUBJECT = {

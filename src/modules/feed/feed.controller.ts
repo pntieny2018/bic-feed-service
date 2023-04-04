@@ -1,5 +1,16 @@
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
@@ -11,6 +22,13 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserDto } from '../v2-user/application';
 import { GetDraftPostDto } from '../post/dto/requests/get-draft-posts.dto';
 import { ArticleResponseDto } from '../article/dto/responses';
+import { PinContentDto } from './dto/request/pin-content.dto';
+import { TagDuplicateNameException, TagNotFoundException } from '../v2-post/exception';
+import { TagNoCreatePermissionException } from '../v2-post/exception/tag-no-create-permission.exception';
+import { DomainModelException } from '../../common/exceptions/domain-model.exception';
+import { ContentNotFoundException } from '../v2-post/exception/content-not-found.exception';
+import { AudienceNoBelongContentException } from '../v2-post/exception/audience-no-belong-content.exception';
+import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -84,5 +102,33 @@ export class FeedController {
     @AuthUser() user: UserDto
   ): Promise<ArticleResponseDto[]> {
     return this._feedService.getPinnedList(groupId, user);
+  }
+
+  @ApiOperation({ summary: 'Pin content' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Put('pin/:postId')
+  public async pinItem(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @Body() pinContentDto: PinContentDto
+  ): Promise<void> {
+    try {
+      await this._feedService.pinContent(postId, pinContentDto.groupIds, user);
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+          throw new NotFoundException(e);
+        case AudienceNoBelongContentException:
+          throw new BadRequestException(e);
+        case ContentNoPinPermissionException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
   }
 }
