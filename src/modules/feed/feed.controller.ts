@@ -103,37 +103,4 @@ export class FeedController {
   ): Promise<ArticleResponseDto[]> {
     return this._feedService.getPinnedList(groupId, user);
   }
-
-  @ApiOperation({ summary: 'Pin content' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-  })
-  @Put('pin/:postId')
-  public async pinItem(
-    @AuthUser() authUser: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string,
-    @Body() pinContentDto: PinContentDto
-  ): Promise<void> {
-    try {
-      await this._feedService.pinContent({
-        postId,
-        pinGroupIds: pinContentDto.pinGroupIds,
-        unpinGroupIds: pinContentDto.unpinGroupIds,
-        authUser,
-      });
-    } catch (e) {
-      switch (e.constructor) {
-        case ContentNotFoundException:
-          throw new NotFoundException(e);
-        case AudienceNoBelongContentException:
-          throw new BadRequestException(e);
-        case ContentNoPinPermissionException:
-          throw new ForbiddenException(e);
-        case DomainModelException:
-          throw new BadRequestException(e);
-        default:
-          throw e;
-      }
-    }
-  }
 }

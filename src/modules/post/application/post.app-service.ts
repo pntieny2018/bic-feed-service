@@ -10,8 +10,8 @@ import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
 import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
-import { IPostGroup } from '../../../database/models/post-group.model';
-import { IPost, PostStatus } from '../../../database/models/post.model';
+import { IPostGroup, PostGroupModel } from '../../../database/models/post-group.model';
+import { IPost, PostModel, PostStatus } from '../../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -35,6 +35,8 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-grou
 import { ArticleResponseDto } from '../../article/dto/responses';
 import { ContentNotFoundException } from '../../v2-post/exception/content-not-found.exception';
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
+import { AudienceNoBelongContentException } from '../../v2-post/exception/audience-no-belong-content.exception';
+import { InjectModel } from '@nestjs/sequelize';
 
 @Injectable()
 export class PostAppService {
@@ -51,7 +53,9 @@ export class PostAppService {
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
     protected authorityService: AuthorityService,
-    private _tagService: TagService
+    private _tagService: TagService,
+    @InjectModel(PostModel)
+    protected postModel: typeof PostModel
   ) {}
 
   public getDraftPosts(
@@ -244,7 +248,7 @@ export class PostAppService {
   public async getAudience(
     postId: string,
     user: UserDto,
-    getAudienceContentDto: GetAudienceContentDto,
+    getAudienceContentDto: GetAudienceContentDto
   ): Promise<any> {
     const post = await this._postService.getGroupsByPostId(postId);
     if (!post) {
@@ -371,7 +375,51 @@ export class PostAppService {
     this._postService.checkContent(post.content, post.media);
   }
 
-  public async getPinnedList(groupId: string, user: UserDto) {
-    return await this._postService.getPinnedList(groupId, user);
+  public async pinContent(payload: {
+    postId: string;
+    pinGroupIds: string[];
+    unpinGroupIds: string[];
+    authUser: UserDto;
+  }): Promise<void> {
+    const { postId, pinGroupIds, unpinGroupIds, authUser } = payload;
+    const post = await this.postModel.findOne({
+      attributes: ['id'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId', 'isPinned', 'pinnedIndex'],
+          where: { isArchived: false },
+        },
+      ],
+      where: {
+        id: postId,
+        isHidden: false,
+      },
+    });
+
+    if (!post || post.groups?.length === 0) {
+      throw new ContentNotFoundException();
+    }
+
+    const postGroupIds = post.groups.map((group) => group.groupId);
+
+    const groupIdsPinAndUnpin = [...unpinGroupIds, ...pinGroupIds];
+
+    const groupIdsNotBelong = groupIdsPinAndUnpin.filter(
+      (groupId) => !postGroupIds.includes(groupId)
+    );
+    if (groupIdsNotBelong.length) {
+      throw new AudienceNoBelongContentException({ groupsDenied: groupIdsNotBelong });
+    }
+    await this._authorityService.checkPinPermission(authUser, groupIdsPinAndUnpin);
+
+    try {
+      await this._postService.pinPostToGroupIds(postId, unpinGroupIds, false);
+      await this._postService.pinPostToGroupIds(postId, pinGroupIds, true);
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex?.stack));
+    }
   }
 }
