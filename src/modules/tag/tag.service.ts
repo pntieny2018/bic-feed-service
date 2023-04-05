@@ -295,7 +295,7 @@ export class TagService {
       },
     });
     if (!tag) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+      return null;
     }
     return tag.id;
   }
