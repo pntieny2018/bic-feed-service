@@ -30,6 +30,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
+import { TagService } from '../tag/tag.service';
 
 type FieldSearch = {
   default: string;
@@ -55,6 +56,7 @@ export class SearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
+    protected readonly tagService: TagService,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected readonly appGroupService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
@@ -245,7 +247,7 @@ export class SearchService {
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<any>> {
-    const { contentSearch, limit, offset, groupId } = searchPostsDto;
+    const { contentSearch, limit, offset, groupId, tagName } = searchPostsDto;
     const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<any>([], {
@@ -256,6 +258,7 @@ export class SearchService {
     }
 
     let groupIds = user.groups;
+    let tagId;
     if (groupId) {
       const group = await this.appGroupService.findOne(groupId);
       if (!group) {
@@ -268,6 +271,12 @@ export class SearchService {
           offset,
           hasNextPage: false,
         });
+      }
+      if (tagName) {
+        tagId = await this.tagService.getTagIdByGroupNameAndTagName(tagName, groupId);
+        if (tagId) {
+          searchPostsDto.tagId = tagId;
+        }
       }
     }
 
@@ -606,6 +615,7 @@ export class SearchService {
       type,
       notIncludeIds,
       tagName,
+      tagId,
     }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
@@ -625,7 +635,7 @@ export class SearchService {
             ...this._getTypeFilter(type),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
-            ...this._getTagFilter(tagName),
+            ...(tagId ? this._getTagIdFilter(tagId) : this._getTagFilter(tagName)),
           ],
           should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -829,6 +839,20 @@ export class SearchService {
         {
           term: {
             [tags.name]: tagName,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
+  private _getTagIdFilter(tagId: string): any {
+    const { tags } = ELASTIC_POST_MAPPING_PATH;
+    if (tagId) {
+      return [
+        {
+          term: {
+            [tags.id]: tagId,
           },
         },
       ];

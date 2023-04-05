@@ -286,4 +286,17 @@ export class TagService {
     }
     return [];
   }
+
+  public async getTagIdByGroupNameAndTagName(name: string, groupId: string): Promise<string> {
+    const tag = await this._tagModel.findOne({
+      where: {
+        name: name,
+        groupId: groupId,
+      },
+    });
+    if (!tag) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_TAG_NOT_EXISTING);
+    }
+    return tag.id;
+  }
 }
