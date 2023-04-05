@@ -1,12 +1,5 @@
 import { SentryService } from '@app/sentry';
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
 import { Transaction } from 'sequelize';
@@ -26,10 +19,7 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { PostGroupModel } from '../../database/models/post-group.model';
 import { AuthorityService } from '../authority';
-import { ContentNotFoundException } from '../v2-post/exception/content-not-found.exception';
-import { AudienceNoBelongContentException } from '../v2-post/exception/audience-no-belong-content.exception';
 
 @Injectable()
 export class FeedService {
@@ -115,7 +105,6 @@ export class FeedService {
     posts: IPost[];
     authUser: UserDto;
   }): Promise<ArticleResponseDto[]> {
-    console.log('xxxx=', JSON.stringify(posts, null, 4));
     const postsBindedData = await this._postBindingService.bindRelatedData(posts, {
       shouldBindReaction: true,
       shouldBindActor: true,
@@ -208,39 +197,6 @@ export class FeedService {
       throw ex;
     }
   }
-
-  public async markSeenPosts(postId: string, userId: string): Promise<void> {
-    try {
-      const exist = await this._userSeenPostModel.findOne({
-        where: {
-          postId: postId,
-          userId: userId,
-        },
-      });
-      if (!exist) {
-        await this._userSeenPostModel.bulkCreate(
-          [
-            {
-              postId: postId,
-              userId: userId,
-            },
-          ],
-          { ignoreDuplicates: true }
-        );
-
-        await this._newsFeedModel.update(
-          { isSeenPost: true },
-          {
-            where: { userId, postId },
-          }
-        );
-      }
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex?.stack));
-      this._sentryService.captureException(ex);
-    }
-  }
-
   /**
    * Get Timeline
    */

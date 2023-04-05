@@ -60,6 +60,7 @@ import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/a
 import { GroupPrivacy } from '../v2-group/data-type';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class PostService {
@@ -103,7 +104,9 @@ export class PostService {
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
-    protected readonly tagService: TagService
+    protected readonly tagService: TagService,
+    @InjectModel(UserSeenPostModel)
+    protected userSeenPostModel: typeof UserSeenPostModel
   ) {}
 
   /**
@@ -2033,5 +2036,30 @@ export class PostService {
     });
 
     return post;
+  }
+
+  public async markSeenPost(postId: string, userId: string): Promise<void> {
+    try {
+      const exist = await this.userSeenPostModel.findOne({
+        where: {
+          postId: postId,
+          userId: userId,
+        },
+      });
+      if (!exist) {
+        await this.userSeenPostModel.bulkCreate(
+          [
+            {
+              postId: postId,
+              userId: userId,
+            },
+          ],
+          { ignoreDuplicates: true }
+        );
+      }
+    } catch (ex) {
+      this.logger.error(JSON.stringify(ex?.stack));
+      this.sentryService.captureException(ex);
+    }
   }
 }

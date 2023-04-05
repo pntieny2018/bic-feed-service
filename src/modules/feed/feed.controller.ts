@@ -1,17 +1,6 @@
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  ForbiddenException,
-  Get,
-  NotFoundException,
-  Param,
-  ParseUUIDPipe,
-  Put,
-  Query,
-} from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
 import { GetTimelineDto } from './dto/request';
@@ -20,15 +9,7 @@ import { PostResponseDto } from '../post/dto/responses';
 import { APP_VERSION } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserDto } from '../v2-user/application';
-import { GetDraftPostDto } from '../post/dto/requests/get-draft-posts.dto';
 import { ArticleResponseDto } from '../article/dto/responses';
-import { PinContentDto } from './dto/request/pin-content.dto';
-import { TagDuplicateNameException, TagNotFoundException } from '../v2-post/exception';
-import { TagNoCreatePermissionException } from '../v2-post/exception/tag-no-create-permission.exception';
-import { DomainModelException } from '../../common/exceptions/domain-model.exception';
-import { ContentNotFoundException } from '../v2-post/exception/content-not-found.exception';
-import { AudienceNoBelongContentException } from '../v2-post/exception/audience-no-belong-content.exception';
-import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
 
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
@@ -63,24 +44,6 @@ export class FeedController {
     @Query() getNewsFeedDto: GetNewsFeedDto
   ): Promise<PageDto<PostResponseDto>> {
     return this._feedService.getNewsFeed(authUser, getNewsFeedDto);
-  }
-
-  @ApiOperation({ summary: 'Mark seen post' })
-  @ApiParam({
-    name: 'id',
-    description: 'Id of seen post',
-    required: true,
-  })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Put('/seen/:id')
-  public async markSeenPost(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    await this._feedService.markSeenPosts(postId, user.id);
-    return true;
   }
 
   @ApiOperation({ summary: 'Get users seen post' })

@@ -18,7 +18,6 @@ import {
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
 import { AuthorityService } from '../../authority';
-import { FeedService } from '../../feed/feed.service';
 import { TargetType } from '../../report-content/contstants';
 import { CreatePostDto, GetPostDto, GetPostEditedHistoryDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
@@ -47,7 +46,6 @@ export class PostAppService {
     private _postHistoryService: PostHistoryService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _feedService: FeedService,
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
     @Inject(GROUP_APPLICATION_TOKEN)
@@ -109,7 +107,7 @@ export class PostAppService {
     }
 
     if (user) {
-      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+      this.markSeenPost(postId, user.id).catch((ex) => {
         this._logger.error(JSON.stringify(ex?.stack));
       });
     }
@@ -200,7 +198,7 @@ export class PostAppService {
     await this._preCheck(post, user);
 
     const postUpdated = await this._postService.publish(post, user);
-    this._feedService.markSeenPosts(postUpdated.id, user.id);
+    this.markSeenPost(postUpdated.id, user.id);
     postUpdated.totalUsersSeen = Math.max(postUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
@@ -287,10 +285,14 @@ export class PostAppService {
     return true;
   }
 
+  public async markSeenPost(postId: string, userId: string): Promise<void> {
+    await this._postService.markSeenPost(postId, userId);
+  }
+
   public getEditedHistory(
     user: UserDto,
     postId: string,
-    getPostEditedHistoryDto: GetPostEditedHistoryDto
+    getPostEditedHistoryDto: GetPostEditedHistoryDto,
   ): Promise<PageDto<PostEditedHistoryDto>> {
     return this._postHistoryService.getEditedHistory(user, postId, getPostEditedHistoryDto);
   }
