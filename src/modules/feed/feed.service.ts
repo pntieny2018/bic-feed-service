@@ -348,7 +348,13 @@ export class FeedService {
     return postsBoundData;
   }
 
-  public async pinContent(postId: string, groupIds: string[], authUser: UserDto): Promise<void> {
+  public async pinContent(payload: {
+    postId: string;
+    pinGroupIds: string[];
+    unpinGroupIds: string[];
+    authUser: UserDto;
+  }): Promise<void> {
+    const { postId, pinGroupIds, unpinGroupIds, authUser } = payload;
     const post = await this.postModel.findOne({
       attributes: ['id'],
       include: [
@@ -371,19 +377,23 @@ export class FeedService {
     }
 
     const postGroupIds = post.groups.map((group) => group.groupId);
-    const oldGroupIds = post.groups.filter((group) => group.isPinned).map((group) => group.groupId);
-    const removeGroupIds = oldGroupIds.filter((groupId) => !groupIds.includes(groupId));
-    const addGroupIds = groupIds.filter((groupId) => !oldGroupIds.includes(groupId));
+    const oldGroupIdsPinned = post.groups
+      .filter((group) => group.isPinned)
+      .map((group) => group.groupId);
 
-    const groupIdsNotBelong = groupIds.filter((groupId) => !postGroupIds.includes(groupId));
+    const groupIdsPinAndUnpin = [...unpinGroupIds, ...pinGroupIds];
+
+    const groupIdsNotBelong = groupIdsPinAndUnpin.filter(
+      (groupId) => !postGroupIds.includes(groupId)
+    );
     if (groupIdsNotBelong.length) {
       throw new AudienceNoBelongContentException({ groupsDenied: groupIdsNotBelong });
     }
-    await this._authorityService.checkPinPermission(authUser, [...removeGroupIds, ...addGroupIds]);
+    await this._authorityService.checkPinPermission(authUser, groupIdsPinAndUnpin);
 
     try {
-      await this._postService.pinPostToGroupIds(postId, removeGroupIds, false);
-      await this._postService.pinPostToGroupIds(postId, addGroupIds, true);
+      await this._postService.pinPostToGroupIds(postId, unpinGroupIds, false);
+      await this._postService.pinPostToGroupIds(postId, pinGroupIds, true);
     } catch (ex) {
       this._logger.error(JSON.stringify(ex?.stack));
     }

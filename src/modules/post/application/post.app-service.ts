@@ -33,6 +33,8 @@ import {
 } from '../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
 import { ArticleResponseDto } from '../../article/dto/responses';
+import { ContentNotFoundException } from '../../v2-post/exception/content-not-found.exception';
+import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
 
 @Injectable()
 export class PostAppService {
@@ -237,6 +239,36 @@ export class PostAppService {
   public async markReadPost(user: UserDto, postId: string): Promise<boolean> {
     await this._postService.markRead(postId, user.id);
     return true;
+  }
+
+  public async getAudience(
+    postId: string,
+    user: UserDto,
+    getAudienceContentDto: GetAudienceContentDto,
+  ): Promise<any> {
+    const post = await this._postService.getGroupsByPostId(postId);
+    if (!post) {
+      throw new ContentNotFoundException();
+    }
+    const groups = post.groups || [];
+    const listPinPostIds = {};
+    const groupIds = [];
+    groups.forEach((group) => {
+      groupIds.push(group.groupId);
+      listPinPostIds[group.groupId] = group.isPinned;
+    });
+    let dataGroups = await this._groupAppService.findAllByIds(groupIds);
+
+    if (getAudienceContentDto.pinnable) {
+      dataGroups = await this._authorityService.getAudienceCanPin(dataGroups, user);
+    }
+    return {
+      groups: dataGroups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        isPinned: listPinPostIds[group.id],
+      })),
+    };
   }
 
   public async savePost(user: UserDto, postId: string): Promise<boolean> {

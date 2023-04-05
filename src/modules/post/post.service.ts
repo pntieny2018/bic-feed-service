@@ -2012,4 +2012,27 @@ export class PostService {
       }
     );
   }
+
+  public async getGroupsByPostId(id: string): Promise<IPost> {
+    const post = await this.postModel.findOne({
+      attributes: ['id'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId', 'isPinned'],
+          where: {
+            isArchived: false,
+          },
+        },
+      ],
+      where: {
+        id,
+        isHidden: false,
+      },
+    });
+
+    return post;
+  }
 }

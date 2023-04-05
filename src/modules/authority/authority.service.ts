@@ -302,7 +302,7 @@ export class AuthorityService {
         PERMISSION_KEY.PIN_CONTENT,
         subject(SUBJECT.GROUP, { id: groupId })
       );
-      if (canPin) {
+      if (!canPin) {
         invalidGroup.push(groupId);
       }
     }
@@ -310,5 +310,20 @@ export class AuthorityService {
     if (invalidGroup.length > 0) {
       throw new ContentNoPinPermissionException({ groupsDenied: invalidGroup });
     }
+  }
+
+  public async getAudienceCanPin(groups: GroupDto[], user: UserDto): Promise<GroupDto[]> {
+    const ability = await this._buildAbility(user);
+    const groupsCanPin = [];
+    for (const group of groups) {
+      const canPin = ability.can(
+        PERMISSION_KEY.PIN_CONTENT,
+        subject(SUBJECT.GROUP, { id: group.id })
+      );
+      if (canPin) {
+        groupsCanPin.push(group);
+      }
+    }
+    return groupsCanPin;
   }
 }

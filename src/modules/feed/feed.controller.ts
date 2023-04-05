@@ -110,12 +110,17 @@ export class FeedController {
   })
   @Put('pin/:postId')
   public async pinItem(
-    @AuthUser() user: UserDto,
+    @AuthUser() authUser: UserDto,
     @Param('postId', ParseUUIDPipe) postId: string,
     @Body() pinContentDto: PinContentDto
   ): Promise<void> {
     try {
-      await this._feedService.pinContent(postId, pinContentDto.groupIds, user);
+      await this._feedService.pinContent({
+        postId,
+        pinGroupIds: pinContentDto.pinGroupIds,
+        unpinGroupIds: pinContentDto.unpinGroupIds,
+        authUser,
+      });
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
