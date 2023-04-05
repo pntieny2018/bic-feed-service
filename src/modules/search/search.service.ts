@@ -273,7 +273,7 @@ export class SearchService {
         });
       }
       if (tagName) {
-        tagId = await this.tagService.getTagIdByGroupNameAndTagName(tagName, groupId);
+        tagId = await this.tagService.findTag(tagName, groupId);
         if (tagId) {
           searchPostsDto.tagId = tagId;
         }

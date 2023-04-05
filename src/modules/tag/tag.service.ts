@@ -287,7 +287,7 @@ export class TagService {
     return [];
   }
 
-  public async getTagIdByGroupNameAndTagName(name: string, groupId: string): Promise<string> {
+  public async findTag(name: string, groupId: string): Promise<string> {
     const tag = await this._tagModel.findOne({
       where: {
         name: name,
