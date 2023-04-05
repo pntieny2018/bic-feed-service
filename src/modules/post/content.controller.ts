@@ -89,7 +89,7 @@ export class ContentController {
     return this._postAppService.getAudience(postId, user, getAudienceContentDto);
   }
 
-  @ApiOperation({ summary: 'Pin/unpin content' })
+  @ApiOperation({ summary: 'Pin/unpin content.' })
   @ApiOkResponse({
     type: PostResponseDto,
   })
