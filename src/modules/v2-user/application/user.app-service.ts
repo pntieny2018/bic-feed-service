@@ -25,6 +25,7 @@ export class UserApplicationService implements IUserApplicationService {
   public async findOne(userId: string, options?: FindUserOption): Promise<UserDto> {
     if (!userId) return null;
     const user = await this._repo.findOne(userId);
+    if (!user) return null;
     if (options && options.withPermission) {
       const permissions = await this._repo.getPermissionsByUserId(user.get('id'));
       user.setPermissions(permissions);
@@ -47,7 +48,9 @@ export class UserApplicationService implements IUserApplicationService {
       return user;
     });
   }
-
+  public async canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean> {
+    return this._repo.canCudTagInCommunityByUserId(userId, communityId);
+  }
   private _toDto(user: UserEntity): UserDto {
     return {
       id: user.get('id'),

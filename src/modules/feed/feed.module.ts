@@ -6,6 +6,7 @@ import { FeedController } from './feed.controller';
 import { ReactionModule } from '../reaction';
 import { UserModuleV2 } from '../v2-user/user.module';
 import { GroupModuleV2 } from '../v2-group/group.module';
+import { AuthorityModule } from '../authority';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { GroupModuleV2 } from '../v2-group/group.module';
     GroupModuleV2,
     MentionModule,
     forwardRef(() => ReactionModule),
+    AuthorityModule,
   ],
   providers: [FeedService],
   controllers: [FeedController],
