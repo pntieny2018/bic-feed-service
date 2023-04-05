@@ -24,6 +24,7 @@ import { ContentNotFoundException } from '../v2-post/exception/content-not-found
 import { AudienceNoBelongContentException } from '../v2-post/exception/audience-no-belong-content.exception';
 import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
 import { DomainModelException } from '../../common/exceptions/domain-model.exception';
+import { ResponseMessages } from '../../common/decorators';
 
 @ApiSecurity('authorization')
 @ApiTags('Content')
@@ -93,6 +94,7 @@ export class ContentController {
   @ApiOkResponse({
     type: PostResponseDto,
   })
+  @ResponseMessages({ success: 'Pinned successfully!' })
   @Put('/:postId/pin')
   public async pinItem(
     @AuthUser() authUser: UserDto,
