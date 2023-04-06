@@ -9,8 +9,6 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { IAxiosConfig } from '../../config/axios';
 import { CategoryController } from './driving-apdater/controller/category.controller';
-import { giphyProvider } from './provider/giphy.provider';
-import { GiphyController } from './driving-apdater/controller/giphy.controller';
 
 @Module({
   imports: [
@@ -30,7 +28,7 @@ import { GiphyController } from './driving-apdater/controller/giphy.controller';
     GroupModuleV2,
     UserModuleV2,
   ],
-  controllers: [TagController, CategoryController, GiphyController],
-  providers: [...tagProvider, ...categoryProvider, ...giphyProvider],
+  controllers: [TagController, CategoryController],
+  providers: [...tagProvider, ...categoryProvider],
 })
 export class PostModuleV2 {}

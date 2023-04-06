@@ -1,13 +1,14 @@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { ClassTransformer } from 'class-transformer';
-import { GetTrendingGifRequestDto } from '../dto/request/giphy/get-trending-gif.request.dto';
-import { SearchGifRequestDto } from '../dto/request/giphy/search-gif.request.dto';
+import { GetTrendingGifRequestDto } from '../dto/request/get-trending-gif.request.dto';
+import { SearchGifRequestDto } from '../dto/request/search-gif.request.dto';
 import { GiphyResponseDto } from '../dto/response/giphy.response.dto';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { GetTrendingGifsQuery } from '../../application/query/find-giphy/get-trending-gifs.query';
-import { SearchGifsQuery } from '../../application/query/find-giphy/search-gifs.query';
+import {
+  GIPHY_APPLICATION_TOKEN,
+  IGiphyApplicationService,
+} from '../../application/interface/giphy.app-service.interface';
 
 @ApiTags('Giphy')
 @Controller({
@@ -15,17 +16,16 @@ import { SearchGifsQuery } from '../../application/query/find-giphy/search-gifs.
   path: 'giphy',
 })
 export class GiphyController {
-  public constructor(
-    private readonly _commandBus: CommandBus,
-    private readonly _queryBus: QueryBus
-  ) {}
+  @Inject(GIPHY_APPLICATION_TOKEN)
+  private readonly _giphyAppService: IGiphyApplicationService;
+  // public constructor() {}
   private _classTransformer = new ClassTransformer();
   @ApiOperation({ summary: 'Get trending gif' })
   @Get('/trending')
   public async getTrendingGif(
     @Query() getTrendingGifRequestDto: GetTrendingGifRequestDto
   ): Promise<GiphyResponseDto[]> {
-    return this._queryBus.execute(new GetTrendingGifsQuery(getTrendingGifRequestDto));
+    return this._giphyAppService.getTrendingGifs(getTrendingGifRequestDto);
   }
 
   @ApiOperation({ summary: 'Search gif' })
@@ -33,6 +33,6 @@ export class GiphyController {
   public async searchGif(
     @Query() searchGifRequestDto: SearchGifRequestDto
   ): Promise<GiphyResponseDto[]> {
-    return this._queryBus.execute(new SearchGifsQuery(searchGifRequestDto));
+    return this._giphyAppService.searchGifs(searchGifRequestDto);
   }
 }

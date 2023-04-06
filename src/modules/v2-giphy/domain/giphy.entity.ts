@@ -1,4 +1,4 @@
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
+import { DomainAggregateRoot } from '../../../common/domain-model/domain-aggregate-root';
 
 export type GiphyProps = {
   type: string;
