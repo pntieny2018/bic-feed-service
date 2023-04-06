@@ -292,7 +292,7 @@ export class PostAppService {
   public getEditedHistory(
     user: UserDto,
     postId: string,
-    getPostEditedHistoryDto: GetPostEditedHistoryDto,
+    getPostEditedHistoryDto: GetPostEditedHistoryDto
   ): Promise<PageDto<PostEditedHistoryDto>> {
     return this._postHistoryService.getEditedHistory(user, postId, getPostEditedHistoryDto);
   }
@@ -404,22 +404,33 @@ export class PostAppService {
     if (!post || post.groups?.length === 0) {
       throw new ContentNotFoundException();
     }
+    const groups = post.groups || [];
+    const currentGroupIds = [];
+    const currentPinGroupIds = [];
+    const currentUnpinGroupIds = [];
+    for (const group of groups) {
+      if (group.isPinned) currentPinGroupIds.push(group.groupId);
+      if (!group.isPinned) currentUnpinGroupIds.push(group.groupId);
+      currentGroupIds.push(group.groupId);
+    }
 
-    const postGroupIds = post.groups.map((group) => group.groupId);
+    const newGroupIdsPinAndUnpin = [...unpinGroupIds, ...pinGroupIds];
 
-    const groupIdsPinAndUnpin = [...unpinGroupIds, ...pinGroupIds];
-
-    const groupIdsNotBelong = groupIdsPinAndUnpin.filter(
-      (groupId) => !postGroupIds.includes(groupId)
+    const groupIdsNotBelong = newGroupIdsPinAndUnpin.filter(
+      (groupId) => !currentGroupIds.includes(groupId)
     );
     if (groupIdsNotBelong.length) {
       throw new AudienceNoBelongContentException({ groupsDenied: groupIdsNotBelong });
     }
-    await this._authorityService.checkPinPermission(authUser, groupIdsPinAndUnpin);
+    await this._authorityService.checkPinPermission(authUser, newGroupIdsPinAndUnpin);
 
+    const addPinGroupIds = pinGroupIds.filter((groupId) => !currentPinGroupIds.includes(groupId));
+    const addUnpinGroupIds = unpinGroupIds.filter(
+      (groupId) => !currentUnpinGroupIds.includes(groupId)
+    );
     try {
-      await this._postService.pinPostToGroupIds(postId, unpinGroupIds, false);
-      await this._postService.pinPostToGroupIds(postId, pinGroupIds, true);
+      await this._postService.unpinPostToGroupIds(postId, addUnpinGroupIds);
+      await this._postService.pinPostToGroupIds(postId, addPinGroupIds);
     } catch (ex) {
       this._logger.error(JSON.stringify(ex?.stack));
     }
