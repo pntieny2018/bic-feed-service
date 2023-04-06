@@ -447,6 +447,13 @@ export class PostService {
         required: false,
       });
     }
+    if (shouldIncludePreviewLink) {
+      includes.push({
+        model: LinkPreviewModel,
+        as: 'linkPreview',
+        required: false,
+      });
+    }
     if (shouldIncludeArticlesInSeries) {
       includes.push({
         model: PostModel,
