@@ -7,6 +7,7 @@ import {
   FindOptions,
   Includeable,
   Op,
+  QueryTypes,
   Transaction,
   WhereOptions,
 } from 'sequelize';
@@ -19,7 +20,6 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
-import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import { MediaModel, MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
@@ -58,7 +58,9 @@ import { TagService } from '../tag/tag.service';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
-import { ItemInSeriesResponseDto } from '../article/dto/responses';
+import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
+import { getDatabaseConfig } from '../../config/database';
+import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 
 @Injectable()
 export class PostService {
@@ -102,7 +104,9 @@ export class PostService {
     protected readonly linkPreviewService: LinkPreviewService,
     @InjectModel(ReportContentDetailModel)
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
-    protected readonly tagService: TagService
+    protected readonly tagService: TagService,
+    @InjectModel(UserSeenPostModel)
+    protected userSeenPostModel: typeof UserSeenPostModel
   ) {}
 
   /**
@@ -431,7 +435,7 @@ export class PostService {
         model: PostGroupModel,
         as: 'groups',
         required: mustIncludeGroup,
-        attributes: ['groupId', 'isArchived'],
+        attributes: ['groupId', 'isArchived', 'isPinned'],
         where: { isArchived: false },
       };
       if (filterGroupIds) {
@@ -1624,6 +1628,36 @@ export class PostService {
     return mappedPosts;
   }
 
+  public async getIdsPinnedInGroup(groupId: string, userId: string) {
+    const { schema } = getDatabaseConfig();
+    let condition = ` pg.group_id =:groupId AND pg.is_archived = false`;
+    if (userId) {
+      condition += ` AND is_pinned = TRUE
+            AND NOT EXISTS(
+           SELECT null
+           FROM ${schema}.report_content_details r
+             WHERE r.created_by =:userId AND r.target_id = p.id
+           )`;
+    }
+    const posts = await this.sequelizeConnection.query<{ id: string }>(
+      `
+    SELECT id
+    FROM ${schema}.posts p
+    INNER JOIN ${schema}.posts_groups pg ON pg.post_id = p.id
+    WHERE ${condition}
+    ORDER BY pg.pinned_index ASC
+    `,
+      {
+        type: QueryTypes.SELECT,
+        replacements: {
+          userId,
+          groupId,
+        },
+      }
+    );
+    return posts.map((post) => post.id);
+  }
+
   public async getPostIdsInGroupIds(
     groupIds: string[],
     filters: {
@@ -1941,6 +1975,118 @@ export class PostService {
       }
 
       await this.postSeriesModel.bulkCreate(dataInsert, { transaction });
+    }
+  }
+
+  public async getPinnedList(groupId: string, user: UserDto) {
+    const ids = await this.getIdsPinnedInGroup(groupId, user?.id || null);
+    if (ids.length === 0) return [];
+    const posts = await this.getPostsByIds(ids, user?.id || null);
+    const postsBindedData = await this.postBinding.bindRelatedData(posts, {
+      shouldBindReaction: true,
+      shouldBindActor: true,
+      shouldBindMention: true,
+      shouldBindAudience: true,
+      shouldHideSecretAudienceCanNotAccess: true,
+      authUser: user,
+    });
+
+    await this.postBinding.bindCommunity(posts);
+    return this.classTransformer.plainToInstance(ArticleResponseDto, postsBindedData, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  public async pinPostToGroupIds(
+    postId: string,
+    groupIds: string[],
+  ): Promise<[number, IPostGroup[]]> {
+    if (groupIds.length === 0) return;
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = PostGroupModel.tableName;
+    this.postGroupModel.sequelize.query(
+      `
+        UPDATE ${schema}.${postGroupTableName} t1 
+        SET is_pinned = TRUE, 
+        pinned_index = (select MAX(pinned_index) FROM ${schema}.${postGroupTableName} t2 where t2.group_id = t1.group_id) + 1
+        WHERE post_id = :postId AND group_id IN(:groupIds)
+    `,
+      {
+        replacements: {
+          postId,
+          groupIds,
+        },
+      },
+    );
+  }
+
+  public async unpinPostToGroupIds(
+    postId: string,
+    groupIds: string[],
+  ): Promise<[number, IPostGroup[]]> {
+    if (groupIds.length === 0) return;
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = PostGroupModel.tableName;
+    this.postGroupModel.sequelize.query(
+      `
+        UPDATE ${schema}.${postGroupTableName} t1 
+        SET is_pinned = FALSE, pinned_index = 0
+        WHERE post_id = :postId AND group_id IN(:groupIds)
+    `,
+      {
+        replacements: {
+          postId,
+          groupIds,
+        },
+      },
+    );
+  }
+
+  public async getGroupsByPostId(id: string): Promise<IPost> {
+    const post = await this.postModel.findOne({
+      attributes: ['id'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId', 'isPinned'],
+          where: {
+            isArchived: false,
+          },
+        },
+      ],
+      where: {
+        id,
+        isHidden: false,
+      },
+    });
+
+    return post;
+  }
+
+  public async markSeenPost(postId: string, userId: string): Promise<void> {
+    try {
+      const exist = await this.userSeenPostModel.findOne({
+        where: {
+          postId: postId,
+          userId: userId,
+        },
+      });
+      if (!exist) {
+        await this.userSeenPostModel.bulkCreate(
+          [
+            {
+              postId: postId,
+              userId: userId,
+            },
+          ],
+          { ignoreDuplicates: true }
+        );
+      }
+    } catch (ex) {
+      this.logger.error(JSON.stringify(ex?.stack));
+      this.sentryService.captureException(ex);
     }
   }
 }

@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { FeedService } from 'src/modules/feed/feed.service';
 import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
@@ -33,7 +32,6 @@ export class SeriesListener {
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupAppService: IGroupApplicationService,
     private readonly _postSearchService: SearchService,
-    private readonly _feedService: FeedService,
     private readonly _postService: PostService,
     private readonly _seriesService: SeriesService,
     private readonly _postActivityService: PostActivityService,

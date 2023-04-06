@@ -200,6 +200,12 @@ export class IndexPostCommand implements CommandRunner {
             updatedAt: post.updatedAt,
             createdBy: post.createdBy,
           };
+          const tagList = post.tagsJson ?? [];
+          item.tags = tagList.map((tag) => ({
+            id: tag.id,
+            name: tag.name,
+            groupId: tag.groupId,
+          }));
           if (post.type === PostType.POST) {
             const mentionUserIds = [];
             for (const key in post.mentions) {
@@ -245,12 +251,6 @@ export class IndexPostCommand implements CommandRunner {
             item.categories = post.categories.map((category) => ({
               id: category.id,
               name: category.name,
-            }));
-            const tagList = post.tagsJson ?? [];
-            item.tags = tagList.map((tag) => ({
-              id: tag.id,
-              name: tag.name,
-              groupId: tag.groupId,
             }));
           }
           if (post.type === PostType.SERIES) {

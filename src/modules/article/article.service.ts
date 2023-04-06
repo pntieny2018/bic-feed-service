@@ -15,26 +15,22 @@ import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
-import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
+import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
-import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
-import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { MediaService } from '../media';
 import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
-import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
@@ -47,7 +43,7 @@ import {
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
+import { ArticleResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { PostBindingService } from '../post/post-binding.service';
@@ -85,8 +81,6 @@ export class ArticleService {
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    @Inject(forwardRef(() => FeedService))
-    protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBindingService: PostBindingService,
     @Inject(forwardRef(() => SeriesService))
@@ -560,7 +554,6 @@ export class ArticleService {
           canReact: setting.canReact,
           privacy: null,
           tagsJson: tagList,
-          views: 0,
           linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
@@ -667,42 +660,6 @@ export class ArticleService {
     }
   }
 
-  /**
-   * Update view article
-   * @param postId postID
-   * @param authUser UserDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
-    const authUserId = authUser.id;
-    const creator = authUser;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-    try {
-      const dataUpdate = { views: 1 };
-      await this.postModel.increment(dataUpdate, {
-        where: {
-          id: postId,
-          createdBy: authUserId,
-        },
-      });
-      return true;
-    } catch (error) {
-      this.logger.error(JSON.stringify(error?.stack));
-      throw error;
-    }
-  }
-
-  /**
-   * Update Post except status === DRAFT
-   * @param postId postID
-   * @param authUser UserDto
-   * @param UpdateArticleDto UpdateArticleDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
   public async update(
     post: ArticleResponseDto,
     authUser: UserDto,
@@ -712,8 +669,7 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags, setting } =
-        updateArticleDto;
+      const { media, mentions, audience, categories, series, tags, setting } = updateArticleDto;
       let mediaListChanged = [];
       if (media) {
         mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
