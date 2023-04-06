@@ -9,7 +9,7 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { IAxiosConfig } from '../../config/axios';
 import { CategoryController } from './driving-apdater/controller/category.controller';
-import { RecentSearchController } from './driving-apdater/controller/recent-search.controller';
+import { RecentSearchController } from '../v2-recent-search/driving-adapter/controller/recent-search.controller';
 
 @Module({
   imports: [

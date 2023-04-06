@@ -33,6 +33,7 @@ import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { I18nMiddleware } from 'nestjs-i18n';
+import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { I18nMiddleware } from 'nestjs-i18n';
     PostModuleV2,
     GroupModuleV2,
     UserModuleV2,
+    RecentSearchModuleV2,
     AdminModule,
     I18nGlobalModule,
   ],
