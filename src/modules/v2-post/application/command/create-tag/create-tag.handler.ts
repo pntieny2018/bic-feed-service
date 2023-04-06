@@ -9,6 +9,7 @@ import { TagDuplicateNameException } from '../../../exception';
 import { CreateTagCommand } from './create-tag.command';
 import { CreateTagDto } from './create-tag.dto';
 import { TagNoCreatePermissionException } from '../../../exception/tag-no-create-permission.exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(CreateTagCommand)
 export class CreateTagHandler implements ICommandHandler<CreateTagCommand, CreateTagDto> {
@@ -16,11 +17,13 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, Creat
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
+  @Inject(USER_APPLICATION_TOKEN)
+  private readonly _userAppService: IUserApplicationService;
 
   public async execute(command: CreateTagCommand): Promise<CreateTagDto> {
     const { name, groupId, userId } = command.payload;
 
-    const canCreateTag = await this._tagRepository.canCUDTag(userId, groupId);
+    const canCreateTag = await this._userAppService.canCudTagInCommunityByUserId(userId, groupId);
     if (!canCreateTag) {
       throw new TagNoCreatePermissionException();
     }

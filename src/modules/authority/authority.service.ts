@@ -17,10 +17,13 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { UserDto } from '../v2-user/application';
+import { TagNoUpdatePermissionException } from '../v2-post/exception/tag-no-update-permission.exception';
+import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
 
 @Injectable()
 export class AuthorityService {
   private readonly _logger = new Logger(AuthorityService.name);
+
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
@@ -289,5 +292,38 @@ export class AuthorityService {
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
+  }
+
+  public async checkPinPermission(user: UserDto, groupIds: string[]): Promise<void> {
+    const invalidGroup = [];
+    const ability = await this._buildAbility(user);
+    for (const groupId of groupIds) {
+      const canPin = ability.can(
+        PERMISSION_KEY.PIN_CONTENT,
+        subject(SUBJECT.GROUP, { id: groupId })
+      );
+      if (!canPin) {
+        invalidGroup.push(groupId);
+      }
+    }
+
+    if (invalidGroup.length > 0) {
+      throw new ContentNoPinPermissionException({ groupsDenied: invalidGroup });
+    }
+  }
+
+  public async getAudienceCanPin(groups: GroupDto[], user: UserDto): Promise<GroupDto[]> {
+    const ability = await this._buildAbility(user);
+    const groupsCanPin = [];
+    for (const group of groups) {
+      const canPin = ability.can(
+        PERMISSION_KEY.PIN_CONTENT,
+        subject(SUBJECT.GROUP, { id: group.id })
+      );
+      if (canPin) {
+        groupsCanPin.push(group);
+      }
+    }
+    return groupsCanPin;
   }
 }

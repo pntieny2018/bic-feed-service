@@ -21,8 +21,6 @@ export interface ITagRepository {
   create(data: TagEntity): Promise<void>;
 
   delete(id: string): Promise<void>;
-
-  canCUDTag(userId: string, rootGroupId: string): Promise<boolean>;
 }
 
 export const TAG_REPOSITORY_TOKEN = 'TAG_REPOSITORY_TOKEN';

@@ -79,7 +79,7 @@ export class SeriesAppService {
     }
 
     if (user) {
-      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+      this._postService.markSeenPost(postId, user.id).catch((ex) => {
         this._logger.error(JSON.stringify(ex?.stack));
       });
     }
@@ -100,7 +100,7 @@ export class SeriesAppService {
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
       const series = await this._seriesService.get(created.id, user, new GetSeriesDto());
-      this._feedService.markSeenPosts(series.id, user.id);
+      this._postService.markSeenPost(series.id, user.id);
       series.totalUsersSeen = Math.max(series.totalUsersSeen, 1);
       this._eventEmitter.emit(
         new SeriesHasBeenPublishedEvent({

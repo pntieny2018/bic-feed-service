@@ -1,5 +1,5 @@
 export const ERRORS = {
-  tag: {
+  TAG: {
     TAG_NAME_EXCEED_MAX_LENGTH: 'tag.tag_name_exceed_max_length',
     TAG_DUPLICATE_NAME: 'tag.duplicate_name',
     TAG_NOT_FOUND: 'tag.not_found',
@@ -7,6 +7,11 @@ export const ERRORS = {
     TAG_NO_UPDATE_PERMISSION: 'tag.no_update_permission',
     TAG_NO_CREATE_PERMISSION: 'tag.no_create_permission',
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
+  },
+  CONTENT: {
+    AUDIENCE_NO_BELONG: 'content.audience_no_belong',
+    CONTENT_NOT_FOUND: 'content.not_found',
+    CONTENT_NO_PIN_PERMISSION: 'content.no_pin_permission',
   },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',
