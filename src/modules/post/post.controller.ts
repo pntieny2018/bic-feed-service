@@ -31,30 +31,6 @@ import { UserDto } from '../v2-user/application';
 export class PostController {
   public constructor(private _postAppService: PostAppService) {}
 
-  @ApiOperation({ summary: 'Save post' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Post('/:postId/save')
-  public async save(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.savePost(user, postId);
-  }
-
-  @ApiOperation({ summary: 'unsave post' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @Delete('/:postId/unsave')
-  public async unSave(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.unSavePost(user, postId);
-  }
-
   @ApiOperation({ summary: 'Get post edited history' })
   @ApiOkResponse({
     type: PostEditedHistoryDto,

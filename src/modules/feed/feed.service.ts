@@ -6,7 +6,7 @@ import { Transaction } from 'sequelize';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto, PageMetaDto } from '../../common/dto';
 import { ExceptionHelper } from '../../common/helpers';
-import { IPost } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -19,6 +19,7 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
+import { AuthorityService } from '../authority';
 
 @Injectable()
 export class FeedService {
@@ -37,7 +38,10 @@ export class FeedService {
     @InjectModel(UserSeenPostModel)
     private _userSeenPostModel: typeof UserSeenPostModel,
     private _sentryService: SentryService,
-    private _postBindingService: PostBindingService
+    private _postBindingService: PostBindingService,
+    @InjectModel(PostModel)
+    protected postModel: typeof PostModel,
+    private _authorityService: AuthorityService
   ) {}
 
   /**
@@ -193,39 +197,6 @@ export class FeedService {
       throw ex;
     }
   }
-
-  public async markSeenPosts(postId: string, userId: string): Promise<void> {
-    try {
-      const exist = await this._userSeenPostModel.findOne({
-        where: {
-          postId: postId,
-          userId: userId,
-        },
-      });
-      if (!exist) {
-        await this._userSeenPostModel.bulkCreate(
-          [
-            {
-              postId: postId,
-              userId: userId,
-            },
-          ],
-          { ignoreDuplicates: true }
-        );
-
-        await this._newsFeedModel.update(
-          { isSeenPost: true },
-          {
-            where: { userId, postId },
-          }
-        );
-      }
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex?.stack));
-      this._sentryService.captureException(ex);
-    }
-  }
-
   /**
    * Get Timeline
    */
