@@ -101,4 +101,5 @@ export class SearchPostsDto extends PageOptionsDto {
   public type?: PostType;
 
   public notIncludeIds?: string[];
+  public tagId?: string;
 }
