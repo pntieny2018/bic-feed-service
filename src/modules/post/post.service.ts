@@ -1999,19 +1999,45 @@ export class PostService {
   public async pinPostToGroupIds(
     postId: string,
     groupIds: string[],
-    isPinned: boolean
-  ): Promise<void> {
+  ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
-    await this.postGroupModel.update(
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = PostGroupModel.tableName;
+    this.postGroupModel.sequelize.query(
+      `
+        UPDATE ${schema}.${postGroupTableName} t1 
+        SET is_pinned = TRUE, 
+        pinned_index = (select MAX(pinned_index) FROM ${schema}.${postGroupTableName} t2 where t2.group_id = t1.group_id) + 1
+        WHERE post_id = :postId AND group_id IN(:groupIds)
+    `,
       {
-        isPinned,
-      },
-      {
-        where: {
+        replacements: {
           postId,
-          groupId: groupIds,
+          groupIds,
         },
-      }
+      },
+    );
+  }
+
+  public async unpinPostToGroupIds(
+    postId: string,
+    groupIds: string[],
+  ): Promise<[number, IPostGroup[]]> {
+    if (groupIds.length === 0) return;
+    const { schema } = getDatabaseConfig();
+    const postGroupTableName = PostGroupModel.tableName;
+    this.postGroupModel.sequelize.query(
+      `
+        UPDATE ${schema}.${postGroupTableName} t1 
+        SET is_pinned = FALSE, pinned_index = 0
+        WHERE post_id = :postId AND group_id IN(:groupIds)
+    `,
+      {
+        replacements: {
+          postId,
+          groupIds,
+        },
+      },
     );
   }
 
