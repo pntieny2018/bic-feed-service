@@ -5,7 +5,11 @@ import {
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../../exception';
+import {
+  TagDuplicateNameException,
+  TagNotFoundException,
+  TagUsedException,
+} from '../../../exception';
 import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
 import { TagNoUpdatePermissionException } from '../../../exception/tag-no-update-permission.exception';
