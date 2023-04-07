@@ -5,7 +5,7 @@ import {
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
+import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../../exception';
 import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
 import { TagNoUpdatePermissionException } from '../../../exception/tag-no-update-permission.exception';
@@ -26,6 +26,10 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
     const tag = await this._tagRepository.findOne({ id });
     if (!tag) {
       throw new TagNotFoundException();
+    }
+
+    if (tag.get('totalUsed') > 0) {
+      throw new TagUsedException();
     }
 
     const canUpdateTag = await this._userAppService.canCudTagInCommunityByUserId(

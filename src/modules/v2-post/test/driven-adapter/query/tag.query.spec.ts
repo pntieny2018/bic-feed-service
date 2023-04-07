@@ -8,8 +8,9 @@ import { GetPaginationTagProps } from '../../../domain/query-interface';
 import { TagQuery } from '../../../driven-adapter/query';
 import { userMock } from '../../mock/user.dto.mock';
 import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory';
+import { PostTagModel } from '../../../../../database/models/post-tag.model';
 describe('TagQuery', () => {
-  let query, tagModel;
+  let query, tagModel, postTagModel;
   let factory: ITagFactory;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,6 +21,10 @@ describe('TagQuery', () => {
           useValue: createMock<TagModel>(),
         },
         {
+          provide: getModelToken(PostTagModel),
+          useValue: createMock<PostTagModel>(),
+        },
+        {
           provide: TAG_FACTORY_TOKEN,
           useValue: createMock<TagFactory>(),
         },
@@ -28,6 +33,7 @@ describe('TagQuery', () => {
     factory = module.get(TAG_FACTORY_TOKEN);
     query = module.get<TagQuery>(TagQuery);
     tagModel = module.get<TagModel>(getModelToken(TagModel));
+    postTagModel = module.get<PostTagModel>(getModelToken(PostTagModel));
   });
 
   afterEach(() => {
