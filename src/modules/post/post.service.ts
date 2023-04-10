@@ -61,6 +61,7 @@ import { GroupPrivacy } from '../v2-group/data-type';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
 
 @Injectable()
 export class PostService {
@@ -2005,7 +2006,7 @@ export class PostService {
 
   public async pinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2022,13 +2023,13 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
   public async unpinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2044,7 +2045,7 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
