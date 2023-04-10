@@ -26,6 +26,7 @@ export class TagQuery implements ITagQuery {
       conditions['name'] = { [Op.iLike]: name + '%' };
     }
     const { rows, count } = await this._tagModel.findAndCountAll({
+      attributes: TagModel.loadAllAttributes(),
       where: conditions,
       offset,
       limit,
@@ -34,25 +35,6 @@ export class TagQuery implements ITagQuery {
         ['createdAt', 'DESC'],
       ],
     });
-    const tagIds = rows.map((row) => row.id);
-    const postTagData = await this._postTagModel.findAll({
-      where: {
-        tagId: tagIds,
-      },
-      include: [
-        {
-          model: PostModel,
-          as: 'post',
-          where: {
-            status: PostStatus.PUBLISHED,
-            isHidden: false,
-          },
-        },
-      ],
-    });
-    for (const row of rows) {
-      row.totalUsed = postTagData.filter((postTag) => postTag.tagId === row.id).length;
-    }
     const result = rows.map((row) => this._factory.reconstitute(row));
     return {
       rows: result,

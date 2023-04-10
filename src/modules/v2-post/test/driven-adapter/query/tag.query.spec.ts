@@ -69,6 +69,7 @@ describe('TagQuery', () => {
       const result = await query.getPagination(input);
 
       expect(tagModel.findAndCountAll).toBeCalledWith({
+        attributes: TagModel.loadAllAttributes(),
         where: {
           groupId: input.groupIds,
         },

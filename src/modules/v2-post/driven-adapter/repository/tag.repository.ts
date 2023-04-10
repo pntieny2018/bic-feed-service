@@ -63,7 +63,10 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findOne(input: FindOneTagProps): Promise<TagEntity> {
-    const findOptions: FindOptions = { where: {} };
+    const findOptions: FindOptions = {
+      attributes: TagModel.loadAllAttributes(),
+      where: {},
+    };
     if (input.id) {
       findOptions.where['id'] = input.id;
     }

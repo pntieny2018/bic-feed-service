@@ -140,6 +140,7 @@ describe('TagRepository', () => {
       jest.spyOn(factory, 'reconstitute').mockReturnValue(tagEntity);
       const result = await repo.findOne({ id: tagEntity.get('id') });
       expect(tagModel.findOne).toBeCalledWith({
+        attributes: TagModel.loadAllAttributes(),
         where: {
           id: tagEntity.get('id'),
         },
