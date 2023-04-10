@@ -77,8 +77,8 @@ export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag 
     return [
       Sequelize.literal(`(
             SELECT COUNT(*)
-            FROM bein_feed_local.${schema}.${PostModel.tableName} p
-            JOIN bein_feed_local.${schema}.${PostTagModel.tableName} pt ON pt.post_id = p.id
+            FROM ${schema}.${PostModel.tableName} p
+            JOIN ${schema}.${PostTagModel.tableName} pt ON pt.post_id = p.id
             WHERE pt.tag_id = "TagModel".id AND p.is_hidden = false AND p.status = 'PUBLISHED'
           )`),
       'totalUsed',
