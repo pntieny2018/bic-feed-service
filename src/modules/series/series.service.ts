@@ -74,7 +74,11 @@ export class SeriesService {
     const series = PostHelper.filterArchivedPost(
       await this._postModel.findOne({
         attributes: {
-          include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
+          include: [
+            ['cover_json', 'cover'],
+            PostModel.loadMarkReadPost(authUser.id),
+            PostModel.loadSaved(authUser.id),
+          ],
         },
         where: { id, type: PostType.SERIES },
         include: [
@@ -92,11 +96,6 @@ export class SeriesService {
             where: {
               createdBy: authUser.id,
             },
-          },
-          {
-            model: MediaModel,
-            as: 'coverMedia',
-            required: false,
           },
         ],
       })

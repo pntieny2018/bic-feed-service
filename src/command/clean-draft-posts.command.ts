@@ -22,7 +22,6 @@ export class CleanDraftPostCommand implements CommandRunner {
         paranoid: false,
       });
       for (const post of posts) {
-        await this._postService.cleanRelationship(post.id, null, true);
         post.destroy({
           force: true,
         });

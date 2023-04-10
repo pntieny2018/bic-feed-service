@@ -87,7 +87,6 @@ export interface IPost {
   mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
-  giphyId?: string;
   markedReadPost?: boolean;
   type: PostType;
   title?: string;
@@ -168,10 +167,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public lang: string;
-
-  @AllowNull(true)
-  @Column
-  public giphyId: string;
 
   @Column
   public privacy: PostPrivacy;

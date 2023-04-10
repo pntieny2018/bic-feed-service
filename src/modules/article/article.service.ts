@@ -195,9 +195,7 @@ export class ArticleService {
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
       shouldIncludeCategory: true,
-      shouldIncludeCover: true,
     });
     const orderOption = [];
     if (
@@ -273,7 +271,6 @@ export class ArticleService {
     const categoryIds = article.categories.map((category) => category.id);
 
     const includeRelated = this.getIncludeObj({
-      shouldIncludeCover: true,
       shouldIncludeCategory: true,
       mustIncludeGroup: true,
       filterGroupIds: groupIdsUserCanAccess,
@@ -356,10 +353,8 @@ export class ArticleService {
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
       shouldIncludeSeries: true,
       authUserId: authUser?.id || null,
     });
@@ -434,12 +429,6 @@ export class ArticleService {
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = this._postService.getAttributesObj(options);
-
-    if (attributes['include'] && Array.isArray(attributes['include'])) {
-      attributes['include'].push(['hashtags_json', 'hashtags']);
-    } else {
-      attributes['include'] = [['hashtags_json', 'hashtags']];
-    }
     return attributes;
   }
 
@@ -450,11 +439,9 @@ export class ArticleService {
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
     shouldIncludeMention,
-    shouldIncludeMedia,
     shouldIncludePreviewLink,
     shouldIncludeArticlesInSeries,
     shouldIncludeCategory,
-    shouldIncludeCover,
     shouldIncludeSeries,
     filterMediaIds,
     filterCategoryIds,
@@ -467,10 +454,8 @@ export class ArticleService {
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
-    shouldIncludeMedia?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludePreviewLink?: boolean;
-    shouldIncludeCover?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     filterCategoryIds?: string[];
@@ -485,10 +470,8 @@ export class ArticleService {
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
       shouldIncludeMention,
-      shouldIncludeMedia,
       shouldIncludePreviewLink,
       shouldIncludeCategory,
-      shouldIncludeCover,
       shouldIncludeArticlesInSeries,
       shouldIncludeSeries,
       filterMediaIds,

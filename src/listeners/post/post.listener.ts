@@ -441,7 +441,6 @@ export class PostListener {
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
-      status: MediaStatus.COMPLETED,
     };
     if (properties?.name) dataUpdate['name'] = properties.name;
     if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;

@@ -145,8 +145,6 @@ export class PostService {
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCover: true,
     });
     const orderOption = [];
     if (
@@ -210,7 +208,6 @@ export class PostService {
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
       shouldIncludePreviewLink: true,
       shouldIncludeSeries: true,
       authUserId: user?.id || null,
@@ -276,7 +273,7 @@ export class PostService {
     if (options?.authUserId && options?.loadSaved) {
       include.push(PostModel.loadSaved(options.authUserId));
     }
-    include.push(['tags_json', 'tags']);
+    include.push(['tags_json', 'tags'], ['media_json', 'media'], ['cover_json', 'cover']);
 
     attributes.include = include;
     return attributes;
@@ -361,8 +358,6 @@ export class PostService {
   public async getItemsInSeriesByIds(ids: string[], authUserId = null): Promise<IPost[]> {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCover: true,
       mustIncludeGroup: true,
       authUserId: authUserId ?? null,
     });
@@ -396,18 +391,14 @@ export class PostService {
 
   public getIncludeObj({
     mustIncludeGroup = false,
-    mustIncludeMedia,
     mustInSeriesIds,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
     shouldIncludeMention,
-    shouldIncludeMedia,
     shouldIncludePreviewLink,
-    shouldIncludeCover,
     shouldIncludeArticlesInSeries,
     shouldIncludeSeries,
-    filterMediaIds,
     filterCategoryIds,
     authUserId,
     filterGroupIds,
@@ -419,9 +410,7 @@ export class PostService {
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
-    shouldIncludeMedia?: boolean;
     shouldIncludePreviewLink?: boolean;
-    shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
     filterMediaIds?: string[];
@@ -496,32 +485,6 @@ export class PostService {
         ],
       });
     }
-    if (shouldIncludeMedia || mustIncludeMedia) {
-      const obj = {
-        model: MediaModel,
-        as: 'media',
-        required: mustIncludeMedia ? true : false,
-        attributes: [
-          'id',
-          'url',
-          'size',
-          'extension',
-          'type',
-          'name',
-          'originName',
-          'width',
-          'height',
-          'thumbnails',
-          'status',
-          'mimeType',
-          'createdAt',
-        ],
-      };
-      if (filterMediaIds) {
-        obj['where'] = { id: filterMediaIds };
-      }
-      includes.push(obj);
-    }
     if (shouldIncludeOwnerReaction && authUserId) {
       includes.push({
         model: PostReactionModel,
@@ -548,16 +511,6 @@ export class PostService {
           id: filterCategoryIds,
         };
       }
-
-      includes.push(obj);
-    }
-
-    if (shouldIncludeCover) {
-      const obj = {
-        model: MediaModel,
-        as: 'coverMedia',
-        required: false,
-      };
 
       includes.push(obj);
     }
@@ -904,34 +857,18 @@ export class PostService {
    * Delete post
    */
   public async delete(post: IPost, authUser: UserDto): Promise<IPost> {
-    const transaction = await this.sequelizeConnection.transaction();
     try {
       const postId = post.id;
-      if (post.status === PostStatus.DRAFT) {
-        await this.cleanRelationship(postId, transaction, true);
-        await this.postModel.destroy({
-          where: {
-            id: postId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-          force: true,
-        });
-      } else {
-        await this.postModel.destroy({
-          where: {
-            id: postId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-        });
-      }
-      await transaction.commit();
+      await this.postModel.destroy({
+        where: {
+          id: postId,
+          createdBy: authUser.id,
+        },
+      });
 
       return post;
     } catch (error) {
       this.logger.error(error, error?.stack);
-      await transaction.rollback();
       throw error;
     }
   }
@@ -1328,7 +1265,10 @@ export class PostService {
     });
     const posts = await this.postModel.findAll({
       attributes: {
-        include: [['tags_json', 'tags']],
+        include: [
+          ['tags_json', 'tags'],
+          ['media_json', 'media'],
+        ],
       },
       include,
     });
@@ -1530,11 +1470,9 @@ export class PostService {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
-      shouldIncludeMedia: true,
       shouldIncludeMention: true,
       shouldIncludeOwnerReaction: true,
       shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
       shouldIncludeArticlesInSeries: true,
       mustIncludeGroup: true,
       authUserId: userId,
@@ -1552,6 +1490,8 @@ export class PostService {
       attributes: {
         include: [
           ['tags_json', 'tags'],
+          ['media_json', 'media'],
+          ['cover_json', 'cover'],
           PostModel.loadMarkReadPost(userId),
           PostModel.loadSaved(userId),
         ],
@@ -1999,7 +1939,7 @@ export class PostService {
 
   public async pinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2016,13 +1956,13 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
   public async unpinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2038,7 +1978,7 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
