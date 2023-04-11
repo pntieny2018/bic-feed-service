@@ -17,8 +17,6 @@ export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
     [REQUEST_CONTEXT]: {
       user: UserDto;
-      token: string;
-      userPayload: string;
     };
   };
 }
@@ -33,37 +31,33 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
 
   public async validate(media: MediaDto, args?: IExtendedValidationArguments): Promise<boolean> {
     const fileIds = media.files.map((i) => i.id);
-    const token = args?.object[REQUEST_CONTEXT].token;
     const user = args?.object[REQUEST_CONTEXT].user;
-    const userPayload = args?.object[REQUEST_CONTEXT].userPayload;
     if (fileIds.length > 0) {
-      const files = await this._externalService.getFileIds(fileIds, token, userPayload);
+      const files = await this._externalService.getFileIds(fileIds);
       if (files.length < fileIds.length) {
         return false;
       }
+      if (!files.every((file) => file.userId !== user.id)) return false;
       media.files = files;
     }
 
     const videoIds = media.videos.map((i) => i.id);
     if (videoIds.length > 0) {
-      const videos = await this._externalService.getVideoIds(videoIds, token, userPayload);
+      const videos = await this._externalService.getVideoIds(videoIds);
       if (videos.length < videoIds.length) {
         return false;
       }
+      if (!videos.every((file) => file.userId !== user.id)) return false;
       media.videos = videos;
     }
 
     const imageIds = media.images.map((i) => i.id);
     if (imageIds.length > 0) {
-      const images = await this._mediaModel.findAll({
-        where: {
-          id: imageIds,
-          createdBy: user.id,
-        },
-      });
+      const images = await this._externalService.getImageIds(videoIds);
       if (images.length < imageIds.length) {
         return false;
       }
+      if (!images.every((file) => file.userId !== user.id)) return false;
       media.images = images;
     }
 

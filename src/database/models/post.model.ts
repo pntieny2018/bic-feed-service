@@ -107,6 +107,7 @@ export interface IPost {
   errorLog?: any;
   mediaJson?: any;
   coverJson?: any;
+  idVideoProcessing?: string;
 }
 
 @Table({
@@ -187,6 +188,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public linkPreviewId: string;
+
+  @AllowNull(true)
+  @Column
+  public idVideoProcessing?: string;
 
   @AllowNull(true)
   @Column

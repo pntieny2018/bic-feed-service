@@ -13,7 +13,11 @@ export const ENDPOINT = {
     },
   },
   UPLOAD: {
-    GET_FILES: '/files/ids',
-    GET_VIDEOS: 'videos/ids',
+    INTERNAL: {
+      GET_FILES: '/files/ids',
+      GET_VIDEOS: '/videos/ids',
+      UPDATE_IMAGES: '/images/ids',
+      GET_IMAGES: '/images/ids',
+    },
   },
 };

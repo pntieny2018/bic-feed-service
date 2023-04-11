@@ -492,27 +492,14 @@ export class ArticleService {
   public async create(authUser: UserDto, createArticleDto: CreateArticleDto): Promise<any> {
     let transaction;
     try {
-      const {
-        title,
-        summary,
-        content,
-        media,
-        setting,
-        mentions,
-        audience,
-        categories,
-        tags,
-        series,
-      } = createArticleDto;
+      const { title, summary, content, setting, mentions, audience, categories, tags, series } =
+        createArticleDto;
       const authUserId = authUser.id;
 
       let groupIds = [];
       if (audience.groupIds) {
         groupIds = audience.groupIds;
       }
-
-      const { files, images, videos } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
 
       const linkPreview = await this._linkPreviewService.upsert(createArticleDto.linkPreview);
 
@@ -541,10 +528,6 @@ export class ArticleService {
         },
         { transaction }
       );
-      if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId);
-        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
-      }
 
       await Promise.all([
         this._seriesService.addToPost(series, post.id, transaction),
@@ -652,26 +635,10 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, tags, setting } = updateArticleDto;
-      let mediaListChanged = [];
-      if (media) {
-        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
-      }
+      const { coverMedia, mentions, audience, categories, series, tags, setting } =
+        updateArticleDto;
 
       const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
-
-      if (
-        mediaListChanged &&
-        mediaListChanged.filter(
-          (m) =>
-            m.status === MediaStatus.WAITING_PROCESS ||
-            m.status === MediaStatus.PROCESSING ||
-            m.status === MediaStatus.FAILED
-        ).length > 0 &&
-        post.status === PostStatus.PUBLISHED
-      ) {
-        dataUpdate['status'] = PostStatus.PROCESSING;
-      }
 
       dataUpdate.linkPreviewId = null;
       if (updateArticleDto.linkPreview) {
@@ -680,12 +647,6 @@ export class ArticleService {
       }
 
       transaction = await this.sequelizeConnection.transaction();
-
-      if (media) {
-        const { files, images, videos } = media;
-        const newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
-      }
 
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
@@ -716,6 +677,10 @@ export class ArticleService {
         const tagList = await this.tagService.getTagsByIds(tags);
         await this.tagService.updateToPost(tags, post.id, transaction);
         dataUpdate['tagsJson'] = tagList;
+      }
+
+      if (coverMedia) {
+        dataUpdate['coverJson'] = coverMedia;
       }
 
       await this.postModel.update(dataUpdate, {

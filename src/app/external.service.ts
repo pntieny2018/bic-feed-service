@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SentryService } from '@app/sentry';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
+import { AxiosHelper } from '../common/helpers';
+import { ENDPOINT } from '../common/constants/endpoint.constant';
 
 @Injectable()
 export class ExternalService {
@@ -17,20 +19,14 @@ export class ExternalService {
     private readonly _httpService: HttpService
   ) {}
 
-  public async getFileIds(
-    ids: string[],
-    token: string = null,
-    userPayload: string = null
-  ): Promise<any> {
+  public async getFileIds(ids: string[]): Promise<any> {
     try {
-      const headers = {};
-      if (token) headers['authorization'] = token;
-      if (userPayload) headers['user'] = userPayload;
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/files/ids`, ids, {
-          headers,
-          baseURL: '',
-        })
+        this._httpService.post(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.GET_FILES, {
+            ids,
+          })
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -48,19 +44,14 @@ export class ExternalService {
     }
   }
 
-  public async getVideoIds(
-    ids: string[],
-    token: string = null,
-    userPayload: string = null
-  ): Promise<any> {
+  public async getVideoIds(ids: string[]): Promise<any> {
     try {
-      const headers = {};
-      if (token) headers['authorization'] = token;
-      if (userPayload) headers['user'] = userPayload;
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/videos/ids`, ids, {
-          headers,
-        })
+        this._httpService.post(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, {
+            ids,
+          })
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -74,6 +65,32 @@ export class ExternalService {
             size: i.properties.size,
             thumbnails: i.thumbnails,
             createdAt: i.created_at ? new Date(i.created_at) : new Date(),
+          }))
+        : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  public async getImageIds(ids: string[]): Promise<any> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.post(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, {
+            ids,
+          })
+        )
+      );
+      return response.data.data
+        ? response.data.data.map((i) => ({
+            id: i.id,
+            url: i.url,
+            createdBy: i.user_id,
+            mimeType: i.properties.mime_type,
+            width: i.properties.width,
+            height: i.properties.height,
+            size: i.properties.size,
+            status: i.status,
           }))
         : [];
     } catch (e) {
@@ -104,10 +121,12 @@ export class ExternalService {
     try {
       const { userId, type } = data;
       const response = await lastValueFrom(
-        this._httpService.post(`${this._uploadServiceEndpoint}/internal/${id}`, {
-          userId,
-          type,
-        })
+        this._httpService.put(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES + `/${id}`, {
+            resource: type,
+            user_id: userId,
+          })
+        )
       );
 
       this._logger.debug('response.data', JSON.stringify(response.data));

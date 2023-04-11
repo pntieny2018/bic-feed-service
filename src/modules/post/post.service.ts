@@ -581,14 +581,14 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           tagsJson: tagList,
+          mediaJson: media || {
+            images: [],
+            files: [],
+            videos: [],
+          },
         },
         { transaction }
       );
-
-      if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId);
-        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
-      }
 
       if (audience.groupIds.length > 0) {
         await this.addGroup(audience.groupIds, post.id, transaction);
@@ -657,23 +657,9 @@ export class PostService {
     try {
       const { media, mentions, audience, setting, tags, series } = updatePostDto;
 
-      let mediaListChanged = [];
-      if (media) {
-        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
-      }
-
       const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
 
-      if (
-        mediaListChanged &&
-        mediaListChanged.filter(
-          (m) =>
-            m.status === MediaStatus.WAITING_PROCESS ||
-            m.status === MediaStatus.PROCESSING ||
-            m.status === MediaStatus.FAILED
-        ).length > 0 &&
-        post.status === PostStatus.PUBLISHED
-      ) {
+      if (media.videos?.length > 0 && media.videos[0].status) {
         dataUpdate['status'] = PostStatus.PROCESSING;
       }
 
@@ -702,6 +688,10 @@ export class PostService {
         dataUpdate['tagsJson'] = tagList;
       }
 
+      if (media) {
+        dataUpdate['mediaJson'] = media;
+      }
+
       transaction = await this.sequelizeConnection.transaction();
       await this.postModel.update(dataUpdate, {
         where: {
@@ -710,12 +700,6 @@ export class PostService {
         },
         transaction,
       });
-
-      if (media) {
-        const { files, images, videos } = media;
-        const newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
-      }
 
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
