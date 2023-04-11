@@ -8,6 +8,7 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagNotFoundException, TagUsedException } from '../../../exception';
 import { DeleteTagCommand } from './delete-tag.command';
 import { TagNoDeletePermissionException } from '../../../exception/tag-no-delete-permission.exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(DeleteTagCommand)
 export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void> {
@@ -15,6 +16,8 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
   private readonly _tagDomainService: ITagDomainService;
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
+  @Inject(USER_APPLICATION_TOKEN)
+  private readonly _userAppService: IUserApplicationService;
 
   public async execute(command: DeleteTagCommand): Promise<void> {
     const { id, userId } = command.payload;
@@ -27,7 +30,10 @@ export class DeleteTagHandler implements ICommandHandler<DeleteTagCommand, void>
       throw new TagUsedException();
     }
 
-    const canDeleteTag = await this._tagRepository.canCUDTag(userId, tag.get('groupId'));
+    const canDeleteTag = await this._userAppService.canCudTagInCommunityByUserId(
+      userId,
+      tag.get('groupId'),
+    );
     if (!canDeleteTag) {
       throw new TagNoDeletePermissionException();
     }

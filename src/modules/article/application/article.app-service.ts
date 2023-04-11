@@ -25,7 +25,6 @@ import { ArticleResponseDto } from '../dto/responses/article.response.dto';
 import { TagService } from '../../tag/tag.service';
 import { IPostGroup } from '../../../database/models/post-group.model';
 import { IPost, PostStatus } from '../../../database/models/post.model';
-import { FeedService } from '../../feed/feed.service';
 import { ScheduleArticleDto } from '../dto/requests/schedule-article.dto';
 import { GetPostsByParamsDto } from '../../post/dto/requests/get-posts-by-params.dto';
 import { ClassTransformer } from 'class-transformer';
@@ -44,7 +43,6 @@ export class ArticleAppService {
     private _postService: PostService,
     private _postSearchService: SearchService,
     private _tagService: TagService,
-    private _feedService: FeedService,
     protected readonly authorityService: AuthorityService
   ) {}
 
@@ -182,10 +180,6 @@ export class ArticleAppService {
     }
   }
 
-  public async updateView(user: UserDto, articleId: string): Promise<boolean> {
-    return this._articleService.updateView(articleId, user);
-  }
-
   public async update(
     user: UserDto,
     articleId: string,
@@ -290,7 +284,7 @@ export class ArticleAppService {
 
     article.status = PostStatus.PUBLISHED;
     const articleUpdated = await this._articleService.publish(article, user);
-    this._feedService.markSeenPosts(articleUpdated.id, user.id);
+    this._postService.markSeenPost(articleUpdated.id, user.id);
     articleUpdated.totalUsersSeen = Math.max(articleUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new ArticleHasBeenPublishedEvent({
