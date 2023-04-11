@@ -955,6 +955,7 @@ export class PostService {
       this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
       this.postTagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+      this.userSavePostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
   /**
@@ -1998,7 +1999,7 @@ export class PostService {
 
   public async pinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2015,13 +2016,13 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
   public async unpinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2037,7 +2038,7 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
