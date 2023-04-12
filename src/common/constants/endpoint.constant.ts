@@ -14,10 +14,10 @@ export const ENDPOINT = {
   },
   UPLOAD: {
     INTERNAL: {
-      GET_FILES: '/files/ids',
-      GET_VIDEOS: '/videos/ids',
-      UPDATE_IMAGES: '/images/ids',
-      GET_IMAGES: '/images/ids',
+      GET_FILES: '/internal/files/ids',
+      GET_VIDEOS: '/internal/videos/ids',
+      UPDATE_IMAGES: '/internal/images',
+      GET_IMAGES: '/internal/images/ids',
     },
   },
 };

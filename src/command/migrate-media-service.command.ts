@@ -151,13 +151,14 @@ export class MigrateMediaServiceCommand implements CommandRunner {
     let offset = 0;
     const limit = 200;
     let total = 0;
+    console.log('333333333333');
     while (!stop) {
       const posts = await this._postModel.findAll({
         include: [
           {
             model: MediaModel,
             as: 'media',
-            required: false,
+            required: true,
             attributes: [
               'id',
               'url',
@@ -179,6 +180,7 @@ export class MigrateMediaServiceCommand implements CommandRunner {
         limit,
         offset,
       });
+      console.log('111', JSON.stringify(posts));
       for (const post of posts) {
         const imageJson = [];
         const fileJson = [];
@@ -186,6 +188,7 @@ export class MigrateMediaServiceCommand implements CommandRunner {
         for (const media of post.media) {
           total++;
           if (media.type === MediaType.IMAGE) {
+            console.log('xxxxxxxxxxx', media.id);
             const mediaData = await this._externalService.updateMedia(media.id, {
               userId: post.createdBy,
               type: 'post:content',

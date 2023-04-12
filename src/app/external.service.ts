@@ -22,11 +22,9 @@ export class ExternalService {
   public async getFileIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.GET_FILES, {
-            ids,
-          })
-        )
+        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_FILES, {
+          ids,
+        })
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -47,11 +45,9 @@ export class ExternalService {
   public async getVideoIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, {
-            ids,
-          })
-        )
+        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, {
+          ids,
+        })
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -75,11 +71,9 @@ export class ExternalService {
   public async getImageIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, {
-            ids,
-          })
-        )
+        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, {
+          ids,
+        })
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -118,28 +112,27 @@ export class ExternalService {
     }
   ): Promise<any> {
     const { userId, type } = data;
-    try {
-      const response = await lastValueFrom(
-        this._httpService.put(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES + `/${id}`, {
-            resource: type,
-            user_id: userId,
-          })
-        )
-      );
+    console.log(
+      'https://api.beincom.tech/v1/upload' + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES + `/${id}`
+    );
+    const response = await lastValueFrom(
+      this._httpService.put(
+        'https://api.beincom.tech/v1/upload/internal/images/eaec868a-39a4-4d96-907d-76ea80636ea1',
+        {
+          resource: 'post:content',
+          user_id: '6235bc91-2255-4f4b-bcfa-bebcd24e27ac',
+        }
+      )
+    );
 
-      this._logger.debug('response.data', JSON.stringify(response.data));
-      return {
-        id: response.data.id,
-        url: response.data.url,
-        src: response.data.src,
-        mimeType: response.data.properties.mime_type,
-        width: response.data.properties.width,
-        height: response.data.properties.height,
-      };
-    } catch (e) {
-      this._logger.error(`Media ID: ${id} not found -- payload: ${JSON.stringify(data)}`);
-      return null;
-    }
+    this._logger.debug('response.data', JSON.stringify(response.data));
+    return {
+      id: response.data.id,
+      url: response.data.url,
+      src: response.data.src,
+      mimeType: response.data.properties.mime_type,
+      width: response.data.properties.width,
+      height: response.data.properties.height,
+    };
   }
 }
