@@ -51,16 +51,16 @@ jobs:
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
-            envsubst <apps/$SERVICE/$ITN_ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$ITN_ENVIRONMENT/version.yaml.out
-            mv apps/$SERVICE/$ITN_ENVIRONMENT/version.yaml.out apps/$SERVICE/$ITN_ENVIRONMENT/version.yaml
+            envsubst <bic/services/$SERVICE/$ITN_ENVIRONMENT/version.patch.yaml >bic/services/$SERVICE/$ITN_ENVIRONMENT/version.yaml.out
+            mv bic/services/$SERVICE/$ITN_ENVIRONMENT/version.yaml.out bic/services/$SERVICE/$ITN_ENVIRONMENT/version.yaml
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
 
             git checkout refactor/restructure
-            git pull 
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
@@ -70,6 +70,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
   dev:
     docker:
@@ -105,16 +106,16 @@ jobs:
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
-            envsubst <apps/$SERVICE/$DEV_ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$DEV_ENVIRONMENT/version.yaml.out
-            mv apps/$SERVICE/$DEV_ENVIRONMENT/version.yaml.out apps/$SERVICE/$DEV_ENVIRONMENT/version.yaml
+            envsubst <bic/services/$SERVICE/$DEV_ENVIRONMENT/version.patch.yaml >bic/services/$SERVICE/$DEV_ENVIRONMENT/version.yaml.out
+            mv bic/services/$SERVICE/$DEV_ENVIRONMENT/version.yaml.out bic/services/$SERVICE/$DEV_ENVIRONMENT/version.yaml
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
 
             git checkout refactor/restructure
-            git pull 
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
@@ -124,6 +125,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
   stg:
     docker:
@@ -159,16 +161,16 @@ jobs:
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
-            envsubst <apps/$SERVICE/$STG_ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$STG_ENVIRONMENT/version.yaml.out
-            mv apps/$SERVICE/$STG_ENVIRONMENT/version.yaml.out apps/$SERVICE/$STG_ENVIRONMENT/version.yaml
+            envsubst <bic/services/$SERVICE/$STG_ENVIRONMENT/version.patch.yaml >bic/services/$SERVICE/$STG_ENVIRONMENT/version.yaml.out
+            mv bic/services/$SERVICE/$STG_ENVIRONMENT/version.yaml.out bic/services/$SERVICE/$STG_ENVIRONMENT/version.yaml
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
 
             git checkout refactor/restructure
-            git pull 
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
@@ -178,6 +180,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
   rel:
     docker:
@@ -210,9 +213,6 @@ jobs:
             GIT_COMMIT_MESSAGE=$(git log --format=%B -n 1 $CIRCLE_SHA1)
             git clone https://cicd-bic:$CIRCLECI_ARGOCD_TOKEN@bitbucket.org/$BITBUCKET_WORKPLACE/bic-kube.git 
             cd bic-kube
-
-            git checkout refactor/restructure
-            git pull           
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
@@ -222,6 +222,20 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
+            git push
+
+            git checkout refactor/restructure        
+            set -e
+            COMMIT_SHA1=$CIRCLE_SHA1
+            export COMMIT_SHA1=$COMMIT_SHA1
+            envsubst <bic/services/$SERVICE/$REL_ENVIRONMENT/version.patch.yaml >bic/services/$SERVICE/$REL_ENVIRONMENT/version.yaml.out
+            mv bic/services/$SERVICE/$REL_ENVIRONMENT/version.yaml.out bic/services/$SERVICE/$REL_ENVIRONMENT/version.yaml
+            git config --global user.email "cicd@evol.vn"
+            git config --global user.name "CICD"
+            git add -A
+            git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
   pro:
     docker:
@@ -257,16 +271,16 @@ jobs:
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
-            envsubst <apps/$SERVICE/$PRO_ENVIRONMENT/version.patch.yaml >apps/$SERVICE/$PRO_ENVIRONMENT/version.yaml.out
-            mv apps/$SERVICE/$PRO_ENVIRONMENT/version.yaml.out apps/$SERVICE/$PRO_ENVIRONMENT/version.yaml
+            envsubst <bic/services/$SERVICE/$PRO_ENVIRONMENT/version.patch.yaml >bic/services/$SERVICE/$PRO_ENVIRONMENT/version.yaml.out
+            mv bic/services/$SERVICE/$PRO_ENVIRONMENT/version.yaml.out bic/services/$SERVICE/$PRO_ENVIRONMENT/version.yaml
             git config --global user.email "cicd@evol.vn"
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
 
-            git checkout refactor/restructure
-            git pull           
+            git checkout refactor/restructur       
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
@@ -276,6 +290,7 @@ jobs:
             git config --global user.name "CICD"
             git add -A
             git commit -m "Commit: $HEAD  Build: $CIRCLE_BUILD_NUM  Message: $GIT_COMMIT_MESSAGE"
+            git pull
             git push
 workflows:
   version: 2
@@ -285,7 +300,7 @@ workflows:
       - itn:
           filters:
             branches:
-              only: /^internal\-\d+/
+              only: /^internal\-\d*/
   Develop:
     when: << pipeline.parameters.run_workflow_dev >>
     jobs:
