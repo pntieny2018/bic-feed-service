@@ -963,6 +963,7 @@ export class PostService {
       this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
       this.postTagModel.destroy({ where: { postId: postId }, transaction }),
       this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
+      this.userSavePostModel.destroy({ where: { postId }, transaction }),
     ]);
   }
   /**
