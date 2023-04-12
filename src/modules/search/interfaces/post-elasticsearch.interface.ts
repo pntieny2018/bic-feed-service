@@ -76,7 +76,7 @@ export interface IDataPostToAdd {
   title?: string;
   summary?: string;
   content?: string;
-  media?: IMedia[];
+  media?: any;
   mentionUserIds?: string[];
   categories?: { id: string; name: string }[];
   items?: { id: string; zindex: number }[];

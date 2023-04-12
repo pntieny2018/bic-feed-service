@@ -89,7 +89,6 @@ export class ExternalService {
             mimeType: i.properties.mime_type,
             width: i.properties.width,
             height: i.properties.height,
-            size: i.properties.size,
             status: i.status,
           }))
         : [];
@@ -118,8 +117,8 @@ export class ExternalService {
       type: string;
     }
   ): Promise<any> {
+    const { userId, type } = data;
     try {
-      const { userId, type } = data;
       const response = await lastValueFrom(
         this._httpService.put(
           AxiosHelper.injectParamsToStrUrl(ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES + `/${id}`, {
@@ -130,21 +129,17 @@ export class ExternalService {
       );
 
       this._logger.debug('response.data', JSON.stringify(response.data));
-      const result = response.data.data
-        ? response.data.data.map((i) => ({
-            id: i.id,
-            url: i.origin_url,
-            name: i.properties.name,
-            originName: i.properties.name,
-            mimeType: i.properties.mime_type,
-            size: i.properties.size,
-            createdAt: i.created_at ? new Date(i.created_at) : new Date(),
-          }))
-        : [];
-
-      return result;
+      return {
+        id: response.data.id,
+        url: response.data.url,
+        src: response.data.src,
+        mimeType: response.data.properties.mime_type,
+        width: response.data.properties.width,
+        height: response.data.properties.height,
+      };
     } catch (e) {
-      throw e;
+      this._logger.error(`Media ID: ${id} not found -- payload: ${JSON.stringify(data)}`);
+      return null;
     }
   }
 }

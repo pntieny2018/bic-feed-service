@@ -346,6 +346,13 @@ export class PostResponseDto {
   @Expose()
   public series?: SeriesSimpleResponseDto[];
 
+  @ApiProperty({
+    description: 'Video processing',
+    type: String,
+  })
+  @Expose()
+  public videoIdProcessing?: string;
+
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
   }

@@ -561,8 +561,6 @@ export class PostService {
       const { content, media, setting, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
-      const { files, images, videos } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       let tagList = [];
       if (tags) {
         tagList = await this.tagService.getTagsByIds(tags);
@@ -659,8 +657,13 @@ export class PostService {
 
       const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
 
-      if (media.videos?.length > 0 && media.videos[0].status) {
+      if (
+        post.status === PostStatus.PUBLISHED &&
+        media.videos?.length > 0 &&
+        media.videos[0].status !== MediaStatus.COMPLETED
+      ) {
         dataUpdate['status'] = PostStatus.PROCESSING;
+        dataUpdate['videoIdProcessing'] = media.videos[0].id;
       }
 
       dataUpdate.linkPreviewId = null;
@@ -784,7 +787,10 @@ export class PostService {
       const authUserId = authUser.id;
       const groupIds = post.audience.groups.map((g) => g.id);
 
-      let status = PostStatus.PUBLISHED;
+      const dataUpdate = {
+        status: PostStatus.PUBLISHED,
+        createdAt: new Date(),
+      };
       if (
         post.media.videos.filter(
           (m) =>
@@ -793,23 +799,17 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        status = PostStatus.PROCESSING;
+        dataUpdate['status'] = PostStatus.PROCESSING;
+        dataUpdate['videoIdProcessing'] = post.media.videos[0].id;
       }
-      const postPrivacy = await this.getPrivacy(groupIds);
-      await this.postModel.update(
-        {
-          status,
-          privacy: postPrivacy,
-          createdAt: new Date(),
+      dataUpdate['privacy'] = await this.getPrivacy(groupIds);
+      await this.postModel.update(dataUpdate, {
+        where: {
+          id: post.id,
+          createdBy: authUserId,
         },
-        {
-          where: {
-            id: post.id,
-            createdBy: authUserId,
-          },
-        }
-      );
-      post.status = status;
+      });
+      post.status = dataUpdate['status'];
       if (post.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -1242,7 +1242,6 @@ export class PostService {
 
   public async getsByMedia(id: string): Promise<PostResponseDto[]> {
     const include = this.getIncludeObj({
-      mustIncludeMedia: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
       filterMediaIds: [id],
@@ -1255,6 +1254,9 @@ export class PostService {
         ],
       },
       include,
+      where: {
+        videoIdProcessing: id,
+      },
     });
 
     const jsonPosts = posts.map((p) => p.toJSON());
