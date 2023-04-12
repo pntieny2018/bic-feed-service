@@ -11,7 +11,6 @@ import { AuthorityModule } from '../authority';
 @Module({
   imports: [
     UserModuleV2,
-    PostModule,
     forwardRef(() => PostModule),
     GroupModuleV2,
     MentionModule,
