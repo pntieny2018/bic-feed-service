@@ -20,7 +20,7 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
-import { MediaModel, MediaStatus } from '../../database/models/media.model';
+import { MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
@@ -91,7 +91,6 @@ export class PostService {
     protected userSavePostModel: typeof UserSavePostModel,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected groupAppService: IGroupApplicationService,
-    protected mediaService: MediaService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
@@ -404,7 +403,6 @@ export class PostService {
     filterGroupIds,
   }: {
     mustIncludeGroup?: boolean;
-    mustIncludeMedia?: boolean;
     mustInSeriesIds?: string[];
     shouldIncludeCategory?: boolean;
     shouldIncludeOwnerReaction?: boolean;
@@ -413,7 +411,6 @@ export class PostService {
     shouldIncludePreviewLink?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
-    filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
     authUserId?: string;
@@ -464,17 +461,13 @@ export class PostService {
           'canReact',
           'importantExpiredAt',
           'type',
+          ['media_json', 'media'],
         ],
         where: {
           status: PostStatus.PUBLISHED,
           isHidden: false,
         },
         include: [
-          {
-            model: MediaModel,
-            as: 'coverMedia',
-            required: false,
-          },
           {
             model: PostGroupModel,
             as: 'groups',
@@ -856,29 +849,6 @@ export class PostService {
       throw error;
     }
   }
-
-  public async cleanRelationship(
-    postId: string,
-    transaction: Transaction,
-    isCleanMedia = false
-  ): Promise<void> {
-    await Promise.all([
-      this.mentionService.setMention([], MentionableType.POST, postId, transaction),
-      isCleanMedia
-        ? this.mediaService.sync(postId, EntityType.POST, [], transaction)
-        : Promise.resolve(),
-      this.setGroupByPost([], postId, transaction),
-      this.reactionService.deleteByPostIds([postId]),
-      this.commentService.deleteCommentsByPost(postId, transaction),
-      this.feedService.deleteNewsFeedByPost(postId, transaction),
-      this.feedService.deleteUserSeenByPost(postId, transaction),
-      this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
-      this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
-      this.postTagModel.destroy({ where: { postId: postId }, transaction }),
-      this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
-      this.userSavePostModel.destroy({ where: { postId }, transaction }),
-    ]);
-  }
   /**
    * Add group to post
    * @param groupIds Array of Group ID
@@ -1244,7 +1214,6 @@ export class PostService {
     const include = this.getIncludeObj({
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      filterMediaIds: [id],
     });
     const posts = await this.postModel.findAll({
       attributes: {
@@ -1270,26 +1239,6 @@ export class PostService {
     return this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
-  }
-
-  public async updateStatus(postId: string): Promise<void> {
-    const mediaList = await this.mediaService.getMediaByPostId(postId);
-    let totalWaitingProcess = 0;
-    let totalProcessing = 0;
-    let totalFailed = 0;
-    let totalCompleted = 0;
-    for (const media of mediaList) {
-      if (media.status === MediaStatus.COMPLETED) totalCompleted++;
-      if (media.status === MediaStatus.FAILED) totalFailed++;
-      if (media.status === MediaStatus.WAITING_PROCESS) totalWaitingProcess++;
-      if (media.status === MediaStatus.PROCESSING) totalProcessing++;
-    }
-    let status;
-    if (totalCompleted === mediaList.length) status = PostStatus.PUBLISHED;
-    if (totalProcessing > 0) status = PostStatus.PROCESSING;
-    if (totalFailed === mediaList.length || totalWaitingProcess === mediaList.length)
-      status = PostStatus.DRAFT;
-    await this.postModel.update({ status }, { where: { id: postId } });
   }
 
   public checkContent(content: string, media: MediaDto): void {
@@ -1523,13 +1472,9 @@ export class PostService {
         'canReact',
         'importantExpiredAt',
         'type',
+        ['media_json', 'media'],
       ],
       include: [
-        {
-          model: MediaModel,
-          as: 'coverMedia',
-          required: false,
-        },
         {
           model: PostGroupModel,
           as: 'groups',

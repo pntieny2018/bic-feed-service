@@ -12,6 +12,7 @@ import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { MediaModel } from '../../../database/models/media.model';
 import { MediaDto } from '../dto';
 import { UserDto } from '../../v2-user/application';
+import { MediaStatus } from '../../v2-post/data-type';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -37,7 +38,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
       if (files.length < fileIds.length) {
         return false;
       }
-      if (!files.every((file) => file.userId !== user.id)) return false;
+      if (!files.every((file) => file.createdBy !== user.id)) return false;
       media.files = files;
     }
 
@@ -47,7 +48,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
       if (videos.length < videoIds.length) {
         return false;
       }
-      if (!videos.every((file) => file.userId !== user.id)) return false;
+      if (!videos.every((video) => video.createdBy !== user.id)) return false;
       media.videos = videos;
     }
 
@@ -57,7 +58,12 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
       if (images.length < imageIds.length) {
         return false;
       }
-      if (!images.every((file) => file.userId !== user.id)) return false;
+      if (
+        !images.every(
+          (image) => image.createdBy !== user.id || image.status !== MediaStatus.COMPLETED
+        )
+      )
+        return false;
       media.images = images;
     }
 

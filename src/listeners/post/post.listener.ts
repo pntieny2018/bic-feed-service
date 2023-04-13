@@ -525,7 +525,6 @@ export class PostListener {
     if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
-    await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
       this._postService

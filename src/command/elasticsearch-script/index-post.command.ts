@@ -41,7 +41,7 @@ export class IndexPostCommand implements CommandRunner {
   private _logger = new Logger(IndexPostCommand.name);
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
-    public readonly groupAppService: IGroupApplicationService, e
+    public readonly groupAppService: IGroupApplicationService,
     public readonly postSearchService: SearchService,
     public readonly postService: PostService,
     public readonly postBingdingService: PostBindingService,

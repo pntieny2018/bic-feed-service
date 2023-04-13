@@ -29,10 +29,9 @@ export class ExternalService {
             id: i.id,
             url: i.origin_url,
             name: i.properties.name,
-            originName: i.properties.name,
             mimeType: i.properties.mime_type,
             size: i.properties.size,
-            createdAt: i.created_at ? new Date(i.created_at) : new Date(),
+            createdBy: i.user_id,
           }))
         : [];
     } catch (e) {
@@ -50,13 +49,12 @@ export class ExternalService {
             id: i.id,
             url: i.origin_url,
             name: i.properties.name,
-            originName: i.properties.name,
             mimeType: i.properties.mime_type,
             width: i.properties.width,
             height: i.properties.height,
             size: i.properties.size,
             thumbnails: i.thumbnails,
-            createdAt: i.created_at ? new Date(i.created_at) : new Date(),
+            createdBy: i.user_id,
           }))
         : [];
     } catch (e) {
@@ -73,6 +71,7 @@ export class ExternalService {
         ? response.data.data.map((i) => ({
             id: i.id,
             url: i.url,
+            src: i.src,
             createdBy: i.user_id,
             mimeType: i.properties.mime_type,
             width: i.properties.width,

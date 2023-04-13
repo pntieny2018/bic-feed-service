@@ -14,31 +14,10 @@ export interface ICoverMedia {
   extension?: string;
 }
 
-export interface IMedia {
-  id: string;
-  createdBy: string;
-  url: string;
-  createdAt: Date;
-  name: string;
-  originName: string;
-  status?: MediaStatus;
-  type: MediaType;
-  width?: number;
-  height?: number;
-  extension?: string;
-  size?: number;
-  mimeType?: string;
-  thumbnails?: {
-    width: number;
-    height: number;
-    url: string;
-  }[];
-}
-
 export interface IPostElasticsearch {
   id: string;
   type: PostType;
-  media: IMedia[];
+  media: any;
   groupIds: string[];
   communityIds: string[];
   createdAt: string;
