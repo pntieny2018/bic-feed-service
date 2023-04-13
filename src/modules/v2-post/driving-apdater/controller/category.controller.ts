@@ -21,6 +21,7 @@ export class CategoryController {
     private readonly _commandBus: CommandBus,
     private readonly _queryBus: QueryBus
   ) {}
+
   private _classTransformer = new ClassTransformer();
 
   @ApiOperation({ summary: 'Get categories' })
