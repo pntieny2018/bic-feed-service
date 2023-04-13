@@ -64,7 +64,7 @@ export interface IDataPostToAdd {
     groupId: string;
     name: string;
   }[];
-  coverMedia?: ICoverMedia;
+  coverMedia?: any;
 }
 
 export interface IDataPostToUpdate extends IDataPostToAdd {

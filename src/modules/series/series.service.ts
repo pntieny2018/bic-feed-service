@@ -74,7 +74,7 @@ export class SeriesService {
       await this._postModel.findOne({
         attributes: {
           include: [
-            ['cover_json', 'cover'],
+            ['cover_json', 'coverMedia'],
             PostModel.loadMarkReadPost(authUser.id),
             PostModel.loadSaved(authUser.id),
           ],

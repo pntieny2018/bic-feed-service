@@ -61,6 +61,7 @@ import { GroupPrivacy } from '../v2-group/data-type';
 import { ArticleResponseDto, ItemInSeriesResponseDto } from '../article/dto/responses';
 import { getDatabaseConfig } from '../../config/database';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
+import { LinkPreviewModel } from '../../database/models/link-preview.model';
 
 @Injectable()
 export class PostService {
@@ -272,7 +273,7 @@ export class PostService {
     if (options?.authUserId && options?.loadSaved) {
       include.push(PostModel.loadSaved(options.authUserId));
     }
-    include.push(['tags_json', 'tags'], ['media_json', 'media'], ['cover_json', 'cover']);
+    include.push(['tags_json', 'tags'], ['media_json', 'media'], ['cover_json', 'coverMedia']);
 
     attributes.include = include;
     return attributes;
@@ -434,6 +435,13 @@ export class PostService {
       includes.push({
         model: MentionModel,
         as: 'mentions',
+        required: false,
+      });
+    }
+    if (shouldIncludePreviewLink) {
+      includes.push({
+        model: LinkPreviewModel,
+        as: 'linkPreview',
         required: false,
       });
     }
@@ -1426,7 +1434,7 @@ export class PostService {
         include: [
           ['tags_json', 'tags'],
           ['media_json', 'media'],
-          ['cover_json', 'cover'],
+          ['cover_json', 'coverMedia'],
           PostModel.loadMarkReadPost(userId),
           PostModel.loadSaved(userId),
         ],

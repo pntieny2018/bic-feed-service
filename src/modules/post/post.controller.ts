@@ -160,4 +160,28 @@ export class PostController {
   ): Promise<any> {
     return this._postAppService.getUserGroup(groupId, userId, postId);
   }
+
+  @ApiOperation({ summary: 'Save post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Post('/:postId/save')
+  public async save(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.savePost(user, postId);
+  }
+
+  @ApiOperation({ summary: 'unsave post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Delete('/:postId/unsave')
+  public async unSave(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.unSavePost(user, postId);
+  }
 }
