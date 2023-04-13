@@ -25,6 +25,7 @@ import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import { request, Request } from 'express';
+import { ObjectHelper } from '../../common/helpers';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -94,7 +95,44 @@ export class PostController {
     @AuthUser() user: UserDto,
     @Body() createPostDto: CreatePostDto
   ): Promise<any> {
-    return this._postAppService.createPost(user, createPostDto);
+    const content = [
+      {
+        type: 'p',
+        children: [
+          {
+            text: '              ngon',
+          },
+        ],
+        id: 'oFmfMtoPFYbOoXhmN_Pe2',
+      },
+      {
+        type: 'img',
+        children: [
+          {
+            text: 'img',
+          },
+        ],
+        url: 'https://bic-dev-user-upload-images-s3-bucket.s3.ap-southeast-1.amazonaws.com/post/original/20f8e855-fdd7-47dd-9582-d8b85462faee.jpg',
+        id: 'Tq9aeZ2lRDlx0w0opPim_',
+      },
+      {
+        type: 'p',
+        children: [
+          {
+            text: '',
+          },
+        ],
+        id: '6l7Ndk_hy1e4GSTRpMlHT',
+      },
+    ];
+    const newContent = ObjectHelper.contentReplaceUrl(content, [
+      {
+        plateId: 'Tq9aeZ2lRDlx0w0opPim_',
+        url: 'https://media.beincom.tech/image/variants/post/content/20f8e855-fdd7-47dd-9582-d8b85462faee',
+      },
+    ]);
+    console.log('newC=', newContent);
+    // return this._postAppService.createPost(user, createPostDto);
   }
 
   @ApiOperation({ summary: 'Update post' })

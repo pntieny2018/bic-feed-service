@@ -11,9 +11,9 @@ import { ObjectHelper } from '../common/helpers';
 import { IS3Config } from '../config/s3';
 import { Logger } from '@nestjs/common';
 
-@Command({ name: 'migrate:media-service', description: 'Move media to Upload service' })
-export class MigrateMediaServiceCommand implements CommandRunner {
-  private _logger = new Logger(MigrateMediaServiceCommand.name);
+@Command({ name: 'migrate:post-media', description: 'Move media to Upload service' })
+export class MigratePostMediaCommand implements CommandRunner {
+  private _logger = new Logger(MigratePostMediaCommand.name);
 
   public constructor(
     @InjectModel(MediaModel) private _mediaModel: typeof MediaModel,
@@ -24,48 +24,34 @@ export class MigrateMediaServiceCommand implements CommandRunner {
   ) {}
 
   public async run(): Promise<any> {
-    //await this.migrateMediaId();
-    await this.migratePostsMedia('9f0b1383-4b23-4b8a-9eb4-c1310b6c4d03');
+    try {
+      console.info('We have 4 steps:');
+      console.info('[Step 1] Migrate media to posts');
+      await this.migratePostsMedia();
+      console.info('[Step 2] Migrate cover article/series');
+      await this.migratePostsCover();
+      console.info('[Step 3] Migrate image in comments');
+      await this.migrateComments();
+      console.info('[Finally] Migrate images article content');
+      await this.migrateArticleContent();
+    } catch (e) {
+      console.log(e);
+    }
+
     process.exit();
   }
 
-  public async migrateMediaId(updateOldId = false): Promise<void> {
-    const { schema } = getDatabaseConfig();
-    await this._mediaModel.sequelize.query(`UPDATE ${schema}.media SET old_id = id`);
-    let stop = false;
-    let offset = 0;
-    const limit = 200;
-    let total = 0;
-    while (!stop) {
-      const images = await this._mediaModel.findAll({
-        attributes: ['url', 'id'],
-        where: {
-          type: MediaType.IMAGE,
-        },
-        limit,
-        offset,
-      });
-      for (const image of images) {
-        const identifyChar = '/original/';
-        const offsetUUID = image.url.indexOf(identifyChar);
-        const uuidLength = 36;
-        const newId = image.url.substring(
-          offsetUUID + identifyChar.length,
-          offsetUUID + identifyChar.length + uuidLength
-        );
-        console.log(`Changing ID ${image.id} -- to new ID: ${newId}`);
-        await this._mediaModel.update(
-          { id: newId },
-          {
-            where: { id: image.id },
-          }
-        );
-        total++;
-      }
-      if (images.length === 0) stop = true;
-      offset = limit + offset;
+  public getMediaIdFromURL(url): string {
+    const matchUUID = url.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    return matchUUID !== null && matchUUID.length > 0 ? matchUUID[0] : null;
+  }
+
+  public parseContentArticle(content) {
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return null;
     }
-    console.log(`Migrated all media ID(${total})`);
   }
 
   public async migrateArticleContent(testId = null): Promise<void> {
@@ -79,66 +65,73 @@ export class MigrateMediaServiceCommand implements CommandRunner {
 
     let stop = false;
     let offset = 0;
-    let total = 0;
+    let totalUpdated = 0;
     const limit = 200;
     while (!stop) {
       const posts = await this._postModel.findAll({
-        attributes: ['id', 'content'],
+        attributes: ['id', 'createdBy', 'content'],
         where: condition,
         limit,
         offset,
+        order: [['createdAt', 'desc']],
       });
       const s3Config = this._configService.get<IS3Config>('s3');
       for (const post of posts) {
-        total++;
-        const urlImages = ObjectHelper.nodeToUrlImages({ children: JSON.parse(post.content) });
-
-        const availableUrlImages = urlImages
-          .filter((item) =>
-            item.url.includes(`${s3Config.userSharingAssetsBucket}.s3.${s3Config.region}`)
-          )
+        const articleContent = this.parseContentArticle(post.content);
+        if (!articleContent) {
+          console.error(`Skip: format content invalid - ID: ${post.id}`);
+          continue;
+        }
+        const urlImages = ObjectHelper.nodeToUrlImages({ children: articleContent });
+        const bicUrlImages = urlImages
+          .filter((item) => item.url.includes(`${s3Config.userSharingAssetsBucket}`))
           .map((image) => {
-            const identifyChar = 'post/original/';
-            const offsetUUID = image.url.indexOf(identifyChar);
-            const uuidLength = 36;
-            const newId = image.url.substring(
-              offsetUUID + identifyChar.length,
-              offsetUUID + identifyChar.length + uuidLength
-            );
+            const newId = this.getMediaIdFromURL(image.url);
             return {
               id: newId,
               plateId: image.plateId,
+              url: image.url,
             };
           });
+        if (bicUrlImages.length === 0) {
+          continue;
+        }
         const dataImages = await Promise.all(
-          availableUrlImages.map((image) =>
+          bicUrlImages.map((image) =>
             this._externalService.updateMedia(image.id, {
               userId: post.createdBy,
-              type: 'comment',
+              type: 'article:content',
+              url: image.url,
+              entityId: post.id,
             })
           )
         );
-
+        if (dataImages.length === 0) {
+          continue;
+        }
         const replaceImages = dataImages.map((image) => ({
-          plateId: availableUrlImages.find((item) => item.id === image.id).plateId,
+          plateId: bicUrlImages.find((item) => item.id === image.id).plateId,
           url: image.url,
         }));
+        const newContent = ObjectHelper.contentReplaceUrl(articleContent, replaceImages);
 
-        const newContent = ObjectHelper.contentReplaceUrl(post.content, replaceImages);
-        this._postModel.update(
+        const { schema } = getDatabaseConfig();
+        await this._postModel.sequelize.query(
+          `UPDATE ${schema}.posts SET old_content = content, content = :content WHERE id = :postId`,
           {
-            content: newContent,
-          },
-          {
-            where: { id: post.id },
+            replacements: {
+              postId: post.id,
+              content: JSON.stringify(newContent),
+            },
           }
         );
-        console.log(`Updated article content: ${post.id}`);
+
+        totalUpdated++;
+        console.log(`Updated: ${totalUpdated}`);
       }
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
-    console.log(`Migrated all article content(${total})`);
   }
 
   /*Media for post*/
@@ -150,10 +143,35 @@ export class MigrateMediaServiceCommand implements CommandRunner {
     let stop = false;
     let offset = 0;
     const limit = 200;
-    let total = 0;
-    console.log('333333333333');
+    let totalUpdated = 0;
+    const total = await this._postModel.count({
+      include: [
+        {
+          model: MediaModel,
+          as: 'media',
+          required: true,
+          attributes: [
+            'id',
+            'url',
+            'size',
+            'extension',
+            'type',
+            'name',
+            'originName',
+            'width',
+            'height',
+            'thumbnails',
+            'status',
+            'mimeType',
+            'createdAt',
+          ],
+        },
+      ],
+      where: condition,
+    });
     while (!stop) {
       const posts = await this._postModel.findAll({
+        subQuery: false,
         include: [
           {
             model: MediaModel,
@@ -179,25 +197,27 @@ export class MigrateMediaServiceCommand implements CommandRunner {
         where: condition,
         limit,
         offset,
+        order: [['createdAt', 'desc']],
       });
-      console.log('111', JSON.stringify(posts));
       for (const post of posts) {
         const imageJson = [];
         const fileJson = [];
         const videoJson = [];
+        totalUpdated++;
         for (const media of post.media) {
-          total++;
           if (media.type === MediaType.IMAGE) {
-            console.log('xxxxxxxxxxx', media.id);
             const mediaData = await this._externalService.updateMedia(media.id, {
               userId: post.createdBy,
               type: 'post:content',
+              url: media.url,
+              entityId: post.id,
             });
             if (mediaData) {
               imageJson.push({
                 id: mediaData.id,
                 url: mediaData.url,
                 src: mediaData.src,
+                mimeType: mediaData.mimeType,
                 width: mediaData.width,
                 height: mediaData.height,
               });
@@ -237,12 +257,11 @@ export class MigrateMediaServiceCommand implements CommandRunner {
             where: { id: post.id },
           }
         );
-        console.log(`Updated post media ${post.id} - media(${imageJson.length})`);
+        // console.log(`Updated ${totalUpdated}/${total}`);
       }
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
-    console.log(`Migrated all posts (${total}.`);
   }
 
   /*Cover for post/article/series*/
@@ -251,26 +270,46 @@ export class MigrateMediaServiceCommand implements CommandRunner {
       cover: {
         [Op.ne]: null,
       },
+      type: [PostType.ARTICLE, PostType.SERIES],
     };
     if (testId) {
       condition['id'] = testId;
     }
     let stop = false;
     let offset = 0;
-    let total = 0;
+    let totalUpdated = 0;
     const limit = 200;
+    const total = await this._postModel.count({
+      include: [
+        {
+          model: MediaModel,
+          as: 'coverMedia',
+          required: true,
+        },
+      ],
+      where: condition,
+    });
     while (!stop) {
       const posts = await this._postModel.findAll({
-        attributes: ['id', 'cover', 'type'],
+        attributes: ['id', 'createdBy', 'cover', 'type'],
+        include: [
+          {
+            model: MediaModel,
+            as: 'coverMedia',
+            required: true,
+          },
+        ],
         where: condition,
         limit,
         offset,
+        order: [['createdAt', 'desc']],
       });
       for (const post of posts) {
-        total++;
         const mediaData = await this._externalService.updateMedia(post.cover, {
           userId: post.createdBy,
           type: `${post.type.toLowerCase()}:cover`,
+          url: post.coverMedia.url,
+          entityId: post.id,
         });
         let mediaJson = null;
         if (mediaData) {
@@ -291,12 +330,12 @@ export class MigrateMediaServiceCommand implements CommandRunner {
             where: { id: post.id },
           }
         );
-        console.log(`Updated post cover ${post.id} - media(${mediaJson.length})`);
+        totalUpdated++;
+        // console.log(`Updated: ${totalUpdated}/${total}`);
       }
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
-    console.log(`Migrated all cover(${total})`);
   }
 
   public async migrateComments(testId = null): Promise<void> {
@@ -304,25 +343,40 @@ export class MigrateMediaServiceCommand implements CommandRunner {
     if (testId) condition['id'] = testId;
     let stop = false;
     let offset = 0;
-    let total = 0;
+    let totalUpdated = 0;
     const limit = 200;
+    const total = await this._commentModel.count({
+      include: [
+        {
+          model: MediaModel,
+          as: 'media',
+          required: true,
+        },
+      ],
+      where: condition,
+    });
     while (!stop) {
       const comments = await this._commentModel.findAll({
         include: [
           {
             model: MediaModel,
+            as: 'media',
             required: true,
           },
         ],
         where: condition,
+        limit,
+        offset,
+        order: [['createdAt', 'desc']],
       });
       for (const comment of comments) {
-        total++;
         const mediaJson = [];
         for (const media of comment.media) {
           const mediaData = await this._externalService.updateMedia(media.id, {
             userId: comment.createdBy,
             type: 'comment:content',
+            url: media.url,
+            entityId: comment.id,
           });
           if (mediaData) {
             mediaJson.push({
@@ -347,11 +401,12 @@ export class MigrateMediaServiceCommand implements CommandRunner {
             where: { id: comment.id },
           }
         );
-        console.log(`Updated comment ${comment.id} - media(${mediaJson.length})`);
+
+        totalUpdated++;
+        // console.log(`Updated ${totalUpdated}/${total}`);
       }
       if (comments.length === 0) stop = true;
       offset = limit + offset;
     }
-    console.log(`Migrated all media comments(${total}`);
   }
 }
