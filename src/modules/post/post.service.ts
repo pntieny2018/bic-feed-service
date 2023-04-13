@@ -1977,7 +1977,7 @@ export class PostService {
     }
   }
 
-  public async getPinnedList(groupId: string, user: UserDto) {
+  public async getPinnedList(groupId: string, user: UserDto): Promise<ArticleResponseDto[]> {
     const ids = await this.getIdsPinnedInGroup(groupId, user?.id || null);
     if (ids.length === 0) return [];
     const posts = await this.getPostsByIds(ids, user?.id || null);
@@ -1998,7 +1998,7 @@ export class PostService {
 
   public async pinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2015,13 +2015,13 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
   }
 
   public async unpinPostToGroupIds(
     postId: string,
-    groupIds: string[],
+    groupIds: string[]
   ): Promise<[number, IPostGroup[]]> {
     if (groupIds.length === 0) return;
     const { schema } = getDatabaseConfig();
@@ -2037,8 +2037,35 @@ export class PostService {
           postId,
           groupIds,
         },
-      },
+      }
     );
+  }
+
+  public async getPinnedPostGroupsByGroupId(groupId: string): Promise<IPostGroup[]> {
+    const postGroups = await this.postGroupModel.findAll({
+      where: {
+        groupId,
+        isPinned: true,
+      },
+    });
+    return postGroups;
+  }
+
+  public async reorderPinnedPostGroups(groupId: string, postIds: string[]): Promise<void> {
+    const reorderExecute = postIds.map((postId, index) => {
+      return this.postGroupModel.update(
+        {
+          pinnedIndex: index + 1,
+        },
+        {
+          where: {
+            groupId,
+            postId,
+          },
+        }
+      );
+    });
+    await Promise.all(reorderExecute);
   }
 
   public async getGroupsByPostId(id: string): Promise<IPost> {
