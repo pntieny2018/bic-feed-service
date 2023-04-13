@@ -280,7 +280,7 @@ jobs:
             git pull
             git push
 
-            git checkout refactor/restructur       
+            git checkout refactor/restructure       
             set -e
             COMMIT_SHA1=$CIRCLE_SHA1
             export COMMIT_SHA1=$COMMIT_SHA1
