@@ -1927,6 +1927,18 @@ export class PostService {
         groupId,
         isPinned: true,
       },
+      include: [
+        {
+          model: PostModel,
+          as: 'post',
+          required: true,
+          attributes: [],
+          where: {
+            status: PostStatus.PUBLISHED,
+            isHidden: false,
+          },
+        },
+      ],
     });
     return postGroups;
   }
