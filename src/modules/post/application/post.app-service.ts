@@ -36,6 +36,8 @@ import { ContentNotFoundException } from '../../v2-post/exception/content-not-fo
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
 import { AudienceNoBelongContentException } from '../../v2-post/exception/audience-no-belong-content.exception';
 import { InjectModel } from '@nestjs/sequelize';
+import { ContentPinNotFoundException } from '../../v2-post/exception/content-pin-not-found.exception';
+import { ContentPinLackException } from '../../v2-post/exception/content-pin-lack.exception';
 
 @Injectable()
 export class PostAppService {
@@ -431,6 +433,33 @@ export class PostAppService {
     try {
       await this._postService.unpinPostToGroupIds(postId, addUnpinGroupIds);
       await this._postService.pinPostToGroupIds(postId, addPinGroupIds);
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex?.stack));
+    }
+  }
+
+  public async reorderPinnedContent(payload: {
+    groupId: string;
+    postIds: string[];
+    authUser: UserDto;
+  }): Promise<void> {
+    const { groupId, postIds, authUser } = payload;
+
+    await this._authorityService.checkPinPermission(authUser, [groupId]);
+
+    const postGroups = await this._postService.getPinnedPostGroupsByGroupId(groupId);
+    const currentPostIds = postGroups.map((e) => e.postId);
+    const postIdsNotBelong = postIds.filter((postId) => !currentPostIds.includes(postId));
+    if (postIdsNotBelong.length) {
+      throw new ContentPinNotFoundException({ postsDenied: postIdsNotBelong });
+    }
+    const postsIdsNotFound = currentPostIds.filter((postId) => !postIds.includes(postId));
+    if (postsIdsNotFound.length) {
+      throw new ContentPinLackException({ postsLacked: postsIdsNotFound });
+    }
+
+    try {
+      await this._postService.reorderPinnedPostGroups(groupId, postIds);
     } catch (ex) {
       this._logger.error(JSON.stringify(ex?.stack));
     }

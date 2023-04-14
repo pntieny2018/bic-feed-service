@@ -66,6 +66,9 @@ export class SeriesController {
     type: SeriesResponseDto,
     description: 'Create series successfully',
   })
+  @ResponseMessages({
+    success: 'message.series.created_success',
+  })
   @Post('/')
   @InjectUserToBody()
   public async create(
@@ -79,6 +82,9 @@ export class SeriesController {
   @ApiOkResponse({
     type: SeriesResponseDto,
     description: 'Update series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.updated_success',
   })
   @Put('/:id')
   @InjectUserToBody()
@@ -94,6 +100,9 @@ export class SeriesController {
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.deleted_success',
   })
   @Delete('/:id')
   public async delete(
@@ -123,6 +132,9 @@ export class SeriesController {
   @ApiOkResponse({
     description: 'Remove article/posts successfully',
   })
+  @ResponseMessages({
+    success: 'message.series.removed_success',
+  })
   @Delete('/:id/remove-items')
   public async removeArticle(
     @Param('id', ParseUUIDPipe) id: string,
@@ -136,6 +148,9 @@ export class SeriesController {
   @ApiOperation({ summary: 'Add item into series' })
   @ApiOkResponse({
     description: 'Add article/posts successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.added_success',
   })
   @Put('/:id/add-items')
   public async addArticle(
