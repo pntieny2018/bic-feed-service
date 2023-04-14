@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -26,6 +27,7 @@ import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -58,7 +60,17 @@ export class SeriesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query(GetSeriesPipe) getPostDto: GetSeriesDto
   ): Promise<SeriesResponseDto> {
-    return this._seriesAppService.getSeriesDetail(user, id, getPostDto);
+    try {
+      const series = await this._seriesAppService.getSeriesDetail(user, id, getPostDto);
+      return series;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create series' })

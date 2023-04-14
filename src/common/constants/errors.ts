@@ -12,6 +12,16 @@ export const ERRORS = {
     AUDIENCE_NO_BELONG: 'content.audience_no_belong',
     CONTENT_NOT_FOUND: 'content.not_found',
     CONTENT_NO_PIN_PERMISSION: 'content.no_pin_permission',
+    CONTENT_REQUIRE_GROUP: 'content.require_group',
+  },
+  ARTICLE: {
+    ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
+  },
+  POST: {
+    POST_NO_READ_PERMISSION: 'post.no_read_permission',
+  },
+  SERIES: {
+    SERIES_NO_READ_PERMISSION: 'series.no_read_permission',
   },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',

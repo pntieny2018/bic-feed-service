@@ -91,6 +91,7 @@ export class PostAppService {
     const post = {
       privacy: postResponseDto.privacy,
       createdBy: postResponseDto.createdBy,
+      type: postResponseDto.type,
       status: postResponseDto.status,
       groups: postResponseDto.audience.groups.map(
         (g) =>
@@ -101,7 +102,7 @@ export class PostAppService {
     } as IPost;
 
     if (user) {
-      await this.authorityService.checkCanReadPost(user, post);
+      await this.authorityService.checkCanReadPost(user, post, postResponseDto.audience.groups);
     } else {
       await this.authorityService.checkIsPublicPost(post);
     }

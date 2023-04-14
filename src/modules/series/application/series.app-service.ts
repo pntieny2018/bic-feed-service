@@ -64,6 +64,7 @@ export class SeriesAppService {
       privacy: seriesResponseDto.privacy,
       createdBy: seriesResponseDto.createdBy,
       status: seriesResponseDto.status,
+      type: seriesResponseDto.type,
       groups: seriesResponseDto.audience.groups.map(
         (g) =>
           ({
@@ -73,7 +74,11 @@ export class SeriesAppService {
     } as IPost;
 
     if (user) {
-      await this._authorityService.checkCanReadSeries(user, series);
+      await this._authorityService.checkCanReadSeries(
+        user,
+        series,
+        seriesResponseDto.audience.groups
+      );
     } else {
       await this._authorityService.checkIsPublicSeries(series);
     }
