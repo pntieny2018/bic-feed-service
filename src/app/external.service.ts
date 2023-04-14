@@ -22,7 +22,10 @@ export class ExternalService {
   public async getFileIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_FILES, ids)
+        this._httpService.post(
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_FILES,
+          ids
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -42,7 +45,10 @@ export class ExternalService {
   public async getVideoIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, ids)
+        this._httpService.post(
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS,
+          ids
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -65,7 +71,10 @@ export class ExternalService {
   public async getImageIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, ids)
+        this._httpService.post(
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES,
+          ids
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -109,10 +118,13 @@ export class ExternalService {
     const { userId, type } = data;
     try {
       const response = await lastValueFrom(
-        this._httpService.put(`${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`, {
-          resource: type,
-          user_id: userId,
-        })
+        this._httpService.put(
+          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
+          {
+            resource: type,
+            user_id: userId,
+          }
+        )
       );
 
       const data = response.data.data;
