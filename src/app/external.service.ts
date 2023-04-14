@@ -109,13 +109,10 @@ export class ExternalService {
     const { userId, type } = data;
     try {
       const response = await lastValueFrom(
-        this._httpService.put(
-          `https://api.beincom.tech/v1/upload${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
-          {
-            resource: type,
-            user_id: userId,
-          }
-        )
+        this._httpService.put(`${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`, {
+          resource: type,
+          user_id: userId,
+        })
       );
 
       const data = response.data.data;
