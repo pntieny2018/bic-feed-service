@@ -12,6 +12,8 @@ export const ERRORS = {
     AUDIENCE_NO_BELONG: 'content.audience_no_belong',
     CONTENT_NOT_FOUND: 'content.not_found',
     CONTENT_NO_PIN_PERMISSION: 'content.no_pin_permission',
+    CONTENT_PIN_NOT_FOUND: 'content.pin_not_found',
+    CONTENT_PIN_LACK: 'content.pin_lack',
     CONTENT_REQUIRE_GROUP: 'content.require_group',
   },
   ARTICLE: {
