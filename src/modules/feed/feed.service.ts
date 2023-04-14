@@ -6,7 +6,7 @@ import { Transaction } from 'sequelize';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { PageDto, PageMetaDto } from '../../common/dto';
 import { ExceptionHelper } from '../../common/helpers';
-import { IPost } from '../../database/models/post.model';
+import { IPost, PostModel } from '../../database/models/post.model';
 import { UserNewsFeedModel } from '../../database/models/user-newsfeed.model';
 import { UserSeenPostModel } from '../../database/models/user-seen-post.model';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -19,6 +19,7 @@ import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, GroupApplicationService } from '../v2-group/application';
 import { GroupPrivacy } from '../v2-group/data-type';
+import { AuthorityService } from '../authority';
 
 @Injectable()
 export class FeedService {
@@ -37,7 +38,10 @@ export class FeedService {
     @InjectModel(UserSeenPostModel)
     private _userSeenPostModel: typeof UserSeenPostModel,
     private _sentryService: SentryService,
-    private _postBindingService: PostBindingService
+    private _postBindingService: PostBindingService,
+    @InjectModel(PostModel)
+    protected postModel: typeof PostModel,
+    private _authorityService: AuthorityService
   ) {}
 
   /**
@@ -82,12 +86,12 @@ export class FeedService {
     }
     const posts = await this._postService.getPostsByIds(postIdsAndSorted, authUser.id);
 
-    const postsBindedData = await this._bindAndTransformData({
+    const postsBoundData = await this._bindAndTransformData({
       posts: posts,
       authUser,
     });
 
-    return new PageDto<PostResponseDto>(postsBindedData, {
+    return new PageDto<PostResponseDto>(postsBoundData, {
       limit,
       offset,
       hasNextPage,
@@ -193,39 +197,6 @@ export class FeedService {
       throw ex;
     }
   }
-
-  public async markSeenPosts(postId: string, userId: string): Promise<void> {
-    try {
-      const exist = await this._userSeenPostModel.findOne({
-        where: {
-          postId: postId,
-          userId: userId,
-        },
-      });
-      if (!exist) {
-        await this._userSeenPostModel.bulkCreate(
-          [
-            {
-              postId: postId,
-              userId: userId,
-            },
-          ],
-          { ignoreDuplicates: true }
-        );
-
-        await this._newsFeedModel.update(
-          { isSeenPost: true },
-          {
-            where: { userId, postId },
-          }
-        );
-      }
-    } catch (ex) {
-      this._logger.error(JSON.stringify(ex?.stack));
-      this._sentryService.captureException(ex);
-    }
-  }
-
   /**
    * Get Timeline
    */
@@ -236,9 +207,6 @@ export class FeedService {
       throw new BadRequestException(`Group ${groupId} not found`);
     }
     const groupIds = this._groupAppService.getGroupIdAndChildIdsUserJoined(group, authUser.groups);
-    this._logger.debug('[authUser.groups=]', JSON.stringify(authUser));
-    this._logger.debug('[groups=]', JSON.stringify(group));
-    this._logger.debug('[GROUP_IDS=]', JSON.stringify(groupIds));
     if (groupIds.length === 0) {
       return new PageDto<PostResponseDto>([], {
         limit,
@@ -312,6 +280,7 @@ export class FeedService {
       return new PageDto<PostResponseDto>([], paging);
     }
   }
+
   /**
    * Delete newsfeed by post
    */
@@ -321,5 +290,17 @@ export class FeedService {
 
   public deleteUserSeenByPost(postId: string, transaction: Transaction): Promise<number> {
     return this._userSeenPostModel.destroy({ where: { postId }, transaction: transaction });
+  }
+
+  public async getPinnedList(groupId: string, authUser: UserDto) {
+    const ids = await this._postService.getIdsPinnedInGroup(groupId, authUser?.id || null);
+    if (ids.length === 0) return [];
+    const posts = await this._postService.getPostsByIds(ids, authUser?.id || null);
+    const postsBoundData = await this._bindAndTransformData({
+      posts,
+      authUser,
+    });
+
+    return postsBoundData;
   }
 }

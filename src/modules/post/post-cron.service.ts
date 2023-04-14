@@ -70,7 +70,7 @@ export class PostCronService {
   @Cron(CronExpression.EVERY_MINUTE)
   private async _jobUpdateImportantPost(): Promise<void> {
     try {
-      this._postModel.update(
+      await this._postModel.update(
         {
           isImportant: false,
         },

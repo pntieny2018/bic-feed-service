@@ -87,4 +87,6 @@ export const HTTP_STATUS_ID = {
   APP_TAG_NOT_HAVE_DELETE_PERMISSION: 'app.tag.not_have_delete_permission.app_error',
 
   APP_GROUP_NOT_EXIST: 'app.group.existing.app_error',
+
+  NO_PERMISSION_PIN: 'no_pin_permission',
 };

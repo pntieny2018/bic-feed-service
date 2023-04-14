@@ -2,15 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PageDto } from '../../common/dto';
 import { ArticleResponseDto } from '../article/dto/responses';
 import { GetsByAdminDto } from './dto/requests/gets-by-admin.dto';
-import { PostGroupModel } from '../../database/models/post-group.model';
-import { MentionModel } from '../../database/models/mention.model';
-import { MediaModel } from '../../database/models/media.model';
-import { CategoryModel } from '../../database/models/category.model';
-import { GetArticleDto } from '../article/dto/requests';
-import { PostModel, PostStatus } from '../../database/models/post.model';
-import { Op } from 'sequelize';
-import { PostReactionModel } from '../../database/models/post-reaction.model';
-import { LinkPreviewModel } from '../../database/models/link-preview.model';
+import { PostModel, PostType } from '../../database/models/post.model';
 import { PostHelper } from '../post/post.helper';
 import { ClassTransformer } from 'class-transformer';
 import { UserDto } from '../v2-user/application';
@@ -19,12 +11,15 @@ import { PostBindingService } from '../post/post-binding.service';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { InjectModel } from '@nestjs/sequelize';
-import { PostResponseDto } from '../post/dto/responses';
+import { SeriesService } from '../series/series.service';
+import { ArticleService } from '../article/article.service';
 
 @Injectable()
 export class AdminService {
   public constructor(
     private _postService: PostService,
+    private _articleService: ArticleService,
+    private _seriesService: SeriesService,
     private _postBindingService: PostBindingService,
     @InjectModel(PostModel)
     protected postModel: typeof PostModel
@@ -86,115 +81,34 @@ export class AdminService {
     });
   }
 
-  public async getPostDetail(
-    articleId: string,
-    getPostDto: GetArticleDto
-  ): Promise<PostResponseDto> {
-    const attributes = {
-      exclude: ['updatedBy'],
-    };
-    attributes['include'] = [
-      ['hashtags_json', 'hashtags'],
-      ['tags_json', 'tags'],
-    ];
-    const include = [
-      {
-        model: PostGroupModel,
-        as: 'groups',
-        required: false,
-        attributes: ['groupId', 'isArchived'],
-        where: {
-          isArchived: false,
-        },
-      },
-      {
-        model: MentionModel,
-        as: 'mentions',
-        required: false,
-      },
-      {
-        model: MediaModel,
-        as: 'media',
-        required: false,
-        attributes: [
-          'id',
-          'url',
-          'size',
-          'extension',
-          'type',
-          'name',
-          'originName',
-          'width',
-          'height',
-          'thumbnails',
-          'status',
-          'mimeType',
-          'createdAt',
-        ],
-      },
-      {
-        model: PostReactionModel,
-        as: 'ownerReactions',
-        required: false,
-      },
-      {
-        model: CategoryModel,
-        as: 'categories',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'name'],
-      },
-      {
-        model: LinkPreviewModel,
-        as: 'linkPreview',
-        required: false,
-      },
-      {
-        model: MediaModel,
-        as: 'coverMedia',
-        required: false,
-      },
-      {
-        model: PostModel,
-        as: 'series',
-        required: false,
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'title'],
-      },
-    ];
+  public async getPostDetail(postId: string, user: UserDto): Promise<any> {
+    //TODO: check admin
 
-    const condition = { id: articleId, status: { [Op.not]: PostStatus.DRAFT } };
-
-    const post = PostHelper.filterArchivedPost(
-      await this.postModel.findOne({
-        attributes,
-        where: condition,
-        include,
-      })
-    );
+    const post = await this.postModel.findOne({
+      attributes: ['id', 'type'],
+      where: { id: postId },
+    });
 
     if (!post) {
       throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
     }
-
-    const jsonPost = post.toJSON();
-    const articlesBindedData = await this._postBindingService.bindRelatedData([jsonPost], {
-      shouldBindReaction: true,
-      shouldBindActor: true,
-      shouldBindMention: true,
-      shouldBindAudience: true,
-      shouldHideSecretAudienceCanNotAccess: false,
-      authUser: null,
-    });
-    await this._postBindingService.bindCommunity(articlesBindedData);
-    const result = this._classTransformer.plainToInstance(PostResponseDto, articlesBindedData, {
-      excludeExtraneousValues: true,
-    });
-
-    return result[0];
+    if (post.type === PostType.POST) {
+      return this._postService.get(postId, user, {
+        withComment: false,
+        hideSecretAudienceCanNotAccess: false,
+      });
+    }
+    if (post.type === PostType.ARTICLE) {
+      return this._articleService.get(postId, user, {
+        withComment: false,
+        hideSecretAudienceCanNotAccess: false,
+      });
+    }
+    if (post.type === PostType.SERIES) {
+      return this._seriesService.get(postId, user, {
+        withComment: false,
+        hideSecretAudienceCanNotAccess: false,
+      });
+    }
   }
 }

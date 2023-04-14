@@ -20,12 +20,15 @@ import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests'
 import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
-import { PostStatus } from '../../../database/models/post.model';
+import { IPost, PostStatus } from '../../../database/models/post.model';
 import { UserDto } from '../../v2-user/application';
+import { LogicException } from '../../../common/exceptions';
+import { IPostGroup } from '../../../database/models/post-group.model';
 
 @Injectable()
 export class SeriesAppService {
   private _logger = new Logger(SeriesAppService.name);
+
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
@@ -48,14 +51,40 @@ export class SeriesAppService {
     getSeriesDto: GetSeriesDto
   ): Promise<SeriesResponseDto> {
     getSeriesDto.hideSecretAudienceCanNotAccess = true;
-    const post = await this._seriesService.get(postId, user, getSeriesDto);
+    const seriesResponseDto = await this._seriesService.get(postId, user, getSeriesDto);
+
+    if (
+      (seriesResponseDto.isHidden || seriesResponseDto.status !== PostStatus.PUBLISHED) &&
+      seriesResponseDto.createdBy !== user?.id
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    }
+
+    const series = {
+      privacy: seriesResponseDto.privacy,
+      createdBy: seriesResponseDto.createdBy,
+      status: seriesResponseDto.status,
+      groups: seriesResponseDto.audience.groups.map(
+        (g) =>
+          ({
+            groupId: g.id,
+          } as IPostGroup)
+      ),
+    } as IPost;
+
     if (user) {
-      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+      await this._authorityService.checkCanReadSeries(user, series);
+    } else {
+      await this._authorityService.checkIsPublicSeries(series);
+    }
+
+    if (user) {
+      this._postService.markSeenPost(postId, user.id).catch((ex) => {
         this._logger.error(JSON.stringify(ex?.stack));
       });
     }
 
-    return post;
+    return seriesResponseDto;
   }
 
   public async createSeries(user: UserDto, createSeriesDto: CreateSeriesDto): Promise<any> {
@@ -71,7 +100,7 @@ export class SeriesAppService {
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
       const series = await this._seriesService.get(created.id, user, new GetSeriesDto());
-      this._feedService.markSeenPosts(series.id, user.id);
+      this._postService.markSeenPost(series.id, user.id);
       series.totalUsersSeen = Math.max(series.totalUsersSeen, 1);
       this._eventEmitter.emit(
         new SeriesHasBeenPublishedEvent({

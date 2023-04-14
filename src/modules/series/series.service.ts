@@ -2,7 +2,7 @@ import { SentryService } from '@app/sentry';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { ClassTransformer } from 'class-transformer';
-import { Op, Transaction } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { NIL } from 'uuid';
 import { HTTP_STATUS_ID } from '../../common/constants';
@@ -14,7 +14,6 @@ import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { ArticleService } from '../article/article.service';
 import { AuthorityService } from '../authority';
 import { CommentService } from '../comment';
 import { FeedService } from '../feed/feed.service';
@@ -72,23 +71,12 @@ export class SeriesService {
     authUser: UserDto,
     getSeriesDto?: GetSeriesDto
   ): Promise<SeriesResponseDto> {
-    let condition;
-    if (authUser) {
-      condition = {
-        id,
-        type: PostType.SERIES,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
-      };
-    } else {
-      condition = { id, type: PostType.SERIES };
-    }
-
     const series = PostHelper.filterArchivedPost(
       await this._postModel.findOne({
         attributes: {
           include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
         },
-        where: condition,
+        where: { id, type: PostType.SERIES },
         include: [
           {
             model: PostGroupModel,
@@ -116,11 +104,6 @@ export class SeriesService {
 
     if (!series) {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
-    }
-    if (authUser) {
-      await this._authorityService.checkCanReadSeries(authUser, series);
-    } else {
-      await this._authorityService.checkIsPublicSeries(series);
     }
     let comments = null;
     if (getSeriesDto.withComment) {

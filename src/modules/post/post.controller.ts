@@ -34,36 +34,6 @@ import { MediaStatus } from '../../database/models/media.model';
 export class PostController {
   public constructor(private _postAppService: PostAppService) {}
 
-  @ApiOperation({ summary: 'Save post' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @ResponseMessages({
-    success: 'message.post.saved_success',
-  })
-  @Post('/:postId/save')
-  public async save(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.savePost(user, postId);
-  }
-
-  @ApiOperation({ summary: 'unsave post' })
-  @ApiOkResponse({
-    type: Boolean,
-  })
-  @ResponseMessages({
-    success: 'message.post.unsaved_success',
-  })
-  @Delete('/:postId/unsave')
-  public async unSave(
-    @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
-  ): Promise<boolean> {
-    return this._postAppService.unSavePost(user, postId);
-  }
-
   @ApiOperation({ summary: 'Get post edited history' })
   @ApiOkResponse({
     type: PostEditedHistoryDto,
@@ -89,7 +59,7 @@ export class PostController {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 
-  @ApiOperation({ summary: 'Get total draft' })
+  @ApiOperation({ summary: 'Get total draft posts' })
   @ApiOkResponse({
     type: Number,
   })
@@ -205,5 +175,29 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string
   ): Promise<any> {
     return this._postAppService.getUserGroup(groupId, userId, postId);
+  }
+
+  @ApiOperation({ summary: 'Save post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Post('/:postId/save')
+  public async save(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.savePost(user, postId);
+  }
+
+  @ApiOperation({ summary: 'unsave post' })
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @Delete('/:postId/unsave')
+  public async unSave(
+    @AuthUser() user: UserDto,
+    @Param('postId', ParseUUIDPipe) postId: string
+  ): Promise<boolean> {
+    return this._postAppService.unSavePost(user, postId);
   }
 }

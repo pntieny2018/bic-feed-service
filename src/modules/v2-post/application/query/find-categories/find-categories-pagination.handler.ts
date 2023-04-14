@@ -12,6 +12,7 @@ export class FindCategoriesPaginationHandler
   implements IQueryHandler<FindCategoriesPaginationQuery, FindCategoriesPaginationDto>
 {
   @Inject(CATEGORY_QUERY_TOKEN) private readonly _categoryQuery: ICategoryQuery;
+
   public async execute(query: FindCategoriesPaginationQuery): Promise<FindCategoriesPaginationDto> {
     const { rows, total } = await this._categoryQuery.getPagination(query.payload);
 

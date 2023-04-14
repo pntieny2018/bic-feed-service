@@ -10,15 +10,14 @@ import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
 import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
-import { IPostGroup } from '../../../database/models/post-group.model';
-import { IPost, PostStatus } from '../../../database/models/post.model';
+import { IPostGroup, PostGroupModel } from '../../../database/models/post-group.model';
+import { IPost, PostModel, PostStatus } from '../../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
 import { AuthorityService } from '../../authority';
-import { FeedService } from '../../feed/feed.service';
 import { TargetType } from '../../report-content/contstants';
 import { CreatePostDto, GetPostDto, GetPostEditedHistoryDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
@@ -32,6 +31,13 @@ import {
   UserDto,
 } from '../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
+import { ArticleResponseDto } from '../../article/dto/responses';
+import { ContentNotFoundException } from '../../v2-post/exception/content-not-found.exception';
+import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
+import { AudienceNoBelongContentException } from '../../v2-post/exception/audience-no-belong-content.exception';
+import { InjectModel } from '@nestjs/sequelize';
+import { ContentPinNotFoundException } from '../../v2-post/exception/content-pin-not-found.exception';
+import { ContentPinLackException } from '../../v2-post/exception/content-pin-lack.exception';
 
 @Injectable()
 export class PostAppService {
@@ -42,13 +48,14 @@ export class PostAppService {
     private _postHistoryService: PostHistoryService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
-    private _feedService: FeedService,
     @Inject(USER_APPLICATION_TOKEN)
     private _userAppService: IUserApplicationService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
     protected authorityService: AuthorityService,
-    private _tagService: TagService
+    private _tagService: TagService,
+    @InjectModel(PostModel)
+    protected postModel: typeof PostModel
   ) {}
 
   public getDraftPosts(
@@ -66,6 +73,13 @@ export class PostAppService {
     getPostDto.hideSecretAudienceCanNotAccess = true;
 
     const postResponseDto = await this._postService.get(postId, user, getPostDto);
+
+    if (
+      (postResponseDto.isHidden || postResponseDto.status !== PostStatus.PUBLISHED) &&
+      postResponseDto.createdBy !== user?.id
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    }
 
     if (user) {
       const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
@@ -95,7 +109,7 @@ export class PostAppService {
     }
 
     if (user) {
-      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+      this.markSeenPost(postId, user.id).catch((ex) => {
         this._logger.error(JSON.stringify(ex?.stack));
       });
     }
@@ -186,7 +200,7 @@ export class PostAppService {
     await this._preCheck(post, user);
 
     const postUpdated = await this._postService.publish(post, user);
-    this._feedService.markSeenPosts(postUpdated.id, user.id);
+    this.markSeenPost(postUpdated.id, user.id);
     postUpdated.totalUsersSeen = Math.max(postUpdated.totalUsersSeen, 1);
     this._eventEmitter.emit(
       new PostHasBeenPublishedEvent({
@@ -231,6 +245,36 @@ export class PostAppService {
     return true;
   }
 
+  public async getAudience(
+    postId: string,
+    user: UserDto,
+    getAudienceContentDto: GetAudienceContentDto
+  ): Promise<any> {
+    const post = await this._postService.getGroupsByPostId(postId);
+    if (!post) {
+      throw new ContentNotFoundException();
+    }
+    const groups = post.groups || [];
+    const listPinPostIds = {};
+    const groupIds = [];
+    groups.forEach((group) => {
+      groupIds.push(group.groupId);
+      listPinPostIds[group.groupId] = group.isPinned;
+    });
+    let dataGroups = await this._groupAppService.findAllByIds(groupIds);
+
+    if (getAudienceContentDto.pinnable) {
+      dataGroups = await this._authorityService.getAudienceCanPin(dataGroups, user);
+    }
+    return {
+      groups: dataGroups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        isPinned: listPinPostIds[group.id],
+      })),
+    };
+  }
+
   public async savePost(user: UserDto, postId: string): Promise<boolean> {
     await this._postService.checkExistAndPublished(postId);
     await this._postService.savePostToUserCollection(postId, user.id);
@@ -241,6 +285,10 @@ export class PostAppService {
     await this._postService.checkExistAndPublished(postId);
     await this._postService.unSavePostToUserCollection(postId, user.id);
     return true;
+  }
+
+  public async markSeenPost(postId: string, userId: string): Promise<void> {
+    await this._postService.markSeenPost(postId, userId);
   }
 
   public getEditedHistory(
@@ -329,5 +377,91 @@ export class PostAppService {
     );
 
     this._postService.checkContent(post.content, post.media);
+  }
+
+  public async pinContent(payload: {
+    postId: string;
+    pinGroupIds: string[];
+    unpinGroupIds: string[];
+    authUser: UserDto;
+  }): Promise<void> {
+    const { postId, pinGroupIds, unpinGroupIds, authUser } = payload;
+    const post = await this.postModel.findOne({
+      attributes: ['id'],
+      include: [
+        {
+          model: PostGroupModel,
+          as: 'groups',
+          required: true,
+          attributes: ['groupId', 'isPinned', 'pinnedIndex'],
+          where: { isArchived: false },
+        },
+      ],
+      where: {
+        id: postId,
+        isHidden: false,
+      },
+    });
+
+    if (!post || post.groups?.length === 0) {
+      throw new ContentNotFoundException();
+    }
+    const groups = post.groups || [];
+    const currentGroupIds = [];
+    const currentPinGroupIds = [];
+    const currentUnpinGroupIds = [];
+    for (const group of groups) {
+      if (group.isPinned) currentPinGroupIds.push(group.groupId);
+      if (!group.isPinned) currentUnpinGroupIds.push(group.groupId);
+      currentGroupIds.push(group.groupId);
+    }
+
+    const newGroupIdsPinAndUnpin = [...unpinGroupIds, ...pinGroupIds];
+
+    const groupIdsNotBelong = newGroupIdsPinAndUnpin.filter(
+      (groupId) => !currentGroupIds.includes(groupId)
+    );
+    if (groupIdsNotBelong.length) {
+      throw new AudienceNoBelongContentException({ groupsDenied: groupIdsNotBelong });
+    }
+    await this._authorityService.checkPinPermission(authUser, newGroupIdsPinAndUnpin);
+
+    const addPinGroupIds = pinGroupIds.filter((groupId) => !currentPinGroupIds.includes(groupId));
+    const addUnpinGroupIds = unpinGroupIds.filter(
+      (groupId) => !currentUnpinGroupIds.includes(groupId)
+    );
+    try {
+      await this._postService.unpinPostToGroupIds(postId, addUnpinGroupIds);
+      await this._postService.pinPostToGroupIds(postId, addPinGroupIds);
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex?.stack));
+    }
+  }
+
+  public async reorderPinnedContent(payload: {
+    groupId: string;
+    postIds: string[];
+    authUser: UserDto;
+  }): Promise<void> {
+    const { groupId, postIds, authUser } = payload;
+
+    await this._authorityService.checkPinPermission(authUser, [groupId]);
+
+    const postGroups = await this._postService.getPinnedPostGroupsByGroupId(groupId);
+    const currentPostIds = postGroups.map((e) => e.postId);
+    const postIdsNotBelong = postIds.filter((postId) => !currentPostIds.includes(postId));
+    if (postIdsNotBelong.length) {
+      throw new ContentPinNotFoundException({ postsDenied: postIdsNotBelong });
+    }
+    const postsIdsNotFound = currentPostIds.filter((postId) => !postIds.includes(postId));
+    if (postsIdsNotFound.length) {
+      throw new ContentPinLackException({ postsLacked: postsIdsNotFound });
+    }
+
+    try {
+      await this._postService.reorderPinnedPostGroups(groupId, postIds);
+    } catch (ex) {
+      this._logger.error(JSON.stringify(ex?.stack));
+    }
   }
 }

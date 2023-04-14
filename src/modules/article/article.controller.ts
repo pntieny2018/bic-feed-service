@@ -147,19 +147,6 @@ export class ArticleController {
     return await this._articleAppService.create(user, createArticleDto);
   }
 
-  @ApiOperation({ summary: 'Update view article' })
-  @ApiOkResponse({
-    type: Boolean,
-    description: 'Update view article successfully',
-  })
-  @Put('/:id/update-view')
-  public async updateView(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) articleId: string
-  ): Promise<boolean> {
-    return this._articleAppService.updateView(user, articleId);
-  }
-
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
     type: ArticleResponseDto,

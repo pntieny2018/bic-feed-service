@@ -33,12 +33,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
   protected handleHttpException(exception: HttpException, response: Response): Response {
     const status = exception.getStatus();
     const res = exception.getResponse();
+    let errors = null;
+    if (res['errors']) errors = snakecaseKeys(res['errors']);
+    if (res['cause']) errors = snakecaseKeys(res['cause']);
     return response.status(status).json(
       new ResponseDto({
         code: res['code'],
         meta: {
           message: exception.message,
-          errors: res['errors'] ? snakecaseKeys(res['errors']) : null,
+          errors,
           stack: this._getStack(exception),
         },
       })
