@@ -60,6 +60,9 @@ export class CommentService {
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
+    }
 
     if (replyId !== NIL_UUID) {
       const parentComment = await this._commentModel.findOne({

@@ -63,7 +63,7 @@ export class CommentController {
     description: 'Create comment successfully',
   })
   @ResponseMessages({
-    success: 'Create comment successfully.',
+    success: 'message.comment.created_success',
   })
   @Post('/')
   public async create(
@@ -79,7 +79,7 @@ export class CommentController {
     description: 'Create reply comment successfully',
   })
   @ResponseMessages({
-    success: 'Create reply comment successfully',
+    success: 'message.comment.replied_success',
   })
   @Post('/:commentId/reply')
   public async reply(
@@ -128,6 +128,9 @@ export class CommentController {
   @ResponseMessages({
     success: 'Update comment successfully',
   })
+  @ResponseMessages({
+    success: 'message.comment.updated_success',
+  })
   @Put('/:commentId')
   public async update(
     @AuthUser() user: UserDto,
@@ -143,7 +146,7 @@ export class CommentController {
     description: 'Delete comment successfully',
   })
   @ResponseMessages({
-    success: 'Delete comment successfully',
+    success: 'message.comment.deleted_success',
   })
   @Delete('/:commentId')
   public async destroy(
