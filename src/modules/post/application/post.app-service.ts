@@ -73,40 +73,40 @@ export class PostAppService {
     getPostDto.hideSecretAudienceCanNotAccess = true;
 
     const postResponseDto = await this._postService.get(postId, user, getPostDto);
-
-    if (
-      (postResponseDto.isHidden || postResponseDto.status !== PostStatus.PUBLISHED) &&
-      postResponseDto.createdBy !== user?.id
-    ) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-    }
-
-    if (user) {
-      const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
-        TargetType.POST,
-      ]);
-      if (postIdsReported.includes(postId) && postResponseDto.actor.id !== user.id) {
-        throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
-      }
-    }
-
-    const post = {
-      privacy: postResponseDto.privacy,
-      createdBy: postResponseDto.createdBy,
-      status: postResponseDto.status,
-      groups: postResponseDto.audience.groups.map(
-        (g) =>
-          ({
-            groupId: g.id,
-          } as IPostGroup)
-      ),
-    } as IPost;
-
-    if (user) {
-      await this.authorityService.checkCanReadPost(user, post);
-    } else {
-      await this.authorityService.checkIsPublicPost(post);
-    }
+    //
+    // if (
+    //   (postResponseDto.isHidden || postResponseDto.status !== PostStatus.PUBLISHED) &&
+    //   postResponseDto.createdBy !== user?.id
+    // ) {
+    //   throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    // }
+    //
+    // if (user) {
+    //   const postIdsReported = await this._postService.getEntityIdsReportedByUser(user.id, [
+    //     TargetType.POST,
+    //   ]);
+    //   if (postIdsReported.includes(postId) && postResponseDto.actor.id !== user.id) {
+    //     throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    //   }
+    // }
+    //
+    // const post = {
+    //   privacy: postResponseDto.privacy,
+    //   createdBy: postResponseDto.createdBy,
+    //   status: postResponseDto.status,
+    //   groups: postResponseDto.audience.groups.map(
+    //     (g) =>
+    //       ({
+    //         groupId: g.id,
+    //       } as IPostGroup)
+    //   ),
+    // } as IPost;
+    //
+    // if (user) {
+    //   await this.authorityService.checkCanReadPost(user, post);
+    // } else {
+    //   await this.authorityService.checkIsPublicPost(post);
+    // }
 
     if (user) {
       this.markSeenPost(postId, user.id).catch((ex) => {

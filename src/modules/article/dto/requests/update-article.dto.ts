@@ -4,6 +4,7 @@ import { UpdatePostDto } from '../../../post/dto/requests';
 import { Expose } from 'class-transformer';
 import { CanUseCategory } from '../../validators/can-use-category.validator';
 import { PostStatus } from '../../../../database/models/post.model';
+import { ValidateCover } from '../../../media/validators/cover.validator';
 
 export class CoverMediaDto {
   public id: string;
@@ -70,5 +71,6 @@ export class UpdateArticleDto extends UpdatePostDto {
   @Expose({
     name: 'cover_media',
   })
+  @ValidateCover()
   public coverMedia: CoverMediaDto;
 }

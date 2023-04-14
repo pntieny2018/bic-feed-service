@@ -20,7 +20,7 @@ import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
 import { CategoryModel } from '../../database/models/category.model';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel } from '../../database/models/comment.model';
-import { MediaModel, MediaStatus } from '../../database/models/media.model';
+import { MediaStatus } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { IPostGroup, PostGroupModel } from '../../database/models/post-group.model';
@@ -92,7 +92,6 @@ export class PostService {
     protected userSavePostModel: typeof UserSavePostModel,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected groupAppService: IGroupApplicationService,
-    protected mediaService: MediaService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
@@ -146,8 +145,6 @@ export class PostService {
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCover: true,
     });
     const orderOption = [];
     if (
@@ -211,7 +208,6 @@ export class PostService {
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
       shouldIncludePreviewLink: true,
       shouldIncludeSeries: true,
       authUserId: user?.id || null,
@@ -277,7 +273,7 @@ export class PostService {
     if (options?.authUserId && options?.loadSaved) {
       include.push(PostModel.loadSaved(options.authUserId));
     }
-    include.push(['tags_json', 'tags']);
+    include.push(['tags_json', 'tags'], ['media_json', 'media'], ['cover_json', 'coverMedia']);
 
     attributes.include = include;
     return attributes;
@@ -362,8 +358,6 @@ export class PostService {
   public async getItemsInSeriesByIds(ids: string[], authUserId = null): Promise<IPost[]> {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCover: true,
       mustIncludeGroup: true,
       authUserId: authUserId ?? null,
     });
@@ -397,35 +391,27 @@ export class PostService {
 
   public getIncludeObj({
     mustIncludeGroup = false,
-    mustIncludeMedia,
     mustInSeriesIds,
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
     shouldIncludeMention,
-    shouldIncludeMedia,
     shouldIncludePreviewLink,
-    shouldIncludeCover,
     shouldIncludeArticlesInSeries,
     shouldIncludeSeries,
-    filterMediaIds,
     filterCategoryIds,
     authUserId,
     filterGroupIds,
   }: {
     mustIncludeGroup?: boolean;
-    mustIncludeMedia?: boolean;
     mustInSeriesIds?: string[];
     shouldIncludeCategory?: boolean;
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
-    shouldIncludeMedia?: boolean;
     shouldIncludePreviewLink?: boolean;
-    shouldIncludeCover?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
-    filterMediaIds?: string[];
     filterCategoryIds?: string[];
     filterGroupIds?: string[];
     authUserId?: string;
@@ -483,17 +469,13 @@ export class PostService {
           'canReact',
           'importantExpiredAt',
           'type',
+          ['media_json', 'media'],
         ],
         where: {
           status: PostStatus.PUBLISHED,
           isHidden: false,
         },
         include: [
-          {
-            model: MediaModel,
-            as: 'coverMedia',
-            required: false,
-          },
           {
             model: PostGroupModel,
             as: 'groups',
@@ -503,32 +485,6 @@ export class PostService {
           },
         ],
       });
-    }
-    if (shouldIncludeMedia || mustIncludeMedia) {
-      const obj = {
-        model: MediaModel,
-        as: 'media',
-        required: mustIncludeMedia ? true : false,
-        attributes: [
-          'id',
-          'url',
-          'size',
-          'extension',
-          'type',
-          'name',
-          'originName',
-          'width',
-          'height',
-          'thumbnails',
-          'status',
-          'mimeType',
-          'createdAt',
-        ],
-      };
-      if (filterMediaIds) {
-        obj['where'] = { id: filterMediaIds };
-      }
-      includes.push(obj);
     }
     if (shouldIncludeOwnerReaction && authUserId) {
       includes.push({
@@ -556,16 +512,6 @@ export class PostService {
           id: filterCategoryIds,
         };
       }
-
-      includes.push(obj);
-    }
-
-    if (shouldIncludeCover) {
-      const obj = {
-        model: MediaModel,
-        as: 'coverMedia',
-        required: false,
-      };
 
       includes.push(obj);
     }
@@ -616,8 +562,6 @@ export class PostService {
       const { content, media, setting, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
-      const { files, images, videos } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
       let tagList = [];
       if (tags) {
         tagList = await this.tagService.getTagsByIds(tags);
@@ -636,14 +580,14 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           tagsJson: tagList,
+          mediaJson: media || {
+            images: [],
+            files: [],
+            videos: [],
+          },
         },
         { transaction }
       );
-
-      if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId);
-        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
-      }
 
       if (audience.groupIds.length > 0) {
         await this.addGroup(audience.groupIds, post.id, transaction);
@@ -712,24 +656,15 @@ export class PostService {
     try {
       const { media, mentions, audience, setting, tags, series } = updatePostDto;
 
-      let mediaListChanged = [];
-      if (media) {
-        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
-      }
-
       const dataUpdate = await this.getDataUpdate(updatePostDto, authUserId);
 
       if (
-        mediaListChanged &&
-        mediaListChanged.filter(
-          (m) =>
-            m.status === MediaStatus.WAITING_PROCESS ||
-            m.status === MediaStatus.PROCESSING ||
-            m.status === MediaStatus.FAILED
-        ).length > 0 &&
-        post.status === PostStatus.PUBLISHED
+        post.status === PostStatus.PUBLISHED &&
+        media.videos?.length > 0 &&
+        media.videos[0].status !== MediaStatus.COMPLETED
       ) {
         dataUpdate['status'] = PostStatus.PROCESSING;
+        dataUpdate['videoIdProcessing'] = media.videos[0].id;
       }
 
       dataUpdate.linkPreviewId = null;
@@ -757,6 +692,10 @@ export class PostService {
         dataUpdate['tagsJson'] = tagList;
       }
 
+      if (media) {
+        dataUpdate['mediaJson'] = media;
+      }
+
       transaction = await this.sequelizeConnection.transaction();
       await this.postModel.update(dataUpdate, {
         where: {
@@ -765,12 +704,6 @@ export class PostService {
         },
         transaction,
       });
-
-      if (media) {
-        const { files, images, videos } = media;
-        const newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
-      }
 
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
@@ -855,7 +788,10 @@ export class PostService {
       const authUserId = authUser.id;
       const groupIds = post.audience.groups.map((g) => g.id);
 
-      let status = PostStatus.PUBLISHED;
+      const dataUpdate = {
+        status: PostStatus.PUBLISHED,
+        createdAt: new Date(),
+      };
       if (
         post.media.videos.filter(
           (m) =>
@@ -864,23 +800,17 @@ export class PostService {
             m.status === MediaStatus.FAILED
         ).length > 0
       ) {
-        status = PostStatus.PROCESSING;
+        dataUpdate['status'] = PostStatus.PROCESSING;
+        dataUpdate['videoIdProcessing'] = post.media.videos[0].id;
       }
-      const postPrivacy = await this.getPrivacy(groupIds);
-      await this.postModel.update(
-        {
-          status,
-          privacy: postPrivacy,
-          createdAt: new Date(),
+      dataUpdate['privacy'] = await this.getPrivacy(groupIds);
+      await this.postModel.update(dataUpdate, {
+        where: {
+          id: post.id,
+          createdBy: authUserId,
         },
-        {
-          where: {
-            id: post.id,
-            createdBy: authUserId,
-          },
-        }
-      );
-      post.status = status;
+      });
+      post.status = dataUpdate['status'];
       if (post.setting.isImportant) {
         const checkMarkImportant = await this.userMarkReadPostModel.findOne({
           where: {
@@ -912,59 +842,20 @@ export class PostService {
    * Delete post
    */
   public async delete(post: IPost, authUser: UserDto): Promise<IPost> {
-    const transaction = await this.sequelizeConnection.transaction();
     try {
       const postId = post.id;
-      if (post.status === PostStatus.DRAFT) {
-        await this.cleanRelationship(postId, transaction, true);
-        await this.postModel.destroy({
-          where: {
-            id: postId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-          force: true,
-        });
-      } else {
-        await this.postModel.destroy({
-          where: {
-            id: postId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-        });
-      }
-      await transaction.commit();
+      await this.postModel.destroy({
+        where: {
+          id: postId,
+          createdBy: authUser.id,
+        },
+      });
 
       return post;
     } catch (error) {
       this.logger.error(error, error?.stack);
-      await transaction.rollback();
       throw error;
     }
-  }
-
-  public async cleanRelationship(
-    postId: string,
-    transaction: Transaction,
-    isCleanMedia = false
-  ): Promise<void> {
-    await Promise.all([
-      this.mentionService.setMention([], MentionableType.POST, postId, transaction),
-      isCleanMedia
-        ? this.mediaService.sync(postId, EntityType.POST, [], transaction)
-        : Promise.resolve(),
-      this.setGroupByPost([], postId, transaction),
-      this.reactionService.deleteByPostIds([postId]),
-      this.commentService.deleteCommentsByPost(postId, transaction),
-      this.feedService.deleteNewsFeedByPost(postId, transaction),
-      this.feedService.deleteUserSeenByPost(postId, transaction),
-      this.postCategoryModel.destroy({ where: { postId: postId }, transaction }),
-      this.postSeriesModel.destroy({ where: { postId: postId }, transaction }),
-      this.postTagModel.destroy({ where: { postId: postId }, transaction }),
-      this.userMarkReadPostModel.destroy({ where: { postId }, transaction }),
-      this.userSavePostModel.destroy({ where: { postId }, transaction }),
-    ]);
   }
   /**
    * Add group to post
@@ -1329,16 +1220,20 @@ export class PostService {
 
   public async getsByMedia(id: string): Promise<PostResponseDto[]> {
     const include = this.getIncludeObj({
-      mustIncludeMedia: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      filterMediaIds: [id],
     });
     const posts = await this.postModel.findAll({
       attributes: {
-        include: [['tags_json', 'tags']],
+        include: [
+          ['tags_json', 'tags'],
+          ['media_json', 'media'],
+        ],
       },
       include,
+      where: {
+        videoIdProcessing: id,
+      },
     });
 
     const jsonPosts = posts.map((p) => p.toJSON());
@@ -1352,26 +1247,6 @@ export class PostService {
     return this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
       excludeExtraneousValues: true,
     });
-  }
-
-  public async updateStatus(postId: string): Promise<void> {
-    const mediaList = await this.mediaService.getMediaByPostId(postId);
-    let totalWaitingProcess = 0;
-    let totalProcessing = 0;
-    let totalFailed = 0;
-    let totalCompleted = 0;
-    for (const media of mediaList) {
-      if (media.status === MediaStatus.COMPLETED) totalCompleted++;
-      if (media.status === MediaStatus.FAILED) totalFailed++;
-      if (media.status === MediaStatus.WAITING_PROCESS) totalWaitingProcess++;
-      if (media.status === MediaStatus.PROCESSING) totalProcessing++;
-    }
-    let status;
-    if (totalCompleted === mediaList.length) status = PostStatus.PUBLISHED;
-    if (totalProcessing > 0) status = PostStatus.PROCESSING;
-    if (totalFailed === mediaList.length || totalWaitingProcess === mediaList.length)
-      status = PostStatus.DRAFT;
-    await this.postModel.update({ status }, { where: { id: postId } });
   }
 
   public checkContent(content: string, media: MediaDto): void {
@@ -1538,11 +1413,9 @@ export class PostService {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
-      shouldIncludeMedia: true,
       shouldIncludeMention: true,
       shouldIncludeOwnerReaction: true,
       shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
       shouldIncludeArticlesInSeries: true,
       mustIncludeGroup: true,
       authUserId: userId,
@@ -1560,6 +1433,8 @@ export class PostService {
       attributes: {
         include: [
           ['tags_json', 'tags'],
+          ['media_json', 'media'],
+          ['cover_json', 'coverMedia'],
           PostModel.loadMarkReadPost(userId),
           PostModel.loadSaved(userId),
         ],
@@ -1605,13 +1480,9 @@ export class PostService {
         'canReact',
         'importantExpiredAt',
         'type',
+        ['media_json', 'media'],
       ],
       include: [
-        {
-          model: MediaModel,
-          as: 'coverMedia',
-          required: false,
-        },
         {
           model: PostGroupModel,
           as: 'groups',

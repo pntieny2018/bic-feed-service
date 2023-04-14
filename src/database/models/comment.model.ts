@@ -24,7 +24,13 @@ import { MentionableType } from '../../common/constants';
 import { getDatabaseConfig } from '../../config/database';
 import { CommentMediaModel } from './comment-media.model';
 import { CommentReactionModel } from './comment-reaction.model';
-import { BelongsToManyAddAssociationsMixin, Optional, QueryTypes, Sequelize } from 'sequelize';
+import {
+  BelongsToManyAddAssociationsMixin,
+  DataTypes,
+  Optional,
+  QueryTypes,
+  Sequelize,
+} from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { NIL, NIL as NIL_UUID, v4 as uuid_v4 } from 'uuid';
 import { OrderEnum } from '../../common/dto';
@@ -58,6 +64,7 @@ export interface IComment {
   child?: IComment[];
   totalReply?: number;
   reactionsCount?: string;
+  mediaJson?: any;
 }
 
 @Table({
@@ -115,13 +122,17 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   @Column
   public updatedAt?: Date;
 
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mediaJson: any;
+
   @BelongsTo(() => PostModel)
   public post: PostModel;
 
   @BelongsToMany(() => MediaModel, () => CommentMediaModel)
   public media?: MediaModel[];
-
-  public addMedia!: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 
   @HasMany(() => MentionModel, {
     foreignKey: 'entityId',
@@ -304,13 +315,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       )}
     )`;
     let select = `SELECT "CommentModel".*,
-    "media"."id" AS "mediaId",
-    "media"."url" AS "mediaUrl", 
-    "media"."type" AS "mediaType",
-    "media"."name" AS "mediaName",
-    "media"."width" AS "mediaWidth", 
-    "media"."height" AS "mediaHeight", 
-    "media"."extension" AS "mediaExtension",
     "mentions"."user_id" AS "mentionUserId"`;
 
     if (authUserId) {
@@ -325,6 +329,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     "c"."post_id" AS "postId",
     "c"."content", 
     "c"."edited", 
+    "c"."media_json" as "media",
     "c"."giphy_id" as "giphyId",
     "c"."total_reply" AS "totalReply", 
     "c"."created_by" AS "createdBy", 
@@ -338,11 +343,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         WHERE ${condition} 
         ORDER BY "c"."created_at" ${order}
         OFFSET 0 LIMIT :limit
-      ) AS "CommentModel" 
-      LEFT OUTER JOIN ( 
-        ${schema}."comments_media" AS "media->CommentMediaModel" 
-       INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
-      ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+      ) AS "CommentModel"
       LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
         "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
       ) 
@@ -375,13 +376,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     const condition = await CommentModel._getCondition(getCommentsDto);
     const reportContentDetailTable = ReportContentDetailModel.tableName;
     let select = `SELECT "CommentModel".*,
-    "media"."id" AS "mediaId",
-    "media"."url" AS "mediaUrl", 
-    "media"."type" AS "mediaType",
-    "media"."name" AS "mediaName",
-    "media"."width" AS "mediaWidth", 
-    "media"."height" AS "mediaHeight", 
-    "media"."extension" AS "mediaExtension",
     "mentions"."user_id" AS "mentionUserId"`;
 
     if (authUserId) {
@@ -396,6 +390,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     "c"."post_id" AS "postId",
     "c"."content", 
     "c"."edited", 
+    "c"."media_json" as "media",
     "c"."giphy_id" as "giphyId",
     "c"."total_reply" AS "totalReply", 
     "c"."created_by" AS "createdBy", 
@@ -432,11 +427,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         ORDER BY "c"."created_at" ASC
         OFFSET 0 LIMIT :limitBottom
       )
-    ) AS "CommentModel" 
-    LEFT OUTER JOIN ( 
-      ${schema}."comments_media" AS "media->CommentMediaModel" 
-      INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
-    ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+    ) AS "CommentModel"
     LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
       "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
     )
@@ -476,6 +467,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
               "post_id" AS "postId", 
               "content", 
               "edited",
+              "media_json" as "media",
               "total_reply" AS "totalReply", 
               "created_by" AS "createdBy", 
               "updated_by" AS "updatedBy", 
@@ -496,13 +488,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
 
     let query = `SELECT 
       "CommentModel".*,
-      "media"."id" AS "mediaId",
-      "media"."url" AS "mediaUrl", 
-      "media"."type" AS "mediaType",
-      "media"."name" AS "mediaName",
-      "media"."width" AS "mediaWidth", 
-      "media"."height" AS "mediaHeight", 
-      "media"."extension" AS "mediaExtension",
       "mentions"."user_id" AS "mentionUserId"
       ${
         authUserId
@@ -511,11 +496,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       "ownerReactions"."created_at" AS "reactCreatedAt"`
           : ``
       }
-    FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel" 
-    LEFT OUTER JOIN ( 
-      ${schema}."comments_media" AS "media->CommentMediaModel" 
-      INNER JOIN ${schema}."media" AS "media" ON "media"."id" = "media->CommentMediaModel"."media_id"
-    ) ON "CommentModel"."id" = "media->CommentMediaModel"."comment_id" 
+    FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel"
     LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" 
         AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment')`;
     if (authUserId) {
