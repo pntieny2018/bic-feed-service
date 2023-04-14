@@ -22,9 +22,13 @@ export class ExternalService {
   public async getFileIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_FILES, ids, {
-          baseURL: this._uploadServiceEndpoint,
-        })
+        this._httpService.post(
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_FILES,
+          ids,
+          {
+            baseURL: '',
+          }
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -44,9 +48,13 @@ export class ExternalService {
   public async getVideoIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, ids, {
-          baseURL: this._uploadServiceEndpoint,
-        })
+        this._httpService.post(
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS,
+          ids,
+          {
+            baseURL: '',
+          }
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -69,9 +77,13 @@ export class ExternalService {
   public async getImageIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, ids, {
-          baseURL: this._uploadServiceEndpoint,
-        })
+        this._httpService.post(
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES,
+          ids,
+          {
+            baseURL: '',
+          }
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -116,13 +128,13 @@ export class ExternalService {
     try {
       const response = await lastValueFrom(
         this._httpService.put(
-          `${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
+          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
           {
             resource: type,
             user_id: userId,
           },
           {
-            baseURL: this._uploadServiceEndpoint,
+            baseURL: '',
           }
         )
       );
@@ -138,9 +150,9 @@ export class ExternalService {
       };
     } catch (e) {
       console.error(
-        `${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}: ${JSON.stringify(
-          e.message
-        )}, payload:${JSON.stringify(data)}`
+        `${
+          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES
+        }/${id}: ${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`
       );
       this._logger.debug(
         `[ERROR UPLOAD SERVICE] PUT ${
