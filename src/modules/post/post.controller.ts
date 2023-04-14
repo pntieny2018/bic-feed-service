@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
@@ -21,6 +22,8 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
+import { Request } from 'express';
+import { MediaStatus } from '../../database/models/media.model';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -83,6 +86,9 @@ export class PostController {
     type: PostResponseDto,
     description: 'Create post successfully',
   })
+  @ResponseMessages({
+    success: 'message.post.created_success',
+  })
   @Post('/')
   @InjectUserToBody()
   public async create(
@@ -97,7 +103,9 @@ export class PostController {
     type: PostResponseDto,
     description: 'Update post successfully',
   })
-  @ResponseMessages({ success: 'Post has been published successfully' })
+  @ResponseMessages({
+    success: 'message.post.updated_success',
+  })
   @Put('/:postId')
   @InjectUserToBody()
   public async update(
@@ -113,18 +121,32 @@ export class PostController {
     type: PostResponseDto,
     description: 'Publish post successfully',
   })
+  @ResponseMessages({
+    success: 'message.post.published_success',
+  })
   @Put('/:postId/publish')
   public async publish(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @Req() req: Request
   ): Promise<PostResponseDto> {
-    return this._postAppService.publishPost(user, postId);
+    const publishResult = await this._postAppService.publishPost(user, postId);
+    if (
+      publishResult?.media?.videos?.length > 0 &&
+      publishResult.media.videos.find((video) => video.status === MediaStatus.WAITING_PROCESS)
+    ) {
+      req.message = 'message.post.published_success_with_video_waiting_process';
+    }
+    return publishResult;
   }
 
   @ApiOperation({ summary: 'Delete post' })
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete post successfully',
+  })
+  @ResponseMessages({
+    success: 'message.post.deleted_success',
   })
   @Delete('/:id')
   public async delete(

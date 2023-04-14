@@ -15,6 +15,7 @@ declare module 'express-serve-static-core' {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   interface Request {
     user: UserDto;
+    message?: string;
   }
 
   /**
