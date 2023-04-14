@@ -138,9 +138,9 @@ export class ExternalService {
       };
     } catch (e) {
       console.error(
-        `Error while calling Upload service ${JSON.stringify(
+        `${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}: ${JSON.stringify(
           e.message
-        )}. ID: ${id}, payload:${JSON.stringify(data)}`
+        )}, payload:${JSON.stringify(data)}`
       );
       this._logger.debug(
         `[ERROR UPLOAD SERVICE] PUT ${
