@@ -22,10 +22,9 @@ export class ExternalService {
   public async getFileIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(
-          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_FILES,
-          ids
-        )
+        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_FILES, ids, {
+          baseURL: this._uploadServiceEndpoint,
+        })
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -45,10 +44,9 @@ export class ExternalService {
   public async getVideoIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(
-          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS,
-          ids
-        )
+        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_VIDEOS, ids, {
+          baseURL: this._uploadServiceEndpoint,
+        })
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -71,10 +69,9 @@ export class ExternalService {
   public async getImageIds(ids: string[]): Promise<any> {
     try {
       const response = await lastValueFrom(
-        this._httpService.post(
-          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES,
-          ids
-        )
+        this._httpService.post(ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES, ids, {
+          baseURL: this._uploadServiceEndpoint,
+        })
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -119,10 +116,13 @@ export class ExternalService {
     try {
       const response = await lastValueFrom(
         this._httpService.put(
-          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
+          `${ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
           {
             resource: type,
             user_id: userId,
+          },
+          {
+            baseURL: this._uploadServiceEndpoint,
           }
         )
       );
