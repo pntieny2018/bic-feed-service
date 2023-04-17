@@ -55,22 +55,20 @@ export class AuthorityService {
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      if (requireGroups) {
-        if (requireGroups.length === 0) {
-          if (post.type === PostType.POST) {
-            throw new PostNoReadPermissionException();
-          } else if (post.type === PostType.ARTICLE) {
-            throw new ArticleNoReadPermissionException();
-          } else if (post.type === PostType.SERIES) {
-            throw new SeriesNoReadPermissionException();
-          } else {
-            throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-          }
-        } else {
-          throw new ContentRequireGroupException({ requireGroups: requireGroups });
-        }
+      if (requireGroups && requireGroups.length > 0) {
+        throw new ContentRequireGroupException({ requireGroups: requireGroups });
       }
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+
+      switch (post.type) {
+        case PostType.POST:
+          throw new PostNoReadPermissionException();
+        case PostType.ARTICLE:
+          throw new ArticleNoReadPermissionException();
+        case PostType.SERIES:
+          throw new SeriesNoReadPermissionException();
+        default:
+          throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
     }
   }
 
