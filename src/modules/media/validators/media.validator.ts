@@ -38,7 +38,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
       if (files.length < fileIds.length) {
         return false;
       }
-      if (!files.every((file) => file.createdBy !== user.id)) return false;
+      if (files.some((file) => file.createdBy !== user.id)) return false;
       media.files = files;
     }
 
@@ -48,7 +48,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
       if (videos.length < videoIds.length) {
         return false;
       }
-      if (!videos.every((video) => video.createdBy !== user.id)) return false;
+      if (videos.some((video) => video.createdBy !== user.id)) return false;
       media.videos = videos;
     }
 
@@ -59,7 +59,7 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
         return false;
       }
       if (
-        !images.every(
+        images.some(
           (image) => image.createdBy !== user.id || image.status !== MediaStatus.COMPLETED
         )
       )
