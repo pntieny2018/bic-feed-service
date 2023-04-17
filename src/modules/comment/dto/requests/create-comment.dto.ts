@@ -4,6 +4,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
 import { UserMentionDto } from '../../../mention/dto';
 import { GiphyDto } from '../../../giphy/dto/requests';
+import { ValidateMedia } from '../../../media/validators/media.validator';
 
 export class CreateCommentDto {
   @ApiProperty({
@@ -52,6 +53,7 @@ export class CreateCommentDto {
   @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
+  @ValidateMedia()
   public media?: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
