@@ -79,7 +79,6 @@ export class MigratePostMediaCommand implements CommandRunner {
       for (const post of posts) {
         const articleContent = this.parseContentArticle(post.content);
         if (!articleContent) {
-          console.error(`Skip: format content invalid - ID: ${post.id}`);
           continue;
         }
         const urlImages = ObjectHelper.nodeToUrlImages({ children: articleContent });
@@ -257,7 +256,7 @@ export class MigratePostMediaCommand implements CommandRunner {
             where: { id: post.id },
           }
         );
-        // console.log(`Updated ${totalUpdated}/${total}`);
+        console.log(`Updated ${totalUpdated}/${total}`);
       }
       if (posts.length === 0) stop = true;
       offset = limit + offset;
@@ -331,7 +330,7 @@ export class MigratePostMediaCommand implements CommandRunner {
           }
         );
         totalUpdated++;
-        // console.log(`Updated: ${totalUpdated}/${total}`);
+        console.log(`Updated: ${totalUpdated}/${total}`);
       }
       if (posts.length === 0) stop = true;
       offset = limit + offset;
@@ -403,7 +402,7 @@ export class MigratePostMediaCommand implements CommandRunner {
         );
 
         totalUpdated++;
-        // console.log(`Updated ${totalUpdated}/${total}`);
+        console.log(`Updated ${totalUpdated}/${total}`);
       }
       if (comments.length === 0) stop = true;
       offset = limit + offset;

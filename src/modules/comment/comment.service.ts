@@ -57,6 +57,7 @@ export class CommentService {
     createCommentDto: CreateCommentDto,
     replyId = NIL_UUID
   ): Promise<IComment> {
+    const { media } = createCommentDto;
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
@@ -102,6 +103,11 @@ export class CommentService {
           content: createCommentDto.content,
           postId: post.id,
           giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
+          mediaJson: media || {
+            files: [],
+            images: [],
+            videos: [],
+          },
         },
         { transaction }
       );
@@ -121,18 +127,6 @@ export class CommentService {
           })),
           transaction
         );
-      }
-      const media = [
-        ...createCommentDto.media.files,
-        ...createCommentDto.media.images,
-        ...createCommentDto.media.videos,
-      ];
-
-      if (media.length) {
-        const mediaIds = media.map((m) => m.id);
-
-        await this._mediaService.isValid(mediaIds, user.id);
-        await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
       }
 
       await transaction.commit();
@@ -159,6 +153,7 @@ export class CommentService {
     comment: IComment;
     oldComment: IComment;
   }> {
+    const { media } = updateCommentDto;
     const comment = await this._commentModel.findOne({
       include: [
         {
@@ -199,6 +194,11 @@ export class CommentService {
           content: updateCommentDto.content,
           giphyId: updateCommentDto.giphy ? updateCommentDto.giphy.id : null,
           edited: true,
+          mediaJson: media || {
+            files: [],
+            images: [],
+            videos: [],
+          },
         },
         {
           transaction: transaction,
@@ -216,18 +216,6 @@ export class CommentService {
         comment.id,
         transaction
       );
-
-      const media = [
-        ...updateCommentDto.media.files,
-        ...updateCommentDto.media.images,
-        ...updateCommentDto.media.videos,
-      ];
-
-      const mediaIds = media.map((m) => m.id);
-      if (mediaIds.length) {
-        await this._mediaService.isValid(mediaIds, user.id);
-      }
-      await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
 
       await transaction.commit();
 

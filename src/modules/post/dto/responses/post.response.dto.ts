@@ -104,6 +104,14 @@ export class PostResponseDto {
     type: MediaFilterResponseDto,
   })
   @Expose()
+  @Transform(({ value }) => {
+    if (!value)
+      return {
+        files: [],
+        videos: [],
+        images: [],
+      };
+  })
   public media?: MediaFilterResponseDto;
 
   @ApiProperty({

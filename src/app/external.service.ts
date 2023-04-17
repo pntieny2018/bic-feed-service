@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SentryService } from '@app/sentry';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { AxiosHelper } from '../common/helpers';
 import { ENDPOINT } from '../common/constants/endpoint.constant';
+import urlExist from 'url-exist';
 
 @Injectable()
 export class ExternalService {
@@ -149,16 +149,14 @@ export class ExternalService {
         height: data.properties.height,
       };
     } catch (e) {
-      console.error(
-        `${
-          this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES
-        }/${id}: ${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`
-      );
-      this._logger.debug(
-        `[ERROR UPLOAD SERVICE] PUT ${
-          ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES
-        }/${id} payload:${JSON.stringify(data)}`
-      );
+      const exist = await urlExist(data.url);
+      if (exist) {
+        console.error(`${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`);
+        this._logger.debug(
+          `[ERROR UPLOAD SERVICE] ${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`
+        );
+      }
+
       return null;
     }
   }
