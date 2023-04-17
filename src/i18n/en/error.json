@@ -12,7 +12,7 @@
     "not_found": "Content not found",
     "no_pin_permission": "You don't have permission in this group",
     "audience_no_belong": "This post no longer belongs to this group",
-    "require_group": "Join at least one group to keep reading"
+    "group_join_required": "Join at least one group to keep reading"
   },
   "post": {
     "no_read_permission": "You do not have permission to read this post"

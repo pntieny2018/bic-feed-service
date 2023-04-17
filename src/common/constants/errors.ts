@@ -14,7 +14,7 @@ export const ERRORS = {
     CONTENT_NO_PIN_PERMISSION: 'content.no_pin_permission',
     CONTENT_PIN_NOT_FOUND: 'content.pin_not_found',
     CONTENT_PIN_LACK: 'content.pin_lack',
-    CONTENT_REQUIRE_GROUP: 'content.require_group',
+    CONTENT_GROUP_JOIN_REQUIRED: 'content.group_join_required',
   },
   ARTICLE: {
     ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',

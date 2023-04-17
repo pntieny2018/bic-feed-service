@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   ForbiddenException,
-  ExecutionContext,
   Get,
   Param,
   ParseUUIDPipe,
@@ -11,7 +10,6 @@ import {
   Put,
   Query,
   Req,
-  SetMetadata,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
@@ -26,9 +24,9 @@ import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
-import { request, Request } from 'express';
-import { ObjectHelper } from '../../common/helpers';
+import { Request } from 'express';
 import { MediaStatus } from '../../database/models/media.model';
+import { PostNoReadPermissionException } from '../v2-post/exception/post-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -89,6 +87,8 @@ export class PostController {
     } catch (e) {
       switch (e.constructor) {
         case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case PostNoReadPermissionException:
           throw new ForbiddenException(e);
         default:
           throw e;

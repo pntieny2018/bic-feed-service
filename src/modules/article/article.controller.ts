@@ -32,6 +32,7 @@ import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
 import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { ArticleNoReadPermissionException } from '../v2-post/exception/article-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -135,6 +136,8 @@ export class ArticleController {
     } catch (e) {
       switch (e.constructor) {
         case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case ArticleNoReadPermissionException:
           throw new ForbiddenException(e);
         default:
           throw e;

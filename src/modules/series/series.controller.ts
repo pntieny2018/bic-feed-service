@@ -28,6 +28,7 @@ import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { SeriesNoReadPermissionException } from '../v2-post/exception/series-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -66,6 +67,8 @@ export class SeriesController {
     } catch (e) {
       switch (e.constructor) {
         case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case SeriesNoReadPermissionException:
           throw new ForbiddenException(e);
         default:
           throw e;
