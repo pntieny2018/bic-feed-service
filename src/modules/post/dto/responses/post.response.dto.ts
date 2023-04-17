@@ -105,12 +105,14 @@ export class PostResponseDto {
   })
   @Expose()
   @Transform(({ value }) => {
-    if (!value)
+    if (!value) {
       return {
         files: [],
         videos: [],
         images: [],
       };
+    }
+    return value;
   })
   public media?: MediaFilterResponseDto;
 
