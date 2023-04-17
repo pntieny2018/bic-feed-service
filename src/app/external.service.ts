@@ -3,7 +3,7 @@ import { SentryService } from '@app/sentry';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { ENDPOINT } from '../common/constants/endpoint.constant';
-import urlExist from 'url-exist';
+import * as fs from 'fs';
 
 @Injectable()
 export class ExternalService {
@@ -149,7 +149,7 @@ export class ExternalService {
         height: data.properties.height,
       };
     } catch (e) {
-      const exist = await urlExist(data.url);
+      const exist = await fs.existsSync(data.url);
       if (exist) {
         console.error(`${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`);
         this._logger.debug(
