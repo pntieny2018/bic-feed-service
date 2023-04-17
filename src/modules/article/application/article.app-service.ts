@@ -127,6 +127,7 @@ export class ArticleAppService {
       privacy: articleResponseDto.privacy,
       createdBy: articleResponseDto.createdBy,
       status: articleResponseDto.status,
+      type: articleResponseDto.type,
       groups: articleResponseDto.audience.groups.map(
         (g) =>
           ({
@@ -142,7 +143,11 @@ export class ArticleAppService {
       throw new LogicException(HTTP_STATUS_ID.APP_ARTICLE_NOT_EXISTING);
     }
     if (user) {
-      await this.authorityService.checkCanReadArticle(user, article);
+      await this.authorityService.checkCanReadArticle(
+        user,
+        article,
+        articleResponseDto.audience.groups
+      );
     } else {
       await this.authorityService.checkIsPublicArticle(article);
     }
