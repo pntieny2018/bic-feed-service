@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   ForbiddenException,
+  ExecutionContext,
   Get,
   Param,
   ParseUUIDPipe,
@@ -10,6 +11,7 @@ import {
   Put,
   Query,
   Req,
+  SetMetadata,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
@@ -24,7 +26,8 @@ import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
-import { Request } from 'express';
+import { request, Request } from 'express';
+import { ObjectHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 
 @ApiSecurity('authorization')
@@ -102,6 +105,7 @@ export class PostController {
     success: 'message.post.created_success',
   })
   @Post('/')
+  @ResponseMessages({ success: 'Post has been published successfully' })
   @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,

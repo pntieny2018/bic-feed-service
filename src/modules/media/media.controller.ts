@@ -1,6 +1,13 @@
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UploadService } from '../upload';
 import { UploadDto, UploadType } from '../upload/dto/requests/upload.dto';
 import { APP_VERSION } from '../../common/constants';
@@ -11,6 +18,7 @@ import { MediaStatus } from '../../database/models/media.model';
 import { ValidatorException } from '../../common/exceptions';
 import { WHITE_LIST_MIME_TYPE_IMAGE } from './media.constants';
 import { UserDto } from '../v2-user/application';
+import { ObjectHelper } from '../../common/helpers';
 
 @ApiTags('Media')
 @ApiSecurity('authorization')
@@ -44,29 +52,6 @@ export class MediaController {
     @UploadedFile() file: Express.Multer.File,
     @Body('upload_type') uploadType: UploadType
   ): Promise<any> {
-    const url = await this._uploadService.upload(file, uploadType);
-
-    let width = 0;
-    let height = 0;
-    if (file.mimetype.includes('image') || file.mimetype.includes('video')) {
-      const des = await MediaHelper.getDimensions(file.buffer);
-      const arrOrientationRotate = [5, 6, 7, 8];
-      const isRotated = des.orientation && arrOrientationRotate.includes(des.orientation);
-      width = isRotated ? des.height : des.width;
-      height = isRotated ? des.width : des.height;
-    }
-    const result = await this._mediaService.create(user, {
-      url,
-      name: url.split('/').pop(),
-      uploadType,
-      originName: file.originalname,
-      extension: file.mimetype.split('/').pop(),
-      width,
-      height,
-      size: file.size ?? 0,
-      status: MediaStatus.COMPLETED,
-      mimeType: file.mimetype,
-    });
-    return result.toJSON();
+    throw new BadRequestException('Your version no belong supported, please upgrade new version');
   }
 }

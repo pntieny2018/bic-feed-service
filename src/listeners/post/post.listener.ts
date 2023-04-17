@@ -147,12 +147,11 @@ export class PostListener {
       isHidden,
       tags,
     } = post;
-    const mediaIds = media.videos
-      .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
-      .map((i) => i.id);
-    await this._mediaService
-      .processVideo(mediaIds)
-      .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
+    if (post.videoIdProcessing) {
+      await this._mediaService
+        .processVideo([post.videoIdProcessing])
+        .catch((ex) => this._logger.debug(JSON.stringify(ex?.stack)));
+    }
 
     if (status !== PostStatus.PUBLISHED) return;
 
@@ -181,34 +180,13 @@ export class PostListener {
     for (const key in mentions) {
       mentionUserIds.push(mentions[key].id);
     }
-    const mediaList = [];
-    for (const mediaType in media) {
-      for (const mediaItem of media[mediaType]) {
-        mediaList.push({
-          id: mediaItem.id,
-          status: mediaItem.status,
-          type: mediaItem.type,
-          name: mediaItem.name,
-          url: mediaItem.url,
-          size: mediaItem.size,
-          width: mediaItem.width,
-          height: mediaItem.height,
-          originName: mediaItem.originName,
-          extension: mediaItem.extension,
-          mimeType: mediaItem.mimeType,
-          thumbnails: mediaItem.thumbnails,
-          createdAt: mediaItem.createdAt,
-          createdBy: mediaItem.createdBy,
-        });
-      }
-    }
     this._postSearchService.addPostsToSearch([
       {
         id,
         type,
         content,
         isHidden,
-        media: mediaList,
+        media,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
         communityIds: audience.groups.map((group) => group.rootGroupId),
@@ -267,25 +245,10 @@ export class PostListener {
       tags,
     } = newPost;
 
-    if (oldPost.status === PostStatus.PUBLISHED) {
-      const mediaIds = media.videos
-        .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
-        .map((i) => i.id);
+    if (oldPost.status === PostStatus.PUBLISHED && newPost.videoIdProcessing) {
       this._mediaService
-        .processVideo(mediaIds)
+        .processVideo([newPost.videoIdProcessing])
         .catch((e) => this._sentryService.captureException(e));
-    }
-
-    if (oldPost.status === PostStatus.PUBLISHED && status === PostStatus.DRAFT) {
-      this._feedService.deleteNewsFeedByPost(id, null).catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-        if (tags.length) {
-          this._tagService
-            .decreaseTotalUsed(tags.map((e) => e.id))
-            .catch((ex) => this._logger.debug(ex));
-        }
-      });
     }
 
     if (status !== PostStatus.PUBLISHED) return;
@@ -441,19 +404,36 @@ export class PostListener {
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
     const dataUpdate = {
       url: hlsUrl,
-      status: MediaStatus.COMPLETED,
     };
     if (properties?.name) dataUpdate['name'] = properties.name;
     if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
-    await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updateStatus(post.id).catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+      this._postService
+        .updateData([post.id], {
+          videoIdProcessing: null,
+          status: PostStatus.PUBLISHED,
+          mediaJson: {
+            videos: [
+              {
+                url: hlsUrl,
+                mimeType: properties.mimeType,
+                size: properties.size,
+                width: properties.width,
+                height: properties.height,
+                duration: properties.duration,
+              },
+            ],
+            files: [],
+            images: [],
+          },
+        })
+        .catch((e) => {
+          this._logger.error(JSON.stringify(e?.stack));
+          this._sentryService.captureException(e);
+        });
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
@@ -467,7 +447,6 @@ export class PostListener {
       });
 
       const {
-        actor,
         id,
         content,
         media,
@@ -485,34 +464,13 @@ export class PostListener {
       for (const key in mentions) {
         mentionUserIds.push(mentions[key].id);
       }
-      const mediaList = [];
-      for (const mediaType in media) {
-        for (const mediaItem of media[mediaType]) {
-          mediaList.push({
-            id: mediaItem.id,
-            status: mediaItem.status,
-            name: mediaItem.name,
-            type: mediaItem.type,
-            url: mediaItem.url,
-            size: mediaItem.size,
-            width: mediaItem.width,
-            height: mediaItem.height,
-            originName: mediaItem.originName,
-            extension: mediaItem.extension,
-            mimeType: mediaItem.mimeType,
-            thumbnails: mediaItem.thumbnails,
-            createdAt: mediaItem.createdAt,
-            createdBy: mediaItem.createdBy,
-          });
-        }
-      }
       this._postSearchService.addPostsToSearch([
         {
           id,
           type,
           content,
           isHidden,
-          media: mediaList,
+          media,
           mentionUserIds,
           groupIds: audience.groups.map((group) => group.id),
           communityIds: audience.groups.map((group) => group.rootGroupId),
@@ -567,13 +525,16 @@ export class PostListener {
     if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
     if (properties?.size) dataUpdate['size'] = properties.size;
     if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
-    await this._mediaService.updateData([videoId], dataUpdate);
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
-      this._postService.updateStatus(post.id).catch((e) => {
-        this._logger.error(JSON.stringify(e?.stack));
-        this._sentryService.captureException(e);
-      });
+      this._postService
+        .updateData([post.id], {
+          status: PostStatus.DRAFT,
+        })
+        .catch((e) => {
+          this._logger.error(JSON.stringify(e?.stack));
+          this._sentryService.captureException(e);
+        });
       const postActivity = this._postActivityService.createPayload(post);
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
