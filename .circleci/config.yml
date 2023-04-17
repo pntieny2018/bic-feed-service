@@ -294,13 +294,13 @@ jobs:
             git push
 workflows:
   version: 2
-  # Internal:
-  #   when: << pipeline.parameters.run_workflow_itn >>
-  #   jobs:
-  #     - itn:
-  #         filters:
-  #           branches:
-  #             only: /^internal\-\d*/
+  Internal:
+    when: << pipeline.parameters.run_workflow_itn >>
+    jobs:
+      - itn:
+          filters:
+            branches:
+              only: /^internal\-\d*/
   Develop:
     when: << pipeline.parameters.run_workflow_dev >>
     jobs:
