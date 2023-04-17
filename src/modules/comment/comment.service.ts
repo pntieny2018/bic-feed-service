@@ -360,7 +360,6 @@ export class CommentService {
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
-
     if (comments.list.length && parentId === NIL_UUID && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
@@ -771,6 +770,7 @@ export class CommentService {
         postId,
         giphyId,
         content,
+        media,
         totalReply,
         createdBy,
         updatedBy,
@@ -789,20 +789,6 @@ export class CommentService {
                 createdAt: comment.reactCreatedAt,
               },
             ];
-        const media =
-          comment.mediaId === null
-            ? []
-            : [
-                {
-                  id: comment.mediaId,
-                  url: comment.mediaUrl,
-                  name: comment.mediaName,
-                  type: comment.mediaType,
-                  width: comment.mediaWidth,
-                  height: comment.mediaHeight,
-                  extension: comment.mediaExtension,
-                },
-              ];
         result.push({
           id,
           parentId,
@@ -836,17 +822,6 @@ export class CommentService {
           id: comment.commentReactionId,
           reactionName: comment.reactionName,
           createdAt: comment.reactCreatedAt,
-        });
-      }
-      if (comment.mediaId !== null && !commentAdded.media.find((m) => m.id === comment.mediaId)) {
-        commentAdded.media.push({
-          id: comment.mediaId,
-          url: comment.mediaUrl,
-          name: comment.mediaName,
-          type: comment.mediaType,
-          width: comment.mediaWidth,
-          height: comment.mediaHeight,
-          extension: comment.mediaExtension,
         });
       }
     });
