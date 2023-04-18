@@ -1,4 +1,4 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel, MediaType } from '../database/models/media.model';
 import { Op } from 'sequelize';
@@ -7,6 +7,10 @@ import { PostModel } from '../database/models/post.model';
 import { CommentModel } from '../database/models/comment.model';
 import { getDatabaseConfig } from '../config/database';
 import { ExternalService } from '../app/external.service';
+
+interface ICommandOptions {
+  backupId: boolean;
+}
 
 @Command({ name: 'migrate:media-id', description: 'Move media to Upload service' })
 export class MigrateMediaIdCommand implements CommandRunner {
@@ -18,8 +22,20 @@ export class MigrateMediaIdCommand implements CommandRunner {
     private _externalService: ExternalService
   ) {}
 
-  public async run(): Promise<any> {
+  @Option({
+    flags: '-s, --backup-id [boolean]',
+  })
+  public parseBoolean(val: string): boolean {
+    return JSON.parse(val);
+  }
+
+  public async run(prams, options?: ICommandOptions): Promise<any> {
+    const shouldBackupId = options.backupId ?? false;
     try {
+      if (shouldBackupId) {
+        const { schema } = getDatabaseConfig();
+        await this._mediaModel.sequelize.query(`UPDATE ${schema}.media SET old_id = id`);
+      }
       await this.migrateMediaId();
     } catch (e) {
       console.log(e);
@@ -33,9 +49,7 @@ export class MigrateMediaIdCommand implements CommandRunner {
     return matchUUID !== null && matchUUID.length > 0 ? matchUUID[0] : null;
   }
 
-  public async migrateMediaId(updateOldId = false): Promise<void> {
-    const { schema } = getDatabaseConfig();
-    await this._mediaModel.sequelize.query(`UPDATE ${schema}.media SET old_id = id`);
+  public async migrateMediaId(): Promise<void> {
     let stop = false;
     let offset = 0;
     const limit = 200;
