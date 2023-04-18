@@ -206,6 +206,8 @@ export class ArticleAppService {
         throw new BadRequestException('Image is not ready to use');
       }
       updateArticleDto.coverMedia = images[0];
+    } else {
+      delete updateArticleDto.coverMedia;
     }
 
     await this._authorityService.checkPostOwner(articleBefore, user.id);
