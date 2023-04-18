@@ -1,4 +1,4 @@
-import { Command, CommandRunner } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
 import { MediaModel, MediaType } from '../database/models/media.model';
 import { Op } from 'sequelize';
@@ -10,6 +10,10 @@ import { ExternalService } from '../app/external.service';
 import { ObjectHelper } from '../common/helpers';
 import { IS3Config } from '../config/s3';
 import { Logger } from '@nestjs/common';
+
+interface ICommandOptions {
+  backupContent: boolean;
+}
 
 @Command({ name: 'migrate:post-media', description: 'Move media to Upload service' })
 export class MigratePostMediaCommand implements CommandRunner {
@@ -23,7 +27,14 @@ export class MigratePostMediaCommand implements CommandRunner {
     private _externalService: ExternalService
   ) {}
 
-  public async run(): Promise<any> {
+  @Option({
+    flags: '-s, --backup-content [boolean]',
+  })
+  public parseBoolean(val: string): boolean {
+    return JSON.parse(val);
+  }
+
+  public async run(prams, options?: ICommandOptions): Promise<any> {
     try {
       console.info('We have 4 steps:');
       console.info('[Step 1] Migrate media to posts');
@@ -54,7 +65,7 @@ export class MigratePostMediaCommand implements CommandRunner {
     }
   }
 
-  public async migrateArticleContent(testId = null): Promise<void> {
+  public async migrateArticleContent(testId = null, options?: ICommandOptions): Promise<void> {
     const condition = {
       type: PostType.ARTICLE,
       content: {
@@ -114,16 +125,19 @@ export class MigratePostMediaCommand implements CommandRunner {
         }));
         const newContent = ObjectHelper.contentReplaceUrl(articleContent, replaceImages);
 
-        const { schema } = getDatabaseConfig();
-        await this._postModel.sequelize.query(
-          `UPDATE ${schema}.posts SET old_content = content, content = :content WHERE id = :postId`,
-          {
-            replacements: {
-              postId: post.id,
-              content: JSON.stringify(newContent),
-            },
-          }
-        );
+        if (options.backupContent) {
+          const { schema } = getDatabaseConfig();
+          await this._postModel.sequelize.query(
+            `UPDATE ${schema}.posts SET old_content = content, content = :content WHERE id = :postId`,
+            {
+              replacements: {
+                postId: post.id,
+                content: JSON.stringify(newContent),
+              },
+            }
+          );
+          console.log(`Back up postId: ${post.id}`);
+        }
 
         totalUpdated++;
         console.log(`Updated: ${totalUpdated}`);
