@@ -76,6 +76,7 @@ export class ExternalService {
 
   public async getImageIds(ids: string[]): Promise<any> {
     try {
+      console.log(ids);
       const response = await lastValueFrom(
         this._httpService.post(
           this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES,
@@ -98,6 +99,7 @@ export class ExternalService {
           }))
         : [];
     } catch (e) {
+      console.error(e);
       return [];
     }
   }

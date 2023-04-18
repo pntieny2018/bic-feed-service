@@ -12,7 +12,6 @@ import { REQUEST_CONTEXT } from '../../../common/interceptors/user.interceptor';
 import { MediaModel } from '../../../database/models/media.model';
 import { MediaDto } from '../dto';
 import { UserDto } from '../../v2-user/application';
-import { MediaStatus } from '../../v2-post/data-type';
 
 export interface IExtendedValidationArguments extends ValidationArguments {
   object: {
@@ -54,15 +53,12 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
 
     const imageIds = media.images.map((i) => i.id);
     if (imageIds.length > 0) {
-      const images = await this._externalService.getImageIds(videoIds);
+      const images = await this._externalService.getImageIds(imageIds);
+      console.log('images=', images);
       if (images.length < imageIds.length) {
         return false;
       }
-      if (
-        images.some(
-          (image) => image.createdBy !== user.id || image.status !== MediaStatus.COMPLETED
-        )
-      )
+      if (images.some((image) => image.createdBy !== user.id || image.status !== 'DONE'))
         return false;
       media.images = images;
     }
