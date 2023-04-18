@@ -1,7 +1,8 @@
 import { PageOptionsDto } from '../../../../common/dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
+import { PostType } from '../../../../database/models/post.model';
 
 export class GetDraftPostDto extends PageOptionsDto {
   @ApiProperty({
@@ -33,4 +34,16 @@ export class GetDraftPostDto extends PageOptionsDto {
     return null;
   })
   public isProcessing?: boolean;
+
+  @ApiProperty({
+    description: 'Type',
+    required: false,
+    default: '',
+    enum: PostType,
+  })
+  @Expose()
+  @IsOptional()
+  @IsEnum(PostType)
+  @ValidateIf((i) => i.type !== '')
+  public type?: PostType;
 }

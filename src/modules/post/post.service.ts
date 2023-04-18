@@ -117,12 +117,15 @@ export class PostService {
     authUserId: string,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order, isProcessing } = getDraftPostDto;
+    const { limit, offset, order, isProcessing, type } = getDraftPostDto;
     const condition = {
       createdBy: authUserId,
       status: PostStatus.DRAFT,
-      type: PostType.POST,
     };
+
+    if (type) {
+      condition['type'] = type;
+    }
 
     if (isProcessing) condition.status = PostStatus.PROCESSING;
 
@@ -146,8 +149,6 @@ export class PostService {
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
-      shouldIncludeCover: true,
     });
     const orderOption = [];
     if (
