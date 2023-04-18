@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -26,6 +27,8 @@ import { SearchSeriesDto } from './dto/requests/search-series.dto';
 import { SeriesResponseDto } from './dto/responses';
 import { GetSeriesPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { SeriesNoReadPermissionException } from '../v2-post/exception/series-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Series')
@@ -58,13 +61,28 @@ export class SeriesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query(GetSeriesPipe) getPostDto: GetSeriesDto
   ): Promise<SeriesResponseDto> {
-    return this._seriesAppService.getSeriesDetail(user, id, getPostDto);
+    try {
+      const series = await this._seriesAppService.getSeriesDetail(user, id, getPostDto);
+      return series;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case SeriesNoReadPermissionException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create series' })
   @ApiOkResponse({
     type: SeriesResponseDto,
     description: 'Create series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.created_success',
   })
   @Post('/')
   @InjectUserToBody()
@@ -80,6 +98,9 @@ export class SeriesController {
     type: SeriesResponseDto,
     description: 'Update series successfully',
   })
+  @ResponseMessages({
+    success: 'message.series.updated_success',
+  })
   @Put('/:id')
   @InjectUserToBody()
   public async update(
@@ -94,6 +115,9 @@ export class SeriesController {
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete series successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.deleted_success',
   })
   @Delete('/:id')
   public async delete(
@@ -123,6 +147,9 @@ export class SeriesController {
   @ApiOkResponse({
     description: 'Remove article/posts successfully',
   })
+  @ResponseMessages({
+    success: 'message.series.removed_success',
+  })
   @Delete('/:id/remove-items')
   public async removeArticle(
     @Param('id', ParseUUIDPipe) id: string,
@@ -136,6 +163,9 @@ export class SeriesController {
   @ApiOperation({ summary: 'Add item into series' })
   @ApiOkResponse({
     description: 'Add article/posts successfully',
+  })
+  @ResponseMessages({
+    success: 'message.series.added_success',
   })
   @Put('/:id/add-items')
   public async addArticle(

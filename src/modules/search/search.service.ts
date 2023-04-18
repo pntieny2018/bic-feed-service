@@ -310,7 +310,11 @@ export class SearchService {
         updatedAt: source.updatedAt,
         createdBy: source.createdBy,
         coverMedia: source.coverMedia ?? null,
-        media: source.media || [],
+        media: source.media || {
+          files: [],
+          images: [],
+          videos: [],
+        },
         content: source.content || null,
         title: source.title || null,
         summary: source.summary || null,
@@ -388,11 +392,6 @@ export class SearchService {
       const audienceGroups = [];
       const communities = [];
       let mentions = {};
-      const media = {
-        files: [],
-        videos: [],
-        images: [],
-      };
       const reactionsCount = {};
       for (const group of groups) {
         if (post.groupIds && post.groupIds.includes(group.id)) {
@@ -457,18 +456,6 @@ export class SearchService {
         );
       }
 
-      if (post.media) {
-        post.media
-          .sort((a, b) => {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          })
-          .forEach((item) => {
-            if (item.type === MediaType.VIDEO) media.videos.push(item);
-            if (item.type === MediaType.IMAGE) media.images.push(item);
-            if (item.type === MediaType.FILE) media.files.push(item);
-          });
-      }
-      post.media = media;
       post.reactionsCount = reactionsCount;
       post.audience = { groups: audienceGroups };
       post.communities = communities;

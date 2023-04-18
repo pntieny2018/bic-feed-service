@@ -95,18 +95,7 @@ export class SeriesListener {
         communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
         items: series.items.map((article) => ({ id: article.id, zindex: article.zindex })),
-        coverMedia: {
-          id: coverMedia.id,
-          createdBy: coverMedia.createdBy,
-          url: coverMedia.url,
-          type: coverMedia.type as MediaType,
-          createdAt: coverMedia.createdAt,
-          name: coverMedia.name,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
-        },
+        coverMedia,
       },
     ]);
 
@@ -188,18 +177,7 @@ export class SeriesListener {
         title,
         type: PostType.SERIES,
         items: items.map((article) => ({ id: article.id, zindex: article.zindex })),
-        coverMedia: {
-          id: coverMedia.id,
-          url: coverMedia.url,
-          type: coverMedia.type as MediaType,
-          createdBy: coverMedia.createdBy,
-          createdAt: coverMedia.createdAt,
-          name: coverMedia.name,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
-        },
+        coverMedia,
       },
     ]);
 

@@ -11,7 +11,6 @@ import { LogicException } from '../../common/exceptions';
 import { ExceptionHelper } from '../../common/helpers';
 import { CommentReactionModel } from '../../database/models/comment-reaction.model';
 import { CommentModel, IComment } from '../../database/models/comment.model';
-import { MediaModel } from '../../database/models/media.model';
 import { MentionModel } from '../../database/models/mention.model';
 import { AuthorityService } from '../authority';
 import { GiphyService } from '../giphy';
@@ -58,9 +57,13 @@ export class CommentService {
     createCommentDto: CreateCommentDto,
     replyId = NIL_UUID
   ): Promise<IComment> {
+    const { media } = createCommentDto;
     const post = await this._postService.findPost({
       postId: createCommentDto.postId,
     });
+    if (!post) {
+      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
+    }
 
     if (replyId !== NIL_UUID) {
       const parentComment = await this._commentModel.findOne({
@@ -100,6 +103,11 @@ export class CommentService {
           content: createCommentDto.content,
           postId: post.id,
           giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
+          mediaJson: media || {
+            files: [],
+            images: [],
+            videos: [],
+          },
         },
         { transaction }
       );
@@ -119,18 +127,6 @@ export class CommentService {
           })),
           transaction
         );
-      }
-      const media = [
-        ...createCommentDto.media.files,
-        ...createCommentDto.media.images,
-        ...createCommentDto.media.videos,
-      ];
-
-      if (media.length) {
-        const mediaIds = media.map((m) => m.id);
-
-        await this._mediaService.isValid(mediaIds, user.id);
-        await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
       }
 
       await transaction.commit();
@@ -157,6 +153,7 @@ export class CommentService {
     comment: IComment;
     oldComment: IComment;
   }> {
+    const { media } = updateCommentDto;
     const comment = await this._commentModel.findOne({
       include: [
         {
@@ -197,6 +194,11 @@ export class CommentService {
           content: updateCommentDto.content,
           giphyId: updateCommentDto.giphy ? updateCommentDto.giphy.id : null,
           edited: true,
+          mediaJson: media || {
+            files: [],
+            images: [],
+            videos: [],
+          },
         },
         {
           transaction: transaction,
@@ -214,18 +216,6 @@ export class CommentService {
         comment.id,
         transaction
       );
-
-      const media = [
-        ...updateCommentDto.media.files,
-        ...updateCommentDto.media.images,
-        ...updateCommentDto.media.videos,
-      ];
-
-      const mediaIds = media.map((m) => m.id);
-      if (mediaIds.length) {
-        await this._mediaService.isValid(mediaIds, user.id);
-      }
-      await this._mediaService.sync(comment.id, EntityType.COMMENT, mediaIds, transaction);
 
       await transaction.commit();
 
@@ -249,18 +239,11 @@ export class CommentService {
     childLimit = 25
   ): Promise<CommentResponseDto> {
     const response = await this._commentModel.findOne({
+      attributes: [['media_json', 'media']],
       where: {
         id: commentId,
       },
       include: [
-        {
-          model: MediaModel,
-          as: 'media',
-          through: {
-            attributes: [],
-          },
-          required: false,
-        },
         {
           model: MentionModel,
           as: 'mentions',
@@ -302,6 +285,7 @@ export class CommentService {
    */
   public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
     const responses = await this._commentModel.findAll({
+      attributes: [['media_json', 'media']],
       order: [['createdAt', 'DESC']],
       where: {
         id: {
@@ -309,14 +293,6 @@ export class CommentService {
         },
       },
       include: [
-        {
-          model: MediaModel,
-          as: 'media',
-          through: {
-            attributes: [],
-          },
-          required: false,
-        },
         {
           model: MentionModel,
           as: 'mentions',
@@ -384,7 +360,6 @@ export class CommentService {
     }
     const userId = user ? user.id : null;
     const comments = await this._getComments(getCommentsDto, userId);
-
     if (comments.list.length && parentId === NIL_UUID && childLimit) {
       await this.bindChildrenToComment(comments.list, userId, childLimit);
     }
@@ -741,18 +716,11 @@ export class CommentService {
   public async findComment(commentId: string): Promise<CommentResponseDto> {
     const get = async (cid: string): Promise<CommentModel> => {
       return this._commentModel.findOne({
+        attributes: [['media_json', 'media']],
         where: {
           id: cid,
         },
         include: [
-          {
-            model: MediaModel,
-            as: 'media',
-            through: {
-              attributes: [],
-            },
-            required: false,
-          },
           {
             model: MentionModel,
             as: 'mentions',
@@ -802,6 +770,7 @@ export class CommentService {
         postId,
         giphyId,
         content,
+        media,
         totalReply,
         createdBy,
         updatedBy,
@@ -820,20 +789,6 @@ export class CommentService {
                 createdAt: comment.reactCreatedAt,
               },
             ];
-        const media =
-          comment.mediaId === null
-            ? []
-            : [
-                {
-                  id: comment.mediaId,
-                  url: comment.mediaUrl,
-                  name: comment.mediaName,
-                  type: comment.mediaType,
-                  width: comment.mediaWidth,
-                  height: comment.mediaHeight,
-                  extension: comment.mediaExtension,
-                },
-              ];
         result.push({
           id,
           parentId,
@@ -867,17 +822,6 @@ export class CommentService {
           id: comment.commentReactionId,
           reactionName: comment.reactionName,
           createdAt: comment.reactCreatedAt,
-        });
-      }
-      if (comment.mediaId !== null && !commentAdded.media.find((m) => m.id === comment.mediaId)) {
-        commentAdded.media.push({
-          id: comment.mediaId,
-          url: comment.mediaUrl,
-          name: comment.mediaName,
-          type: comment.mediaType,
-          width: comment.mediaWidth,
-          height: comment.mediaHeight,
-          extension: comment.mediaExtension,
         });
       }
     });
