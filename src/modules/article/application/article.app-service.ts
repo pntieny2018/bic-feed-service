@@ -31,6 +31,7 @@ import { ClassTransformer } from 'class-transformer';
 import { PostHelper } from '../../post/post.helper';
 import { UserDto } from '../../v2-user/application';
 import { PostBindingService } from '../../post/post-binding.service';
+import { ExternalService } from '../../../app/external.service';
 
 @Injectable()
 export class ArticleAppService {
@@ -43,7 +44,8 @@ export class ArticleAppService {
     private _postService: PostService,
     private _postSearchService: SearchService,
     private _tagService: TagService,
-    protected readonly authorityService: AuthorityService
+    protected readonly authorityService: AuthorityService,
+    private _externalService: ExternalService
   ) {}
 
   public async getRelatedById(
@@ -193,6 +195,23 @@ export class ArticleAppService {
     const { audience, series, setting, coverMedia, tags } = updateArticleDto;
     const articleBefore = await this._articleService.get(articleId, user, new GetArticleDto());
     if (!articleBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+
+    if (
+      updateArticleDto.coverMedia?.id &&
+      updateArticleDto.coverMedia.id !== articleBefore.coverMedia?.id
+    ) {
+      const images = await this._externalService.getImageIds([updateArticleDto.coverMedia.id]);
+      if (images.length === 0) {
+        throw new BadRequestException('Invalid cover image');
+      }
+      if (images[0].createdBy !== user.id) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images[0].status !== 'DONE') {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      updateArticleDto.coverMedia = images[0];
+    }
 
     await this._authorityService.checkPostOwner(articleBefore, user.id);
 

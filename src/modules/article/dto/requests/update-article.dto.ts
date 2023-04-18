@@ -71,6 +71,5 @@ export class UpdateArticleDto extends UpdatePostDto {
   @Expose({
     name: 'cover_media',
   })
-  @ValidateCover()
   public coverMedia: CoverMediaDto;
 }
