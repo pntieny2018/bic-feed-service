@@ -47,6 +47,7 @@ export class MigratePostMediaCommand implements CommandRunner {
       await this.migrateArticleContent();
     } catch (e) {
       console.log(e);
+      throw e;
     }
 
     process.exit();
@@ -218,6 +219,7 @@ export class MigratePostMediaCommand implements CommandRunner {
         const videoJson = [];
         totalUpdated++;
         for (const media of post.media) {
+          if (!media.url) continue;
           if (media.type === MediaType.IMAGE) {
             const mediaData = await this._externalService.updateMedia(media.id, {
               userId: post.createdBy,
@@ -385,6 +387,7 @@ export class MigratePostMediaCommand implements CommandRunner {
       for (const comment of comments) {
         const mediaJson = [];
         for (const media of comment.media) {
+          if (!media.url) continue;
           const mediaData = await this._externalService.updateMedia(media.id, {
             userId: comment.createdBy,
             type: 'comment:content',

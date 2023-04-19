@@ -147,6 +147,7 @@ export class SeriesAppService {
       updateSeriesDto.coverMedia.id !== seriesBefore.coverMedia?.id
     ) {
       const images = await this._externalService.getImageIds([updateSeriesDto.coverMedia.id]);
+      console.log('images=', images);
       if (images.length === 0) {
         throw new BadRequestException('Invalid cover image');
       }
@@ -157,6 +158,8 @@ export class SeriesAppService {
         throw new BadRequestException('Image is not ready to use');
       }
       updateSeriesDto.coverMedia = images[0];
+    } else {
+      delete updateSeriesDto.coverMedia;
     }
 
     await this._authorityService.checkPostOwner(seriesBefore, user.id);
