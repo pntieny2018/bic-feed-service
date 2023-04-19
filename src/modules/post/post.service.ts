@@ -578,7 +578,7 @@ export class PostService {
         through: {
           attributes: ['zindex'],
         },
-        attributes: ['id', 'title'],
+        attributes: ['id', 'title', 'createdBy'],
         include: [
           {
             model: PostGroupModel,
@@ -1332,6 +1332,7 @@ export class PostService {
       mustIncludeMedia: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
+      shouldIncludeSeries: true,
       filterMediaIds: [id],
     });
     const posts = await this.postModel.findAll({

@@ -175,6 +175,11 @@ export class PostListener {
         },
         event: event.getEventName(),
         data: activity,
+        meta: {
+          post: {
+            ignoreUserIds: post.series?.map((series) => series.createdBy),
+          },
+        },
       },
     });
     const mentionUserIds = [];
@@ -329,6 +334,7 @@ export class PostListener {
           meta: {
             post: {
               oldData: oldActivity,
+              ignoreUserIds: newPost.series?.map((series) => series.createdBy),
             },
           },
         },
@@ -465,6 +471,11 @@ export class PostListener {
           },
           event: event.getEventName(),
           data: postActivity,
+          meta: {
+            post: {
+              ignoreUserIds: post.series?.map((series) => series.createdBy),
+            },
+          },
         },
       });
 

@@ -46,6 +46,12 @@ class SeriesSimpleResponseDto {
   public title: string;
 
   @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public createdBy?: string;
+
+  @ApiProperty({
     type: Number,
   })
   @Expose()

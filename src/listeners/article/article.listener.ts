@@ -223,6 +223,11 @@ export class ArticleListener {
         actor: actor,
         event: event.getEventName(),
         data: activity,
+        meta: {
+          post: {
+            ignoreUserIds: article.series?.map((series) => series.createdBy),
+          },
+        },
       },
     });
 
@@ -339,6 +344,7 @@ export class ArticleListener {
           meta: {
             post: {
               oldData: oldActivity,
+              ignoreUserIds: newArticle.series?.map((series) => series.createdBy),
             },
           },
         },
