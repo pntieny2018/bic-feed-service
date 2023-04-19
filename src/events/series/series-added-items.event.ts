@@ -21,4 +21,5 @@ export interface ISeriesAddItemsPayload {
   seriesId: string;
   itemIds: string[];
   actor: Partial<UserDto>;
+  context: 'publish' | 'add'; // publish: when publish post,article or edit post, article; add when series add item
 }

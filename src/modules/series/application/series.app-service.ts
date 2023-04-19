@@ -321,6 +321,7 @@ export class SeriesAppService {
         actor: user,
         seriesId,
         itemIds,
+        context: 'add',
       })
     );
   }
