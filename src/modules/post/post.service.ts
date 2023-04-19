@@ -1231,7 +1231,6 @@ export class PostService {
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
       shouldIncludeSeries: true,
-      filterMediaIds: [id],
     });
     const posts = await this.postModel.findAll({
       attributes: {
