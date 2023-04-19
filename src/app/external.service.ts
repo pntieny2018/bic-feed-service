@@ -20,6 +20,7 @@ export class ExternalService {
   ) {}
 
   public async getFileIds(ids: string[]): Promise<any> {
+    if (ids.length === 0) return [];
     try {
       const response = await lastValueFrom(
         this._httpService.post(
@@ -46,6 +47,7 @@ export class ExternalService {
   }
 
   public async getVideoIds(ids: string[]): Promise<any> {
+    if (ids.length === 0) return [];
     try {
       const response = await lastValueFrom(
         this._httpService.post(
@@ -75,8 +77,8 @@ export class ExternalService {
   }
 
   public async getImageIds(ids: string[]): Promise<any> {
+    if (ids.length === 0) return [];
     try {
-      console.log(ids);
       const response = await lastValueFrom(
         this._httpService.post(
           this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.GET_IMAGES,

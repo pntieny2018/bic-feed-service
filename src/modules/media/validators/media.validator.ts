@@ -54,7 +54,6 @@ export class ValidateMediaConstraint implements ValidatorConstraintInterface {
     const imageIds = media.images.map((i) => i.id);
     if (imageIds.length > 0) {
       const images = await this._externalService.getImageIds(imageIds);
-      console.log('images=', images);
       if (images.length < imageIds.length) {
         return false;
       }
