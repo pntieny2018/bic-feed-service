@@ -586,11 +586,6 @@ export class CommentService {
     commentIdsNeedDelete.push(comment.id);
     try {
       await Promise.all([
-        this._mediaService.deleteMediaByEntityIds(
-          commentIdsNeedDelete,
-          EntityType.COMMENT,
-          transaction
-        ),
         this._mentionService.deleteByEntityIds(
           commentIdsNeedDelete,
           MentionableType.COMMENT,
@@ -699,7 +694,6 @@ export class CommentService {
     const commentIds = comments.map((i) => i.id);
 
     await Promise.all([
-      this._mediaService.deleteMediaByEntityIds(commentIds, EntityType.COMMENT, transaction),
       this._mentionService.deleteByEntityIds(commentIds, MentionableType.COMMENT, transaction),
       this._reactionService.deleteByCommentIds(commentIds, transaction),
     ]).catch((ex) => {

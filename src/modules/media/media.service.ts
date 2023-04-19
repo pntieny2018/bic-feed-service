@@ -443,52 +443,6 @@ export class MediaService {
     );
   }
 
-  @Cron(CronExpression.EVERY_4_HOURS)
-  public async deleteUnusedMediav2(): Promise<void> {
-    const unusedMediaList = await this._mediaModel.findAll({
-      attributes: ['id', 'type', 'url'],
-      include: [
-        {
-          model: PostMediaModel,
-          attributes: [],
-          required: false,
-        },
-        {
-          model: CommentMediaModel,
-          attributes: [],
-          required: false,
-        },
-        {
-          model: PostModel,
-          attributes: [],
-          required: false,
-          paranoid: false,
-        },
-      ],
-      where: {
-        type: [MediaType.FILE, MediaType.VIDEO],
-        createdAt: {
-          [Op.lte]: moment().subtract(4, 'hours').toDate(),
-        },
-        [Op.and]: this._sequelizeConnection.literal(
-          'post_id is null and comment_id is null and cover is null'
-        ),
-      },
-    });
-
-    this.emitMediaToUploadServiceFromMediaList(unusedMediaList, MediaMarkAction.DELETE);
-    const deleteMediaIds = unusedMediaList.map((media) => media.id);
-    await this.deleteMediaByIds(deleteMediaIds);
-  }
-
-  public async deleteMediaByIds(ids: string[]): Promise<void> {
-    this._mediaModel.destroy({
-      where: {
-        id: ids,
-      },
-    });
-  }
-
   public async processVideo(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
     try {
@@ -496,7 +450,6 @@ export class MediaService {
         key: null,
         value: JSON.stringify({ videoIds: ids }),
       });
-      await this.updateData(ids, { status: MediaStatus.PROCESSING });
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       this._sentryService.captureException(e);
