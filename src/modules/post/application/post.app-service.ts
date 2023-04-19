@@ -252,21 +252,21 @@ export class PostAppService {
           newPost: postUpdated,
           actor: user,
         })
-  ,    );
+      );
 
       if (videoIdsNeedToAdd) {
         await this._mediaService.emitMediaToUploadService(
           MediaType.VIDEO,
           MediaMarkAction.USED,
           videoIdsNeedToAdd
-  ,      );
+        );
       }
       if (fileIdsNeedToAdd) {
         await this._mediaService.emitMediaToUploadService(
           MediaType.FILE,
           MediaMarkAction.USED,
           fileIdsNeedToAdd
-  ,      );
+        );
       }
 
       if (videoIdsNeedToRemove) {
@@ -274,7 +274,7 @@ export class PostAppService {
           MediaType.VIDEO,
           MediaMarkAction.DELETE,
           videoIdsNeedToRemove
-  ,      );
+        );
       }
 
       if (fileIdsNeedToRemove) {
@@ -282,7 +282,7 @@ export class PostAppService {
           MediaType.FILE,
           MediaMarkAction.DELETE,
           fileIdsNeedToRemove
-  ,      );
+        );
       }
       return postUpdated;
     }
