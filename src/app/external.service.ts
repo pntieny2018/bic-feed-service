@@ -69,6 +69,7 @@ export class ExternalService {
             size: i.properties.size,
             thumbnails: i.thumbnails,
             createdBy: i.user_id,
+            status: i.status,
           }))
         : [];
     } catch (e) {
@@ -151,6 +152,7 @@ export class ExternalService {
         mimeType: data.properties.mime_type,
         width: data.properties.width,
         height: data.properties.height,
+        status: data.status,
       };
     } catch (e) {
       const exist = await fs.existsSync(data.url);

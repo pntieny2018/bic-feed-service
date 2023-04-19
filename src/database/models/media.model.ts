@@ -30,8 +30,8 @@ export enum MediaMarkAction {
 export enum MediaStatus {
   WAITING_PROCESS = 'waiting_process',
   PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+  COMPLETED = 'DONE',
+  FAILED = 'ERROR',
 }
 
 export interface IMedia {

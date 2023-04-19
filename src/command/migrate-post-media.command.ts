@@ -1,6 +1,6 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { MediaModel, MediaType } from '../database/models/media.model';
+import { MediaModel, MediaStatus, MediaType } from '../database/models/media.model';
 import { Op } from 'sequelize';
 import { ConfigService } from '@nestjs/config';
 import { PostModel, PostType } from '../database/models/post.model';
@@ -257,6 +257,7 @@ export class MigratePostMediaCommand implements CommandRunner {
               width: media.width,
               height: media.height,
               thumbnails: media.thumbnails,
+              status: media.status === MediaStatus.COMPLETED ? 'DONE' : 'PROCESSING',
             });
           }
         }
