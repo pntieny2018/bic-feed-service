@@ -53,7 +53,6 @@ export class CreateCommentDto {
   @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
-  @ValidateMedia()
   public media?: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
