@@ -72,7 +72,7 @@ export class MigrateMediaIdCommand implements CommandRunner {
           console.error(`Can not identify UUID from URL ${image.url}`);
           continue;
         }
-        console.log(`Changing ID ${image.id} -- to new ID: ${newId}`);
+        console.log(`Changing ID ${image.id} -- to new ID: ${newId} - URL:${image.url}`);
         await this._mediaModel.update(
           { id: newId },
           {

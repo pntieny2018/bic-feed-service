@@ -682,8 +682,6 @@ export class ArticleService {
       dataUpdate['summary'] = summary;
     }
 
-    dataUpdate['cover'] = coverMedia?.id || null;
-
     return dataUpdate;
   }
 
