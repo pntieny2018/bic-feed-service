@@ -304,33 +304,12 @@ export class PostListener {
       });
     }
 
-    const mediaList = [];
-    for (const mediaType in media) {
-      for (const mediaItem of media[mediaType]) {
-        mediaList.push({
-          id: mediaItem.id,
-          status: mediaItem.status,
-          name: mediaItem.name,
-          type: mediaItem.type,
-          url: mediaItem.url,
-          size: mediaItem.size,
-          width: mediaItem.width,
-          height: mediaItem.height,
-          originName: mediaItem.originName,
-          extension: mediaItem.extension,
-          mimeType: mediaItem.mimeType,
-          thumbnails: mediaItem.thumbnails,
-          createdAt: mediaItem.createdAt,
-          createdBy: mediaItem.createdBy,
-        });
-      }
-    }
     this._postSearchService.updatePostsToSearch([
       {
         id,
         type,
         content,
-        media: mediaList,
+        media,
         isHidden,
         mentionUserIds,
         groupIds: audience.groups.map((group) => group.id),
@@ -552,17 +531,6 @@ export class PostListener {
           this._logger.error(JSON.stringify(e?.stack));
           this._sentryService.captureException(e);
         });
-      const postActivity = this._postActivityService.createPayload(post);
-      this._notificationService.publishPostNotification({
-        key: `${post.id}`,
-        value: {
-          actor: {
-            id: post.actor.id,
-          },
-          event: event.getEventName(),
-          data: postActivity,
-        },
-      });
     });
   }
 

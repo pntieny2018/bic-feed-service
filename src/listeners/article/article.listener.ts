@@ -147,12 +147,6 @@ export class ArticleListener {
       createdBy,
       isHidden,
     } = article;
-    const mediaIds = media.videos
-      .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
-      .map((i) => i.id);
-    this._mediaService
-      .processVideo(mediaIds)
-      .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
     if (status !== PostStatus.PUBLISHED) return;
 
@@ -241,7 +235,6 @@ export class ArticleListener {
       status,
       id,
       content,
-      media,
       createdBy,
       audience,
       type,
