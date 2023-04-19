@@ -106,7 +106,8 @@ export class PostService {
     protected readonly reportContentDetailModel: typeof ReportContentDetailModel,
     protected readonly tagService: TagService,
     @InjectModel(UserSeenPostModel)
-    protected userSeenPostModel: typeof UserSeenPostModel
+    protected userSeenPostModel: typeof UserSeenPostModel,
+    protected mediaService: MediaService
   ) {}
 
   /**
@@ -559,7 +560,7 @@ export class PostService {
   public async create(authUser: UserDto, createPostDto: CreatePostDto): Promise<IPost> {
     let transaction;
     try {
-      const { content, media, setting, mentions, audience, tags, series } = createPostDto;
+      const { content, setting, mentions, audience, tags, series } = createPostDto;
       const authUserId = authUser.id;
 
       let tagList = [];
@@ -580,7 +581,7 @@ export class PostService {
           canComment: setting.canComment,
           canReact: setting.canReact,
           tagsJson: tagList,
-          mediaJson: media || {
+          mediaJson: {
             images: [],
             files: [],
             videos: [],
@@ -704,6 +705,10 @@ export class PostService {
         },
         transaction,
       });
+
+      const videoIds = post.media.videos.map((video) => video.id);
+      const fileIds = post.media.videos.map((file) => file.id);
+      const imageIds = post.media.videos.map((image) => image.id);
 
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);

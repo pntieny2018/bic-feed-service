@@ -142,7 +142,6 @@ export class SeriesAppService {
       updateSeriesDto.coverMedia.id !== seriesBefore.coverMedia?.id
     ) {
       const images = await this._externalService.getImageIds([updateSeriesDto.coverMedia.id]);
-      console.log('images=', images);
       if (images.length === 0) {
         throw new BadRequestException('Invalid cover image');
       }

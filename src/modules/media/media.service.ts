@@ -383,12 +383,12 @@ export class MediaService {
     });
   }
 
-  public emitMediaToUploadService(
+  public async emitMediaToUploadService(
     mediaType: MediaType,
     mediaMarkAction: MediaMarkAction,
     mediaIds: string[],
     userId: string = null
-  ): void {
+  ): Promise<void> {
     const [kafkaTopic, keyIds] =
       mediaType === MediaType.FILE
         ? [
@@ -412,7 +412,7 @@ export class MediaService {
 
     if (!kafkaTopic) return;
     if (mediaIds.length) {
-      this._clientKafka.emit(kafkaTopic, {
+      await this._clientKafka.emit(kafkaTopic, {
         key: null,
         value: JSON.stringify({ [keyIds]: mediaIds, userId }),
       });

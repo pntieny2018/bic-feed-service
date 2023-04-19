@@ -54,7 +54,6 @@ export class UpdatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
-  @ValidateMedia()
   public media?: MediaDto;
 
   @ApiProperty({

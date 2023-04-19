@@ -402,13 +402,6 @@ export class PostListener {
   @On(PostVideoSuccessEvent)
   public async onPostVideoSuccess(event: PostVideoSuccessEvent): Promise<void> {
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
-    const dataUpdate = {
-      url: hlsUrl,
-    };
-    if (properties?.name) dataUpdate['name'] = properties.name;
-    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
-    if (properties?.size) dataUpdate['size'] = properties.size;
-    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
       this._postService
@@ -424,6 +417,8 @@ export class PostListener {
                 width: properties.width,
                 height: properties.height,
                 duration: properties.duration,
+                thumbnails,
+                status: MediaStatus.COMPLETED,
               },
             ],
             files: [],
@@ -517,18 +512,26 @@ export class PostListener {
   @On(PostVideoFailedEvent)
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
     const { videoId, hlsUrl, properties, thumbnails } = event.payload;
-    const dataUpdate = {
-      url: hlsUrl,
-      status: MediaStatus.FAILED,
-    };
-    if (properties?.name) dataUpdate['name'] = properties.name;
-    if (properties?.mimeType) dataUpdate['mimeType'] = properties.mimeType;
-    if (properties?.size) dataUpdate['size'] = properties.size;
-    if (thumbnails) dataUpdate['thumbnails'] = thumbnails;
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
       this._postService
         .updateData([post.id], {
+          mediaJson: {
+            videos: [
+              {
+                url: hlsUrl,
+                mimeType: properties.mimeType,
+                size: properties.size,
+                width: properties.width,
+                height: properties.height,
+                duration: properties.duration,
+                thumbnails: thumbnails,
+                status: MediaStatus.FAILED,
+              },
+            ],
+            files: [],
+            images: [],
+          },
           status: PostStatus.DRAFT,
         })
         .catch((e) => {
