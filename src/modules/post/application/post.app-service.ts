@@ -9,8 +9,8 @@ import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
 import { ExceptionHelper } from '../../../common/helpers';
-import { PostGroupModel } from '../../../database/models/post-group.model';
-import { PostModel, PostStatus } from '../../../database/models/post.model';
+import { IPostGroup, PostGroupModel } from '../../../database/models/post-group.model';
+import { IPost, PostModel, PostStatus } from '../../../database/models/post.model';
 import {
   PostHasBeenDeletedEvent,
   PostHasBeenPublishedEvent,
@@ -38,6 +38,8 @@ import { ContentPinLackException } from '../../v2-post/exception/content-pin-lac
 import { ExternalService } from '../../../app/external.service';
 import { MediaService } from '../../media';
 import { MediaMarkAction, MediaType } from '../../../database/models/media.model';
+import { LogicException } from '../../../common/exceptions';
+import { TargetType } from '../../report-content/contstants';
 
 @Injectable()
 export class PostAppService {
