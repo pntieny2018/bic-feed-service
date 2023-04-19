@@ -36,15 +36,16 @@ export class MigratePostMediaCommand implements CommandRunner {
 
   public async run(prams, options?: ICommandOptions): Promise<any> {
     try {
-      console.info('We have 4 steps:');
+      console.info('***** We have 4 steps ********');
       console.info('[Step 1] Migrate media to posts');
       await this.migratePostsMedia();
       console.info('[Step 2] Migrate cover article/series');
       await this.migratePostsCover();
       console.info('[Step 3] Migrate image in comments');
       await this.migrateComments();
-      console.info('[Finally] Migrate images article content');
+      console.info('[Step 4] Migrate images article content');
       await this.migrateArticleContent();
+      console.info('DONE!');
     } catch (e) {
       console.log(e);
       throw e;
@@ -139,10 +140,9 @@ export class MigratePostMediaCommand implements CommandRunner {
           );
           console.log(`Back up postId: ${post.id}`);
         }
-
         totalUpdated++;
-        console.log(`Updated: ${totalUpdated}`);
       }
+      console.log(`Updated: ${totalUpdated}`);
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
@@ -272,8 +272,8 @@ export class MigratePostMediaCommand implements CommandRunner {
             where: { id: post.id },
           }
         );
-        console.log(`Updated ${totalUpdated}/${total}`);
       }
+      console.log(`Updated ${totalUpdated}/${total}`);
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
@@ -346,8 +346,8 @@ export class MigratePostMediaCommand implements CommandRunner {
           }
         );
         totalUpdated++;
-        console.log(`Updated: ${totalUpdated}/${total}`);
       }
+      console.log(`Updated: ${totalUpdated}/${total}`);
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
@@ -419,8 +419,8 @@ export class MigratePostMediaCommand implements CommandRunner {
         );
 
         totalUpdated++;
-        console.log(`Updated ${totalUpdated}/${total}`);
       }
+      console.log(`Updated ${totalUpdated}/${total}`);
       if (comments.length === 0) stop = true;
       offset = limit + offset;
     }
