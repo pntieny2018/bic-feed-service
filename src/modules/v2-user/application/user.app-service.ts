@@ -61,6 +61,7 @@ export class UserApplicationService implements IUserApplicationService {
       groups: user.get('groups'),
       permissions: user.get('permissions'),
       isDeactivated: user.get('isDeactivated'),
+      isVerified: user.get('isVerified'),
     };
   }
 }

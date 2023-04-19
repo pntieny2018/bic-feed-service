@@ -4,6 +4,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { UserMentionDto } from '../../../mention/dto';
 import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
 import { GiphyDto } from '../../../giphy/dto/requests';
+import { ValidateMedia } from '../../../media/validators/media.validator';
 
 export class CreateReplyCommentDto {
   @ApiProperty({

@@ -25,6 +25,10 @@ import { AudienceNoBelongContentException } from '../v2-post/exception/audience-
 import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
 import { DomainModelException } from '../../common/exceptions/domain-model.exception';
 import { ResponseMessages } from '../../common/decorators';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PageDto } from '../../common/dto';
+import { ContentPinNotFoundException } from '../v2-post/exception/content-pin-not-found.exception';
+import { ContentPinLackException } from '../v2-post/exception/content-pin-lack.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Content')
@@ -113,6 +117,51 @@ export class ContentController {
         case ContentNotFoundException:
           throw new NotFoundException(e);
         case AudienceNoBelongContentException:
+          throw new BadRequestException(e);
+        case ContentNoPinPermissionException:
+          throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Get draft content' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Get('/draft')
+  public getDrafts(
+    @AuthUser() user: UserDto,
+    @Query() getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._postAppService.getDraftPosts(user, getDraftPostDto);
+  }
+  
+  @ApiOperation({ summary: 'Reorder pin content.' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @ResponseMessages({ success: 'Reorder successfully!' })
+  @Post('/group/:groupId/reorder')
+  public async reorderItem(
+    @AuthUser() authUser: UserDto,
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Body() postIds: string[]
+  ): Promise<void> {
+    try {
+      await this._postAppService.reorderPinnedContent({
+        groupId,
+        postIds,
+        authUser,
+      });
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentPinNotFoundException:
+          throw new NotFoundException(e);
+        case ContentPinLackException:
           throw new BadRequestException(e);
         case ContentNoPinPermissionException:
           throw new ForbiddenException(e);

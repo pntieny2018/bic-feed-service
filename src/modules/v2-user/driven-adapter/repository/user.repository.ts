@@ -22,6 +22,7 @@ type UserDataInCache = {
   groups: string[];
   isDeactivated?: boolean;
   permissions?: Permission;
+  isVerified?: boolean;
 };
 
 type UserDataInRest = UserDataInCache;

@@ -2,12 +2,14 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { APP_VERSION } from '../../common/constants';
@@ -21,6 +23,10 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { Request } from 'express';
+import { MediaStatus } from '../../database/models/media.model';
+import { PostNoReadPermissionException } from '../v2-post/exception/post-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -75,7 +81,19 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
-    return this._postAppService.getPost(user, postId, getPostDto);
+    try {
+      const post = await this._postAppService.getPost(user, postId, getPostDto);
+      return post;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case PostNoReadPermissionException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create post' })
@@ -83,7 +101,11 @@ export class PostController {
     type: PostResponseDto,
     description: 'Create post successfully',
   })
+  @ResponseMessages({
+    success: 'message.post.created_success',
+  })
   @Post('/')
+  @ResponseMessages({ success: 'Post has been published successfully' })
   @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
@@ -97,7 +119,9 @@ export class PostController {
     type: PostResponseDto,
     description: 'Update post successfully',
   })
-  @ResponseMessages({ success: 'Post has been published successfully' })
+  @ResponseMessages({
+    success: 'message.post.updated_success',
+  })
   @Put('/:postId')
   @InjectUserToBody()
   public async update(
@@ -113,18 +137,32 @@ export class PostController {
     type: PostResponseDto,
     description: 'Publish post successfully',
   })
+  @ResponseMessages({
+    success: 'message.post.published_success',
+  })
   @Put('/:postId/publish')
   public async publish(
     @AuthUser() user: UserDto,
-    @Param('postId', ParseUUIDPipe) postId: string
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @Req() req: Request
   ): Promise<PostResponseDto> {
-    return this._postAppService.publishPost(user, postId);
+    const publishResult = await this._postAppService.publishPost(user, postId);
+    if (
+      publishResult?.media?.videos?.length > 0 &&
+      publishResult.media.videos.find((video) => video.status === MediaStatus.WAITING_PROCESS)
+    ) {
+      req.message = 'message.post.published_success_with_video_waiting_process';
+    }
+    return publishResult;
   }
 
   @ApiOperation({ summary: 'Delete post' })
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete post successfully',
+  })
+  @ResponseMessages({
+    success: 'message.post.deleted_success',
   })
   @Delete('/:id')
   public async delete(

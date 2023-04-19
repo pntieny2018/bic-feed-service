@@ -10,6 +10,7 @@ export class UserDto {
   };
   public groups?: string[];
   public isDeactivated?: boolean;
+  public isVerified?: boolean;
 
   public constructor(userInfo: Partial<UserDto>) {
     Object.assign(this, userInfo);
