@@ -239,7 +239,9 @@ export class CommentService {
     childLimit = 25
   ): Promise<CommentResponseDto> {
     const response = await this._commentModel.findOne({
-      attributes: [['media_json', 'media']],
+      attributes: {
+        include: [['media_json', 'media']],
+      },
       where: {
         id: commentId,
       },
@@ -285,7 +287,9 @@ export class CommentService {
    */
   public async getCommentsByIds(commentIds: string[]): Promise<CommentResponseDto[]> {
     const responses = await this._commentModel.findAll({
-      attributes: [['media_json', 'media']],
+      attributes: {
+        include: [['media_json', 'media']],
+      },
       order: [['createdAt', 'DESC']],
       where: {
         id: {
@@ -716,7 +720,9 @@ export class CommentService {
   public async findComment(commentId: string): Promise<CommentResponseDto> {
     const get = async (cid: string): Promise<CommentModel> => {
       return this._commentModel.findOne({
-        attributes: [['media_json', 'media']],
+        attributes: {
+          include: [['media_json', 'media']],
+        },
         where: {
           id: cid,
         },
