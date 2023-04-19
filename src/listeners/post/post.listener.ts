@@ -242,6 +242,7 @@ export class PostListener {
             itemIds: [post.id],
             seriesId: sr.id,
             actor: actor,
+            context: 'publish',
           })
         );
       }
@@ -395,6 +396,7 @@ export class PostListener {
             itemIds: [newPost.id],
             seriesId: seriesId,
             actor: actor,
+            context: 'publish',
           })
         )
       );
@@ -549,6 +551,7 @@ export class PostListener {
               actor: {
                 id: post.createdBy,
               },
+              context: 'publish',
             })
           );
         }

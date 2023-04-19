@@ -233,6 +233,7 @@ export class ArticleListener {
             itemIds: [article.id],
             seriesId: sr.id,
             actor: actor,
+            context: 'publish',
           })
         );
       }
@@ -352,6 +353,7 @@ export class ArticleListener {
             itemIds: [newArticle.id],
             seriesId: seriesId,
             actor: actor,
+            context: 'publish',
           })
         );
       }
