@@ -8,8 +8,6 @@ export class NotificationMetaPayloadDto<T> {
     creatorId?: string;
   };
 
-  public context?: string;
-
   public post?: {
     oldData?: T;
     ignoreUserIds?: string[];
@@ -23,6 +21,7 @@ export class NotificationMetaPayloadDto<T> {
     isSendToContentCreator?: boolean;
     targetUserIds?: string[];
     contentIsDeleted?: boolean;
+    context?: string;
   };
 }
 export class NotificationPayloadDto<T> {
