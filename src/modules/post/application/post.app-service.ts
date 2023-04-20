@@ -186,7 +186,7 @@ export class PostAppService {
     }
 
     if (videoIdsNeedToAdd.length) {
-      const videos = await this._externalService.getVideoIds(newImageIds);
+      const videos = await this._externalService.getVideoIds(newVideoIds);
       if (videos.length < videoIdsNeedToAdd.length) {
         throw new BadRequestException('Invalid video');
       }
