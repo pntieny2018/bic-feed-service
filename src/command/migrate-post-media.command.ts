@@ -44,7 +44,7 @@ export class MigratePostMediaCommand implements CommandRunner {
       console.info('[Step 3] Migrate image in comments');
       await this.migrateComments();
       console.info('[Step 4] Migrate images article content');
-      await this.migrateArticleContent();
+      await this.migrateArticleContent(null, options);
       console.info('DONE!');
     } catch (e) {
       console.log(e);
