@@ -49,7 +49,6 @@ jobs:
         git push
 
         git checkout refactor/restructure
-        git pull
         set -e
         export COMMIT_SHA1=${{ github.sha }}
         envsubst <bic/services/${{ secrets.SERVICE }}/${{ secrets.ITN_ENVIRONMENT }}/version.patch.yaml >bic/services/${{ secrets.SERVICE }}/${{ secrets.ITN_ENVIRONMENT }}/version.yaml.out
@@ -102,7 +101,6 @@ jobs:
         git push
 
         git checkout refactor/restructure
-        git pull
         set -e
         export COMMIT_SHA1=${{ github.sha }}
         envsubst <bic/services/${{ secrets.SERVICE }}/${{ secrets.DEV_ENVIRONMENT }}/version.patch.yaml >bic/services/${{ secrets.SERVICE }}/${{ secrets.DEV_ENVIRONMENT }}/version.yaml.out
@@ -155,7 +153,6 @@ jobs:
         git push
 
         git checkout refactor/restructure
-        git pull
         set -e
         export COMMIT_SHA1=${{ github.sha }}
         envsubst <bic/services/${{ secrets.SERVICE }}/${{ secrets.STG_ENVIRONMENT }}/version.patch.yaml >bic/services/${{ secrets.SERVICE }}/${{ secrets.STG_ENVIRONMENT }}/version.yaml.out
@@ -208,7 +205,6 @@ jobs:
         git push
 
         git checkout refactor/restructure
-        git pull
         set -e
         export COMMIT_SHA1=${{ github.sha }}
         envsubst <bic/services/${{ secrets.SERVICE }}/${{ secrets.REL_ENVIRONMENT }}/version.patch.yaml >bic/services/${{ secrets.SERVICE }}/${{ secrets.REL_ENVIRONMENT }}/version.yaml.out
@@ -261,7 +257,6 @@ jobs:
         git push
 
         git checkout refactor/restructure
-        git pull
         set -e
         export COMMIT_SHA1=${{ github.sha }}
         envsubst <bic/services/${{ secrets.SERVICE }}/${{ secrets.PRO_ENVIRONMENT }}/version.patch.yaml >bic/services/${{ secrets.SERVICE }}/${{ secrets.PRO_ENVIRONMENT }}/version.yaml.out
