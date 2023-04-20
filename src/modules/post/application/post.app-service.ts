@@ -201,7 +201,7 @@ export class PostAppService {
     }
 
     if (fileIdsNeedToAdd.length) {
-      const files = await this._externalService.getVideoIds(newFileIds);
+      const files = await this._externalService.getFileIds(newFileIds);
       if (files.length < fileIdsNeedToAdd.length) {
         throw new BadRequestException('Invalid file');
       }
@@ -261,14 +261,16 @@ export class PostAppService {
         await this._mediaService.emitMediaToUploadService(
           MediaType.VIDEO,
           MediaMarkAction.USED,
-          videoIdsNeedToAdd
+          videoIdsNeedToAdd,
+          user.id
         );
       }
       if (fileIdsNeedToAdd) {
         await this._mediaService.emitMediaToUploadService(
           MediaType.FILE,
           MediaMarkAction.USED,
-          fileIdsNeedToAdd
+          fileIdsNeedToAdd,
+          user.id
         );
       }
 
@@ -276,7 +278,8 @@ export class PostAppService {
         await this._mediaService.emitMediaToUploadService(
           MediaType.VIDEO,
           MediaMarkAction.DELETE,
-          videoIdsNeedToRemove
+          videoIdsNeedToRemove,
+          user.id
         );
       }
 
@@ -284,7 +287,8 @@ export class PostAppService {
         await this._mediaService.emitMediaToUploadService(
           MediaType.FILE,
           MediaMarkAction.DELETE,
-          fileIdsNeedToRemove
+          fileIdsNeedToRemove,
+          user.id
         );
       }
       return postUpdated;
