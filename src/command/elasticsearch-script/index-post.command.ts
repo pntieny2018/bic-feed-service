@@ -213,41 +213,14 @@ export class IndexPostCommand implements CommandRunner {
             }
 
             item.content = post.content;
-            item.media = post.media.map((mediaItem) => ({
-              id: mediaItem.id,
-              type: mediaItem.type,
-              name: mediaItem.name,
-              url: mediaItem.url,
-              size: mediaItem.size,
-              width: mediaItem.width,
-              height: mediaItem.height,
-              originName: mediaItem.originName,
-              extension: mediaItem.extension,
-              mimeType: mediaItem.mimeType,
-              thumbnails: mediaItem.thumbnails ?? [],
-              createdAt: mediaItem.createdAt,
-              createdBy: mediaItem.createdBy,
-            }));
+            item.media = post.mediaJson;
             item.mentionUserIds = mentionUserIds;
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;
             item.summary = post.summary;
             item.content = post.content;
-            if (post['coverMedia']) {
-              item.coverMedia = {
-                id: post['coverMedia'].id,
-                createdBy: post['coverMedia'].createdBy,
-                url: post['coverMedia'].url,
-                type: post['coverMedia'].type,
-                createdAt: post['coverMedia'].createdAt,
-                name: post['coverMedia'].name,
-                originName: post['coverMedia'].originName,
-                width: post['coverMedia'].width,
-                height: post['coverMedia'].height,
-                extension: post['coverMedia'].extension,
-              };
-            }
+            item.coverMedia = post.coverJson;
             item.categories = post.categories.map((category) => ({
               id: category.id,
               name: category.name,
@@ -260,20 +233,7 @@ export class IndexPostCommand implements CommandRunner {
               id: article.id,
               zindex: article['PostSeriesModel'].zindex,
             }));
-            if (post['coverMedia']) {
-              item.coverMedia = {
-                id: post['coverMedia'].id,
-                createdBy: post['coverMedia'].createdBy,
-                url: post['coverMedia'].url,
-                type: post['coverMedia'].type,
-                createdAt: post['coverMedia'].createdAt,
-                name: post['coverMedia'].name,
-                originName: post['coverMedia'].originName,
-                width: post['coverMedia'].width,
-                height: post['coverMedia'].height,
-                extension: post['coverMedia'].extension,
-              };
-            }
+            item.coverMedia = post.coverJson;
           }
           insertDataPosts.push(item);
         }
@@ -328,26 +288,6 @@ export class IndexPostCommand implements CommandRunner {
           where: { status: 'PUBLISHED', isHidden: false },
         },
         {
-          model: MediaModel,
-          as: 'media',
-          required: false,
-          attributes: [
-            'id',
-            'url',
-            'size',
-            'extension',
-            'type',
-            'name',
-            'originName',
-            'width',
-            'height',
-            'thumbnails',
-            'status',
-            'mimeType',
-            'createdAt',
-          ],
-        },
-        {
           model: CategoryModel,
           as: 'categories',
           required: false,
@@ -355,7 +295,6 @@ export class IndexPostCommand implements CommandRunner {
           attributes: ['id', 'name'],
         },
         { model: LinkPreviewModel, as: 'linkPreview', required: false },
-        { model: MediaModel, as: 'coverMedia', required: false },
       ],
       where: {
         status: PostStatus.PUBLISHED,

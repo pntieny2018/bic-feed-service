@@ -25,6 +25,8 @@ import { AudienceNoBelongContentException } from '../v2-post/exception/audience-
 import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
 import { DomainModelException } from '../../common/exceptions/domain-model.exception';
 import { ResponseMessages } from '../../common/decorators';
+import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
+import { PageDto } from '../../common/dto';
 import { ContentPinNotFoundException } from '../v2-post/exception/content-pin-not-found.exception';
 import { ContentPinLackException } from '../v2-post/exception/content-pin-lack.exception';
 
@@ -126,6 +128,18 @@ export class ContentController {
     }
   }
 
+  @ApiOperation({ summary: 'Get draft content' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+  })
+  @Get('/draft')
+  public getDrafts(
+    @AuthUser() user: UserDto,
+    @Query() getDraftPostDto: GetDraftPostDto
+  ): Promise<PageDto<PostResponseDto>> {
+    return this._postAppService.getDraftPosts(user, getDraftPostDto);
+  }
+  
   @ApiOperation({ summary: 'Reorder pin content.' })
   @ApiOkResponse({
     type: PostResponseDto,

@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { UserMentionDto } from '../../../mention/dto';
 import { GiphyDto } from '../../../giphy/dto/requests';
+import { ValidateMedia } from '../../../media/validators/media.validator';
 
 export class UpdateCommentDto {
   @ApiProperty({ type: String })

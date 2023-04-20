@@ -308,13 +308,13 @@ workflows:
   #         filters:
   #           branches:
   #             only: develop
-  # Staging:
-  #   when: << pipeline.parameters.run_workflow_stg >>
-  #   jobs:
-  #     - stg:
-  #         filters:
-  #           branches:
-  #             only: staging
+  Staging:
+    when: << pipeline.parameters.run_workflow_stg >>
+    jobs:
+      - stg:
+          filters:
+            branches:
+              only: staging
   Release:
     when: << pipeline.parameters.run_workflow_rel >>
     jobs:

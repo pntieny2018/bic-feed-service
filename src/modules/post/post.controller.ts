@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -22,8 +23,10 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
 import { Request } from 'express';
 import { MediaStatus } from '../../database/models/media.model';
+import { PostNoReadPermissionException } from '../v2-post/exception/post-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -78,7 +81,19 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @Query(GetPostPipe) getPostDto: GetPostDto
   ): Promise<PostResponseDto> {
-    return this._postAppService.getPost(user, postId, getPostDto);
+    try {
+      const post = await this._postAppService.getPost(user, postId, getPostDto);
+      return post;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case PostNoReadPermissionException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create post' })
@@ -90,6 +105,7 @@ export class PostController {
     success: 'message.post.created_success',
   })
   @Post('/')
+  @ResponseMessages({ success: 'Post has been published successfully' })
   @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,

@@ -46,6 +46,12 @@ class SeriesSimpleResponseDto {
   public title: string;
 
   @ApiProperty({
+    type: String,
+  })
+  @Expose()
+  public createdBy?: string;
+
+  @ApiProperty({
     type: Number,
   })
   @Expose()
@@ -105,18 +111,14 @@ export class PostResponseDto {
   })
   @Expose()
   @Transform(({ value }) => {
-    if (
-      typeof value === 'object' &&
-      value.hasOwnProperty('files') &&
-      value.hasOwnProperty('images') &&
-      value.hasOwnProperty('videos')
-    ) {
-      return value;
+    if (!value) {
+      return {
+        files: [],
+        videos: [],
+        images: [],
+      };
     }
-    if (value && value.length) {
-      return MediaService.filterMediaType(value);
-    }
-    return new MediaFilterResponseDto([], [], []);
+    return value;
   })
   public media?: MediaFilterResponseDto;
 
@@ -359,6 +361,13 @@ export class PostResponseDto {
   })
   @Expose()
   public series?: SeriesSimpleResponseDto[];
+
+  @ApiProperty({
+    description: 'Video processing',
+    type: String,
+  })
+  @Expose()
+  public videoIdProcessing?: string;
 
   public constructor(data: Partial<PostResponseDto>) {
     Object.assign(this, data);
