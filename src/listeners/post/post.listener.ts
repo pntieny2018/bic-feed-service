@@ -398,6 +398,7 @@ export class PostListener {
           mediaJson: {
             videos: [
               {
+                id: videoId,
                 url: hlsUrl,
                 mimeType: properties.mimeType,
                 size: properties.size,
@@ -512,6 +513,7 @@ export class PostListener {
           mediaJson: {
             videos: [
               {
+                id: videoId,
                 url: hlsUrl,
                 mimeType: properties.mimeType,
                 size: properties.size,
