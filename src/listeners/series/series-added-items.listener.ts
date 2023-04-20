@@ -70,8 +70,8 @@ export class SeriesAddedItemsListener {
         meta: {
           series: {
             isSendToContentCreator: isSendToArticleCreator,
+            context,
           },
-          context,
         },
       },
     });
