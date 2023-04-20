@@ -148,7 +148,7 @@ export class MigratePostMediaCommand implements CommandRunner {
     }
   }
 
-  /*Media for post*/
+  /*Media for post only*/
   public async migratePostsMedia(testId = null): Promise<void> {
     const condition = {
       type: PostType.POST,
