@@ -121,10 +121,16 @@ export class MigratePostMediaCommand implements CommandRunner {
         if (dataImages.length === 0) {
           continue;
         }
-        const replaceImages = dataImages.map((image) => ({
-          plateId: bicUrlImages.find((item) => item.id === image.id).plateId,
-          url: image.url,
-        }));
+        const replaceImages: any = [];
+
+        dataImages.forEach((image) => {
+          if (image) {
+            replaceImages.push({
+              plateId: bicUrlImages.find((item) => item.id === image.id).plateId,
+              url: image.url,
+            });
+          }
+        });
         const newContent = ObjectHelper.contentReplaceUrl(articleContent, replaceImages);
 
         if (options.backupContent) {
