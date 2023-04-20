@@ -796,13 +796,10 @@ export class PostService {
         status: PostStatus.PUBLISHED,
         createdAt: new Date(),
       };
-      if (
-        post.status === PostStatus.PUBLISHED &&
-        post.media.videos?.length > 0 &&
-        post.media.videos[0].status !== MediaStatus.COMPLETED
-      ) {
+      if (post.media.videos?.length > 0 && post.media.videos[0].status !== MediaStatus.COMPLETED) {
         dataUpdate['status'] = PostStatus.PROCESSING;
         dataUpdate['videoIdProcessing'] = post.media.videos[0].id;
+        post.videoIdProcessing = dataUpdate['videoIdProcessing'];
       }
       dataUpdate['privacy'] = await this.getPrivacy(groupIds);
       await this.postModel.update(dataUpdate, {
