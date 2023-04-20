@@ -709,10 +709,6 @@ export class PostService {
         transaction,
       });
 
-      const videoIds = post.media.videos.map((video) => video.id);
-      const fileIds = post.media.videos.map((file) => file.id);
-      const imageIds = post.media.videos.map((image) => image.id);
-
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
       }
@@ -801,12 +797,9 @@ export class PostService {
         createdAt: new Date(),
       };
       if (
-        post.media.videos.filter(
-          (m) =>
-            m.status === MediaStatus.WAITING_PROCESS ||
-            m.status === MediaStatus.PROCESSING ||
-            m.status === MediaStatus.FAILED
-        ).length > 0
+        post.status === PostStatus.PUBLISHED &&
+        post.media.videos?.length > 0 &&
+        post.media.videos[0].status !== MediaStatus.COMPLETED
       ) {
         dataUpdate['status'] = PostStatus.PROCESSING;
         dataUpdate['videoIdProcessing'] = post.media.videos[0].id;
