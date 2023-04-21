@@ -248,15 +248,12 @@ export class ReactionService {
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       if (e['name'] === UNIQUE_CONSTRAINT_ERROR) {
-        this._sentryService.captureException(e);
         throw new LogicException(HTTP_STATUS_ID.APP_REACTION_UNIQUE);
       }
       if (e.message === HTTP_STATUS_ID.APP_REACTION_RATE_LIMIT_KIND) {
-        this._sentryService.captureException(e);
         throw new LogicException(e.message);
       }
       if (e.message === SERIALIZE_TRANSACTION_ERROR) {
-        this._sentryService.captureException(e);
         return this._createPostReaction(userDto, createReactionDto, attempt + 1);
       }
 

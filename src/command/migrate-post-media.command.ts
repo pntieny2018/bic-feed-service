@@ -164,31 +164,6 @@ export class MigratePostMediaCommand implements CommandRunner {
     let offset = 0;
     const limit = 200;
     let totalUpdated = 0;
-    const total = await this._postModel.count({
-      include: [
-        {
-          model: MediaModel,
-          as: 'media',
-          required: true,
-          attributes: [
-            'id',
-            'url',
-            'size',
-            'extension',
-            'type',
-            'name',
-            'originName',
-            'width',
-            'height',
-            'thumbnails',
-            'status',
-            'mimeType',
-            'createdAt',
-          ],
-        },
-      ],
-      where: condition,
-    });
     while (!stop) {
       const posts = await this._postModel.findAll({
         subQuery: false,
@@ -280,7 +255,7 @@ export class MigratePostMediaCommand implements CommandRunner {
           }
         );
       }
-      console.log(`Updated ${totalUpdated}/${total}`);
+      console.log(`Updated ${totalUpdated}`);
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
