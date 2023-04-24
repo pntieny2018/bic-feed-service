@@ -210,6 +210,9 @@ export class ArticleAppService {
       if (images[0].status !== 'DONE') {
         throw new BadRequestException('Image is not ready to use');
       }
+      if (images[0].resource !== 'article:cover') {
+        throw new BadRequestException('Resource type is incorrect');
+      }
       updateArticleDto.coverMedia = images[0];
     } else {
       delete updateArticleDto.coverMedia;

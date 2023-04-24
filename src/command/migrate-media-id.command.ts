@@ -1,6 +1,6 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { InjectModel } from '@nestjs/sequelize';
-import { MediaModel, MediaType } from '../database/models/media.model';
+import { IMedia, MediaModel, MediaType } from '../database/models/media.model';
 import { Op } from 'sequelize';
 import { ConfigService } from '@nestjs/config';
 import { PostModel } from '../database/models/post.model';
@@ -12,6 +12,7 @@ interface ICommandOptions {
   backupId: boolean;
 }
 
+//npx ts-node -r tsconfig-paths/register src/command/cli.ts migrate:media-id
 @Command({ name: 'migrate:media-id', description: 'Move media to Upload service' })
 export class MigrateMediaIdCommand implements CommandRunner {
   public constructor(
@@ -37,6 +38,7 @@ export class MigrateMediaIdCommand implements CommandRunner {
         await this._mediaModel.sequelize.query(`UPDATE ${schema}.media SET old_id = id`);
       }
       await this.migrateMediaId();
+      await this.checkSum();
     } catch (e) {
       console.log(e);
     }
@@ -49,22 +51,27 @@ export class MigrateMediaIdCommand implements CommandRunner {
     return matchUUID !== null && matchUUID.length > 0 ? matchUUID[0] : null;
   }
 
-  public async migrateMediaId(): Promise<void> {
+  public async migrateMediaId(id = null): Promise<void> {
     let stop = false;
     let offset = 0;
     const limit = 200;
     let total = 0;
+    const condition = {
+      type: MediaType.IMAGE,
+      url: {
+        [Op.ne]: null,
+      },
+    };
+    if (id) {
+      condition['id'] = id;
+    }
     while (!stop) {
       const images = await this._mediaModel.findAll({
         attributes: ['url', 'id'],
-        where: {
-          type: MediaType.IMAGE,
-          url: {
-            [Op.ne]: null,
-          },
-        },
+        where: condition,
         limit,
         offset,
+        order: [['id', 'asc']],
       });
       for (const image of images) {
         const newId = this.getMediaIdFromURL(image.url);
@@ -72,18 +79,47 @@ export class MigrateMediaIdCommand implements CommandRunner {
           console.error(`Can not identify UUID from URL ${image.url}`);
           continue;
         }
-        console.log(`Changing ID ${image.id} -- to new ID: ${newId} - URL:${image.url}`);
-        await this._mediaModel.update(
-          { id: newId },
-          {
-            where: { id: image.id },
-          }
-        );
-        total++;
+        if (newId !== image.id) {
+          console.log(`Changing ID ${image.id} -- to new ID: ${newId} - URL:${image.url}`);
+          await this._mediaModel.update(
+            { id: newId },
+            {
+              where: { id: image.id },
+            }
+          );
+          total++;
+        }
       }
       if (images.length === 0) stop = true;
       offset = limit + offset;
     }
     console.log(`Migrated all media ID(${total})`);
+  }
+
+  public async checkSum(): Promise<void> {
+    const { schema } = getDatabaseConfig();
+    const wrongMedia: any = await this._mediaModel.sequelize.query(`
+          select id, old_id, url, type
+          from ${schema}.media
+          where 
+          type = 'image' and url is not null
+          and id NOT IN (
+          select id
+          from ${schema}.media
+          where 
+           url like CONCAT('%',id, '%') AND 
+          type = 'image' and url is not null
+        )`);
+    if (wrongMedia[0].length) {
+      for (const media of wrongMedia[0]) {
+        console.log('imageID incorrect:', media.id);
+        console.log('Fixing...');
+        await this.migrateMediaId(media.id);
+      }
+      console.log('Recheck');
+      await this.checkSum();
+    } else {
+      console.log('No wrong imageID');
+    }
   }
 }
