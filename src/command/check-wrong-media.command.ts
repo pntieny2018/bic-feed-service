@@ -11,6 +11,7 @@ interface ICommandOptions {
   backupContent: boolean;
 }
 //npx ts-node -r tsconfig-paths/register src/command/cli.ts check-wrong-media
+//node dist/src/command/cli.js check-wrong-media
 @Command({ name: 'check-wrong-media', description: 'Move media to Upload service' })
 export class CheckWrongMediaCommand implements CommandRunner {
   public constructor(
@@ -57,6 +58,8 @@ export class CheckWrongMediaCommand implements CommandRunner {
         attributes: ['id', 'createdBy', 'coverJson', 'mediaJson'],
         where: condition,
         order: [['createdAt', 'desc']],
+        offset,
+        limit,
       });
       const mediaIds = [];
       const mapPostWithMedia = {};
@@ -91,6 +94,7 @@ export class CheckWrongMediaCommand implements CommandRunner {
           wrongPostIds.push(imageInfo);
         }
       });
+      console.log('offset=', offset);
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
@@ -116,6 +120,8 @@ export class CheckWrongMediaCommand implements CommandRunner {
         attributes: ['id', 'createdBy', 'mediaJson'],
         where: condition,
         order: [['createdAt', 'desc']],
+        limit,
+        offset,
       });
       const mediaIds = [];
       const mapCommentWithMedia = {};
@@ -141,6 +147,7 @@ export class CheckWrongMediaCommand implements CommandRunner {
           wrongCommentIds.push(imageInfo);
         }
       });
+      console.log('offset=', offset);
       if (comments.length === 0) stop = true;
       offset = limit + offset;
     }
