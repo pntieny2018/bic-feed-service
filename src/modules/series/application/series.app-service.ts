@@ -107,6 +107,9 @@ export class SeriesAppService {
       if (images[0].status !== 'DONE') {
         throw new BadRequestException('Image is not ready to use');
       }
+      if (images[0].resource !== 'series:cover') {
+        throw new BadRequestException('Resource type is incorrect');
+      }
       createSeriesDto.coverMedia = images[0];
     }
     if (audience.groupIds?.length > 0) {
@@ -155,6 +158,9 @@ export class SeriesAppService {
       }
       if (images[0].status !== 'DONE') {
         throw new BadRequestException('Image is not ready to use');
+      }
+      if (images[0].resource !== 'series:cover') {
+        throw new BadRequestException('Resource type is incorrect');
       }
       updateSeriesDto.coverMedia = images[0];
     } else {

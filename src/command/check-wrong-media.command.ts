@@ -10,7 +10,7 @@ import { Op } from 'sequelize';
 interface ICommandOptions {
   backupContent: boolean;
 }
-
+//npx ts-node -r tsconfig-paths/register src/command/cli.ts check-wrong-media
 @Command({ name: 'check-wrong-media', description: 'Move media to Upload service' })
 export class CheckWrongMediaCommand implements CommandRunner {
   public constructor(
@@ -31,12 +31,12 @@ export class CheckWrongMediaCommand implements CommandRunner {
   public async run(prams, options?: ICommandOptions): Promise<any> {
     try {
       console.info('***** Check wrong media ********');
-      console.info('Posts...');
+      console.info('1) Scan posts migrated...');
       console.info('Scanning...');
-      await this.process();
-      console.info('Comments...');
+      await this.processPostMigrated();
+      console.info('2) Scan comments migrated ...');
       console.info('Scanning...');
-      await this.processComment();
+      await this.processCommentMigrated();
     } catch (e) {
       console.log(e);
       throw e;
@@ -45,80 +45,62 @@ export class CheckWrongMediaCommand implements CommandRunner {
     process.exit();
   }
 
-  public async process(testId = null): Promise<void> {
+  public async processPostMigrated(testId = null): Promise<void> {
     const condition = {};
     if (testId) condition['id'] = testId;
     let stop = false;
     let offset = 0;
     const limit = 200;
-    let totalUpdated = 0;
+    const wrongPostIds = [];
     while (!stop) {
       const posts = await this._postModel.findAll({
         attributes: ['id', 'createdBy', 'coverJson', 'mediaJson'],
         where: condition,
         order: [['createdAt', 'desc']],
       });
-
+      const mediaIds = [];
+      const mapPostWithMedia = {};
       for (const post of posts) {
-        const dataUpdate = {
-          coverJson: post.coverJson,
-          mediaJson: post.mediaJson,
-        };
-
-        let needUpdate = false;
-        if (post.coverJson?.id && post.coverJson?.url) {
-          const coverData = await this._externalService.getImageIds([post.coverJson.id]);
-          if (coverData.length > 0 && coverData[0].url !== post.coverJson?.url) {
-            console.error(`Cover image not found, ${JSON.stringify(post.coverJson)}`);
-            dataUpdate.coverJson = coverData[0];
-            needUpdate = true;
-          }
+        if (post.coverJson?.id && post.coverJson?.url && !mediaIds.includes(post.coverJson?.id)) {
+          mediaIds.push(post.coverJson.id);
+          mapPostWithMedia[post.coverJson.id] = {
+            postId: post.id,
+            url: post.coverJson?.url,
+            resource: 'cover',
+          };
         }
 
         if (post.mediaJson !== null && post.mediaJson.images?.length > 0) {
-          const imageIds = post.mediaJson.images.map((image) => image.id);
-          const uploadImages = await this._externalService.getImageIds(imageIds);
-          const imageErrors = [];
-          const newImages = [];
-          for (const image of post.mediaJson.images) {
-            const findImageInPost = uploadImages.find((img) => img.id === image.id);
-            if (findImageInPost && findImageInPost.url !== image.url) {
-              imageErrors.push(image.url);
-
-              //clone image
-              newImages.push();
-            } else {
-              newImages.push(image);
+          post.mediaJson.images.forEach((item) => {
+            if (!mediaIds.includes(item.id)) {
+              mediaIds.push(item.id);
+              mapPostWithMedia[item.id] = {
+                postId: post.id,
+                url: item.url,
+                resource: 'post:content',
+              };
             }
-          }
-          if (imageErrors.length) {
-            console.error(`Post image not found, ${JSON.stringify(imageErrors)}`);
-            dataUpdate.mediaJson = {
-              files: [],
-              videos: [],
-              images: newImages,
-            };
-            needUpdate = true;
-          }
-        }
-
-        if (needUpdate) {
-          totalUpdated++;
-          // await this._postModel.update(dataUpdate, {
-          //   where: {
-          //     id: post.id,
-          //   },
-          // });
-          console.log(`${totalUpdated}. Updated image for postID: ${post.id}`);
-          console.log(`---------------------------------------------------------------`);
+          });
         }
       }
+
+      const imagesFromUpload = await this._externalService.getImageIds(mediaIds);
+      imagesFromUpload.forEach((image) => {
+        const imageInfo = mapPostWithMedia[image.id] ?? null;
+        if (imageInfo && image.url !== imageInfo.url) {
+          wrongPostIds.push(imageInfo);
+        }
+      });
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
+
+    if (wrongPostIds.length) {
+      console.log(`List posts need to fix:`, JSON.stringify(wrongPostIds));
+    }
   }
 
-  public async processComment(testId = null): Promise<void> {
+  public async processCommentMigrated(testId = null): Promise<void> {
     const condition = {
       mediaJson: {
         [Op.ne]: null,
@@ -128,61 +110,42 @@ export class CheckWrongMediaCommand implements CommandRunner {
     let stop = false;
     let offset = 0;
     const limit = 200;
-    let totalUpdated = 0;
+    const wrongCommentIds = [];
     while (!stop) {
       const comments = await this._commentModel.findAll({
         attributes: ['id', 'createdBy', 'mediaJson'],
         where: condition,
         order: [['createdAt', 'desc']],
       });
-
+      const mediaIds = [];
+      const mapCommentWithMedia = {};
       for (const comment of comments) {
-        const dataUpdate = {
-          mediaJson: comment.mediaJson,
-        };
-
-        let needUpdate = false;
-
         if (comment.mediaJson !== null && comment.mediaJson.images?.length > 0) {
-          const imageIds = comment.mediaJson.images.map((image) => image.id);
-          const uploadImages = await this._externalService.getImageIds(imageIds);
-          const imageErrors = [];
-          const newImages = [];
-          for (const image of comment.mediaJson.images) {
-            const findImageInPost = uploadImages.find((img) => img.id === image.id);
-            if (findImageInPost && findImageInPost.url !== image.url) {
-              imageErrors.push(image.url);
-
-              //clone image
-              newImages.push();
-            } else {
-              newImages.push(image);
+          comment.mediaJson.images.forEach((item) => {
+            if (!mediaIds.includes(item.id)) {
+              mediaIds.push(item.id);
+              mapCommentWithMedia[item.id] = {
+                commentId: comment.id,
+                url: item.url,
+                resource: 'post:content',
+              };
             }
-          }
-          if (imageErrors.length) {
-            console.error(`Post image not found, ${JSON.stringify(imageErrors)}`);
-            dataUpdate.mediaJson = {
-              files: [],
-              videos: [],
-              images: newImages,
-            };
-            needUpdate = true;
-          }
-        }
-
-        if (needUpdate) {
-          totalUpdated++;
-          // await this._postModel.update(dataUpdate, {
-          //   where: {
-          //     id: post.id,
-          //   },
-          // });
-          console.log(`${totalUpdated}. Updated image for commentID: ${comment.id}`);
-          console.log(`---------------------------------------------------------------`);
+          });
         }
       }
+
+      const imagesFromUpload = await this._externalService.getImageIds(mediaIds);
+      imagesFromUpload.forEach((image) => {
+        const imageInfo = mapCommentWithMedia[image.id] ?? null;
+        if (imageInfo && image.url !== imageInfo.url) {
+          wrongCommentIds.push(imageInfo);
+        }
+      });
       if (comments.length === 0) stop = true;
       offset = limit + offset;
+    }
+    if (wrongCommentIds.length) {
+      console.log(`List comments need to fix:`, JSON.stringify(wrongCommentIds));
     }
   }
 }

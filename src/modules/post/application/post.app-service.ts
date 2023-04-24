@@ -178,6 +178,9 @@ export class PostAppService {
       if (images.some((image) => image.createdBy !== user.id || image.status !== 'DONE')) {
         throw new BadRequestException('Image is not ready to use');
       }
+      if (images.some((image) => image.resource !== 'post:content')) {
+        throw new BadRequestException('Resource type is incorrect');
+      }
       updatePostDto.media.images = images;
     } else {
       updatePostDto.media.images = postBefore.media.images.filter((item) =>

@@ -96,6 +96,7 @@ export class ExternalService {
             src: i.src,
             createdBy: i.user_id,
             mimeType: i.properties.mime_type,
+            resource: i.resource,
             width: i.properties.width,
             height: i.properties.height,
             status: i.status,
