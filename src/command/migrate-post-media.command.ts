@@ -14,7 +14,7 @@ import { Logger } from '@nestjs/common';
 interface ICommandOptions {
   backupContent: boolean;
 }
-
+//npx ts-node -r tsconfig-paths/register src/command/cli.ts migrate:post-media
 @Command({ name: 'migrate:post-media', description: 'Move media to Upload service' })
 export class MigratePostMediaCommand implements CommandRunner {
   private _logger = new Logger(MigratePostMediaCommand.name);
@@ -36,15 +36,15 @@ export class MigratePostMediaCommand implements CommandRunner {
 
   public async run(prams, options?: ICommandOptions): Promise<any> {
     try {
-      console.info('***** We have 4 steps ********');
+      console.info('***** We have 3 steps ********');
       console.info('[Step 1] Migrate media to posts');
-      await this.migratePostsMedia();
+      await this.migratePostsMedia(null, options);
       console.info('[Step 2] Migrate cover article/series');
-      await this.migratePostsCover();
+      await this.migratePostsCover(null, options);
       console.info('[Step 3] Migrate image in comments');
-      await this.migrateComments();
-      console.info('[Step 4] Migrate images article content');
-      await this.migrateArticleContent(null, options);
+      await this.migrateComments(null, options);
+      //console.info('[Step 4] Migrate images article content');
+      //await this.migrateArticleContent(null, options);
       console.info('DONE!');
     } catch (e) {
       console.log(e);
@@ -133,19 +133,17 @@ export class MigratePostMediaCommand implements CommandRunner {
         });
         const newContent = ObjectHelper.contentReplaceUrl(articleContent, replaceImages);
 
-        if (options.backupContent) {
-          const { schema } = getDatabaseConfig();
-          await this._postModel.sequelize.query(
-            `UPDATE ${schema}.posts SET old_content = content, content = :content WHERE id = :postId`,
-            {
-              replacements: {
-                postId: post.id,
-                content: JSON.stringify(newContent),
-              },
-            }
-          );
-          console.log(`Back up postId: ${post.id}`);
-        }
+        const { schema } = getDatabaseConfig();
+        await this._postModel.sequelize.query(
+          `UPDATE ${schema}.posts SET old_content = content, content = :content WHERE id = :postId`,
+          {
+            replacements: {
+              postId: post.id,
+              content: JSON.stringify(newContent),
+            },
+          }
+        );
+        console.log(`Back up postId: ${post.id}`);
         totalUpdated++;
       }
       console.log(`Updated: ${totalUpdated}`);
@@ -155,7 +153,7 @@ export class MigratePostMediaCommand implements CommandRunner {
   }
 
   /*Media for post only*/
-  public async migratePostsMedia(testId = null): Promise<void> {
+  public async migratePostsMedia(testId = null, options: ICommandOptions): Promise<void> {
     const condition = {
       type: PostType.POST,
     };
@@ -164,31 +162,6 @@ export class MigratePostMediaCommand implements CommandRunner {
     let offset = 0;
     const limit = 200;
     let totalUpdated = 0;
-    const total = await this._postModel.count({
-      include: [
-        {
-          model: MediaModel,
-          as: 'media',
-          required: true,
-          attributes: [
-            'id',
-            'url',
-            'size',
-            'extension',
-            'type',
-            'name',
-            'originName',
-            'width',
-            'height',
-            'thumbnails',
-            'status',
-            'mimeType',
-            'createdAt',
-          ],
-        },
-      ],
-      where: condition,
-    });
     while (!stop) {
       const posts = await this._postModel.findAll({
         subQuery: false,
@@ -223,7 +196,6 @@ export class MigratePostMediaCommand implements CommandRunner {
         const imageJson = [];
         const fileJson = [];
         const videoJson = [];
-        totalUpdated++;
         for (const media of post.media) {
           if (!media.url) continue;
           if (media.type === MediaType.IMAGE) {
@@ -267,7 +239,7 @@ export class MigratePostMediaCommand implements CommandRunner {
             });
           }
         }
-        this._postModel.update(
+        await this._postModel.update(
           {
             mediaJson: {
               images: imageJson,
@@ -279,15 +251,16 @@ export class MigratePostMediaCommand implements CommandRunner {
             where: { id: post.id },
           }
         );
+        totalUpdated++;
       }
-      console.log(`Updated ${totalUpdated}/${total}`);
+      console.log(`Updated ${totalUpdated}`);
       if (posts.length === 0) stop = true;
       offset = limit + offset;
     }
   }
 
   /*Cover for post/article/series*/
-  public async migratePostsCover(testId = null): Promise<void> {
+  public async migratePostsCover(testId = null, options: ICommandOptions): Promise<void> {
     const condition = {
       cover: {
         [Op.ne]: null,
@@ -344,7 +317,7 @@ export class MigratePostMediaCommand implements CommandRunner {
             mimeType: mediaData.mimeType,
           };
         }
-        this._postModel.update(
+        await this._postModel.update(
           {
             coverJson: mediaJson,
           },
@@ -360,7 +333,7 @@ export class MigratePostMediaCommand implements CommandRunner {
     }
   }
 
-  public async migrateComments(testId = null): Promise<void> {
+  public async migrateComments(testId = null, options: ICommandOptions): Promise<void> {
     const condition = {};
     if (testId) condition['id'] = testId;
     let stop = false;
@@ -412,20 +385,21 @@ export class MigratePostMediaCommand implements CommandRunner {
             });
           }
         }
-        this._commentModel.update(
-          {
-            mediaJson: {
-              images: mediaJson,
-              videos: [],
-              files: [],
+        if (mediaJson.length) {
+          await this._commentModel.update(
+            {
+              mediaJson: {
+                images: mediaJson,
+                videos: [],
+                files: [],
+              },
             },
-          },
-          {
-            where: { id: comment.id },
-          }
-        );
-
-        totalUpdated++;
+            {
+              where: { id: comment.id },
+            }
+          );
+          totalUpdated++;
+        }
       }
       console.log(`Updated ${totalUpdated}/${total}`);
       if (comments.length === 0) stop = true;

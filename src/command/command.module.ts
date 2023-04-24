@@ -31,6 +31,7 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { MigrateMediaIdCommand } from './migrate-media-id.command';
 import { MigratePostMediaCommand } from './migrate-post-media.command';
+import { CheckWrongMediaCommand } from './check-wrong-media.command';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { MigratePostMediaCommand } from './migrate-post-media.command';
     FixTotalUsersSeenCommand,
     MigrateMediaIdCommand,
     MigratePostMediaCommand,
+    CheckWrongMediaCommand,
   ],
 })
 export class CommandModule {}
