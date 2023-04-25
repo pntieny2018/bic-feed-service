@@ -213,6 +213,7 @@ export class MigratePostMediaCommand implements CommandRunner {
                 mimeType: mediaData.mimeType,
                 width: mediaData.width,
                 height: mediaData.height,
+                resource: mediaData.resource,
               });
             }
           } else if (media.type === MediaType.FILE) {
@@ -315,6 +316,7 @@ export class MigratePostMediaCommand implements CommandRunner {
             width: mediaData.width,
             height: mediaData.height,
             mimeType: mediaData.mimeType,
+            resource: mediaData.resource,
           };
         }
         await this._postModel.update(
@@ -382,6 +384,7 @@ export class MigratePostMediaCommand implements CommandRunner {
               width: mediaData.width,
               height: mediaData.height,
               mimeType: mediaData.mimeType,
+              resource: mediaData.resource,
             });
           }
         }
