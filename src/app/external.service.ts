@@ -154,6 +154,7 @@ export class ExternalService {
         width: data.properties.width,
         height: data.properties.height,
         status: data.status,
+        resource: data.resource,
       };
     } catch (e) {
       const exist = await fs.existsSync(data.url);

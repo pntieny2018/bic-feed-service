@@ -36,15 +36,15 @@ export class MigratePostMediaCommand implements CommandRunner {
 
   public async run(prams, options?: ICommandOptions): Promise<any> {
     try {
-      console.info('***** We have 3 steps ********');
+      console.info('***** We have 4 steps ********');
       console.info('[Step 1] Migrate media to posts');
       await this.migratePostsMedia(null, options);
       console.info('[Step 2] Migrate cover article/series');
       await this.migratePostsCover(null, options);
       console.info('[Step 3] Migrate image in comments');
       await this.migrateComments(null, options);
-      //console.info('[Step 4] Migrate images article content');
-      //await this.migrateArticleContent(null, options);
+      console.info('[Step 4] Migrate images article content');
+      await this.migrateArticleContent(null, options);
       console.info('DONE!');
     } catch (e) {
       console.log(e);
