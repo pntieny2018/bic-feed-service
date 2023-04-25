@@ -15,6 +15,7 @@ interface ICommandOptions {
   backupContent: boolean;
 }
 //npx ts-node -r tsconfig-paths/register src/command/cli.ts migrate:post-media
+// node dist/src/command/cli.js migrate:post-media
 @Command({ name: 'migrate:post-media', description: 'Move media to Upload service' })
 export class MigratePostMediaCommand implements CommandRunner {
   private _logger = new Logger(MigratePostMediaCommand.name);
@@ -164,7 +165,6 @@ export class MigratePostMediaCommand implements CommandRunner {
     let totalUpdated = 0;
     while (!stop) {
       const posts = await this._postModel.findAll({
-        subQuery: false,
         include: [
           {
             model: MediaModel,
