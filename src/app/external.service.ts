@@ -133,8 +133,8 @@ export class ExternalService {
     const { userId, type } = data;
     try {
       const response = await lastValueFrom(
-        this._httpService.put(
-          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
+        this._httpService.post(
+          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}/copy`,
           {
             resource: type,
             user_id: userId,
