@@ -15,6 +15,7 @@ interface ICommandOptions {
   backupContent: boolean;
 }
 //npx ts-node -r tsconfig-paths/register src/command/cli.ts migrate:post-media
+// node dist/src/command/cli.js migrate:post-media
 @Command({ name: 'migrate:post-media', description: 'Move media to Upload service' })
 export class MigratePostMediaCommand implements CommandRunner {
   private _logger = new Logger(MigratePostMediaCommand.name);
@@ -36,15 +37,15 @@ export class MigratePostMediaCommand implements CommandRunner {
 
   public async run(prams, options?: ICommandOptions): Promise<any> {
     try {
-      console.info('***** We have 3 steps ********');
+      console.info('***** We have 4 steps ********');
       console.info('[Step 1] Migrate media to posts');
       await this.migratePostsMedia(null, options);
       console.info('[Step 2] Migrate cover article/series');
       await this.migratePostsCover(null, options);
       console.info('[Step 3] Migrate image in comments');
       await this.migrateComments(null, options);
-      //console.info('[Step 4] Migrate images article content');
-      //await this.migrateArticleContent(null, options);
+      console.info('[Step 4] Migrate images article content');
+      await this.migrateArticleContent(null, options);
       console.info('DONE!');
     } catch (e) {
       console.log(e);
@@ -164,7 +165,6 @@ export class MigratePostMediaCommand implements CommandRunner {
     let totalUpdated = 0;
     while (!stop) {
       const posts = await this._postModel.findAll({
-        subQuery: false,
         include: [
           {
             model: MediaModel,
@@ -213,6 +213,7 @@ export class MigratePostMediaCommand implements CommandRunner {
                 mimeType: mediaData.mimeType,
                 width: mediaData.width,
                 height: mediaData.height,
+                resource: mediaData.resource,
               });
             }
           } else if (media.type === MediaType.FILE) {
@@ -315,6 +316,7 @@ export class MigratePostMediaCommand implements CommandRunner {
             width: mediaData.width,
             height: mediaData.height,
             mimeType: mediaData.mimeType,
+            resource: mediaData.resource,
           };
         }
         await this._postModel.update(
@@ -382,6 +384,7 @@ export class MigratePostMediaCommand implements CommandRunner {
               width: mediaData.width,
               height: mediaData.height,
               mimeType: mediaData.mimeType,
+              resource: mediaData.resource,
             });
           }
         }

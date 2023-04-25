@@ -133,8 +133,8 @@ export class ExternalService {
     const { userId, type } = data;
     try {
       const response = await lastValueFrom(
-        this._httpService.put(
-          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}`,
+        this._httpService.post(
+          `${this._uploadServiceEndpoint + ENDPOINT.UPLOAD.INTERNAL.UPDATE_IMAGES}/${id}/copy`,
           {
             resource: type,
             user_id: userId,
@@ -154,6 +154,7 @@ export class ExternalService {
         width: data.properties.width,
         height: data.properties.height,
         status: data.status,
+        resource: data.resource,
       };
     } catch (e) {
       const exist = await fs.existsSync(data.url);
