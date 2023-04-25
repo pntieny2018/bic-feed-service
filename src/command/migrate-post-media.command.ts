@@ -41,11 +41,11 @@ export class MigratePostMediaCommand implements CommandRunner {
       console.info('[Step 1] Migrate media to posts');
       await this.migratePostsMedia(null, options);
       console.info('[Step 2] Migrate cover article/series');
-      // await this.migratePostsCover(null, options);
+      await this.migratePostsCover(null, options);
       console.info('[Step 3] Migrate image in comments');
-      //await this.migrateComments(null, options);
+      await this.migrateComments(null, options);
       console.info('[Step 4] Migrate images article content');
-      // await this.migrateArticleContent(null, options);
+      await this.migrateArticleContent(null, options);
       console.info('DONE!');
     } catch (e) {
       console.log(e);
