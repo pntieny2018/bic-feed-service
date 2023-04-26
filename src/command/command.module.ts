@@ -32,6 +32,7 @@ import { GroupModuleV2 } from '../modules/v2-group/group.module';
 import { MigrateMediaIdCommand } from './migrate-media-id.command';
 import { MigratePostMediaCommand } from './migrate-post-media.command';
 import { CheckWrongMediaCommand } from './check-wrong-media.command';
+import { MigrateLinkPreviewCommand } from './migrate-link-preview.command';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { CheckWrongMediaCommand } from './check-wrong-media.command';
     MigrateMediaIdCommand,
     MigratePostMediaCommand,
     CheckWrongMediaCommand,
+    MigrateLinkPreviewCommand,
   ],
 })
 export class CommandModule {}

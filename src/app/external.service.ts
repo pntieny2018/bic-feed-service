@@ -103,7 +103,6 @@ export class ExternalService {
           }))
         : [];
     } catch (e) {
-      console.error(e);
       return [];
     }
   }
