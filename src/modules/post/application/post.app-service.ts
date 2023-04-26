@@ -155,9 +155,9 @@ export class PostAppService {
     const currentVideoIds = postBefore.media.videos.map((video) => video.id);
     const currentFileIds = postBefore.media.files.map((file) => file.id);
 
-    const newImageIds = media.images.map((image) => image.id);
-    const newVideoIds = media.videos.map((video) => video.id);
-    const newFileIds = media.files.map((file) => file.id);
+    const newImageIds = (media?.images || []).map((image) => image.id);
+    const newVideoIds = (media?.videos || []).map((video) => video.id);
+    const newFileIds = (media?.files || []).map((file) => file.id);
 
     const imageIdsNeedToAdd = newImageIds.filter((id) => !currentImageIds.includes(id));
     const videoIdsNeedToAdd = newVideoIds.filter((id) => !currentVideoIds.includes(id));
