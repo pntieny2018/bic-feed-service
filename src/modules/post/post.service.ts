@@ -330,6 +330,12 @@ export class PostService {
     authUser: UserDto
   ): Promise<ItemInSeriesResponseDto[]> {
     const itemsInSeries = await this.postSeriesModel.findAll({
+      attributes: {
+        include: [
+          ['media_json', 'media'],
+          ['cover_json', 'coverMedia'],
+        ],
+      },
       where: {
         seriesId,
       },
