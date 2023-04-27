@@ -117,12 +117,15 @@ export class PostService {
     authUserId: string,
     getDraftPostDto: GetDraftPostDto
   ): Promise<PageDto<PostResponseDto>> {
-    const { limit, offset, order, isProcessing } = getDraftPostDto;
+    const { limit, offset, order, isProcessing, type } = getDraftPostDto;
     const condition = {
       createdBy: authUserId,
       status: PostStatus.DRAFT,
-      type: PostType.POST,
     };
+
+    if (type) {
+      condition['type'] = type;
+    }
 
     if (isProcessing) condition.status = PostStatus.PROCESSING;
 
@@ -1986,7 +1989,7 @@ export class PostService {
     }
   }
 
-  public async getPinnedList(groupId: string, user: UserDto) {
+  public async getPinnedList(groupId: string, user: UserDto): Promise<ArticleResponseDto[]> {
     const ids = await this.getIdsPinnedInGroup(groupId, user?.id || null);
     if (ids.length === 0) return [];
     const posts = await this.getPostsByIds(ids, user?.id || null);
@@ -2048,6 +2051,45 @@ export class PostService {
         },
       }
     );
+  }
+
+  public async getPinnedPostGroupsByGroupId(groupId: string): Promise<IPostGroup[]> {
+    const postGroups = await this.postGroupModel.findAll({
+      where: {
+        groupId,
+        isPinned: true,
+      },
+      include: [
+        {
+          model: PostModel,
+          as: 'post',
+          required: true,
+          attributes: [],
+          where: {
+            status: PostStatus.PUBLISHED,
+            isHidden: false,
+          },
+        },
+      ],
+    });
+    return postGroups;
+  }
+
+  public async reorderPinnedPostGroups(groupId: string, postIds: string[]): Promise<void> {
+    const reorderExecute = postIds.map((postId, index) => {
+      return this.postGroupModel.update(
+        {
+          pinnedIndex: index + 1,
+        },
+        {
+          where: {
+            groupId,
+            postId,
+          },
+        }
+      );
+    });
+    await Promise.all(reorderExecute);
   }
 
   public async getGroupsByPostId(id: string): Promise<IPost> {
