@@ -147,6 +147,7 @@ export class ExternalService {
       const data = response.data.data;
       return {
         id: data.id,
+        originId: id,
         url: data.url,
         src: data.src,
         mimeType: data.properties.mime_type,
