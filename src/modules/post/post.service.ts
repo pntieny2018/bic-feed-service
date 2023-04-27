@@ -366,8 +366,11 @@ export class PostService {
       authUserId: authUserId ?? null,
     });
 
-    const attributes = {
-      include: [],
+    const attributes: any = {
+      include: [
+        ['media_json', 'media'],
+        ['cover_json', 'coverMedia'],
+      ],
     };
     if (authUserId) {
       attributes.include.push(PostModel.loadSaved(authUserId));
