@@ -528,6 +528,7 @@ export class PostListener {
             images: [],
           },
           status: PostStatus.DRAFT,
+          videoIdProcessing: null,
         })
         .catch((e) => {
           this._logger.error(JSON.stringify(e?.stack));
