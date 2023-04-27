@@ -127,7 +127,7 @@ export class MigratePostMediaCommand implements CommandRunner {
         dataImages.forEach((image) => {
           if (image) {
             replaceImages.push({
-              plateId: bicUrlImages.find((item) => item.id === image.id).plateId,
+              plateId: bicUrlImages.find((item) => item.id === image.originId).plateId,
               url: image.url,
             });
           }
