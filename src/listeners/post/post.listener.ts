@@ -505,29 +505,19 @@ export class PostListener {
 
   @On(PostVideoFailedEvent)
   public async onPostVideoFailed(event: PostVideoFailedEvent): Promise<void> {
-    const { videoId, hlsUrl, properties, thumbnails } = event.payload;
+    const { videoId } = event.payload;
     const posts = await this._postService.getsByMedia(videoId);
     posts.forEach((post) => {
       this._postService
         .updateData([post.id], {
           mediaJson: {
-            videos: [
-              {
-                id: videoId,
-                url: hlsUrl,
-                mimeType: properties.mimeType,
-                size: properties.size,
-                width: properties.width,
-                height: properties.height,
-                duration: properties.duration,
-                thumbnails: thumbnails,
-                status: MediaStatus.FAILED,
-              },
-            ],
-            files: [],
-            images: [],
+            ...post.media,
+            ...post.media?.videos
+              ?.filter((video) => video.id === videoId)
+              ?.map((item) => (item.status = MediaStatus.FAILED)),
           },
           status: PostStatus.DRAFT,
+          videoIdProcessing: null,
         })
         .catch((e) => {
           this._logger.error(JSON.stringify(e?.stack));
