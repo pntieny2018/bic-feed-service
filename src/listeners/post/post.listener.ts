@@ -512,9 +512,14 @@ export class PostListener {
         .updateData([post.id], {
           mediaJson: {
             ...post.media,
-            ...post.media?.videos
-              ?.filter((video) => video.id === videoId)
-              ?.map((item) => (item.status = MediaStatus.FAILED)),
+            videos: [
+              ...post.media?.videos?.map((video) => {
+                if (video.id === videoId) {
+                  return { ...video, status: MediaStatus.FAILED };
+                }
+                return video;
+              }),
+            ],
           },
           status: PostStatus.DRAFT,
           videoIdProcessing: null,
