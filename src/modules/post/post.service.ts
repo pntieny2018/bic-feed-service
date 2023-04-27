@@ -330,12 +330,6 @@ export class PostService {
     authUser: UserDto
   ): Promise<ItemInSeriesResponseDto[]> {
     const itemsInSeries = await this.postSeriesModel.findAll({
-      attributes: {
-        include: [
-          ['media_json', 'media'],
-          ['cover_json', 'coverMedia'],
-        ],
-      },
       where: {
         seriesId,
       },
@@ -372,8 +366,11 @@ export class PostService {
       authUserId: authUserId ?? null,
     });
 
-    const attributes = {
-      include: [],
+    const attributes: any = {
+      include: [
+        ['media_json', 'media'],
+        ['cover_json', 'coverMedia'],
+      ],
     };
     if (authUserId) {
       attributes.include.push(PostModel.loadSaved(authUserId));
