@@ -308,20 +308,20 @@ workflows:
   #         filters:
   #           branches:
   #             only: develop
-  Staging:
-    when: << pipeline.parameters.run_workflow_stg >>
-    jobs:
-      - stg:
-          filters:
-            branches:
-              only: staging
-  Release:
-    when: << pipeline.parameters.run_workflow_rel >>
-    jobs:
-      - rel:
-          filters:
-            branches:
-              only: /^release.*$/
+  # Staging:
+  #   when: << pipeline.parameters.run_workflow_stg >>
+  #   jobs:
+  #     - stg:
+  #         filters:
+  #           branches:
+  #             only: staging
+  # Release:
+  #   when: << pipeline.parameters.run_workflow_rel >>
+  #   jobs:
+  #     - rel:
+  #         filters:
+  #           branches:
+  #             only: /^release.*$/
   Production:
     when: << pipeline.parameters.run_workflow_pro >>
     jobs:
