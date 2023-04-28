@@ -139,7 +139,7 @@ export class ContentController {
   ): Promise<PageDto<PostResponseDto>> {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
-  
+
   @ApiOperation({ summary: 'Reorder pin content.' })
   @ApiOkResponse({
     type: PostResponseDto,
