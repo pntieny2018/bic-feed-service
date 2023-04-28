@@ -43,6 +43,9 @@ export class ContentController {
   @ApiOkResponse({
     type: Boolean,
   })
+  @ResponseMessages({
+    success: 'message.content.saved_success ',
+  })
   @Post('/:postId/save')
   public async save(
     @AuthUser() user: UserDto,
@@ -54,6 +57,9 @@ export class ContentController {
   @ApiOperation({ summary: 'unsave post' })
   @ApiOkResponse({
     type: Boolean,
+  })
+  @ResponseMessages({
+    success: 'message.content.unsaved_success',
   })
   @Delete('/:postId/unsave')
   public async unSave(
@@ -139,7 +145,7 @@ export class ContentController {
   ): Promise<PageDto<PostResponseDto>> {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
-  
+
   @ApiOperation({ summary: 'Reorder pin content.' })
   @ApiOkResponse({
     type: PostResponseDto,
