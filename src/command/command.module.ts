@@ -29,6 +29,10 @@ import { MultiUpdateVsBulkUpdateCommand } from './test-performance/multi-update-
 import { FixTotalUsersSeenCommand } from './fix_total_users_seen.command';
 import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { GroupModuleV2 } from '../modules/v2-group/group.module';
+import { MigrateMediaIdCommand } from './migrate-media-id.command';
+import { MigratePostMediaCommand } from './migrate-post-media.command';
+import { CheckWrongMediaCommand } from './check-wrong-media.command';
+import { MigrateLinkPreviewCommand } from './migrate-link-preview.command';
 
 @Module({
   imports: [
@@ -68,6 +72,10 @@ import { GroupModuleV2 } from '../modules/v2-group/group.module';
     UpdateContentTypeImageCommand,
     MultiUpdateVsBulkUpdateCommand,
     FixTotalUsersSeenCommand,
+    MigrateMediaIdCommand,
+    MigratePostMediaCommand,
+    CheckWrongMediaCommand,
+    MigrateLinkPreviewCommand,
   ],
 })
 export class CommandModule {}

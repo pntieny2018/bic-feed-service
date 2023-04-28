@@ -8,7 +8,6 @@ import { NIL } from 'uuid';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { LogicException } from '../../common/exceptions';
 import { ArrayHelper } from '../../common/helpers';
-import { MediaModel } from '../../database/models/media.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostReactionModel } from '../../database/models/post-reaction.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
@@ -74,7 +73,11 @@ export class SeriesService {
     const series = PostHelper.filterArchivedPost(
       await this._postModel.findOne({
         attributes: {
-          include: [PostModel.loadMarkReadPost(authUser.id), PostModel.loadSaved(authUser.id)],
+          include: [
+            ['cover_json', 'coverMedia'],
+            PostModel.loadMarkReadPost(authUser.id),
+            PostModel.loadSaved(authUser.id),
+          ],
         },
         where: { id, type: PostType.SERIES },
         include: [
@@ -92,11 +95,6 @@ export class SeriesService {
             where: {
               createdBy: authUser.id,
             },
-          },
-          {
-            model: MediaModel,
-            as: 'coverMedia',
-            required: false,
           },
         ],
       })
@@ -154,7 +152,6 @@ export class SeriesService {
           createdBy: authUserId,
           updatedBy: authUserId,
           status: PostStatus.PUBLISHED,
-          cover: coverMedia.id,
           type: PostType.SERIES,
           privacy,
           isImportant: setting.isImportant,
@@ -162,6 +159,7 @@ export class SeriesService {
           canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
+          coverJson: coverMedia,
         },
         { transaction }
       );
@@ -230,7 +228,7 @@ export class SeriesService {
         updatedBy: authUserId,
         title,
         summary,
-        cover: coverMedia.id,
+        coverJson: coverMedia,
         privacy,
       };
       if (setting && setting.hasOwnProperty('canShare')) {
@@ -330,47 +328,18 @@ export class SeriesService {
    * Delete Series
    */
   public async delete(authUser: UserDto, series: IPost): Promise<IPost> {
-    const transaction = await this._sequelizeConnection.transaction();
     const seriesId = series.id;
     try {
-      if (series.status !== PostStatus.PUBLISHED) {
-        await Promise.all([
-          this._postGroupModel.destroy({
-            where: {
-              postId: seriesId,
-            },
-          }),
-          this._postTagModel.destroy({ where: { postId: seriesId } }),
-          this._reactionService.deleteByPostIds([seriesId]),
-          this._commentService.deleteCommentsByPost(seriesId, transaction),
-          this._feedService.deleteNewsFeedByPost(seriesId, transaction),
-          this._feedService.deleteUserSeenByPost(seriesId, transaction),
-          this._postSeriesModel.destroy({ where: { postId: seriesId }, transaction }),
-          this._userMarkReadPostModel.destroy({ where: { postId: seriesId }, transaction }),
-        ]);
-        await this._postModel.destroy({
-          where: {
-            id: seriesId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-          force: true,
-        });
-      } else {
-        await this._postModel.destroy({
-          where: {
-            id: seriesId,
-            createdBy: authUser.id,
-          },
-          transaction: transaction,
-        });
-      }
-      await transaction.commit();
+      await this._postModel.destroy({
+        where: {
+          id: seriesId,
+          createdBy: authUser.id,
+        },
+      });
 
       return series;
     } catch (error) {
       this._logger.error(JSON.stringify(error?.stack));
-      await transaction.rollback();
       throw error;
     }
   }
@@ -478,46 +447,6 @@ export class SeriesService {
 
       await this._postSeriesModel.bulkCreate(dataInsert, { transaction });
     }
-  }
-
-  public async getSeriesByIds(ids: string[], userId: string): Promise<IPost[]> {
-    if (ids.length === 0) return [];
-    const attributes = {
-      include: [PostModel.loadMarkReadPost(userId)],
-    };
-    const rows = await this._postModel.findAll({
-      attributes,
-      include: [
-        {
-          model: PostGroupModel,
-          as: 'groups',
-          required: false,
-        },
-        {
-          model: PostReactionModel,
-          as: 'ownerReactions',
-          required: false,
-          where: {
-            createdBy: userId,
-          },
-        },
-        {
-          model: MediaModel,
-          as: 'coverMedia',
-          required: false,
-        },
-      ],
-      where: {
-        id: ids,
-      },
-    });
-
-    const mappedPosts = ids.map((postId) => {
-      const post = rows.find((row) => row.id === postId);
-      if (post) return post.toJSON();
-    });
-
-    return mappedPosts;
   }
 
   public async reorderItems(id: string, postIds: string[]): Promise<void> {

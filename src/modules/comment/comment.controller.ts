@@ -30,6 +30,7 @@ import { CommentDetailResponseDto } from './dto/response/comment-detail.response
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
 import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
 import { UserDto } from '../v2-user/application';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -66,6 +67,7 @@ export class CommentController {
     success: 'message.comment.created_success',
   })
   @Post('/')
+  @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
@@ -82,6 +84,7 @@ export class CommentController {
     success: 'message.comment.replied_success',
   })
   @Post('/:commentId/reply')
+  @InjectUserToBody()
   public async reply(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
@@ -132,6 +135,7 @@ export class CommentController {
     success: 'message.comment.updated_success',
   })
   @Put('/:commentId')
+  @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,

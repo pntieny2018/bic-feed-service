@@ -8,7 +8,6 @@ import {
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { HTTP_STATUS_ID } from '../../../common/constants';
 import { PageDto } from '../../../common/dto';
-import { LogicException } from '../../../common/exceptions';
 import { ExceptionHelper } from '../../../common/helpers';
 import { IPostGroup, PostGroupModel } from '../../../database/models/post-group.model';
 import { IPost, PostModel, PostStatus } from '../../../database/models/post.model';
@@ -18,7 +17,6 @@ import {
   PostHasBeenUpdatedEvent,
 } from '../../../events/post';
 import { AuthorityService } from '../../authority';
-import { TargetType } from '../../report-content/contstants';
 import { CreatePostDto, GetPostDto, GetPostEditedHistoryDto, UpdatePostDto } from '../dto/requests';
 import { GetDraftPostDto } from '../dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from '../dto/responses';
@@ -31,13 +29,17 @@ import {
   UserDto,
 } from '../../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../v2-group/application';
-import { ArticleResponseDto } from '../../article/dto/responses';
 import { ContentNotFoundException } from '../../v2-post/exception/content-not-found.exception';
 import { GetAudienceContentDto } from '../dto/requests/get-audience-content.response.dto';
 import { AudienceNoBelongContentException } from '../../v2-post/exception/audience-no-belong-content.exception';
 import { InjectModel } from '@nestjs/sequelize';
 import { ContentPinNotFoundException } from '../../v2-post/exception/content-pin-not-found.exception';
 import { ContentPinLackException } from '../../v2-post/exception/content-pin-lack.exception';
+import { ExternalService } from '../../../app/external.service';
+import { MediaService } from '../../media';
+import { MediaMarkAction, MediaType } from '../../../database/models/media.model';
+import { LogicException } from '../../../common/exceptions';
+import { TargetType } from '../../report-content/contstants';
 
 @Injectable()
 export class PostAppService {
@@ -55,7 +57,9 @@ export class PostAppService {
     protected authorityService: AuthorityService,
     private _tagService: TagService,
     @InjectModel(PostModel)
-    protected postModel: typeof PostModel
+    protected postModel: typeof PostModel,
+    private _externalService: ExternalService,
+    private _mediaService: MediaService
   ) {}
 
   public getDraftPosts(
@@ -93,6 +97,7 @@ export class PostAppService {
     const post = {
       privacy: postResponseDto.privacy,
       createdBy: postResponseDto.createdBy,
+      type: postResponseDto.type,
       status: postResponseDto.status,
       groups: postResponseDto.audience.groups.map(
         (g) =>
@@ -103,7 +108,7 @@ export class PostAppService {
     } as IPost;
 
     if (user) {
-      await this.authorityService.checkCanReadPost(user, post);
+      await this.authorityService.checkCanReadPost(user, post, postResponseDto.audience.groups);
     } else {
       await this.authorityService.checkIsPublicPost(post);
     }
@@ -142,9 +147,76 @@ export class PostAppService {
     postId: string,
     updatePostDto: UpdatePostDto
   ): Promise<PostResponseDto> {
-    const { audience, setting, tags, series } = updatePostDto;
+    const { audience, setting, tags, series, media } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+
+    const currentImageIds = postBefore.media.images.map((image) => image.id);
+    const currentVideoIds = postBefore.media.videos.map((video) => video.id);
+    const currentFileIds = postBefore.media.files.map((file) => file.id);
+
+    const newImageIds = (media?.images || []).map((image) => image.id);
+    const newVideoIds = (media?.videos || []).map((video) => video.id);
+    const newFileIds = (media?.files || []).map((file) => file.id);
+
+    const imageIdsNeedToAdd = newImageIds.filter((id) => !currentImageIds.includes(id));
+    const videoIdsNeedToAdd = newVideoIds.filter((id) => !currentVideoIds.includes(id));
+    const fileIdsNeedToAdd = newFileIds.filter((id) => !currentFileIds.includes(id));
+
+    //const imageIdsNeedToRemove = currentImageIds.filter((id) => !newImageIds.includes(id));
+    const videoIdsNeedToRemove = currentVideoIds.filter((id) => !newVideoIds.includes(id));
+    const fileIdsNeedToRemove = currentFileIds.filter((id) => !newFileIds.includes(id));
+
+    if (imageIdsNeedToAdd.length) {
+      const images = await this._externalService.getImageIds(newImageIds);
+      if (images.length < imageIdsNeedToAdd.length) {
+        throw new BadRequestException('Invalid image');
+      }
+      if (images.some((video) => video.createdBy !== user.id)) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images.some((image) => image.createdBy !== user.id || image.status !== 'DONE')) {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      if (images.some((image) => image.resource !== 'post:content')) {
+        throw new BadRequestException('Resource type is incorrect');
+      }
+      updatePostDto.media.images = images;
+    } else {
+      updatePostDto.media.images = postBefore.media.images.filter((item) =>
+        newImageIds.includes(item.id)
+      );
+    }
+
+    if (videoIdsNeedToAdd.length) {
+      const videos = await this._externalService.getVideoIds(newVideoIds);
+      if (videos.length < videoIdsNeedToAdd.length) {
+        throw new BadRequestException('Invalid video');
+      }
+      if (videos.some((video) => video.createdBy !== user.id)) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      updatePostDto.media.videos = videos;
+    } else {
+      updatePostDto.media.videos = postBefore.media.videos.filter((item) =>
+        newVideoIds.includes(item.id)
+      );
+    }
+
+    if (fileIdsNeedToAdd.length) {
+      const files = await this._externalService.getFileIds(newFileIds);
+      if (files.length < fileIdsNeedToAdd.length) {
+        throw new BadRequestException('Invalid file');
+      }
+      if (files.some((video) => video.createdBy !== user.id)) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      updatePostDto.media.files = files;
+    } else {
+      updatePostDto.media.files = postBefore.media.files.filter((item) =>
+        newFileIds.includes(item.id)
+      );
+    }
 
     await this._authorityService.checkPostOwner(postBefore, user.id);
     if (postBefore.status === PostStatus.PUBLISHED) {
@@ -188,6 +260,40 @@ export class PostAppService {
         })
       );
 
+      if (videoIdsNeedToAdd) {
+        await this._mediaService.emitMediaToUploadService(
+          MediaType.VIDEO,
+          MediaMarkAction.USED,
+          videoIdsNeedToAdd,
+          user.id
+        );
+      }
+      if (fileIdsNeedToAdd) {
+        await this._mediaService.emitMediaToUploadService(
+          MediaType.FILE,
+          MediaMarkAction.USED,
+          fileIdsNeedToAdd,
+          user.id
+        );
+      }
+
+      if (videoIdsNeedToRemove) {
+        await this._mediaService.emitMediaToUploadService(
+          MediaType.VIDEO,
+          MediaMarkAction.DELETE,
+          videoIdsNeedToRemove,
+          user.id
+        );
+      }
+
+      if (fileIdsNeedToRemove) {
+        await this._mediaService.emitMediaToUploadService(
+          MediaType.FILE,
+          MediaMarkAction.DELETE,
+          fileIdsNeedToRemove,
+          user.id
+        );
+      }
       return postUpdated;
     }
   }

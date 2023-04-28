@@ -84,23 +84,20 @@ export class CommentResponseDto {
   public createdBy?: string;
 
   @ApiProperty({
+    description: 'Array of files, images, videos',
     type: MediaFilterResponseDto,
   })
-  @Transform(({ value }) => {
-    if (value && value.length) {
-      return MediaService.filterMediaType(value);
-    }
-    if (
-      typeof value === 'object' &&
-      value.hasOwnProperty('files') &&
-      value.hasOwnProperty('images') &&
-      value.hasOwnProperty('videos')
-    ) {
-      return value;
-    }
-    return new MediaFilterResponseDto([], [], []);
-  })
   @Expose()
+  @Transform(({ value }) => {
+    if (!value) {
+      return {
+        files: [],
+        videos: [],
+        images: [],
+      };
+    }
+    return value;
+  })
   public media?: MediaFilterResponseDto;
 
   @ApiProperty({

@@ -7,7 +7,6 @@ import { ReactionModule } from '../reaction';
 import { FeedModule } from '../feed';
 import { PostModule } from '../post';
 import { SeriesAppService } from './application/series.app-service';
-import { ArticleModule } from '../article';
 import { SearchModule } from '../search';
 import { GroupModuleV2 } from '../v2-group/group.module';
 

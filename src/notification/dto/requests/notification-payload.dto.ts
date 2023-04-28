@@ -8,8 +8,11 @@ export class NotificationMetaPayloadDto<T> {
     creatorId?: string;
   };
 
+  public context?: string;
+
   public post?: {
     oldData?: T;
+    ignoreUserIds?: string[];
   };
   public comment?: {
     commentRecipient?: CommentRecipientDto;
