@@ -27,13 +27,17 @@
         "created_success": "Created series successfully",
         "updated_success": "Edited series successfully",
         "deleted_success": "Deleted series successfully",
-        "added_success": "Added successfully",
-        "remove_success": "Removed successfully"
+        "added_success": "Added article successfully",
+        "removed_success": "Removed article successfully"
     },
     "comment": {
         "created_success": "Created comment successfully",
         "replied_success": "Replied comment successfully",
         "updated_success": "Edited comment successfully",
         "deleted_success": "Deleted comment successfully"
+    },
+    "content": {
+        "saved_success": "Saved content successfully",
+        "unsaved_success": "Unsaved content successfully"
     }
 }
