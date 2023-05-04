@@ -183,6 +183,7 @@ export class PostAppService {
       }
       updatePostDto.media.images = images;
     } else {
+      if (!updatePostDto.media) updatePostDto.media = {};
       updatePostDto.media.images = postBefore.media.images.filter((item) =>
         newImageIds.includes(item.id)
       );
@@ -234,7 +235,7 @@ export class PostAppService {
       ) {
         isEnableSetting = true;
       }
-      this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+      // this._postService.checkContent(updatePostDto.content, updatePostDto.media); // disable because some case user only need to update audience
       const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
       await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
