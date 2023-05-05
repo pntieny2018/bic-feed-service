@@ -27,6 +27,7 @@ import { ContentRequireGroupException } from '../v2-post/exception/content-requi
 import { Request } from 'express';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostNoReadPermissionException } from '../v2-post/exception/post-no-read-permission.exception';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -58,7 +59,7 @@ export class PostController {
   public getDrafts(
     @AuthUser() user: UserDto,
     @Query() getDraftPostDto: GetDraftPostDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<ArticleResponseDto>> {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 

@@ -116,7 +116,7 @@ export class PostService {
   public async getDrafts(
     authUserId: string,
     getDraftPostDto: GetDraftPostDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<ArticleResponseDto>> {
     const { limit, offset, order, isProcessing, type } = getDraftPostDto;
     const condition = {
       createdBy: authUserId,
@@ -131,7 +131,7 @@ export class PostService {
 
     const result = await this.getsAndCount(condition, order, { limit, offset });
 
-    return new PageDto<PostResponseDto>(result.data, {
+    return new PageDto<ArticleResponseDto>(result.data, {
       total: result.count,
       limit,
       offset,
@@ -142,13 +142,13 @@ export class PostService {
     condition: WhereOptions<IPost>,
     order?: OrderEnum,
     otherParams?: FindOptions
-  ): Promise<{ data: PostResponseDto[]; count: number }> {
+  ): Promise<{ data: ArticleResponseDto[]; count: number }> {
     const attributes = this.getAttributesObj({ loadMarkRead: false });
-
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
+      shouldIncludeCategory: true,
     });
     const orderOption = [];
     if (
@@ -160,32 +160,36 @@ export class PostService {
       orderOption.push(['createdAt', order]);
     }
     const rows = await this.postModel.findAll<PostModel>({
-      attributes,
       where: condition,
+      attributes,
       include,
+      subQuery: false,
       order: orderOption,
       ...otherParams,
     });
-    const jsonPosts = rows.map((r) => r.toJSON());
-    const postsBindedData = await this.postBinding.bindRelatedData(jsonPosts, {
+    const jsonArticles = rows.map((r) => r.toJSON());
+    const articlesBindedData = await this.postBinding.bindRelatedData(jsonArticles, {
       shouldBindActor: true,
       shouldBindMention: true,
       shouldBindAudience: true,
       shouldHideSecretAudienceCanNotAccess: false,
     });
 
-    await this.postBinding.bindCommunity(postsBindedData);
+    await this.postBinding.bindCommunity(articlesBindedData);
+
+    const result = this.classTransformer.plainToInstance(ArticleResponseDto, articlesBindedData, {
+      excludeExtraneousValues: true,
+    });
+    const total = await this.postModel.count<PostModel>({
+      where: condition,
+      attributes,
+      include: otherParams.include ? otherParams.include : include,
+      distinct: true,
+    });
 
     return {
-      data: this.classTransformer.plainToInstance(PostResponseDto, postsBindedData, {
-        excludeExtraneousValues: true,
-      }),
-      count: await this.postModel.count<PostModel>({
-        where: condition,
-        attributes,
-        include: otherParams.include ? otherParams.include : include,
-        distinct: true,
-      }),
+      data: result,
+      count: total,
     };
   }
 

@@ -40,6 +40,7 @@ import { MediaService } from '../../media';
 import { MediaMarkAction, MediaType } from '../../../database/models/media.model';
 import { LogicException } from '../../../common/exceptions';
 import { TargetType } from '../../report-content/contstants';
+import { ArticleResponseDto } from '../../article/dto/responses';
 
 @Injectable()
 export class PostAppService {
@@ -65,7 +66,7 @@ export class PostAppService {
   public getDraftPosts(
     user: UserDto,
     getDraftPostDto: GetDraftPostDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<ArticleResponseDto>> {
     return this._postService.getDrafts(user.id, getDraftPostDto);
   }
 
