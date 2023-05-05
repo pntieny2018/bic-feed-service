@@ -44,7 +44,7 @@ export class ContentController {
     type: Boolean,
   })
   @ResponseMessages({
-    success: 'message.content.saved_success ',
+    success: 'message.content.saved_success',
   })
   @Post('/:postId/save')
   public async save(
