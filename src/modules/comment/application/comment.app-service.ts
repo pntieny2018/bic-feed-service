@@ -55,9 +55,9 @@ export class CommentAppService {
       if (images[0].status !== 'DONE') {
         throw new BadRequestException('Image is not ready to use');
       }
-      if (images[0].resource !== 'comment:content') {
-        throw new BadRequestException('Resource type is incorrect');
-      }
+      // if (images[0].resource !== 'comment:content') {
+      //   throw new BadRequestException('Resource type is incorrect');
+      // }
       createCommentDto.media.images = images;
     }
     const comment = await this._commentService.create(user, createCommentDto);
@@ -92,9 +92,9 @@ export class CommentAppService {
       if (images[0].status !== 'DONE') {
         throw new BadRequestException('Image is not ready to use');
       }
-      if (images[0].resource !== 'comment:content') {
-        throw new BadRequestException('Resource type is incorrect');
-      }
+      // if (images[0].resource !== 'comment:content') {
+      //   throw new BadRequestException('Resource type is incorrect');
+      // }
       createReplyCommentDto.media.images = images;
     }
     const comment = await this._commentService.create(
@@ -155,9 +155,9 @@ export class CommentAppService {
       if (images[0].status !== 'DONE') {
         throw new BadRequestException('Image is not ready to use');
       }
-      if (images[0].resource !== 'comment:content') {
-        throw new BadRequestException('Resource type is incorrect');
-      }
+      // if (images[0].resource !== 'comment:content') {
+      //   throw new BadRequestException('Resource type is incorrect');
+      // }
       updateCommentDto.media.images = images;
     }
     const response = await this._commentService.update(user, commentId, updateCommentDto);
