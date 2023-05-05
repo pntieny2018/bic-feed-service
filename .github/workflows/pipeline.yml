@@ -1,5 +1,5 @@
 name: Run CI
-run-name: Pipeline
+run-name: ${{ github.ref_name }}
 on:
   pull_request:
     types:
