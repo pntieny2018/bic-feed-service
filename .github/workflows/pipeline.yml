@@ -4,7 +4,7 @@ on:
   pull_request:
     types:
       - closed
-    branches: [ "internal-*", "develop", "staging", "release*", "master" ]
+    branches: [ "internal-*", "develop", "staging", "release/*", "master" ]
 
 jobs:
   Internal:
@@ -164,7 +164,7 @@ jobs:
         git pull
         git push
   Release:
-    if: startsWith(github.ref_name, 'release')
+    if: startsWith(github.ref_name, 'release/')
     runs-on: ubuntu-latest
 
     steps:
