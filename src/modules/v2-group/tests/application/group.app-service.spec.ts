@@ -7,8 +7,8 @@ import {
 } from '../../domain/repositoty-interface/group.repository.interface';
 import { GroupRepository } from '../../driven-adapter/repository/group.repository';
 
-describe('FindTagsPaginationHandler', () => {
-  let groupAppService;
+describe('GroupApplicationService', () => {
+  let groupAppService: IGroupApplicationService;
   let repo: IGroupRepository;
 
   beforeEach(async () => {
