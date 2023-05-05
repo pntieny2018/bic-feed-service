@@ -1,6 +1,6 @@
 {
     "tag": {
-        "created_success": "Created tag successfully",
+        "created_success": "Added tag successfully",
         "updated_success": "Updated tag successfully",
         "deleted_success": "Deleted tag successfully"
     },
@@ -24,7 +24,7 @@
         "unsaved_success": "Unsaved article successfully"
     },
     "series" : {
-        "created_success": "Created series successfully",
+        "created_success": "Published series successfully",
         "updated_success": "Edited series successfully",
         "deleted_success": "Deleted series successfully",
         "added_success": "Added content successfully",
