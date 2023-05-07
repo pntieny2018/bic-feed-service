@@ -23,6 +23,7 @@ export class IPropertiesAttribute {
   public codec?: string;
   public width?: number;
   public height?: number;
+  public duration?: number;
 }
 
 export class ThumbnailDto {

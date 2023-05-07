@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InternalEventEmitterService } from '../../../app/custom/event-emitter';
 import { PageDto } from '../../../common/dto';
 import {
@@ -18,6 +18,7 @@ import {
 import { GetCommentLinkDto } from '../dto/requests/get-comment-link.dto';
 import { CommentEditedHistoryDto, CommentResponseDto } from '../dto/response';
 import { UserDto } from '../../v2-user/application';
+import { ExternalService } from '../../../app/external.service';
 
 @Injectable()
 export class CommentAppService {
@@ -26,7 +27,8 @@ export class CommentAppService {
   public constructor(
     private _commentService: CommentService,
     private _commentHistoryService: CommentHistoryService,
-    private _eventEmitter: InternalEventEmitterService
+    private _eventEmitter: InternalEventEmitterService,
+    private _externalService: ExternalService
   ) {}
 
   public getList(
@@ -40,6 +42,24 @@ export class CommentAppService {
     user: UserDto,
     createCommentDto: CreateCommentDto
   ): Promise<CommentResponseDto> {
+    const { media } = createCommentDto;
+    if (media?.images.length > 0) {
+      const mediaIds = media.images.map((image) => image.id);
+      const images = await this._externalService.getImageIds(mediaIds);
+      if (images.length === 0) {
+        throw new BadRequestException('Invalid cover image');
+      }
+      if (images[0].createdBy !== user.id) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images[0].status !== 'DONE') {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      // if (images[0].resource !== 'comment:content') {
+      //   throw new BadRequestException('Resource type is incorrect');
+      // }
+      createCommentDto.media.images = images;
+    }
     const comment = await this._commentService.create(user, createCommentDto);
 
     const commentResponse = await this._commentService.getComment(user, comment.id);
@@ -59,6 +79,24 @@ export class CommentAppService {
     commentId: string,
     createReplyCommentDto: CreateReplyCommentDto
   ): Promise<CommentResponseDto> {
+    const { media } = createReplyCommentDto;
+    if (media?.images.length > 0) {
+      const mediaIds = media.images.map((image) => image.id);
+      const images = await this._externalService.getImageIds(mediaIds);
+      if (images.length === 0) {
+        throw new BadRequestException('Invalid cover image');
+      }
+      if (images[0].createdBy !== user.id) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images[0].status !== 'DONE') {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      // if (images[0].resource !== 'comment:content') {
+      //   throw new BadRequestException('Resource type is incorrect');
+      // }
+      createReplyCommentDto.media.images = images;
+    }
     const comment = await this._commentService.create(
       user,
       {
@@ -104,6 +142,24 @@ export class CommentAppService {
     commentId: string,
     updateCommentDto: UpdateCommentDto
   ): Promise<CommentResponseDto> {
+    const { media } = updateCommentDto;
+    if (media?.images.length > 0) {
+      const mediaIds = media.images.map((image) => image.id);
+      const images = await this._externalService.getImageIds(mediaIds);
+      if (images.length === 0) {
+        throw new BadRequestException('Invalid cover image');
+      }
+      if (images[0].createdBy !== user.id) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images[0].status !== 'DONE') {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      // if (images[0].resource !== 'comment:content') {
+      //   throw new BadRequestException('Resource type is incorrect');
+      // }
+      updateCommentDto.media.images = images;
+    }
     const response = await this._commentService.update(user, commentId, updateCommentDto);
 
     const commentResponse = await this._commentService.getComment(user, response.comment.id);

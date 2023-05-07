@@ -294,38 +294,38 @@ jobs:
             git push
 workflows:
   version: 2
-  Internal:
-    when: << pipeline.parameters.run_workflow_itn >>
-    jobs:
-      - itn:
-          filters:
-            branches:
-              only: /^internal\-\d*/
-  Develop:
-    when: << pipeline.parameters.run_workflow_dev >>
-    jobs:
-      - dev:
-          filters:
-            branches:
-              only: develop
-  Staging:
-    when: << pipeline.parameters.run_workflow_stg >>
-    jobs:
-      - stg:
-          filters:
-            branches:
-              only: staging
-  Release:
-    when: << pipeline.parameters.run_workflow_rel >>
-    jobs:
-      - rel:
-          filters:
-            branches:
-              only: /^release.*$/
-  Production:
-    when: << pipeline.parameters.run_workflow_pro >>
-    jobs:
-      - pro:
-          filters:
-            branches:
-              only: master
+  # Internal:
+  #   when: << pipeline.parameters.run_workflow_itn >>
+  #   jobs:
+  #     - itn:
+  #         filters:
+  #           branches:
+  #             only: /^internal\-\d*/
+  # Develop:
+  #   when: << pipeline.parameters.run_workflow_dev >>
+  #   jobs:
+  #     - dev:
+  #         filters:
+  #           branches:
+  #             only: develop
+  # Staging:
+  #   when: << pipeline.parameters.run_workflow_stg >>
+  #   jobs:
+  #     - stg:
+  #         filters:
+  #           branches:
+  #             only: staging
+  # Release:
+  #   when: << pipeline.parameters.run_workflow_rel >>
+  #   jobs:
+  #     - rel:
+  #         filters:
+  #           branches:
+  #             only: /^release.*$/
+  # Production:
+  #   when: << pipeline.parameters.run_workflow_pro >>
+  #   jobs:
+  #     - pro:
+  #         filters:
+  #           branches:
+  #             only: master
