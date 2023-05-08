@@ -12,6 +12,7 @@ import { ReportContentService } from './report-content.service';
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { DetailContentReportResponseDto } from './dto/detail-content-report.response.dto';
 import { UserDto } from '../v2-user/application';
+import { ResponseMessages } from '../../common/decorators';
 
 @ApiTags('Reports')
 @Controller('reports')
@@ -79,6 +80,9 @@ export class ReportContentController {
     );
   }
 
+  @ResponseMessages({
+    success: 'message.content.reported_success',
+  })
   @Post('/content')
   public async report(
     @AuthUser() user: UserDto,
