@@ -40,8 +40,7 @@ export class UserRepository implements IUserRepository {
 
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
-      const userCacheKey = `bg_profile:${username}`; //${CACHE_KEYS.USER_PROFILE}:${username}`;
-      console.log('userCacheKey=', userCacheKey);
+      const userCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
       const user = await this._store.get<UserDataInCache>(userCacheKey);
       let userWithGroups = null;
       if (user) {
