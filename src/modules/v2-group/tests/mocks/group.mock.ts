@@ -12,9 +12,9 @@ export const groupMock: GroupDto[] = [
     isCommunity: false,
     child: {
       open: ['d3a2e019-1dba-485d-a8cf-ec037e9f25af', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7eb'],
-      closed: [],
-      private: [],
-      secret: [],
+      closed: ['c4d5c2be-86f5-4db2-8959-af92ff5ae469', '4878cd75-16c0-40cc-84e4-ebc42bda2d99'],
+      private: ['1d3251ef-f520-4703-b1e9-df29db4d6a9f', 'df98b0f0-c2b7-41dd-a4ee-28fea1e83231'],
+      secret: ['d3a2e019-1dba-485d-a8cf-ec037e9f25a1', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7e2'],
     },
   },
   {

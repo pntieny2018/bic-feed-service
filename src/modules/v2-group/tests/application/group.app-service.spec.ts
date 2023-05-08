@@ -43,9 +43,9 @@ describe('GroupApplicationService', () => {
       isCommunity: false,
       child: {
         open: ['d3a2e019-1dba-485d-a8cf-ec037e9f25af', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7eb'],
-        closed: [],
-        private: [],
-        secret: [],
+        closed: ['c4d5c2be-86f5-4db2-8959-af92ff5ae469', '4878cd75-16c0-40cc-84e4-ebc42bda2d99'],
+        private: ['1d3251ef-f520-4703-b1e9-df29db4d6a9f', 'df98b0f0-c2b7-41dd-a4ee-28fea1e83231'],
+        secret: ['d3a2e019-1dba-485d-a8cf-ec037e9f25a1', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7e2'],
       },
     };
     const groupEntityMocked = new GroupEntity(groupPropsMock);
@@ -68,9 +68,9 @@ describe('GroupApplicationService', () => {
         isCommunity: false,
         child: {
           open: ['d3a2e019-1dba-485d-a8cf-ec037e9f25af', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7eb'],
-          closed: [],
-          private: [],
-          secret: [],
+          closed: ['c4d5c2be-86f5-4db2-8959-af92ff5ae469', '4878cd75-16c0-40cc-84e4-ebc42bda2d99'],
+          private: ['1d3251ef-f520-4703-b1e9-df29db4d6a9f', 'df98b0f0-c2b7-41dd-a4ee-28fea1e83231'],
+          secret: ['d3a2e019-1dba-485d-a8cf-ec037e9f25a1', 'd3bc1d0d-0511-43e7-acfa-197a7aeab7e2'],
         },
       },
       {
@@ -141,6 +141,45 @@ describe('GroupApplicationService', () => {
     });
   });
 
+  describe('GroupService.getGroupIdAndChildIdsUserJoined.OPEN', () => {
+    const userMocked = {
+      id: 'fe26b6bc-0253-49b2-9eb4-3c1545650548',
+      username: 'hoangnhut',
+      avatar:
+        'https://media.beincom.com/image/variants/user/avatar/f98fd465-12ff-4f39-93b4-7ecf42befd7e',
+      email: 'nhutduong@tgm.vn',
+      fullname: 'Dương Hoàng Nhựt',
+      groups: ['c4d5c2be-86f5-4db2-8959-af92ff5ae469', '9b42ac09-e9b9-4899-9a72-3a0832693ea4'],
+    };
+    const groupMocked: GroupDto = {
+      child: {
+        closed: ['c4d5c2be-86f5-4db2-8959-af92ff5ae469', '4878cd75-16c0-40cc-84e4-ebc42bda2d99'],
+        open: ['234de9dd-d84c-421b-bd52-90d982753427', '9b42ac09-e9b9-4899-9a72-3a0832693ea4'],
+        secret: [],
+        private: ['1d3251ef-f520-4703-b1e9-df29db4d6a9f', 'df98b0f0-c2b7-41dd-a4ee-28fea1e83231'],
+      },
+      id: 'e2487d02-b7be-4185-8245-f7596eba1437',
+      name: '321 matrix',
+      icon: 'https://media.beincom.io/image/variants/group/avatar/839b0cb1-a0de-4045-90df-c4ecae39326b',
+      privacy: GroupPrivacy.OPEN,
+      rootGroupId: 'e2487d02-b7be-4185-8245-f7596eba1437',
+      communityId: '3c5e58f2-ee1d-4292-bf9a-c60cfa3cefe1',
+      isCommunity: true,
+    };
+
+    it('Should returned be true', () => {
+      const result = groupAppService.getGroupIdAndChildIdsUserJoined(
+        groupMocked,
+        userMocked.groups
+      );
+      expect(result).toEqual([
+        '9b42ac09-e9b9-4899-9a72-3a0832693ea4',
+        'c4d5c2be-86f5-4db2-8959-af92ff5ae469',
+        'e2487d02-b7be-4185-8245-f7596eba1437',
+      ]);
+    });
+  });
+
   describe('GroupService.getGroupAdminIds', () => {
     const userMocked = {
       id: '7251dac7-5088-4a33-b900-d1b058edaf98',
@@ -160,5 +199,31 @@ describe('GroupApplicationService', () => {
       const result = await groupAppService.getGroupAdminIds(userMocked, userMocked.groups);
       expect(result).toEqual([userMocked.id]);
     });
-  }); 
+  });
+
+  describe('GroupService.getAdminIds', () => {
+    const rootGroupIds = ['c567c88e-38a4-4859-b067-cf91002c5963/'];
+    const groupAdminsResponse = {
+      code: 'api.ok',
+      meta: {
+        message: 'Success',
+        total: 2,
+        offset: 0,
+        limit: 20,
+        has_next_page: true,
+      },
+      data: {
+        admins: {
+          data: ['fe26b6bc-0253-49b2-9eb4-3c1545650548'],
+        },
+        owners: {},
+      },
+    };
+    it('Should returned list adminIds', async () => {
+      jest.spyOn(repo, 'getAdminIds').mockResolvedValue(groupAdminsResponse.data);
+      const result = await groupAppService.getAdminIds(rootGroupIds);
+      expect(result).toEqual(groupAdminsResponse.data);
+    });
+  });
+  
 });
