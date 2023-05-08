@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { FindUserOption, IUserApplicationService, UserDto } from '.';
+import { FindByUsernameOption, FindUserOption, IUserApplicationService, UserDto } from '.';
 import { UserEntity } from '../domain/model/user';
 import {
   IUserRepository,
@@ -12,14 +12,11 @@ export class UserApplicationService implements IUserApplicationService {
   @Inject(USER_REPOSITORY_TOKEN)
   private readonly _repo: IUserRepository;
 
-  public async findByUserName(username: string, options?: FindUserOption): Promise<UserDto> {
+  public async findByUserName(username: string, options?: FindByUsernameOption): Promise<UserDto> {
     if (!username) return null;
     const user = await this._repo.findByUserName(username);
     if (!user) return null;
     const result = this._toDto(user);
-    if (!options?.withPermission) {
-      delete result.permissions;
-    }
     if (!options?.withGroupJoined) {
       delete result.groups;
     }
@@ -30,6 +27,7 @@ export class UserApplicationService implements IUserApplicationService {
   public async findOne(userId: string, options?: FindUserOption): Promise<UserDto> {
     if (!userId) return null;
     const user = await this._repo.findOne(userId);
+    if (!user) return null;
     if (options && options.withPermission) {
       const permissions = await this._repo.getPermissionsByUserId(user.get('id'));
       user.setPermissions(permissions);
@@ -53,6 +51,10 @@ export class UserApplicationService implements IUserApplicationService {
     });
   }
 
+  public async canCudTagInCommunityByUserId(userId: string, communityId: string): Promise<boolean> {
+    return this._repo.canCudTagInCommunityByUserId(userId, communityId);
+  }
+
   private _toDto(user: UserEntity): UserDto {
     return {
       id: user.get('id'),
@@ -63,6 +65,7 @@ export class UserApplicationService implements IUserApplicationService {
       groups: user.get('groups'),
       permissions: user.get('permissions'),
       isDeactivated: user.get('isDeactivated'),
+      isVerified: user.get('isVerified'),
     };
   }
 }

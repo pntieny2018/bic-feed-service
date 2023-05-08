@@ -6,8 +6,9 @@ import { TAG_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { TAG_FACTORY_TOKEN } from '../domain/factory/interface';
 import { POST_VALIDATOR_TOKEN } from '../domain/validator/interface/post.validator.interface';
 import { PostValidator } from '../domain/validator/post.validator';
-import { POST_FACTORY_TOKEN } from '../domain/factory/interface/post.factory.interface';
-import { PostFactory } from '../domain/factory/post.factory';
+import { POST_FACTORY_TOKEN } from '../domain/factory/interface';
+import { PostFactory, TagFactory } from '../domain/factory';
+import { TagDomainService } from '../domain/domain-service';
 
 export const postProvider = [
   {

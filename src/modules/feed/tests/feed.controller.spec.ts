@@ -66,12 +66,4 @@ describe('FeedController', () => {
       expect(feedService.getNewsFeed).toBeCalledWith(mockedUserAuth, getNewsFeedDto);
     });
   });
-
-  describe('markSeenPost', () => {
-    it('Should successfully', async () => {
-      feedService.markSeenPosts = jest.fn().mockResolvedValue(Promise.resolve());
-      await feedController.markSeenPost(mockedUserAuth, 'f433e351-d04a-4bdf-9680-b8e27925e87f');
-      expect(feedService.markSeenPosts).toBeCalledTimes(1);
-    });
-  });
 });

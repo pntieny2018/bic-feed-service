@@ -30,6 +30,7 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
+import { TagService } from '../tag/tag.service';
 
 type FieldSearch = {
   default: string;
@@ -55,6 +56,7 @@ export class SearchService {
     protected readonly sentryService: SentryService,
     protected readonly reactionService: ReactionService,
     protected readonly elasticsearchService: ElasticsearchService,
+    protected readonly tagService: TagService,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected readonly appGroupService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
@@ -245,7 +247,7 @@ export class SearchService {
     authUser: UserDto,
     searchPostsDto: SearchPostsDto
   ): Promise<PageDto<any>> {
-    const { contentSearch, limit, offset, groupId } = searchPostsDto;
+    const { contentSearch, limit, offset, groupId, tagName } = searchPostsDto;
     const user = authUser;
     if (!user || user.groups.length === 0) {
       return new PageDto<any>([], {
@@ -256,6 +258,7 @@ export class SearchService {
     }
 
     let groupIds = user.groups;
+    let tagId;
     if (groupId) {
       const group = await this.appGroupService.findOne(groupId);
       if (!group) {
@@ -268,6 +271,12 @@ export class SearchService {
           offset,
           hasNextPage: false,
         });
+      }
+      if (tagName) {
+        tagId = await this.tagService.findTag(tagName, groupId);
+        if (tagId) {
+          searchPostsDto.tagId = tagId;
+        }
       }
     }
 
@@ -301,7 +310,11 @@ export class SearchService {
         updatedAt: source.updatedAt,
         createdBy: source.createdBy,
         coverMedia: source.coverMedia ?? null,
-        media: source.media || [],
+        media: source.media || {
+          files: [],
+          images: [],
+          videos: [],
+        },
         content: source.content || null,
         title: source.title || null,
         summary: source.summary || null,
@@ -379,11 +392,6 @@ export class SearchService {
       const audienceGroups = [];
       const communities = [];
       let mentions = {};
-      const media = {
-        files: [],
-        videos: [],
-        images: [],
-      };
       const reactionsCount = {};
       for (const group of groups) {
         if (post.groupIds && post.groupIds.includes(group.id)) {
@@ -433,6 +441,9 @@ export class SearchService {
 
       if (post.items) {
         const bindArticles = [];
+        post.items.sort((a, b) => {
+          return a.zindex - b.zindex;
+        });
         for (const itemInSeries of post.items) {
           const findArticle = articles.find((item) => item.id === itemInSeries.id);
           if (findArticle) bindArticles.push(findArticle);
@@ -445,18 +456,6 @@ export class SearchService {
         );
       }
 
-      if (post.media) {
-        post.media
-          .sort((a, b) => {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          })
-          .forEach((item) => {
-            if (item.type === MediaType.VIDEO) media.videos.push(item);
-            if (item.type === MediaType.IMAGE) media.images.push(item);
-            if (item.type === MediaType.FILE) media.files.push(item);
-          });
-      }
-      post.media = media;
       post.reactionsCount = reactionsCount;
       post.audience = { groups: audienceGroups };
       post.communities = communities;
@@ -603,6 +602,7 @@ export class SearchService {
       type,
       notIncludeIds,
       tagName,
+      tagId,
     }: SearchPostsDto,
     groupIds: string[]
   ): Promise<{
@@ -622,7 +622,7 @@ export class SearchService {
             ...this._getTypeFilter(type),
             ...this._getAudienceFilter(groupIds),
             ...this._getFilterTime(startTime, endTime),
-            ...this._getTagFilter(tagName),
+            ...(tagId ? this._getTagIdFilter(tagId) : this._getTagFilter(tagName)),
           ],
           should: [...this._getMatchKeyword(type, contentSearch)],
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -833,6 +833,20 @@ export class SearchService {
     return [];
   }
 
+  private _getTagIdFilter(tagId: string): any {
+    const { tags } = ELASTIC_POST_MAPPING_PATH;
+    if (tagId) {
+      return [
+        {
+          term: {
+            [tags.id]: tagId,
+          },
+        },
+      ];
+    }
+    return [];
+  }
+
   private _getCategoryFilter(categoryIds: string[]): any {
     const { categories } = ELASTIC_POST_MAPPING_PATH;
     if (categoryIds) {
@@ -903,9 +917,10 @@ export class SearchService {
       //En
       if (type === PostType.POST) {
         fields = [content.ascii, content.default];
-      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.ascii, summary.default, content.ascii, content.default];
+      } else if (type === PostType.SERIES) {
+        fields = [title.ascii, title.default, summary.ascii, summary.default];
       } else {
+        // for article or all
         fields = [
           title.ascii,
           title.default,
@@ -928,8 +943,8 @@ export class SearchService {
       //Vi
       if (type === PostType.POST) {
         fields = [title.default];
-      } else if (type === PostType.ARTICLE || type === PostType.SERIES) {
-        fields = [summary.default, content.default];
+      } else if (type === PostType.SERIES) {
+        fields = [title.default, summary.default];
       } else {
         fields = [title.default, summary.default, content.default];
       }

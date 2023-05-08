@@ -7,7 +7,7 @@ import {
   TagDuplicateNameException,
   TagNotFoundException,
   TagUsedException,
-} from '../../../exception';
+} from '../../../domain/exception';
 import { userMock } from '../../mock/user.dto.mock';
 
 describe('TagController', () => {

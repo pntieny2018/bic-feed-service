@@ -8,8 +8,8 @@ import {
   CommentHasBeenUpdatedEvent,
 } from '../../events/comment';
 import { CommentService } from '../../modules/comment';
-import { FeedService } from '../../modules/feed/feed.service';
 import { CommentNotificationService } from '../../notification/services';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class CommentListener {
@@ -18,7 +18,7 @@ export class CommentListener {
     private _commentService: CommentService,
     private _commentNotificationService: CommentNotificationService,
     private _sentryService: SentryService,
-    private _feedService: FeedService
+    private _postService: PostService
   ) {}
 
   @On(CommentHasBeenCreatedEvent)
@@ -39,7 +39,7 @@ export class CommentListener {
         this._sentryService.captureException(ex);
       });
 
-    this._feedService.markSeenPosts(commentResponse.postId, actor.id).catch((ex) => {
+    this._postService.markSeenPost(commentResponse.postId, actor.id).catch((ex) => {
       this._logger.error(JSON.stringify(ex?.stack));
       this._sentryService.captureException(ex);
     });

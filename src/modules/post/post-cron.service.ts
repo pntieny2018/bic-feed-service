@@ -41,15 +41,6 @@ export class PostCronService {
         },
       },
       paranoid: false,
-      include: {
-        model: MediaModel,
-        as: 'media',
-        through: {
-          attributes: [],
-        },
-        attributes: ['id', 'type'],
-        required: false,
-      },
     });
     if (willDeletePosts.length === 0) return;
 
@@ -57,7 +48,6 @@ export class PostCronService {
 
     try {
       for (const post of willDeletePosts) {
-        await this._postService.cleanRelationship(post.id, transaction, true);
         await post.destroy({ force: true, transaction });
       }
       await transaction.commit();
@@ -70,7 +60,7 @@ export class PostCronService {
   @Cron(CronExpression.EVERY_MINUTE)
   private async _jobUpdateImportantPost(): Promise<void> {
     try {
-      this._postModel.update(
+      await this._postModel.update(
         {
           isImportant: false,
         },

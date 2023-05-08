@@ -26,12 +26,16 @@ import { DeleteTagCommand } from '../../application/command/delete-tag/delete-ta
 import { UpdateTagCommand } from '../../application/command/update-tag/update-tag.command';
 import { UpdateTagDto } from '../../application/command/update-tag/update-tag.dto';
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
-import { TagDuplicateNameException, TagNotFoundException, TagUsedException } from '../../exception';
+import {
+  TagDuplicateNameException,
+  TagNotFoundException,
+  TagUsedException,
+} from '../../domain/exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
 import { TagResponseDto } from '../dto/response';
-import { TagNoCreatePermissionException } from '../../exception/tag/tag-no-create-permission.exception';
-import { TagNoUpdatePermissionException } from '../../exception/tag/tag-no-update-permission.exception';
-import { TagNoDeletePermissionException } from '../../exception/tag/tag-no-delete-permission.exception';
+import { TagNoCreatePermissionException } from '../../domain/exception/tag-no-create-permission.exception';
+import { TagNoUpdatePermissionException } from '../../domain/exception/tag-no-update-permission.exception';
+import { TagNoDeletePermissionException } from '../../domain/exception/tag-no-delete-permission.exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 
 @ApiTags('Tags')

@@ -4,10 +4,7 @@ import {
 } from '../../domain/query-interface/category.query.interface';
 import { PaginationResult } from '../../../../common/types/pagination-result.type';
 import { CategoryEntity } from '../../domain/model/category';
-import {
-  CATEGORY_FACTORY_TOKEN,
-  ICategoryFactory,
-} from '../../domain/factory/interface/category.factory.interface';
+import { CATEGORY_FACTORY_TOKEN, ICategoryFactory } from '../../domain/factory/interface';
 import { Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CategoryModel } from '../../../../database/models/category.model';
@@ -16,6 +13,7 @@ import { Op } from 'sequelize';
 export class CategoryQuery implements ICategoryQuery {
   @Inject(CATEGORY_FACTORY_TOKEN) private readonly _factory: ICategoryFactory;
   @InjectModel(CategoryModel) private readonly _categoryModel: typeof CategoryModel;
+
   public async getPagination(
     input: GetPaginationCategoryProps
   ): Promise<PaginationResult<CategoryEntity>> {

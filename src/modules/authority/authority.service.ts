@@ -1,5 +1,11 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
+import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  IPost,
+  PostModel,
+  PostPrivacy,
+  PostStatus,
+  PostType,
+} from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { Ability, subject } from '@casl/ability';
@@ -17,9 +23,16 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { UserDto } from '../v2-user/application';
+import { ContentNoPinPermissionException } from '../v2-post/domain/exception/content-no-pin-permission.exception';
+import { ContentRequireGroupException } from '../v2-post/domain/exception/content-require-group.exception';
+import { ArticleNoReadPermissionException } from '../v2-post/domain/exception/article-no-read-permission.exception';
+import { PostNoReadPermissionException } from '../v2-post/domain/exception/post-no-read-permission.exception';
+import { SeriesNoReadPermissionException } from '../v2-post/domain/exception/series-no-read-permission.exception';
 
 @Injectable()
 export class AuthorityService {
+  private readonly _logger = new Logger(AuthorityService.name);
+
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
     private _groupAppService: IGroupApplicationService,
@@ -31,14 +44,31 @@ export class AuthorityService {
     throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
   }
 
-  public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
+  public async checkCanReadPost(
+    user: UserDto,
+    post: IPost,
+    requireGroups?: GroupDto[]
+  ): Promise<void> {
     if (post.status !== PostStatus.PUBLISHED && post.createdBy === user.id) return;
     if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      if (requireGroups && requireGroups.length > 0) {
+        throw new ContentRequireGroupException({ requireGroups: requireGroups });
+      }
+
+      switch (post.type) {
+        case PostType.POST:
+          throw new PostNoReadPermissionException();
+        case PostType.ARTICLE:
+          throw new ArticleNoReadPermissionException();
+        case PostType.SERIES:
+          throw new SeriesNoReadPermissionException();
+        default:
+          throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
     }
   }
 
@@ -62,7 +92,7 @@ export class AuthorityService {
 
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
@@ -85,7 +115,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
@@ -112,7 +142,7 @@ export class AuthorityService {
 
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
@@ -135,7 +165,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
@@ -165,7 +195,7 @@ export class AuthorityService {
       }
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
@@ -188,7 +218,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
@@ -215,7 +245,7 @@ export class AuthorityService {
 
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
@@ -238,7 +268,7 @@ export class AuthorityService {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
@@ -262,16 +292,24 @@ export class AuthorityService {
     }
   }
 
-  public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
-    return this.checkCanReadPost(user, post);
+  public async checkCanReadArticle(
+    user: UserDto,
+    post: IPost,
+    requireGroups?: GroupDto[]
+  ): Promise<void> {
+    return this.checkCanReadPost(user, post, requireGroups);
   }
 
   public async checkIsPublicArticle(post: IPost): Promise<void> {
     return this.checkIsPublicPost(post);
   }
 
-  public async checkCanReadSeries(user: UserDto, post: IPost): Promise<void> {
-    return this.checkCanReadPost(user, post);
+  public async checkCanReadSeries(
+    user: UserDto,
+    post: IPost,
+    requireGroups?: GroupDto[]
+  ): Promise<void> {
+    return this.checkCanReadPost(user, post, requireGroups);
   }
 
   public async checkIsPublicSeries(post: IPost): Promise<void> {
@@ -288,5 +326,38 @@ export class AuthorityService {
     if (!canAccess) {
       throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
     }
+  }
+
+  public async checkPinPermission(user: UserDto, groupIds: string[]): Promise<void> {
+    const invalidGroup = [];
+    const ability = await this._buildAbility(user);
+    for (const groupId of groupIds) {
+      const canPin = ability.can(
+        PERMISSION_KEY.PIN_CONTENT,
+        subject(SUBJECT.GROUP, { id: groupId })
+      );
+      if (!canPin) {
+        invalidGroup.push(groupId);
+      }
+    }
+
+    if (invalidGroup.length > 0) {
+      throw new ContentNoPinPermissionException({ groupsDenied: invalidGroup });
+    }
+  }
+
+  public async getAudienceCanPin(groups: GroupDto[], user: UserDto): Promise<GroupDto[]> {
+    const ability = await this._buildAbility(user);
+    const groupsCanPin = [];
+    for (const group of groups) {
+      const canPin = ability.can(
+        PERMISSION_KEY.PIN_CONTENT,
+        subject(SUBJECT.GROUP, { id: group.id })
+      );
+      if (canPin) {
+        groupsCanPin.push(group);
+      }
+    }
+    return groupsCanPin;
   }
 }

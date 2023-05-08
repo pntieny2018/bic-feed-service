@@ -14,7 +14,6 @@ export class AppBootstrap {
    */
   public static async init(app: INestApplication, configService: ConfigService): Promise<void> {
     const appConfig = configService.get<IAppConfig>('app');
-
     app.enableCors({
       origin: '*',
     });

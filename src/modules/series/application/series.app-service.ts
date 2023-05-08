@@ -20,19 +20,24 @@ import { CreateSeriesDto, GetSeriesDto, UpdateSeriesDto } from '../dto/requests'
 import { SearchSeriesDto } from '../dto/requests/search-series.dto';
 import { SeriesResponseDto } from '../dto/responses';
 import { SeriesService } from '../series.service';
-import { PostStatus } from '../../../database/models/post.model';
+import { IPost, PostStatus } from '../../../database/models/post.model';
 import { UserDto } from '../../v2-user/application';
+import { LogicException } from '../../../common/exceptions';
+import { IPostGroup } from '../../../database/models/post-group.model';
+import { ExternalService } from '../../../app/external.service';
 
 @Injectable()
 export class SeriesAppService {
   private _logger = new Logger(SeriesAppService.name);
+
   public constructor(
     private _seriesService: SeriesService,
     private _eventEmitter: InternalEventEmitterService,
     private _authorityService: AuthorityService,
     private _feedService: FeedService,
     private _postSearchService: SearchService,
-    private _postService: PostService
+    private _postService: PostService,
+    private _externalService: ExternalService
   ) {}
 
   public async searchSeries(
@@ -48,18 +53,65 @@ export class SeriesAppService {
     getSeriesDto: GetSeriesDto
   ): Promise<SeriesResponseDto> {
     getSeriesDto.hideSecretAudienceCanNotAccess = true;
-    const post = await this._seriesService.get(postId, user, getSeriesDto);
+    const seriesResponseDto = await this._seriesService.get(postId, user, getSeriesDto);
+
+    if (
+      (seriesResponseDto.isHidden || seriesResponseDto.status !== PostStatus.PUBLISHED) &&
+      seriesResponseDto.createdBy !== user?.id
+    ) {
+      throw new LogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+    }
+
+    const series = {
+      privacy: seriesResponseDto.privacy,
+      createdBy: seriesResponseDto.createdBy,
+      status: seriesResponseDto.status,
+      type: seriesResponseDto.type,
+      groups: seriesResponseDto.audience.groups.map(
+        (g) =>
+          ({
+            groupId: g.id,
+          } as IPostGroup)
+      ),
+    } as IPost;
+
     if (user) {
-      this._feedService.markSeenPosts(postId, user.id).catch((ex) => {
+      await this._authorityService.checkCanReadSeries(
+        user,
+        series,
+        seriesResponseDto.audience.groups
+      );
+    } else {
+      await this._authorityService.checkIsPublicSeries(series);
+    }
+
+    if (user) {
+      this._postService.markSeenPost(postId, user.id).catch((ex) => {
         this._logger.error(JSON.stringify(ex?.stack));
       });
     }
 
-    return post;
+    return seriesResponseDto;
   }
 
   public async createSeries(user: UserDto, createSeriesDto: CreateSeriesDto): Promise<any> {
     const { audience, setting } = createSeriesDto;
+    if (createSeriesDto.coverMedia?.id) {
+      const images = await this._externalService.getImageIds([createSeriesDto.coverMedia.id]);
+      if (images.length === 0) {
+        throw new BadRequestException('Invalid cover image');
+      }
+      if (images[0].createdBy !== user.id) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images[0].status !== 'DONE') {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      if (images[0].resource !== 'series:cover') {
+        throw new BadRequestException('Resource type is incorrect');
+      }
+      createSeriesDto.coverMedia = images[0];
+    }
     if (audience.groupIds?.length > 0) {
       const isEnableSetting =
         setting.isImportant ||
@@ -71,7 +123,7 @@ export class SeriesAppService {
     const created = await this._seriesService.create(user, createSeriesDto);
     if (created) {
       const series = await this._seriesService.get(created.id, user, new GetSeriesDto());
-      this._feedService.markSeenPosts(series.id, user.id);
+      this._postService.markSeenPost(series.id, user.id);
       series.totalUsersSeen = Math.max(series.totalUsersSeen, 1);
       this._eventEmitter.emit(
         new SeriesHasBeenPublishedEvent({
@@ -92,6 +144,29 @@ export class SeriesAppService {
     const seriesBefore = await this._seriesService.get(postId, user, new GetSeriesDto());
 
     if (!seriesBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_SERIES_NOT_EXISTING);
+
+    if (
+      updateSeriesDto.coverMedia?.id &&
+      updateSeriesDto.coverMedia.id !== seriesBefore.coverMedia?.id
+    ) {
+      const images = await this._externalService.getImageIds([updateSeriesDto.coverMedia.id]);
+      if (images.length === 0) {
+        throw new BadRequestException('Invalid cover image');
+      }
+      if (images[0].createdBy !== user.id) {
+        throw new BadRequestException('You must be owner this cover');
+      }
+      if (images[0].status !== 'DONE') {
+        throw new BadRequestException('Image is not ready to use');
+      }
+      if (images[0].resource !== 'series:cover') {
+        throw new BadRequestException('Resource type is incorrect');
+      }
+      updateSeriesDto.coverMedia = images[0];
+    } else {
+      delete updateSeriesDto.coverMedia;
+    }
+
     await this._authorityService.checkPostOwner(seriesBefore, user.id);
 
     if (audience.groupIds.length === 0) {
@@ -252,6 +327,7 @@ export class SeriesAppService {
         actor: user,
         seriesId,
         itemIds,
+        context: 'add',
       })
     );
   }

@@ -10,6 +10,7 @@ export class NotificationMetaPayloadDto<T> {
 
   public post?: {
     oldData?: T;
+    ignoreUserIds?: string[];
   };
   public comment?: {
     commentRecipient?: CommentRecipientDto;
@@ -20,6 +21,7 @@ export class NotificationMetaPayloadDto<T> {
     isSendToContentCreator?: boolean;
     targetUserIds?: string[];
     contentIsDeleted?: boolean;
+    context?: string;
   };
 }
 export class NotificationPayloadDto<T> {

@@ -15,26 +15,20 @@ import { NIL } from 'uuid';
 import { HTTP_STATUS_ID, MentionableType } from '../../common/constants';
 import { OrderEnum, PageDto } from '../../common/dto';
 import { LogicException } from '../../common/exceptions';
-import { ArrayHelper, ExceptionHelper } from '../../common/helpers';
+import { ArrayHelper } from '../../common/helpers';
 import { MediaStatus } from '../../database/models/media.model';
 import { PostCategoryModel } from '../../database/models/post-category.model';
 import { PostGroupModel } from '../../database/models/post-group.model';
 import { PostSeriesModel } from '../../database/models/post-series.model';
 import { PostTagModel } from '../../database/models/post-tag.model';
 import { IPost, PostModel, PostStatus, PostType } from '../../database/models/post.model';
-import { ReportContentDetailModel } from '../../database/models/report-content-detail.model';
 import { UserMarkReadPostModel } from '../../database/models/user-mark-read-post.model';
-import { UserSavePostModel } from '../../database/models/user-save-post.model';
 import { CategoryService } from '../category/category.service';
 import { CommentService } from '../comment';
-import { FeedService } from '../feed/feed.service';
 import { LinkPreviewService } from '../link-preview/link-preview.service';
-import { MediaService } from '../media';
-import { EntityType } from '../media/media.constants';
 import { MentionService } from '../mention';
 import { PostHelper } from '../post/post.helper';
 import { PostService } from '../post/post.service';
-import { ReactionService } from '../reaction';
 import { TargetType } from '../report-content/contstants';
 import { SeriesService } from '../series/series.service';
 import { TagService } from '../tag/tag.service';
@@ -47,7 +41,7 @@ import {
 import { GetDraftArticleDto } from './dto/requests/get-draft-article.dto';
 import { GetRelatedArticlesDto } from './dto/requests/get-related-articles.dto';
 import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
-import { ArticleResponseDto, ItemInSeriesResponseDto } from './dto/responses';
+import { ArticleResponseDto } from './dto/responses';
 import { UserDto } from '../v2-user/application';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../v2-group/application';
 import { PostBindingService } from '../post/post-binding.service';
@@ -81,12 +75,9 @@ export class ArticleService {
     protected userMarkReadPostModel: typeof UserMarkReadPostModel,
     @Inject(GROUP_APPLICATION_TOKEN)
     protected groupAppService: IGroupApplicationService,
-    protected mediaService: MediaService,
     protected mentionService: MentionService,
     @Inject(forwardRef(() => CommentService))
     protected commentService: CommentService,
-    @Inject(forwardRef(() => FeedService))
-    protected feedService: FeedService,
     protected readonly sentryService: SentryService,
     protected readonly postBindingService: PostBindingService,
     @Inject(forwardRef(() => SeriesService))
@@ -97,75 +88,6 @@ export class ArticleService {
     private readonly _postService: PostService
   ) {}
 
-  private async _getArticleIdsWithFilter(
-    getListArticleDto: GetListArticlesDto,
-    authUser: UserDto
-  ): Promise<string[]> {
-    const { groupId, categories, hashtags, series, offset, limit, tags } = getListArticleDto;
-    const include = [];
-    if (groupId) {
-      const groupIds = await this._getGroupIdAndChildIdsUserCanAccess(groupId, authUser);
-      if (groupIds.length === 0) return [];
-      include.push({
-        model: PostGroupModel,
-        as: 'groups',
-        required: true,
-        attributes: [],
-        where: {
-          groupId: groupIds,
-        },
-      });
-    }
-
-    if (categories && categories.length > 0) {
-      include.push({
-        model: PostCategoryModel,
-        required: true,
-        attributes: [],
-        where: {
-          categoryId: categories,
-        },
-      });
-    }
-
-    if (series && series.length > 0) {
-      include.push({
-        model: PostSeriesModel,
-        required: true,
-        attributes: [],
-        where: {
-          seriesId: series,
-        },
-      });
-    }
-
-    if (tags && tags.length > 0) {
-      include.push({
-        model: PostTagModel,
-        required: true,
-        attributes: [],
-        where: {
-          tagId: tags,
-        },
-      });
-    }
-
-    const conditions = {
-      status: PostStatus.PUBLISHED,
-    };
-
-    const articles = await this.postModel.findAll({
-      attributes: ['id'],
-      include,
-      subQuery: false,
-      where: conditions,
-      order: [['createdAt', 'desc']],
-      offset,
-      limit,
-    });
-
-    return articles.map((article) => article.id);
-  }
   /**
    * Get Draft Articles
    */
@@ -201,9 +123,7 @@ export class ArticleService {
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
       shouldIncludeCategory: true,
-      shouldIncludeCover: true,
     });
     const orderOption = [];
     if (
@@ -279,7 +199,6 @@ export class ArticleService {
     const categoryIds = article.categories.map((category) => category.id);
 
     const includeRelated = this.getIncludeObj({
-      shouldIncludeCover: true,
       shouldIncludeCategory: true,
       mustIncludeGroup: true,
       filterGroupIds: groupIdsUserCanAccess,
@@ -362,26 +281,14 @@ export class ArticleService {
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
       shouldIncludeMention: true,
-      shouldIncludeMedia: true,
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
-      shouldIncludeCover: true,
       shouldIncludeSeries: true,
       authUserId: authUser?.id || null,
     });
-
-    let condition;
-    if (authUser) {
-      condition = {
-        id: articleId,
-        [Op.or]: [{ status: PostStatus.PUBLISHED }, { createdBy: authUser.id }],
-      };
-    } else {
-      condition = { id: articleId, type: PostType.ARTICLE, isHidden: false };
-    }
     return this.getDetail(
       attributes,
-      condition,
+      { id: articleId },
       include,
       articleId,
       authUser,
@@ -450,64 +357,46 @@ export class ArticleService {
     authUserId?: string;
   }): FindAttributeOptions {
     const attributes: FindAttributeOptions = this._postService.getAttributesObj(options);
-
-    if (attributes['include'] && Array.isArray(attributes['include'])) {
-      attributes['include'].push(['hashtags_json', 'hashtags']);
-    } else {
-      attributes['include'] = [['hashtags_json', 'hashtags']];
-    }
     return attributes;
   }
 
   public getIncludeObj({
     mustIncludeGroup,
-    mustIncludeMedia,
     mustInSeriesIds,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
     shouldIncludeMention,
-    shouldIncludeMedia,
     shouldIncludePreviewLink,
     shouldIncludeArticlesInSeries,
     shouldIncludeCategory,
-    shouldIncludeCover,
     shouldIncludeSeries,
-    filterMediaIds,
     filterCategoryIds,
     filterGroupIds,
     authUserId,
   }: {
     mustIncludeGroup?: boolean;
-    mustIncludeMedia?: boolean;
     mustInSeriesIds?: string[];
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
     shouldIncludeMention?: boolean;
-    shouldIncludeMedia?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludePreviewLink?: boolean;
-    shouldIncludeCover?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     filterCategoryIds?: string[];
-    filterMediaIds?: string[];
     filterGroupIds?: string[];
     authUserId?: string;
   }): Includeable[] {
     const includes: Includeable[] = this._postService.getIncludeObj({
       mustIncludeGroup,
-      mustIncludeMedia,
       mustInSeriesIds,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
       shouldIncludeMention,
-      shouldIncludeMedia,
       shouldIncludePreviewLink,
       shouldIncludeCategory,
-      shouldIncludeCover,
       shouldIncludeArticlesInSeries,
       shouldIncludeSeries,
-      filterMediaIds,
       filterCategoryIds,
       filterGroupIds,
       authUserId,
@@ -525,27 +414,14 @@ export class ArticleService {
   public async create(authUser: UserDto, createArticleDto: CreateArticleDto): Promise<any> {
     let transaction;
     try {
-      const {
-        title,
-        summary,
-        content,
-        media,
-        setting,
-        mentions,
-        audience,
-        categories,
-        tags,
-        series,
-      } = createArticleDto;
+      const { title, summary, content, setting, mentions, audience, categories, tags, series } =
+        createArticleDto;
       const authUserId = authUser.id;
 
       let groupIds = [];
       if (audience.groupIds) {
         groupIds = audience.groupIds;
       }
-
-      const { files, images, videos } = media;
-      const uniqueMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
 
       const linkPreview = await this._linkPreviewService.upsert(createArticleDto.linkPreview);
 
@@ -570,15 +446,10 @@ export class ArticleService {
           canReact: setting.canReact,
           privacy: null,
           tagsJson: tagList,
-          views: 0,
           linkPreviewId: linkPreview?.id || null,
         },
         { transaction }
       );
-      if (uniqueMediaIds.length) {
-        await this.mediaService.createIfNotExist(media, authUserId);
-        await this.mediaService.sync(post.id, EntityType.POST, uniqueMediaIds, transaction);
-      }
 
       await Promise.all([
         this._seriesService.addToPost(series, post.id, transaction),
@@ -677,42 +548,6 @@ export class ArticleService {
     }
   }
 
-  /**
-   * Update view article
-   * @param postId postID
-   * @param authUser UserDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
-  public async updateView(postId: string, authUser: UserDto): Promise<boolean> {
-    const authUserId = authUser.id;
-    const creator = authUser;
-    if (!creator) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_USER_NOT_EXISTING);
-    }
-    try {
-      const dataUpdate = { views: 1 };
-      await this.postModel.increment(dataUpdate, {
-        where: {
-          id: postId,
-          createdBy: authUserId,
-        },
-      });
-      return true;
-    } catch (error) {
-      this.logger.error(JSON.stringify(error?.stack));
-      throw error;
-    }
-  }
-
-  /**
-   * Update Post except status === DRAFT
-   * @param postId postID
-   * @param authUser UserDto
-   * @param UpdateArticleDto UpdateArticleDto
-   * @returns Promise resolve boolean
-   * @throws HttpException
-   */
   public async update(
     post: ArticleResponseDto,
     authUser: UserDto,
@@ -722,27 +557,10 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { media, mentions, audience, categories, series, hashtags, tags, setting } =
+      const { coverMedia, mentions, audience, categories, series, tags, setting } =
         updateArticleDto;
-      let mediaListChanged = [];
-      if (media) {
-        mediaListChanged = await this.mediaService.createIfNotExist(media, authUserId);
-      }
 
       const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
-
-      if (
-        mediaListChanged &&
-        mediaListChanged.filter(
-          (m) =>
-            m.status === MediaStatus.WAITING_PROCESS ||
-            m.status === MediaStatus.PROCESSING ||
-            m.status === MediaStatus.FAILED
-        ).length > 0 &&
-        post.status === PostStatus.PUBLISHED
-      ) {
-        dataUpdate['status'] = PostStatus.PROCESSING;
-      }
 
       dataUpdate.linkPreviewId = null;
       if (updateArticleDto.linkPreview) {
@@ -751,12 +569,6 @@ export class ArticleService {
       }
 
       transaction = await this.sequelizeConnection.transaction();
-
-      if (media) {
-        const { files, images, videos } = media;
-        const newMediaIds = [...new Set([...files, ...images, ...videos].map((i) => i.id))];
-        await this.mediaService.sync(post.id, EntityType.POST, newMediaIds, transaction);
-      }
 
       if (mentions) {
         await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
@@ -787,6 +599,10 @@ export class ArticleService {
         const tagList = await this.tagService.getTagsByIds(tags);
         await this.tagService.updateToPost(tags, post.id, transaction);
         dataUpdate['tagsJson'] = tagList;
+      }
+
+      if (coverMedia) {
+        dataUpdate['coverJson'] = coverMedia;
       }
 
       await this.postModel.update(dataUpdate, {
@@ -866,37 +682,7 @@ export class ArticleService {
       dataUpdate['summary'] = summary;
     }
 
-    dataUpdate['cover'] = coverMedia?.id || null;
-
     return dataUpdate;
-  }
-
-  public async getsByMedia(id: string): Promise<ArticleResponseDto[]> {
-    const include = this._postService.getIncludeObj({
-      mustIncludeMedia: true,
-      shouldIncludeGroup: true,
-      shouldIncludeMention: true,
-      filterMediaIds: [id],
-    });
-    const articles = await this.postModel.findAll({ include });
-
-    const jsonArticles = articles.map((p) => p.toJSON());
-
-    const result = await this.postBindingService.bindRelatedData(jsonArticles, {
-      shouldBindAudience: true,
-      shouldBindMention: true,
-      shouldBindActor: true,
-    });
-
-    return this.classTransformer.plainToInstance(ArticleResponseDto, result, {
-      excludeExtraneousValues: true,
-    });
-  }
-
-  public async maskArticleContent(articles: any[]): Promise<void> {
-    for (const article of articles) {
-      if (article.isLocked) article.content = null;
-    }
   }
 
   public async schedule(articleId: string, scheduleArticleDto: ScheduleArticleDto): Promise<void> {

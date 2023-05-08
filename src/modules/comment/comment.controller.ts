@@ -30,6 +30,7 @@ import { CommentDetailResponseDto } from './dto/response/comment-detail.response
 import { CreateCommentPipe, GetCommentsPipe } from './pipes';
 import { GetCommentLinkPipe } from './pipes/get-comment-link.pipe';
 import { UserDto } from '../v2-user/application';
+import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 
 @ApiTags('Comment')
 @ApiSecurity('authorization')
@@ -63,9 +64,10 @@ export class CommentController {
     description: 'Create comment successfully',
   })
   @ResponseMessages({
-    success: 'Create comment successfully.',
+    success: 'message.comment.created_success',
   })
   @Post('/')
+  @InjectUserToBody()
   public async create(
     @AuthUser() user: UserDto,
     @Body(CreateCommentPipe) createCommentDto: CreateCommentDto
@@ -79,9 +81,10 @@ export class CommentController {
     description: 'Create reply comment successfully',
   })
   @ResponseMessages({
-    success: 'Create reply comment successfully',
+    success: 'message.comment.replied_success',
   })
   @Post('/:commentId/reply')
+  @InjectUserToBody()
   public async reply(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
@@ -128,7 +131,11 @@ export class CommentController {
   @ResponseMessages({
     success: 'Update comment successfully',
   })
+  @ResponseMessages({
+    success: 'message.comment.updated_success',
+  })
   @Put('/:commentId')
+  @InjectUserToBody()
   public async update(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
@@ -143,7 +150,7 @@ export class CommentController {
     description: 'Delete comment successfully',
   })
   @ResponseMessages({
-    success: 'Delete comment successfully',
+    success: 'message.comment.deleted_success',
   })
   @Delete('/:commentId')
   public async destroy(

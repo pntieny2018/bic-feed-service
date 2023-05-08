@@ -8,9 +8,10 @@ import { TagEntity } from '../../../domain/model/tag';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { Sequelize } from 'sequelize-typescript';
-import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory/interface';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
 import { HttpService } from '@nestjs/axios';
 import { Transaction } from 'sequelize';
+import { TagFactory } from '../../../domain/factory';
 
 const transaction = createMock<Transaction>();
 
@@ -140,6 +141,7 @@ describe('TagRepository', () => {
       jest.spyOn(factory, 'reconstitute').mockReturnValue(tagEntity);
       const result = await repo.findOne({ id: tagEntity.get('id') });
       expect(tagModel.findOne).toBeCalledWith({
+        attributes: TagModel.loadAllAttributes(),
         where: {
           id: tagEntity.get('id'),
         },

@@ -2,15 +2,16 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { v4 } from 'uuid';
 import { StringHelper } from '../../../../../common/helpers';
-import { TagDomainService } from '../../../domain/domain-service/interface';
+import { TagDomainService } from '../../../domain/domain-service';
 import { ITagDomainService } from '../../../domain/domain-service/interface';
-import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory/interface';
+import { TagFactory } from '../../../domain/factory';
 import { TagEntity } from '../../../domain/model/tag';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
 import { TagRepository } from '../../../driven-adapter/repository';
 import { userMock } from '../../mock/user.dto.mock';
 import { DatabaseException } from '../../../../../common/exceptions/database.exception';
 import { I18nContext } from 'nestjs-i18n';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
 
 describe('TagDomainService', () => {
   let domainService: ITagDomainService;
@@ -145,20 +146,23 @@ describe('TagDomainService', () => {
 
   describe('deleteTag', () => {
     it('Should delete tag success', async () => {
-      jest.spyOn(repo, 'delete').mockReturnValue(undefined);
+      const spyRepoDelete = jest.spyOn(repo, 'delete').mockReturnThis();
 
       await domainService.deleteTag(tagEntity.get('id'));
-      expect(repo.delete).toBeCalledWith(tagEntity.get('id'));
+      expect(spyRepoDelete).toBeCalledWith(tagEntity.get('id'));
     });
 
     it('Should throw error when tag id not exist', async () => {
-      const logError = jest.spyOn(domainService['_logger'], 'error').mockReturnThis();
-      jest.spyOn(repo, 'delete').mockRejectedValue(new Error('Tag id not exist'));
+      const spyRepoDelete = jest
+        .spyOn(repo, 'delete')
+        .mockRejectedValue(new Error('Tag id not exist'));
+      const loggerSpy = jest.spyOn(domainService['_logger'], 'error').mockReturnThis();
       try {
         await domainService.deleteTag(tagEntity.get('id'));
       } catch (e) {
+        expect(spyRepoDelete).toBeCalledWith(tagEntity.get('id'));
         expect(e).toEqual(new DatabaseException());
-        expect(logError).toBeCalled();
+        expect(loggerSpy).toBeCalled();
       }
     });
   });

@@ -5,10 +5,15 @@ import {
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagDuplicateNameException, TagNotFoundException } from '../../../exception';
+import {
+  TagDuplicateNameException,
+  TagNotFoundException,
+  TagUsedException,
+} from '../../../domain/exception';
 import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
-import { TagNoUpdatePermissionException } from '../../../exception/tag/tag-no-update-permission.exception';
+import { TagNoUpdatePermissionException } from '../../../domain/exception/tag-no-update-permission.exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(UpdateTagCommand)
 export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, UpdateTagDto> {
@@ -16,6 +21,8 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
   private readonly _tagDomainService: ITagDomainService;
+  @Inject(USER_APPLICATION_TOKEN)
+  private readonly _userAppService: IUserApplicationService;
 
   public async execute(command: UpdateTagCommand): Promise<UpdateTagDto> {
     const { name, id, userId } = command.payload;
@@ -25,7 +32,14 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
       throw new TagNotFoundException();
     }
 
-    const canUpdateTag = await this._tagRepository.canCUDTag(userId, tag.get('groupId'));
+    if (tag.get('totalUsed') > 0) {
+      throw new TagUsedException();
+    }
+
+    const canUpdateTag = await this._userAppService.canCudTagInCommunityByUserId(
+      userId,
+      tag.get('groupId')
+    );
     if (!canUpdateTag) {
       throw new TagNoUpdatePermissionException();
     }

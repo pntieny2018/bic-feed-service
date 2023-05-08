@@ -22,6 +22,7 @@ export class TagQuery implements ITagQuery {
       conditions['name'] = { [Op.iLike]: name + '%' };
     }
     const { rows, count } = await this._tagModel.findAndCountAll({
+      attributes: TagModel.loadAllAttributes(),
       where: conditions,
       offset,
       limit,
@@ -30,7 +31,6 @@ export class TagQuery implements ITagQuery {
         ['createdAt', 'DESC'],
       ],
     });
-
     const result = rows.map((row) => this._factory.reconstitute(row));
     return {
       rows: result,

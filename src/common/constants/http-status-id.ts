@@ -50,6 +50,7 @@ export const HTTP_STATUS_ID = {
   APP_POST_PUBLISH_CONTENT_EMPTY: 'app.post.publish.content_empty.app_error',
   APP_COMMENT_NOT_EXISTING: 'app.comment.not_existing.app_error',
   APP_COMMENT_REPLY_NOT_EXISTING: 'app.comment.reply.not_existing.app_error',
+  APP_COMMENT_POST_NOT_EXISTING: 'app.comment.post.not_existing.app_error',
   APP_POST_SETTING_DISABLE: 'app.post.setting.disable.app_error',
   APP_POST_NOT_EXISTING: 'app.post.not_existing.app_error',
   APP_REACTION_NOT_EXISTING: 'app.reaction.not_existing.app_error',
@@ -86,4 +87,6 @@ export const HTTP_STATUS_ID = {
   APP_TAG_NOT_HAVE_DELETE_PERMISSION: 'app.tag.not_have_delete_permission.app_error',
 
   APP_GROUP_NOT_EXIST: 'app.group.existing.app_error',
+
+  NO_PERMISSION_PIN: 'no_pin_permission',
 };

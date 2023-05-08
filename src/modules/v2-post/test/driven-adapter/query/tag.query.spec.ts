@@ -7,10 +7,11 @@ import { TagEntity } from '../../../domain/model/tag';
 import { GetPaginationTagProps } from '../../../domain/query-interface';
 import { TagQuery } from '../../../driven-adapter/query';
 import { userMock } from '../../mock/user.dto.mock';
-import { ITagFactory, TAG_FACTORY_TOKEN, TagFactory } from '../../../domain/factory/interface';
+import { ITagFactory, TAG_FACTORY_TOKEN } from '../../../domain/factory/interface';
+import { TagFactory } from '../../../domain/factory';
 
 describe('TagQuery', () => {
-  let query, tagModel;
+  let query, tagModel, postTagModel;
   let factory: ITagFactory;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,7 +52,7 @@ describe('TagQuery', () => {
       });
     }
 
-    it('Should pagination success', async () => {
+    it('Should get tags success with group', async () => {
       const input: GetPaginationTagProps = {
         limit: 10,
         offset: 0,
@@ -60,12 +61,11 @@ describe('TagQuery', () => {
       jest
         .spyOn(tagModel, 'findAndCountAll')
         .mockResolvedValue({ rows: tagRecords, count: input.limit });
-      jest
-        .spyOn(factory, 'reconstitute')
-        .mockImplementation((tagRecord) => new TagEntity(tagRecord));
+      jest.spyOn(factory, 'reconstitute').mockImplementation((entity) => new TagEntity(entity));
       const result = await query.getPagination(input);
 
       expect(tagModel.findAndCountAll).toBeCalledWith({
+        attributes: TagModel.loadAllAttributes(),
         where: {
           groupId: input.groupIds,
         },

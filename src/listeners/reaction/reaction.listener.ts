@@ -7,20 +7,20 @@ import { PostType } from '../../database/models/post.model';
 import { CreateReactionInternalEvent, DeleteReactionInternalEvent } from '../../events/reaction';
 import { ArticleService } from '../../modules/article/article.service';
 import { CommentResponseDto } from '../../modules/comment/dto/response';
-import { FeedService } from '../../modules/feed/feed.service';
 import { FollowService } from '../../modules/follow';
 import { PostResponseDto } from '../../modules/post/dto/responses';
 import { ReactionResponseDto } from '../../modules/reaction/dto/response';
 import { NotificationService, TypeActivity } from '../../notification';
 import { ReactionActivityService } from '../../notification/activities';
 import { UserDto } from '../../modules/v2-user/application';
+import { PostService } from '../../modules/post/post.service';
 
 @Injectable()
 export class ReactionListener {
   private readonly _logger = new Logger(ReactionListener.name);
 
   public constructor(
-    private readonly _feedService: FeedService,
+    private readonly _postService: PostService,
     private readonly _followService: FollowService,
     private readonly _articleService: ArticleService,
     private readonly _reactionActivityService: ReactionActivityService,
@@ -31,7 +31,7 @@ export class ReactionListener {
   public onCreatedReactionEvent(event: CreateReactionInternalEvent): Promise<void> {
     const { payload } = event;
 
-    this._feedService.markSeenPosts(payload.post.id, payload.actor.id).catch((ex) => {
+    this._postService.markSeenPost(payload.post.id, payload.actor.id).catch((ex) => {
       this._logger.error(ex);
     });
 

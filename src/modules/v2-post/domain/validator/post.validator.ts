@@ -71,7 +71,7 @@ export class PostValidator implements IPostValidator {
 
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
@@ -95,7 +95,7 @@ export class PostValidator implements IPostValidator {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });
@@ -122,7 +122,7 @@ export class PostValidator implements IPostValidator {
 
       if (canCreatePost && needEnableSetting) {
         const canEditPostSetting = ability.can(
-          PERMISSION_KEY.EDIT_POST_SETTING,
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
           subject(SUBJECT.GROUP, { id: group.id })
         );
         if (!canEditPostSetting) {
@@ -145,7 +145,7 @@ export class PostValidator implements IPostValidator {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,
         message: `You don't have ${permissionToCommonName(
-          PERMISSION_KEY.EDIT_POST_SETTING
+          PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING
         )} permission at group ${notEditSettingInGroups.map((e) => e.name).join(', ')}`,
         errors: { groupsDenied: notEditSettingInGroups.map((e) => e.id) },
       });

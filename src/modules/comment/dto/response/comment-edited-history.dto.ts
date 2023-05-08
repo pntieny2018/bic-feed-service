@@ -21,23 +21,19 @@ export class CommentEditedHistoryDto {
   public content: string;
 
   @ApiProperty({
-    description: 'Media',
+    description: 'Array of files, images, videos',
     type: MediaFilterResponseDto,
   })
   @Expose()
   @Transform(({ value }) => {
-    if (
-      typeof value === 'object' &&
-      value.hasOwnProperty('files') &&
-      value.hasOwnProperty('images') &&
-      value.hasOwnProperty('videos')
-    ) {
-      return value;
+    if (!value) {
+      return {
+        files: [],
+        videos: [],
+        images: [],
+      };
     }
-    if (value && value.length) {
-      return MediaService.filterMediaType(value);
-    }
-    return new MediaFilterResponseDto([], [], []);
+    return value;
   })
   public media?: MediaFilterResponseDto;
 

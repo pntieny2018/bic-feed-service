@@ -147,12 +147,6 @@ export class ArticleListener {
       createdBy,
       isHidden,
     } = article;
-    const mediaIds = media.videos
-      .filter((m) => m.status === MediaStatus.WAITING_PROCESS || m.status === MediaStatus.FAILED)
-      .map((i) => i.id);
-    this._mediaService
-      .processVideo(mediaIds)
-      .catch((e) => this._logger.debug(JSON.stringify(e?.stack)));
 
     if (status !== PostStatus.PUBLISHED) return;
 
@@ -177,18 +171,7 @@ export class ArticleListener {
           createdAt,
           title,
           summary,
-          coverMedia: {
-            id: coverMedia.id,
-            createdBy: coverMedia.createdBy,
-            url: coverMedia.url,
-            createdAt: coverMedia.createdAt,
-            name: coverMedia.name,
-            type: coverMedia.type as MediaType,
-            originName: coverMedia.originName,
-            width: coverMedia.width,
-            height: coverMedia.height,
-            extension: coverMedia.extension,
-          },
+          coverMedia,
           categories: categories.map((category) => ({ id: category.id, name: category.name })),
           tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
         },
@@ -223,6 +206,11 @@ export class ArticleListener {
         actor: actor,
         event: event.getEventName(),
         data: activity,
+        meta: {
+          post: {
+            ignoreUserIds: article.series?.map((series) => series.createdBy),
+          },
+        },
       },
     });
 
@@ -233,6 +221,7 @@ export class ArticleListener {
             itemIds: [article.id],
             seriesId: sr.id,
             actor: actor,
+            context: 'publish',
           })
         );
       }
@@ -246,7 +235,6 @@ export class ArticleListener {
       status,
       id,
       content,
-      media,
       createdBy,
       audience,
       type,
@@ -295,18 +283,7 @@ export class ArticleListener {
         lang,
         summary,
         title,
-        coverMedia: {
-          id: coverMedia.id,
-          createdBy: coverMedia.createdBy,
-          url: coverMedia.url,
-          createdAt: coverMedia.createdAt,
-          type: coverMedia.type as MediaType,
-          name: coverMedia.name,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
-        },
+        coverMedia,
         categories: categories.map((category) => ({ id: category.id, name: category.name })),
         tags: tags.map((tag) => ({ id: tag.id, name: tag.name, groupId: tag.groupId })),
       },
@@ -338,6 +315,7 @@ export class ArticleListener {
           meta: {
             post: {
               oldData: oldActivity,
+              ignoreUserIds: newArticle.series?.map((series) => series.createdBy),
             },
           },
         },
@@ -352,6 +330,7 @@ export class ArticleListener {
             itemIds: [newArticle.id],
             seriesId: seriesId,
             actor: actor,
+            context: 'publish',
           })
         );
       }

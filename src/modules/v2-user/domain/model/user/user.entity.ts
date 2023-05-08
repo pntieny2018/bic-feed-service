@@ -16,6 +16,7 @@ export type UserProps = {
   groups: string[];
   permissions?: UserPermission;
   isDeactivated?: boolean;
+  isVerified?: boolean;
 };
 
 export class UserEntity extends DomainAggregateRoot<UserProps> {

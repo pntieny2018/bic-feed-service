@@ -21,7 +21,8 @@ type UserDataInCache = {
   email: string;
   groups: string[];
   isDeactivated?: boolean;
-  permission?: Permission;
+  permissions?: Permission;
+  isVerified?: boolean;
 };
 
 type UserDataInRest = UserDataInCache;
@@ -39,18 +40,36 @@ export class UserRepository implements IUserRepository {
 
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
-      const response = await lastValueFrom(
-        this._httpService.get(
-          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
-            username: username,
-          })
-        )
-      );
-      if (response.status !== HttpStatus.OK) {
-        return null;
+      const userCacheKey = `bg_profile:${username}`; //${CACHE_KEYS.USER_PROFILE}:${username}`;
+      console.log('userCacheKey=', userCacheKey);
+      const user = await this._store.get<UserDataInCache>(userCacheKey);
+      let userWithGroups = null;
+      if (user) {
+        const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${user.id}`;
+        const userGroupCacheKey = `${this._prefixRedis + user.id}`;
+        const [permissions, userGroups] = await this._store.mget([
+          permissionCacheKey,
+          userGroupCacheKey,
+        ]);
+        if (userGroups && permissions) {
+          userWithGroups = userGroups;
+          userWithGroups.permissions = permissions;
+        }
       }
-      const user = AxiosHelper.getDataResponse<UserDataInRest>(response);
-      return new UserEntity(user);
+      if (!userWithGroups) {
+        const response = await lastValueFrom(
+          this._httpService.get(
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.GET_USER, {
+              username: username,
+            })
+          )
+        );
+        if (response.status !== HttpStatus.OK) {
+          return null;
+        }
+        userWithGroups = AxiosHelper.getDataResponse<UserDataInRest>(response);
+      }
+      return new UserEntity(userWithGroups);
     } catch (ex) {
       this._logger.debug(ex);
       return null;
@@ -58,7 +77,27 @@ export class UserRepository implements IUserRepository {
   }
 
   public async findOne(id: string): Promise<UserEntity> {
-    const user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    let user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
+    if (!user) {
+      try {
+        const response = await lastValueFrom(
+          this._httpService.get(
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+              ids: id,
+            })
+          )
+        );
+        if (response.status === HttpStatus.OK) {
+          user = AxiosHelper.getDataArrayResponse<UserDataInRest>(response)[0];
+        }
+      } catch (e) {
+        this._logger.debug(e);
+      }
+
+      if (!user) {
+        return null;
+      }
+    }
     return new UserEntity(user);
   }
 
@@ -67,7 +106,25 @@ export class UserRepository implements IUserRepository {
       (userId) => `${this._prefixRedis + userId}`
     );
 
-    const users = await this._store.mget(keys);
+    let users = await this._store.mget(keys);
+    const notFoundUserIds = ids.filter((id) => !users.find((user) => user?.id === id));
+    try {
+      if (notFoundUserIds.length > 0) {
+        const response = await lastValueFrom(
+          this._httpService.get(
+            AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.USERS_PATH, {
+              ids: notFoundUserIds.join(','),
+            })
+          )
+        );
+        if (response.status === HttpStatus.OK) {
+          users = users.concat(AxiosHelper.getDataArrayResponse<UserDataInRest>(response));
+        }
+      }
+    } catch (e) {
+      this._logger.debug(e);
+    }
+
     const result = [];
     for (const user of users) {
       if (user) {
@@ -86,5 +143,21 @@ export class UserRepository implements IUserRepository {
       communities: {},
       groups: {},
     };
+  }
+
+  public async canCudTagInCommunityByUserId(userId: string, rootGroupId: string): Promise<boolean> {
+    try {
+      const response = await lastValueFrom(
+        this._httpService.get(
+          AxiosHelper.injectParamsToStrUrl(ENDPOINT.GROUP.INTERNAL.CHECK_CUD_TAG, {
+            userId,
+            rootGroupId,
+          })
+        )
+      );
+      return AxiosHelper.getDataResponse<boolean>(response);
+    } catch (e) {
+      return false;
+    }
   }
 }

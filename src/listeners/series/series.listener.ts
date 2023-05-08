@@ -1,6 +1,5 @@
 import { SentryService } from '@app/sentry';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { FeedService } from 'src/modules/feed/feed.service';
 import { On } from '../../common/decorators';
 import { MediaType } from '../../database/models/media.model';
 import { PostStatus, PostType } from '../../database/models/post.model';
@@ -33,7 +32,6 @@ export class SeriesListener {
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupAppService: IGroupApplicationService,
     private readonly _postSearchService: SearchService,
-    private readonly _feedService: FeedService,
     private readonly _postService: PostService,
     private readonly _seriesService: SeriesService,
     private readonly _postActivityService: PostActivityService,
@@ -97,18 +95,7 @@ export class SeriesListener {
         communityIds: audience.groups.map((group) => group.rootGroupId),
         type: PostType.SERIES,
         items: series.items.map((article) => ({ id: article.id, zindex: article.zindex })),
-        coverMedia: {
-          id: coverMedia.id,
-          createdBy: coverMedia.createdBy,
-          url: coverMedia.url,
-          type: coverMedia.type as MediaType,
-          createdAt: coverMedia.createdAt,
-          name: coverMedia.name,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
-        },
+        coverMedia,
       },
     ]);
 
@@ -190,18 +177,7 @@ export class SeriesListener {
         title,
         type: PostType.SERIES,
         items: items.map((article) => ({ id: article.id, zindex: article.zindex })),
-        coverMedia: {
-          id: coverMedia.id,
-          url: coverMedia.url,
-          type: coverMedia.type as MediaType,
-          createdBy: coverMedia.createdBy,
-          createdAt: coverMedia.createdAt,
-          name: coverMedia.name,
-          originName: coverMedia.originName,
-          width: coverMedia.width,
-          height: coverMedia.height,
-          extension: coverMedia.extension,
-        },
+        coverMedia,
       },
     ]);
 

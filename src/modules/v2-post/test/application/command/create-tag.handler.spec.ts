@@ -4,7 +4,6 @@ import { v4 } from 'uuid';
 import { StringHelper } from '../../../../../common/helpers';
 import { CreateTagCommand } from '../../../application/command/create-tag/create-tag.command';
 import { CreateTagHandler } from '../../../application/command/create-tag/create-tag.handler';
-import { TagDomainService } from '../../../domain/domain-service/interface';
 import {
   ITagDomainService,
   TAG_DOMAIN_SERVICE_TOKEN,
@@ -14,12 +13,22 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { userMock } from '../../mock/user.dto.mock';
 import { I18nContext } from 'nestjs-i18n';
 import { TagRepository } from '../../../driven-adapter/repository';
-import { TagDuplicateNameException } from '../../../exception';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserApplicationService,
+} from '../../../../v2-user/application';
+import {
+  TagDuplicateNameException,
+  TagNoCreatePermissionException,
+} from '../../../domain/exception';
+import { TagDomainService } from '../../../domain/domain-service';
 
 describe('CreateTagHandler', () => {
   let handler: CreateTagHandler;
   let domainService: ITagDomainService;
   let repo: ITagRepository;
+  let userAppService: IUserApplicationService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -27,6 +36,10 @@ describe('CreateTagHandler', () => {
         {
           provide: TAG_DOMAIN_SERVICE_TOKEN,
           useValue: createMock<TagDomainService>(),
+        },
+        {
+          provide: USER_APPLICATION_TOKEN,
+          useValue: createMock<UserApplicationService>(),
         },
         {
           provide: TAG_REPOSITORY_TOKEN,
@@ -38,6 +51,7 @@ describe('CreateTagHandler', () => {
     handler = module.get<CreateTagHandler>(CreateTagHandler);
     domainService = module.get(TAG_DOMAIN_SERVICE_TOKEN);
     repo = module.get(TAG_REPOSITORY_TOKEN);
+    userAppService = module.get(USER_APPLICATION_TOKEN);
     jest.spyOn(I18nContext, 'current').mockImplementation(
       () =>
         ({
@@ -51,11 +65,13 @@ describe('CreateTagHandler', () => {
   });
 
   describe('execute', () => {
+    const id = v4();
+    const name = StringHelper.randomStr(10);
     const tagRecord = {
-      id: v4(),
+      id: id,
       groupId: v4(),
-      name: 'tag bbbdd12 ddffc 1dddf22',
-      slug: StringHelper.convertToSlug('tag bbbdd12 ddffc 1dddf22'),
+      name: name,
+      slug: StringHelper.convertToSlug(name),
       totalUsed: 0,
       updatedBy: userMock.id,
       createdBy: userMock.id,
@@ -65,8 +81,13 @@ describe('CreateTagHandler', () => {
 
     const tagEntity = new TagEntity(tagRecord);
     it('Should create tag success', async () => {
-      jest.spyOn(domainService, 'createTag').mockResolvedValue(tagEntity);
-      jest.spyOn(repo, 'findOne').mockResolvedValue(null);
+      const spyCanCUDTag = jest
+        .spyOn(userAppService, 'canCudTagInCommunityByUserId')
+        .mockResolvedValue(true);
+      const spyServiceCreateTag = jest
+        .spyOn(domainService, 'createTag')
+        .mockResolvedValue(tagEntity);
+      const spyRepoFindOne = jest.spyOn(repo, 'findOne').mockResolvedValue(null);
 
       const command = new CreateTagCommand({
         groupId: tagRecord.groupId,
@@ -74,8 +95,13 @@ describe('CreateTagHandler', () => {
         userId: tagRecord.createdBy,
       });
       const result = await handler.execute(command);
-
-      expect(repo.findOne).toBeCalledWith({
+      expect(spyCanCUDTag).toBeCalledWith(userMock.id, tagEntity.get('groupId'));
+      expect(spyServiceCreateTag).toBeCalledWith({
+        name,
+        groupId: tagRecord.groupId,
+        userId: tagRecord.createdBy,
+      });
+      expect(spyRepoFindOne).toBeCalledWith({
         name: tagRecord.name,
         groupId: tagRecord.groupId,
       });
@@ -95,9 +121,22 @@ describe('CreateTagHandler', () => {
       });
     });
 
+    it('should throw error when no permission', async () => {
+      const name = StringHelper.randomStr(10);
+      const newName = 'new name ' + name;
+      const command = new CreateTagCommand({
+        name: newName,
+        groupId: tagRecord.groupId,
+        userId: userMock.id,
+      });
+      jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(false);
+      await expect(handler.execute(command)).rejects.toThrowError(TagNoCreatePermissionException);
+    });
+
     it('Should throw error when tag name is duplicate', async () => {
       jest.spyOn(repo, 'findOne').mockResolvedValue(tagEntity);
-
+      jest.spyOn(userAppService, 'canCudTagInCommunityByUserId').mockResolvedValue(true);
       const command = new CreateTagCommand({
         groupId: tagRecord.groupId,
         name: tagRecord.name,
