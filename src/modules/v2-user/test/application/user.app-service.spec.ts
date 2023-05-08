@@ -45,10 +45,7 @@ describe('UserApplicationService', () => {
       delete userMocked.groups;
       expect(result).toEqual(new UserDto(userMocked));
     });
-  });
 
-  describe('UserApplicationService.findByUserName', () => {
-    const userEntityMocked = new UserEntity(userMocked);
     it('Should returned null', async () => {
       jest.spyOn(repo, 'findByUserName').mockResolvedValue(null);
       const result = await userAppService.findByUserName(userMocked.username, {
@@ -71,10 +68,7 @@ describe('UserApplicationService', () => {
       const { groups, ...rest } = userMocked;
       expect(result).toEqual(new UserDto({ ...rest, permissions: userPermissions }));
     });
-  });
 
-  describe('UserApplicationService.findOne', () => {
-    const userEntityMocked = new UserEntity(userMocked);
     it('Should returned a UserDto with group', async () => {
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
       jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
