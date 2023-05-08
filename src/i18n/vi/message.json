@@ -28,12 +28,16 @@
         "updated_success": "Cập nhật sê-ri thành công",
         "deleted_success": "Xóa sê-ri thành công",
         "added_success": "Thêm bài viết vào sê-ri thành công",
-        "remove_success": "Xóa bài viết khỏi sê-ri thành công"
+        "removed_success": "Xóa bài viết khỏi sê-ri thành công"
     },
     "comment": {
         "created_success": "Tạo bình luận thành công",
         "replied_success": "Trả lời bình luận thành công",
         "updated_success": "Cập nhật bình luận thành công",
         "deleted_success": "Xóa bình luận thành công"
+    },
+    "content": {
+        "saved_success": "Lưu bài viết thành công",
+        "unsaved_success": "Bỏ lưu bài viết thành công"
     }
 }
