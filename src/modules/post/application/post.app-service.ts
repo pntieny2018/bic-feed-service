@@ -184,6 +184,7 @@ export class PostAppService {
       }
       updatePostDto.media.images = images;
     } else {
+      if (!updatePostDto.media) updatePostDto.media = {};
       updatePostDto.media.images = postBefore.media.images.filter((item) =>
         newImageIds.includes(item.id)
       );
