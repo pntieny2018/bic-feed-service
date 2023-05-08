@@ -1,5 +1,6 @@
 import { RedisService } from '../../../../../libs/redis/src';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
+import { AppHelper } from '../../../../common/helpers/app.helper';
 import { UserEntity } from '../../domain/model/user';
 import { IUserRepository } from '../../domain/repositoty-interface/user.repository.interface';
 import { HttpService } from '@nestjs/axios';
@@ -30,6 +31,8 @@ type UserDataInRest = UserDataInCache;
 export class UserRepository implements IUserRepository {
   private readonly _logger = new Logger(UserRepository.name);
 
+  private readonly _prefixRedis = `${AppHelper.getRedisEnv()}SU:`;
+
   public constructor(
     private readonly _httpService: HttpService,
     private readonly _store: RedisService
@@ -42,7 +45,7 @@ export class UserRepository implements IUserRepository {
       let userWithGroups = null;
       if (user) {
         const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${user.id}`;
-        const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${user.id}`;
+        const userGroupCacheKey = `${this._prefixRedis + user.id}`;
         const [permissions, userGroups] = await this._store.mget([
           permissionCacheKey,
           userGroupCacheKey,
@@ -73,7 +76,7 @@ export class UserRepository implements IUserRepository {
   }
 
   public async findOne(id: string): Promise<UserEntity> {
-    let user = await this._store.get<UserDataInCache>(`${CACHE_KEYS.SHARE_USER}:${id}`);
+    let user = await this._store.get<UserDataInCache>(`${this._prefixRedis + id}`);
     if (!user) {
       try {
         const response = await lastValueFrom(
@@ -99,7 +102,7 @@ export class UserRepository implements IUserRepository {
 
   public async findAllByIds(ids: string[]): Promise<UserEntity[]> {
     const keys = [...new Set(ArrayHelper.arrayUnique(ids.map((id) => id)))].map(
-      (userId) => `${CACHE_KEYS.SHARE_USER}:${userId}`
+      (userId) => `${this._prefixRedis + userId}`
     );
 
     let users = await this._store.mget(keys);
