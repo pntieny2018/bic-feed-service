@@ -140,4 +140,25 @@ describe('GroupApplicationService', () => {
       ]);
     });
   });
+
+  describe('GroupService.getGroupAdminIds', () => {
+    const userMocked = {
+      id: '7251dac7-5088-4a33-b900-d1b058edaf98',
+      username: 'martine.baumbach',
+      avatar: 'https://bein.group/baumbach.png',
+      email: 'baumbach@tgm.vn',
+      fullname: 'Martine Baumbach',
+      groups: [
+        'c4d5c2be-86f5-4db2-8959-af92ff5ae469',
+        '9b42ac09-e9b9-4899-9a72-3a0832693ea4',
+        'bc04d99e-97e5-42ef-9006-1448a5d05f85',
+        'e2487d02-b7be-4185-8245-f7596eba1437',
+      ],
+    };
+    it('Should returned list adminIds', async () => {
+      jest.spyOn(repo, 'getGroupAdminIds').mockResolvedValue([userMocked.id]);
+      const result = await groupAppService.getGroupAdminIds(userMocked, userMocked.groups);
+      expect(result).toEqual([userMocked.id]);
+    });
+  }); 
 });
