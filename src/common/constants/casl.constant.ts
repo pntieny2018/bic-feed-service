@@ -16,9 +16,6 @@ export const SUBJECT = {
 export const CACHE_KEYS = {
   USER_PERMISSIONS: 'bg_user_permissions',
   USER_PROFILE: 'bg_profile',
-  REPORT_REASON_TYPE: 'report_reason_type',
-  SHARE_USER: 'SU',
-  SHARE_GROUP: 'SG',
 };
 
 export class BasicPermissionDto {
