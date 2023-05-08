@@ -119,7 +119,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 
         return {
           redisOptions: {
-            keyPrefix: redisConfig.prefix,
+            keyPrefix: null,
             host: redisConfig.host,
             port: redisConfig.port,
             password: redisConfig.password,
