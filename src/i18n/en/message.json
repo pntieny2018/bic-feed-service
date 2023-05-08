@@ -38,6 +38,7 @@
     },
     "content": {
         "saved_success": "Saved content successfully",
-        "unsaved_success": "Unsaved content successfully"
+        "unsaved_success": "Unsaved content successfully",
+        "reported_success": "Reported content successfully"
     }
 }
