@@ -8,7 +8,6 @@ import { AudienceResponseDto } from './index';
 import { PostSettingDto } from '../common/post-setting.dto';
 import { PostSettingResponseDto } from './post-setting-response.dto';
 import { PostType } from '../../../../database/models/post.model';
-import { MediaService } from '../../../media';
 import { UserDto } from '../../../v2-user/application';
 
 export class ItemInSeriesResponseDto {
@@ -59,18 +58,14 @@ export class ItemInSeriesResponseDto {
   })
   @Expose()
   @Transform(({ value }) => {
-    if (
-      typeof value === 'object' &&
-      value.hasOwnProperty('files') &&
-      value.hasOwnProperty('images') &&
-      value.hasOwnProperty('videos')
-    ) {
-      return value;
+    if (!value) {
+      return {
+        files: [],
+        videos: [],
+        images: [],
+      };
     }
-    if (value && value.length) {
-      return MediaService.filterMediaType(value);
-    }
-    return new MediaFilterResponseDto([], [], []);
+    return value;
   })
   public media?: MediaFilterResponseDto;
 

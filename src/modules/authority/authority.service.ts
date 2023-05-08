@@ -1,5 +1,11 @@
 import { ForbiddenException, Inject, Injectable, Logger } from '@nestjs/common';
-import { IPost, PostModel, PostPrivacy, PostStatus } from '../../database/models/post.model';
+import {
+  IPost,
+  PostModel,
+  PostPrivacy,
+  PostStatus,
+  PostType,
+} from '../../database/models/post.model';
 import { LogicException } from '../../common/exceptions';
 import { HTTP_STATUS_ID } from '../../common/constants';
 import { Ability, subject } from '@casl/ability';
@@ -17,8 +23,11 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { UserDto } from '../v2-user/application';
-import { TagNoUpdatePermissionException } from '../v2-post/exception/tag-no-update-permission.exception';
 import { ContentNoPinPermissionException } from '../v2-post/exception/content-no-pin-permission.exception';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { ArticleNoReadPermissionException } from '../v2-post/exception/article-no-read-permission.exception';
+import { PostNoReadPermissionException } from '../v2-post/exception/post-no-read-permission.exception';
+import { SeriesNoReadPermissionException } from '../v2-post/exception/series-no-read-permission.exception';
 
 @Injectable()
 export class AuthorityService {
@@ -35,14 +44,31 @@ export class AuthorityService {
     throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
   }
 
-  public async checkCanReadPost(user: UserDto, post: IPost): Promise<void> {
+  public async checkCanReadPost(
+    user: UserDto,
+    post: IPost,
+    requireGroups?: GroupDto[]
+  ): Promise<void> {
     if (post.status !== PostStatus.PUBLISHED && post.createdBy === user.id) return;
     if (post.privacy === PostPrivacy.OPEN || post.privacy === PostPrivacy.CLOSED) return;
     const groupAudienceIds = (post.groups ?? []).map((g) => g.groupId);
     const userJoinedGroupIds = user.groups ?? [];
     const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
     if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      if (requireGroups && requireGroups.length > 0) {
+        throw new ContentRequireGroupException({ requireGroups: requireGroups });
+      }
+
+      switch (post.type) {
+        case PostType.POST:
+          throw new PostNoReadPermissionException();
+        case PostType.ARTICLE:
+          throw new ArticleNoReadPermissionException();
+        case PostType.SERIES:
+          throw new SeriesNoReadPermissionException();
+        default:
+          throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+      }
     }
   }
 
@@ -266,16 +292,24 @@ export class AuthorityService {
     }
   }
 
-  public async checkCanReadArticle(user: UserDto, post: IPost): Promise<void> {
-    return this.checkCanReadPost(user, post);
+  public async checkCanReadArticle(
+    user: UserDto,
+    post: IPost,
+    requireGroups?: GroupDto[]
+  ): Promise<void> {
+    return this.checkCanReadPost(user, post, requireGroups);
   }
 
   public async checkIsPublicArticle(post: IPost): Promise<void> {
     return this.checkIsPublicPost(post);
   }
 
-  public async checkCanReadSeries(user: UserDto, post: IPost): Promise<void> {
-    return this.checkCanReadPost(user, post);
+  public async checkCanReadSeries(
+    user: UserDto,
+    post: IPost,
+    requireGroups?: GroupDto[]
+  ): Promise<void> {
+    return this.checkCanReadPost(user, post, requireGroups);
   }
 
   public async checkIsPublicSeries(post: IPost): Promise<void> {

@@ -29,6 +29,7 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PageDto } from '../../common/dto';
 import { ContentPinNotFoundException } from '../v2-post/exception/content-pin-not-found.exception';
 import { ContentPinLackException } from '../v2-post/exception/content-pin-lack.exception';
+import { ArticleResponseDto } from '../article/dto/responses';
 
 @ApiSecurity('authorization')
 @ApiTags('Content')
@@ -130,13 +131,13 @@ export class ContentController {
 
   @ApiOperation({ summary: 'Get draft content' })
   @ApiOkResponse({
-    type: PostResponseDto,
+    type: ArticleResponseDto,
   })
   @Get('/draft')
   public getDrafts(
     @AuthUser() user: UserDto,
     @Query() getDraftPostDto: GetDraftPostDto
-  ): Promise<PageDto<PostResponseDto>> {
+  ): Promise<PageDto<ArticleResponseDto>> {
     return this._postAppService.getDraftPosts(user, getDraftPostDto);
   }
 

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -30,6 +31,8 @@ import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { ArticleNoReadPermissionException } from '../v2-post/exception/article-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -122,12 +125,24 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/:id')
-  public get(
+  public async get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    return this._articleAppService.get(user, articleId, getArticleDto);
+    try {
+      const article = await this._articleAppService.get(user, articleId, getArticleDto);
+      return article;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case ArticleNoReadPermissionException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create article' })

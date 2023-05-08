@@ -53,7 +53,6 @@ export class CreatePostDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => MediaDto)
-  @ValidateMedia()
   public media: MediaDto = { files: [], images: [], videos: [] };
 
   @ApiProperty({
