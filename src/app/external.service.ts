@@ -14,7 +14,6 @@ export class ExternalService {
   private _logger = new Logger(ExternalService.name);
   private _uploadServiceEndpoint = process.env.UPLOAD_ENDPOINT;
   private _groupServiceEndpoint = process.env.GROUP_ENDPOINT;
-
   public constructor(
     private _sentryService: SentryService,
     private readonly _httpService: HttpService
@@ -56,8 +55,8 @@ export class ExternalService {
           ids,
           {
             baseURL: '',
-   ,       }
- ,       )
+          }
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -87,8 +86,8 @@ export class ExternalService {
           ids,
           {
             baseURL: '',
-          },
-        ),
+          }
+        )
       );
       return response.data.data
         ? response.data.data.map((i) => ({
@@ -112,8 +111,8 @@ export class ExternalService {
     try {
       const response = await lastValueFrom(
         this._httpService.get(
-          `${this._groupServiceEndpoint}/internal/users/${userId}/can-cud-tags/${rootGroupId}`,
-        ),
+          `${this._groupServiceEndpoint}/internal/users/${userId}/can-cud-tags/${rootGroupId}`
+        )
       );
       return response.data.data;
     } catch (e) {
@@ -128,7 +127,7 @@ export class ExternalService {
       type: string;
       url: string;
       entityId: string;
-    },
+    }
   ): Promise<any> {
     const { userId, type } = data;
     try {
@@ -141,8 +140,8 @@ export class ExternalService {
           },
           {
             baseURL: '',
-          },
-        ),
+          }
+        )
       );
 
       const data = response.data.data;
@@ -162,7 +161,7 @@ export class ExternalService {
       if (exist) {
         console.error(`${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`);
         this._logger.debug(
-          `[ERROR UPLOAD SERVICE] ${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`,
+          `[ERROR UPLOAD SERVICE] ${JSON.stringify(e.message)}, payload:${JSON.stringify(data)}`
         );
       }
 
