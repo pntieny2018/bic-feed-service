@@ -135,7 +135,7 @@ describe('GroupRepository', () => {
       data: {
         code: 'OK',
         data: {
-          groupAdmin: {
+          group_admin: {
             name: 'string',
             userCount: 1,
             data: [
@@ -148,13 +148,13 @@ describe('GroupRepository', () => {
               },
             ],
           },
-          groupMember: {
+          group_member: {
             name: 'string',
             userCount: 1,
             data: [
               {
-                id: 'c87c7ad5-8331-4003-873a-baccd545d88f',
-                isAdmin: true,
+                id: 'fe26b6bc-0253-49b2-9eb4-3c1545650548',
+                isAdmin: false,
                 roles: {
                   name: 'string',
                 },
@@ -173,9 +173,66 @@ describe('GroupRepository', () => {
     };
 
     it('Should returned a list groupIds', async () => {
-      jest.spyOn(repo, 'getGroupAdminIds').mockResolvedValue([userMocked.id]);
-      const result = repo.getGroupAdminIds(userMocked, userMocked.groups);
-      expect(result).resolves.toEqual([userMocked.id]);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValueOnce(response);
+      const result = await repo.getGroupAdminIds(userMocked, userMocked.groups);
+      expect(result).toEqual(response.data.data.group_admin.data.map((item) => item.id));
+    });
+  });
+
+  describe('GroupRepository.getAdminIds', () => {
+    const rootGroupIds = ['c567c88e-38a4-4859-b067-cf91002c5963/'];
+    const groupAdminsResponse = {
+      data: {
+        code: 'api.ok',
+        meta: {
+          message: 'Success',
+          total: 1,
+          offset: 0,
+          limit: 20,
+          has_next_page: true,
+        },
+        data: {
+          admins: {
+            data: ['fe26b6bc-0253-49b2-9eb4-3c1545650548'],
+          },
+          owners: {},
+        },
+      },
+      status: 200,
+    };
+
+    it('Should returned a list adminIds', async () => {
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue(groupAdminsResponse);
+      const result = await repo.getAdminIds(rootGroupIds);
+      expect(result).toEqual(groupAdminsResponse.data.data);
+    });
+  });
+
+  describe('GroupRepository.getAdminIds', () => {
+    const rootGroupIds = ['c567c88e-38a4-4859-b067-cf91002c5963/'];
+    const groupAdminsResponse = {
+      data: {
+        code: 'api.ok',
+        meta: {
+          message: 'Success',
+          total: 0,
+          offset: 0,
+          limit: 20,
+          has_next_page: false,
+        },
+        data: {
+          admins: {},
+          owners: {},
+        },
+      },
+      status: 200,
+    };
+
+    it('Should returned a reject', async () => {
+      const error = new Error('Group id not found');
+      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(error);
+      const result = await repo.getAdminIds(rootGroupIds);
+      expect(result).toEqual(groupAdminsResponse.data.data);
     });
   });
 });
