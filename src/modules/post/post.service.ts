@@ -1093,7 +1093,17 @@ export class PostService {
     if (type) {
       condition['type'] = type;
     }
-    const include = [];
+    const include: any = [
+      {
+        model: UserNewsFeedModel,
+        as: 'userNewsfeeds',
+        required: true,
+        attributes: [],
+        where: {
+          userId,
+        },
+      },
+    ];
     if (groupIds) {
       include.push({
         model: PostGroupModel,
