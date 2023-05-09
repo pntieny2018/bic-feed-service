@@ -6,6 +6,8 @@ import { GroupRepository } from '../../../driven-adapter/repository/group.reposi
 import { RedisService } from '@app/redis';
 import * as rxjs from 'rxjs';
 import { GroupEntity, GroupProps } from '../../../domain/model/group';
+import { userMocked } from '../../mocks/group.mock';
+import { NotFoundException } from '@nestjs/common';
 
 describe('GroupRepository', () => {
   let repo: IGroupRepository;
@@ -64,6 +66,13 @@ describe('GroupRepository', () => {
       const result = await repo.findOne(response.data.data[0].id);
       expect(result).toEqual(new GroupEntity(response.data.data[0] as GroupProps));
     });
+
+    it('Should returned null', async () => {
+      jest.spyOn(store, 'get').mockResolvedValue(null);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({});
+      const result = await repo.findOne(response.data.data[0].id);
+      expect(result).toEqual(null);
+    });
   });
 
   describe('GroupRepository.findAllByIds', () => {
@@ -72,13 +81,13 @@ describe('GroupRepository', () => {
         code: 'OK',
         data: [
           {
-            child: { closed: [], open: [], secret: [], private: [] },
-            id: 'c87c7ad5-8331-4003-873a-baccd545d88f',
+            id: 'aac7a9ee-1432-4420-86d0-64a663e61123',
             name: 'Bein Group BE',
             icon: '',
             privacy: 'OPEN',
             rootGroupId: '35b5fb8f-6f7a-4ac2-90bb-18199096c429',
             communityId: '15337361-1577-4b7b-a31d-990df06aa446',
+            child: { closed: [], open: [], secret: [], private: [] },
           },
           {
             id: 'c87c7ad5-8331-4003-873a-baccd545d88f',
@@ -109,29 +118,18 @@ describe('GroupRepository', () => {
     };
 
     it('Should returned a list GroupEntity', async () => {
-      jest.spyOn(store, 'mget').mockResolvedValue([]);
-      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue(response);
+      jest.spyOn(store, 'mget').mockResolvedValue([response.data.data[0]]);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({
+        ...response,
+        data: { ...response.data, data: [response.data.data[1]] },
+      });
       const result = await repo.findAllByIds(response.data.data.map((item) => item.id));
       expect(result).toEqual(response.data.data.map((item) => new GroupEntity(item as GroupProps)));
     });
   });
 
   describe('GroupRepository.getGroupAdminIds', () => {
-    const userMocked = {
-      id: '7251dac7-5088-4a33-b900-d1b058edaf98',
-      username: 'martine.baumbach',
-      avatar: 'https://bein.group/baumbach.png',
-      email: 'baumbach@tgm.vn',
-      fullname: 'Martine Baumbach',
-      groups: [
-        'c4d5c2be-86f5-4db2-8959-af92ff5ae469',
-        '9b42ac09-e9b9-4899-9a72-3a0832693ea4',
-        'bc04d99e-97e5-42ef-9006-1448a5d05f85',
-        'e2487d02-b7be-4185-8245-f7596eba1437',
-      ],
-    };
-
-    const response = {
+    const successResponse = {
       data: {
         code: 'OK',
         data: {
@@ -172,16 +170,40 @@ describe('GroupRepository', () => {
       status: 200,
     };
 
+    const failedResponse = {
+      data: {
+        code: 'not.oK',
+        data: {},
+        meta: {
+          total: 0,
+          has_next_page: false,
+          message: 'Something went wrong',
+          errors: 'Unknown error',
+        },
+      },
+      status: 500,
+    };
+
     it('Should returned a list groupIds', async () => {
-      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValueOnce(response);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValueOnce(successResponse);
+      repo.getGroupAdminIds = jest.fn().mockImplementation(repo.getGroupAdminIds);
       const result = await repo.getGroupAdminIds(userMocked, userMocked.groups);
-      expect(result).toEqual(response.data.data.group_admin.data.map((item) => item.id));
+      expect(repo.getGroupAdminIds).toBeCalledWith(userMocked, userMocked.groups);
+      expect(result).toEqual(successResponse.data.data.group_admin.data.map((item) => item.id));
+    });
+
+    it('Should returned a empty list', async () => {
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValueOnce(failedResponse);
+      repo.getGroupAdminIds = jest.fn().mockImplementation(repo.getGroupAdminIds);
+      const result = await repo.getGroupAdminIds(userMocked, userMocked.groups);
+      expect(repo.getGroupAdminIds).toBeCalledWith(userMocked, userMocked.groups);
+      expect(result).toEqual([]);
     });
   });
 
   describe('GroupRepository.getAdminIds', () => {
     const rootGroupIds = ['c567c88e-38a4-4859-b067-cf91002c5963/'];
-    const groupAdminsResponse = {
+    const successResponse = {
       data: {
         code: 'api.ok',
         meta: {
@@ -202,36 +224,45 @@ describe('GroupRepository', () => {
     };
 
     it('Should returned a list adminIds', async () => {
-      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue(groupAdminsResponse);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue(successResponse);
+      repo.getAdminIds = jest.fn().mockImplementation(repo.getAdminIds);
       const result = await repo.getAdminIds(rootGroupIds);
-      expect(result).toEqual(groupAdminsResponse.data.data);
+      expect(repo.getAdminIds).toBeCalledWith(rootGroupIds);
+      expect(result).toEqual(successResponse.data.data);
     });
-  });
 
-  describe('GroupRepository.getAdminIds', () => {
-    const rootGroupIds = ['c567c88e-38a4-4859-b067-cf91002c5963/'];
+    const rejectResponse = {
+      admins: {},
+      owners: {},
+    };
+    it('Should returned a reject', async () => {
+      const error = new NotFoundException('Group id not found');
+      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(error);
+      repo.getAdminIds = jest.fn().mockImplementation(repo.getAdminIds);
+      const result = await repo.getAdminIds(rootGroupIds);
+      expect(repo.getAdminIds).toBeCalledWith(rootGroupIds);
+      expect(result).toEqual(rejectResponse);
+    });
+
     const groupAdminsResponse = {
       data: {
-        code: 'api.ok',
+        code: 'api.not.ok',
         meta: {
-          message: 'Success',
-          total: 0,
-          offset: 0,
-          limit: 20,
-          has_next_page: false,
+          message: 'Something went wrong',
         },
         data: {
           admins: {},
           owners: {},
         },
       },
-      status: 200,
+      status: 500,
     };
 
-    it('Should returned a reject', async () => {
-      const error = new Error('Group id not found');
-      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(error);
+    it('Should returned a empty object', async () => {
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue(groupAdminsResponse);
+      repo.getAdminIds = jest.fn().mockImplementation(repo.getAdminIds);
       const result = await repo.getAdminIds(rootGroupIds);
+      expect(repo.getAdminIds).toBeCalledWith(rootGroupIds);
       expect(result).toEqual(groupAdminsResponse.data.data);
     });
   });
