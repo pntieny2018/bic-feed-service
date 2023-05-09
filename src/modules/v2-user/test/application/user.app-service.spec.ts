@@ -107,15 +107,19 @@ describe('UserApplicationService', () => {
       const result = await userAppService.findAllByIds([userMocked.id], {
         withGroupJoined: false,
       } as FindUserOption);
-      const { groups, ...rest } = userMocked;
       expect(result).toEqual([new UserDto(userMocked)]);
     });
 
     it('Should returned a list UserDto with group', async () => {
       jest.spyOn(repo, 'findAllByIds').mockResolvedValue([userEntityMocked]);
       const result = await userAppService.findAllByIds([userMocked.id]);
-      const { groups, ...rest } = userMocked;
       expect(result).toEqual([new UserDto(userMocked)]);
+    });
+
+    it('Should returned a empty list', async () => {
+      jest.spyOn(repo, 'findAllByIds').mockResolvedValue([]);
+      const result = await userAppService.findAllByIds([]);
+      expect(result).toEqual([]);
     });
   });
 
