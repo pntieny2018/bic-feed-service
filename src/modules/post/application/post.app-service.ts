@@ -191,7 +191,9 @@ export class PostAppService {
         if (images.some((image) => image.resource !== 'post:content')) {
           throw new BadRequestException('Resource type is incorrect');
         }
-        updatePostDto.media.images = images;
+        updatePostDto.media.images.forEach((image, index) => {
+          updatePostDto.media.images[index] = images.find((img) => img.id === image.id);
+        });
       } else {
         updatePostDto.media.images = postBefore.media.images.filter((item) =>
           newImageIds.includes(item.id)
