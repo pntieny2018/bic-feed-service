@@ -162,5 +162,11 @@ describe('UserRepository', () => {
       const result = await repo.canCudTagInCommunityByUserId(bfProfile.id, cacheSG.rootGroupId);
       expect(result).toEqual(false);
     });
+
+    it('Should returned false', async () => {
+      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(new InternalServerErrorException());
+      const result = await repo.canCudTagInCommunityByUserId(bfProfile.id, cacheSG.rootGroupId);
+      expect(result).toEqual(false);
+    });
   });
 });
