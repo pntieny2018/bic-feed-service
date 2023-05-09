@@ -7,6 +7,7 @@ import { IUserRepository } from '../../../domain/repositoty-interface/user.repos
 import { bfProfile, cacheSG, cacheSU, permissionCacheKey } from '../../mock/user-store.dto.mock';
 import * as rxjs from 'rxjs';
 import { UserEntity } from '../../../domain/model/user';
+import { InternalServerErrorException } from '@nestjs/common';
 
 describe('UserRepository', () => {
   let repo: IUserRepository;
@@ -42,6 +43,11 @@ describe('UserRepository', () => {
       expect(result).toEqual(new UserEntity({ ...cacheSU, permissions: permissionCacheKey }));
     });
 
+    it('Should returne null because property is empty', async () => {
+      const result = await repo.findByUserName('');
+      expect(result).toEqual(null);
+    });
+
     it('Should returned a UserEntity get data from GroupService', async () => {
       jest.spyOn(store, 'get').mockResolvedValue(bfProfile);
       jest.spyOn(store, 'mget').mockResolvedValue([]);
@@ -51,6 +57,25 @@ describe('UserRepository', () => {
       });
       const result = await repo.findByUserName(bfProfile.username);
       expect(result).toEqual(new UserEntity({ ...cacheSU, permissions: permissionCacheKey }));
+    });
+
+    it('Should return null because data is not found', async () => {
+      jest.spyOn(store, 'get').mockResolvedValue(bfProfile);
+      jest.spyOn(store, 'mget').mockResolvedValue([]);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({
+        data: { data: {} },
+        status: 400,
+      });
+      const result = await repo.findByUserName(bfProfile.username);
+      expect(result).toEqual(null);
+    });
+
+    it('Should return null because call Group API has exception', async () => {
+      jest.spyOn(store, 'get').mockResolvedValue(bfProfile);
+      jest.spyOn(store, 'mget').mockResolvedValue([]);
+      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(new InternalServerErrorException());
+      const result = await repo.findByUserName(bfProfile.username);
+      expect(result).toEqual(null);
     });
   });
 
@@ -70,6 +95,23 @@ describe('UserRepository', () => {
       const result = await repo.findOne(bfProfile.id);
       expect(result).toEqual(new UserEntity({ ...cacheSU }));
     });
+
+    it('Should return null because data is not found', async () => {
+      jest.spyOn(store, 'get').mockResolvedValue(null);
+      jest.spyOn(rxjs, 'lastValueFrom').mockResolvedValue({
+        data: { data: [] },
+        status: 400,
+      });
+      const result = await repo.findOne(bfProfile.id);
+      expect(result).toEqual(null);
+    });
+
+    it('Should return null because call Group API has exception', async () => {
+      jest.spyOn(store, 'get').mockResolvedValue(null);
+      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(new InternalServerErrorException());
+      const result = await repo.findOne(bfProfile.id);
+      expect(result).toEqual(null);
+    });
   });
 
   describe('findAllByIds', () => {
@@ -88,6 +130,13 @@ describe('UserRepository', () => {
       const result = await repo.findAllByIds([bfProfile.id]);
       expect(result).toEqual([new UserEntity({ ...cacheSU })]);
     });
+
+    it('Should returned a emtpty list because call Group API has exception', async () => {
+      jest.spyOn(store, 'mget').mockResolvedValue([]);
+      jest.spyOn(rxjs, 'lastValueFrom').mockRejectedValue(new InternalServerErrorException());
+      const result = await repo.findAllByIds([bfProfile.id]);
+      expect(result).toEqual([]);
+    });
   });
 
   describe('getPermissionsByUserId', () => {
@@ -95,6 +144,12 @@ describe('UserRepository', () => {
       jest.spyOn(store, 'get').mockResolvedValue(permissionCacheKey);
       const result = await repo.getPermissionsByUserId(bfProfile.id);
       expect(result).toEqual(permissionCacheKey);
+    });
+
+    it('Should returned a empty object permissions', async () => {
+      jest.spyOn(store, 'get').mockResolvedValue(null);
+      const result = await repo.getPermissionsByUserId(bfProfile.id);
+      expect(result).toEqual({ communities: {}, groups: {} });
     });
   });
 
