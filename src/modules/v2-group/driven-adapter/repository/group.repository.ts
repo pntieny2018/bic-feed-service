@@ -57,7 +57,7 @@ export class GroupRepository implements IGroupRepository {
       (groupId) => `${CACHE_KEYS.SHARE_GROUP}:${groupId}`
     );
     let groups = await this._store.mget(keys);
-    const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group?.id === id));
+    const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group.id === id));
     if (notFoundGroupIds.length > 0) {
       const response = await lastValueFrom(
         this._httpService.get(
