@@ -34,6 +34,7 @@ import { UserModuleV2 } from '../modules/v2-user/user.module';
 import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
+import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
 
 @Module({
   imports: [
@@ -50,12 +51,10 @@ import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.
     ReactionModule,
     ListenerModule,
     AuthorityModule,
-    RecentSearchModule,
     NotificationModule,
     ReactionCountModule,
     FeedGeneratorModule,
     FeedPublisherModule,
-    GiphyModule,
     ArticleModule,
     SeriesModule,
     CategoryModule,
@@ -70,6 +69,7 @@ import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.
     GroupModuleV2,
     UserModuleV2,
     RecentSearchModuleV2,
+    GiphyModuleV2,
     AdminModule,
     I18nGlobalModule,
   ],

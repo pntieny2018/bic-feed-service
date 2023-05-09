@@ -2,14 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { PAGING_DEFAULT_LIMIT } from '../../../../common/constants';
-import { GifType } from '../../giphy.util';
-
-export enum Rating {
-  g = 'g',
-  pg = 'pg',
-  pg13 = 'pg-13',
-  r = 'r',
-}
+import { GifType, GiphyRating } from '../../../v2-giphy/data-type';
 
 export class TrendingDto {
   @ApiProperty({
@@ -24,10 +17,10 @@ export class TrendingDto {
   @IsOptional()
   public limit?: number = 25;
 
-  @ApiProperty({ enum: Rating, default: Rating.g, required: false })
-  @IsEnum(Rating)
+  @ApiProperty({ enum: GiphyRating, default: GiphyRating.g, required: false })
+  @IsEnum(GiphyRating)
   @IsOptional()
-  public rating?: Rating = Rating.g;
+  public rating?: GiphyRating = GiphyRating.g;
 
   @ApiProperty({ enum: GifType, default: GifType.PREVIEW_GIF, required: false })
   @IsEnum(GifType)

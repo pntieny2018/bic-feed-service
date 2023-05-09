@@ -87,12 +87,10 @@ export interface IPost {
   mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
-  giphyId?: string;
   markedReadPost?: boolean;
   type: PostType;
   title?: string;
   summary?: string;
-  views: number;
   categories?: ICategory[];
   series?: IPost[];
   tags?: ITag[];
@@ -107,6 +105,9 @@ export interface IPost {
   status: PostStatus;
   publishedAt?: Date;
   errorLog?: any;
+  mediaJson?: any;
+  coverJson?: any;
+  videoIdProcessing?: string;
 }
 
 @Table({
@@ -169,13 +170,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public lang: string;
 
   @Column
-  public views: number;
-
-  @AllowNull(true)
-  @Column
-  public giphyId: string;
-
-  @Column
   public privacy: PostPrivacy;
 
   @Column({
@@ -197,6 +191,10 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @AllowNull(true)
   @Column
+  public videoIdProcessing?: string;
+
+  @AllowNull(true)
+  @Column
   public cover: string;
 
   @AllowNull(false)
@@ -212,6 +210,18 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
     type: DataTypes.JSONB,
   })
   public errorLog: any;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public coverJson: any;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mediaJson: any;
 
   @CreatedAt
   @Column

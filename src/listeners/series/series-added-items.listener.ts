@@ -48,7 +48,7 @@ export class SeriesAddedItemsListener {
   }
 
   private async _notifyAddedItem(event: SeriesAddedItemsEvent): Promise<void> {
-    const { seriesId, itemIds, actor } = event.payload;
+    const { seriesId, itemIds, actor, context } = event.payload;
 
     const series = await this._postService.getListWithGroupsByIds([seriesId], true);
     const items = await this._postService.getListWithGroupsByIds([itemIds[0]], true);
@@ -70,6 +70,7 @@ export class SeriesAddedItemsListener {
         meta: {
           series: {
             isSendToContentCreator: isSendToArticleCreator,
+            context,
           },
         },
       },

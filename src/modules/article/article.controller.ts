@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -30,6 +31,8 @@ import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
+import { ContentRequireGroupException } from '../v2-post/exception/content-require-group.exception';
+import { ArticleNoReadPermissionException } from '../v2-post/exception/article-no-read-permission.exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -122,12 +125,24 @@ export class ArticleController {
     type: ArticleResponseDto,
   })
   @Get('/:id')
-  public get(
+  public async get(
     @AuthUser(false) user: UserDto,
     @Param('id', ParseUUIDPipe) articleId: string,
     @Query(GetPostPipe) getArticleDto: GetArticleDto
   ): Promise<ArticleResponseDto> {
-    return this._articleAppService.get(user, articleId, getArticleDto);
+    try {
+      const article = await this._articleAppService.get(user, articleId, getArticleDto);
+      return article;
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentRequireGroupException:
+          throw new ForbiddenException(e);
+        case ArticleNoReadPermissionException:
+          throw new ForbiddenException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @ApiOperation({ summary: 'Create article' })
@@ -137,6 +152,9 @@ export class ArticleController {
   })
   @Post('/')
   @InjectUserToBody()
+  @ResponseMessages({
+    success: 'message.article.created_success',
+  })
   public async create(
     @AuthUser() user: UserDto,
     @Body() createArticleDto: CreateArticleDto
@@ -144,23 +162,13 @@ export class ArticleController {
     return await this._articleAppService.create(user, createArticleDto);
   }
 
-  @ApiOperation({ summary: 'Update view article' })
-  @ApiOkResponse({
-    type: Boolean,
-    description: 'Update view article successfully',
-  })
-  @Put('/:id/update-view')
-  public async updateView(
-    @AuthUser() user: UserDto,
-    @Param('id', ParseUUIDPipe) articleId: string
-  ): Promise<boolean> {
-    return this._articleAppService.updateView(user, articleId);
-  }
-
   @ApiOperation({ summary: 'Update article' })
   @ApiOkResponse({
     type: ArticleResponseDto,
     description: 'Update article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.updated_success',
   })
   @Put('/:id')
   @ResponseMessages({ success: 'Article updated' })
@@ -178,6 +186,9 @@ export class ArticleController {
     type: ArticleResponseDto,
     description: 'Publish article successfully',
   })
+  @ResponseMessages({
+    success: 'message.article.published_success',
+  })
   @Put('/:id/publish')
   public async publish(
     @AuthUser() user: UserDto,
@@ -190,6 +201,9 @@ export class ArticleController {
   @ApiOkResponse({
     type: ArticleResponseDto,
     description: 'Schedule article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.scheduled_success',
   })
   @Put('/:id/schedule')
   public async schedule(
@@ -204,6 +218,9 @@ export class ArticleController {
   @ApiOkResponse({
     type: Boolean,
     description: 'Delete article successfully',
+  })
+  @ResponseMessages({
+    success: 'message.article.deleted_success',
   })
   @Delete('/:id')
   public async delete(

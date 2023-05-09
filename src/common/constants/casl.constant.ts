@@ -3,8 +3,9 @@ export const PERMISSION_KEY = {
   CRUD_SERIES: 'crud_series',
   //ASSIGN_CONTENT_OWNER: 'assign_content_owner',
   //EDIT_POST_OF_INACTIVE_USER: 'edit_post_of_inactive_user',
-  EDIT_POST_SETTING: 'edit_post_setting',
+  EDIT_OWN_CONTENT_SETTING: 'edit_own_content_setting',
   //PUBLISH_UNPUBLISH_POST: 'publish_unpublish_post',
+  PIN_CONTENT: 'pin_content',
 };
 
 export const SUBJECT = {
@@ -29,8 +30,8 @@ export const permissionToCommonName = (permission: string): string => {
       return 'CRUD post';
     case PERMISSION_KEY.CRUD_SERIES:
       return 'CRUD series';
-    case PERMISSION_KEY.EDIT_POST_SETTING:
-      return 'post setting';
+    case PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING:
+      return 'own content setting';
     default:
       return 'undefined';
   }

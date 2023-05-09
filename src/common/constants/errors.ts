@@ -1,5 +1,5 @@
 export const ERRORS = {
-  tag: {
+  TAG: {
     TAG_NAME_EXCEED_MAX_LENGTH: 'tag.tag_name_exceed_max_length',
     TAG_DUPLICATE_NAME: 'tag.duplicate_name',
     TAG_NOT_FOUND: 'tag.not_found',
@@ -7,6 +7,23 @@ export const ERRORS = {
     TAG_NO_UPDATE_PERMISSION: 'tag.no_update_permission',
     TAG_NO_CREATE_PERMISSION: 'tag.no_create_permission',
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
+  },
+  CONTENT: {
+    AUDIENCE_NO_BELONG: 'content.audience_no_belong',
+    CONTENT_NOT_FOUND: 'content.not_found',
+    CONTENT_NO_PIN_PERMISSION: 'content.no_pin_permission',
+    CONTENT_PIN_NOT_FOUND: 'content.pin_not_found',
+    CONTENT_PIN_LACK: 'content.pin_lack',
+    CONTENT_GROUP_JOIN_REQUIRED: 'content.group_join_required',
+  },
+  ARTICLE: {
+    ARTICLE_NO_READ_PERMISSION: 'article.no_read_permission',
+  },
+  POST: {
+    POST_NO_READ_PERMISSION: 'post.no_read_permission',
+  },
+  SERIES: {
+    SERIES_NO_READ_PERMISSION: 'series.no_read_permission',
   },
   recent_search: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',

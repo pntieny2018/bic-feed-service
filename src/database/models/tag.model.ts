@@ -8,10 +8,15 @@ import {
   PrimaryKey,
   Table,
   UpdatedAt,
+  Sequelize,
 } from 'sequelize-typescript';
 import { Optional } from 'sequelize';
 import { IsUUID } from 'class-validator';
 import { v4 as uuid_v4 } from 'uuid';
+import { Literal } from 'sequelize/types/utils';
+import { getDatabaseConfig } from '../../config/database';
+import { PostModel } from './post.model';
+import { PostTagModel } from './post-tag.model';
 
 export interface ITag {
   id: string;
@@ -65,4 +70,32 @@ export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag 
   @UpdatedAt
   @Column
   public updatedAt: Date;
+
+  public static loadTotalUsed(): [Literal, string] {
+    const { schema } = getDatabaseConfig();
+
+    return [
+      Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM ${schema}.${PostModel.tableName} p
+            JOIN ${schema}.${PostTagModel.tableName} pt ON pt.post_id = p.id
+            WHERE pt.tag_id = "TagModel".id AND p.is_hidden = false AND p.status = 'PUBLISHED'
+          )`),
+      'totalUsed',
+    ];
+  }
+
+  public static loadAllAttributes(): Array<string | [Literal, string]> {
+    return [
+      'id',
+      'name',
+      'slug',
+      'groupId',
+      'createdAt',
+      'updatedAt',
+      'createdBy',
+      'updatedBy',
+      TagModel.loadTotalUsed(),
+    ];
+  }
 }

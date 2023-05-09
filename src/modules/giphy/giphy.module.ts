@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { GiphyController } from './giphy.controller';
 import { HttpModule } from '@nestjs/axios';
 import { GiphyService } from './giphy.service';
 
 @Module({
   imports: [HttpModule],
-  controllers: [GiphyController],
+  controllers: [],
   providers: [GiphyService],
   exports: [GiphyService],
 })
