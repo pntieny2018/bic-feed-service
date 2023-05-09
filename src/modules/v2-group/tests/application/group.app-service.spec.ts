@@ -42,7 +42,10 @@ describe('GroupApplicationService', () => {
     const groupEntityMocked = new GroupEntity(groupPropsMock);
     it('Should returned a GroupDto', async () => {
       jest.spyOn(repo, 'findOne').mockResolvedValue(groupEntityMocked);
+      groupAppService.findOne = jest.fn().mockImplementation(groupAppService.findOne);
       const result = await groupAppService.findOne(groupPropsMock.id);
+      expect(groupAppService.findOne).toBeCalledWith(groupPropsMock.id);
+      expect(groupAppService.findOne).toBeCalledTimes(1);
       expect(result).toEqual(groupMock.find((group) => group.id === groupPropsMock.id));
     });
   });
@@ -52,14 +55,25 @@ describe('GroupApplicationService', () => {
     const groupIds = groupListMock.map((item) => item.id);
     it('Should returned a list of GroupDto', async () => {
       jest.spyOn(repo, 'findAllByIds').mockResolvedValue(groupEntitiesMocked);
+      groupAppService.findAllByIds = jest.fn().mockImplementation(groupAppService.findAllByIds);
       const result = await groupAppService.findAllByIds(groupIds);
+      expect(groupAppService.findAllByIds).toBeCalledWith(groupIds);
+      expect(groupAppService.findAllByIds).toBeCalledTimes(1);
       expect(result).toEqual(groupMock.filter((group) => groupIds.includes(group.id)));
     });
   });
 
   describe('GroupService.getGroupIdAndChildIdsUserJoined', () => {
     it('Should returned be true', () => {
+      groupAppService.getGroupIdAndChildIdsUserJoined = jest
+        .fn()
+        .mockImplementation(groupAppService.getGroupIdAndChildIdsUserJoined);
       const result = groupAppService.getGroupIdAndChildIdsUserJoined(groupDto, userMocked.groups);
+      expect(groupAppService.getGroupIdAndChildIdsUserJoined).toBeCalledWith(
+        groupDto,
+        userMocked.groups
+      );
+      expect(groupAppService.getGroupIdAndChildIdsUserJoined).toBeCalledTimes(1);
       expect(result).toEqual([
         'e2487d02-b7be-4185-8245-f7596eba1437',
         '9b42ac09-e9b9-4899-9a72-3a0832693ea4',
@@ -71,7 +85,14 @@ describe('GroupApplicationService', () => {
   describe('GroupService.getGroupIdAndChildIdsUserJoined.OPEN', () => {
     const cloesedGroupMocked: GroupDto = { ...groupDto, privacy: GroupPrivacy.OPEN };
     it('Should returned be true', () => {
+      groupAppService.getGroupIdAndChildIdsUserJoined = jest
+        .fn()
+        .mockImplementation(groupAppService.getGroupIdAndChildIdsUserJoined);
       const result = groupAppService.getGroupIdAndChildIdsUserJoined(
+        cloesedGroupMocked,
+        userMocked.groups
+      );
+      expect(groupAppService.getGroupIdAndChildIdsUserJoined).toBeCalledWith(
         cloesedGroupMocked,
         userMocked.groups
       );
@@ -86,7 +107,11 @@ describe('GroupApplicationService', () => {
   describe('GroupService.getGroupAdminIds', () => {
     it('Should returned list adminIds', async () => {
       jest.spyOn(repo, 'getGroupAdminIds').mockResolvedValue([userMocked.id]);
+      groupAppService.getGroupAdminIds = jest
+        .fn()
+        .mockImplementation(groupAppService.getGroupAdminIds);
       const result = await groupAppService.getGroupAdminIds(userMocked, userMocked.groups);
+      expect(groupAppService.getGroupAdminIds).toBeCalledWith(userMocked, userMocked.groups);
       expect(result).toEqual([userMocked.id]);
     });
   });
@@ -110,7 +135,9 @@ describe('GroupApplicationService', () => {
     };
     it('Should returned list adminIds', async () => {
       jest.spyOn(repo, 'getAdminIds').mockResolvedValue(groupAdminsResponse.data);
+      groupAppService.getAdminIds = jest.fn().mockImplementation(groupAppService.getAdminIds);
       const result = await groupAppService.getAdminIds(groupMock.map((item) => item.id));
+      expect(groupAppService.getAdminIds).toBeCalledWith(groupMock.map((item) => item.id));
       expect(result).toEqual(groupAdminsResponse.data);
     });
   });
