@@ -1,13 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserApplicationService } from '../../application';
-import { IGroupRepository } from '../../../v2-group/domain/repositoty-interface/group.repository.interface';
+import {
+  FindUserOption,
+  IUserApplicationService,
+  UserApplicationService,
+  UserDto,
+} from '../../application';
 import { createMock } from '@golevelup/ts-jest';
-import { USER_REPOSITORY_TOKEN } from '../../domain/repositoty-interface/user.repository.interface';
+import {
+  IUserRepository,
+  USER_REPOSITORY_TOKEN,
+} from '../../domain/repositoty-interface/user.repository.interface';
 import { UserRepository } from '../../driven-adapter/repository/user.repository';
+import { UserEntity } from '../../domain/model/user';
+import { userDto, userDtoWithoutGroup, userMocked, userPermissions } from '../mock/user.dto.mock';
 
 describe('UserApplicationService', () => {
-  let groupAppService;
-  let repo: IGroupRepository;
+  let userAppService: IUserApplicationService;
+  let repo: IUserRepository;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -18,7 +27,7 @@ describe('UserApplicationService', () => {
         },
       ],
     }).compile();
-    groupAppService = module.get<UserApplicationService>(UserApplicationService);
+    userAppService = module.get<UserApplicationService>(UserApplicationService);
     repo = module.get(USER_REPOSITORY_TOKEN);
   });
 
@@ -26,17 +35,135 @@ describe('UserApplicationService', () => {
     jest.clearAllMocks();
   });
 
+  describe('UserApplicationService.findByUserName', () => {
+    it('Should returned a UserDto', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findByUserName').mockResolvedValue(userEntityMocked);
+      repo.findByUserName = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findByUserName(userMocked.username, {
+        withGroupJoined: false,
+      });
+      expect(repo.findByUserName).toBeCalledWith(userMocked.username);
+      expect(result).toEqual(userDtoWithoutGroup);
+    });
+
+    it('Should returned a UserDto with group', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findByUserName').mockResolvedValue(userEntityMocked);
+      repo.findByUserName = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findByUserName(userMocked.username, {
+        withGroupJoined: true,
+      });
+      expect(repo.findByUserName).toBeCalledWith(userMocked.username);
+      expect(result).toEqual(userDto);
+    });
+
+    it('Should returned null', async () => {
+      jest.spyOn(repo, 'findByUserName').mockResolvedValue(null);
+      repo.findByUserName = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findByUserName(userMocked.username);
+      expect(repo.findByUserName).toBeCalledWith(userMocked.username);
+      expect(result).toEqual(null);
+    });
+
+    it('Should returned null because property is empty', async () => {
+      const result = await userAppService.findByUserName('');
+      expect(result).toEqual(null);
+    });
+  });
+
   describe('UserApplicationService.findOne', () => {
-    const userMocked = {
-      id: '7251dac7-5088-4a33-b900-d1b058edaf98',
-      username: 'martine.baumbach',
-      avatar: 'https://bein.group/baumbach.png',
-      email: 'baumbach@tgm.vn',
-      fullname: 'Martine Baumbach',
-      groups: ['7251dac7-5088-4a33-b900-d1b058edaf99', '7251dac7-5088-4a33-b900-d1b058edaf90'],
-    };
-    it('Should', () => {
-      expect(1).toBe(1);
+    it('Should returned a UserDto without group', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
+      jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
+      repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findOne(userMocked.id, {
+        withGroupJoined: false,
+        withPermission: true,
+      });
+      expect(repo.findOne).toBeCalledWith(userMocked.id);
+      expect(result).toEqual(new UserDto({ ...userDtoWithoutGroup, permissions: userPermissions }));
+    });
+
+    it('Should returned a UserDto with group', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
+      jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
+      repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
+      repo.getPermissionsByUserId = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findOne(userMocked.id, {
+        withGroupJoined: true,
+        withPermission: true,
+      });
+      expect(repo.findOne).toBeCalledWith(userMocked.id);
+      expect(repo.getPermissionsByUserId).toBeCalledWith(userMocked.id);
+      expect(result).toEqual(new UserDto({ ...userDto, permissions: userPermissions }));
+    });
+
+    it('Should returned a UserDto without permission', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
+      repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
+      repo.getPermissionsByUserId = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findOne(userMocked.id, {
+        withGroupJoined: true,
+        withPermission: false,
+      } as FindUserOption);
+      expect(repo.findOne).toBeCalledWith(userMocked.id);
+      expect(result).toEqual(userDto);
+    });
+
+    it('Should returned null', async () => {
+      jest.spyOn(repo, 'findOne').mockResolvedValue(null);
+      const result = await userAppService.findOne(userMocked.id);
+      expect(result).toEqual(null);
+    });
+
+    it('Should returned null because propety is empty', async () => {
+      const result = await userAppService.findOne('');
+      expect(result).toEqual(null);
+    });
+  });
+
+  describe('UserApplicationService.findAllByIds', () => {
+    it('Should returned a list UserDto without group', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findAllByIds').mockResolvedValue([userEntityMocked]);
+      repo.findAllByIds = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findAllByIds([userMocked.id], {
+        withGroupJoined: false,
+      } as FindUserOption);
+      expect(repo.findAllByIds).toBeCalledWith([userMocked.id]);
+      expect(result).toEqual([userDtoWithoutGroup]);
+    });
+
+    it('Should returned a list UserDto with group', async () => {
+      const userEntityMocked = new UserEntity({ ...userMocked });
+      jest.spyOn(repo, 'findAllByIds').mockResolvedValue([userEntityMocked]);
+      repo.findAllByIds = jest.fn().mockResolvedValue(Promise.resolve());
+      const result = await userAppService.findAllByIds([userMocked.id], {
+        withGroupJoined: true,
+      } as FindUserOption);
+      expect(repo.findAllByIds).toBeCalledWith([userMocked.id]);
+      expect(result).toEqual([userDto]);
+    });
+
+    it('Should returned a empty list', async () => {
+      jest.spyOn(repo, 'findAllByIds').mockResolvedValue([]);
+      const result = await userAppService.findAllByIds([]);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('UserApplicationService.canCudTagInCommunityByUserId', () => {
+    it('Should returned a boolean', async () => {
+      jest.spyOn(repo, 'canCudTagInCommunityByUserId').mockResolvedValue(false);
+      const result = await userAppService.canCudTagInCommunityByUserId(
+        userMocked.id,
+        Object.keys(userPermissions.communities)[0]
+      );
+      expect(result).toEqual(false);
     });
   });
 });

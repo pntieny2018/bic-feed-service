@@ -37,21 +37,8 @@ export class UserRepository implements IUserRepository {
 
   public async findByUserName(username: string): Promise<UserEntity> {
     try {
-      const userCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
-      const user = await this._store.get<UserDataInCache>(userCacheKey);
-      let userWithGroups = null;
-      if (user) {
-        const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${user.id}`;
-        const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${user.id}`;
-        const [permissions, userGroups] = await this._store.mget([
-          permissionCacheKey,
-          userGroupCacheKey,
-        ]);
-        if (userGroups && permissions) {
-          userWithGroups = userGroups;
-          userWithGroups.permissions = permissions;
-        }
-      }
+      if (!username) return null;
+      let userWithGroups = await this.getUserDataFromCache(username);
       if (!userWithGroups) {
         const response = await lastValueFrom(
           this._httpService.get(
@@ -70,6 +57,25 @@ export class UserRepository implements IUserRepository {
       this._logger.debug(ex);
       return null;
     }
+  }
+
+  private async getUserDataFromCache(username: string): Promise<UserDataInCache> {
+    const userCacheKey = `${CACHE_KEYS.USER_PROFILE}:${username}`;
+    const user = await this._store.get<UserDataInCache>(userCacheKey);
+    let userWithGroups = null;
+    if (user) {
+      const permissionCacheKey = `${CACHE_KEYS.USER_PERMISSIONS}:${user.id}`;
+      const userGroupCacheKey = `${CACHE_KEYS.SHARE_USER}:${user.id}`;
+      const [permissions, userGroups] = await this._store.mget([
+        permissionCacheKey,
+        userGroupCacheKey,
+      ]);
+      if (userGroups && permissions) {
+        userWithGroups = userGroups;
+        userWithGroups.permissions = permissions;
+      }
+    }
+    return userWithGroups;
   }
 
   public async findOne(id: string): Promise<UserEntity> {
@@ -103,7 +109,7 @@ export class UserRepository implements IUserRepository {
     );
 
     let users = await this._store.mget(keys);
-    const notFoundUserIds = ids.filter((id) => !users.find((user) => user?.id === id));
+    const notFoundUserIds = ids.filter((id) => !users.find((user) => user.id === id));
     try {
       if (notFoundUserIds.length > 0) {
         const response = await lastValueFrom(
