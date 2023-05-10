@@ -43,7 +43,7 @@ describe('UserRepository', () => {
       expect(result).toEqual(new UserEntity({ ...cacheSU, permissions: permissionCacheKey }));
     });
 
-    it('Should returne null because property is empty', async () => {
+    it('Should return null because property is empty', async () => {
       const result = await repo.findByUserName('');
       expect(result).toEqual(null);
     });
