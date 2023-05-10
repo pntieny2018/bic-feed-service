@@ -75,12 +75,12 @@ export class TagModel extends Model<ITag, Optional<ITag, 'id'>> implements ITag 
     const { schema } = getDatabaseConfig();
 
     return [
-      Sequelize.literal(`(
+      Sequelize.literal(`CAST((
             SELECT COUNT(*)
             FROM ${schema}.${PostModel.tableName} p
             JOIN ${schema}.${PostTagModel.tableName} pt ON pt.post_id = p.id
             WHERE pt.tag_id = "TagModel".id AND p.is_hidden = false AND p.status = 'PUBLISHED'
-          )`),
+          ) AS INTEGER)`),
       'totalUsed',
     ];
   }
