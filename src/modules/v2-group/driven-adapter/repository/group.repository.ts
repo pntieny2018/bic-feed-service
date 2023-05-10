@@ -1,13 +1,13 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../../../../../libs/redis/src';
 import { ArrayHelper, AxiosHelper } from '../../../../common/helpers';
-import { AppHelper } from '../../../../common/helpers/app.helper';
 import { GroupEntity } from '../../domain/model/group';
 import { IGroupRepository } from '../../domain/repositoty-interface/group.repository.interface';
 import { GroupPrivacy } from '../../data-type';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { UserDto } from '../../../v2-user/application';
+import { CACHE_KEYS } from '../../../../common/constants/casl.constant';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 
 type GroupDataInCache = {
@@ -32,10 +32,8 @@ export class GroupRepository implements IGroupRepository {
 
   public constructor(private readonly _httpService: HttpService, private _store: RedisService) {}
 
-  private readonly _prefixRedis = `${AppHelper.getRedisEnv()}SG:`;
-
   public async findOne(groupId: string): Promise<GroupEntity> {
-    let group = await this._store.get<GroupDataInCache>(`${this._prefixRedis}${groupId}`);
+    let group = await this._store.get<GroupDataInCache>(`${CACHE_KEYS.SHARE_GROUP}:${groupId}`);
     if (group === null) {
       const response = await lastValueFrom(
         this._httpService.get(
@@ -56,7 +54,7 @@ export class GroupRepository implements IGroupRepository {
 
   public async findAllByIds(groupIds: string[]): Promise<GroupEntity[]> {
     const keys = [...new Set(ArrayHelper.arrayUnique(groupIds.map((id) => id)))].map(
-      (groupId) => `${this._prefixRedis + groupId}`
+      (groupId) => `${CACHE_KEYS.SHARE_GROUP}:${groupId}`
     );
     let groups = await this._store.mget(keys);
     const notFoundGroupIds = groupIds.filter((id) => !groups.find((group) => group.id === id));

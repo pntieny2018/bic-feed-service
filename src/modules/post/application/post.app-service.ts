@@ -199,7 +199,6 @@ export class PostAppService {
           newImageIds.includes(item.id)
         );
       }
-
       if (videoIdsNeedToAdd.length) {
         const videos = await this._externalService.getVideoIds(newVideoIds);
         if (videos.length < videoIdsNeedToAdd.length) {
@@ -247,7 +246,7 @@ export class PostAppService {
       ) {
         isEnableSetting = true;
       }
-      this._postService.checkContent(updatePostDto.content, updatePostDto.media);
+      // this._postService.checkContent(updatePostDto.content, updatePostDto.media); // disable because some case user only need to update audience
       const oldGroupIds = postBefore.audience.groups.map((group) => group.id);
       await this._authorityService.checkCanUpdatePost(user, oldGroupIds, false);
       this._authorityService.checkUserInSomeGroups(user, oldGroupIds);
