@@ -1,5 +1,5 @@
 import { StringHelper } from './string.helper';
-import { NodePlateContent } from '../types/node-image.type ';
+import { NodePlateContent } from '../types/node-image.type';
 
 export class ObjectHelper {
   public static omit<T extends object = object>(keys: string[], obj: T): Partial<T> {
