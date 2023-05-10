@@ -151,72 +151,84 @@ export class PostAppService {
     const { audience, setting, tags, series, media } = updatePostDto;
     const postBefore = await this._postService.get(postId, user, new GetPostDto());
     if (!postBefore) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    let imageIdsNeedToAdd = [],
+      videoIdsNeedToAdd = [],
+      fileIdsNeedToAdd = [],
+      videoIdsNeedToRemove = [],
+      fileIdsNeedToRemove = [];
 
-    const currentImageIds = postBefore.media.images.map((image) => image.id);
-    const currentVideoIds = postBefore.media.videos.map((video) => video.id);
-    const currentFileIds = postBefore.media.files.map((file) => file.id);
+    if (media) {
+      const currentImageIds = postBefore.media.images.map((image) => image.id);
+      const currentVideoIds = postBefore.media.videos.map((video) => video.id);
+      const currentFileIds = postBefore.media.files.map((file) => file.id);
 
-    const newImageIds = (media?.images || []).map((image) => image.id);
-    const newVideoIds = (media?.videos || []).map((video) => video.id);
-    const newFileIds = (media?.files || []).map((file) => file.id);
+      const newImageIds = (media?.images || []).map((image) => image.id);
+      const newVideoIds = (media?.videos || []).map((video) => video.id);
+      const newFileIds = (media?.files || []).map((file) => file.id);
 
-    const imageIdsNeedToAdd = newImageIds.filter((id) => !currentImageIds.includes(id));
-    const videoIdsNeedToAdd = newVideoIds.filter((id) => !currentVideoIds.includes(id));
-    const fileIdsNeedToAdd = newFileIds.filter((id) => !currentFileIds.includes(id));
+      imageIdsNeedToAdd = newImageIds.filter((id) => !currentImageIds.includes(id));
+      videoIdsNeedToAdd = newVideoIds.filter((id) => !currentVideoIds.includes(id));
+      fileIdsNeedToAdd = newFileIds.filter((id) => !currentFileIds.includes(id));
 
-    //const imageIdsNeedToRemove = currentImageIds.filter((id) => !newImageIds.includes(id));
-    const videoIdsNeedToRemove = currentVideoIds.filter((id) => !newVideoIds.includes(id));
-    const fileIdsNeedToRemove = currentFileIds.filter((id) => !newFileIds.includes(id));
+      /**
+       * Uncomment when upload service supports handle for images
+       * const imageIdsNeedToRemove = currentImageIds.filter((id) => !newImageIds.includes(id));
+       */
+      videoIdsNeedToRemove = currentVideoIds.filter((id) => !newVideoIds.includes(id));
+      fileIdsNeedToRemove = currentFileIds.filter((id) => !newFileIds.includes(id));
 
-    if (imageIdsNeedToAdd.length) {
-      const images = await this._externalService.getImageIds(newImageIds);
-      if (images.length < imageIdsNeedToAdd.length) {
-        throw new BadRequestException('Invalid image');
+      if (imageIdsNeedToAdd.length) {
+        const images = await this._externalService.getImageIds(newImageIds);
+        if (images.length < imageIdsNeedToAdd.length) {
+          throw new BadRequestException('Invalid image');
+        }
+        if (images.some((video) => video.createdBy !== user.id)) {
+          throw new BadRequestException('You must be owner this cover');
+        }
+        if (images.some((image) => image.createdBy !== user.id || image.status !== 'DONE')) {
+          throw new BadRequestException('Image is not ready to use');
+        }
+        if (images.some((image) => image.resource !== 'post:content')) {
+          throw new BadRequestException('Resource type is incorrect');
+        }
+        updatePostDto.media.images.forEach((image, index) => {
+          updatePostDto.media.images[index] = images.find((img) => img.id === image.id);
+        });
+      } else {
+        updatePostDto.media.images = postBefore.media.images.filter((item) =>
+          newImageIds.includes(item.id)
+        );
       }
-      if (images.some((video) => video.createdBy !== user.id)) {
-        throw new BadRequestException('You must be owner this cover');
-      }
-      if (images.some((image) => image.createdBy !== user.id || image.status !== 'DONE')) {
-        throw new BadRequestException('Image is not ready to use');
-      }
-      if (images.some((image) => image.resource !== 'post:content')) {
-        throw new BadRequestException('Resource type is incorrect');
-      }
-      updatePostDto.media.images = images;
-    } else {
-      updatePostDto.media.images = postBefore.media.images.filter((item) =>
-        newImageIds.includes(item.id)
-      );
-    }
 
-    if (videoIdsNeedToAdd.length) {
-      const videos = await this._externalService.getVideoIds(newVideoIds);
-      if (videos.length < videoIdsNeedToAdd.length) {
-        throw new BadRequestException('Invalid video');
+      if (videoIdsNeedToAdd.length) {
+        const videos = await this._externalService.getVideoIds(newVideoIds);
+        if (videos.length < videoIdsNeedToAdd.length) {
+          throw new BadRequestException('Invalid video');
+        }
+        if (videos.some((video) => video.createdBy !== user.id)) {
+          throw new BadRequestException('You must be owner this cover');
+        }
+        updatePostDto.media.videos = videos;
+      } else {
+        updatePostDto.media.videos = postBefore.media.videos.filter((item) =>
+          newVideoIds.includes(item.id)
+        );
       }
-      if (videos.some((video) => video.createdBy !== user.id)) {
-        throw new BadRequestException('You must be owner this cover');
-      }
-      updatePostDto.media.videos = videos;
-    } else {
-      updatePostDto.media.videos = postBefore.media.videos.filter((item) =>
-        newVideoIds.includes(item.id)
-      );
-    }
 
-    if (fileIdsNeedToAdd.length) {
-      const files = await this._externalService.getFileIds(newFileIds);
-      if (files.length < fileIdsNeedToAdd.length) {
-        throw new BadRequestException('Invalid file');
+      if (fileIdsNeedToAdd.length) {
+        const files = await this._externalService.getFileIds(newFileIds);
+        if (files.length < fileIdsNeedToAdd.length) {
+          throw new BadRequestException('Invalid file');
+        }
+        if (files.some((video) => video.createdBy !== user.id)) {
+          throw new BadRequestException('You must be owner this cover');
+        }
+        updatePostDto.media.files = files;
+      } else {
+        updatePostDto.media.files = postBefore.media.files.filter((item) =>
+          newFileIds.includes(item.id)
+        );
       }
-      if (files.some((video) => video.createdBy !== user.id)) {
-        throw new BadRequestException('You must be owner this cover');
-      }
-      updatePostDto.media.files = files;
-    } else {
-      updatePostDto.media.files = postBefore.media.files.filter((item) =>
-        newFileIds.includes(item.id)
-      );
     }
 
     await this._authorityService.checkPostOwner(postBefore, user.id);
