@@ -16,6 +16,7 @@ export type VideoProps = {
   name: string;
   createdAt: Date;
   mimeType: string;
+  size: number;
   width: number;
   height: number;
   thumbnails: VideoThumbnailProps[];

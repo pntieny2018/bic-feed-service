@@ -22,7 +22,7 @@ spec:
           image: beingroup/bein-stream-backend-api-sbx:$COMMIT_SHA1
           imagePullPolicy: Always
           command: ['sh', '-c']
-          args: ['npx sequelize-cli db:migrate && node dist/apps/api/src/main.js']
+          args: ['npx sequelize-cli db:migrate && node dist/src/main.js']
           ports:
             - containerPort: 3001
               name: http

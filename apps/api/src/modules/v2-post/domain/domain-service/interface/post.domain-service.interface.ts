@@ -2,20 +2,12 @@ import { PostEntity } from '../../model/post';
 
 export type PostCreateProps = {
   name: string;
-  groupId: string;
-  userId: string;
-};
-
-export type PostUpdateProps = {
-  name: string;
-  id: string;
+  groupIds: string;
   userId: string;
 };
 
 export interface IPostDomainService {
   createDraftPost(data: PostCreateProps): Promise<PostEntity>;
-
-  updatePost(tag: PostEntity, data: PostUpdateProps): Promise<PostEntity>;
 
   deletePost(id: string): Promise<void>;
 }

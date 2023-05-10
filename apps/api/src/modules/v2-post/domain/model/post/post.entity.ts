@@ -7,7 +7,7 @@ import { TagEntity } from '../tag';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
 import { LinkPreviewEntity } from '../link-preview';
 import { PostSettingAttributes } from './attributes/post-setting.entity';
-import { PostPrivacy } from '../../../data-type';
+import { PostPrivacy, PostType } from '../../../data-type';
 
 export type PostProps = {
   id: string;
@@ -16,16 +16,13 @@ export type PostProps = {
     files: FileEntity[];
     images: ImageEntity[];
   }[];
-  aggregation: {
-    commentsCount: number;
-    totalUsersSeen: number;
-  };
   isReported: boolean;
   isHidden: boolean;
   createdBy: string;
   updatedBy: string;
   privacy: PostPrivacy;
   status: PostStatus;
+  type: PostType;
   setting: PostSettingAttributes;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +35,10 @@ export type PostProps = {
   linkPreview?: LinkPreviewEntity;
   series?: any;
   tags?: TagEntity[];
+  aggregation?: {
+    commentsCount: number;
+    totalUsersSeen: number;
+  };
 };
 
 export class PostEntity extends DomainAggregateRoot<PostProps> {

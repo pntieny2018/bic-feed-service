@@ -1,6 +1,6 @@
 export type PostSettingAttributes = {
   isImportant: boolean;
-  importantExpiredAt: string;
+  importantExpiredAt: Date;
   canReact: boolean;
   canShare: boolean;
   canComment: boolean;

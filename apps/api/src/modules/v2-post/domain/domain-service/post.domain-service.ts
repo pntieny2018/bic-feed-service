@@ -2,11 +2,18 @@ import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory/interface';
 import { TagEntity } from '../model/tag';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
-import { ITagDomainService, TagCreateProps, TagUpdateProps } from './interface';
+import {
+  ITagRepository,
+  TAG_REPOSITORY_TOKEN,
+} from '../repositoty-interface/tag.repository.interface';
+import {
+  ITagDomainService,
+  TagCreateProps,
+  TagUpdateProps,
+} from './interface/tag.domain-service.interface';
 
-export class TagDomainService implements ITagDomainService {
-  private readonly _logger = new Logger(TagDomainService.name);
+export class PostDomainService implements ITagDomainService {
+  private readonly _logger = new Logger(PostDomainService.name);
 
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;

@@ -6,7 +6,7 @@ export type CreatePostDraftProps = {
 };
 
 export interface IPostFactory {
-  createDraft(): PostEntity;
+  createDraft(props: CreatePostDraftProps): PostEntity;
 
   reconstitute(props: PostProps): PostEntity;
 }

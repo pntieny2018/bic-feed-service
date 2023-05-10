@@ -1,12 +1,12 @@
 import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { CreatePostDraftProps } from './interface/post.factory.interface';
+import { CreatePostDraftProps, IPostFactory } from './interface';
 import { PostEntity, PostProps } from '../model/post';
 import { PostStatus } from '../../data-type/post-status.enum';
-import { PostPrivacy } from '../../data-type';
+import { PostPrivacy, PostType } from '../../data-type';
 
-export class PostFactory {
+export class PostFactory implements IPostFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
   public createDraft(options: CreatePostDraftProps): PostEntity {
@@ -22,6 +22,7 @@ export class PostFactory {
         commentsCount: 0,
         totalUsersSeen: 1,
       },
+      type: PostType.POST,
       status: PostStatus.DRAFT,
       media: [],
       isHidden: false,
