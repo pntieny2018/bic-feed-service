@@ -33,11 +33,11 @@ RUN yarn --production
 
 RUN yarn add @nestjs/swagger swagger-ui-express typescript ts-node  source-map-support
 
-COPY --from=development /usr/src/app/dist ./dist
+COPY --from=development /usr/src/app/dist/apps/api ./dist
 
 COPY --from=development /usr/src/app/sequelize ./sequelize
 
 COPY --from=development /usr/src/app/.sequelizerc ./.sequelizerc
 
 
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/apps/api/src/main.js"]
