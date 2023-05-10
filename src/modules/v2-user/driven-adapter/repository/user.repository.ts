@@ -109,7 +109,7 @@ export class UserRepository implements IUserRepository {
     );
 
     let users = await this._store.mget(keys);
-    const notFoundUserIds = ids.filter((id) => !users.find((user) => user.id === id));
+    const notFoundUserIds = ids.filter((id) => !users.find((user) => user?.id === id));
     try {
       if (notFoundUserIds.length > 0) {
         const response = await lastValueFrom(
