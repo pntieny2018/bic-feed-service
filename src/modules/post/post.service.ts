@@ -1352,9 +1352,10 @@ export class PostService {
       limit: number;
       isImportant?: boolean;
       type?: PostType;
+      createdBy?: string;
     }
   ): Promise<string[]> {
-    const { offset, limit, isImportant, type } = filters;
+    const { offset, limit, isImportant, type, createdBy } = filters;
     const conditions = {
       status: PostStatus.PUBLISHED,
       isHidden: false,
@@ -1369,6 +1370,9 @@ export class PostService {
     if (isImportant) {
       conditions['isImportant'] = true;
       order.push([this.sequelizeConnection.literal('"markedReadPost" ASC')]);
+    }
+    if (createdBy) {
+      conditions['createdBy'] = createdBy;
     }
     order.push(['createdAt', 'desc']);
 
