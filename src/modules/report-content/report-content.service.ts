@@ -36,13 +36,13 @@ import { ArticleService } from '../article/article.service';
 import { Sequelize } from 'sequelize-typescript';
 import { CommentResponseDto } from '../comment/dto/response';
 import { IUserApplicationService, USER_APPLICATION_TOKEN, UserDto } from '../v2-user/application';
-import { AppHelper } from '../../common/helpers/app.helper';
 import { RedisService } from '@app/redis';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
   IGroupApplicationService,
 } from '../v2-group/application';
+import { CACHE_KEYS } from 'src/common/constants/casl.constant';
 
 @Injectable()
 export class ReportContentService {
@@ -862,7 +862,7 @@ export class ReportContentService {
   }
 
   public async getReasonType(): Promise<{ id: string; description: string }[]> {
-    const raws: unknown[] = await this._store.get(`${AppHelper.getRedisEnv()}report_reason_type`);
+    const raws: unknown[] = await this._store.get(CACHE_KEYS.REPORT_REASON_TYPE);
     if (!raws || !raws?.length) {
       //FIX ME : it was blocked by group service
       return [

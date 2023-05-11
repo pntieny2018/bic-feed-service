@@ -14,7 +14,7 @@ import {
   getRecentSearchesDto,
   mockedRecentSearchList,
 } from './mocks/recent-search-list.mock';
-import { userMock } from '../../v2-user/test/mock/user.dto.mock';
+import { userMocked } from '../../v2-user/test/mock/user.dto.mock';
 
 describe('RecentSearchController', () => {
   let recentSearchController: RecentSearchController;
@@ -65,14 +65,17 @@ describe('RecentSearchController', () => {
   describe('Create recent search', () => {
     it('Create recent search successfully', async () => {
       recentSearchService.create = jest.fn().mockResolvedValue(createRecentSearchDto);
-      const rsp = await recentSearchController.createRecentSearch(userMock, createRecentSearchDto);
+      const rsp = await recentSearchController.createRecentSearch(
+        userMocked,
+        createRecentSearchDto
+      );
       expect(rsp).toEqual(createRecentSearchDto);
     });
 
     it(`Can catch exception`, async () => {
       recentSearchModel.findOne.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchController.createRecentSearch(userMock, createRecentSearchDto);
+        await recentSearchController.createRecentSearch(userMocked, createRecentSearchDto);
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -83,7 +86,7 @@ describe('RecentSearchController', () => {
   describe('Delete recent search', () => {
     it('Delete recent search successfully', async () => {
       const rsp = await recentSearchController.deleteRecentSearch(
-        userMock,
+        userMocked,
         mockedRecentSearchList[0].id
       );
       expect(rsp).toEqual(true);
@@ -92,7 +95,7 @@ describe('RecentSearchController', () => {
     it(`Can catch exception`, async () => {
       recentSearchModel.destroy.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchController.deleteRecentSearch(userMock, mockedRecentSearchList[0].id);
+        await recentSearchController.deleteRecentSearch(userMocked, mockedRecentSearchList[0].id);
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -102,14 +105,17 @@ describe('RecentSearchController', () => {
 
   describe('Clean recent search', () => {
     it('Clean recent search successfully', async () => {
-      const rsp = await recentSearchController.cleanRecentSearches(userMock, cleanRecentSearchDto);
+      const rsp = await recentSearchController.cleanRecentSearches(
+        userMocked,
+        cleanRecentSearchDto
+      );
       expect(rsp).toEqual(true);
       expect(recentSearchModel.destroy).toBeCalledTimes(1);
     });
     it(`Can catch exception`, async () => {
       recentSearchModel.destroy.mockRejectedValue(new Error('any error'));
       try {
-        await recentSearchController.cleanRecentSearches(userMock, cleanRecentSearchDto);
+        await recentSearchController.cleanRecentSearches(userMocked, cleanRecentSearchDto);
       } catch (e) {
         expect(sentryService.captureException).toBeCalledTimes(1);
         expect(e).toBeInstanceOf(HttpException);
@@ -120,7 +126,7 @@ describe('RecentSearchController', () => {
   describe('Get recent search', () => {
     it('Should successfully', async () => {
       recentSearchModel.findAll.mockResolvedValue(mockedRecentSearchList);
-      const rsp = await recentSearchController.getRecentSearches(userMock, getRecentSearchesDto);
+      const rsp = await recentSearchController.getRecentSearches(userMocked, getRecentSearchesDto);
       expect(rsp).toEqual(
         plainToClass(
           RecentSearchesDto,
