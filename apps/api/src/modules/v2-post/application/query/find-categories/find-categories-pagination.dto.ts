@@ -11,4 +11,7 @@ export class FindCategoriesPaginationDto {
     updatedAt?: Date;
   }[];
   public readonly total: number;
+  public constructor(data: Partial<FindCategoriesPaginationDto>) {
+    Object.assign(this, data);
+  }
 }

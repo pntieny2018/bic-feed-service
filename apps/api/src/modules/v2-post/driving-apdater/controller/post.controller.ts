@@ -10,8 +10,7 @@ import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
 } from '../../domain/exception';
-import { CreateDraftPostRequestDto } from '../dto/request/tag';
-import { TagResponseDto } from '../dto/response';
+import { CreateDraftPostRequestDto } from '../dto/request';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
@@ -30,9 +29,9 @@ export class PostController {
 
   private _classTransformer = new ClassTransformer();
 
-  @ApiOperation({ summary: 'Create draft post tag' })
+  @ApiOperation({ summary: 'Create draft post' })
   @ApiOkResponse({
-    type: TagResponseDto,
+    type: CreateDraftPostDto,
     description: 'Create draft post successfully',
   })
   @ResponseMessages({
@@ -40,14 +39,13 @@ export class PostController {
   })
   @Post('/')
   public async create(
-    @AuthUser() user: UserDto,
+    @AuthUser() authUser: UserDto,
     @Body() createDraftPostRequestDto: CreateDraftPostRequestDto
-  ): Promise<any> {
+  ): Promise<CreateDraftPostDto> {
     const { audience } = createDraftPostRequestDto;
-    const userId = user.id;
     try {
       const data = await this._commandBus.execute<CreateDraftPostCommand, CreateDraftPostDto>(
-        new CreateDraftPostCommand({ groupIds: audience.groupIds, userId })
+        new CreateDraftPostCommand({ groupIds: audience.groupIds, authUser })
       );
 
       return data;

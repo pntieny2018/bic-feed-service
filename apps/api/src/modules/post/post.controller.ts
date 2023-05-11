@@ -99,23 +99,23 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Create post' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-    description: 'Create post successfully',
-  })
-  @ResponseMessages({
-    success: 'message.post.created_success',
-  })
-  @Post('/')
-  @ResponseMessages({ success: 'Post has been published successfully' })
-  @InjectUserToBody()
-  public async create(
-    @AuthUser() user: UserDto,
-    @Body() createPostDto: CreatePostDto
-  ): Promise<any> {
-    return this._postAppService.createPost(user, createPostDto);
-  }
+  // @ApiOperation({ summary: 'Create post' })
+  // @ApiOkResponse({
+  //   type: PostResponseDto,
+  //   description: 'Create post successfully',
+  // })
+  // @ResponseMessages({
+  //   success: 'message.post.created_success',
+  // })
+  // @Post('/')
+  // @ResponseMessages({ success: 'Post has been published successfully' })
+  // @InjectUserToBody()
+  // public async create(
+  //   @AuthUser() user: UserDto,
+  //   @Body() createPostDto: CreatePostDto
+  // ): Promise<any> {
+  //   return this._postAppService.createPost(user, createPostDto);
+  // }
 
   @ApiOperation({ summary: 'Update post' })
   @ApiOkResponse({
@@ -200,6 +200,9 @@ export class PostController {
   @ApiOkResponse({
     type: Boolean,
   })
+  @ResponseMessages({
+    success: 'message.post.saved_success',
+  })
   @Post('/:postId/save')
   public async save(
     @AuthUser() user: UserDto,
@@ -211,6 +214,9 @@ export class PostController {
   @ApiOperation({ summary: 'unsave post' })
   @ApiOkResponse({
     type: Boolean,
+  })
+  @ResponseMessages({
+    success: 'message.post.unsaved_success',
   })
   @Delete('/:postId/unsave')
   public async unSave(

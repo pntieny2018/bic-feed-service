@@ -1,14 +1,12 @@
-import { CreateTagHandler } from '../application/command/create-tag/create-tag.handler';
-import { DeleteTagHandler } from '../application/command/delete-tag/delete-tag.handler';
-import { UpdateTagHandler } from '../application/command/update-tag/update-tag.handler';
-import { FindTagsPaginationHandler } from '../application/query/find-tags/find-tags-pagination.handler';
-import { TAG_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
-import { TAG_FACTORY_TOKEN } from '../domain/factory/interface';
+import { POST_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
+import { POST_FACTORY_TOKEN } from '../domain/factory/interface';
 import { CONTENT_VALIDATOR_TOKEN } from '../domain/validator/interface/content.validator.interface';
 import { ContentValidator } from '../domain/validator/content.validator';
-import { POST_FACTORY_TOKEN } from '../domain/factory/interface';
-import { PostFactory, TagFactory } from '../domain/factory';
-import { TagDomainService } from '../domain/domain-service';
+import { PostFactory } from '../domain/factory';
+import { PostDomainService } from '../domain/domain-service/post.domain-service';
+import { POST_REPOSITORY_TOKEN } from '../domain/repositoty-interface/post.repository.interface';
+import { PostRepository } from '../driven-adapter/repository/post.repository';
+import { CreateDraftPostHandler } from '../application/command/create-draft-post/create-draft-post.handler';
 
 export const postProvider = [
   {
@@ -20,16 +18,13 @@ export const postProvider = [
     useClass: PostFactory,
   },
   {
-    provide: TAG_DOMAIN_SERVICE_TOKEN,
-    useClass: TagDomainService,
+    provide: POST_DOMAIN_SERVICE_TOKEN,
+    useClass: PostDomainService,
   },
   {
-    provide: TAG_FACTORY_TOKEN,
-    useClass: TagFactory,
+    provide: POST_REPOSITORY_TOKEN,
+    useClass: PostRepository,
   },
   /** Application */
-  CreateTagHandler,
-  UpdateTagHandler,
-  DeleteTagHandler,
-  FindTagsPaginationHandler,
+  CreateDraftPostHandler,
 ];

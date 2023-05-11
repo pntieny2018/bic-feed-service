@@ -11,4 +11,8 @@ export class FindTagsPaginationDto implements IQueryResult {
     groups: Omit<GroupDto, 'child'>[];
   }[];
   public readonly total: number;
+
+  public constructor(data: Partial<FindTagsPaginationDto>) {
+    Object.assign(this, data);
+  }
 }

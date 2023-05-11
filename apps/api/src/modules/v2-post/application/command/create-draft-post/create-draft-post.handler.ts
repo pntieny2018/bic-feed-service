@@ -30,13 +30,12 @@ export class CreateDraftPostHandler
   private readonly _contentValidator: IContentValidator;
 
   public async execute(command: CreateDraftPostCommand): Promise<CreateDraftPostDto> {
-    const { groupIds, userId } = command.payload;
-    const authUser = await this._userAppService.findOne(userId);
+    const { groupIds, authUser } = command.payload;
     await this._contentValidator.checkCanCRUDContent(authUser, groupIds);
 
     const tagEntity = await this._postDomainService.createDraftPost({
       groupIds,
-      userId,
+      userId: authUser.id,
     });
 
     return new CreateDraftPostDto({

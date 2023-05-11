@@ -3,12 +3,12 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { APP_VERSION } from '../../../../common/constants';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ClassTransformer } from 'class-transformer';
-import { CategoryResponseDto } from '../dto/response';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
 import { GetCategoryDto } from '../../../category/dto/requests/get-category.dto';
 import { PageDto } from '../../../../common/dto';
 import { FindCategoriesPaginationQuery } from '../../application/query/find-categories/find-categories-pagination.query';
+import { FindCategoriesPaginationDto } from '../../application/query/find-categories/find-categories-pagination.dto';
 
 @ApiTags('Category')
 @ApiSecurity('authorization')
@@ -26,26 +26,20 @@ export class CategoryController {
 
   @ApiOperation({ summary: 'Get categories' })
   @ApiOkResponse({
-    type: CategoryResponseDto,
+    type: FindCategoriesPaginationDto,
     description: 'Get category successfully',
   })
   @Get('/')
   public async get(
     @AuthUser() _user: UserDto,
     @Query() getCategoryDto: GetCategoryDto
-  ): Promise<PageDto<CategoryResponseDto>> {
+  ): Promise<PageDto<FindCategoriesPaginationDto>> {
     const { name, level, isCreatedByMe, offset, limit } = getCategoryDto;
     const { rows, total } = await this._queryBus.execute(
       new FindCategoriesPaginationQuery({ name, level, isCreatedByMe, offset, limit })
     );
 
-    const categories = rows.map((row) =>
-      this._classTransformer.plainToInstance(CategoryResponseDto, row, {
-        excludeExtraneousValues: true,
-      })
-    );
-
-    return new PageDto<CategoryResponseDto>(categories, {
+    return new PageDto<FindCategoriesPaginationDto>(rows, {
       total,
       hasNextPage: total > limit + offset,
       limit: getCategoryDto.limit,
