@@ -31,12 +31,14 @@ import {
   TagNotFoundException,
   TagUsedException,
 } from '../../domain/exception';
-import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
-import { TagResponseDto } from '../dto/response';
-import { TagNoCreatePermissionException } from '../../domain/exception/tag-no-create-permission.exception';
-import { TagNoUpdatePermissionException } from '../../domain/exception/tag-no-update-permission.exception';
-import { TagNoDeletePermissionException } from '../../domain/exception/tag-no-delete-permission.exception';
+import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request';
+import {
+  TagNoCreatePermissionException,
+  TagNoUpdatePermissionException,
+  TagNoDeletePermissionException,
+} from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
+import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -51,24 +53,17 @@ export class TagController {
   ) {}
   private _classTransformer = new ClassTransformer();
   @ApiOperation({ summary: 'Get tags' })
-  @ApiOkResponse({ type: TagResponseDto })
   @Get('/')
   public async get(
     @AuthUser() _user: UserDto,
     @Query() getTagDto: GetTagRequestDto
-  ): Promise<PageDto<TagResponseDto>> {
+  ): Promise<PageDto<FindTagsPaginationDto>> {
     const { groupIds, name, offset, limit } = getTagDto;
     const { rows, total } = await this._queryBus.execute(
       new FindTagsPaginationQuery({ name, groupIds, offset, limit })
     );
 
-    const tags = rows.map((row) =>
-      this._classTransformer.plainToInstance(TagResponseDto, row, {
-        excludeExtraneousValues: true,
-      })
-    );
-
-    return new PageDto<TagResponseDto>(tags, {
+    return new PageDto<FindTagsPaginationDto>(rows, {
       total,
       limit: getTagDto.limit,
       offset: getTagDto.offset,
@@ -77,7 +72,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Create new tag' })
   @ApiOkResponse({
-    type: TagResponseDto,
+    type: CreateTagDto,
     description: 'Create tag successfully',
   })
   @ResponseMessages({
@@ -87,18 +82,15 @@ export class TagController {
   public async create(
     @AuthUser() user: UserDto,
     @Body() createTagDto: CreateTagRequestDto
-  ): Promise<TagResponseDto> {
+  ): Promise<CreateTagDto> {
     const { groupId, name } = createTagDto;
     const userId = user.id;
     try {
       const tag = await this._commandBus.execute<CreateTagCommand, CreateTagDto>(
         new CreateTagCommand({ groupId, name, userId })
       );
-      const a = this._classTransformer.plainToInstance(TagResponseDto, tag, {
-        excludeExtraneousValues: true,
-      });
 
-      return a;
+      return tag;
     } catch (e) {
       switch (e.constructor) {
         case TagNotFoundException:
@@ -117,7 +109,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Update tag' })
   @ApiOkResponse({
-    type: TagResponseDto,
+    type: UpdateTagDto,
     description: 'Update tag successfully',
   })
   @ResponseMessages({ success: 'message.tag.updated_success' })
@@ -126,15 +118,13 @@ export class TagController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagRequestDto
-  ): Promise<TagResponseDto> {
+  ): Promise<UpdateTagDto> {
     const { name } = updateTagDto;
     try {
       const tag = await this._commandBus.execute<UpdateTagCommand, UpdateTagDto>(
         new UpdateTagCommand({ id: tagId, name, userId: user.id })
       );
-      return this._classTransformer.plainToInstance(TagResponseDto, tag, {
-        excludeExtraneousValues: true,
-      });
+      return tag;
     } catch (e) {
       switch (e.constructor) {
         case TagNotFoundException:

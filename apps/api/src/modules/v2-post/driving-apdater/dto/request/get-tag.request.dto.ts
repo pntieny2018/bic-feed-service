@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsOptional, IsUUID } from 'class-validator';
-import { PageOptionsDto } from '../../../../../../common/dto';
+import { PageOptionsDto } from '../../../../../common/dto';
 
 export class GetTagRequestDto extends PageOptionsDto {
   @ApiProperty({ type: String, required: false })

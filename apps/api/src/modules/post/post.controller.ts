@@ -23,11 +23,13 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
-import { ContentRequireGroupException } from '../v2-post/domain/exception/content-require-group.exception';
 import { Request } from 'express';
 import { MediaStatus } from '../../database/models/media.model';
-import { PostNoReadPermissionException } from '../v2-post/domain/exception/post-no-read-permission.exception';
 import { ArticleResponseDto } from '../article/dto/responses';
+import {
+  ContentRequireGroupException,
+  ContentNoCRUDPermissionException,
+} from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -89,7 +91,7 @@ export class PostController {
       switch (e.constructor) {
         case ContentRequireGroupException:
           throw new ForbiddenException(e);
-        case PostNoReadPermissionException:
+        case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
         default:
           throw e;
@@ -97,23 +99,23 @@ export class PostController {
     }
   }
 
-  @ApiOperation({ summary: 'Create post' })
-  @ApiOkResponse({
-    type: PostResponseDto,
-    description: 'Create post successfully',
-  })
-  @ResponseMessages({
-    success: 'message.post.created_success',
-  })
-  @Post('/')
-  @ResponseMessages({ success: 'Post has been published successfully' })
-  @InjectUserToBody()
-  public async create(
-    @AuthUser() user: UserDto,
-    @Body() createPostDto: CreatePostDto
-  ): Promise<any> {
-    return this._postAppService.createPost(user, createPostDto);
-  }
+  // @ApiOperation({ summary: 'Create post' })
+  // @ApiOkResponse({
+  //   type: PostResponseDto,
+  //   description: 'Create post successfully',
+  // })
+  // @ResponseMessages({
+  //   success: 'message.post.created_success',
+  // })
+  // @Post('/')
+  // @ResponseMessages({ success: 'Post has been published successfully' })
+  // @InjectUserToBody()
+  // public async create(
+  //   @AuthUser() user: UserDto,
+  //   @Body() createPostDto: CreatePostDto
+  // ): Promise<any> {
+  //   return this._postAppService.createPost(user, createPostDto);
+  // }
 
   @ApiOperation({ summary: 'Update post' })
   @ApiOkResponse({
@@ -198,6 +200,9 @@ export class PostController {
   @ApiOkResponse({
     type: Boolean,
   })
+  @ResponseMessages({
+    success: 'message.post.saved_success',
+  })
   @Post('/:postId/save')
   public async save(
     @AuthUser() user: UserDto,
@@ -209,6 +214,9 @@ export class PostController {
   @ApiOperation({ summary: 'unsave post' })
   @ApiOkResponse({
     type: Boolean,
+  })
+  @ResponseMessages({
+    success: 'message.post.unsaved_success',
   })
   @Delete('/:postId/unsave')
   public async unSave(

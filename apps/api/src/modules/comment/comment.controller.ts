@@ -129,9 +129,6 @@ export class CommentController {
     description: 'Update comment successfully',
   })
   @ResponseMessages({
-    success: 'Update comment successfully',
-  })
-  @ResponseMessages({
     success: 'message.comment.updated_success',
   })
   @Put('/:commentId')

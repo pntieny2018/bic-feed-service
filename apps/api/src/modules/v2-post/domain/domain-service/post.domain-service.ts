@@ -1,64 +1,40 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ITagFactory, TAG_FACTORY_TOKEN } from '../factory/interface';
-import { TagEntity } from '../model/tag';
+import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
+import { IPostDomainService, PostCreateProps } from './interface';
+import { PostEntity } from '../model/post';
 import {
-  ITagRepository,
-  TAG_REPOSITORY_TOKEN,
-} from '../repositoty-interface/tag.repository.interface';
-import {
-  ITagDomainService,
-  TagCreateProps,
-  TagUpdateProps,
-} from './interface/tag.domain-service.interface';
+  IPostRepository,
+  POST_REPOSITORY_TOKEN,
+} from '../repositoty-interface/post.repository.interface';
 
-export class PostDomainService implements ITagDomainService {
+export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
 
-  @Inject(TAG_REPOSITORY_TOKEN)
-  private readonly _tagRepository: ITagRepository;
-  @Inject(TAG_FACTORY_TOKEN)
-  private readonly _tagFactory: ITagFactory;
+  @Inject(POST_REPOSITORY_TOKEN)
+  private readonly _postRepository: IPostRepository;
+  @Inject(POST_FACTORY_TOKEN)
+  private readonly _postFactory: IPostFactory;
 
-  public async createTag(input: TagCreateProps): Promise<TagEntity> {
-    const { name, groupId, userId } = input;
-    const tagEntity = this._tagFactory.create({
-      name,
-      groupId,
+  public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
+    const { groupIds, userId } = input;
+    const postEntity = this._postFactory.createDraft({
+      groupIds,
       userId,
     });
     try {
-      await this._tagRepository.create(tagEntity);
-      tagEntity.commit();
+      await this._postRepository.createPost(postEntity);
+      postEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-    return tagEntity;
+    return postEntity;
   }
 
-  public async updateTag(tag: TagEntity, input: TagUpdateProps): Promise<TagEntity> {
-    const { name, userId } = input;
-    tag.update({
-      name,
-      updatedBy: userId,
-    });
-
-    if (tag.isChanged()) {
-      try {
-        await this._tagRepository.update(tag);
-        tag.commit();
-      } catch (e) {
-        this._logger.error(JSON.stringify(e?.stack));
-        throw new DatabaseException();
-      }
-    }
-    return tag;
-  }
-
-  public async deleteTag(tagId: string): Promise<void> {
+  public async delete(id: string): Promise<void> {
     try {
-      await this._tagRepository.delete(tagId);
+      await this._postRepository.delete(id);
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();

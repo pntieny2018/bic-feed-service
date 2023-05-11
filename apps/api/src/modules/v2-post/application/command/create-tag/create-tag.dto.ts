@@ -4,4 +4,8 @@ export class CreateTagDto {
   public name: string;
   public slug: string;
   public totalUsed: number;
+
+  public constructor(data: Partial<CreateTagDto>) {
+    Object.assign(this, data);
+  }
 }

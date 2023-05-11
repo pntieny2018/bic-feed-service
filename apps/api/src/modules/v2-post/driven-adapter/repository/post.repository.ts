@@ -14,7 +14,7 @@ export class PostRepository implements IPostRepository {
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async createDraftPost(data: PostEntity): Promise<void> {
+  public async createPost(data: PostEntity): Promise<void> {
     await this._postModel.create({
       id: data.get('id'),
       content: data.get('content'),

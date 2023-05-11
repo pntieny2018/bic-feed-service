@@ -36,7 +36,7 @@ export class FindTagsPaginationHandler
     });
 
     const groups = await this._getGroupsInfo(rootGroupIds);
-    const result = {
+    return new FindTagsPaginationDto({
       rows: rows.map((row) => ({
         id: row.get('id'),
         name: row.get('name'),
@@ -46,8 +46,7 @@ export class FindTagsPaginationHandler
         groups: groups[row.get('groupId')],
       })),
       total,
-    };
-    return result;
+    });
   }
 
   private async _getGroupsInfo(
