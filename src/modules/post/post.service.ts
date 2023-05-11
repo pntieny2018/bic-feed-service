@@ -671,6 +671,7 @@ export class PostService {
 
       if (
         post.status === PostStatus.PUBLISHED &&
+        media &&
         media.videos?.length > 0 &&
         media.videos[0].status !== MediaStatus.COMPLETED
       ) {
