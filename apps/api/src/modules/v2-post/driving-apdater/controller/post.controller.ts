@@ -18,7 +18,7 @@ import { CreateDraftPostDto } from '../../application/command/create-draft-post/
 @ApiTags('Posts')
 @ApiSecurity('authorization')
 @Controller({
-  version: APP_VERSION,
+  version: '2',
   path: 'posts',
 })
 export class PostController {
