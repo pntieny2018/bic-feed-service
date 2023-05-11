@@ -1,0 +1,45 @@
+{
+  "tag": {
+    "duplicate_name": "Name is existed",
+    "not_found": "Tag not found",
+    "tag_name_exceed_max_length": "Tag name must be less than or equal to {num} characters",
+    "is_used": "The tag is used",
+    "no_create_permission": "Failed to create tag: you don't have permission",
+    "no_update_permission": "Failed to update tag: you don't have permission",
+    "no_delete_permission": "Failed to delete tag: you don't have permission"
+  },
+  "content": {
+    "not_found": "Content not found",
+    "no_pin_permission": "You don't have permission in this group",
+    "audience_no_belong": "This post no longer belongs to this group",
+    "group_join_required": "Join at least one group to keep reading"
+  },
+  "post": {
+    "not_found": "Post not found",
+    "not_owner": "You are not the owner of this post",
+    "no_create_permission": "Failed to create post: you don't have permission",
+    "no_update_permission": "Failed to update post: you don't have permission",
+    "no_delete_permission": "Failed to delete post: you don't have permission",
+    "no_read_permission": "You do not have permission to read this post"
+  },
+  "article": {
+    "not_found": "Article not found",
+    "not_owner": "You are not the owner of this post",
+    "no_create_permission": "Failed to create article: you don't have permission",
+    "no_update_permission": "Failed to update article: you don't have permission",
+    "no_delete_permission": "Failed to delete article: you don't have permission",
+    "no_read_permission": "You do not have permission to read this article"
+  },
+  "series": {
+    "not_found": "Series not found",
+    "not_owner": "You are not the owner of this post",
+    "no_create_permission": "Failed to create series: you don't have permission",
+    "no_update_permission": "Failed to update series: you don't have permission",
+    "no_delete_permission": "Failed to delete series: you don't have permission",
+    "no_read_permission": "You do not have permission to read this series"
+  },
+  "common": {
+    "database_error": "Database error",
+    "domain_model_validation": "Domain model invalidate"
+  }
+}

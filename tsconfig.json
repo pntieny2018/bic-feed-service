@@ -33,7 +33,12 @@
       "@app/sentry/*": [
         "libs/sentry/src/*"
       ]
-    },
+    }
   },
-  "include": ["src","sequelize","libs","test"]
+  "include": [
+    "src",
+    "sequelize",
+    "libs",
+    "test"
+  ]
 }
