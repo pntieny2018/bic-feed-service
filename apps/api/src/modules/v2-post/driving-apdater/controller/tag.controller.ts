@@ -33,9 +33,11 @@ import {
 } from '../../domain/exception';
 import { CreateTagRequestDto, GetTagRequestDto, UpdateTagRequestDto } from '../dto/request/tag';
 import { TagResponseDto } from '../dto/response';
-import { TagNoCreatePermissionException } from '../../domain/exception/tag-no-create-permission.exception';
-import { TagNoUpdatePermissionException } from '../../domain/exception/tag-no-update-permission.exception';
-import { TagNoDeletePermissionException } from '../../domain/exception/tag-no-delete-permission.exception';
+import {
+  TagNoCreatePermissionException,
+  TagNoUpdatePermissionException,
+  TagNoDeletePermissionException,
+} from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 
 @ApiTags('Tags')
@@ -61,7 +63,7 @@ export class TagController {
     const { rows, total } = await this._queryBus.execute(
       new FindTagsPaginationQuery({ name, groupIds, offset, limit })
     );
-
+    console.log('111111');
     const tags = rows.map((row) =>
       this._classTransformer.plainToInstance(TagResponseDto, row, {
         excludeExtraneousValues: true,

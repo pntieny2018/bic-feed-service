@@ -31,8 +31,10 @@ import { ScheduleArticleDto } from './dto/requests/schedule-article.dto';
 import { PostResponseDto } from '../post/dto/responses';
 import { GetPostsByParamsDto } from '../post/dto/requests/get-posts-by-params.dto';
 import { UserDto } from '../v2-user/application';
-import { ContentRequireGroupException } from '../v2-post/domain/exception/content-require-group.exception';
-import { ArticleNoReadPermissionException } from '../v2-post/domain/exception/article-no-read-permission.exception';
+import {
+  ContentNoCRUDPermissionException,
+  ContentRequireGroupException,
+} from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Articles')
@@ -137,7 +139,7 @@ export class ArticleController {
       switch (e.constructor) {
         case ContentRequireGroupException:
           throw new ForbiddenException(e);
-        case ArticleNoReadPermissionException:
+        case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
         default:
           throw e;

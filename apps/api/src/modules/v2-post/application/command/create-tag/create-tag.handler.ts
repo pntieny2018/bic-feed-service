@@ -8,7 +8,7 @@ import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty
 import { TagDuplicateNameException } from '../../../domain/exception';
 import { CreateTagCommand } from './create-tag.command';
 import { CreateTagDto } from './create-tag.dto';
-import { TagNoCreatePermissionException } from '../../../domain/exception/tag-no-create-permission.exception';
+import { TagNoCreatePermissionException } from '../../../domain/exception';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(CreateTagCommand)

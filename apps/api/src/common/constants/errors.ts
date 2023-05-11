@@ -15,6 +15,8 @@ export const ERRORS = {
     CONTENT_PIN_NOT_FOUND: 'content.pin_not_found',
     CONTENT_PIN_LACK: 'content.pin_lack',
     CONTENT_GROUP_JOIN_REQUIRED: 'content.group_join_required',
+    CONTENT_NO_CRUD_PERMISSION: 'content.no_crud_permission',
+    CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
   },
   ARTICLE: {
     ARTICLE_NOT_FOUND: 'article.not_found',

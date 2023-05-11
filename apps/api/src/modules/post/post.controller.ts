@@ -23,11 +23,13 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
-import { ContentRequireGroupException } from '../v2-post/domain/exception/content-require-group.exception';
 import { Request } from 'express';
 import { MediaStatus } from '../../database/models/media.model';
-import { PostNoReadPermissionException } from '../v2-post/domain/exception/post-no-read-permission.exception';
 import { ArticleResponseDto } from '../article/dto/responses';
+import {
+  ContentRequireGroupException,
+  ContentNoCRUDPermissionException,
+} from '../v2-post/domain/exception';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -89,7 +91,7 @@ export class PostController {
       switch (e.constructor) {
         case ContentRequireGroupException:
           throw new ForbiddenException(e);
-        case PostNoReadPermissionException:
+        case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
         default:
           throw e;

@@ -23,11 +23,11 @@ import {
   IGroupApplicationService,
 } from '../v2-group/application';
 import { UserDto } from '../v2-user/application';
-import { ContentNoPinPermissionException } from '../v2-post/domain/exception/content-no-pin-permission.exception';
-import { ContentRequireGroupException } from '../v2-post/domain/exception/content-require-group.exception';
-import { ArticleNoReadPermissionException } from '../v2-post/domain/exception/article-no-read-permission.exception';
-import { PostNoReadPermissionException } from '../v2-post/domain/exception/post-no-read-permission.exception';
-import { SeriesNoReadPermissionException } from '../v2-post/domain/exception/series-no-read-permission.exception';
+import {
+  ContentRequireGroupException,
+  ContentNoCRUDPermissionException,
+  ContentNoPinPermissionException,
+} from '../v2-post/domain/exception';
 
 @Injectable()
 export class AuthorityService {
@@ -61,11 +61,9 @@ export class AuthorityService {
 
       switch (post.type) {
         case PostType.POST:
-          throw new PostNoReadPermissionException();
         case PostType.ARTICLE:
-          throw new ArticleNoReadPermissionException();
         case PostType.SERIES:
-          throw new SeriesNoReadPermissionException();
+          throw new ContentNoCRUDPermissionException();
         default:
           throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
       }

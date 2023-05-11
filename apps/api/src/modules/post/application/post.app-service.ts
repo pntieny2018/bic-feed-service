@@ -126,11 +126,8 @@ export class PostAppService {
   public async createPost(user: UserDto, createPostDto: CreatePostDto): Promise<any> {
     const { audience, setting } = createPostDto;
     if (audience.groupIds?.length > 0) {
-      const isEnableSetting =
-        setting.isImportant ||
-        setting.canComment === false ||
-        setting.canReact === false ||
-        setting.canShare === false;
+      const isEnableSetting = setting.isImportant;
+      setting.canComment === false || setting.canReact === false || setting.canShare === false;
       await this._authorityService.checkCanCreatePost(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._postService.create(user, createPostDto);

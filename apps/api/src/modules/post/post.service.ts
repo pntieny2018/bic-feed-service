@@ -563,7 +563,7 @@ export class PostService {
   /**
    * Create Post
    * @param authUser UserDto
-   * @param createPostDto CreatePostDto
+   * @param createPostDto CreateDraftPostDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */

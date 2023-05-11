@@ -11,7 +11,7 @@ enum PostAttribute {
 }
 
 export interface IPostRepository {
-  createDraftPost(data: PostEntity): Promise<void>;
+  createPost(data: PostEntity): Promise<void>;
 
   findOne(id: string, attributes?: PostAttribute): Promise<PostEntity>;
 
