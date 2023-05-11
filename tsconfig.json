@@ -36,9 +36,8 @@
     }
   },
   "include": [
-    "src",
+    "apps",
     "sequelize",
-    "libs",
-    "test"
+    "libs"
   ]
 }
