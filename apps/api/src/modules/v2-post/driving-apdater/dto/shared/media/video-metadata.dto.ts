@@ -9,9 +9,9 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { MediaStatus } from '../../../../../../database/models/media.model';
 import { IDocumentMetadata } from './interfaces';
 import { basename } from 'path';
+import { MediaStatus } from '../../../../data-type/media-status.enum';
 
 export class ThumbnailDto {
   @Expose()
