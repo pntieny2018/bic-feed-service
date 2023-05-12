@@ -20,7 +20,6 @@ export class AppBootstrap {
     });
     app.enableVersioning({
       type: VersioningType.HEADER,
-      defaultVersion: APP_VERSION,
       header: VERSION_HEADER_KEY,
     });
     app.useGlobalInterceptors(new HandleResponseInterceptor());
