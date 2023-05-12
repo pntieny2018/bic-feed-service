@@ -43,25 +43,17 @@ export class CreateCommentHandler
 
     this._contentValidator.allow(post, PostAllow.COMMENT);
 
+    if (media?.images.length) {
+      const mediaIds = media.images.map((image) => image.id);
+      const images = await this._externalService.getImageIds(mediaIds);
+      this._contentValidator.validateImagesMedia(images, actor);
+      media.images = images;
+    }
+
     const mentionUserIds = Object.values(mentions || {}).map((item) => item.id);
 
     if (mentionUserIds.length) {
       this._contentValidator.checkValidMentions(post.get('groupIds'), mentionUserIds);
-    }
-
-    if (media?.images.length > 0) {
-      const mediaIds = media.images.map((image) => image.id);
-      const images = await this._externalService.getImageIds(mediaIds);
-      if (images.length === 0) {
-        throw new BadRequestException('Invalid image');
-      }
-      if (images[0].createdBy !== actor.id) {
-        throw new BadRequestException('You must be owner this image');
-      }
-      if (images[0].status !== MediaStatus.DONE) {
-        throw new BadRequestException('Image is not ready to use');
-      }
-      media.images = images;
     }
 
     const commentEntity = await this._commentDomainService.create({

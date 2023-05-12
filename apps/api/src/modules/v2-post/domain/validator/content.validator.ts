@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { subject } from '@casl/ability';
 import {
   AUTHORITY_APP_SERVICE_TOKEN,
@@ -18,7 +18,7 @@ import {
   IGroupApplicationService,
 } from '../../../v2-group/application';
 import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants/casl.constant';
-import { PostPrivacy, PostType } from '../../data-type';
+import { MediaStatus, PostPrivacy, PostType } from '../../data-type';
 import { SeriesResponseDto } from '../../../series/dto/responses';
 import { PostResponseDto } from '../../../post/dto/responses';
 import {
@@ -29,6 +29,7 @@ import {
 import { IContentValidator } from './interface/content.validator.interface';
 import { PostEntity } from '../model/post/post.entity';
 import { PostAllow } from '../../data-type/post-allow.enum';
+import { ImageMetadataDto } from '../../driving-apdater/dto/shared/media';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -159,6 +160,18 @@ export class ContentValidator implements IContentValidator {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
         throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
       }
+    }
+  }
+
+  public validateImagesMedia(images: ImageMetadataDto[], actor: UserDto): void {
+    if (images.length === 0) {
+      throw new BadRequestException('Invalid image');
+    }
+    if (images[0]['createdBy'] !== actor.id) {
+      throw new BadRequestException('You must be owner this image');
+    }
+    if (images[0]['status'] !== MediaStatus.DONE) {
+      throw new BadRequestException('Image is not ready to use');
     }
   }
 }
