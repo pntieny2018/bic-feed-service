@@ -1,4 +1,4 @@
-import { BadRequestException, Inject } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ICommentDomainService,
@@ -6,7 +6,6 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CreateCommentCommand } from './create-comment.command';
 import { CreateCommentDto } from './create-comment.dto';
-import { MediaStatus } from '../../../data-type';
 import { ExternalService } from '../../../../../app/external.service';
 import {
   IPostRepository,
@@ -53,7 +52,7 @@ export class CreateCommentHandler
     const mentionUserIds = Object.values(mentions || {}).map((item) => item.id);
 
     if (mentionUserIds.length) {
-      this._contentValidator.checkValidMentions(post.get('groupIds'), mentionUserIds);
+      await this._contentValidator.checkValidMentions(post.get('groupIds'), mentionUserIds);
     }
 
     const commentEntity = await this._commentDomainService.create({
