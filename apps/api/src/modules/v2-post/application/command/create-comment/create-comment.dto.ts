@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MediaFilterResponseDto } from '../../../../media/dto/response';
-import { UserMentionDto } from '../../../../mention/dto/user-mention.dto';
 import { Expose, Transform } from 'class-transformer';
+import { MediaFilterResponseDto } from '../../../driving-apdater/dto/shared/media/response/media-response.dto';
+import { UserMentionDto } from '../../../driving-apdater/dto/shared/mention/user-mention.dto';
 
 export class CreateCommentDto {
   @ApiProperty()

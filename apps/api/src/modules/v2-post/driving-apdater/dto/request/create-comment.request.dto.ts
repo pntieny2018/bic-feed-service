@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MediaDto } from '../../../../media/dto/media.dto';
+import { MediaDto } from '../shared/media/media.dto';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
-import { UserMentionDto } from '../../../../mention/dto/user-mention.dto';
+import { UserMentionDto } from '../shared/mention/user-mention.dto';
 
 export class CreateCommentRequestDto {
   @ApiProperty({
