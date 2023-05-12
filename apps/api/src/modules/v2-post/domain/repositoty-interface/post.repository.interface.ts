@@ -1,19 +1,19 @@
 import { PostEntity } from '../model/post';
 
-export type CreateDraftPostProps = {
-  id: string;
-  groupIds: string[];
-};
-
 enum PostAttribute {
   ID = 'id',
   TITLE = 'title',
 }
 
+export type FindPostOptions = {
+  shouldIncludeGroup: boolean;
+  mustIncludeGroup: boolean;
+};
+
 export interface IPostRepository {
   createPost(data: PostEntity): Promise<void>;
 
-  findOne(id: string, attributes?: PostAttribute): Promise<PostEntity>;
+  findOne(id: string, options?: FindPostOptions, attributes?: PostAttribute): Promise<PostEntity>;
 
   delete(id: string): Promise<void>;
 }

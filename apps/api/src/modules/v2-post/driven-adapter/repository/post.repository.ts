@@ -2,9 +2,13 @@ import { Inject, Logger } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize';
 import { IPostFactory, POST_FACTORY_TOKEN } from '../../domain/factory/interface';
-import { IPostRepository } from '../../domain/repositoty-interface/post.repository.interface';
+import {
+  IPostRepository,
+  FindPostOptions,
+} from '../../domain/repositoty-interface/post.repository.interface';
 import { PostEntity } from '../../domain/model/post';
 import { PostModel } from '../../../../database/models/post.model';
+import { PostGroupModel } from '../../../../database/models/post-group.model';
 
 export class PostRepository implements IPostRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _factory: IPostFactory;
@@ -37,7 +41,16 @@ export class PostRepository implements IPostRepository {
     await this._postModel.destroy({ where: { id } });
   }
 
-  public async findOne(id: string): Promise<PostEntity> {
+  public async findOne(id: string, options: FindPostOptions): Promise<PostEntity> {
+    const { shouldIncludeGroup, mustIncludeGroup } = options;
+    const include = [];
+    if (shouldIncludeGroup || mustIncludeGroup) {
+      include.push({
+        model: PostGroupModel,
+        as: 'groups',
+        required: !shouldIncludeGroup,
+      });
+    }
     const entity = await this._postModel.findByPk(id);
     return this._modelToEntity(entity);
   }
@@ -66,6 +79,7 @@ export class PostRepository implements IPostRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       content: post.content,
+      groupIds: post.groups.map((group) => group.id),
     });
   }
 }
