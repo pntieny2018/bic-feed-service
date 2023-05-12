@@ -6,8 +6,8 @@ enum PostAttribute {
 }
 
 export type FindPostOptions = {
-  shouldIncludeGroup: boolean;
-  mustIncludeGroup: boolean;
+  shouldIncludeGroup?: boolean;
+  mustIncludeGroup?: boolean;
 };
 
 export interface IPostRepository {
