@@ -19,14 +19,24 @@ export class CommentRepository implements ICommentRepository {
   ) {}
 
   public async createComment(data: CommentEntity): Promise<void> {
-    await this._commentModel.create({
-      id: data.get('id'),
-      content: data.get('content'),
-      isHidden: data.get('isHidden'),
-      updatedBy: data.get('updatedBy'),
-      createdBy: data.get('createdBy'),
-      mediaJson: data.get('media'),
-    });
+    await this._commentModel.create(
+      {
+        id: data.get('id'),
+        content: data.get('content'),
+        isHidden: data.get('isHidden'),
+        updatedBy: data.get('updatedBy'),
+        createdBy: data.get('createdBy'),
+        mediaJson: data.get('media'),
+        mentions: data.get('mentions').map((id) => {
+          return {
+            userId: id,
+          } as MentionModel;
+        }),
+      },
+      {
+        include: [MentionModel],
+      }
+    );
   }
 
   private _modelToEntity(comment: CommentModel): CommentEntity {
