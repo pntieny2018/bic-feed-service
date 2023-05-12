@@ -38,6 +38,9 @@ export const ERRORS = {
     SERIES_NO_CREATE_PERMISSION: 'series.no_create_permission',
     SERIES_NO_READ_PERMISSION: 'series.no_read_permission',
   },
+  recent_search: {
+    RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
+  },
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',
   API_UNAUTHORIZED: 'api.unauthorized',
