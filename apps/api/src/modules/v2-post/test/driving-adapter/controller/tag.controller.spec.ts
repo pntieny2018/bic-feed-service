@@ -9,6 +9,10 @@ import {
   TagUsedException,
 } from '../../../domain/exception';
 import { userMock } from '../../mock/user.dto.mock';
+import { CreateTagCommand } from '../../../application/command/create-tag/create-tag.command';
+import { CreateTagRequestDto, UpdateTagRequestDto } from '../../../driving-apdater/dto/request';
+import { FindTagsPaginationQuery } from '../../../application/query/find-tags/find-tags-pagination.query';
+import { UpdateTagCommand } from '../../../application/command/update-tag/update-tag.command';
 
 describe('TagController', () => {
   let tagController: TagController;
@@ -42,8 +46,6 @@ describe('TagController', () => {
     name: 'tag bbbdd12 ddffc 1dddf22',
     slug: 'tag-bbbdd12-ddffc-1dddf22',
     totalUsed: 0,
-    createdBy: userMock.id,
-    updatedBy: userMock.id,
   };
 
   describe('Get', () => {
@@ -55,46 +57,37 @@ describe('TagController', () => {
     };
 
     it('Should get tags successfully', async () => {
-      jest.spyOn(query, 'execute').mockResolvedValue({ rows: [tagMock], total: 1 });
+      const queryExecute = jest
+        .spyOn(query, 'execute')
+        .mockResolvedValue({ rows: [tagMock], total: 1 });
       const result = await tagController.get(userMock, getTagDto);
-      expect(result).toEqual({
-        list: [
-          {
-            groupId: '452f371c-58c3-45cb-abca-d68c70b82df2',
-            id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
-            name: 'tag bbbdd12 ddffc 1dddf22',
-            slug: 'tag-bbbdd12-ddffc-1dddf22',
-            totalUsed: 0,
-          },
-        ],
-        meta: {
-          limit: 10,
-          offset: 0,
-          total: 1,
-        },
-      });
+      expect(queryExecute).toBeCalledWith(
+        new FindTagsPaginationQuery({
+          name: getTagDto.name,
+          groupIds: getTagDto.groupIds,
+          offset: getTagDto.offset,
+          limit: getTagDto.limit,
+        })
+      );
     });
   });
 
   describe('Create', () => {
-    const createTagDto = {
+    const createTagDto: CreateTagRequestDto = {
       name: 'Tag 1',
       groupId: '452f371c-58c3-45cb-abca-d68c70b82df2',
     };
 
     it('Should create tag successfully', async () => {
-      jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
-      const result = await tagController.create(userMock, createTagDto);
-      expect(result).toEqual({
-        id: tagMock.id,
-        groupId: tagMock.groupId,
-        name: tagMock.name,
-        slug: tagMock.slug,
-        totalUsed: tagMock.totalUsed,
-        createdAt: undefined,
-        updatedAt: undefined,
-        groups: undefined,
-      });
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
+      await tagController.create(userMock, createTagDto);
+      expect(commandExecute).toBeCalledWith(
+        new CreateTagCommand({
+          groupId: createTagDto.groupId,
+          name: createTagDto.name,
+          userId: userMock.id,
+        })
+      );
     });
 
     it(`Should catch bad request exception`, async () => {
@@ -109,25 +102,20 @@ describe('TagController', () => {
   });
 
   describe('Update', () => {
-    const updateTagDto = {
-      id: 'f2e60f9d-4e77-42f6-bb63-007e3a18ec67',
+    const updateTagDto: UpdateTagRequestDto = {
       name: 'Tag 1',
-      groupId: '452f371c-58c3-45cb-abca-d68c70b82df2',
     };
 
     it('Should update tag successfully', async () => {
-      jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
+      const commandExecute = jest.spyOn(command, 'execute').mockResolvedValue(tagMock);
       const result = await tagController.update(userMock, tagMock.id, updateTagDto);
-      expect(result).toEqual({
-        id: tagMock.id,
-        groupId: tagMock.groupId,
-        name: tagMock.name,
-        slug: tagMock.slug,
-        totalUsed: tagMock.totalUsed,
-        createdAt: undefined,
-        updatedAt: undefined,
-        groups: undefined,
-      });
+      expect(commandExecute).toBeCalledWith(
+        new UpdateTagCommand({
+          id: tagMock.id,
+          name: updateTagDto.name,
+          userId: userMock.id,
+        })
+      );
     });
 
     it(`Should catch not found exception`, async () => {

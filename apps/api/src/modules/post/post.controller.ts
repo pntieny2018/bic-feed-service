@@ -99,23 +99,23 @@ export class PostController {
     }
   }
 
-  // @ApiOperation({ summary: 'Create post' })
-  // @ApiOkResponse({
-  //   type: PostResponseDto,
-  //   description: 'Create post successfully',
-  // })
-  // @ResponseMessages({
-  //   success: 'message.post.created_success',
-  // })
-  // @Post('/')
-  // @ResponseMessages({ success: 'Post has been published successfully' })
-  // @InjectUserToBody()
-  // public async create(
-  //   @AuthUser() user: UserDto,
-  //   @Body() createPostDto: CreatePostDto
-  // ): Promise<any> {
-  //   return this._postAppService.createPost(user, createPostDto);
-  // }
+  @ApiOperation({ summary: 'Create post' })
+  @ApiOkResponse({
+    type: PostResponseDto,
+    description: 'Create post successfully',
+  })
+  @ResponseMessages({
+    success: 'message.post.created_success',
+  })
+  @Post('/')
+  @ResponseMessages({ success: 'Post has been published successfully' })
+  @InjectUserToBody()
+  public async create(
+    @AuthUser() user: UserDto,
+    @Body() createPostDto: CreatePostDto
+  ): Promise<any> {
+    return this._postAppService.createPost(user, createPostDto);
+  }
 
   @ApiOperation({ summary: 'Update post' })
   @ApiOkResponse({

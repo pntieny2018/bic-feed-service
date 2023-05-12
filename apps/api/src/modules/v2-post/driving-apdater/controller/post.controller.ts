@@ -15,10 +15,10 @@ import { DomainModelException } from '../../../../common/exceptions/domain-model
 import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
 
-@ApiTags('Posts')
+@ApiTags('v2 Posts')
 @ApiSecurity('authorization')
 @Controller({
-  version: APP_VERSION,
+  version: '2',
   path: 'posts',
 })
 export class PostController {
@@ -30,15 +30,11 @@ export class PostController {
   private _classTransformer = new ClassTransformer();
 
   @ApiOperation({ summary: 'Create draft post' })
-  @ApiOkResponse({
-    type: CreateDraftPostDto,
-    description: 'Create draft post successfully',
-  })
   @ResponseMessages({
     success: 'message.post.created_success',
   })
   @Post('/')
-  public async create(
+  public async createDraft(
     @AuthUser() authUser: UserDto,
     @Body() createDraftPostRequestDto: CreateDraftPostRequestDto
   ): Promise<CreateDraftPostDto> {

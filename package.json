@@ -167,7 +167,6 @@
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src",
       "<rootDir>/apps/"
     ],
     "moduleNameMapper": {
