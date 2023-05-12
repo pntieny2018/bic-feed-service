@@ -23,13 +23,12 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
-import { Request } from 'express';
-import { MediaStatus } from '../../database/models/media.model';
-import { ArticleResponseDto } from '../article/dto/responses';
+import { Request } from 'express';import { ArticleResponseDto } from '../article/dto/responses';
 import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
 } from '../v2-post/domain/exception';
+import { PostStatus } from '../../database/models/post.model';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
@@ -152,7 +151,7 @@ export class PostController {
     const publishResult = await this._postAppService.publishPost(user, postId);
     if (
       publishResult?.media?.videos?.length > 0 &&
-      publishResult.media.videos.find((video) => video.status === MediaStatus.WAITING_PROCESS)
+      publishResult.status === PostStatus.PROCESSING
     ) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }
