@@ -12,7 +12,7 @@ export type CreateCommentCommandPayload = {
 
   media?: MediaDto;
 
-  mentions?: UserMentionDto[];
+  mentions?: UserMentionDto;
 
   giphyId?: string;
 };
