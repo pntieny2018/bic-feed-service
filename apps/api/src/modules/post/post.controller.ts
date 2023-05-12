@@ -23,7 +23,8 @@ import { GetDraftPostDto } from './dto/requests/get-draft-posts.dto';
 import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
-import { Request } from 'express';import { ArticleResponseDto } from '../article/dto/responses';
+import { Request } from 'express';
+import { ArticleResponseDto } from '../article/dto/responses';
 import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
