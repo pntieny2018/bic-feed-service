@@ -76,7 +76,7 @@ export class CreateCommentRequestDto {
     }
     return value;
   })
-  public mentions?: UserMentionDto[] = [];
+  public mentions?: UserMentionDto;
 
   @ApiProperty()
   @IsNotEmpty()
