@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { APP_VERSION } from '../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
@@ -39,7 +39,7 @@ import {
 @ApiSecurity('authorization')
 @ApiTags('Articles')
 @Controller({
-  version: APP_VERSION,
+  version: DEFAULT_APP_VERSION,
   path: 'articles',
 })
 export class ArticleController {

@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { APP_VERSION } from '../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
@@ -35,7 +35,7 @@ import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 @ApiTags('Comment')
 @ApiSecurity('authorization')
 @Controller({
-  version: APP_VERSION,
+  version: DEFAULT_APP_VERSION,
   path: 'comments',
 })
 export class CommentController {
