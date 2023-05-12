@@ -7,7 +7,6 @@ export type PostCreateProps = {
 
 export interface IPostDomainService {
   createDraftPost(data: PostCreateProps): Promise<PostEntity>;
-
   delete(id: string): Promise<void>;
 }
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';

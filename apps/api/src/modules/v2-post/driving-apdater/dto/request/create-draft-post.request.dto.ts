@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { AudienceRequestDto } from './audience.request.dto';
 
 export class CreateDraftPostRequestDto {
@@ -11,10 +11,10 @@ export class CreateDraftPostRequestDto {
       ['group_ids']: ['02032703-6db0-437a-a900-d93e742c3cb9'],
     },
   })
-  @IsNotEmpty()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience?: AudienceRequestDto = {
+  public audience: AudienceRequestDto = {
     groupIds: [],
   };
 }

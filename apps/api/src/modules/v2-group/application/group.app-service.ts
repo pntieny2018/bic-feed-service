@@ -75,7 +75,7 @@ export class GroupApplicationService implements IGroupApplicationService {
   }
 
   private _toDto(groupEntity: GroupEntity): GroupDto {
-    return {
+    return new GroupDto({
       id: groupEntity.get('id'),
       name: groupEntity.get('name'),
       icon: groupEntity.get('icon'),
@@ -89,6 +89,6 @@ export class GroupApplicationService implements IGroupApplicationService {
         private: groupEntity.get('child').private.map((item) => item),
         secret: groupEntity.get('child').secret.map((item) => item),
       },
-    };
+    });
   }
 }

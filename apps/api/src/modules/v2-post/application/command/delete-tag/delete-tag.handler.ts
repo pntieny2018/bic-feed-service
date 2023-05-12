@@ -5,9 +5,12 @@ import {
   TAG_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
-import { TagNotFoundException, TagUsedException } from '../../../domain/exception';
+import {
+  TagNotFoundException,
+  TagUsedException,
+  TagNoDeletePermissionException,
+} from '../../../domain/exception';
 import { DeleteTagCommand } from './delete-tag.command';
-import { TagNoDeletePermissionException } from '../../../domain/exception/tag-no-delete-permission.exception';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(DeleteTagCommand)

@@ -42,12 +42,12 @@ export class CreateTagHandler implements ICommandHandler<CreateTagCommand, Creat
       userId,
     });
 
-    return {
+    return new CreateTagDto({
       id: tagEntity.get('id'),
       name: tagEntity.get('name'),
       groupId: tagEntity.get('groupId'),
       slug: tagEntity.get('slug'),
       totalUsed: tagEntity.get('totalUsed'),
-    };
+    });
   }
 }
