@@ -1,12 +1,12 @@
 import { GetNewsFeedDto } from './dto/request/get-newsfeed.dto';
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query, Version } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { PageDto } from '../../common/dto';
 import { AuthUser } from '../auth';
 import { GetTimelineDto } from './dto/request';
 import { FeedService } from './feed.service';
 import { PostResponseDto } from '../post/dto/responses';
-import { APP_VERSION } from '../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../common/constants';
 import { GetUserSeenPostDto } from './dto/request/get-user-seen-post.dto';
 import { UserDto } from '../v2-user/application';
 import { ArticleResponseDto } from '../article/dto/responses';
@@ -14,7 +14,6 @@ import { ArticleResponseDto } from '../article/dto/responses';
 @ApiTags('Feeds')
 @ApiSecurity('authorization')
 @Controller({
-  version: APP_VERSION,
   path: 'feeds',
 })
 export class FeedController {
@@ -38,6 +37,7 @@ export class FeedController {
     description: 'Get timeline in a group successfully.',
     type: PageDto,
   })
+  @Version('1')
   @Get('/newsfeed')
   public async getNewsFeed(
     @AuthUser() authUser: UserDto,

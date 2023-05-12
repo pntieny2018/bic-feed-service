@@ -9,10 +9,10 @@ import {
   TagDuplicateNameException,
   TagNotFoundException,
   TagUsedException,
+  TagNoUpdatePermissionException,
 } from '../../../domain/exception';
 import { UpdateTagCommand } from './update-tag.command';
 import { UpdateTagDto } from './update-tag.dto';
-import { TagNoUpdatePermissionException } from '../../../domain/exception/tag-no-update-permission.exception';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(UpdateTagCommand)
@@ -58,12 +58,12 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
       userId,
     });
 
-    return {
+    return new UpdateTagDto({
       id: tag.get('id'),
       name: tag.get('name'),
       groupId: tag.get('groupId'),
       slug: tag.get('slug'),
       totalUsed: tag.get('totalUsed'),
-    };
+    });
   }
 }

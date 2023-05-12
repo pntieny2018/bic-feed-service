@@ -15,7 +15,7 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ClassTransformer } from 'class-transformer';
-import { APP_VERSION } from '../../../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { ResponseMessages } from '../../../../common/decorators';
 import { PageDto } from '../../../../common/dto';
 import { AuthUser } from '../../../auth';
@@ -43,7 +43,7 @@ import { FindTagsPaginationDto } from '../../application/query/find-tags/find-ta
 @ApiTags('Tags')
 @ApiSecurity('authorization')
 @Controller({
-  version: APP_VERSION,
+  version: DEFAULT_APP_VERSION,
   path: 'tags',
 })
 export class TagController {

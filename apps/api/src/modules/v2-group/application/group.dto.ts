@@ -1,4 +1,6 @@
 import { GroupPrivacy } from '../data-type';
+import { Exclude, Expose } from 'class-transformer';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../common/constants/transformer.constant';
 
 export class ChildGroup {
   public open: string[] = [];
@@ -15,10 +17,16 @@ export class GroupDto {
   public isCommunity: boolean;
   public privacy: GroupPrivacy;
   public rootGroupId: string;
+
+  @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
   public child?: ChildGroup = {
     closed: [],
     open: [],
     private: [],
     secret: [],
   };
+
+  public constructor(userInfo: Partial<GroupDto>) {
+    Object.assign(this, userInfo);
+  }
 }

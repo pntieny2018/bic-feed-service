@@ -12,7 +12,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { APP_VERSION } from '../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../common/constants';
 import { ResponseMessages } from '../../common/decorators';
 import { InjectUserToBody } from '../../common/decorators/inject.decorator';
 import { PageDto } from '../../common/dto';
@@ -24,17 +24,17 @@ import { PostEditedHistoryDto, PostResponseDto } from './dto/responses';
 import { GetPostPipe } from './pipes';
 import { UserDto } from '../v2-user/application';
 import { Request } from 'express';
-import { MediaStatus } from '../../database/models/media.model';
 import { ArticleResponseDto } from '../article/dto/responses';
 import {
   ContentRequireGroupException,
   ContentNoCRUDPermissionException,
 } from '../v2-post/domain/exception';
+import { PostStatus } from '../../database/models/post.model';
 
 @ApiSecurity('authorization')
 @ApiTags('Posts')
 @Controller({
-  version: APP_VERSION,
+  version: DEFAULT_APP_VERSION,
   path: 'posts',
 })
 export class PostController {
@@ -152,7 +152,7 @@ export class PostController {
     const publishResult = await this._postAppService.publishPost(user, postId);
     if (
       publishResult?.media?.videos?.length > 0 &&
-      publishResult.media.videos.find((video) => video.status === MediaStatus.WAITING_PROCESS)
+      publishResult.status === PostStatus.PROCESSING
     ) {
       req.message = 'message.post.published_success_with_video_waiting_process';
     }

@@ -56,7 +56,7 @@ export class UserApplicationService implements IUserApplicationService {
   }
 
   private _toDto(user: UserEntity): UserDto {
-    return {
+    return new UserDto({
       id: user.get('id'),
       username: user.get('username'),
       fullname: user.get('fullname'),
@@ -66,6 +66,6 @@ export class UserApplicationService implements IUserApplicationService {
       permissions: user.get('permissions'),
       isDeactivated: user.get('isDeactivated'),
       isVerified: user.get('isVerified'),
-    };
+    });
   }
 }

@@ -15,6 +15,10 @@ import {
   IContentValidator,
   CONTENT_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface/content.validator.interface';
+import {
+  GROUP_APPLICATION_TOKEN,
+  IGroupApplicationService,
+} from '../../../../v2-group/application';
 
 @CommandHandler(CreateDraftPostCommand)
 export class CreateDraftPostHandler
@@ -24,8 +28,8 @@ export class CreateDraftPostHandler
   private readonly _postRepository: IPostRepository;
   @Inject(POST_DOMAIN_SERVICE_TOKEN)
   private readonly _postDomainService: IPostDomainService;
-  @Inject(USER_APPLICATION_TOKEN)
-  private readonly _userAppService: IUserApplicationService;
+  @Inject(GROUP_APPLICATION_TOKEN)
+  private readonly _groupApplicationService: IGroupApplicationService;
   @Inject(CONTENT_VALIDATOR_TOKEN)
   private readonly _contentValidator: IContentValidator;
 
@@ -38,8 +42,12 @@ export class CreateDraftPostHandler
       userId: authUser.id,
     });
 
+    const groups = await this._groupApplicationService.findAllByIds(groupIds);
     return new CreateDraftPostDto({
       id: tagEntity.get('id'),
+      audience: {
+        groups,
+      },
     });
   }
 }
