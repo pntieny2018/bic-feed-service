@@ -1,7 +1,6 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { MediaType } from '../../../data-type';
 
 export interface VideoThumbnailProps {
   url: string;
@@ -11,15 +10,14 @@ export interface VideoThumbnailProps {
 
 export type VideoProps = {
   id: string;
-  url: string;
-  type: MediaType;
-  name: string;
-  createdAt: Date;
-  mimeType: string;
-  size: number;
-  width: number;
-  height: number;
-  thumbnails: VideoThumbnailProps[];
+  url?: string;
+  name?: string;
+  createdAt?: Date;
+  mimeType?: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  thumbnails?: VideoThumbnailProps[];
 };
 
 export class VideoEntity extends DomainAggregateRoot<VideoProps> {

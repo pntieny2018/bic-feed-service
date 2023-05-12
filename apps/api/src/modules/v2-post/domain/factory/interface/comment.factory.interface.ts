@@ -6,7 +6,7 @@ export type CreateCommentProps = {
   postId: string;
   content?: string;
   giphyId?: string;
-  media?: { images: ImageProps[]; videos: VideoProps[]; files: FileProps[] }[];
+  media?: { images?: ImageProps[]; videos?: VideoProps[]; files?: FileProps[] };
 };
 
 export interface ICommentFactory {

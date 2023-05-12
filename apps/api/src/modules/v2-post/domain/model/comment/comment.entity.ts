@@ -5,11 +5,11 @@ import { FileProps, ImageProps, VideoProps } from '../media';
 
 export type CommentProps = {
   id: string;
-  media: {
-    videos: VideoProps[];
-    files: FileProps[];
-    images: ImageProps[];
-  }[];
+  media?: {
+    videos?: VideoProps[];
+    files?: FileProps[];
+    images?: ImageProps[];
+  };
   postId: string;
   parentId?: string;
   edited?: boolean;

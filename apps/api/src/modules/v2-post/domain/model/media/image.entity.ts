@@ -4,14 +4,14 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 
 export type ImageProps = {
   id: string;
-  url: string;
-  source: string;
-  createdBy: string;
-  mimeType: string;
-  resource: string;
-  width: number;
-  height: number;
-  status: string;
+  url?: string;
+  source?: string;
+  createdBy?: string;
+  mimeType?: string;
+  resource?: string;
+  width?: number;
+  height?: number;
+  status?: string;
 };
 
 export class ImageEntity extends DomainAggregateRoot<ImageProps> {
