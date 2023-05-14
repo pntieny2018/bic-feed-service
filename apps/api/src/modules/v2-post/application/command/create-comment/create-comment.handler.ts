@@ -13,22 +13,23 @@ import {
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { ExceptionHelper } from '../../../../../common/helpers';
 import { HTTP_STATUS_ID } from '../../../../../common/constants';
-import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface/content.validator.interface';
 import { PostAllow } from '../../../data-type/post-allow.enum';
-import { ICommentValidator } from '../../../domain/validator/interface';
+import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/post';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
-  @Inject(POST_REPOSITORY_TOKEN)
-  private readonly _postRepository: IPostRepository;
-  @Inject(CONTENT_VALIDATOR_TOKEN)
-  private readonly _commentValidator: ICommentValidator;
-  @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
-  private readonly _commentDomainService: ICommentDomainService;
-  private readonly _externalService: ExternalService;
+  constructor(
+    @Inject(POST_REPOSITORY_TOKEN)
+    private readonly _postRepository: IPostRepository,
+    @Inject(COMMENT_VALIDATOR_TOKEN)
+    private readonly _commentValidator: ICommentValidator,
+    @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _commentDomainService: ICommentDomainService,
+    private readonly _externalService: ExternalService
+  ) {}
 
   public async execute(command: CreateCommentCommand): Promise<CreateCommentDto> {
     const { actor, postId, content, media, mentions, giphyId } = command.payload;
@@ -53,10 +54,8 @@ export class CreateCommentHandler
       media.images = images;
     }
 
-    const mentionUserIds = Object.values(mentions || {}).map((item) => item.id);
-
-    if (mentionUserIds.length) {
-      await this._commentValidator.checkValidMentions(post.get('groupIds'), mentionUserIds);
+    if (mentions.length) {
+      await this._commentValidator.checkValidMentions(post.get('groupIds'), mentions);
     }
 
     const commentEntity = await this._commentDomainService.create({
@@ -65,7 +64,7 @@ export class CreateCommentHandler
       content,
       giphyId,
       media,
-      mentions: mentionUserIds,
+      mentions: mentions,
     });
 
     return new CreateCommentDto(commentEntity);

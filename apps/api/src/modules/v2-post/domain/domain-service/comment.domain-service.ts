@@ -1,6 +1,6 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ICommentFactory, POST_FACTORY_TOKEN, CreateCommentProps } from '../factory/interface';
+import { ICommentFactory, CreateCommentProps, COMMENT_FACTORY_TOKEN } from '../factory/interface';
 import { ICommentDomainService } from './interface';
 import { CommentEntity } from '../model/comment';
 import {
@@ -8,13 +8,16 @@ import {
   COMMENT_REPOSITORY_TOKEN,
 } from '../repositoty-interface/comment.repository.interface';
 
+@Injectable()
 export class CommentDomainService implements ICommentDomainService {
   private readonly _logger = new Logger(CommentDomainService.name);
 
-  @Inject(POST_FACTORY_TOKEN)
-  private readonly _commentFactory: ICommentFactory;
-  @Inject(COMMENT_REPOSITORY_TOKEN)
-  private readonly _commentRepository: ICommentRepository;
+  public constructor(
+    @Inject(COMMENT_FACTORY_TOKEN)
+    private readonly _commentFactory: ICommentFactory,
+    @Inject(COMMENT_REPOSITORY_TOKEN)
+    private readonly _commentRepository: ICommentRepository
+  ) {}
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {
     const commentEntity = this._commentFactory.createComment(input);

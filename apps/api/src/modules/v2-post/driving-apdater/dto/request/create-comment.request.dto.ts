@@ -3,6 +3,7 @@ import { MediaDto } from '../shared/media/media.dto';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
 import { UserMentionDto } from '../shared/mention/user-mention.dto';
+import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
 
 export class CreateCommentRequestDto {
   @ApiProperty({
@@ -76,10 +77,14 @@ export class CreateCommentRequestDto {
     }
     return value;
   })
-  public mentions?: UserMentionDto;
+  public mentions?: string[];
 
   @ApiProperty()
   @IsNotEmpty()
+  @Type(() => GiphyDto)
+  @Expose({
+    name: 'giphy',
+  })
   @ValidateIf(
     (o) =>
       !(
@@ -89,5 +94,11 @@ export class CreateCommentRequestDto {
         o.media?.files?.length > 0
       )
   )
+  @Transform(({ value }) => {
+    if (typeof value === 'object' && value?.type == 'gif') {
+      if (value?.id) return value.id;
+    }
+    return '';
+  })
   public giphyId?: string;
 }

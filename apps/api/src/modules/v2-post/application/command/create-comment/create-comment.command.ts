@@ -1,6 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
 import { MediaDto } from '../../../../media/dto/media.dto';
-import { UserMentionDto } from '../../../../mention/dto/user-mention.dto';
 import { UserDto } from '../../../../v2-user/application/user.dto';
 
 export type CreateCommentCommandPayload = {
@@ -12,7 +11,7 @@ export type CreateCommentCommandPayload = {
 
   media?: MediaDto;
 
-  mentions?: UserMentionDto;
+  mentions?: string[];
 
   giphyId?: string;
 };
