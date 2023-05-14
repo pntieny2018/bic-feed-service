@@ -60,7 +60,7 @@ export class CommentValidator implements ICommentValidator {
    * @param action PostAllow
    * @returns Promise resolve boolean
    */
-  public allow(post: PostEntity, action: PostAllow): void {
+  public allowAction(post: PostEntity, action: PostAllow): void {
     if (!post.get('setting')[action]) {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,

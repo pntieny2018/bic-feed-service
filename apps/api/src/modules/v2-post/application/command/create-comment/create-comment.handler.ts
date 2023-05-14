@@ -44,7 +44,7 @@ export class CreateCommentHandler
 
     this._commentValidator.checkCanReadPost(post, actor);
 
-    this._commentValidator.allow(post, PostAllow.COMMENT);
+    this._commentValidator.allowAction(post, PostAllow.COMMENT);
 
     if (media?.images.length) {
       const mediaIds = media.images.map((image) => image.id);

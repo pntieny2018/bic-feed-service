@@ -7,7 +7,7 @@ import { ImageMetadataDto } from '../../../driving-apdater/dto/shared/media/imag
 export interface ICommentValidator {
   checkCanReadPost(post: PostEntity, user: UserDto, requireGroups?: GroupDto[]): void;
 
-  allow(post: PostEntity, action: PostAllow): void;
+  allowAction(post: PostEntity, action: PostAllow): void;
 
   checkValidMentions(groupIds: string[], userIds: string[]): Promise<void>;
 
