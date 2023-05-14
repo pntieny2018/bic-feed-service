@@ -1,5 +1,6 @@
 import { ICommand } from '@nestjs/cqrs';
 import { UserDto } from '../../../../v2-user/application';
+import { PostSettingDto } from '../../dto';
 
 export type PublishPostCommandPayload = {
   id: string;
@@ -9,13 +10,7 @@ export type PublishPostCommandPayload = {
   tagIds?: string[];
   seriesIds?: string[];
   mentionUserIds?: string[];
-  setting?: {
-    canComment: boolean;
-    canShare: boolean;
-    canReact: boolean;
-    isImportant: boolean;
-    importantExpiredAt: Date;
-  };
+  setting?: PostSettingDto;
   linkPreview?: {
     url: string;
     domain: string;
@@ -24,15 +19,9 @@ export type PublishPostCommandPayload = {
     description: string;
   };
   media?: {
-    files: {
-      id: string;
-    };
-    images: {
-      id: string;
-    };
-    videos: {
-      id: string;
-    };
+    filesIds: string[];
+    imagesIds: string[];
+    videosIds: string[];
   };
 };
 export class PublishPostCommand implements ICommand {

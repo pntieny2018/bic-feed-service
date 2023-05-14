@@ -1,7 +1,7 @@
 import { Inject, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
-import { IPostDomainService, PostCreateProps } from './interface';
+import { IPostDomainService, PostCreateProps, PostPublishProps } from './interface';
 import { PostEntity, PostProps } from '../model/post';
 import {
   IPostRepository,
@@ -43,25 +43,17 @@ export class PostDomainService implements IPostDomainService {
     return postEntity;
   }
 
-  public async publishPost(
-    postEntity: PostEntity,
-    newData: PublishPostCommandPayload,
-    groups: GroupDto[]
-  ): Promise<PostEntity> {
-    const { authUser, setting, tagIds, seriesIds, media, content, groupIds } = newData;
+  public async publishPost(input: PostPublishProps): Promise<PostEntity> {
+    const { postEntity, newData, groups } = input;
+    const { authUser, mentionUserIds, tagIds, seriesIds, media, content, groupIds } = newData;
     postEntity.update(newData);
-    //validate media
-    await this._postValidator.validateSeriesAndTags(groupIds, seriesIds, tagIds);
+    //TODO: validate media
     await this._postValidator.validatePublishContent(postEntity, authUser, groupIds);
     postEntity.setPrivacyFromGroups(groups);
     postEntity.setPublish();
     await this._postRepository.updatePost(postEntity);
 
     postEntity.commit();
-
-    //emit event
-
-    //bind data and return
     return postEntity;
   }
 

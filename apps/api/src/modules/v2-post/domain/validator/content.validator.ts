@@ -4,8 +4,6 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { HTTP_STATUS_ID } from '../../../../common/constants';
-import { LogicException } from '../../../../common/exceptions';
 import { UserDto } from '../../../v2-user/application';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -19,8 +17,8 @@ import {
 } from '../exception';
 import { IContentValidator } from './interface/content.validator.interface';
 import { ContentEntity } from '../model/post/content.entity';
-import { PublishPostCommandPayload } from '../../application/command/publish-post/publish-post.command';
 import { AccessDeniedException } from '../exception/access-denied.exception';
+import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -94,6 +92,21 @@ export class ContentValidator implements IContentValidator {
 
     if (detachGroupIds?.length) {
       await this.checkCanCRUDContent(userAuth, detachGroupIds);
+    }
+  }
+
+  public async validateMentionUsers(users: UserDto[], groupIds: string[]): Promise<void> {
+    const invalidUsers = [];
+    for (const user of users) {
+      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
+        invalidUsers.push(user.id);
+      }
+    }
+
+    if (invalidUsers.length) {
+      throw new UserNoBelongGroupException({
+        usersDenied: invalidUsers,
+      });
     }
   }
 }

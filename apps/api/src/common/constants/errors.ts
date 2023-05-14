@@ -19,6 +19,9 @@ export const ERRORS = {
     CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
     CONTENT_ACCESS_DENIED: 'content.access_denied',
   },
+  USER: {
+    USER_NO_BELONG_GROUP: 'user.no_belong_group',
+  },
   ARTICLE: {
     ARTICLE_NOT_FOUND: 'article.not_found',
     ARTICLE_NO_UPDATE_PERMISSION: 'article.no_update_permission',

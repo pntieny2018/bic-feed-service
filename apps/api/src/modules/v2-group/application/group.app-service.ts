@@ -20,6 +20,7 @@ export class GroupApplicationService implements IGroupApplicationService {
   }
 
   public async findAllByIds(groupIds: string[]): Promise<GroupDto[]> {
+    if (groupIds.length === 0) return [];
     const rows = await this._repo.findAllByIds(groupIds);
 
     return rows.map((row) => this._toDto(row));

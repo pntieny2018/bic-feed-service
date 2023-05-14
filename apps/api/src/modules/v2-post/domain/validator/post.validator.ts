@@ -56,5 +56,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
         }
       });
     }
+
+    //TODO: validate tags
   }
 }
