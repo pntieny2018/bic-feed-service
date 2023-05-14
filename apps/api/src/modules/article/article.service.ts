@@ -122,7 +122,6 @@ export class ArticleService {
     const include = this._postService.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeCategory: true,
     });
     const orderOption = [];
@@ -280,7 +279,6 @@ export class ArticleService {
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
       shouldIncludeSeries: true,
@@ -365,7 +363,6 @@ export class ArticleService {
     mustInSeriesIds,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
-    shouldIncludeMention,
     shouldIncludePreviewLink,
     shouldIncludeArticlesInSeries,
     shouldIncludeCategory,
@@ -378,7 +375,6 @@ export class ArticleService {
     mustInSeriesIds?: string[];
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
-    shouldIncludeMention?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeSeries?: boolean;
@@ -392,7 +388,6 @@ export class ArticleService {
       mustInSeriesIds,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
-      shouldIncludeMention,
       shouldIncludePreviewLink,
       shouldIncludeCategory,
       shouldIncludeArticlesInSeries,

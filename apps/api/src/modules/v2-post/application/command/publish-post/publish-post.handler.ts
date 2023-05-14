@@ -20,7 +20,7 @@ import {
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { ContentNotFoundException } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/post';
+import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
@@ -41,28 +41,21 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     const postEntity = await this._postRepository.findOne({
       where: {
         id,
-        groupArchived: true,
+        groupArchived: false,
       },
       include: {
         mustIncludeGroup: true,
       },
     });
-
     if (!postEntity || !(postEntity instanceof PostEntity)) {
       throw new ContentNotFoundException();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(groupIds);
-    const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds);
-
     //TODO: validate media
-    await this._postValidator.validateSeriesAndTags(groupIds, seriesIds, tagIds);
-    await this._postValidator.validateMentionUsers(mentionUsers, groupIds);
 
     const tagEntity = await this._postDomainService.publishPost({
       postEntity: postEntity as PostEntity,
       newData: command.payload,
-      groups,
     });
 
     //TODO: emit event

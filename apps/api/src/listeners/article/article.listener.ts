@@ -80,6 +80,7 @@ export class ArticleListener {
         canComment: article.canComment,
         canReact: article.canReact,
         canShare: article.canShare,
+        isImportant: article.isImportant,
       },
       id: article.id,
       audience: {

@@ -52,6 +52,19 @@ export class ContentEntity<
 > extends DomainAggregateRoot<Props> {
   public constructor(props: Props) {
     super(props);
+    this.initState();
+  }
+
+  public initState(): void {
+    this._props.state = {
+      attachGroupIds: [],
+      detachGroupIds: [],
+      attachSeriesIds: [],
+      detachSeriesIds: [],
+      attachTagIds: [],
+      detachTagIds: [],
+      enableSetting: false,
+    };
   }
 
   public validate(): void {
@@ -86,6 +99,10 @@ export class ContentEntity<
 
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
+  }
+
+  public isPublished(): boolean {
+    return this._props.status === PostStatus.PUBLISHED;
   }
 
   public setPublish(): void {

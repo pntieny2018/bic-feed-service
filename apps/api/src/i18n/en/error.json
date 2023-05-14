@@ -14,7 +14,9 @@
     "no_edit_setting_permission": "You don't have edit setting permission",
     "no_pin_permission": "You don't have permission in this group",
     "audience_no_belong": "This post no longer belongs to this group",
-    "group_join_required": "Join at least one group to keep reading"
+    "group_join_required": "Join at least one group to keep reading",
+    "empty_group": "You have not selected any group/community",
+    "empty": "Empty content"
   },
   "post": {
     "not_found": "Post not found",
@@ -47,5 +49,6 @@
     "database_error": "Database error",
     "domain_model_validation": "Domain model invalidate",
     "access_denied": "Access denied"
-  }
+  },
+  "tag_series_invalid": "Tag series invalid"
 }

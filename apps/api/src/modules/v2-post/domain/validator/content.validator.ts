@@ -4,7 +4,11 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { UserDto } from '../../../v2-user/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../v2-user/application';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
@@ -12,11 +16,12 @@ import {
 } from '../../../v2-group/application';
 import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants/casl.constant';
 import {
+  ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
 } from '../exception';
 import { IContentValidator } from './interface/content.validator.interface';
-import { ContentEntity } from '../model/post/content.entity';
+import { ContentEntity } from '../model/content/content.entity';
 import { AccessDeniedException } from '../exception/access-denied.exception';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
 
@@ -24,9 +29,11 @@ import { UserNoBelongGroupException } from '../exception/user-no-belong-group.ex
 export class ContentValidator implements IContentValidator {
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
-    protected _groupAppService: IGroupApplicationService,
+    protected readonly _groupAppService: IGroupApplicationService,
+    @Inject(USER_APPLICATION_TOKEN)
+    protected readonly _userApplicationService: IUserApplicationService,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    protected _authorityAppService: IAuthorityAppService
+    protected readonly _authorityAppService: IAuthorityAppService
   ) {}
 
   public async checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void> {
@@ -81,9 +88,13 @@ export class ContentValidator implements IContentValidator {
     if (!contentEntity.isOwner(userAuth.id)) {
       throw new AccessDeniedException();
     }
+
+    if (contentEntity.get('groupIds')?.length === 0) {
+      throw new ContentEmptyGroupException();
+    }
+
     const state = contentEntity.get('state');
     const { detachGroupIds, enableSetting } = state;
-
     if (enableSetting) {
       await this.checkCanEditContentSetting(userAuth, groupIds);
     } else {
@@ -95,7 +106,9 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public async validateMentionUsers(users: UserDto[], groupIds: string[]): Promise<void> {
+  public async validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void> {
+    if (!userIds?.length) return;
+    const users = await this._userApplicationService.findAllByIds(userIds);
     const invalidUsers = [];
     for (const user of users) {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {

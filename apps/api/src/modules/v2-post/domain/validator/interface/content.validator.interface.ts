@@ -1,5 +1,5 @@
 import { UserDto } from '../../../../v2-user/application';
-import { ContentEntity } from '../../model/post/content.entity';
+import { ContentEntity } from '../../model/content/content.entity';
 
 export interface IContentValidator {
   checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void>;
@@ -12,7 +12,7 @@ export interface IContentValidator {
     groupIds: string[]
   ): Promise<void>;
 
-  validateMentionUsers(users: UserDto[], groupIds: string[]): Promise<void>;
+  validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void>;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

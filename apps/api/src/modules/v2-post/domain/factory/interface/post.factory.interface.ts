@@ -1,4 +1,4 @@
-import { PostEntity, PostProps } from '../../model/post';
+import { PostEntity, PostProps } from '../../model/content';
 
 export interface IPostFactory {
   createDraftPost(props: { groupIds: string[]; userId: string }): PostEntity;

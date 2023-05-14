@@ -73,7 +73,7 @@ export class CommentDissociationService {
       /**
        * users who mentioned in created comment
        */
-      const mentionedUsersInComment = (comment.mentions ?? []).map((m) => m.userId);
+      const mentionedUsersInComment = comment.mentions ?? [];
 
       let prevCommentsRes = await this._commentModel.findAll({
         where: {
@@ -227,9 +227,9 @@ export class CommentDissociationService {
       const parentCommentCreatorId =
         parentComment.createdBy === actorId ? null : parentComment.createdBy;
 
-      const mentionedUserIdsInComment = comment.mentions.map((m) => m.userId);
+      const mentionedUserIdsInComment = comment.mentions;
 
-      const mentionedUserIdsInParentComment = parentComment.mentions.map((m) => m.userId);
+      const mentionedUserIdsInParentComment = parentComment.mentions;
 
       const prevChildCommentCreatorIds = [];
 
@@ -237,7 +237,7 @@ export class CommentDissociationService {
 
       parentComment.child.forEach((comment) => {
         prevChildCommentCreatorIds.push(comment.createdBy);
-        mentionedUserIdsInPrevChildComment.push(...comment.mentions.map((m) => m.userId));
+        mentionedUserIdsInPrevChildComment.push(...comment.mentions);
       });
 
       const handledUserIds = [];

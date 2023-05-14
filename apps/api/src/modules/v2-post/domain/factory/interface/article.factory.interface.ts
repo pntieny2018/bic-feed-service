@@ -1,4 +1,4 @@
-import { ArticleEntity, ArticleProps } from '../../model/post/article.entity';
+import { ArticleEntity, ArticleProps } from '../../model/content/article.entity';
 
 export interface IArticleFactory {
   reconstitute(props: ArticleProps): ArticleEntity;

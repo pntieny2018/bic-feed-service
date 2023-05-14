@@ -60,11 +60,11 @@ export interface IComment {
   updatedAt?: Date;
   post: IPost;
   media?: IMedia[];
-  mentions?: IMention[];
   child?: IComment[];
   totalReply?: number;
   reactionsCount?: string;
   mediaJson?: any;
+  mentions?: string[];
 }
 
 @Table({
@@ -128,20 +128,17 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
   })
   public mediaJson: any;
 
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mentions: string[];
+
   @BelongsTo(() => PostModel)
   public post: PostModel;
 
   @BelongsToMany(() => MediaModel, () => CommentMediaModel)
   public media?: MediaModel[];
-
-  @HasMany(() => MentionModel, {
-    foreignKey: 'entityId',
-    constraints: false,
-    scope: {
-      [StringHelper.camelToSnakeCase('mentionableType')]: MentionableType.COMMENT,
-    },
-  })
-  public mentions: MentionModel[] = [];
 
   public parent?: CommentModel;
 

@@ -22,9 +22,7 @@ export class PublishPostRequestDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience?: AudienceRequestDto = {
-    groupIds: [],
-  };
+  public audience?: AudienceRequestDto;
 
   @ApiProperty({
     description: 'Content of post',
@@ -33,7 +31,7 @@ export class PublishPostRequestDto {
   })
   @IsOptional()
   @Type(() => String)
-  public content?: string = null;
+  public content?: string;
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
@@ -131,7 +129,7 @@ export class PublishPostRequestDto {
     return value;
   })
   @IsUUID('4', { each: true })
-  public tags?: string[] = [];
+  public tags?: string[];
 
   @ApiProperty({
     type: [String],
@@ -145,5 +143,5 @@ export class PublishPostRequestDto {
     return value;
   })
   @IsUUID('4', { each: true })
-  public series?: string[] = [];
+  public series?: string[];
 }

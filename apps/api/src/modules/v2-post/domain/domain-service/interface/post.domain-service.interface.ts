@@ -1,4 +1,4 @@
-import { PostEntity } from '../../model/post';
+import { PostEntity } from '../../model/content';
 import { GroupDto } from '../../../../v2-group/application';
 import { UserDto } from '../../../../v2-user/application';
 import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
@@ -10,7 +10,6 @@ export type PostCreateProps = {
 export type PostPublishProps = {
   postEntity: PostEntity;
   newData: PublishPostCommandPayload;
-  groups: GroupDto[];
 };
 export interface IPostDomainService {
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;

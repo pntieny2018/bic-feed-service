@@ -84,7 +84,6 @@ export interface IPost {
   media?: IMedia[];
   groups?: IPostGroup[];
   userNewsfeeds?: IUserNewsFeed[];
-  mentions?: IMention[];
   mentionIds?: number[];
   reactionsCount?: string;
   markedReadPost?: boolean;
@@ -106,6 +105,7 @@ export interface IPost {
   publishedAt?: Date;
   errorLog?: any;
   mediaJson?: any;
+  mentions?: string[];
   coverJson?: any;
   videoIdProcessing?: string;
 }
@@ -156,6 +156,12 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @AllowNull(true)
   @Column
   public title: string;
+
+  @AllowNull(true)
+  @Column({
+    type: DataTypes.JSONB,
+  })
+  public mentions: string[];
 
   @AllowNull(false)
   @Column
@@ -261,15 +267,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @BelongsToMany(() => PostModel, () => PostSeriesModel, 'seriesId')
   public items?: PostModel[];
-
-  @HasMany(() => MentionModel, {
-    foreignKey: 'entityId',
-    constraints: false,
-    scope: {
-      [StringHelper.camelToSnakeCase('mentionableType')]: MentionableType.POST,
-    },
-  })
-  public mentions?: MentionModel[];
 
   public addMedia?: BelongsToManyAddAssociationsMixin<MediaModel, number>;
 

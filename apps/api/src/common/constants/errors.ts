@@ -9,6 +9,8 @@ export const ERRORS = {
     TAG_NO_DELETE_PERMISSION: 'tag.no_delete_permission',
   },
   CONTENT: {
+    EMPTY: 'content.empty',
+    EMPTY_GROUP: 'content.empty_group',
     AUDIENCE_NO_BELONG: 'content.audience_no_belong',
     CONTENT_NOT_FOUND: 'content.not_found',
     CONTENT_NO_PIN_PERMISSION: 'content.no_pin_permission',
@@ -45,6 +47,8 @@ export const ERRORS = {
   recent_search: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
   },
+  TAG_SERIES_INVALID: 'tag_series_invalid',
+
   API_OK: 'api.ok',
   API_VALIDATION_ERROR: 'api.validation_error',
   API_UNAUTHORIZED: 'api.unauthorized',
