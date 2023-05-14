@@ -36,7 +36,7 @@ describe('UserApplicationService', () => {
   });
 
   describe('UserApplicationService.findByUserName', () => {
-    it('Should returned a UserDto', async () => {
+    it('Should returned a MediaDto', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findByUserName').mockResolvedValue(userEntityMocked);
       repo.findByUserName = jest.fn().mockResolvedValue(Promise.resolve());
@@ -47,7 +47,7 @@ describe('UserApplicationService', () => {
       expect(result).toEqual(userDtoWithoutGroup);
     });
 
-    it('Should returned a UserDto with group', async () => {
+    it('Should returned a MediaDto with group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findByUserName').mockResolvedValue(userEntityMocked);
       repo.findByUserName = jest.fn().mockResolvedValue(Promise.resolve());
@@ -73,7 +73,7 @@ describe('UserApplicationService', () => {
   });
 
   describe('UserApplicationService.findOne', () => {
-    it('Should returned a UserDto without group', async () => {
+    it('Should returned a MediaDto without group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
       jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
@@ -86,7 +86,7 @@ describe('UserApplicationService', () => {
       expect(result).toEqual(new UserDto({ ...userDtoWithoutGroup, permissions: userPermissions }));
     });
 
-    it('Should returned a UserDto with group', async () => {
+    it('Should returned a MediaDto with group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
       jest.spyOn(repo, 'getPermissionsByUserId').mockResolvedValue(userPermissions);
@@ -101,7 +101,7 @@ describe('UserApplicationService', () => {
       expect(result).toEqual(new UserDto({ ...userDto, permissions: userPermissions }));
     });
 
-    it('Should returned a UserDto without permission', async () => {
+    it('Should returned a MediaDto without permission', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findOne').mockResolvedValue(userEntityMocked);
       repo.findOne = jest.fn().mockResolvedValue(Promise.resolve());
@@ -127,7 +127,7 @@ describe('UserApplicationService', () => {
   });
 
   describe('UserApplicationService.findAllByIds', () => {
-    it('Should returned a list UserDto without group', async () => {
+    it('Should returned a list MediaDto without group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findAllByIds').mockResolvedValue([userEntityMocked]);
       repo.findAllByIds = jest.fn().mockResolvedValue(Promise.resolve());
@@ -138,7 +138,7 @@ describe('UserApplicationService', () => {
       expect(result).toEqual([userDtoWithoutGroup]);
     });
 
-    it('Should returned a list UserDto with group', async () => {
+    it('Should returned a list MediaDto with group', async () => {
       const userEntityMocked = new UserEntity({ ...userMocked });
       jest.spyOn(repo, 'findAllByIds').mockResolvedValue([userEntityMocked]);
       repo.findAllByIds = jest.fn().mockResolvedValue(Promise.resolve());

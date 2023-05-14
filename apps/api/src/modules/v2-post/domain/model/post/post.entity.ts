@@ -1,60 +1,54 @@
-import { PostLang } from '../../../data-type/post-lang.enum';
-import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
-import { validate as isUUID } from 'uuid';
-import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { PostStatus } from '../../../data-type/post-status.enum';
-import { TagEntity } from '../tag';
+import { ContentEntity, ContentProps } from './content.entity';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
-import { LinkPreviewEntity } from '../link-preview';
-import { PostSettingAttributes } from './attributes/post-setting.entity';
-import { PostPrivacy, PostType } from '../../../data-type';
+import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
 
-export type PostProps = {
-  id: string;
+export type PostProps = ContentProps & {
   media: {
-    videos: VideoEntity[];
     files: FileEntity[];
     images: ImageEntity[];
-  }[];
-  isReported: boolean;
-  isHidden: boolean;
-  createdBy: string;
-  updatedBy: string;
-  privacy: PostPrivacy;
-  status: PostStatus;
-  type: PostType;
-  setting: PostSettingAttributes;
-  createdAt: Date;
-  updatedAt: Date;
-  errorLog?: any;
-  publishedAt?: Date;
-  content?: string;
-  lang?: PostLang;
-  groupIds?: string[];
-  mentionUserIds?: string[];
-  linkPreview?: LinkPreviewEntity;
-  series?: any;
-  tags?: TagEntity[];
-  aggregation?: {
-    commentsCount: number;
-    totalUsersSeen: number;
+    videos: VideoEntity[];
   };
+  content: string;
+  mentionUserIds?: string[];
+  linkPreview?: string;
+  seriesIds: string[];
+  tagsIds: string[];
 };
 
-export class PostEntity extends DomainAggregateRoot<PostProps> {
+export class PostEntity extends ContentEntity<PostProps> {
   public constructor(props: PostProps) {
     super(props);
   }
 
-  public validate(): void {
-    if (!isUUID(this._props.id)) {
-      throw new DomainModelException(`Group ID is not UUID`);
+  public update(data: PublishPostCommandPayload): void {
+    const { authUser, content, seriesIds, tagIds, media, groupIds, setting, mentionUserIds } = data;
+    super.update({
+      authUser,
+      setting,
+      groupIds,
+    });
+
+    if (content) this._props.content = content;
+    if (mentionUserIds) this._props.mentionUserIds = mentionUserIds;
+
+    if (seriesIds) {
+      this._props.state.attachSeriesIds = seriesIds.filter(
+        (groupId) => !this._props.groupIds?.includes(groupId)
+      );
+      this._props.state.detachSeriesIds = this._props.groupIds?.filter(
+        (groupId) => !groupIds.includes(groupId)
+      );
+      this._props.seriesIds = seriesIds;
     }
-    if (!isUUID(this._props.createdBy)) {
-      throw new DomainModelException(`Created By is not UUID`);
-    }
-    if (!isUUID(this._props.updatedBy)) {
-      throw new DomainModelException(`Updated By is not UUID`);
+
+    if (tagIds) {
+      this._props.state.attachTagIds = tagIds.filter(
+        (tagId) => !this._props.tagsIds?.includes(tagId)
+      );
+      this._props.state.detachTagIds = this._props.tagsIds?.filter(
+        (tagId) => !tagIds.includes(tagId)
+      );
+      this._props.tagsIds = tagIds;
     }
   }
 }

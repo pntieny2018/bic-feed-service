@@ -140,7 +140,7 @@ export class CommentService {
 
   /**
    * Update comment
-   * @param user UserDto
+   * @param user MediaDto
    * @param commentId String
    * @param updateCommentDto UpdateCommentDto
    * @return Promise resolve CommentResponseDto

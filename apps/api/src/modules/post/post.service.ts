@@ -196,7 +196,7 @@ export class PostService {
   /**
    * Get Post
    * @param postId string
-   * @param user UserDto
+   * @param user MediaDto
    * @param getPostDto GetPostDto
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
@@ -562,8 +562,8 @@ export class PostService {
 
   /**
    * Create Post
-   * @param authUser UserDto
-   * @param createPostDto CreateDraftPostDto
+   * @param authUser MediaDto
+   * @param createPostDto PublishPostDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */

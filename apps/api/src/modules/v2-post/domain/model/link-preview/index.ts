@@ -1,1 +1,1 @@
-export * from './tag.entity';
+export * from './link-preview.entity';

@@ -1,12 +1,7 @@
 import { PostEntity, PostProps } from '../../model/post';
 
-export type CreatePostDraftProps = {
-  groupIds: string[];
-  userId: string;
-};
-
 export interface IPostFactory {
-  createDraft(props: CreatePostDraftProps): PostEntity;
+  createDraftPost(props: { groupIds: string[]; userId: string }): PostEntity;
 
   reconstitute(props: PostProps): PostEntity;
 }

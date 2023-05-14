@@ -17,6 +17,7 @@ export const ERRORS = {
     CONTENT_GROUP_JOIN_REQUIRED: 'content.group_join_required',
     CONTENT_NO_CRUD_PERMISSION: 'content.no_crud_permission',
     CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
+    CONTENT_ACCESS_DENIED: 'content.access_denied',
   },
   ARTICLE: {
     ARTICLE_NOT_FOUND: 'article.not_found',

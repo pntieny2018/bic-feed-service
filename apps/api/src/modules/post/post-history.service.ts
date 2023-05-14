@@ -63,7 +63,7 @@ export class PostHistoryService {
 
   /**
    * Get post edited history
-   * @param user UserDto
+   * @param user MediaDto
    * @param postId string
    * @param getPostEditedHistoryDto GetPostEditedHistoryDto
    * @returns Promise resolve PageDto

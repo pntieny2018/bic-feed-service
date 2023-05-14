@@ -22,4 +22,10 @@ export const KAFKA_TOPIC = {
     REACTION: `${process.env.KAFKA_ENV}.bein_stream.reaction`,
     REPORT: `${process.env.KAFKA_ENV}.bein_stream.report`,
   },
+  CONTENT: {
+    POST_PUBLISHED: `${process.env.KAFKA_ENV}.content.post_published`,
+    ARTICLE_PUBLISHED: `${process.env.KAFKA_ENV}.content.article_published`,
+    SERIES_PUBLISHED: `${process.env.KAFKA_ENV}.content.series_published`,
+    COMMENT_CREATED: `${process.env.KAFKA_ENV}.content.comment_created`,
+  },
 };
