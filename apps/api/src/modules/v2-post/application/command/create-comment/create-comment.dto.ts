@@ -51,12 +51,6 @@ export class CreateCommentDto {
   public createdAt?: Date;
 
   @ApiProperty({
-    name: 'updated_at',
-  })
-  @Expose()
-  public updatedAt?: Date;
-
-  @ApiProperty({
     name: 'created_by',
   })
   @Expose()
