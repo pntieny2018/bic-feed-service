@@ -1,8 +1,9 @@
 import { NIL, v4 } from 'uuid';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { CommentEntity } from '../model/Comment';
+import { CommentEntity, CommentProps } from '../model/comment';
 import { CreateCommentProps, ICommentFactory } from './interface/comment.factory.interface';
+import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 
 @Injectable()
 export class CommentFactory implements ICommentFactory {
@@ -18,7 +19,11 @@ export class CommentFactory implements ICommentFactory {
       content,
       createdBy: userId,
       updatedBy: userId,
-      media,
+      media: {
+        images: media.images.map((image) => new ImageEntity(image)),
+        files: media.files.map((file) => new FileEntity(file)),
+        videos: media.videos.map((video) => new VideoEntity(video)),
+      },
       mentions: mentions,
       isHidden: false,
       edited: false,
@@ -28,5 +33,9 @@ export class CommentFactory implements ICommentFactory {
     });
 
     return this._eventPublisher.mergeObjectContext(entity);
+  }
+
+  public reconstitute(properties: CommentProps): CommentEntity {
+    return this._eventPublisher.mergeObjectContext(new CommentEntity(properties));
   }
 }

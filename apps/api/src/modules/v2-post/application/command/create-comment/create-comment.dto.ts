@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { MediaFilterResponseDto } from '../../../driving-apdater/dto/shared/media/response/media-response.dto';
 import { UserMentionDto } from '../../../driving-apdater/dto/shared/mention/user-mention.dto';
-import { CommentEntity } from '../../../domain/model/comment/comment.entity';
 
 export class CreateCommentDto {
   @ApiProperty()
@@ -87,7 +86,7 @@ export class CreateCommentDto {
   @Expose()
   public mentions?: UserMentionDto;
 
-  public constructor(data: Partial<CommentEntity>) {
+  public constructor(data: Partial<CreateCommentDto>) {
     Object.assign(this, data);
   }
 }

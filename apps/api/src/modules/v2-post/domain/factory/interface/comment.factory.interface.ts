@@ -1,5 +1,5 @@
-import { CommentEntity } from '../../model/Comment';
-import { FileProps, ImageProps, VideoProps } from '../../model/media';
+import { CommentEntity, CommentProps } from '../../model/comment';
+import { FileProps, ImageEntity, ImageProps, VideoProps } from '../../model/media';
 
 export type CreateCommentProps = {
   userId: string;
@@ -12,6 +12,8 @@ export type CreateCommentProps = {
 
 export interface ICommentFactory {
   createComment(props: CreateCommentProps): CommentEntity;
+
+  reconstitute(props: CommentProps): CommentEntity;
 }
 
 export const COMMENT_FACTORY_TOKEN = 'COMMENT_FACTORY_TOKEN';

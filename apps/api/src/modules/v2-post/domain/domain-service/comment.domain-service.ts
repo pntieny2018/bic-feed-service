@@ -20,14 +20,14 @@ export class CommentDomainService implements ICommentDomainService {
   ) {}
 
   public async create(input: CreateCommentProps): Promise<CommentEntity> {
-    const commentEntity = this._commentFactory.createComment(input);
     try {
-      await this._commentRepository.createComment(commentEntity);
+      const commentInput = this._commentFactory.createComment(input);
+      const commentEntity = await this._commentRepository.createComment(commentInput);
       commentEntity.commit();
+      return commentEntity;
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
       throw new DatabaseException();
     }
-    return commentEntity;
   }
 }

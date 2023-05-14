@@ -16,11 +16,14 @@ import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/post';
+import { ClassTransformer } from 'class-transformer';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
+  private readonly _classTransformer = new ClassTransformer();
+
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
@@ -67,6 +70,8 @@ export class CreateCommentHandler
       mentions: mentions,
     });
 
-    return new CreateCommentDto(commentEntity);
+    return this._classTransformer.plainToInstance(CreateCommentDto, commentEntity.toObject(), {
+      excludeExtraneousValues: true,
+    });
   }
 }

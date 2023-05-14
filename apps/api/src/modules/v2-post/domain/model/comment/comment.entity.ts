@@ -1,14 +1,14 @@
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
-import { FileProps, ImageProps, VideoProps } from '../media';
+import { FileEntity, ImageEntity, VideoEntity } from '../media';
 
 export type CommentProps = {
   id: string;
   media?: {
-    videos?: VideoProps[];
-    files?: FileProps[];
-    images?: ImageProps[];
+    videos?: VideoEntity[];
+    files?: FileEntity[];
+    images?: ImageEntity[];
   };
   postId: string;
   parentId?: string;
@@ -21,7 +21,7 @@ export type CommentProps = {
   createdAt?: Date;
   updatedAt?: Date;
   totalReply?: number;
-  child?: string[];
+  childs?: CommentEntity[];
   mentions?: string[];
 };
 
@@ -29,7 +29,6 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
   public constructor(props: CommentProps) {
     super(props);
   }
-
   public validate(): void {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Comment ID is not UUID`);
