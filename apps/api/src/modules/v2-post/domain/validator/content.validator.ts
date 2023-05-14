@@ -4,7 +4,6 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { IPost, PostModel } from '../../../../database/models/post.model';
 import { HTTP_STATUS_ID } from '../../../../common/constants';
 import { LogicException } from '../../../../common/exceptions';
 import { UserDto } from '../../../v2-user/application';
@@ -14,22 +13,22 @@ import {
   IGroupApplicationService,
 } from '../../../v2-group/application';
 import { PERMISSION_KEY, SUBJECT } from '../../../../common/constants/casl.constant';
-import { PostPrivacy } from '../../data-type';
-import { SeriesResponseDto } from '../../../series/dto/responses';
-import { PostResponseDto } from '../../../post/dto/responses';
 import {
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
 } from '../exception';
 import { IContentValidator } from './interface/content.validator.interface';
+import { ContentEntity } from '../model/post/content.entity';
+import { PublishPostCommandPayload } from '../../application/command/publish-post/publish-post.command';
+import { AccessDeniedException } from '../exception/access-denied.exception';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
   public constructor(
     @Inject(GROUP_APPLICATION_TOKEN)
-    private _groupAppService: IGroupApplicationService,
+    protected _groupAppService: IGroupApplicationService,
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
-    private _authorityAppService: IAuthorityAppService
+    protected _authorityAppService: IAuthorityAppService
   ) {}
 
   public async checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void> {
@@ -76,24 +75,25 @@ export class ContentValidator implements IContentValidator {
     }
   }
 
-  public async checkPostOwner(
-    post: PostResponseDto | SeriesResponseDto | PostModel | IPost,
-    authUserId: string
+  public async validatePublishContent(
+    contentEntity: ContentEntity,
+    userAuth: UserDto,
+    groupIds: string[]
   ): Promise<void> {
-    if (!post) {
-      throw new LogicException(HTTP_STATUS_ID.APP_POST_NOT_EXISTING);
+    if (!contentEntity.isOwner(userAuth.id)) {
+      throw new AccessDeniedException();
+    }
+    const state = contentEntity.get('state');
+    const { detachGroupIds, enableSetting } = state;
+
+    if (enableSetting) {
+      await this.checkCanEditContentSetting(userAuth, groupIds);
+    } else {
+      await this.checkCanCRUDContent(userAuth, groupIds);
     }
 
-    if (post.createdBy !== authUserId) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-    }
-  }
-
-  public checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void {
-    const userJoinedGroupIds = user.groups ?? [];
-    const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
-    if (!canAccess) {
-      throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
+    if (detachGroupIds?.length) {
+      await this.checkCanCRUDContent(userAuth, detachGroupIds);
     }
   }
 }

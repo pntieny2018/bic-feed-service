@@ -42,6 +42,7 @@
   },
   "common": {
     "database_error": "Database error",
-    "domain_model_validation": "Domain model invalidate"
+    "domain_model_validation": "Domain model invalidate",
+    "access_denied": "Access denied"
   }
 }

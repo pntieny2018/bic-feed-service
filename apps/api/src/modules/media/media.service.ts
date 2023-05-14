@@ -51,7 +51,7 @@ export class MediaService {
 
   /**
    * Create media
-   * @param user UserDto
+   * @param user MediaDto
    * @param url String
    * @param mediaType MediaType
    */

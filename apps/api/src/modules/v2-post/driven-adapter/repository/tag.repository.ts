@@ -10,10 +10,6 @@ import {
   ITagRepository,
 } from '../../domain/repositoty-interface';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { AxiosHelper } from '../../../../common/helpers';
-import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 
 export class TagRepository implements ITagRepository {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;

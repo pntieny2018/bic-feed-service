@@ -49,7 +49,7 @@ export class CommentHistoryService {
 
   /**
    * Get comment edited history
-   * @param user UserDto
+   * @param user MediaDto
    * @param commentId string
    * @param getCommentEditedHistoryDto GetCommentEditedHistoryDto
    * @returns Promise resolve PageDto

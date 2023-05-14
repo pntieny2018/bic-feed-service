@@ -116,7 +116,7 @@ export class ArticleController {
   // })
   // @Get('/')
   // public getList(
-  //   @AuthUser() user: UserDto,
+  //   @AuthUser() user: MediaDto,
   //   @Query() getArticleListDto: GetListArticlesDto
   // ): Promise<PageDto<ArticleResponseDto>> {
   //   return this._articleAppService.getList(user, getArticleListDto);

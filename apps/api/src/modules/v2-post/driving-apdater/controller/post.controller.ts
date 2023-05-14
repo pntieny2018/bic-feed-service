@@ -1,12 +1,6 @@
 import { BadRequestException, Body, Controller, ForbiddenException, Post } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import {
-  classToPlain,
-  ClassTransformer,
-  instanceToPlain,
-  TransformInstanceToPlain,
-} from 'class-transformer';
 import { ResponseMessages } from '../../../../common/decorators';
 import { AuthUser } from '../../../auth';
 import { UserDto } from '../../../v2-user/application';
@@ -19,6 +13,7 @@ import { DomainModelException } from '../../../../common/exceptions/domain-model
 import { CreateDraftPostCommand } from '../../application/command/create-draft-post/create-draft-post.command';
 import { CreateDraftPostDto } from '../../application/command/create-draft-post/create-draft-post.dto';
 import { TRANSFORMER_VISIBLE_ONLY } from '../../../../common/constants/transformer.constant';
+import { TransformInstanceToPlain } from 'class-transformer';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')

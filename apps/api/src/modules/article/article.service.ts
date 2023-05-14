@@ -171,7 +171,7 @@ export class ArticleService {
   /**
    * Get list related article
    * @throws HttpException
-   * @param authUser UserDto
+   * @param authUser MediaDto
    * @param getArticleListDto GetListArticlesDto
    * @returns Promise resolve PageDto<ArticleResponseDto>
    */
@@ -406,7 +406,7 @@ export class ArticleService {
 
   /**
    * Create Post
-   * @param authUser UserDto
+   * @param authUser MediaDto
    * @param createPostDto CreatePostDto
    * @returns Promise resolve boolean
    * @throws HttpException
@@ -482,7 +482,7 @@ export class ArticleService {
 
   /**
    * Publish article
-   * @param authUser UserDto
+   * @param authUser MediaDto
    * @param createArticleDto CreateArticleDto
    * @returns Promise resolve boolean
    * @throws HttpException
