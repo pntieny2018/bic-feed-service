@@ -13,11 +13,10 @@ import {
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { ExceptionHelper } from '../../../../../common/helpers';
 import { HTTP_STATUS_ID } from '../../../../../common/constants';
-import {
-  CONTENT_VALIDATOR_TOKEN,
-  IContentValidator,
-} from '../../../domain/validator/interface/content.validator.interface';
+import { CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface/content.validator.interface';
 import { PostAllow } from '../../../data-type/post-allow.enum';
+import { ICommentValidator } from '../../../domain/validator/interface';
+import { PostEntity } from '../../../domain/model/post';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -26,7 +25,7 @@ export class CreateCommentHandler
   @Inject(POST_REPOSITORY_TOKEN)
   private readonly _postRepository: IPostRepository;
   @Inject(CONTENT_VALIDATOR_TOKEN)
-  private readonly _contentValidator: IContentValidator;
+  private readonly _commentValidator: ICommentValidator;
   @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
   private readonly _commentDomainService: ICommentDomainService;
   private readonly _externalService: ExternalService;
@@ -34,25 +33,30 @@ export class CreateCommentHandler
   public async execute(command: CreateCommentCommand): Promise<CreateCommentDto> {
     const { actor, postId, content, media, mentions, giphyId } = command.payload;
 
-    const post = await this._postRepository.findOne(postId, { shouldIncludeGroup: true });
+    const post = (await this._postRepository.findOne({
+      where: { id: postId },
+      include: {
+        shouldIncludeGroup: true,
+      },
+    })) as PostEntity;
 
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
 
-    this._contentValidator.checkCanReadPost(post, actor);
+    this._commentValidator.checkCanReadPost(post, actor);
 
-    this._contentValidator.allow(post, PostAllow.COMMENT);
+    this._commentValidator.allow(post, PostAllow.COMMENT);
 
     if (media?.images.length) {
       const mediaIds = media.images.map((image) => image.id);
       const images = await this._externalService.getImageIds(mediaIds);
-      this._contentValidator.validateImagesMedia(images, actor);
+      this._commentValidator.validateImagesMedia(images, actor);
       media.images = images;
     }
 
     const mentionUserIds = Object.values(mentions || {}).map((item) => item.id);
 
     if (mentionUserIds.length) {
-      await this._contentValidator.checkValidMentions(post.get('groupIds'), mentionUserIds);
+      await this._commentValidator.checkValidMentions(post.get('groupIds'), mentionUserIds);
     }
 
     const commentEntity = await this._commentDomainService.create({

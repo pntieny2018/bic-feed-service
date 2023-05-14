@@ -4,6 +4,9 @@ import { COMMENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface
 import { CommentFactory } from '../domain/factory/comment.factory';
 import { COMMENT_FACTORY_TOKEN } from '../domain/factory/interface';
 import { COMMENT_REPOSITORY_TOKEN } from '../domain/repositoty-interface';
+import { CommentValidator } from '../domain/validator/comment.validator';
+import { COMMENT_VALIDATOR_TOKEN } from '../domain/validator/interface';
+import { CommentRepository } from '../driven-adapter/repository/comment.repository';
 
 export const commentProvider = [
   {
@@ -16,7 +19,11 @@ export const commentProvider = [
   },
   {
     provide: COMMENT_REPOSITORY_TOKEN,
-    // useClass: CommentRepository,
+    useClass: CommentRepository,
+  },
+  {
+    provide: COMMENT_VALIDATOR_TOKEN,
+    useClass: CommentValidator,
   },
   /** Application */
   CreateCommentHandler,
