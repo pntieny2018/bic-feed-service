@@ -1,12 +1,9 @@
 import { UserDto } from '../../../../v2-user/application';
-import { GroupDto } from '../../../../v2-group/application/group.dto';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { ImageDto, UserMentionDto } from '../../../application/dto';
 import { ContentEntity } from '../../model/content/content.entity';
 
 export interface ICommentValidator {
-  checkCanReadPost(post: ContentEntity, user: UserDto, requireGroups?: GroupDto[]): void;
-
   allowAction(post: ContentEntity, action: PostAllow): void;
 
   checkValidMentionsAndReturnUsers(groupIds: string[], userIds: string[]): Promise<UserDto[]>;

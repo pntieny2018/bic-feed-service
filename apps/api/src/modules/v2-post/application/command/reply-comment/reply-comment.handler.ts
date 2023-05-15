@@ -13,7 +13,12 @@ import {
 import { ExceptionHelper } from '../../../../../common/helpers';
 import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import { PostAllow } from '../../../data-type/post-allow.enum';
-import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
+import {
+  COMMENT_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
+  ICommentValidator,
+  IContentValidator,
+} from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
@@ -31,6 +36,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _commentRepository: ICommentRepository,
     @Inject(COMMENT_VALIDATOR_TOKEN)
     private readonly _commentValidator: ICommentValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     private readonly _externalService: ExternalService
@@ -55,7 +62,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     })) as PostEntity;
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
 
-    this._commentValidator.checkCanReadPost(post, actor);
+    this._contentValidator.checkCanReadContent(post, actor);
 
     this._commentValidator.allowAction(post, PostAllow.COMMENT);
 

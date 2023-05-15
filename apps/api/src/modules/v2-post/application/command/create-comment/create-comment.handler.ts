@@ -12,7 +12,12 @@ import {
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { PostAllow } from '../../../data-type/post-allow.enum';
-import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
+import {
+  COMMENT_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
+  ICommentValidator,
+  IContentValidator,
+} from '../../../domain/validator/interface';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
@@ -29,6 +34,8 @@ export class CreateCommentHandler
     private readonly _postRepository: IPostRepository,
     @Inject(COMMENT_VALIDATOR_TOKEN)
     private readonly _commentValidator: ICommentValidator,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     private readonly _externalService: ExternalService
@@ -46,7 +53,7 @@ export class CreateCommentHandler
 
     if (!post) throw new ContentNotFoundException();
 
-    this._commentValidator.checkCanReadPost(post, actor);
+    this._contentValidator.checkCanReadContent(post, actor);
 
     this._commentValidator.allowAction(post, PostAllow.COMMENT);
 
