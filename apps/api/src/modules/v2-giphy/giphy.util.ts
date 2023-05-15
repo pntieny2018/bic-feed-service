@@ -5,7 +5,7 @@ export enum GifType {
 }
 
 export function createUrlFromId(id?: string, type: GifType = GifType.ORIGINAL): string {
-  if (!id) return null;
+  if (!id) return '';
   if (type === GifType.ORIGINAL) {
     return 'https://i.giphy.com/' + id + '.gif';
   } else if (type === GifType.PREVIEW_GIF) {
