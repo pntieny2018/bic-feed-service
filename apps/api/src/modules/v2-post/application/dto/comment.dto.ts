@@ -54,7 +54,6 @@ export class CommentDto {
   @ApiProperty({
     description: 'Array of files, images, videos',
   })
-  @Expose()
   @Transform(({ value }) => {
     if (!value) {
       return {
@@ -82,7 +81,6 @@ export class CommentDto {
       },
     },
   })
-  @Expose()
   public mentions?: UserMentionDto;
 
   public constructor(data: Partial<CommentDto>) {
