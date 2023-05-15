@@ -15,8 +15,12 @@ import { PostAllow } from '../../../data-type/post-allow.enum';
 import {
   COMMENT_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
+  MEDIA_VALIDATOR_TOKEN,
+  MENTION_VALIDATOR_TOKEN,
   ICommentValidator,
   IContentValidator,
+  IMediaValidator,
+  IMentionValidator,
 } from '../../../domain/validator/interface';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
@@ -24,10 +28,6 @@ import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
-import {
-  IMediaValidator,
-  MEDIA_VALIDATOR_TOKEN,
-} from '../../../domain/validator/interface/media.validator.interface';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -42,6 +42,8 @@ export class CreateCommentHandler
     private readonly _contentValidator: IContentValidator,
     @Inject(MEDIA_VALIDATOR_TOKEN)
     private readonly _mediaValidator: IMediaValidator,
+    @Inject(MENTION_VALIDATOR_TOKEN)
+    private readonly _mentionValidator: IMentionValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     private readonly _externalService: ExternalService
@@ -73,11 +75,11 @@ export class CreateCommentHandler
     }
 
     if (mentions.length) {
-      const users = await this._commentValidator.checkValidMentionsAndReturnUsers(
+      const users = await this._mentionValidator.checkValidMentionsAndReturnUsers(
         post.get('groupIds'),
         mentions
       );
-      usersMention = this._commentValidator.mapMentionWithUserInfo(mentions, users);
+      usersMention = this._mentionValidator.mapMentionWithUserInfo(mentions, users);
     }
 
     const commentEntity = await this._commentDomainService.create({

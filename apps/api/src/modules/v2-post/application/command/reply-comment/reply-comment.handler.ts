@@ -16,8 +16,12 @@ import { PostAllow } from '../../../data-type/post-allow.enum';
 import {
   COMMENT_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
+  MEDIA_VALIDATOR_TOKEN,
+  MENTION_VALIDATOR_TOKEN,
   ICommentValidator,
   IContentValidator,
+  IMediaValidator,
+  IMentionValidator,
 } from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ReplyCommentCommand } from './reply-comment.command';
@@ -26,10 +30,6 @@ import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/re
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
-import {
-  IMediaValidator,
-  MEDIA_VALIDATOR_TOKEN,
-} from '../../../domain/validator/interface/media.validator.interface';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -44,6 +44,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _contentValidator: IContentValidator,
     @Inject(MEDIA_VALIDATOR_TOKEN)
     private readonly _mediaValidator: IMediaValidator,
+    @Inject(MENTION_VALIDATOR_TOKEN)
+    private readonly _mentionValidator: IMentionValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     private readonly _externalService: ExternalService
@@ -82,11 +84,11 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     }
 
     if (mentions.length) {
-      const users = await this._commentValidator.checkValidMentionsAndReturnUsers(
+      const users = await this._mentionValidator.checkValidMentionsAndReturnUsers(
         post.get('groupIds'),
         mentions
       );
-      usersMention = this._commentValidator.mapMentionWithUserInfo(mentions, users);
+      usersMention = this._mentionValidator.mapMentionWithUserInfo(mentions, users);
     }
 
     const commentEntity = await this._commentDomainService.create({
