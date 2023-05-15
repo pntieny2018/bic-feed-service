@@ -20,7 +20,7 @@ import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { UserMentionDto } from '../../dto/user-mention.dto';
-import { createUrlFromId } from '../../../../giphy/giphy.util';
+import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {

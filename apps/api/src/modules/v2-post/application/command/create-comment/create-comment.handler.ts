@@ -19,7 +19,7 @@ import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ClassTransformer } from 'class-transformer';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
-import { createUrlFromId } from '../../../../giphy/giphy.util';
+import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
