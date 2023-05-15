@@ -1,6 +1,14 @@
 import { AuthUser } from '../../../auth';
 import { CommandBus } from '@nestjs/cqrs';
-import { BadRequestException, Body, Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ResponseMessages } from '../../../../common/decorators';
 import { CreateCommentDto } from '../../application/command/create-comment/create-comment.dto';
@@ -18,6 +26,11 @@ import {
   ReplyCommentCommand,
   ReplyCommentCommandPayload,
 } from '../../application/command/reply-comment/reply-comment.command';
+import { UpdateCommentRequestDto } from '../dto/request/update-comment.request.dto';
+import {
+  UpdateCommentCommand,
+  UpdateCommentCommandPayload,
+} from '../../application/command/update-comment/update-comment.command';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -82,6 +95,38 @@ export class CommentController {
         } as ReplyCommentCommandPayload)
       );
       return data;
+    } catch (e) {
+      switch (e.constructor) {
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Update comment' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Update comment successfully',
+  })
+  @ResponseMessages({
+    success: 'message.comment.updated_success',
+  })
+  @Put('/:commentId')
+  public async update(
+    @AuthUser() user: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string,
+    @Body() updateCommentRequestDto: UpdateCommentRequestDto
+  ): Promise<boolean> {
+    try {
+      return this._commandBus.execute<UpdateCommentCommand, boolean>(
+        new UpdateCommentCommand({
+          ...updateCommentRequestDto,
+          id: commentId,
+          actor: user,
+        } as UpdateCommentCommandPayload)
+      );
     } catch (e) {
       switch (e.constructor) {
         case DomainModelException:
