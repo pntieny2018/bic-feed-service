@@ -30,7 +30,7 @@ export type FindAllPostOptions = {
 };
 
 export interface IPostRepository {
-  update(data: PostEntity): Promise<void>;
+  upsert(data: PostEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;

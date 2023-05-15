@@ -48,7 +48,6 @@ export class CreateDraftPostHandler
         groups,
       },
     });
-    console.log('111111111', data);
     return data;
   }
 }

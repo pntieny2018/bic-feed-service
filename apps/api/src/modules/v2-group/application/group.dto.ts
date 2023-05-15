@@ -10,12 +10,19 @@ export class ChildGroup {
 }
 
 export class GroupDto {
+  @Expose()
   public id: string;
+  @Expose()
   public name: string;
+  @Expose()
   public icon: string;
+  @Expose()
   public communityId: string;
+  @Expose()
   public isCommunity: boolean;
+  @Expose()
   public privacy: GroupPrivacy;
+  @Expose()
   public rootGroupId: string;
 
   @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
