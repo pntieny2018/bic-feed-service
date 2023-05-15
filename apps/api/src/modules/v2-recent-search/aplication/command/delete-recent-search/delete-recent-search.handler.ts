@@ -1,15 +1,15 @@
 import { CommandHandler } from '@nestjs/cqrs';
 import { DeleteRecentSearchCommand } from './delete-recent-search.command';
-import {
-  IRecentSearchRepository,
-  RECENT_SEARCH_REPOSITORY_TOKEN,
-} from '../../../../v2-post/domain/repositoty-interface';
 import { Inject } from '@nestjs/common';
 import {
   IRecentSearchDomainService,
   RECENT_SEARCH_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
 import { RecentSearchNotFoundException } from '../../../exeption/recent-search-not-found.exception';
+import {
+  IRecentSearchRepository,
+  RECENT_SEARCH_REPOSITORY_TOKEN,
+} from '../../../driven-adapter/repository/interface/recent-search.repository.interface';
 
 @CommandHandler(DeleteRecentSearchCommand)
 export class DeleteRecentSearchHandler {

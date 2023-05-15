@@ -38,10 +38,10 @@ export class PostSeriesModel extends Model implements IPostSeries {
   @Column
   public zindex: number;
 
-  @BelongsTo(() => PostModel)
+  @BelongsTo(() => PostModel, 'postId')
   public post?: PostModel;
 
-  @BelongsTo(() => PostModel)
+  @BelongsTo(() => PostModel, 'seriesId')
   public series?: PostModel;
   @CreatedAt
   @Column
