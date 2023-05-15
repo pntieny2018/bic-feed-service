@@ -17,6 +17,8 @@ import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ClassTransformer } from 'class-transformer';
+import { UserMentionDto } from '../../dto/user-mention.dto';
+import { NIL } from 'uuid';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -36,6 +38,7 @@ export class CreateCommentHandler
 
   public async execute(command: CreateCommentCommand): Promise<CreateCommentDto> {
     const { actor, postId, content, media, mentions, giphyId } = command.payload;
+    let usersMention: UserMentionDto = {};
 
     const post = (await this._postRepository.findOne({
       where: { id: postId },
@@ -58,11 +61,16 @@ export class CreateCommentHandler
     }
 
     if (mentions.length) {
-      await this._commentValidator.checkValidMentions(post.get('groupIds'), mentions);
+      const users = await this._commentValidator.checkValidMentionsAndReturnUsers(
+        post.get('groupIds'),
+        mentions
+      );
+      usersMention = this._commentValidator.mapMentionWithUserInfo(mentions, users);
     }
 
     const commentEntity = await this._commentDomainService.create({
       userId: actor.id,
+      parentId: NIL,
       postId,
       content,
       giphyId,
@@ -70,8 +78,12 @@ export class CreateCommentHandler
       mentions: mentions,
     });
 
-    return this._classTransformer.plainToInstance(CreateCommentDto, commentEntity.toObject(), {
-      excludeExtraneousValues: true,
-    });
+    return this._classTransformer.plainToInstance(
+      CreateCommentDto,
+      { ...commentEntity.toObject(), mentions: usersMention },
+      {
+        excludeExtraneousValues: true,
+      }
+    );
   }
 }

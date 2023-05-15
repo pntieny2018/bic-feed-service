@@ -1,4 +1,4 @@
-import { NIL, v4 } from 'uuid';
+import { v4 } from 'uuid';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { CommentEntity, CommentProps } from '../model/comment';
@@ -14,7 +14,7 @@ export class CommentFactory implements ICommentFactory {
     const now = new Date();
     const entity = new CommentEntity({
       id: v4(),
-      parentId: parentId || NIL,
+      parentId: parentId,
       postId,
       content,
       createdBy: userId,

@@ -19,6 +19,7 @@ import { ClassTransformer } from 'class-transformer';
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
+import { UserMentionDto } from '../../dto/user-mention.dto';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -38,8 +39,12 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
   public async execute(command: ReplyCommentCommand): Promise<ReplyCommentDto> {
     const { actor, parentId, postId, content, media, mentions, giphyId } = command.payload;
+    let usersMention: UserMentionDto = {};
 
-    const parentComment = await this._commentRepository.findOne({ id: parentId, parentId: NIL });
+    const parentComment = await this._commentRepository.findOne({
+      id: parentId,
+      parentId: NIL,
+    });
     if (!parentComment) {
       ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
     }
@@ -64,7 +69,11 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     }
 
     if (mentions.length) {
-      await this._commentValidator.checkValidMentions(post.get('groupIds'), mentions);
+      const users = await this._commentValidator.checkValidMentionsAndReturnUsers(
+        post.get('groupIds'),
+        mentions
+      );
+      usersMention = this._commentValidator.mapMentionWithUserInfo(mentions, users);
     }
 
     const commentEntity = await this._commentDomainService.create({
@@ -77,8 +86,12 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       mentions: mentions,
     });
 
-    return this._classTransformer.plainToInstance(ReplyCommentDto, commentEntity.toObject(), {
-      excludeExtraneousValues: true,
-    });
+    return this._classTransformer.plainToInstance(
+      ReplyCommentDto,
+      { ...commentEntity.toObject(), mentions: usersMention },
+      {
+        excludeExtraneousValues: true,
+      }
+    );
   }
 }
