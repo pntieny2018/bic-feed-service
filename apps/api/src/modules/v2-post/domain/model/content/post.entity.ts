@@ -12,7 +12,11 @@ export type PostProps = ContentProps & {
   mentionUserIds?: string[];
   linkPreview?: string;
   seriesIds: string[];
-  tagsIds: string[];
+  tags: {
+    id: string;
+    name?: string;
+    slug?: string;
+  }[];
 };
 
 export class PostEntity extends ContentEntity<PostProps> {
@@ -42,13 +46,14 @@ export class PostEntity extends ContentEntity<PostProps> {
     }
 
     if (tagIds) {
-      this._props.state.attachTagIds = tagIds.filter(
-        (tagId) => !this._props.tagsIds?.includes(tagId)
-      );
-      this._props.state.detachTagIds = this._props.tagsIds?.filter(
-        (tagId) => !tagIds.includes(tagId)
-      );
-      this._props.tagsIds = tagIds;
+      console.log('tags', tagIds);
+      console.log('this._props.tags', this._props.tags);
+      const entityTagIds = this._props.tags.map((tag) => tag.id);
+      this._props.state.attachTagIds = tagIds.filter((tagId) => !entityTagIds?.includes(tagId));
+      this._props.state.detachTagIds = entityTagIds?.filter((tagId) => !tagIds.includes(tagId));
+      this._props.tags = tagIds.map((tagId) => ({
+        id: tagId,
+      }));
     }
   }
 }

@@ -8,7 +8,11 @@ export type ArticleProps = ContentProps & {
   categories: CategoryEntity[];
   cover: ImageEntity;
   seriesIds: string[];
-  tagsIds: string[];
+  tags: {
+    id: string;
+    name?: string;
+    slug?: string;
+  }[];
 };
 
 export class ArticleEntity extends ContentEntity<ArticleProps> {

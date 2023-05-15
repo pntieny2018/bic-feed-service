@@ -10,8 +10,10 @@ export type FindOnePostOptions = {
     groupArchived?: boolean;
   };
   include?: {
-    shouldIncludeGroup?: boolean;
     mustIncludeGroup?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeSeries?: boolean;
+    shouldIncludeTag?: boolean;
   };
   attributes?: (keyof IPost)[];
 };
@@ -23,8 +25,10 @@ export type FindAllPostOptions = {
     groupArchived?: boolean;
   };
   include?: {
-    shouldIncludeGroup?: boolean;
     mustIncludeGroup?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeSeries?: boolean;
+    shouldIncludeTag?: boolean;
   };
   attributes?: (keyof IPost)[];
 };

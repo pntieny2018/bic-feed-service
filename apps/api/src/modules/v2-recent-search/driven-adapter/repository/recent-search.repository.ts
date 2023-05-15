@@ -1,8 +1,3 @@
-import {
-  DeleteRecentSearchOptions,
-  FindRecentSearchOptions,
-  IRecentSearchRepository,
-} from '../../../v2-post/domain/repositoty-interface';
 import { RecentSearchEntity } from '../../domain/model/recent-search/recent-search.entity';
 import { InjectModel } from '@nestjs/sequelize';
 import { RecentSearchModel } from '../../../../database/models/recent-search.model';
@@ -10,6 +5,11 @@ import { Inject } from '@nestjs/common';
 import { RecentSearchType } from '../../data-type/recent-search-type.enum';
 import { RECENT_SEARCH_FACTORY_TOKEN } from '../../domain/factory/interface/recent-search.factory.interface';
 import { RecentSearchFactory } from '../../domain/factory/recent-search.factory';
+import {
+  DeleteRecentSearchOptions,
+  FindRecentSearchOptions,
+  IRecentSearchRepository,
+} from './interface/recent-search.repository.interface';
 
 export class RecentSearchRepository implements IRecentSearchRepository {
   @InjectModel(RecentSearchModel)
