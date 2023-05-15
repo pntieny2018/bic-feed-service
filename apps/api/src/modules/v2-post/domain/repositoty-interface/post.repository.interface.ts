@@ -8,6 +8,7 @@ export type FindOnePostOptions = {
   where: {
     id: string;
     groupArchived?: boolean;
+    isHidden?: boolean;
   };
   include?: {
     shouldIncludeGroup?: boolean;
