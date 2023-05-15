@@ -1,5 +1,4 @@
 import { ICommand } from '@nestjs/cqrs';
-import { MediaDto } from '../../../../media/dto/media.dto';
 import { UserDto } from '../../../../v2-user/application/user.dto';
 
 export type UpdateCommentCommandPayload = {
@@ -9,7 +8,11 @@ export type UpdateCommentCommandPayload = {
 
   content?: string;
 
-  media?: MediaDto;
+  media?: {
+    files: string[];
+    images: string[];
+    videos: string[];
+  };
 
   mentions?: string[];
 

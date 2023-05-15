@@ -13,19 +13,17 @@ import {
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
-import { ClassTransformer } from 'class-transformer';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
+import { ImageDto, FileDto, VideoDto } from '../../dto';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
   implements ICommandHandler<CreateCommentCommand, CreateCommentDto>
 {
-  private readonly _classTransformer = new ClassTransformer();
-
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
@@ -38,7 +36,6 @@ export class CreateCommentHandler
 
   public async execute(command: CreateCommentCommand): Promise<CreateCommentDto> {
     const { actor, postId, content, media, mentions, giphyId } = command.payload;
-    let usersMention: UserMentionDto = {};
 
     const post = (await this._postRepository.findOne({
       where: { id: postId, groupArchived: false, isHidden: false },
@@ -53,11 +50,13 @@ export class CreateCommentHandler
 
     this._commentValidator.allowAction(post, PostAllow.COMMENT);
 
+    let usersMention: UserMentionDto = {};
+    let imagesDto: ImageDto[] = [];
+
     if (media?.images.length) {
-      const mediaIds = media.images.map((image) => image.id);
-      const images = await this._externalService.getImageIds(mediaIds);
+      const images: ImageDto[] = await this._externalService.getImageIds(media?.images);
       this._commentValidator.validateImagesMedia(images, actor);
-      media.images = images;
+      imagesDto = images;
     }
 
     if (mentions.length) {
@@ -74,16 +73,31 @@ export class CreateCommentHandler
       postId,
       content,
       giphyId,
-      media,
+      media: {
+        files: [],
+        images: imagesDto,
+        videos: [],
+      },
       mentions: mentions,
     });
 
-    return this._classTransformer.plainToInstance(
-      CreateCommentDto,
-      { ...commentEntity.toObject(), mentions: usersMention, giphyUrl: createUrlFromId(giphyId) },
-      {
-        excludeExtraneousValues: true,
-      }
-    );
+    return new CreateCommentDto({
+      id: commentEntity.get('id'),
+      edited: commentEntity.get('edited'),
+      parentId: commentEntity.get('parentId'),
+      postId: commentEntity.get('postId'),
+      totalReply: commentEntity.get('totalReply'),
+      content: commentEntity.get('content'),
+      giphyId: commentEntity.get('giphyId'),
+      giphyUrl: createUrlFromId(commentEntity.get('giphyId')),
+      createdAt: commentEntity.get('createdAt'),
+      createdBy: commentEntity.get('createdBy'),
+      media: {
+        files: commentEntity.get('media').files.map((item) => new FileDto(item.toObject())),
+        images: commentEntity.get('media').images.map((item) => new ImageDto(item.toObject())),
+        videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
+      },
+      mentions: usersMention,
+    });
   }
 }

@@ -1,5 +1,5 @@
+import { FileDto, ImageDto, VideoDto } from '../../../application/dto';
 import { CommentEntity, CommentProps } from '../../model/comment';
-import { FileProps, ImageProps, VideoProps } from '../../model/media';
 
 export type CreateCommentProps = {
   userId: string;
@@ -7,7 +7,7 @@ export type CreateCommentProps = {
   parentId?: string;
   content?: string;
   giphyId?: string;
-  media?: { images?: ImageProps[]; videos?: VideoProps[]; files?: FileProps[] };
+  media?: { images?: ImageDto[]; videos?: VideoDto[]; files?: FileDto[] };
   mentions?: string[];
 };
 

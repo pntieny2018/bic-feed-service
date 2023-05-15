@@ -15,17 +15,15 @@ import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/content/post.entity';
-import { ClassTransformer } from 'class-transformer';
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
+import { ImageDto, FileDto, VideoDto } from '../../dto';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
-  private readonly _classTransformer = new ClassTransformer();
-
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
@@ -40,7 +38,6 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
   public async execute(command: ReplyCommentCommand): Promise<ReplyCommentDto> {
     const { actor, parentId, postId, content, media, mentions, giphyId } = command.payload;
-    let usersMention: UserMentionDto = {};
 
     const parentComment = await this._commentRepository.findOne({
       id: parentId,
@@ -62,11 +59,13 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
     this._commentValidator.allowAction(post, PostAllow.COMMENT);
 
+    let usersMention: UserMentionDto = {};
+    let imagesDto: ImageDto[] = [];
+
     if (media?.images.length) {
-      const mediaIds = media.images.map((image) => image.id);
-      const images = await this._externalService.getImageIds(mediaIds);
+      const images: ImageDto[] = await this._externalService.getImageIds(media?.images);
       this._commentValidator.validateImagesMedia(images, actor);
-      media.images = images;
+      imagesDto = images;
     }
 
     if (mentions.length) {
@@ -83,16 +82,31 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       postId,
       content,
       giphyId,
-      media,
+      media: {
+        files: [],
+        images: imagesDto,
+        videos: [],
+      },
       mentions: mentions,
     });
 
-    return this._classTransformer.plainToInstance(
-      ReplyCommentDto,
-      { ...commentEntity.toObject(), mentions: usersMention, giphyUrl: createUrlFromId(giphyId) },
-      {
-        excludeExtraneousValues: true,
-      }
-    );
+    return new ReplyCommentDto({
+      id: commentEntity.get('id'),
+      edited: commentEntity.get('edited'),
+      parentId: commentEntity.get('parentId'),
+      postId: commentEntity.get('postId'),
+      totalReply: commentEntity.get('totalReply'),
+      content: commentEntity.get('content'),
+      giphyId: commentEntity.get('giphyId'),
+      giphyUrl: createUrlFromId(commentEntity.get('giphyId')),
+      createdAt: commentEntity.get('createdAt'),
+      createdBy: commentEntity.get('createdBy'),
+      media: {
+        files: commentEntity.get('media').files.map((item) => new FileDto(item.toObject())),
+        images: commentEntity.get('media').images.map((item) => new ImageDto(item.toObject())),
+        videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
+      },
+      mentions: usersMention,
+    });
   }
 }
