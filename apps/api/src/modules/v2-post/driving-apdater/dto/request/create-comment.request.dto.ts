@@ -60,8 +60,7 @@ export class CreateCommentRequestDto {
       beincom: {
         id: '26799d29-189b-435d-b618-30fb70e9b09e',
         username: 'beincom',
-        avatar: 'https://www.beincom.io/avatar',
-        fullname: 'Beincom',
+        fullname: 'Beincom EVOL',
       },
     },
   })
