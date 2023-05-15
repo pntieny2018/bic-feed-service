@@ -3,7 +3,7 @@ export class PostSettingDto {
   public canShare: boolean;
   public canReact: boolean;
   public isImportant: boolean;
-  public importantExpiredAt: Date;
+  public importantExpiredAt?: Date;
 
   public constructor(data: Partial<PostSettingDto>) {
     Object.assign(this, data);

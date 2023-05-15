@@ -7,7 +7,8 @@ export type FindOneTagProps = {
 };
 
 export type FindAllTagsProps = {
-  groupIds: string[];
+  ids?: string[];
+  groupIds?: string[];
   name?: string;
 };
 

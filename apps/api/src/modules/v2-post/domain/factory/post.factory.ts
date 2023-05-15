@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
 import { IPostFactory } from './interface';
-import { PostEntity, PostProps } from '../model/post';
+import { PostEntity, PostProps } from '../model/content';
 import { PostStatus } from '../../data-type/post-status.enum';
 import { PostType } from '../../data-type';
 

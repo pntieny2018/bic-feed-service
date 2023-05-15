@@ -81,8 +81,14 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
-    const { groupIds, name } = input;
-    const condition: any = { groupId: groupIds.map((groupId) => groupId) };
+    const { groupIds, name, ids } = input;
+    const condition: any = {};
+    if (ids) {
+      condition.id = ids;
+    }
+    if (groupIds) {
+      condition.groupId = groupIds;
+    }
     if (name) {
       condition.name = name.trim().toLowerCase();
     }

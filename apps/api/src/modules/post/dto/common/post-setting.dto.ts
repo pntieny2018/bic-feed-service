@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsOptional, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
 import { Expose } from 'class-transformer';
 
 export class PostSettingDto {
@@ -10,12 +10,12 @@ export class PostSettingDto {
     description: 'Allow to react',
     name: 'can_react',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsBoolean()
   @Expose({
     name: 'can_react',
   })
-  public canReact?: boolean;
+  public canReact: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -24,12 +24,12 @@ export class PostSettingDto {
     description: 'Allow to share post',
     name: 'can_share',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsBoolean()
   @Expose({
     name: 'can_share',
   })
-  public canShare?: boolean;
+  public canShare: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -38,12 +38,12 @@ export class PostSettingDto {
     description: 'Allow to comment',
     name: 'can_comment',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsBoolean()
   @Expose({
     name: 'can_comment',
   })
-  public canComment?: boolean;
+  public canComment: boolean;
 
   @ApiProperty({
     type: Boolean,
@@ -53,12 +53,12 @@ export class PostSettingDto {
     description: 'Set important post',
     name: 'is_important',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsBoolean()
   @Expose({
     name: 'is_important',
   })
-  public isImportant?: boolean;
+  public isImportant: boolean;
 
   @ApiProperty({
     required: false,

@@ -1,8 +1,8 @@
-import { PostEntity } from '../model/post';
+import { PostEntity } from '../model/content';
 import { PostType } from '../../data-type';
 import { IPost } from '../../../../database/models/post.model';
-import { ArticleEntity } from '../model/post/article.entity';
-import { SeriesEntity } from '../model/post/series.entity';
+import { ArticleEntity } from '../model/content/article.entity';
+import { SeriesEntity } from '../model/content/series.entity';
 
 export type FindOnePostOptions = {
   where: {

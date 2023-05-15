@@ -6,11 +6,11 @@ import {
   FindOnePostOptions,
   IPostRepository,
 } from '../../domain/repositoty-interface/post.repository.interface';
-import { PostEntity } from '../../domain/model/post';
+import { PostEntity } from '../../domain/model/content';
 import { IPost, PostModel, PostType } from '../../../../database/models/post.model';
 import { PostGroupModel } from '../../../../database/models/post-group.model';
-import { SeriesEntity } from '../../domain/model/post/series.entity';
-import { ArticleEntity } from '../../domain/model/post/article.entity';
+import { SeriesEntity } from '../../domain/model/content/series.entity';
+import { ArticleEntity } from '../../domain/model/content/article.entity';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { CategoryEntity } from '../../domain/model/category';
 import {
@@ -173,9 +173,23 @@ export class PostRepository implements IPostRepository {
   private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
     const findOption: FindOptions<IPost> = {};
     if (options.where) {
-      if (options.where['id']) findOption.where['id'] = options.where['id'];
-      if (options.where['ids']) findOption.where['ids'] = options.where['ids'];
-      if (options.where['type']) findOption.where['type'] = options.where['type'];
+      if (options.where['id'])
+        findOption.where = {
+          ...findOption.where,
+          id: options.where['id'],
+        };
+      if (options.where['ids']) {
+        findOption.where = {
+          ...findOption.where,
+          id: options.where['ids'],
+        };
+      }
+      if (options.where['type']) {
+        findOption.where = {
+          ...findOption.where,
+          type: options.where['type'],
+        };
+      }
     }
     if (options.include) {
       const { shouldIncludeGroup, mustIncludeGroup } = options.include;
@@ -230,13 +244,17 @@ export class PostRepository implements IPostRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       content: post.content,
-      groupIds: post.groups?.map((group) => group.id),
+      groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.series?.map((series) => series.id),
       tagsIds: post.tags?.map((tag) => tag.id),
       media: {
         images: post.mediaJson.images.map((image) => new ImageEntity(image)),
         files: post.mediaJson.files.map((file) => new FileEntity(file)),
         videos: post.mediaJson.videos.map((video) => new VideoEntity(video)),
+      },
+      aggregation: {
+        commentsCount: post.commentsCount,
+        totalUsersSeen: post.totalUsersSeen,
       },
     });
   }
@@ -266,7 +284,7 @@ export class PostRepository implements IPostRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       categories: post.categories?.map((category) => new CategoryEntity(category)),
-      groupIds: post.groups?.map((group) => group.id),
+      groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.series?.map((series) => series.id),
       tagsIds: post.tags?.map((tag) => tag.id),
       cover: new ImageEntity(post.coverJson),
@@ -297,7 +315,7 @@ export class PostRepository implements IPostRepository {
       updatedAt: post.updatedAt,
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
-      groupIds: post.groups?.map((group) => group.id),
+      groupIds: post.groups?.map((group) => group.groupId),
       cover: new ImageEntity(post.coverJson),
       items: post.items?.map((item) => {
         if (item.type === PostType.ARTICLE) {

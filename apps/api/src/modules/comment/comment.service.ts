@@ -153,7 +153,7 @@ export class CommentService {
     comment: IComment;
     oldComment: IComment;
   }> {
-    const { media } = updateCommentDto;
+    const { media, mentions } = updateCommentDto;
     const comment = await this._commentModel.findOne({
       include: [
         {
@@ -194,6 +194,7 @@ export class CommentService {
           content: updateCommentDto.content,
           giphyId: updateCommentDto.giphy ? updateCommentDto.giphy.id : null,
           edited: true,
+          mentions,
           mediaJson: media || {
             files: [],
             images: [],
@@ -210,12 +211,6 @@ export class CommentService {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
         await this._mentionService.checkValid(groupAudienceIds, userMentionIds);
       }
-      await this._mentionService.setMention(
-        userMentionIds,
-        MentionableType.COMMENT,
-        comment.id,
-        transaction
-      );
 
       await transaction.commit();
 

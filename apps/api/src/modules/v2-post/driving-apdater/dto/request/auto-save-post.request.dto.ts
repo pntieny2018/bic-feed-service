@@ -8,7 +8,7 @@ import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
 import { ValidateMention } from '../../../../mention/validators/validate-mention.validator';
 import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
 
-export class UpdatePostRequestDto {
+export class AutoSavePostRequestDto {
   @ApiProperty({
     description: 'Audience',
     type: AudienceRequestDto,

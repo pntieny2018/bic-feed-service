@@ -9,14 +9,20 @@ import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
-import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
+import {
+  IContentValidator,
+  CONTENT_VALIDATOR_TOKEN,
+  IPostValidator,
+  POST_VALIDATOR_TOKEN,
+} from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { ContentNotFoundException } from '../../../domain/exception';
-import { PostEntity } from '../../../domain/model/post';
+import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -25,30 +31,34 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
     @Inject(GROUP_APPLICATION_TOKEN)
     private readonly _groupApplicationService: IGroupApplicationService,
-    @Inject(CONTENT_VALIDATOR_TOKEN) private readonly _contentValidator: IContentValidator
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService,
+    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<any> {
-    const { id, groupIds, authUser, setting, media } = command.payload;
+    const { id, groupIds, seriesIds, tagIds, setting, mentionUserIds } = command.payload;
     const postEntity = await this._postRepository.findOne({
       where: {
         id,
-        groupArchived: true,
+        groupArchived: false,
       },
       include: {
         mustIncludeGroup: true,
       },
     });
-
     if (!postEntity || !(postEntity instanceof PostEntity)) {
       throw new ContentNotFoundException();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(groupIds);
-    const tagEntity = await this._postDomainService.publishPost(
-      postEntity as PostEntity,
-      command.payload,
-      groups
-    );
+    //TODO: validate media
+
+    const tagEntity = await this._postDomainService.publishPost({
+      postEntity: postEntity as PostEntity,
+      newData: command.payload,
+    });
+
+    //TODO: emit event
+    //TODO: bind data and return
   }
 }

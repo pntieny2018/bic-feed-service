@@ -1,4 +1,4 @@
-import { SeriesEntity, SeriesProps } from '../../model/post/series.entity';
+import { SeriesEntity, SeriesProps } from '../../model/content/series.entity';
 
 export interface ISeriesFactory {
   reconstitute(props: SeriesProps): SeriesEntity;
