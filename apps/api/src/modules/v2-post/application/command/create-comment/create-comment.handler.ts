@@ -13,12 +13,12 @@ import {
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
-import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ClassTransformer } from 'class-transformer';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
+import { ContentEntity } from '../../../domain/model/content/content.entity';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -41,11 +41,11 @@ export class CreateCommentHandler
     let usersMention: UserMentionDto = {};
 
     const post = (await this._postRepository.findOne({
-      where: { id: postId, groupArchived: false },
+      where: { id: postId, groupArchived: false, isHidden: false },
       include: {
         mustIncludeGroup: true,
       },
-    })) as PostEntity;
+    })) as ContentEntity;
 
     if (!post) throw new ContentNotFoundException();
 

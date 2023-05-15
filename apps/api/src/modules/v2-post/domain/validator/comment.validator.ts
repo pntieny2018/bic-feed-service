@@ -10,11 +10,11 @@ import {
 import { GroupDto } from '../../../v2-group/application';
 import { MediaStatus, PostPrivacy, PostType } from '../../data-type';
 import { ContentNoCRUDPermissionException, ContentRequireGroupException } from '../exception';
-import { PostEntity } from '../model/content/post.entity';
 import { PostAllow } from '../../data-type/post-allow.enum';
 import { ImageMetadataDto } from '../../driving-apdater/dto/shared/media';
 import { ICommentValidator } from './interface/comment.validator.interface';
 import { UserMentionDto } from '../../application/dto';
+import { ContentEntity } from '../model/content/content.entity';
 
 @Injectable()
 export class CommentValidator implements ICommentValidator {
@@ -32,7 +32,7 @@ export class CommentValidator implements ICommentValidator {
    * @returns void
    */
 
-  public checkCanReadPost(post: PostEntity, user: UserDto, requireGroups?: GroupDto[]): void {
+  public checkCanReadPost(post: ContentEntity, user: UserDto, requireGroups?: GroupDto[]): void {
     if (post.get('status') !== PostStatus.PUBLISHED && post.get('createdBy') === user.id) return;
     if (post.get('privacy') === PostPrivacy.OPEN || post.get('privacy') === PostPrivacy.CLOSED)
       return;
@@ -61,7 +61,7 @@ export class CommentValidator implements ICommentValidator {
    * @param action PostAllow
    * @returns Promise resolve boolean
    */
-  public allowAction(post: PostEntity, action: PostAllow): void {
+  public allowAction(post: ContentEntity, action: PostAllow): void {
     if (!post.get('setting')[action]) {
       throw new ForbiddenException({
         code: HTTP_STATUS_ID.API_FORBIDDEN,

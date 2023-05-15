@@ -1,14 +1,14 @@
 import { UserDto } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application/group.dto';
-import { PostEntity } from '../../model/content/post.entity';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { ImageMetadataDto } from '../../../driving-apdater/dto/shared/media/image-metadata.dto';
 import { UserMentionDto } from '../../../application/dto';
+import { ContentEntity } from '../../model/content/content.entity';
 
 export interface ICommentValidator {
-  checkCanReadPost(post: PostEntity, user: UserDto, requireGroups?: GroupDto[]): void;
+  checkCanReadPost(post: ContentEntity, user: UserDto, requireGroups?: GroupDto[]): void;
 
-  allowAction(post: PostEntity, action: PostAllow): void;
+  allowAction(post: ContentEntity, action: PostAllow): void;
 
   checkValidMentionsAndReturnUsers(groupIds: string[], userIds: string[]): Promise<UserDto[]>;
 
