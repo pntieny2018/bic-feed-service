@@ -5,7 +5,6 @@ import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from '../../../../media/dto';
 import { UserMentionDto } from '../../../../mention/dto';
 import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
-import { ValidateMention } from '../../../../mention/validators/validate-mention.validator';
 import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
 import { MediaRequestDto } from './media.request.dto';
 
@@ -122,12 +121,6 @@ export class PublishPostRequestDto {
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
-    }
-    return value;
-  })
   @IsUUID('4', { each: true })
   public tags?: string[];
 
@@ -136,12 +129,6 @@ export class PublishPostRequestDto {
     example: ['9322c384-fd8e-4a13-80cd-1cbd1ef95ba8', '986dcaf4-c1ea-4218-b6b4-e4fd95a3c28e'],
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) {
-      return value.map((v) => v.trim());
-    }
-    return value;
-  })
   @IsUUID('4', { each: true })
   public series?: string[];
 }

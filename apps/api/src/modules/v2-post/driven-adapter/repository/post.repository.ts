@@ -21,6 +21,8 @@ import {
   POST_FACTORY_TOKEN,
   SERIES_FACTORY_TOKEN,
 } from '../../domain/factory/interface';
+import { PostSeriesModel } from '../../../../database/models/post-series.model';
+import { PostTagModel } from '../../../../database/models/post-tag.model';
 
 export class PostRepository implements IPostRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -31,46 +33,29 @@ export class PostRepository implements IPostRepository {
   private readonly _postModel: typeof PostModel;
   @InjectModel(PostGroupModel)
   private readonly _postGroupModel: typeof PostGroupModel;
+  @InjectModel(PostSeriesModel)
+  private readonly _postSeriesModel: typeof PostSeriesModel;
+  @InjectModel(PostTagModel)
+  private readonly _postTagModel: typeof PostTagModel;
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async createPost(postEntity: PostEntity): Promise<void> {
+  public async update(postEntity: PostEntity): Promise<void> {
     const postId = postEntity.get('id');
-    const groupIds = postEntity.get('groupIds');
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      await this._postModel.create(
-        {
-          id: postEntity.get('id'),
-          content: postEntity.get('content'),
-          privacy: postEntity.get('privacy'),
-          isHidden: postEntity.get('isHidden'),
-          isReported: postEntity.get('isReported'),
-          type: postEntity.get('type'),
-          status: postEntity.get('status'),
-          updatedBy: postEntity.get('updatedBy'),
-          createdBy: postEntity.get('createdBy'),
-          isImportant: postEntity.get('setting').isImportant,
-          importantExpiredAt: postEntity.get('setting').importantExpiredAt,
-          canShare: postEntity.get('setting').canShare,
-          canComment: postEntity.get('setting').canComment,
-          canReact: postEntity.get('setting').canReact,
-          commentsCount: postEntity.get('aggregation').commentsCount,
-          totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
-          mediaJson: postEntity.get('media'),
+      const attributes = this._setAttributes(postEntity);
+      await this._postModel.update(attributes, {
+        where: {
+          id: postId,
         },
-        { transaction }
-      );
+        transaction,
+      });
 
-      if (groupIds.length > 0) {
-        await this._postGroupModel.bulkCreate(
-          groupIds.map((groupId) => ({
-            postId,
-            groupId,
-          })),
-          { transaction, ignoreDuplicates: true }
-        );
-      }
+      await this._setSeries(postEntity, transaction);
+      await this._setTags(postEntity, transaction);
+      await this._setGroups(postEntity, transaction);
+
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();
@@ -78,63 +63,118 @@ export class PostRepository implements IPostRepository {
     }
   }
 
-  public async updatePost(postEntity: PostEntity): Promise<void> {
-    const postId = postEntity.get('id');
-    const transaction = await this._sequelizeConnection.transaction();
-    try {
-      await this._postModel.update(
-        {
-          id: postEntity.get('id'),
-          content: postEntity.get('content'),
-          privacy: postEntity.get('privacy'),
-          isHidden: postEntity.get('isHidden'),
-          isReported: postEntity.get('isReported'),
-          type: postEntity.get('type'),
-          status: postEntity.get('status'),
-          updatedBy: postEntity.get('updatedBy'),
-          isImportant: postEntity.get('setting').isImportant,
-          importantExpiredAt: postEntity.get('setting').importantExpiredAt,
-          canShare: postEntity.get('setting').canShare,
-          canComment: postEntity.get('setting').canComment,
-          canReact: postEntity.get('setting').canReact,
-          commentsCount: postEntity.get('aggregation').commentsCount,
-          totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
-          mediaJson: postEntity.get('media'),
-        },
-        {
-          where: {
-            id: postId,
-          },
-          transaction,
-        }
+  private async _setGroups(postEntity: PostEntity, transaction): Promise<void> {
+    const state = postEntity.get('state');
+    if (state.attachGroupIds.length > 0) {
+      await this._postGroupModel.bulkCreate(
+        state.attachGroupIds.map((groupId) => ({
+          postId: postEntity.get('id'),
+          groupId,
+        })),
+        { transaction, ignoreDuplicates: true }
       );
+    }
 
-      const state = postEntity.get('state');
+    if (state.detachGroupIds.length > 0) {
+      await this._postGroupModel.destroy({
+        where: {
+          postId: postEntity.get('id'),
+          groupId: state.detachGroupIds,
+        },
+        transaction,
+      });
+    }
+  }
 
-      if (state.attachGroupIds.length > 0) {
-        await this._postGroupModel.bulkCreate(
-          state.attachGroupIds.map((groupId) => ({
-            postId,
-            groupId,
-          })),
-          { transaction, ignoreDuplicates: true }
-        );
-      }
+  private _setAttributes(postEntity): IPost {
+    return {
+      id: postEntity.get('id'),
+      content: postEntity.get('content'),
+      privacy: postEntity.get('privacy'),
+      isHidden: postEntity.get('isHidden'),
+      isReported: postEntity.get('isReported'),
+      type: postEntity.get('type'),
+      status: postEntity.get('status'),
+      createdBy: postEntity.get('createdBy'),
+      updatedBy: postEntity.get('updatedBy'),
+      isImportant: postEntity.get('setting').isImportant,
+      importantExpiredAt: postEntity.get('setting').importantExpiredAt,
+      canShare: postEntity.get('setting').canShare,
+      canComment: postEntity.get('setting').canComment,
+      canReact: postEntity.get('setting').canReact,
+      commentsCount: postEntity.get('aggregation').commentsCount,
+      totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
+      mediaJson: postEntity.get('media'),
+      mentions: postEntity.get('mentionUserIds'),
+    };
+  }
 
-      if (state.detachGroupIds.length > 0) {
-        await this._postGroupModel.destroy({
-          where: {
-            postId,
-            groupId: state.detachGroupIds,
-          },
-          transaction,
-        });
-      }
+  private async _setSeries(postEntity: PostEntity, transaction): Promise<void> {
+    const state = postEntity.get('state');
+    if (state.attachSeriesIds.length > 0) {
+      await this._postSeriesModel.bulkCreate(
+        state.attachSeriesIds.map((groupId) => ({
+          postId: postEntity.get('id'),
+          seriesId: state.attachSeriesIds,
+        })),
+        { transaction, ignoreDuplicates: true }
+      );
+    }
 
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
+    if (state.detachSeriesIds.length > 0) {
+      await this._postSeriesModel.destroy({
+        where: {
+          postId: postEntity.get('id'),
+          seriesId: state.detachSeriesIds,
+        },
+        transaction,
+      });
+    }
+  }
+
+  private async _setTags(postEntity: PostEntity, transaction): Promise<void> {
+    const state = postEntity.get('state');
+    if (state.attachTagIds.length > 0) {
+      await this._postTagModel.bulkCreate(
+        state.attachTagIds.map((groupId) => ({
+          postId: postEntity.get('id'),
+          tagId: state.attachTagIds,
+        })),
+        { transaction, ignoreDuplicates: true }
+      );
+    }
+
+    if (state.detachTagIds.length > 0) {
+      await this._postTagModel.destroy({
+        where: {
+          postId: postEntity.get('id'),
+          tagId: state.detachTagIds,
+        },
+        transaction,
+      });
+    }
+  }
+
+  private async _s(postEntity: PostEntity, transaction): Promise<void> {
+    const state = postEntity.get('state');
+    if (state.attachSeriesIds.length > 0) {
+      await this._postSeriesModel.bulkCreate(
+        state.attachSeriesIds.map((groupId) => ({
+          postId: postEntity.get('id'),
+          seriesId: state.attachSeriesIds,
+        })),
+        { transaction, ignoreDuplicates: true }
+      );
+    }
+
+    if (state.detachSeriesIds.length > 0) {
+      await this._postSeriesModel.destroy({
+        where: {
+          postId: postEntity.get('id'),
+          seriesId: state.detachSeriesIds,
+        },
+        transaction,
+      });
     }
   }
 
@@ -166,6 +206,7 @@ export class PostRepository implements IPostRepository {
       }
     }
     const findOption = this._buildFindOptions(findAllPostOptions);
+    console.log('findOption', JSON.stringify(findOption, null, 4));
     const rows = await this._postModel.findAll(findOption);
     return rows.map((row) => this._modelToPostEntity(row));
   }
@@ -248,9 +289,9 @@ export class PostRepository implements IPostRepository {
       seriesIds: post.series?.map((series) => series.id),
       tagsIds: post.tags?.map((tag) => tag.id),
       media: {
-        images: post.mediaJson.images.map((image) => new ImageEntity(image)),
-        files: post.mediaJson.files.map((file) => new FileEntity(file)),
-        videos: post.mediaJson.videos.map((video) => new VideoEntity(video)),
+        images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
+        files: post.mediaJson?.files.map((file) => new FileEntity(file)),
+        videos: post.mediaJson?.videos.map((video) => new VideoEntity(video)),
       },
       aggregation: {
         commentsCount: post.commentsCount,

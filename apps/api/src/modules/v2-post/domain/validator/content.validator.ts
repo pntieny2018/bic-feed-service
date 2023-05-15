@@ -107,8 +107,10 @@ export class ContentValidator implements IContentValidator {
   }
 
   public async validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void> {
-    if (!userIds?.length) return;
-    const users = await this._userApplicationService.findAllByIds(userIds);
+    if (!userIds?.length || !groupIds?.length) return;
+    const users = await this._userApplicationService.findAllByIds(userIds, {
+      withGroupJoined: true,
+    });
     const invalidUsers = [];
     for (const user of users) {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {

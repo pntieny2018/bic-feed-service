@@ -33,10 +33,10 @@ export class PostEntity extends ContentEntity<PostProps> {
 
     if (seriesIds) {
       this._props.state.attachSeriesIds = seriesIds.filter(
-        (groupId) => !this._props.groupIds?.includes(groupId)
+        (seriesId) => !this._props.seriesIds?.includes(seriesId)
       );
-      this._props.state.detachSeriesIds = this._props.groupIds?.filter(
-        (groupId) => !groupIds.includes(groupId)
+      this._props.state.detachSeriesIds = this._props.seriesIds?.filter(
+        (seriesId) => !seriesIds.includes(seriesId)
       );
       this._props.seriesIds = seriesIds;
     }
