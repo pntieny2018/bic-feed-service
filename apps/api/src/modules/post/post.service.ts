@@ -667,7 +667,6 @@ export class PostService {
         dataUpdate['status'] = PostStatus.PROCESSING;
         dataUpdate['videoIdProcessing'] = media.videos[0].id;
       }
-
       dataUpdate.linkPreviewId = null;
       if (updatePostDto.linkPreview) {
         const linkPreview = await this.linkPreviewService.upsert(updatePostDto.linkPreview);
@@ -713,7 +712,6 @@ export class PostService {
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
         await this.setGroupByPost(audience.groupIds, post.id, transaction);
       }
-
       await transaction.commit();
 
       if (setting && setting.isImportant) {

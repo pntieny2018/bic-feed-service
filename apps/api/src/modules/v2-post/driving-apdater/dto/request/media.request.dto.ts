@@ -14,20 +14,23 @@ export class MediaRequestDto {
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
-  @Transform(({ value }) => value.map((item) => item.id) ?? [])
+  @Transform(({ value }) => value.map((item) => item?.id) ?? [])
+  @Type(() => MediaDto)
   public images?: string[];
 
   @ApiProperty({ required: false, type: [MediaDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @IsOptional()
-  @Transform(({ value }) => value.map((item) => item.id) ?? [])
+  @Transform(({ value }) => value.map((item) => item?.id) ?? [])
+  @Type(() => MediaDto)
   public videos?: string[];
 
   @ApiProperty({ required: false, type: [MediaDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Transform(({ value }) => value.map((item) => item.id) ?? [])
+  @Transform(({ value }) => value.map((item) => item?.id) ?? [])
+  @Type(() => MediaDto)
   public files?: string[];
 }

@@ -71,10 +71,10 @@ export class ContentEntity<
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Group ID is not UUID`);
     }
-    if (!isUUID(this._props.createdBy)) {
+    if (this._props.createdBy && !isUUID(this._props.createdBy)) {
       throw new DomainModelException(`Created By is not UUID`);
     }
-    if (!isUUID(this._props.updatedBy)) {
+    if (this._props.updatedBy && !isUUID(this._props.updatedBy)) {
       throw new DomainModelException(`Updated By is not UUID`);
     }
   }
@@ -142,6 +142,6 @@ export class ContentEntity<
     if (setting) this.setSetting(setting);
     if (groupIds) this.setGroups(groupIds);
     this._props.updatedAt = new Date();
-    this._props.createdBy = authUser.id;
+    this._props.updatedBy = authUser.id;
   }
 }

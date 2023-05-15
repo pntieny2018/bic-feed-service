@@ -58,14 +58,14 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     if (seriesIds?.length) {
       const groupIds = groups.map((e) => e.id);
       const series = await this._postRepository.findAll({
-        attributes: ['id', 'title', 'groups'],
+        attributes: ['id', 'title'],
         include: {
           mustIncludeGroup: true,
         },
         where: {
           ids: seriesIds,
           type: PostType.SERIES,
-          groupArchived: true,
+          groupArchived: false,
         },
       });
       series.forEach((item) => {
