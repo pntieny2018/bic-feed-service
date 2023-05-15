@@ -48,9 +48,7 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isPublished()) return postEntity;
     postEntity.update(newData);
     //TODO: validate media
-    console.log('11111111111');
     await this._postValidator.validatePublishContent(postEntity, authUser, groupIds);
-    console.log('222222222');
     if (postEntity.get('mentionUserIds')) {
       await this._postValidator.validateMentionUsers(
         postEntity.get('mentionUserIds'),

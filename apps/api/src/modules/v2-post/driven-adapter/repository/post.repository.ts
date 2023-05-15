@@ -40,22 +40,17 @@ export class PostRepository implements IPostRepository {
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async update(postEntity: PostEntity): Promise<void> {
-    const postId = postEntity.get('id');
+  public async upsert(postEntity: PostEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const attributes = this._setAttributes(postEntity);
-      await this._postModel.update(attributes, {
-        where: {
-          id: postId,
-        },
+      await this._postModel.upsert(attributes, {
         transaction,
       });
 
       await this._setSeries(postEntity, transaction);
       await this._setTags(postEntity, transaction);
       await this._setGroups(postEntity, transaction);
-
       await transaction.commit();
     } catch (error) {
       await transaction.rollback();
