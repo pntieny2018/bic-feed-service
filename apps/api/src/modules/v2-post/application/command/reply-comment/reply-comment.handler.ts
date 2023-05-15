@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { ForbiddenException, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ICommentDomainService,
@@ -12,13 +12,10 @@ import {
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import { ExceptionHelper } from '../../../../../common/helpers';
 import { HTTP_STATUS_ID } from '../../../../../common/constants';
-import { PostAllow } from '../../../data-type/post-allow.enum';
 import {
-  COMMENT_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
   MEDIA_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
-  ICommentValidator,
   IContentValidator,
   IMediaValidator,
   IMentionValidator,
@@ -38,8 +35,6 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _postRepository: IPostRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
-    @Inject(COMMENT_VALIDATOR_TOKEN)
-    private readonly _commentValidator: ICommentValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(MEDIA_VALIDATOR_TOKEN)
@@ -63,16 +58,21 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     }
 
     const post = (await this._postRepository.findOne({
-      where: { id: postId },
+      where: { id: postId, groupArchived: false, isHidden: false },
       include: {
-        shouldIncludeGroup: true,
+        mustIncludeGroup: true,
       },
     })) as PostEntity;
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    this._commentValidator.allowAction(post, PostAllow.COMMENT);
+    if (!post.allowComment()) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: 'Comment action on this content is not available',
+      });
+    }
 
     let usersMention: UserMentionDto = {};
     let imagesDto: ImageDto[] = [];

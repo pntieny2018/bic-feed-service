@@ -9,7 +9,6 @@ import { PostPrivacy, PostType } from '../../../data-type';
 import { GroupDto } from '../../../../v2-group/application';
 import { GroupPrivacy } from '../../../../v2-group/data-type';
 import { PostSettingDto } from '../../../application/dto/post-setting.dto';
-import { PublishPostCommandPayload } from '../../../application/command/publish-post/publish-post.command';
 
 export type ContentProps = {
   id: string;
@@ -143,5 +142,9 @@ export class ContentEntity<
     if (groupIds) this.setGroups(groupIds);
     this._props.updatedAt = new Date();
     this._props.updatedBy = authUser.id;
+  }
+
+  public allowComment(): boolean {
+    return this._props.setting.canComment;
   }
 }

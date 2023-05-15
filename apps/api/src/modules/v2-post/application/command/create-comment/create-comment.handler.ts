@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { ForbiddenException, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ICommentDomainService,
@@ -11,13 +11,10 @@ import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
-import { PostAllow } from '../../../data-type/post-allow.enum';
 import {
-  COMMENT_VALIDATOR_TOKEN,
   CONTENT_VALIDATOR_TOKEN,
   MEDIA_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
-  ICommentValidator,
   IContentValidator,
   IMediaValidator,
   IMentionValidator,
@@ -28,6 +25,7 @@ import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
+import { HTTP_STATUS_ID } from '../../../../../common/constants';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -36,8 +34,6 @@ export class CreateCommentHandler
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
-    @Inject(COMMENT_VALIDATOR_TOKEN)
-    private readonly _commentValidator: ICommentValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
     @Inject(MEDIA_VALIDATOR_TOKEN)
@@ -63,7 +59,12 @@ export class CreateCommentHandler
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    this._commentValidator.allowAction(post, PostAllow.COMMENT);
+    if (!post.allowComment()) {
+      throw new ForbiddenException({
+        code: HTTP_STATUS_ID.API_FORBIDDEN,
+        message: 'Comment action on this content is not available',
+      });
+    }
 
     let usersMention: UserMentionDto = {};
     let imagesDto: ImageDto[] = [];
