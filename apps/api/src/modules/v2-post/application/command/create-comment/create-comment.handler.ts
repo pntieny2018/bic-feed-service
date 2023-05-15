@@ -15,7 +15,7 @@ import { ExceptionHelper } from '../../../../../common/helpers';
 import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
-import { PostEntity } from '../../../domain/model/post';
+import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ClassTransformer } from 'class-transformer';
 
 @CommandHandler(CreateCommentCommand)

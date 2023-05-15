@@ -10,7 +10,7 @@ import {
 import { GroupDto } from '../../../v2-group/application';
 import { MediaStatus, PostPrivacy, PostType } from '../../data-type';
 import { ContentNoCRUDPermissionException, ContentRequireGroupException } from '../exception';
-import { PostEntity } from '../model/post/post.entity';
+import { PostEntity } from '../model/content/post.entity';
 import { PostAllow } from '../../data-type/post-allow.enum';
 import { ImageMetadataDto } from '../../driving-apdater/dto/shared/media';
 import { ICommentValidator } from './interface/comment.validator.interface';
