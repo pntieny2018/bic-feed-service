@@ -33,7 +33,7 @@ export class PostDomainService implements IPostDomainService {
     });
     postEntity.setPrivacyFromGroups(groups);
     try {
-      await this._postRepository.createPost(postEntity);
+      await this._postRepository.update(postEntity);
       postEntity.commit();
     } catch (e) {
       this._logger.error(JSON.stringify(e?.stack));
@@ -48,9 +48,14 @@ export class PostDomainService implements IPostDomainService {
     if (postEntity.isPublished()) return postEntity;
     postEntity.update(newData);
     //TODO: validate media
-
+    console.log('11111111111');
+    await this._postValidator.validatePublishContent(postEntity, authUser, groupIds);
+    console.log('222222222');
     if (postEntity.get('mentionUserIds')) {
-      await this._postValidator.validateMentionUsers(postEntity.get('mentionUserIds'), groupIds);
+      await this._postValidator.validateMentionUsers(
+        postEntity.get('mentionUserIds'),
+        postEntity.get('groupIds')
+      );
     }
 
     const groups = await this._groupApplicationService.findAllByIds(postEntity.get('groupIds'));
@@ -59,11 +64,9 @@ export class PostDomainService implements IPostDomainService {
       await this._postValidator.validateSeriesAndTags(groups, seriesIds, tagIds);
     }
 
-    await this._postValidator.validatePublishContent(postEntity, authUser, groupIds);
-
     postEntity.setPrivacyFromGroups(groups);
     postEntity.setPublish();
-    await this._postRepository.updatePost(postEntity);
+    await this._postRepository.update(postEntity);
     postEntity.commit();
     return postEntity;
   }

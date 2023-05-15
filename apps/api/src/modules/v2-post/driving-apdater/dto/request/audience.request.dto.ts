@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Expose } from 'class-transformer';
 
 export class AudienceRequestDto {
@@ -10,6 +10,7 @@ export class AudienceRequestDto {
     name: 'group_ids',
   })
   @IsNotEmpty()
+  @IsUUID('4', { each: true })
   @IsArray()
   @Expose({
     name: 'group_ids',

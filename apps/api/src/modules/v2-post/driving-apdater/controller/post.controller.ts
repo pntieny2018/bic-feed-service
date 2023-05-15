@@ -34,6 +34,7 @@ import { Request } from 'express';
 import { UserNoBelongGroupException } from '../../domain/exception/user-no-belong-group.exception';
 import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
+import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -88,6 +89,7 @@ export class PostController {
     @Body() publishPostRequestDto: PublishPostRequestDto
   ): Promise<any> {
     const { audience, tags, series, mentions, media } = publishPostRequestDto;
+    console.log('publishPostRequestDto', publishPostRequestDto);
     try {
       const data = await this._commandBus.execute<PublishPostCommand, PostDto>(
         new PublishPostCommand({
@@ -115,6 +117,7 @@ export class PostController {
         case ContentNoEditSettingPermissionException:
         case ContentNoCRUDPermissionException:
           throw new ForbiddenException(e);
+        case AccessDeniedException:
         case DomainModelException:
         case UserNoBelongGroupException:
         case ContentEmptyException:
