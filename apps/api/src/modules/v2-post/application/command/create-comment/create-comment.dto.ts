@@ -8,10 +8,6 @@ export class CreateCommentDto {
   @Expose()
   public id: string;
 
-  @ApiProperty()
-  @Expose()
-  public edited: boolean = false;
-
   @ApiProperty({
     name: 'parent_id',
   })
@@ -35,12 +31,14 @@ export class CreateCommentDto {
   public content?: string;
 
   @ApiProperty({
-    name: 'created_at',
+    name: 'giphy_id',
   })
   @Expose()
   public giphyId?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    name: 'giphy_url',
+  })
   @Expose()
   public giphyUrl?: string;
 
@@ -76,6 +74,13 @@ export class CreateCommentDto {
   @ApiProperty({
     type: [UserMentionDto],
     name: 'mentions',
+    example: {
+      beincom: {
+        id: '26799d29-189b-435d-b618-30fb70e9b09e',
+        username: 'beincom',
+        fullname: 'Beincom EVOL',
+      },
+    },
   })
   @Expose()
   public mentions?: UserMentionDto[];

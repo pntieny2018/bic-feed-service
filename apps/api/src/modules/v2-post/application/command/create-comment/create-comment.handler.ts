@@ -19,6 +19,7 @@ import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ClassTransformer } from 'class-transformer';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
+import { createUrlFromId } from '../../../../giphy/giphy.util';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -80,7 +81,7 @@ export class CreateCommentHandler
 
     return this._classTransformer.plainToInstance(
       CreateCommentDto,
-      { ...commentEntity.toObject(), mentions: usersMention },
+      { ...commentEntity.toObject(), mentions: usersMention, giphyUrl: createUrlFromId(giphyId) },
       {
         excludeExtraneousValues: true,
       }
