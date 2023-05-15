@@ -11,8 +11,6 @@ import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
-import { ExceptionHelper } from '../../../../../common/helpers';
-import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import { PostAllow } from '../../../data-type/post-allow.enum';
 import { COMMENT_VALIDATOR_TOKEN, ICommentValidator } from '../../../domain/validator/interface';
 import { PostEntity } from '../../../domain/model/content/post.entity';
@@ -20,6 +18,7 @@ import { ClassTransformer } from 'class-transformer';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
+import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -42,13 +41,13 @@ export class CreateCommentHandler
     let usersMention: UserMentionDto = {};
 
     const post = (await this._postRepository.findOne({
-      where: { id: postId },
+      where: { id: postId, groupArchived: false },
       include: {
-        shouldIncludeGroup: true,
+        mustIncludeGroup: true,
       },
     })) as PostEntity;
 
-    if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
+    if (!post) throw new ContentNotFoundException();
 
     this._commentValidator.checkCanReadPost(post, actor);
 
