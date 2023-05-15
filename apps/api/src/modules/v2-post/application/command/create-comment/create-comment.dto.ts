@@ -9,6 +9,13 @@ export class CreateCommentDto {
   public id: string;
 
   @ApiProperty({
+    name: 'edited',
+    example: false,
+  })
+  @Expose()
+  public edited: boolean = false;
+
+  @ApiProperty({
     name: 'parent_id',
   })
   @Expose()
