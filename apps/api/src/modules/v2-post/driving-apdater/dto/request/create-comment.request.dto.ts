@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MediaDto } from '../shared/media/media.dto';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
-import { UserMentionDto } from '../shared/mention/user-mention.dto';
 import { GiphyDto } from '../../../../v2-giphy/driving-adapter/dto/giphy.dto';
+import { MediaRequestDto } from './media.request.dto';
+import { UserMentionDto } from '../../../application/dto/user-mention.dto';
 
 export class CreateCommentRequestDto {
   @ApiProperty({
@@ -34,7 +34,7 @@ export class CreateCommentRequestDto {
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
-    type: MediaDto,
+    type: MediaRequestDto,
     required: false,
     example: {
       images: [
@@ -51,8 +51,8 @@ export class CreateCommentRequestDto {
   @IsNotEmpty()
   @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
-  @Type(() => MediaDto)
-  public media?: MediaDto = { files: [], images: [], videos: [] };
+  @Type(() => MediaRequestDto)
+  public media?: MediaRequestDto = { files: [], images: [], videos: [] };
 
   @ApiPropertyOptional({
     type: UserMentionDto,

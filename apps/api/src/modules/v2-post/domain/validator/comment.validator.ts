@@ -11,9 +11,8 @@ import { GroupDto } from '../../../v2-group/application';
 import { MediaStatus, PostPrivacy, PostType } from '../../data-type';
 import { ContentNoCRUDPermissionException, ContentRequireGroupException } from '../exception';
 import { PostAllow } from '../../data-type/post-allow.enum';
-import { ImageMetadataDto } from '../../driving-apdater/dto/shared/media';
 import { ICommentValidator } from './interface/comment.validator.interface';
-import { UserMentionDto } from '../../application/dto';
+import { ImageDto, UserMentionDto } from '../../application/dto';
 import { ContentEntity } from '../model/content/content.entity';
 
 @Injectable()
@@ -100,7 +99,7 @@ export class CommentValidator implements ICommentValidator {
    * @throws BadRequestException
    * returns void
    */
-  public validateImagesMedia(images: ImageMetadataDto[], actor: UserDto): void {
+  public validateImagesMedia(images: ImageDto[], actor: UserDto): void {
     if (images.length === 0) {
       throw new BadRequestException('Invalid image');
     }
