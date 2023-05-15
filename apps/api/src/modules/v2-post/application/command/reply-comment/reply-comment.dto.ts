@@ -1,6 +1,5 @@
-import { CreateCommentDto } from '../create-comment/create-comment.dto';
-
-export class ReplyCommentDto extends CreateCommentDto {
+import { CommentDto } from '../../dto/comment.dto';
+export class ReplyCommentDto extends CommentDto {
   public constructor(data: Partial<ReplyCommentDto>) {
     super(data);
   }
