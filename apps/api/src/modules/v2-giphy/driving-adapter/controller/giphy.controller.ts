@@ -1,6 +1,6 @@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Inject, Query } from '@nestjs/common';
-import { APP_VERSION } from '../../../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../../../common/constants';
 import { ClassTransformer } from 'class-transformer';
 import { GetTrendingGifRequestDto } from '../dto/request/get-trending-gif.request.dto';
 import { SearchGifRequestDto } from '../dto/request/search-gif.request.dto';
@@ -12,7 +12,7 @@ import {
 
 @ApiTags('Giphy')
 @Controller({
-  version: APP_VERSION,
+  version: DEFAULT_APP_VERSION,
   path: 'giphy',
 })
 export class GiphyController {

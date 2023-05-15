@@ -77,6 +77,7 @@ export class PostListener {
           canComment: post.canComment,
           canReact: post.canReact,
           canShare: post.canShare,
+          isImportant: post.isImportant,
         },
         id: post.id,
         audience: {

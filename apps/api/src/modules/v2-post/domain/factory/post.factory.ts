@@ -1,16 +1,15 @@
 import { v4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { EventPublisher } from '@nestjs/cqrs';
-import { CreatePostDraftProps, IPostFactory } from './interface';
-import { PostEntity, PostProps } from '../model/post';
+import { IPostFactory } from './interface';
+import { PostEntity, PostProps } from '../model/content';
 import { PostStatus } from '../../data-type/post-status.enum';
-import { PostPrivacy, PostType } from '../../data-type';
+import { PostType } from '../../data-type';
 
 export class PostFactory implements IPostFactory {
   @Inject(EventPublisher) private readonly _eventPublisher: EventPublisher;
 
-  public createDraft(options: CreatePostDraftProps): PostEntity {
-    const { groupIds, userId } = options;
+  public createDraftPost({ groupIds, userId }: { groupIds: string[]; userId: string }): PostEntity {
     const now = new Date();
     const entity = new PostEntity({
       id: v4(),
@@ -20,14 +19,18 @@ export class PostFactory implements IPostFactory {
       updatedBy: userId,
       aggregation: {
         commentsCount: 0,
-        totalUsersSeen: 1,
+        totalUsersSeen: 0,
       },
       type: PostType.POST,
       status: PostStatus.DRAFT,
-      media: [],
+      media: {
+        files: [],
+        images: [],
+        videos: [],
+      },
       isHidden: false,
       isReported: false,
-      privacy: PostPrivacy.OPEN,
+      privacy: null,
       setting: {
         canComment: true,
         canReact: true,
@@ -39,8 +42,8 @@ export class PostFactory implements IPostFactory {
       updatedAt: now,
       mentionUserIds: [],
       linkPreview: null,
-      series: [],
-      tags: [],
+      seriesIds: [],
+      tagsIds: [],
     });
 
     return this._eventPublisher.mergeObjectContext(entity);

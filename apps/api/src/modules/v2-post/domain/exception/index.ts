@@ -16,3 +16,4 @@ export * from './tag-no-delete-permission.exception';
 export * from './tag-no-update-permission.exception';
 export * from './tag-not-found.exception';
 export * from './tag-used.exception';
+export * from './content-empty-group.exception';

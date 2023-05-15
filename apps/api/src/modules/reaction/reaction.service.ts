@@ -160,7 +160,7 @@ export class ReactionService {
 
   /**
    * Create reaction
-   * @param userDto UserDto
+   * @param userDto MediaDto
    * @param createReactionDto CreateReactionDto
    * @returns Promise resolve ReactionResponseDto
    */
@@ -184,7 +184,7 @@ export class ReactionService {
 
   /**
    * Create post reaction
-   * @param userDto UserDto
+   * @param userDto MediaDto
    * @param createReactionDto CreateReactionDto
    * @param attempt Number
    * @returns Promise resolve ReactionResponseDto
@@ -263,7 +263,7 @@ export class ReactionService {
 
   /**
    * Create comment reaction
-   * @param userDto UserDto
+   * @param userDto MediaDto
    * @param createReactionDto CreateReactionDto
    * @param attempt
    * @returns Promise resolve ReactionResponseDto
@@ -357,7 +357,7 @@ export class ReactionService {
 
   /**
    * Delete reaction
-   * @param userDto UserDto
+   * @param userDto MediaDto
    * @param deleteReactionDto DeleteReactionDto
    * @returns Promise resolve boolean
    * @throws HttpException
@@ -381,7 +381,7 @@ export class ReactionService {
 
   /**
    * Delete post reaction
-   * @param userDto UserDto
+   * @param userDto MediaDto
    * @param deleteReactionDto DeleteReactionDto
    * @param attempt
    * @returns Promise resolve boolean
@@ -476,7 +476,7 @@ export class ReactionService {
 
   /**
    * Delete comment reaction
-   * @param actor UserDto
+   * @param actor MediaDto
    * @param deleteReactionDto DeleteReactionDto
    * @param attempt
    * @returns Promise resolve boolean

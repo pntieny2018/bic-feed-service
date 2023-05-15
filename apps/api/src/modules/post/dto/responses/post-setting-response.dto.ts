@@ -10,9 +10,8 @@ export class PostSettingResponseDto extends PostSettingDto {
     description: 'Allow to react',
     name: 'can_react',
   })
-  @IsOptional()
   @IsBoolean()
-  public canReact?: boolean = true;
+  public canReact: boolean = true;
 
   @ApiProperty({
     type: Boolean,
@@ -21,9 +20,8 @@ export class PostSettingResponseDto extends PostSettingDto {
     description: 'Allow to share post',
     name: 'can_share',
   })
-  @IsOptional()
   @IsBoolean()
-  public canShare?: boolean = true;
+  public canShare: boolean = true;
 
   @ApiProperty({
     type: Boolean,
@@ -32,9 +30,8 @@ export class PostSettingResponseDto extends PostSettingDto {
     description: 'Allow to comment',
     name: 'can_comment',
   })
-  @IsOptional()
   @IsBoolean()
-  public canComment?: boolean = true;
+  public canComment: boolean = true;
 
   @ApiProperty({
     type: Boolean,
@@ -44,9 +41,8 @@ export class PostSettingResponseDto extends PostSettingDto {
     description: 'Set important post',
     name: 'is_important',
   })
-  @IsOptional()
   @IsBoolean()
-  public isImportant?: boolean = false;
+  public isImportant: boolean = false;
 
   @ApiProperty({
     required: false,

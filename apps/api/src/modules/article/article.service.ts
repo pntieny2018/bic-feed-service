@@ -122,7 +122,6 @@ export class ArticleService {
     const include = this._postService.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeCategory: true,
     });
     const orderOption = [];
@@ -171,7 +170,7 @@ export class ArticleService {
   /**
    * Get list related article
    * @throws HttpException
-   * @param authUser UserDto
+   * @param authUser MediaDto
    * @param getArticleListDto GetListArticlesDto
    * @returns Promise resolve PageDto<ArticleResponseDto>
    */
@@ -280,7 +279,6 @@ export class ArticleService {
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeCategory: true,
       shouldIncludePreviewLink: true,
       shouldIncludeSeries: true,
@@ -365,7 +363,6 @@ export class ArticleService {
     mustInSeriesIds,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
-    shouldIncludeMention,
     shouldIncludePreviewLink,
     shouldIncludeArticlesInSeries,
     shouldIncludeCategory,
@@ -378,7 +375,6 @@ export class ArticleService {
     mustInSeriesIds?: string[];
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
-    shouldIncludeMention?: boolean;
     shouldIncludeCategory?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeSeries?: boolean;
@@ -392,7 +388,6 @@ export class ArticleService {
       mustInSeriesIds,
       shouldIncludeOwnerReaction,
       shouldIncludeGroup,
-      shouldIncludeMention,
       shouldIncludePreviewLink,
       shouldIncludeCategory,
       shouldIncludeArticlesInSeries,
@@ -406,7 +401,7 @@ export class ArticleService {
 
   /**
    * Create Post
-   * @param authUser UserDto
+   * @param authUser MediaDto
    * @param createPostDto CreatePostDto
    * @returns Promise resolve boolean
    * @throws HttpException
@@ -482,7 +477,7 @@ export class ArticleService {
 
   /**
    * Publish article
-   * @param authUser UserDto
+   * @param authUser MediaDto
    * @param createArticleDto CreateArticleDto
    * @returns Promise resolve boolean
    * @throws HttpException
@@ -557,8 +552,7 @@ export class ArticleService {
 
     let transaction;
     try {
-      const { coverMedia, mentions, audience, categories, series, tags, setting } =
-        updateArticleDto;
+      const { coverMedia, audience, categories, series, tags, setting } = updateArticleDto;
 
       const dataUpdate = await this.getDataUpdate(updateArticleDto, authUserId);
 
@@ -569,10 +563,6 @@ export class ArticleService {
       }
 
       transaction = await this.sequelizeConnection.transaction();
-
-      if (mentions) {
-        await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
-      }
 
       const oldGroupIds = post.audience?.groups.map((group) => group.id) ?? [];
 

@@ -10,10 +10,6 @@ import {
   ITagRepository,
 } from '../../domain/repositoty-interface';
 import { ITagFactory, TAG_FACTORY_TOKEN } from '../../domain/factory/interface';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { AxiosHelper } from '../../../../common/helpers';
-import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 
 export class TagRepository implements ITagRepository {
   @Inject(TAG_FACTORY_TOKEN) private readonly _factory: ITagFactory;
@@ -85,8 +81,14 @@ export class TagRepository implements ITagRepository {
   }
 
   public async findAll(input: FindAllTagsProps): Promise<TagEntity[]> {
-    const { groupIds, name } = input;
-    const condition: any = { groupId: groupIds.map((groupId) => groupId) };
+    const { groupIds, name, ids } = input;
+    const condition: any = {};
+    if (ids) {
+      condition.id = ids;
+    }
+    if (groupIds) {
+      condition.groupId = groupIds;
+    }
     if (name) {
       condition.name = name.trim().toLowerCase();
     }

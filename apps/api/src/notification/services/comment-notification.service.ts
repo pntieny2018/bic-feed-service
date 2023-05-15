@@ -143,7 +143,7 @@ export class CommentNotificationService {
     }
     const newMentionedUserIds = Object.values(commentResponse.mentions ?? {}).map((u) => u.id);
 
-    const oldMentionedUserIds = (oldComment.mentions ?? []).map((m) => m.userId);
+    const oldMentionedUserIds = oldComment.mentions ?? [];
 
     const validMentionUserIds = (newMentionedUserIds ?? []).filter(
       (userId) => !(oldMentionedUserIds ?? []).includes(userId)

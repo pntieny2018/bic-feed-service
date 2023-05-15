@@ -41,6 +41,7 @@ export class UserApplicationService implements IUserApplicationService {
   }
 
   public async findAllByIds(userIds: string[], options?: FindUserOption): Promise<UserDto[]> {
+    if (userIds.length === 0) return [];
     const rows = await this._repo.findAllByIds(userIds);
     return rows.map((row) => {
       const user = this._toDto(row);

@@ -1,19 +1,44 @@
-import { PostEntity } from '../model/post';
+import { PostEntity } from '../model/content';
+import { PostType } from '../../data-type';
+import { IPost } from '../../../../database/models/post.model';
+import { ArticleEntity } from '../model/content/article.entity';
+import { SeriesEntity } from '../model/content/series.entity';
 
-export type CreateDraftPostProps = {
-  id: string;
-  groupIds: string[];
+export type FindOnePostOptions = {
+  where: {
+    id: string;
+    groupArchived?: boolean;
+  };
+  include?: {
+    shouldIncludeGroup?: boolean;
+    mustIncludeGroup?: boolean;
+  };
+  attributes?: (keyof IPost)[];
 };
 
-enum PostAttribute {
-  ID = 'id',
-  TITLE = 'title',
-}
+export type FindAllPostOptions = {
+  where: {
+    type?: PostType;
+    ids?: string[];
+    groupArchived?: boolean;
+  };
+  include?: {
+    shouldIncludeGroup?: boolean;
+    mustIncludeGroup?: boolean;
+  };
+  attributes?: (keyof IPost)[];
+};
 
 export interface IPostRepository {
   createPost(data: PostEntity): Promise<void>;
+  updatePost(data: PostEntity): Promise<void>;
+  findOne(
+    findOnePostOptions: FindOnePostOptions
+  ): Promise<PostEntity | ArticleEntity | SeriesEntity>;
 
-  findOne(id: string, attributes?: PostAttribute): Promise<PostEntity>;
+  findAll(
+    findAllPostOptions: FindAllPostOptions
+  ): Promise<PostEntity[] | ArticleEntity[] | SeriesEntity[]>;
 
   delete(id: string): Promise<void>;
 }

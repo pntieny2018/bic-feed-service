@@ -207,14 +207,9 @@ export class IndexPostCommand implements CommandRunner {
             groupId: tag.groupId,
           }));
           if (post.type === PostType.POST) {
-            const mentionUserIds = [];
-            for (const key in post.mentions) {
-              mentionUserIds.push(post.mentions[key].id);
-            }
-
             item.content = post.content;
             item.media = post.mediaJson;
-            item.mentionUserIds = mentionUserIds;
+            item.mentionUserIds = post.mentions;
           }
           if (post.type === PostType.ARTICLE) {
             item.title = post.title;

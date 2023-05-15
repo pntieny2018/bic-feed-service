@@ -1,19 +1,18 @@
-import { IPost, PostModel } from '../../../../../database/models/post.model';
 import { UserDto } from '../../../../v2-user/application';
-import { SeriesResponseDto } from '../../../../series/dto/responses';
-import { PostResponseDto } from '../../../../post/dto/responses';
+import { ContentEntity } from '../../model/content/content.entity';
 
 export interface IContentValidator {
   checkCanCRUDContent(user: UserDto, groupAudienceIds: string[]): Promise<void>;
 
   checkCanEditContentSetting(user: UserDto, groupAudienceIds: string[]): Promise<void>;
 
-  checkPostOwner(
-    post: PostResponseDto | SeriesResponseDto | PostModel | IPost,
-    authUserId: string
+  validatePublishContent(
+    contentEntity: ContentEntity,
+    userAuth: UserDto,
+    groupIds: string[]
   ): Promise<void>;
 
-  checkUserInSomeGroups(user: UserDto, groupAudienceIds: string[]): void;
+  validateMentionUsers(userIds: string[], groupIds: string[]): Promise<void>;
 }
 
 export const CONTENT_VALIDATOR_TOKEN = 'CONTENT_VALIDATOR_TOKEN';

@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { APP_VERSION } from '../../common/constants';
+import { DEFAULT_APP_VERSION } from '../../common/constants';
 import { GetTotalPostsInGroupDto } from './dto/requests';
 import { TotalPostInGroupsDto } from './dto/responses';
 import { InternalService } from './internal.service';
@@ -9,7 +9,7 @@ import { InternalService } from './internal.service';
 @ApiTags('Internal')
 @Controller({
   path: 'internal',
-  version: APP_VERSION,
+  version: DEFAULT_APP_VERSION,
 })
 export class InternalController {
   public constructor(private _internalService: InternalService) {}

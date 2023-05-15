@@ -6,14 +6,13 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CreateDraftPostCommand } from './create-draft-post.command';
 import { CreateDraftPostDto } from './create-draft-post.dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
 import {
-  IContentValidator,
   CONTENT_VALIDATOR_TOKEN,
+  IContentValidator,
 } from '../../../domain/validator/interface/content.validator.interface';
 import {
   GROUP_APPLICATION_TOKEN,
@@ -24,30 +23,32 @@ import {
 export class CreateDraftPostHandler
   implements ICommandHandler<CreateDraftPostCommand, CreateDraftPostDto>
 {
-  @Inject(POST_REPOSITORY_TOKEN)
-  private readonly _postRepository: IPostRepository;
-  @Inject(POST_DOMAIN_SERVICE_TOKEN)
-  private readonly _postDomainService: IPostDomainService;
-  @Inject(GROUP_APPLICATION_TOKEN)
-  private readonly _groupApplicationService: IGroupApplicationService;
-  @Inject(CONTENT_VALIDATOR_TOKEN)
-  private readonly _contentValidator: IContentValidator;
+  public constructor(
+    @Inject(POST_REPOSITORY_TOKEN)
+    private readonly _postRepository: IPostRepository,
+    @Inject(POST_DOMAIN_SERVICE_TOKEN)
+    private readonly _postDomainService: IPostDomainService,
+    @Inject(GROUP_APPLICATION_TOKEN)
+    private readonly _groupApplicationService: IGroupApplicationService,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator
+  ) {}
 
   public async execute(command: CreateDraftPostCommand): Promise<CreateDraftPostDto> {
     const { groupIds, authUser } = command.payload;
     await this._contentValidator.checkCanCRUDContent(authUser, groupIds);
-
-    const tagEntity = await this._postDomainService.createDraftPost({
-      groupIds,
-      userId: authUser.id,
-    });
-
     const groups = await this._groupApplicationService.findAllByIds(groupIds);
-    return new CreateDraftPostDto({
+    const tagEntity = await this._postDomainService.createDraftPost({
+      userId: authUser.id,
+      groups,
+    });
+    const data = new CreateDraftPostDto({
       id: tagEntity.get('id'),
       audience: {
         groups,
       },
     });
+    console.log('111111111', data);
+    return data;
   }
 }

@@ -147,7 +147,6 @@ export class PostService {
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: false,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeCategory: true,
     });
     const orderOption = [];
@@ -196,7 +195,7 @@ export class PostService {
   /**
    * Get Post
    * @param postId string
-   * @param user UserDto
+   * @param user MediaDto
    * @param getPostDto GetPostDto
    * @returns Promise resolve PostResponseDto
    * @throws HttpException
@@ -215,7 +214,6 @@ export class PostService {
     const include = this.getIncludeObj({
       shouldIncludeOwnerReaction: true,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludePreviewLink: true,
       shouldIncludeSeries: true,
       authUserId: user?.id || null,
@@ -406,7 +404,6 @@ export class PostService {
     shouldIncludeCategory,
     shouldIncludeOwnerReaction,
     shouldIncludeGroup,
-    shouldIncludeMention,
     shouldIncludePreviewLink,
     shouldIncludeArticlesInSeries,
     shouldIncludeSeries,
@@ -419,7 +416,6 @@ export class PostService {
     shouldIncludeCategory?: boolean;
     shouldIncludeOwnerReaction?: boolean;
     shouldIncludeGroup?: boolean;
-    shouldIncludeMention?: boolean;
     shouldIncludePreviewLink?: boolean;
     shouldIncludeArticlesInSeries?: boolean;
     shouldIncludeSeries?: boolean;
@@ -442,13 +438,6 @@ export class PostService {
       includes.push(obj);
     }
 
-    if (shouldIncludeMention) {
-      includes.push({
-        model: MentionModel,
-        as: 'mentions',
-        required: false,
-      });
-    }
     if (shouldIncludePreviewLink) {
       includes.push({
         model: LinkPreviewModel,
@@ -562,8 +551,8 @@ export class PostService {
 
   /**
    * Create Post
-   * @param authUser UserDto
-   * @param createPostDto CreateDraftPostDto
+   * @param authUser MediaDto
+   * @param createPostDto PublishPostDto
    * @returns Promise resolve boolean
    * @throws HttpException
    */
@@ -707,6 +696,9 @@ export class PostService {
       if (media) {
         dataUpdate['mediaJson'] = media;
       }
+      if (mentions) {
+        dataUpdate['mentions'] = mentions;
+      }
 
       transaction = await this.sequelizeConnection.transaction();
       await this.postModel.update(dataUpdate, {
@@ -716,10 +708,6 @@ export class PostService {
         },
         transaction,
       });
-
-      if (mentions) {
-        await this.mentionService.setMention(mentions, MentionableType.POST, post.id, transaction);
-      }
 
       const oldGroupIds = post.audience.groups.map((group) => group.id);
       if (audience.groupIds && !ArrayHelper.arraysEqual(audience.groupIds, oldGroupIds)) {
@@ -926,10 +914,6 @@ export class PostService {
           {
             model: PostGroupModel,
             as: 'groups',
-          },
-          {
-            model: MentionModel,
-            as: 'mentions',
           },
         ],
         where: {
@@ -1227,7 +1211,6 @@ export class PostService {
   public async getsByMedia(id: string): Promise<PostResponseDto[]> {
     const include = this.getIncludeObj({
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeSeries: true,
     });
     const posts = await this.postModel.findAll({
@@ -1424,7 +1407,6 @@ export class PostService {
     const include = this.getIncludeObj({
       shouldIncludeCategory: true,
       shouldIncludeGroup: true,
-      shouldIncludeMention: true,
       shouldIncludeOwnerReaction: true,
       shouldIncludePreviewLink: true,
       shouldIncludeArticlesInSeries: true,
