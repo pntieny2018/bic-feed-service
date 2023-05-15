@@ -20,13 +20,13 @@ import {
   IMediaValidator,
   IMentionValidator,
 } from '../../../domain/validator/interface';
-import { PostEntity } from '../../../domain/model/content/post.entity';
 import { ReplyCommentCommand } from './reply-comment.command';
 import { NIL } from 'uuid';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
+import { ContentEntity } from '../../../domain/model/content/content.entity';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -62,7 +62,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       include: {
         mustIncludeGroup: true,
       },
-    })) as PostEntity;
+    })) as ContentEntity;
     if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
 
     this._contentValidator.checkCanReadContent(post, actor);
