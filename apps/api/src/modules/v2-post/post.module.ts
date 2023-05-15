@@ -3,7 +3,13 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DatabaseModule } from '../../database';
 import { GroupModuleV2 } from '../v2-group/group.module';
 import { TagController } from './driving-apdater/controller/tag.controller';
-import { categoryProvider, tagProvider, postProvider, commentProvider } from './provider';
+import {
+  categoryProvider,
+  tagProvider,
+  postProvider,
+  commentProvider,
+  sharedProvider,
+} from './provider';
 import { UserModuleV2 } from '../v2-user/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
@@ -33,6 +39,12 @@ import { CommentController } from './driving-apdater/controller/comment.controll
     UserModuleV2,
   ],
   controllers: [TagController, CategoryController, PostController, CommentController],
-  providers: [...tagProvider, ...categoryProvider, ...postProvider, ...commentProvider],
+  providers: [
+    ...tagProvider,
+    ...categoryProvider,
+    ...postProvider,
+    ...commentProvider,
+    ...sharedProvider,
+  ],
 })
 export class PostModuleV2 {}

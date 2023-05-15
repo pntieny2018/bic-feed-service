@@ -26,6 +26,10 @@ import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/re
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
+import {
+  IMediaValidator,
+  MEDIA_VALIDATOR_TOKEN,
+} from '../../../domain/validator/interface/media.validator.interface';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -38,6 +42,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _commentValidator: ICommentValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
+    @Inject(MEDIA_VALIDATOR_TOKEN)
+    private readonly _mediaValidator: IMediaValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     private readonly _externalService: ExternalService
@@ -71,7 +77,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
     if (media?.images.length) {
       const images: ImageDto[] = await this._externalService.getImageIds(media?.images);
-      this._commentValidator.validateImagesMedia(images, actor);
+      this._mediaValidator.validateImagesMedia(images, actor);
       imagesDto = images;
     }
 

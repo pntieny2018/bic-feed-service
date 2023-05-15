@@ -24,6 +24,10 @@ import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
+import {
+  IMediaValidator,
+  MEDIA_VALIDATOR_TOKEN,
+} from '../../../domain/validator/interface/media.validator.interface';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -36,6 +40,8 @@ export class CreateCommentHandler
     private readonly _commentValidator: ICommentValidator,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
+    @Inject(MEDIA_VALIDATOR_TOKEN)
+    private readonly _mediaValidator: IMediaValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     private readonly _externalService: ExternalService
@@ -62,7 +68,7 @@ export class CreateCommentHandler
 
     if (media?.images.length) {
       const images: ImageDto[] = await this._externalService.getImageIds(media?.images);
-      this._commentValidator.validateImagesMedia(images, actor);
+      this._mediaValidator.validateImagesMedia(images, actor);
       imagesDto = images;
     }
 
