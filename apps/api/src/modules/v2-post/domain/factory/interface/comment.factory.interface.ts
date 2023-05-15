@@ -1,9 +1,10 @@
 import { CommentEntity, CommentProps } from '../../model/comment';
-import { FileProps, ImageEntity, ImageProps, VideoProps } from '../../model/media';
+import { FileProps, ImageProps, VideoProps } from '../../model/media';
 
 export type CreateCommentProps = {
   userId: string;
   postId: string;
+  parentId?: string;
   content?: string;
   giphyId?: string;
   media?: { images?: ImageProps[]; videos?: VideoProps[]; files?: FileProps[] };

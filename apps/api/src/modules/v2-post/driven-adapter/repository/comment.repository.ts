@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { CommentEntity } from '../../domain/model/comment';
-import { CommentModel } from '../../../../database/models/comment.model';
+import { CommentModel, IComment } from '../../../../database/models/comment.model';
 import { ICommentRepository } from '../../domain/repositoty-interface/comment.repository.interface';
-import { MentionModel } from 'apps/api/src/database/models/mention.model';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
+import { WhereOptions } from 'sequelize/types';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -50,5 +50,13 @@ export class CommentRepository implements ICommentRepository {
       mentions: comment.mentions,
       media: comment.mediaJson,
     });
+  }
+
+  public async findOne(options: WhereOptions<IComment>): Promise<CommentEntity> {
+    const comment = await this._commentModel.findOne({
+      where: options,
+    });
+
+    return this._modelToEntity(comment);
   }
 }

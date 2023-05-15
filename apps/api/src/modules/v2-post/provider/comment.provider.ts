@@ -1,4 +1,5 @@
 import { CreateCommentHandler } from '../application/command/create-comment/create-comment.handler';
+import { ReplyCommentHandler } from '../application/command/reply-comment/reply-comment.handler';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';
 import { COMMENT_DOMAIN_SERVICE_TOKEN } from '../domain/domain-service/interface';
 import { CommentFactory } from '../domain/factory/comment.factory';
@@ -27,4 +28,5 @@ export const commentProvider = [
   },
   /** Application */
   CreateCommentHandler,
+  ReplyCommentHandler,
 ];

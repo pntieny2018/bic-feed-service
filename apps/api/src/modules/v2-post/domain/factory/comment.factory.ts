@@ -10,11 +10,11 @@ export class CommentFactory implements ICommentFactory {
   public constructor(@Inject(EventPublisher) private readonly _eventPublisher: EventPublisher) {}
 
   public createComment(props: CreateCommentProps): CommentEntity {
-    const { userId, postId, content, media, giphyId, mentions } = props;
+    const { userId, parentId, postId, content, media, giphyId, mentions } = props;
     const now = new Date();
     const entity = new CommentEntity({
       id: v4(),
-      parentId: NIL,
+      parentId: parentId || NIL,
       postId,
       content,
       createdBy: userId,
