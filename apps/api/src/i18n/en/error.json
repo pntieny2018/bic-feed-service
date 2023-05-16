@@ -55,6 +55,7 @@
     "user_not_found": "The mentioned user is not found"
   },
   "comment": {
+    "not_found": "Comment not found",
     "reply_not_exist": "The reply comment does not exist"
   },
   "tag_series_invalid": "Tag series invalid"

@@ -20,4 +20,5 @@ export * from './content-empty-group.exception';
 export * from './mention-user-not-found.exception';
 export * from './content-no-comment-permission.exception';
 export * from './comment-reply-not-exist.exception';
+export * from './comment-not-found.exception';
 
