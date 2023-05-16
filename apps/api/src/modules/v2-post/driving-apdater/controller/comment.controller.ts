@@ -4,6 +4,8 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -31,6 +33,11 @@ import {
   UpdateCommentCommand,
   UpdateCommentCommandPayload,
 } from '../../application/command/update-comment/update-comment.command';
+import {
+  ContentNoCommentPermissionException,
+  ContentNotFoundException,
+} from '../../domain/exception';
+import { LogicException } from '../../../../common/exceptions/logic.exception';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -64,6 +71,11 @@ export class CommentController {
       return data;
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+        case LogicException:
+          throw new NotFoundException(e);
+        case ContentNoCommentPermissionException:
+          throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
         default:
@@ -97,6 +109,11 @@ export class CommentController {
       return data;
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+        case LogicException:
+          throw new NotFoundException(e);
+        case ContentNoCommentPermissionException:
+          throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
         default:

@@ -22,10 +22,12 @@ import {
 import { UserMentionDto } from '../../dto/user-mention.dto';
 import { NIL } from 'uuid';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
-import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
+import {
+  ContentNotFoundException,
+  ContentNoCommentPermissionException,
+} from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
-import { ContentNoCommentPermissionException } from '../../../domain/exception/content-no-comment-permission.exception';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler

@@ -27,7 +27,10 @@ import { UserMentionDto } from '../../dto/user-mention.dto';
 import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
-import { ContentNoCommentPermissionException } from '../../../domain/exception/content-no-comment-permission.exception';
+import {
+  ContentNotFoundException,
+  ContentNoCommentPermissionException,
+} from '../../../domain/exception';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -64,7 +67,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
         mustIncludeGroup: true,
       },
     })) as ContentEntity;
-    if (!post) ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_POST_NOT_EXISTING);
+    if (!post) throw new ContentNotFoundException();
 
     this._contentValidator.checkCanReadContent(post, actor);
 
