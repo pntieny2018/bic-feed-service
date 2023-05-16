@@ -11,8 +11,10 @@ export type FindOnePostOptions = {
     isHidden?: boolean;
   };
   include?: {
-    shouldIncludeGroup?: boolean;
     mustIncludeGroup?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeSeries?: boolean;
+    shouldIncludeTag?: boolean;
   };
   attributes?: (keyof IPost)[];
 };
@@ -24,14 +26,16 @@ export type FindAllPostOptions = {
     groupArchived?: boolean;
   };
   include?: {
-    shouldIncludeGroup?: boolean;
     mustIncludeGroup?: boolean;
+    shouldIncludeGroup?: boolean;
+    shouldIncludeSeries?: boolean;
+    shouldIncludeTag?: boolean;
   };
   attributes?: (keyof IPost)[];
 };
 
 export interface IPostRepository {
-  update(data: PostEntity): Promise<void>;
+  upsert(data: PostEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;

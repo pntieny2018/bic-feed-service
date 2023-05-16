@@ -6,14 +6,8 @@ import {
 } from '../../../domain/domain-service/interface';
 import { CreateDraftPostCommand } from './create-draft-post.command';
 import { CreateDraftPostDto } from './create-draft-post.dto';
-import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post.repository.interface';
-import {
-  CONTENT_VALIDATOR_TOKEN,
-  IContentValidator,
-} from '../../../domain/validator/interface/content.validator.interface';
+import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { CONTENT_VALIDATOR_TOKEN, IContentValidator } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
@@ -48,7 +42,6 @@ export class CreateDraftPostHandler
         groups,
       },
     });
-    console.log('111111111', data);
     return data;
   }
 }

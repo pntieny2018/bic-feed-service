@@ -43,7 +43,7 @@ export class PostFactory implements IPostFactory {
       mentionUserIds: [],
       linkPreview: null,
       seriesIds: [],
-      tagsIds: [],
+      tags: [],
     });
 
     return this._eventPublisher.mergeObjectContext(entity);

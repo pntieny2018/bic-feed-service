@@ -45,12 +45,14 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       },
       include: {
         mustIncludeGroup: true,
+        shouldIncludeSeries: true,
+        shouldIncludeTag: true,
       },
     });
     if (!postEntity || !(postEntity instanceof PostEntity)) {
       throw new ContentNotFoundException();
     }
-
+    console.log('postEntity', postEntity);
     //TODO: validate media
 
     const tagEntity = await this._postDomainService.publishPost({
