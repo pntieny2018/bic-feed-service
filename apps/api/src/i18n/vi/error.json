@@ -14,5 +14,8 @@
   "common": {
     "database_error": "Database error",
     "domain_model_validation": "Domain model invalidate"
+  },
+  "mention": {
+    "user_not_found": "Không tìm thấy người dùng được đề cập"
   }
 }

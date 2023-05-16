@@ -50,5 +50,8 @@
     "domain_model_validation": "Domain model invalidate",
     "access_denied": "Access denied"
   },
+  "mention": {
+    "user_not_found": "The mentioned user is not found"
+  },
   "tag_series_invalid": "Tag series invalid"
 }
