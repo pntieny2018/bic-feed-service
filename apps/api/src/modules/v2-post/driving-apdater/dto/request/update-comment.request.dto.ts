@@ -66,7 +66,15 @@ export class UpdateCommentRequestDto {
   })
   public mentions?: string[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: GiphyDto,
+    name: 'giphy',
+    example: {
+      id: '3pZipqyo1sqHDfJGtz',
+      type: 'gif',
+      url: 'https://i.giphy.com/3pZipqyo1sqHDfJGtz',
+    },
+  })
   @IsNotEmpty()
   @Type(() => GiphyDto)
   @Expose({
