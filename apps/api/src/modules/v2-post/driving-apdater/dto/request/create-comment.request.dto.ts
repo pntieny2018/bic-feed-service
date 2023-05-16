@@ -97,7 +97,7 @@ export class CreateCommentRequestDto {
     if (typeof value === 'object' && value?.type == 'gif') {
       if (value?.id) return value.id;
     }
-    return '';
+    return value;
   })
   public giphyId?: string;
 }
