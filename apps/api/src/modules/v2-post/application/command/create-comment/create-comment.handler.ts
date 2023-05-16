@@ -80,7 +80,7 @@ export class CreateCommentHandler
         post.get('groupIds'),
         mentions
       );
-      usersMention = this._mentionValidator.mapMentionWithUserInfo(mentions, users);
+      usersMention = this._mentionValidator.mapMentionWithUserInfo(users);
     }
 
     const commentEntity = await this._commentDomainService.create({
