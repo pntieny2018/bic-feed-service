@@ -264,7 +264,6 @@ export class IndexPostCommand implements CommandRunner {
           attributes: ['groupId', 'isArchived'],
           where: { isArchived: false },
         },
-        { model: MentionModel, as: 'mentions', required: false },
         {
           model: PostModel,
           as: 'items',

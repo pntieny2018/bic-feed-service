@@ -144,6 +144,13 @@ export class CommentResponseDto {
     },
   })
   @Expose()
+  @Transform(({ obj, value }) => {
+    const mentions = obj.mentions;
+    if (Array.isArray(mentions) && mentions.length === 0) {
+      return {};
+    }
+    return mentions;
+  })
   public mentions?: UserMentionDto;
 
   @ApiProperty({

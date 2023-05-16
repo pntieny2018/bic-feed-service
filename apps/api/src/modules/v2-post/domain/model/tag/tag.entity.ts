@@ -8,10 +8,10 @@ export type TagProps = {
   id: string;
   groupId: string;
   name: string;
-  createdBy: string;
-  updatedBy: string;
+  createdBy?: string;
+  updatedBy?: string;
   slug: string;
-  totalUsed: number;
+  totalUsed?: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -22,13 +22,13 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
   }
 
   public validate(): void {
-    if (!isUUID(this._props.groupId)) {
+    if (this._props.groupId && !isUUID(this._props.groupId)) {
       throw new DomainModelException(`Group ID must be UUID`);
     }
-    if (!isUUID(this._props.createdBy)) {
+    if (this._props.createdBy && !isUUID(this._props.createdBy)) {
       throw new DomainModelException(`Created By must be UUID`);
     }
-    if (!isUUID(this._props.updatedBy)) {
+    if (this._props.updatedBy && !isUUID(this._props.updatedBy)) {
       throw new DomainModelException(`Updated By must be UUID`);
     }
     if (!this._props.name) {
@@ -37,7 +37,7 @@ export class TagEntity extends DomainAggregateRoot<TagProps> {
     if (this._props.name.length > RULES.TAG_MAX_NAME) {
       throw new DomainModelException(`Tag name must not exceed ${RULES.TAG_MAX_NAME} characters`);
     }
-    if (this._props.totalUsed < 0) {
+    if (this._props.totalUsed && this._props.totalUsed < 0) {
       throw new DomainModelException(`Total used must be >= 0`);
     }
   }

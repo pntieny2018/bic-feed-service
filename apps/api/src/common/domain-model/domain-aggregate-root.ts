@@ -27,7 +27,11 @@ export abstract class DomainAggregateRoot<
   }
 
   public isChanged(): boolean {
-    return !equal(this._props, this._snapshot);
+    const props = { ...this._props };
+    const snapshot = { ...this._snapshot };
+    delete props['updatedAt'];
+    delete snapshot['updatedAt'];
+    return !equal(props, snapshot);
   }
 
   public get<K extends keyof Props>(key: K): Props[K] {

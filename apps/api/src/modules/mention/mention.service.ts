@@ -81,17 +81,19 @@ export class MentionService {
     for (const comment of commentsResponse) {
       if (comment?.parent?.mentions.length) {
         comment.parent.mentions = convert(
-          comment.parent.mentions.map((v) => usersInfo.find((u) => u.id === v.userId))
+          comment.parent.mentions.map((userId) => usersInfo.find((u) => u.id === userId))
         );
       }
       if (comment.mentions && comment.mentions.length) {
         comment.mentions = convert(
-          comment.mentions.map((v) => usersInfo.find((u) => u.id === v.userId))
+          comment.mentions.map((userId) => usersInfo.find((u) => u.id === userId))
         );
       }
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child?.list) {
-          cm.mentions = convert(cm.mentions.map((v) => usersInfo.find((u) => u.id === v.userId)));
+          cm.mentions = convert(
+            cm.mentions.map((userId) => usersInfo.find((u) => u.id === userId))
+          );
         }
       }
     }
@@ -101,14 +103,14 @@ export class MentionService {
     const userIds: string[] = [];
     for (const comment of commentsResponse) {
       if (comment?.parent?.mentions.length) {
-        userIds.push(...comment.parent.mentions.map((m) => m.userId));
+        userIds.push(...comment.parent.mentions);
       }
       if (comment.mentions && comment.mentions.length) {
-        userIds.push(...comment.mentions.map((m) => m.userId));
+        userIds.push(...comment.mentions);
       }
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
-          userIds.push(...cm.mentions.map((m) => m.userId));
+          userIds.push(...cm.mentions);
         }
       }
     }
@@ -125,17 +127,16 @@ export class MentionService {
 
     for (const post of posts) {
       if (post.mentions && post.mentions.length) {
-        userIds.push(...post.mentions.map((m) => m.userId));
+        userIds.push(...post.mentions);
       }
     }
 
     const usersInfo = await this.resolve(userIds);
-
     for (const post of posts) {
-      if (post.mentions && post.mentions.length) {
+      if (post.mentions?.length) {
         const mentions = [];
-        post.mentions.forEach((mention) => {
-          const user = usersInfo.find((u) => u.id === mention.userId);
+        post.mentions.forEach((userId) => {
+          const user = usersInfo.find((u) => u.id === userId);
           if (user) mentions.push(user);
         });
         post.mentions = mentions.reduce((obj, cur) => ({ ...obj, [cur.username]: cur }), {});

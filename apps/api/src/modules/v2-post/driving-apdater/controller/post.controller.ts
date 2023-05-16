@@ -89,7 +89,6 @@ export class PostController {
     @Body() publishPostRequestDto: PublishPostRequestDto
   ): Promise<any> {
     const { audience, tags, series, mentions, media } = publishPostRequestDto;
-    console.log('publishPostRequestDto', publishPostRequestDto);
     try {
       const data = await this._commandBus.execute<PublishPostCommand, PostDto>(
         new PublishPostCommand({
@@ -111,6 +110,7 @@ export class PostController {
       );
       return data;
     } catch (e) {
+      console.log(e);
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);

@@ -24,7 +24,6 @@ import { UserDto } from '../../../v2-user/application';
 import { CreateTagCommand } from '../../application/command/create-tag/create-tag.command';
 import { DeleteTagCommand } from '../../application/command/delete-tag/delete-tag.command';
 import { UpdateTagCommand } from '../../application/command/update-tag/update-tag.command';
-import { UpdateTagDto } from '../../application/command/update-tag/update-tag.dto';
 import { FindTagsPaginationQuery } from '../../application/query/find-tags/find-tags-pagination.query';
 import {
   TagDuplicateNameException,
@@ -39,6 +38,7 @@ import {
 } from '../../domain/exception';
 import { DomainModelException } from '../../../../common/exceptions/domain-model.exception';
 import { FindTagsPaginationDto } from '../../application/query/find-tags/find-tags-pagination.dto';
+import { TagDto } from '../../application/dto';
 
 @ApiTags('Tags')
 @ApiSecurity('authorization')
@@ -109,7 +109,7 @@ export class TagController {
 
   @ApiOperation({ summary: 'Update tag' })
   @ApiOkResponse({
-    type: UpdateTagDto,
+    type: TagDto,
     description: 'Update tag successfully',
   })
   @ResponseMessages({ success: 'message.tag.updated_success' })
@@ -118,10 +118,10 @@ export class TagController {
     @AuthUser() user: UserDto,
     @Param('id', ParseUUIDPipe) tagId: string,
     @Body() updateTagDto: UpdateTagRequestDto
-  ): Promise<UpdateTagDto> {
+  ): Promise<TagDto> {
     const { name } = updateTagDto;
     try {
-      const tag = await this._commandBus.execute<UpdateTagCommand, UpdateTagDto>(
+      const tag = await this._commandBus.execute<UpdateTagCommand, TagDto>(
         new UpdateTagCommand({ id: tagId, name, userId: user.id })
       );
       return tag;

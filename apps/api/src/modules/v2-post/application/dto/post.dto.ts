@@ -8,6 +8,7 @@ import { PostStatus } from '../../data-type/post-status.enum';
 import { UserDto } from '../../../v2-user/application';
 import { PostPrivacy, PostType } from '../../data-type';
 import { UserMentionDto } from './user-mention.dto';
+import { TagDto } from './tag.dto';
 
 export class PostDto {
   public id: string;
@@ -16,10 +17,10 @@ export class PostDto {
   };
   public communities: GroupDto[];
   public content: string;
-  public tags: string[];
+  public tags: TagDto[];
   public series: string[];
   public setting: PostSettingDto;
-  public linkPreview: LinkPreviewDto;
+  public linkPreview?: LinkPreviewDto;
   public media?: {
     files: FileDto[];
     images: ImageDto[];

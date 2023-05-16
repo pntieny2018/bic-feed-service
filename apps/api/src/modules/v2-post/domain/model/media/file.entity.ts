@@ -7,6 +7,7 @@ export type FileProps = {
   url: string;
   name: string;
   createdAt: Date;
+  createdBy: string;
   mimeType: string;
   size: number;
 };
@@ -20,5 +21,9 @@ export class FileEntity extends DomainAggregateRoot<FileProps> {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Group ID must be UUID`);
     }
+  }
+
+  public isOwner(userId: string): boolean {
+    return this._props.createdBy === userId;
   }
 }

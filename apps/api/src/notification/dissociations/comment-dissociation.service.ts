@@ -182,23 +182,9 @@ export class CommentDissociationService {
       let parentComment = await this._commentModel.findOne({
         include: [
           {
-            model: MentionModel,
-            as: 'mentions',
-            where: {
-              mentionableType: MentionableType.COMMENT,
-            },
-            required: false,
-          },
-          {
             model: CommentModel,
             as: 'child',
             required: false,
-            include: [
-              {
-                model: MentionModel,
-                as: 'mentions',
-              },
-            ],
             where: {
               id: {
                 [Op.not]: comment.id,

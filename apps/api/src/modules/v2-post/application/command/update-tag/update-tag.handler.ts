@@ -12,11 +12,11 @@ import {
   TagNoUpdatePermissionException,
 } from '../../../domain/exception';
 import { UpdateTagCommand } from './update-tag.command';
-import { UpdateTagDto } from './update-tag.dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { TagDto } from '../../dto';
 
 @CommandHandler(UpdateTagCommand)
-export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, UpdateTagDto> {
+export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, TagDto> {
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepository: ITagRepository;
   @Inject(TAG_DOMAIN_SERVICE_TOKEN)
@@ -24,7 +24,7 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
   @Inject(USER_APPLICATION_TOKEN)
   private readonly _userAppService: IUserApplicationService;
 
-  public async execute(command: UpdateTagCommand): Promise<UpdateTagDto> {
+  public async execute(command: UpdateTagCommand): Promise<TagDto> {
     const { name, id, userId } = command.payload;
 
     const tag = await this._tagRepository.findOne({ id });
@@ -58,7 +58,7 @@ export class UpdateTagHandler implements ICommandHandler<UpdateTagCommand, Updat
       userId,
     });
 
-    return new UpdateTagDto({
+    return new TagDto({
       id: tag.get('id'),
       name: tag.get('name'),
       groupId: tag.get('groupId'),

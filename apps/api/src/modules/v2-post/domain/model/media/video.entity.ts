@@ -12,10 +12,10 @@ export interface VideoThumbnailProps {
 export type VideoProps = {
   id: string;
   url: string;
-  type: MediaType;
   name: string;
   createdAt: Date;
   mimeType: string;
+  createdBy: string;
   size: number;
   width: number;
   height: number;
@@ -31,5 +31,9 @@ export class VideoEntity extends DomainAggregateRoot<VideoProps> {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Group ID must be UUID`);
     }
+  }
+
+  public isOwner(userId: string): boolean {
+    return this._props.createdBy === userId;
   }
 }

@@ -7,6 +7,7 @@ export class VideoDto {
   public size: number;
   public width: number;
   public height: number;
+  public createdBy: string;
   public thumbnails: {
     url: string;
     width: number;
