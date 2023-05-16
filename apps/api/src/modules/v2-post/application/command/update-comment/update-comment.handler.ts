@@ -68,7 +68,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
     if (updateMasks.includes('content')) updateData.content = content;
 
-    if (updateMasks.includes('giphyId')) updateData.content = giphyId;
+    if (updateMasks.includes('giphyId')) updateData.giphyId = giphyId;
 
     if (updateMasks.includes('mediaJson')) {
       const images: ImageDto[] = await this._externalService.getImageIds(media.images);
