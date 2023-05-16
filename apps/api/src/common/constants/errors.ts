@@ -48,6 +48,9 @@ export const ERRORS = {
   MENTION: {
     USER_NOT_FOUND: 'mention.user_not_found',
   },
+  COMMENT: {
+    REPLY_NOT_EXIST: 'comment.reply_not_exist',
+  },
   recent_search: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
   },

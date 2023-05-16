@@ -10,8 +10,6 @@ import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
-import { ExceptionHelper } from '../../../../../common/helpers';
-import { HTTP_STATUS_ID } from '../../../../../common/constants';
 import {
   CONTENT_VALIDATOR_TOKEN,
   MEDIA_VALIDATOR_TOKEN,
@@ -30,6 +28,7 @@ import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
   ContentNotFoundException,
   ContentNoCommentPermissionException,
+  CommentReplyNotExistException,
 } from '../../../domain/exception';
 
 @CommandHandler(ReplyCommentCommand)
@@ -57,9 +56,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       id: parentId,
       parentId: NIL,
     });
-    if (!parentComment) {
-      ExceptionHelper.throwLogicException(HTTP_STATUS_ID.APP_COMMENT_REPLY_NOT_EXISTING);
-    }
+    if (!parentComment) throw new CommentReplyNotExistException();
 
     const post = (await this._postRepository.findOne({
       where: { id: postId, groupArchived: false, isHidden: false },

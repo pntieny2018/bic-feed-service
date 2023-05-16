@@ -34,10 +34,10 @@ import {
   UpdateCommentCommandPayload,
 } from '../../application/command/update-comment/update-comment.command';
 import {
+  CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../domain/exception';
-import { LogicException } from '../../../../common/exceptions/logic.exception';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -72,7 +72,6 @@ export class CommentController {
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
-        case LogicException:
           throw new NotFoundException(e);
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
@@ -110,7 +109,7 @@ export class CommentController {
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
-        case LogicException:
+        case CommentReplyNotExistException:
           throw new NotFoundException(e);
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
