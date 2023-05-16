@@ -8,6 +8,7 @@ import {
 } from '../../../v2-user/application';
 import { UserMentionDto } from '../../application/dto';
 import { IMentionValidator } from './interface/mention.validator.interface';
+import { MentionUserNotFoundException } from '../exception/mention-user-not-found.exception';
 
 @Injectable()
 export class MentionValidator implements IMentionValidator {
@@ -27,7 +28,11 @@ export class MentionValidator implements IMentionValidator {
     groupIds: string[],
     userIds: string[]
   ): Promise<UserDto[]> {
+    userIds = [...new Set(userIds)];
     const users = await this._userAppService.findAllByIds(userIds, { withGroupJoined: true });
+    if (users?.length < userIds.length) {
+      throw new MentionUserNotFoundException();
+    }
     for (const user of users) {
       if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
         throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
@@ -43,10 +48,7 @@ export class MentionValidator implements IMentionValidator {
    * @throws BadRequestException
    * returns UserMentionDto
    */
-  public mapMentionWithUserInfo(mentions: string[], users: UserDto[]): UserMentionDto {
-    if (users.length < mentions.length) {
-      throw new BadRequestException('Mention users not found or resolved');
-    }
+  public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
     return users.reduce((returnValue, current) => {
       return {
         ...returnValue,
