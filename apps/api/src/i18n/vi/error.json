@@ -17,5 +17,8 @@
   },
   "mention": {
     "user_not_found": "Không tìm thấy người dùng được đề cập"
+  },
+  "content": {
+    "no_comment_permission": "Tính năng bình luận không có sẵn cho nội dung này"
   }
 }

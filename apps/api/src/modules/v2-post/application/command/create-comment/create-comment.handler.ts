@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
   ICommentDomainService,
@@ -25,7 +25,7 @@ import { createUrlFromId } from '../../../../v2-giphy/giphy.util';
 import { ContentNotFoundException } from '../../../domain/exception/content-not-found.exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
-import { HTTP_STATUS_ID } from '../../../../../common/constants';
+import { ContentNoCommentPermissionException } from '../../../domain/exception/content-no-comment-permission.exception';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -59,12 +59,7 @@ export class CreateCommentHandler
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    if (!post.allowComment()) {
-      throw new ForbiddenException({
-        code: HTTP_STATUS_ID.API_FORBIDDEN,
-        message: 'Comment action on this content is not available',
-      });
-    }
+    if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
     let usersMention: UserMentionDto = {};
     let imagesDto: ImageDto[] = [];

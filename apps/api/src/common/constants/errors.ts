@@ -20,6 +20,7 @@ export const ERRORS = {
     CONTENT_NO_CRUD_PERMISSION: 'content.no_crud_permission',
     CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
     CONTENT_ACCESS_DENIED: 'content.access_denied',
+    CONTENT_NO_COMMENT_PERMISSION: 'content.no_comment_permission',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
