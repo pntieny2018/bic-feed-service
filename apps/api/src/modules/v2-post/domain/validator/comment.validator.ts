@@ -14,14 +14,14 @@ export class CommentValidator implements ICommentValidator {
 
     if (media && media?.images && Array.isArray(media?.images)) {
       const currentImageIds = (comment.get('media')?.images || []).map((image) => image.get('id'));
-      if (ArrayHelper.arrDifferenceElements(currentImageIds, media.images).length) {
+      if (!ArrayHelper.arraysEqual(currentImageIds, media.images)) {
         updateMasks.push('mediaJson');
       }
     }
 
     if (mentions && Array.isArray(mentions)) {
       const currentMentionIds = comment.get('mentions') || [];
-      if (ArrayHelper.arrDifferenceElements(currentMentionIds, mentions).length) {
+      if (!ArrayHelper.arraysEqual(currentMentionIds, mentions)) {
         updateMasks.push('mentions');
       }
     }

@@ -40,7 +40,7 @@ export class UpdateCommentRequestDto {
   @ValidateIf((o) => o.content === null || o.content == undefined)
   @ValidateNested({ each: true })
   @Type(() => MediaRequestDto)
-  public media?: MediaRequestDto = { files: [], images: [], videos: [] };
+  public media?: MediaRequestDto;
 
   @ApiPropertyOptional({
     type: UserMentionDto,
@@ -85,7 +85,7 @@ export class UpdateCommentRequestDto {
     if (typeof value === 'object' && value?.type == 'gif') {
       if (value?.id) return value.id;
     }
-    return value;
+    return '';
   })
   public giphyId?: string;
 }

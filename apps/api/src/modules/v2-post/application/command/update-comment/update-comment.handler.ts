@@ -42,7 +42,10 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
   public async execute(command: UpdateCommentCommand): Promise<boolean> {
     const { actor, id, content, media, mentions, giphyId } = command.payload;
-    const updateData: Partial<IComment> = {};
+    const updateData: Partial<IComment> = {
+      updatedBy: actor.id,
+      edited: true,
+    };
 
     const comment = await this._commentRepository.findOne({
       id: id,
