@@ -10,9 +10,11 @@ import {
   ICommentValidator,
   IMediaValidator,
   IMentionValidator,
+  IContentValidator,
   COMMENT_VALIDATOR_TOKEN,
   MEDIA_VALIDATOR_TOKEN,
   MENTION_VALIDATOR_TOKEN,
+  CONTENT_VALIDATOR_TOKEN,
 } from '../../../domain/validator/interface';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
@@ -31,6 +33,8 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     private readonly _postRepository: IPostRepository,
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
+    @Inject(CONTENT_VALIDATOR_TOKEN)
+    private readonly _contentValidator: IContentValidator,
     @Inject(MEDIA_VALIDATOR_TOKEN)
     private readonly _mediaValidator: IMediaValidator,
     @Inject(MENTION_VALIDATOR_TOKEN)
@@ -61,6 +65,8 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     })) as ContentEntity;
 
     if (!post) throw new ContentNotFoundException();
+
+    this._contentValidator.checkCanReadContent(post, actor);
 
     if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
