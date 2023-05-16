@@ -5,6 +5,8 @@ import { IComment } from '../../../../database/models/comment.model';
 export interface ICommentRepository {
   createComment(data: CommentEntity): Promise<CommentEntity>;
 
+  updateComment(id: string, data: Partial<IComment>): Promise<boolean>;
+
   findOne(options: WhereOptions<IComment>): Promise<CommentEntity>;
 }
 

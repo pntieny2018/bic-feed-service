@@ -16,7 +16,7 @@ export class CommentRepository implements ICommentRepository {
   ) {}
 
   public async createComment(data: CommentEntity): Promise<CommentEntity> {
-    const post = await this._commentModel.create({
+    const comment = await this._commentModel.create({
       id: data.get('id'),
       content: data.get('content'),
       postId: data.get('postId'),
@@ -28,7 +28,7 @@ export class CommentRepository implements ICommentRepository {
       mediaJson: data.get('media'),
       mentions: data.get('mentions'),
     });
-    return this._modelToEntity(post);
+    return this._modelToEntity(comment);
   }
 
   private _modelToEntity(comment: CommentModel): CommentEntity {
@@ -58,5 +58,16 @@ export class CommentRepository implements ICommentRepository {
     });
 
     return this._modelToEntity(comment);
+  }
+
+  public async updateComment(id: string, data: Partial<IComment>): Promise<boolean> {
+    return Boolean(
+      await this._commentModel.update(data, {
+        where: {
+          id,
+        },
+        returning: true,
+      })
+    );
   }
 }

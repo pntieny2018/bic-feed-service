@@ -34,6 +34,7 @@ import {
   UpdateCommentCommandPayload,
 } from '../../application/command/update-comment/update-comment.command';
 import {
+  CommentNotFoundException,
   CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
@@ -145,6 +146,11 @@ export class CommentController {
       );
     } catch (e) {
       switch (e.constructor) {
+        case ContentNotFoundException:
+        case CommentNotFoundException:
+          throw new NotFoundException(e);
+        case ContentNoCommentPermissionException:
+          throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
         default:
