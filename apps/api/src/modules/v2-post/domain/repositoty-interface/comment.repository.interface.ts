@@ -1,5 +1,5 @@
 import { WhereOptions } from 'sequelize/types';
-import { CommentEntity } from '../model/Comment';
+import { CommentEntity } from '../model/comment';
 import { IComment } from '../../../../database/models/comment.model';
 
 export interface ICommentRepository {
