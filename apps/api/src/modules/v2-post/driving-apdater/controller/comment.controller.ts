@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   NotFoundException,
   Param,
@@ -39,6 +40,10 @@ import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../domain/exception';
+import {
+  DeleteCommentCommand,
+  DeleteCommentCommandPayload,
+} from '../../application/command/delete-comment/delete-comment.command';
 
 @ApiTags('Comment v2')
 @ApiSecurity('authorization')
@@ -151,6 +156,39 @@ export class CommentController {
           throw new NotFoundException(e);
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
+        case DomainModelException:
+          throw new BadRequestException(e);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  @ApiOperation({ summary: 'Delete comment' })
+  @ApiOkResponse({
+    type: Boolean,
+    description: 'Delete comment successfully',
+  })
+  @ResponseMessages({
+    success: 'message.comment.deleted_success',
+  })
+  @Delete('/:commentId')
+  public async destroy(
+    @AuthUser() user: UserDto,
+    @Param('commentId', ParseUUIDPipe) commentId: string
+  ): Promise<boolean> {
+    try {
+      return this._commandBus.execute<DeleteCommentCommand, boolean>(
+        new DeleteCommentCommand({
+          id: commentId,
+          actor: user,
+        } as DeleteCommentCommandPayload)
+      );
+    } catch (e) {
+      switch (e.constructor) {
+        case ContentNotFoundException:
+        case CommentNotFoundException:
+          throw new NotFoundException(e);
         case DomainModelException:
           throw new BadRequestException(e);
         default:

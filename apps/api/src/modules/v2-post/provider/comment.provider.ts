@@ -1,4 +1,5 @@
 import { CreateCommentHandler } from '../application/command/create-comment/create-comment.handler';
+import { DeleteCommentHandler } from '../application/command/delete-comment/delete-comment.handler';
 import { ReplyCommentHandler } from '../application/command/reply-comment/reply-comment.handler';
 import { UpdateCommentHandler } from '../application/command/update-comment/update-comment.handler';
 import { CommentDomainService } from '../domain/domain-service/comment.domain-service';
@@ -31,4 +32,5 @@ export const commentProvider = [
   CreateCommentHandler,
   ReplyCommentHandler,
   UpdateCommentHandler,
+  DeleteCommentHandler,
 ];

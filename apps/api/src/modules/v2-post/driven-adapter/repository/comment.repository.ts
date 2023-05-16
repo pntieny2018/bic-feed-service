@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { CommentEntity } from '../../domain/model/comment';
 import { CommentModel, IComment } from '../../../../database/models/comment.model';
+import { CommentReactionModel } from '../../../../database/models/comment-reaction.model';
 import { ICommentRepository } from '../../domain/repositoty-interface/comment.repository.interface';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
-import { WhereOptions } from 'sequelize/types';
+import { Sequelize, WhereOptions } from 'sequelize';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -12,7 +13,10 @@ export class CommentRepository implements ICommentRepository {
     @Inject(COMMENT_FACTORY_TOKEN)
     private readonly _commentFactory: ICommentFactory,
     @InjectModel(CommentModel)
-    private readonly _commentModel: typeof CommentModel
+    private readonly _commentModel: typeof CommentModel,
+    @InjectModel(CommentReactionModel)
+    private readonly _commentReactionModel: typeof CommentReactionModel,
+    @InjectConnection() private readonly _sequelizeConnection: Sequelize
   ) {}
 
   public async createComment(data: CommentEntity): Promise<CommentEntity> {
@@ -69,5 +73,38 @@ export class CommentRepository implements ICommentRepository {
         returning: true,
       })
     );
+  }
+
+  public async destroyComment(id: string): Promise<boolean> {
+    const comment = await this._commentModel.findByPk(id);
+    const childComments = await this._commentModel.findAll({
+      attributes: ['id'],
+      where: {
+        parentId: id,
+      },
+    });
+    const childCommentIds = childComments.map((child) => child.id);
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      await this._commentReactionModel.destroy({
+        where: {
+          commentId: [id, ...childCommentIds],
+        },
+        transaction: transaction,
+      });
+      await this._commentModel.destroy({
+        where: {
+          parentId: id,
+        },
+        individualHooks: true,
+        transaction: transaction,
+      });
+      await comment.destroy({ transaction });
+      await transaction.commit();
+      return true;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 }

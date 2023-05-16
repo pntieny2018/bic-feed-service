@@ -7,6 +7,8 @@ export interface ICommentRepository {
 
   updateComment(id: string, data: Partial<IComment>): Promise<boolean>;
 
+  destroyComment(id: string): Promise<boolean>;
+
   findOne(options: WhereOptions<IComment>): Promise<CommentEntity>;
 }
 
