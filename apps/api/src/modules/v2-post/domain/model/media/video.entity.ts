@@ -18,7 +18,7 @@ export type VideoProps = {
   size: number;
   width: number;
   height: number;
-  status: string;
+  status: 'DONE';
   thumbnails: VideoThumbnailProps[];
 };
 
@@ -35,5 +35,9 @@ export class VideoEntity extends DomainAggregateRoot<VideoProps> {
 
   public isOwner(userId: string): boolean {
     return this._props.createdBy === userId;
+  }
+
+  public isProcessed(): boolean {
+    return this._props.status === 'DONE';
   }
 }

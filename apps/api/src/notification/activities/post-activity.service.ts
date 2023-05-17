@@ -25,10 +25,10 @@ export class PostActivityService {
       },
       mentions: mentions as any,
       content: content,
-      media: media,
-      reactionsCount: post.reactionsCount,
+      // media: media,
+      // reactionsCount: post.reactionsCount,
       createdAt: post.createdAt,
-      updatedAt: post.createdAt,
+      // updatedAt: post.createdAt,
     };
 
     return new NotificationActivity(
