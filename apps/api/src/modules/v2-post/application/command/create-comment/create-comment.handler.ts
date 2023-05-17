@@ -126,6 +126,7 @@ export class CreateCommentHandler
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
       mentions: usersMentionMapper,
+      actor,
     });
   }
 }
