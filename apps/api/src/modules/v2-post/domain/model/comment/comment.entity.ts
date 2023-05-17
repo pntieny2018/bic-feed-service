@@ -2,6 +2,7 @@ import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-a
 import { validate as isUUID } from 'uuid';
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { FileEntity, ImageEntity, VideoEntity } from '../media';
+import { UpdateCommentCommandPayload } from '../../../application/command/update-comment/update-comment.command';
 
 export type CommentProps = {
   id: string;
@@ -39,5 +40,24 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
     if (!isUUID(this._props.updatedBy)) {
       throw new DomainModelException(`Updated By is not UUID`);
     }
+  }
+
+  public updateAttribute(data: UpdateCommentCommandPayload): void {
+    const { content, giphyId } = data;
+    if (content) this._props.content = content;
+    if (giphyId) this._props.giphyId = giphyId;
+  }
+
+  public setMedia(media: {
+    files: FileEntity[];
+    images: ImageEntity[];
+    videos: VideoEntity[];
+  }): void {
+    const { files, images, videos } = media;
+    this._props.media = {
+      files,
+      images,
+      videos,
+    };
   }
 }
