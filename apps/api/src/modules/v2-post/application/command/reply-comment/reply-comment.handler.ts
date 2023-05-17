@@ -33,6 +33,10 @@ import {
 } from '../../../domain/exception';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+} from '../../binding/binding-post/content.interface';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -51,6 +55,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
     private readonly _externalService: ExternalService
   ) {}
 
@@ -75,7 +81,6 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
 
     if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
-    let usersMention: UserMentionDto = {};
     let imagesDto: ImageDto[] = [];
 
     if (media?.images.length) {
@@ -84,6 +89,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
       imagesDto = images;
     }
 
+    let usersMentionMapper: UserMentionDto = {};
     if (mentions.length) {
       const usersMention = await this._userApplicationService.findAllByIds(mentions, {
         withGroupJoined: true,
@@ -93,6 +99,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
         throw new MentionUserNotFoundException();
       }
       await this._mentionValidator.validateMentionUsers(usersMention, groups);
+      usersMentionMapper = this._contentBinding.mapMentionWithUserInfo(usersMention);
     }
 
     const commentEntity = await this._commentDomainService.create({
@@ -125,7 +132,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
         images: commentEntity.get('media').images.map((item) => new ImageDto(item.toObject())),
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
-      mentions: usersMention,
+      mentions: usersMentionMapper,
     });
   }
 }

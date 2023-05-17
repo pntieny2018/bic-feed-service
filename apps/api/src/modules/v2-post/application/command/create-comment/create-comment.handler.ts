@@ -31,6 +31,10 @@ import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';
+import {
+  CONTENT_BINDING_TOKEN,
+  IContentBinding,
+} from '../../binding/binding-post/content.interface';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -49,6 +53,8 @@ export class CreateCommentHandler
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
+    @Inject(CONTENT_BINDING_TOKEN)
+    private readonly _contentBinding: IContentBinding,
     private readonly _externalService: ExternalService
   ) {}
 
@@ -68,7 +74,6 @@ export class CreateCommentHandler
 
     if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
-    let usersMention: UserMentionDto = {};
     let imagesDto: ImageDto[] = [];
 
     if (media?.images.length) {
@@ -77,6 +82,7 @@ export class CreateCommentHandler
       imagesDto = images;
     }
 
+    let usersMentionMapper: UserMentionDto = {};
     if (mentions.length) {
       const usersMention = await this._userApplicationService.findAllByIds(mentions, {
         withGroupJoined: true,
@@ -86,6 +92,7 @@ export class CreateCommentHandler
         throw new MentionUserNotFoundException();
       }
       await this._mentionValidator.validateMentionUsers(usersMention, groups);
+      usersMentionMapper = this._contentBinding.mapMentionWithUserInfo(usersMention);
     }
 
     const commentEntity = await this._commentDomainService.create({
@@ -118,7 +125,7 @@ export class CreateCommentHandler
         images: commentEntity.get('media').images.map((item) => new ImageDto(item.toObject())),
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
-      mentions: usersMention,
+      mentions: usersMentionMapper,
     });
   }
 }
