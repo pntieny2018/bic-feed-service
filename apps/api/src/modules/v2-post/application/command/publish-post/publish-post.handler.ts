@@ -63,6 +63,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });
+
     const post = await this._postDomainService.publishPost({
       postEntity: postEntity as PostEntity,
       newData: {

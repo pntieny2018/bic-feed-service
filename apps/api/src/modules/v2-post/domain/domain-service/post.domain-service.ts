@@ -3,7 +3,12 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { IPostFactory, POST_FACTORY_TOKEN } from '../factory/interface';
 import { IPostDomainService, PostCreateProps, PostPublishProps } from './interface';
 import { PostEntity } from '../model/content';
-import { IPostRepository, POST_REPOSITORY_TOKEN } from '../repositoty-interface';
+import {
+  IPostRepository,
+  ITagRepository,
+  POST_REPOSITORY_TOKEN,
+  TAG_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import {
   IMentionValidator,
   IPostValidator,
@@ -16,13 +21,16 @@ import {
   ILinkPreviewDomainService,
   LINK_PREVIEW_DOMAIN_SERVICE_TOKEN,
 } from './interface/link-preview.domain-service.interface';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
 import {
   IMediaRepository,
   MEDIA_REPOSITORY_TOKEN,
 } from '../repositoty-interface/media.repository.interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
+import {
+  IMediaDomainService,
+  MEDIA_DOMAIN_SERVICE_TOKEN,
+} from './interface/media.domain-service.interface';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -45,6 +53,7 @@ export class PostDomainService implements IPostDomainService {
   private readonly _mediaRepo: IMediaRepository;
   @Inject(TAG_REPOSITORY_TOKEN)
   private readonly _tagRepo: ITagRepository;
+  @Inject(MEDIA_DOMAIN_SERVICE_TOKEN) private readonly _mediaDomainService: IMediaDomainService;
 
   public async createDraftPost(input: PostCreateProps): Promise<PostEntity> {
     const { groups, userId } = input;
@@ -75,17 +84,31 @@ export class PostDomainService implements IPostDomainService {
       });
       postEntity.setTags(newTagEntities);
     }
-    const images = await this._getAvailableImages(postEntity, media?.imagesIds);
-    if (images.some((image) => !image.isPostContentResource())) {
-      throw new InvalidResourceImageException();
+    if (media) {
+      const images = await this._mediaDomainService.getAvailableImages(
+        postEntity.get('media').images,
+        media?.imagesIds,
+        postEntity.get('createdBy')
+      );
+      if (images.some((image) => !image.isPostContentResource())) {
+        throw new InvalidResourceImageException();
+      }
+      const files = await this._mediaDomainService.getAvailableFiles(
+        postEntity.get('media').files,
+        media?.filesIds,
+        postEntity.get('createdBy')
+      );
+      const videos = await this._mediaDomainService.getAvailableVideos(
+        postEntity.get('media').videos,
+        media?.videosIds,
+        postEntity.get('createdBy')
+      );
+      postEntity.setMedia({
+        files,
+        images,
+        videos,
+      });
     }
-    const files = await this._getAvailableFiles(postEntity, media?.filesIds);
-    const videos = await this._getAvailableVideos(postEntity, media?.videosIds);
-    postEntity.setMedia({
-      files,
-      images,
-      videos,
-    });
     if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
@@ -111,6 +134,40 @@ export class PostDomainService implements IPostDomainService {
     await this._postRepository.update(postEntity);
     postEntity.commit();
     return postEntity;
+  }
+
+  public async autoSavePost(input: PostPublishProps): Promise<void> {
+    const { postEntity, newData } = input;
+    const { tagIds, linkPreview, groups, media } = newData;
+
+    let newTagEntities = [];
+    if (tagIds) {
+      newTagEntities = await this._tagRepo.findAll({
+        ids: tagIds,
+      });
+      postEntity.setTags(newTagEntities);
+    }
+    await this._postValidator.validateAndSetMedia(postEntity, media);
+    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
+      postEntity.setLinkPreview(linkPreviewEntity);
+    }
+
+    postEntity.updateAttribute(newData);
+    postEntity.setPrivacyFromGroups(groups);
+
+    if (!postEntity.isChanged()) return;
+    await this._postRepository.update(postEntity);
+    postEntity.commit();
+  }
+
+  public async delete(id: string): Promise<void> {
+    try {
+      await this._postRepository.delete(id);
+    } catch (e) {
+      this._logger.error(JSON.stringify(e?.stack));
+      throw new DatabaseException();
+    }
   }
 
   private async _getAvailableVideos(
@@ -175,44 +232,9 @@ export class PostDomainService implements IPostDomainService {
     }
 
     const removingImageIds = currentImageIds.filter((id) => !imagesIds.includes(id));
-    console.log('removingImageIds', removingImageIds);
     if (removingImageIds.length) {
       result = result.filter((e) => !removingImageIds.includes(e.get('id')));
     }
     return result;
-  }
-
-  public async autoSavePost(input: PostPublishProps): Promise<void> {
-    const { postEntity, newData } = input;
-    const { tagIds, linkPreview, groups, media } = newData;
-
-    let newTagEntities = [];
-    if (tagIds) {
-      newTagEntities = await this._tagRepo.findAll({
-        ids: tagIds,
-      });
-      postEntity.setTags(newTagEntities);
-    }
-    await this._postValidator.validateAndSetMedia(postEntity, media);
-    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
-      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
-      postEntity.setLinkPreview(linkPreviewEntity);
-    }
-
-    postEntity.updateAttribute(newData);
-    postEntity.setPrivacyFromGroups(groups);
-
-    if (!postEntity.isChanged()) return;
-    await this._postRepository.update(postEntity);
-    postEntity.commit();
-  }
-
-  public async delete(id: string): Promise<void> {
-    try {
-      await this._postRepository.delete(id);
-    } catch (e) {
-      this._logger.error(JSON.stringify(e?.stack));
-      throw new DatabaseException();
-    }
   }
 }
