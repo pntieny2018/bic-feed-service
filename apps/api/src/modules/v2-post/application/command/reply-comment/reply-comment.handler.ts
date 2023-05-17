@@ -29,7 +29,10 @@ import {
   ContentNotFoundException,
   ContentNoCommentPermissionException,
   CommentReplyNotExistException,
+  MentionUserNotFoundException,
 } from '../../../domain/exception';
+import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import { GroupDto } from '../../../../v2-group/application';
 
 @CommandHandler(ReplyCommentCommand)
 export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand, ReplyCommentDto> {
@@ -46,6 +49,8 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     private readonly _mentionValidator: IMentionValidator,
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService,
     private readonly _externalService: ExternalService
   ) {}
 
@@ -80,11 +85,14 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
     }
 
     if (mentions.length) {
-      const users = await this._mentionValidator.checkValidMentionsAndReturnUsers(
-        post.get('groupIds'),
-        mentions
-      );
-      usersMention = this._mentionValidator.mapMentionWithUserInfo(users);
+      const usersMention = await this._userApplicationService.findAllByIds(mentions, {
+        withGroupJoined: true,
+      });
+      const groups = post.get('groupIds').map((item) => new GroupDto({ id: item }));
+      if (usersMention?.length < mentions.length) {
+        throw new MentionUserNotFoundException();
+      }
+      await this._mentionValidator.validateMentionUsers(usersMention, groups);
     }
 
     const commentEntity = await this._commentDomainService.create({

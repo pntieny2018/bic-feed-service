@@ -16,9 +16,6 @@ import {
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
 import { IMentionValidator } from './interface';
 import { UserMentionDto } from '../../application/dto/user-mention.dto';
-import { MentionUserNotFoundException } from '../exception/mention-user-not-found.exception';
-import { LogicException } from '../../../../common/exceptions/logic.exception';
-import { HTTP_STATUS_ID } from '../../../../common/constants/http-status-id';
 
 @Injectable()
 export class MentionValidator implements IMentionValidator {
@@ -30,33 +27,6 @@ export class MentionValidator implements IMentionValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
-
-
-  /**
-   * Check Valid Mentions
-   * @param groupIds
-   * @param userIds number[]
-   * @return users UserDto[]
-   * @throws LogicException
-   */
-  public async checkValidMentionsAndReturnUsers(
-    groupIds: string[],
-    userIds: string[]
-  ): Promise<UserDto[]> {
-    userIds = [...new Set(userIds)];
-    const users = await this._userApplicationService.findAllByIds(userIds, {
-      withGroupJoined: true,
-    });
-    if (users?.length < userIds.length) {
-      throw new MentionUserNotFoundException();
-    }
-    for (const user of users) {
-      if (!groupIds.some((groupId) => user.groups.includes(groupId))) {
-        throw new LogicException(HTTP_STATUS_ID.API_FORBIDDEN);
-      }
-    }
-    return users;
-  }
 
   /**
    * Map mentions to UserInfo
