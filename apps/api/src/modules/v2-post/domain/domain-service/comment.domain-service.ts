@@ -69,11 +69,6 @@ export class CommentDomainService implements ICommentDomainService {
         images,
         videos,
       });
-      commentEntity.setMedia({
-        files,
-        images,
-        videos,
-      });
     }
 
     commentEntity.updateAttribute(newData);
