@@ -41,6 +41,6 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    this._commentRepository.destroyComment(id);
+    await this._commentRepository.destroyComment(id);
   }
 }
