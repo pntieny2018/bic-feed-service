@@ -22,6 +22,7 @@ import { SeriesFactory } from '../domain/factory/series.factory';
 import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/content.interface';
 import { ContentBinding } from '../application/binding/binding-post/content.binding';
 import { MentionValidator } from '../domain/validator/mention.validator';
+import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
 
 export const postProvider = [
   {
@@ -63,4 +64,5 @@ export const postProvider = [
   /** Application */
   CreateDraftPostHandler,
   PublishPostHandler,
+  AutoSavePostHandler,
 ];

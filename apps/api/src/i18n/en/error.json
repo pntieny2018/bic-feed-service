@@ -51,6 +51,8 @@
     "domain_model_validation": "Domain model invalidate",
     "access_denied": "Access denied"
   },
+  "tag_series_invalid": "Tag series invalid",
+  "image_resource_invalid": "Image resource invalid",
   "mention": {
     "user_not_found": "The mentioned user is not found"
   },

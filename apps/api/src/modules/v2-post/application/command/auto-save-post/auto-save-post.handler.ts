@@ -36,7 +36,7 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
         groupArchived: false,
       },
       include: {
-        mustIncludeGroup: true,
+        shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
@@ -46,7 +46,12 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
       throw new ContentNotFoundException();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(groupIds);
+    let groups = undefined;
+    if (groupIds || postEntity.get('groupIds')) {
+      groups = await this._groupApplicationService.findAllByIds(
+        groupIds || postEntity.get('groupIds')
+      );
+    }
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });

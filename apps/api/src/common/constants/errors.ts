@@ -55,6 +55,7 @@ export const ERRORS = {
   recent_search: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
   },
+  IMAGE_RESOURCE_INVALID: 'image_resource_invalid',
   TAG_SERIES_INVALID: 'tag_series_invalid',
 
   API_OK: 'api.ok',

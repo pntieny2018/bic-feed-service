@@ -51,7 +51,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
   }
 
   public async validateSeriesAndTags(
-    groups: GroupDto[],
+    groups: GroupDto[] = [],
     seriesIds: string[],
     tags: TagEntity[]
   ): Promise<void> {
@@ -97,8 +97,6 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     if (seriesTagErrorData.seriesIds.length || seriesTagErrorData.tagIds.length) {
       throw new TagSeriesInvalidException(seriesTagErrorData);
     }
-
-    //TODO: validate tags
   }
 
   public async validatePublishContent(
@@ -135,14 +133,15 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       mediaEntity.files = postEntity.get('media').files;
       const currentFileIds = mediaEntity.files.map((e) => e.get('id'));
       const addingFileIds = media.filesIds.filter((id) => !currentFileIds.includes(id));
-      if (addingFileIds) {
+      if (addingFileIds.length) {
         const files = await this._mediaRepo.findFiles(addingFileIds);
-        mediaEntity.files.push(...files);
+        const availableFiles = files.filter((image) => image.isOwner(postEntity.get('createdBy')));
+        mediaEntity.files.push(...availableFiles);
       }
 
       const removingFileIds = currentFileIds.filter((id) => !media.filesIds.includes(id));
       if (removingFileIds.length) {
-        mediaEntity.files.filter((e) => !removingFileIds.includes(e.get('id')));
+        mediaEntity.files = mediaEntity.files.filter((e) => !removingFileIds.includes(e.get('id')));
       }
     }
 
@@ -150,13 +149,18 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       mediaEntity.images = postEntity.get('media').images || [];
       const currentImageIds = mediaEntity.images.map((e) => e.get('id'));
       const addingImageIds = media.imagesIds.filter((id) => !currentImageIds.includes(id));
-      if (addingImageIds) {
+      if (addingImageIds.length) {
         const images = await this._mediaRepo.findImages(addingImageIds);
-        mediaEntity.images.push(...images);
+        const availableImages = images.filter(
+          (image) => image.isOwner(postEntity.get('createdBy')) && image.isReady()
+        );
+        mediaEntity.images.push(...availableImages);
       }
       const removingImageIds = currentImageIds.filter((id) => !media.imagesIds.includes(id));
       if (removingImageIds.length) {
-        mediaEntity.images.filter((e) => !removingImageIds.includes(e.get('id')));
+        mediaEntity.images = mediaEntity.images.filter(
+          (e) => !removingImageIds.includes(e.get('id'))
+        );
       }
     }
 
@@ -164,16 +168,20 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       mediaEntity.videos = postEntity.get('media').videos;
       const currentVideoIds = mediaEntity.videos.map((e) => e.get('id'));
       const addingVideoIds = media.videosIds.filter((id) => !currentVideoIds.includes(id));
-      if (addingVideoIds) {
+      if (addingVideoIds.length) {
         const videos = await this._mediaRepo.findVideos(addingVideoIds);
-        mediaEntity.videos.push(...videos);
+        const availableVideos = videos.filter((video) =>
+          video.isOwner(postEntity.get('createdBy'))
+        );
+        mediaEntity.videos.push(...availableVideos);
       }
       const removingVideoIds = currentVideoIds.filter((id) => !media.videosIds.includes(id));
       if (removingVideoIds.length) {
-        mediaEntity.videos.filter((e) => !removingVideoIds.includes(e.get('id')));
+        mediaEntity.videos = mediaEntity.videos.filter(
+          (e) => !removingVideoIds.includes(e.get('id'))
+        );
       }
     }
-    console.log('mediaEntity', mediaEntity);
     postEntity.setMedia(mediaEntity);
   }
 }

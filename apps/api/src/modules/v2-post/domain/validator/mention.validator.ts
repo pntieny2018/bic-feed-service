@@ -31,7 +31,6 @@ export class MentionValidator implements IMentionValidator {
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
 
-
   /**
    * Check Valid Mentions
    * @param groupIds
