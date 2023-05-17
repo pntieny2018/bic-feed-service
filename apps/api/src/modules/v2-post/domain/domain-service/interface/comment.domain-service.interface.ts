@@ -14,6 +14,6 @@ export type UpdateCommentProps = {
 export interface ICommentDomainService {
   create(data: CreateCommentProps): Promise<CommentEntity>;
 
-  update(input: UpdateCommentProps): Promise<CommentEntity>;
+  update(input: UpdateCommentProps): Promise<void>;
 }
 export const COMMENT_DOMAIN_SERVICE_TOKEN = 'COMMENT_DOMAIN_SERVICE_TOKEN';

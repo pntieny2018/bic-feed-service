@@ -43,9 +43,13 @@ export class CommentEntity extends DomainAggregateRoot<CommentProps> {
   }
 
   public updateAttribute(data: UpdateCommentCommandPayload): void {
-    const { content, giphyId } = data;
+    const { actor, content, mentions, giphyId } = data;
+    this._props.updatedAt = new Date();
+    this._props.edited = true;
+    this._props.updatedBy = actor.id;
     if (content) this._props.content = content;
     if (giphyId) this._props.giphyId = giphyId;
+    if (mentions && Array.isArray(mentions)) this._props.mentions = mentions;
   }
 
   public setMedia(media: {

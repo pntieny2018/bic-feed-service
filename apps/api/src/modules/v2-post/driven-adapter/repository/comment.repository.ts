@@ -64,12 +64,17 @@ export class CommentRepository implements ICommentRepository {
     return this._modelToEntity(comment);
   }
 
-  public async updateComment(id: string, data: Partial<IComment>): Promise<void> {
-    await this._commentModel.update(data, {
-      where: {
-        id,
-      },
-    });
+  public async update(commentEntity: CommentEntity): Promise<void> {
+    try {
+      const attributes = this._getUpdatedAttributes(commentEntity);
+      await this._commentModel.update(attributes, {
+        where: {
+          id: commentEntity.get('id'),
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
   public async destroyComment(id: string): Promise<void> {
@@ -102,5 +107,20 @@ export class CommentRepository implements ICommentRepository {
       await transaction.rollback();
       throw e;
     }
+  }
+
+  private _getUpdatedAttributes(commentEntity: CommentEntity): Partial<IComment> {
+    return {
+      content: commentEntity.get('content'),
+      updatedBy: commentEntity.get('updatedBy'),
+      edited: commentEntity.get('edited'),
+      giphyId: commentEntity.get('giphyId'),
+      mediaJson: {
+        files: commentEntity.get('media').files.map((file) => file.toObject()),
+        images: commentEntity.get('media').images.map((image) => image.toObject()),
+        videos: commentEntity.get('media').videos.map((video) => video.toObject()),
+      },
+      mentions: commentEntity.get('mentions'),
+    };
   }
 }
