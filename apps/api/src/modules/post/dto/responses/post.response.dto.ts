@@ -174,11 +174,12 @@ export class PostResponseDto {
     },
   })
   @Expose()
-  @Transform(({ value }) => {
-    if (Array.isArray(value) && value.length === 0) {
+  @Transform(({ obj, value }) => {
+    const mentions = obj.mentions;
+    if (Array.isArray(mentions) && mentions.length === 0) {
       return {};
     }
-    return value;
+    return mentions;
   })
   public mentions?: UserMentionDto;
 

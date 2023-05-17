@@ -20,8 +20,8 @@ export interface ILinkPreview {
   image?: string;
   title?: string;
   description?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 @Table({
@@ -63,9 +63,9 @@ export class LinkPreviewModel
 
   @CreatedAt
   @Column
-  public createdAt?: Date;
+  public createdAt: Date;
 
   @UpdatedAt
   @Column
-  public updatedAt?: Date;
+  public updatedAt: Date;
 }

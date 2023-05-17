@@ -4,11 +4,11 @@ import { DomainModelException } from '../../../../../common/exceptions/domain-mo
 
 export type FileProps = {
   id: string;
-  url?: string;
-  name?: string;
-  createdAt?: Date;
-  mimeType?: string;
-  size?: number;
+  url: string;
+  name: string;
+  createdBy: string;
+  mimeType: string;
+  size: number;
 };
 
 export class FileEntity extends DomainAggregateRoot<FileProps> {
@@ -20,5 +20,9 @@ export class FileEntity extends DomainAggregateRoot<FileProps> {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`Group ID must be UUID`);
     }
+  }
+
+  public isOwner(userId: string): boolean {
+    return this._props.createdBy === userId;
   }
 }

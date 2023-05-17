@@ -72,6 +72,13 @@ export class CommentController {
         new CreateCommentCommand({
           ...createCommentDto,
           actor: user,
+          media: createCommentDto.media
+            ? {
+                files: createCommentDto.media?.files.map((file) => file.id),
+                images: createCommentDto.media?.images.map((image) => image.id),
+                videos: createCommentDto.media?.videos.map((video) => video.id),
+              }
+            : undefined,
         } as CreateCommentCommandPayload)
       );
       return data;
@@ -109,6 +116,13 @@ export class CommentController {
           ...replyCommentRequestDto,
           parentId: commentId,
           actor: user,
+          media: replyCommentRequestDto.media
+            ? {
+                files: replyCommentRequestDto.media?.files.map((file) => file.id),
+                images: replyCommentRequestDto.media?.images.map((image) => image.id),
+                videos: replyCommentRequestDto.media?.videos.map((video) => video.id),
+              }
+            : undefined,
         } as ReplyCommentCommandPayload)
       );
       return data;
@@ -147,6 +161,13 @@ export class CommentController {
           ...updateCommentRequestDto,
           id: commentId,
           actor: user,
+          media: updateCommentRequestDto.media
+            ? {
+                files: updateCommentRequestDto.media?.files.map((file) => file.id),
+                images: updateCommentRequestDto.media?.images.map((image) => image.id),
+                videos: updateCommentRequestDto.media?.videos.map((video) => video.id),
+              }
+            : undefined,
         } as UpdateCommentCommandPayload)
       );
     } catch (e) {

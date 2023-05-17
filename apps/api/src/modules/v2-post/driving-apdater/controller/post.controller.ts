@@ -35,6 +35,8 @@ import { UserNoBelongGroupException } from '../../domain/exception/user-no-belon
 import { ContentEmptyException } from '../../domain/exception/content-empty.exception';
 import { TagSeriesInvalidException } from '../../domain/exception/tag-series-invalid.exception';
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
+import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
+import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -87,9 +89,8 @@ export class PostController {
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
     @Body() publishPostRequestDto: PublishPostRequestDto
-  ): Promise<any> {
+  ): Promise<PostDto> {
     const { audience, tags, series, mentions, media } = publishPostRequestDto;
-    console.log('publishPostRequestDto', publishPostRequestDto);
     try {
       const data = await this._commandBus.execute<PublishPostCommand, PostDto>(
         new PublishPostCommand({
@@ -101,9 +102,9 @@ export class PostController {
           seriesIds: series,
           media: media
             ? {
-                filesIds: media?.files,
-                imagesIds: media?.images,
-                videosIds: media?.videos,
+                filesIds: media?.files.map((file) => file.id),
+                imagesIds: media?.images.map((image) => image.id),
+                videosIds: media?.videos.map((video) => video.id),
               }
             : undefined,
           authUser,
@@ -111,6 +112,7 @@ export class PostController {
       );
       return data;
     } catch (e) {
+      console.log(e);
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
@@ -128,5 +130,40 @@ export class PostController {
           throw e;
       }
     }
+  }
+
+  @ApiOperation({ summary: 'Auto save post' })
+  @ResponseMessages({
+    success: 'message.post.updated_success',
+  })
+  @Put('/:postId/auto-save')
+  @TransformInstanceToPlain({ groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
+  public async autoSave(
+    @Param('postId', ParseUUIDPipe) postId: string,
+    @AuthUser() authUser: UserDto,
+    @Body() autoSavePostRequestDto: AutoSavePostRequestDto
+  ): Promise<void> {
+    const { audience, tags, series, mentions, media } = autoSavePostRequestDto;
+    try {
+      const data = await this._commandBus.execute<AutoSavePostCommand, void>(
+        new AutoSavePostCommand({
+          ...autoSavePostRequestDto,
+          id: postId,
+          mentionUserIds: mentions,
+          groupIds: audience?.groupIds,
+          tagIds: tags,
+          seriesIds: series,
+          media: media
+            ? {
+                filesIds: media?.files.map((file) => file.id),
+                imagesIds: media?.images.map((image) => image.id),
+                videosIds: media?.videos.map((video) => video.id),
+              }
+            : undefined,
+          authUser,
+        })
+      );
+      return data;
+    } catch (e) {}
   }
 }

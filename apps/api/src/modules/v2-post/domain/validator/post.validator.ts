@@ -1,9 +1,11 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PostType } from '../../data-type';
 import {
   IPostRepository,
+  ITagRepository,
   POST_REPOSITORY_TOKEN,
-} from '../repositoty-interface/post.repository.interface';
+  TAG_REPOSITORY_TOKEN,
+} from '../repositoty-interface';
 import { IPostValidator } from './interface';
 import { ContentValidator } from './content.validator';
 import {
@@ -15,8 +17,6 @@ import {
   AUTHORITY_APP_SERVICE_TOKEN,
   IAuthorityAppService,
 } from '../../../authority/application/authority.app-service.interface';
-import { LogicException } from '../../../../common/exceptions';
-import { HTTP_STATUS_ID } from '../../../../common/constants';
 import { PostEntity } from '../model/content';
 import {
   IUserApplicationService,
@@ -24,8 +24,12 @@ import {
   UserDto,
 } from '../../../v2-user/application';
 import { ContentEmptyException } from '../exception/content-empty.exception';
-import { ITagRepository, TAG_REPOSITORY_TOKEN } from '../repositoty-interface';
 import { TagSeriesInvalidException } from '../exception/tag-series-invalid.exception';
+import { TagEntity } from '../model/tag';
+import {
+  IMediaRepository,
+  MEDIA_REPOSITORY_TOKEN,
+} from '../repositoty-interface/media.repository.interface';
 
 @Injectable()
 export class PostValidator extends ContentValidator implements IPostValidator {
@@ -39,7 +43,9 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
     @Inject(TAG_REPOSITORY_TOKEN)
-    private readonly _tagRepository: ITagRepository
+    private readonly _tagRepository: ITagRepository,
+    @Inject(MEDIA_REPOSITORY_TOKEN)
+    private readonly _mediaRepo: IMediaRepository
   ) {
     super(_groupAppService, _userApplicationService, _authorityAppService);
   }
@@ -47,7 +53,7 @@ export class PostValidator extends ContentValidator implements IPostValidator {
   public async validateSeriesAndTags(
     groups: GroupDto[],
     seriesIds: string[],
-    tagIds: string[]
+    tags: TagEntity[]
   ): Promise<void> {
     const seriesTagErrorData = {
       seriesIds: [],
@@ -77,10 +83,9 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       });
     }
 
-    if (tagIds?.length) {
-      const tags = await this._tagRepository.findAll({ ids: tagIds });
+    if (tags?.length) {
       const rootGroupIds = groups.map((e) => e.rootGroupId);
-      const invalidTags = tags.filter((tagInfo) => !rootGroupIds.includes(tagInfo.get('groupId')));
+      const invalidTags = tags.filter((tag) => !rootGroupIds.includes(tag.get('groupId')));
       if (invalidTags) {
         invalidTags.forEach((e) => {
           seriesTagErrorData.tagIds.push(e.get('id'));
@@ -110,5 +115,65 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     ) {
       throw new ContentEmptyException();
     }
+  }
+
+  public async validateAndSetMedia(
+    postEntity: PostEntity,
+    media?: {
+      filesIds?: string[];
+      imagesIds?: string[];
+      videosIds?: string[];
+    }
+  ): Promise<void> {
+    if (!media) return;
+    const mediaEntity = {
+      files: [],
+      images: [],
+      videos: [],
+    };
+    if (media.filesIds?.length > 0) {
+      mediaEntity.files = postEntity.get('media').files;
+      const currentFileIds = mediaEntity.files.map((e) => e.get('id'));
+      const addingFileIds = media.filesIds.filter((id) => !currentFileIds.includes(id));
+      if (addingFileIds) {
+        const files = await this._mediaRepo.findFiles(addingFileIds);
+        mediaEntity.files.push(...files);
+      }
+
+      const removingFileIds = currentFileIds.filter((id) => !media.filesIds.includes(id));
+      if (removingFileIds.length) {
+        mediaEntity.files.filter((e) => !removingFileIds.includes(e.get('id')));
+      }
+    }
+
+    if (media.imagesIds?.length > 0) {
+      mediaEntity.images = postEntity.get('media').images || [];
+      const currentImageIds = mediaEntity.images.map((e) => e.get('id'));
+      const addingImageIds = media.imagesIds.filter((id) => !currentImageIds.includes(id));
+      if (addingImageIds) {
+        const images = await this._mediaRepo.findImages(addingImageIds);
+        mediaEntity.images.push(...images);
+      }
+      const removingImageIds = currentImageIds.filter((id) => !media.imagesIds.includes(id));
+      if (removingImageIds.length) {
+        mediaEntity.images.filter((e) => !removingImageIds.includes(e.get('id')));
+      }
+    }
+
+    if (media.videosIds?.length > 0) {
+      mediaEntity.videos = postEntity.get('media').videos;
+      const currentVideoIds = mediaEntity.videos.map((e) => e.get('id'));
+      const addingVideoIds = media.videosIds.filter((id) => !currentVideoIds.includes(id));
+      if (addingVideoIds) {
+        const videos = await this._mediaRepo.findVideos(addingVideoIds);
+        mediaEntity.videos.push(...videos);
+      }
+      const removingVideoIds = currentVideoIds.filter((id) => !media.videosIds.includes(id));
+      if (removingVideoIds.length) {
+        mediaEntity.videos.filter((e) => !removingVideoIds.includes(e.get('id')));
+      }
+    }
+    console.log('mediaEntity', mediaEntity);
+    postEntity.setMedia(mediaEntity);
   }
 }

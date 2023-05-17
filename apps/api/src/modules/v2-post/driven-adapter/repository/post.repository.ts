@@ -25,6 +25,9 @@ import { PostSeriesModel } from '../../../../database/models/post-series.model';
 import { PostTagModel } from '../../../../database/models/post-tag.model';
 import { ContentEntity } from '../../domain/model/content/content.entity';
 import { TagModel } from '../../../../database/models/tag.model';
+import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
+import { LinkPreviewEntity } from '../../domain/model/link-preview';
+import { TagEntity } from '../../domain/model/tag';
 
 export class PostRepository implements IPostRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -41,20 +44,42 @@ export class PostRepository implements IPostRepository {
   private readonly _postTagModel: typeof PostTagModel;
   @InjectModel(TagModel)
   private readonly _tagModel: typeof TagModel;
+  @InjectModel(LinkPreviewModel)
+  private readonly _linkPreviewModel: typeof LinkPreviewModel;
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
-  public async upsert(postEntity: PostEntity | ArticleEntity | SeriesEntity): Promise<void> {
+  public async create(postEntity: ContentEntity): Promise<void> {
     const transaction = await this._sequelizeConnection.transaction();
     try {
-      const attributes = this._getAttributes(postEntity);
-      await this._postModel.upsert(attributes, {
+      const attributes = await this._getAttributes(postEntity);
+      await this._postModel.create(attributes, {
         transaction,
       });
 
       await this._setSeries(postEntity, transaction);
       await this._setTags(postEntity, transaction);
+      await this._setGroups(postEntity, transaction);
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 
+  public async update(postEntity: ContentEntity): Promise<void> {
+    const transaction = await this._sequelizeConnection.transaction();
+    try {
+      const attributes = await this._getAttributes(postEntity);
+      await this._postModel.update(attributes, {
+        where: {
+          id: postEntity.get('id'),
+        },
+        transaction,
+      });
+
+      await this._setSeries(postEntity, transaction);
+      await this._setTags(postEntity, transaction);
       await this._setGroups(postEntity, transaction);
       await transaction.commit();
     } catch (error) {
@@ -64,7 +89,7 @@ export class PostRepository implements IPostRepository {
   }
 
   private async _setGroups(postEntity: ContentEntity, transaction): Promise<void> {
-    const state = postEntity.get('state');
+    const state = postEntity.getState();
     if (state.attachGroupIds.length > 0) {
       await this._postGroupModel.bulkCreate(
         state.attachGroupIds.map((groupId) => ({
@@ -87,7 +112,7 @@ export class PostRepository implements IPostRepository {
   }
 
   private async _getAttributes(postEntity): Promise<IPost> {
-    const attributes: IPost = {
+    return {
       id: postEntity.get('id'),
       content: postEntity.get('content'),
       privacy: postEntity.get('privacy'),
@@ -104,23 +129,20 @@ export class PostRepository implements IPostRepository {
       canReact: postEntity.get('setting').canReact,
       commentsCount: postEntity.get('aggregation').commentsCount,
       totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
-      mediaJson: postEntity.get('media'),
+      mediaJson: {
+        files: postEntity.get('media').files.map((file) => file.toObject()),
+        images: postEntity.get('media').images.map((image) => image.toObject()),
+        videos: postEntity.get('media').videos.map((video) => video.toObject()),
+      },
       mentions: postEntity.get('mentionUserIds'),
       cover: postEntity.get('cover'),
+      tagsJson: postEntity.get('tags').map((tag) => tag.toObject()),
+      linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
     };
-    if (postEntity.get('tagIds') && postEntity.get('tagIds').length > 0) {
-      attributes.tagsJson = await this._tagModel.findAll({
-        attributes: ['id', 'name', 'slug'],
-        where: {
-          id: postEntity.get('tagIds'),
-        },
-      });
-    }
-    return attributes;
   }
 
   private async _setSeries(postEntity: ContentEntity, transaction): Promise<void> {
-    const state = postEntity.get('state');
+    const state = postEntity.getState();
     if (state.attachSeriesIds.length > 0) {
       await this._postSeriesModel.bulkCreate(
         state.attachSeriesIds.map((seriesId) => ({
@@ -143,7 +165,7 @@ export class PostRepository implements IPostRepository {
   }
 
   private async _setTags(postEntity: ContentEntity, transaction): Promise<void> {
-    const state = postEntity.get('state');
+    const state = postEntity.getState();
     if (state.attachTagIds.length > 0) {
       await this._postTagModel.bulkCreate(
         state.attachTagIds.map((tagId) => ({
@@ -219,7 +241,12 @@ export class PostRepository implements IPostRepository {
       }
     }
     if (options.include) {
-      const { shouldIncludeSeries, shouldIncludeGroup, mustIncludeGroup } = options.include;
+      const {
+        shouldIncludeSeries,
+        shouldIncludeGroup,
+        shouldIncludeLinkPreview,
+        mustIncludeGroup,
+      } = options.include;
       findOption.include = [];
       if (shouldIncludeGroup || mustIncludeGroup) {
         findOption.include.push({
@@ -239,6 +266,14 @@ export class PostRepository implements IPostRepository {
           as: 'postSeries',
           required: false,
           attributes: ['seriesId'],
+        });
+      }
+
+      if (shouldIncludeLinkPreview) {
+        findOption.include.push({
+          model: LinkPreviewModel,
+          as: 'linkPreview',
+          required: false,
         });
       }
     }
@@ -289,7 +324,7 @@ export class PostRepository implements IPostRepository {
       content: post.content,
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      tags: post.tagsJson,
+      tags: post.tagsJson.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
         files: post.mediaJson?.files.map((file) => new FileEntity(file)),
@@ -299,6 +334,7 @@ export class PostRepository implements IPostRepository {
         commentsCount: post.commentsCount,
         totalUsersSeen: post.totalUsersSeen,
       },
+      linkPreview: post.linkPreview ? new LinkPreviewEntity(post.linkPreview) : undefined,
     });
   }
 

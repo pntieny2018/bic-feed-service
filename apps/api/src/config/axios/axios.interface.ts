@@ -1,5 +1,12 @@
 export interface IAxiosConfig {
-  baseUrl: string;
-  maxRedirects: number;
-  timeout: number;
+  group: {
+    baseUrl: string;
+    maxRedirects: number;
+    timeout: number;
+  };
+  upload: {
+    baseUrl: string;
+    maxRedirects: number;
+    timeout: number;
+  };
 }

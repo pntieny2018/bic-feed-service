@@ -1,6 +1,7 @@
 import { DomainModelException } from '../../../../../common/exceptions/domain-model.exception';
 import { DomainAggregateRoot } from '../../../../../common/domain-model/domain-aggregate-root';
 import { validate as isUUID } from 'uuid';
+import { LinkPreviewDto } from '../../../application/dto';
 
 export type LinkPreviewProps = {
   id: string;
@@ -22,5 +23,13 @@ export class LinkPreviewEntity extends DomainAggregateRoot<LinkPreviewProps> {
     if (!isUUID(this._props.id)) {
       throw new DomainModelException(`ID must be UUID`);
     }
+  }
+
+  public update(data: LinkPreviewDto): void {
+    this._props = {
+      ...this._props,
+      ...data,
+      updatedAt: new Date(),
+    };
   }
 }

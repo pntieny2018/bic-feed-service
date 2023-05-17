@@ -67,12 +67,6 @@ export class CommentService {
 
     if (replyId !== NIL_UUID) {
       const parentComment = await this._commentModel.findOne({
-        include: [
-          {
-            model: MentionModel,
-            as: 'mentions',
-          },
-        ],
         where: {
           id: replyId,
           parentId: NIL_UUID,
@@ -95,39 +89,28 @@ export class CommentService {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       //HOTFIX: hot fix create comment with image
-      const comment = await this._commentModel.create(
-        {
-          createdBy: user.id,
-          updatedBy: user.id,
-          parentId: replyId,
-          content: createCommentDto.content,
-          postId: post.id,
-          giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
-          mediaJson: media || {
-            files: [],
-            images: [],
-            videos: [],
-          },
-        },
-        { transaction }
-      );
-
       const userMentionIds = createCommentDto.mentions;
 
       if (userMentionIds.length) {
         const groupAudienceIds = post.groups.map((g) => g.groupId);
-
         await this._mentionService.checkValid(groupAudienceIds, userMentionIds);
-
-        await this._mentionService.create(
-          userMentionIds.map((userId) => ({
-            entityId: comment.id,
-            userId,
-            mentionableType: MentionableType.COMMENT,
-          })),
-          transaction
-        );
       }
+
+      const dataCreate = {
+        createdBy: user.id,
+        updatedBy: user.id,
+        parentId: replyId,
+        content: createCommentDto.content,
+        postId: post.id,
+        giphyId: createCommentDto.giphy ? createCommentDto.giphy.id : null,
+        mentions: userMentionIds || [],
+        mediaJson: media || {
+          files: [],
+          images: [],
+          videos: [],
+        },
+      };
+      const comment = await this._commentModel.create(dataCreate, { transaction });
 
       await transaction.commit();
 
@@ -155,12 +138,6 @@ export class CommentService {
   }> {
     const { media, mentions } = updateCommentDto;
     const comment = await this._commentModel.findOne({
-      include: [
-        {
-          model: MentionModel,
-          as: 'mentions',
-        },
-      ],
       where: {
         id: commentId,
         createdBy: user.id,
@@ -242,11 +219,6 @@ export class CommentService {
       },
       include: [
         {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-        },
-        {
           model: CommentReactionModel,
           as: 'ownerReactions',
           required: false,
@@ -291,13 +263,6 @@ export class CommentService {
           [Op.in]: commentIds,
         },
       },
-      include: [
-        {
-          model: MentionModel,
-          as: 'mentions',
-          required: false,
-        },
-      ],
     });
 
     if (!responses) {
@@ -717,11 +682,6 @@ export class CommentService {
         },
         include: [
           {
-            model: MentionModel,
-            as: 'mentions',
-            required: false,
-          },
-          {
             model: CommentReactionModel,
             as: 'ownerReactions',
             required: false,
@@ -766,6 +726,7 @@ export class CommentService {
         giphyId,
         content,
         media,
+        mentions,
         totalReply,
         createdBy,
         updatedBy,
@@ -774,7 +735,6 @@ export class CommentService {
       } = comment;
       const commentAdded = result.find((i) => i.id === comment.id);
       if (!commentAdded) {
-        const mentions = comment.mentionUserId === null ? [] : [{ userId: comment.mentionUserId }];
         const ownerReactions = !comment.commentReactionId
           ? []
           : [
@@ -802,12 +762,6 @@ export class CommentService {
           ownerReactions,
         });
         return;
-      }
-      if (
-        comment.mentionUserId !== null &&
-        !commentAdded.mentions.find((m) => m.userId === comment.mentionUserId)
-      ) {
-        commentAdded.mentions.push({ userId: comment.mentionUserId });
       }
       if (
         comment.commentReactionId !== null &&

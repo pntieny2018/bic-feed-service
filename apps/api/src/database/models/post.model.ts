@@ -182,7 +182,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   @Column({
     type: DataTypes.JSONB,
   })
-  public tagsJson: TagResponseDto[];
+  public tagsJson: ITag[];
 
   @AllowNull(false)
   @Column

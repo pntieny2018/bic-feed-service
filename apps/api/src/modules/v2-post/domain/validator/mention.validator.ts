@@ -1,21 +1,36 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { HTTP_STATUS_ID } from '../../../../common/constants';
-import { LogicException } from '../../../../common/exceptions';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  AUTHORITY_APP_SERVICE_TOKEN,
+  IAuthorityAppService,
+} from '../../../authority/application/authority.app-service.interface';
 import {
   IUserApplicationService,
   USER_APPLICATION_TOKEN,
   UserDto,
 } from '../../../v2-user/application';
-import { UserMentionDto } from '../../application/dto';
-import { IMentionValidator } from './interface/mention.validator.interface';
+import {
+  GROUP_APPLICATION_TOKEN,
+  GroupDto,
+  IGroupApplicationService,
+} from '../../../v2-group/application';
+import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
+import { IMentionValidator } from './interface';
+import { UserMentionDto } from '../../application/dto/user-mention.dto';
 import { MentionUserNotFoundException } from '../exception/mention-user-not-found.exception';
+import { LogicException } from '../../../../common/exceptions/logic.exception';
+import { HTTP_STATUS_ID } from '../../../../common/constants/http-status-id';
 
 @Injectable()
 export class MentionValidator implements IMentionValidator {
   public constructor(
+    @Inject(GROUP_APPLICATION_TOKEN)
+    protected readonly _groupAppService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
-    private _userAppService: IUserApplicationService
+    protected readonly _userApplicationService: IUserApplicationService,
+    @Inject(AUTHORITY_APP_SERVICE_TOKEN)
+    protected readonly _authorityAppService: IAuthorityAppService
   ) {}
+
 
   /**
    * Check Valid Mentions
@@ -29,7 +44,9 @@ export class MentionValidator implements IMentionValidator {
     userIds: string[]
   ): Promise<UserDto[]> {
     userIds = [...new Set(userIds)];
-    const users = await this._userAppService.findAllByIds(userIds, { withGroupJoined: true });
+    const users = await this._userApplicationService.findAllByIds(userIds, {
+      withGroupJoined: true,
+    });
     if (users?.length < userIds.length) {
       throw new MentionUserNotFoundException();
     }
@@ -59,5 +76,21 @@ export class MentionValidator implements IMentionValidator {
         },
       };
     }, {});
+  }
+
+  public async validateMentionUsers(users: UserDto[], groups: GroupDto[]): Promise<void> {
+    if (!users?.length || !groups?.length) return;
+    const invalidUsers = [];
+    for (const user of users) {
+      if (!groups.some((group) => user.groups.includes(group.id))) {
+        invalidUsers.push(user.id);
+      }
+    }
+
+    if (invalidUsers.length) {
+      throw new UserNoBelongGroupException({
+        usersDenied: invalidUsers,
+      });
+    }
   }
 }

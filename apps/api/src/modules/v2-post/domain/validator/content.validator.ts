@@ -62,23 +62,22 @@ export class ContentValidator implements IContentValidator {
     user: UserDto,
     groupAudienceIds: string[]
   ): Promise<void> {
-    const notEditSettingInGroups: GroupDto[] = [];
-    const groups = await this._groupAppService.findAllByIds(groupAudienceIds);
+    const notEditSettingInGroupIds = [];
     const ability = await this._authorityAppService.buildAbility(user);
-    for (const group of groups) {
+    for (const groupId of groupAudienceIds) {
       if (
         !ability.can(
           PERMISSION_KEY.EDIT_OWN_CONTENT_SETTING,
-          subject(SUBJECT.GROUP, { id: group.id })
+          subject(SUBJECT.GROUP, { id: groupId })
         )
       ) {
-        notEditSettingInGroups.push(group);
+        notEditSettingInGroupIds.push(groupId);
       }
     }
 
-    if (notEditSettingInGroups.length) {
+    if (notEditSettingInGroupIds.length) {
       throw new ContentNoEditSettingPermissionException({
-        groupsDenied: notEditSettingInGroups.map((e) => e.id),
+        groupsDenied: notEditSettingInGroupIds,
       });
     }
   }
@@ -96,7 +95,7 @@ export class ContentValidator implements IContentValidator {
       throw new ContentEmptyGroupException();
     }
 
-    const state = contentEntity.get('state');
+    const state = contentEntity.getState();
     const { detachGroupIds, enableSetting } = state;
     if (enableSetting) {
       await this.checkCanEditContentSetting(userAuth, groupIds);

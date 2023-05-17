@@ -311,8 +311,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         authUserId
       )}
     )`;
-    let select = `SELECT "CommentModel".*,
-    "mentions"."user_id" AS "mentionUserId"`;
+    let select = `SELECT "CommentModel".*`;
 
     if (authUserId) {
       select += `,"ownerReactions"."id" AS "commentReactionId", 
@@ -325,6 +324,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     "c"."parent_id" AS "parentId", 
     "c"."post_id" AS "postId",
     "c"."content", 
+    "c"."mentions", 
     "c"."edited", 
     "c"."media_json" as "media",
     "c"."giphy_id" as "giphyId",
@@ -341,9 +341,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         ORDER BY "c"."created_at" ${order}
         OFFSET 0 LIMIT :limit
       ) AS "CommentModel"
-      LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
-        "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
-      ) 
       ${
         authUserId
           ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId`
@@ -372,8 +369,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     const { schema } = getDatabaseConfig();
     const condition = await CommentModel._getCondition(getCommentsDto);
     const reportContentDetailTable = ReportContentDetailModel.tableName;
-    let select = `SELECT "CommentModel".*,
-    "mentions"."user_id" AS "mentionUserId"`;
+    let select = `SELECT "CommentModel".*`;
 
     if (authUserId) {
       select += `,"ownerReactions"."id" AS "commentReactionId", 
@@ -386,6 +382,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     "c"."parent_id" AS "parentId", 
     "c"."post_id" AS "postId",
     "c"."content", 
+    "c"."mentions", 
     "c"."edited", 
     "c"."media_json" as "media",
     "c"."giphy_id" as "giphyId",
@@ -425,9 +422,6 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
         OFFSET 0 LIMIT :limitBottom
       )
     ) AS "CommentModel"
-    LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" AND (
-      "mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment'
-    )
     ${
       authUserId
         ? `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" AND "ownerReactions"."created_by" = :authUserId `
@@ -484,8 +478,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
     }
 
     let query = `SELECT 
-      "CommentModel".*,
-      "mentions"."user_id" AS "mentionUserId"
+      "CommentModel".*
       ${
         authUserId
           ? `,"ownerReactions"."id" AS "commentReactionId", 
@@ -493,9 +486,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
       "ownerReactions"."created_at" AS "reactCreatedAt"`
           : ``
       }
-    FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel"
-    LEFT OUTER JOIN ${schema}."mentions" AS "mentions" ON "CommentModel"."id" = "mentions"."entity_id" 
-        AND ("mentions"."mentionable_type" = 'comment' AND "mentions"."mentionable_type" = 'comment')`;
+    FROM (${subQuery.join(' UNION ALL ')}) AS "CommentModel"`;
     if (authUserId) {
       query += `LEFT OUTER JOIN ${schema}."comments_reactions" AS "ownerReactions" ON "CommentModel"."id" = "ownerReactions"."comment_id" 
       AND "ownerReactions"."created_by" = :authUserId`;

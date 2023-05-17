@@ -35,35 +35,51 @@ export type ContentProps = {
     commentsCount: number;
     totalUsersSeen: number;
   };
-  state?: {
-    attachGroupIds?: string[];
-    detachGroupIds?: string[];
-    attachSeriesIds?: string[];
-    detachSeriesIds?: string[];
-    attachTagIds?: string[];
-    detachTagIds?: string[];
-    enableSetting?: boolean;
-  };
 };
-
+export type ContentState = {
+  attachGroupIds?: string[];
+  detachGroupIds?: string[];
+  attachSeriesIds?: string[];
+  detachSeriesIds?: string[];
+  attachTagIds?: string[];
+  detachTagIds?: string[];
+  attachFileIds?: string[];
+  detachFileIds?: string[];
+  attachImageIds?: string[];
+  detachImageIds?: string[];
+  attachVideoIds?: string[];
+  detachVideoIds?: string[];
+  enableSetting?: boolean;
+};
 export class ContentEntity<
   Props extends ContentProps = ContentProps
 > extends DomainAggregateRoot<Props> {
+  protected _state: ContentState;
   public constructor(props: Props) {
     super(props);
     this.initState();
   }
 
   public initState(): void {
-    this._props.state = {
+    this._state = {
       attachGroupIds: [],
       detachGroupIds: [],
       attachSeriesIds: [],
       detachSeriesIds: [],
       attachTagIds: [],
       detachTagIds: [],
+      attachFileIds: [],
+      detachFileIds: [],
+      attachImageIds: [],
+      detachImageIds: [],
+      attachVideoIds: [],
+      detachVideoIds: [],
       enableSetting: false,
     };
+  }
+
+  public getState(): ContentState {
+    return this._state;
   }
 
   public validate(): void {
@@ -109,10 +125,10 @@ export class ContentEntity<
   }
 
   public setGroups(groupIds: string[]): void {
-    this._props.state.attachGroupIds = groupIds.filter(
+    this._state.attachGroupIds = groupIds.filter(
       (groupId) => !this._props.groupIds?.includes(groupId)
     );
-    this._props.state.detachGroupIds = this._props.groupIds?.filter(
+    this._state.detachGroupIds = this._props.groupIds?.filter(
       (groupId) => !groupIds.includes(groupId)
     );
     this._props.groupIds = groupIds;
@@ -128,7 +144,7 @@ export class ContentEntity<
     ) {
       isEnableSetting = true;
     }
-    this._props.state.enableSetting = isEnableSetting;
+    this._state.enableSetting = isEnableSetting;
     this._props.setting = setting;
   }
 

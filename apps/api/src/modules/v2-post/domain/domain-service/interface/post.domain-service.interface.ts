@@ -9,11 +9,15 @@ export type PostCreateProps = {
 };
 export type PostPublishProps = {
   postEntity: PostEntity;
-  newData: PublishPostCommandPayload;
+  newData: PublishPostCommandPayload & {
+    groups: GroupDto[];
+    mentionUsers: UserDto[];
+  };
 };
 export interface IPostDomainService {
   createDraftPost(input: PostCreateProps): Promise<PostEntity>;
   publishPost(input: PostPublishProps): Promise<PostEntity>;
+  autoSavePost(input: PostPublishProps): Promise<void>;
   delete(id: string): Promise<void>;
 }
 export const POST_DOMAIN_SERVICE_TOKEN = 'POST_DOMAIN_SERVICE_TOKEN';

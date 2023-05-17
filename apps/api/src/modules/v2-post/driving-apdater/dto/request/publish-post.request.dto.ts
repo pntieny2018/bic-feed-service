@@ -1,6 +1,6 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from '../../../../media/dto';
 import { UserMentionDto } from '../../../../mention/dto';
@@ -12,16 +12,16 @@ export class PublishPostRequestDto {
   @ApiProperty({
     description: 'Audience',
     type: AudienceRequestDto,
-    required: false,
+    required: true,
     example: {
       ['user_ids']: [],
       ['group_ids']: ['26799d29-189b-435d-b618-30fb70e9b09e'],
     },
   })
-  @IsOptional()
+  @IsNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience?: AudienceRequestDto;
+  public audience: AudienceRequestDto;
 
   @ApiProperty({
     description: 'Content of post',

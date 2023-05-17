@@ -6,19 +6,7 @@ import { GiphyController } from './driving-adapter/controller/giphy.controller';
 import { giphyProvider } from './provider/giphy.provider';
 
 @Module({
-  imports: [
-    HttpModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const axiosConfig = configService.get<IAxiosConfig>('axios');
-        return {
-          baseURL: axiosConfig.baseUrl,
-          maxRedirects: axiosConfig.maxRedirects,
-          timeout: axiosConfig.timeout,
-        };
-      },
-    }),
-  ],
+  imports: [HttpModule],
   controllers: [GiphyController],
   providers: [...giphyProvider],
 })

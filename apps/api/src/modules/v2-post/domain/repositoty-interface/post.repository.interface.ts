@@ -15,6 +15,7 @@ export type FindOnePostOptions = {
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeLinkPreview?: boolean;
   };
   attributes?: (keyof IPost)[];
 };
@@ -30,12 +31,14 @@ export type FindAllPostOptions = {
     shouldIncludeGroup?: boolean;
     shouldIncludeSeries?: boolean;
     shouldIncludeTag?: boolean;
+    shouldIncludeLinkPreview?: boolean;
   };
   attributes?: (keyof IPost)[];
 };
 
 export interface IPostRepository {
-  upsert(data: PostEntity): Promise<void>;
+  create(data: PostEntity): Promise<void>;
+  update(data: PostEntity): Promise<void>;
   findOne(
     findOnePostOptions: FindOnePostOptions
   ): Promise<PostEntity | ArticleEntity | SeriesEntity>;

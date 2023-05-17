@@ -3,6 +3,7 @@ export class FileDto {
   public url: string;
   public name: string;
   public createdAt: Date;
+  public createdBy: string;
   public mimeType: string;
   public size: number;
 
