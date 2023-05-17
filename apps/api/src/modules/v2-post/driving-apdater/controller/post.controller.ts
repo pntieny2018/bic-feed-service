@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Req,
@@ -136,7 +137,7 @@ export class PostController {
   @ResponseMessages({
     success: 'message.post.updated_success',
   })
-  @Put('/:postId/auto-save')
+  @Patch('/:postId')
   @TransformInstanceToPlain({ groups: [TRANSFORMER_VISIBLE_ONLY.PUBLIC] })
   public async autoSave(
     @Param('postId', ParseUUIDPipe) postId: string,
