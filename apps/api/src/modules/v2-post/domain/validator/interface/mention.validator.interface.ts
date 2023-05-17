@@ -1,10 +1,7 @@
 import { UserDto } from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';
-import { UserMentionDto } from '../../../application/dto/user-mention.dto';
 
 export interface IMentionValidator {
-  mapMentionWithUserInfo(users: UserDto[]): UserMentionDto;
-
   validateMentionUsers(users: UserDto[], groups: GroupDto[]): Promise<void>;
 }
 

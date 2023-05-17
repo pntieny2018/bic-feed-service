@@ -15,7 +15,6 @@ import {
 } from '../../../v2-group/application';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
 import { IMentionValidator } from './interface';
-import { UserMentionDto } from '../../application/dto/user-mention.dto';
 
 @Injectable()
 export class MentionValidator implements IMentionValidator {
@@ -27,26 +26,6 @@ export class MentionValidator implements IMentionValidator {
     @Inject(AUTHORITY_APP_SERVICE_TOKEN)
     protected readonly _authorityAppService: IAuthorityAppService
   ) {}
-
-  /**
-   * Map mentions to UserInfo
-   * @param mentions string[]
-   * @param users UserDto[]
-   * @throws BadRequestException
-   * returns UserMentionDto
-   */
-  public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
-    return users.reduce((returnValue, current) => {
-      return {
-        ...returnValue,
-        [current.username]: {
-          id: current.id,
-          username: current.username,
-          fullname: current.fullname,
-        },
-      };
-    }, {});
-  }
 
   public async validateMentionUsers(users: UserDto[], groups: GroupDto[]): Promise<void> {
     if (!users?.length || !groups?.length) return;
