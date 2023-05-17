@@ -14,5 +14,15 @@
   "common": {
     "database_error": "Database error",
     "domain_model_validation": "Domain model invalidate"
+  },
+  "mention": {
+    "user_not_found": "Không tìm thấy người dùng được đề cập"
+  },
+  "content": {
+    "no_comment_permission": "Tính năng bình luận không có sẵn cho nội dung này"
+  },
+  "comment": {
+    "not_found": "Không tìm thấy bình luận",
+    "reply_not_exist": "Bình luận được trả lời không tồn tại"
   }
 }
