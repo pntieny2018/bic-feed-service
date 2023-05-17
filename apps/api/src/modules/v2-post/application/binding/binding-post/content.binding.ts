@@ -108,7 +108,12 @@ export class ContentBinding implements IContentBinding {
     return users.reduce((returnValue, current) => {
       return {
         ...returnValue,
-        [current.username]: current,
+        [current.username]: {
+          id: current.id,
+          fullname: current.fullname,
+          email: current.email,
+          username: current.username,
+        },
       };
     }, {});
   }

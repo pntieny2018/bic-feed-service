@@ -31,7 +31,11 @@ import {
   CommentReplyNotExistException,
   MentionUserNotFoundException,
 } from '../../../domain/exception';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';
 import {
   CONTENT_BINDING_TOKEN,
@@ -133,7 +137,12 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
       mentions: usersMentionMapper,
-      actor,
+      actor: new UserDto({
+        id: actor.id,
+        fullname: actor.fullname,
+        email: actor.email,
+        username: actor.username,
+      }),
     });
   }
 }

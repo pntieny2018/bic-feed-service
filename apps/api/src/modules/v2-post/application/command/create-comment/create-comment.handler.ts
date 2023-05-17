@@ -29,7 +29,11 @@ import {
 } from '../../../domain/exception';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { ImageDto, FileDto, VideoDto } from '../../dto';
-import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from '../../../../v2-user/application';
 import { GroupDto } from '../../../../v2-group/application';
 import {
   CONTENT_BINDING_TOKEN,
@@ -126,7 +130,12 @@ export class CreateCommentHandler
         videos: commentEntity.get('media').videos.map((item) => new VideoDto(item.toObject())),
       },
       mentions: usersMentionMapper,
-      actor,
+      actor: new UserDto({
+        id: actor.id,
+        fullname: actor.fullname,
+        email: actor.email,
+        username: actor.username,
+      }),
     });
   }
 }
