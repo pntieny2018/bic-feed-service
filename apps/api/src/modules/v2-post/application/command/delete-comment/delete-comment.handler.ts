@@ -11,7 +11,7 @@ import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
 
 @CommandHandler(DeleteCommentCommand)
-export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, boolean> {
+export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
@@ -21,7 +21,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
     private readonly _contentValidator: IContentValidator
   ) {}
 
-  public async execute(command: DeleteCommentCommand): Promise<boolean> {
+  public async execute(command: DeleteCommentCommand): Promise<void> {
     const { actor, id } = command.payload;
 
     const comment = await this._commentRepository.findOne({
@@ -41,6 +41,6 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    return this._commentRepository.destroyComment(id);
+    this._commentRepository.destroyComment(id);
   }
 }

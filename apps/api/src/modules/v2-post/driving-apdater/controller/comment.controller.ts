@@ -154,9 +154,9 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentRequestDto: UpdateCommentRequestDto
-  ): Promise<boolean> {
+  ): Promise<void> {
     try {
-      return this._commandBus.execute<UpdateCommentCommand, boolean>(
+      this._commandBus.execute<UpdateCommentCommand, void>(
         new UpdateCommentCommand({
           ...updateCommentRequestDto,
           id: commentId,
@@ -197,14 +197,14 @@ export class CommentController {
   public async destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
-  ): Promise<boolean> {
+  ): Promise<void> {
     try {
-      return this._commandBus.execute<DeleteCommentCommand, boolean>(
-        new DeleteCommentCommand({
-          id: commentId,
-          actor: user,
-        } as DeleteCommentCommandPayload)
-      );
+      this._commandBus.execute<DeleteCommentCommand, void>(
+         new DeleteCommentCommand({
+           id: commentId,
+           actor: user,
+         } as DeleteCommentCommandPayload)
+       );
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:

@@ -64,18 +64,15 @@ export class CommentRepository implements ICommentRepository {
     return this._modelToEntity(comment);
   }
 
-  public async updateComment(id: string, data: Partial<IComment>): Promise<boolean> {
-    return Boolean(
-      await this._commentModel.update(data, {
-        where: {
-          id,
-        },
-        returning: true,
-      })
-    );
+  public async updateComment(id: string, data: Partial<IComment>): Promise<void> {
+    await this._commentModel.update(data, {
+      where: {
+        id,
+      },
+    });
   }
 
-  public async destroyComment(id: string): Promise<boolean> {
+  public async destroyComment(id: string): Promise<void> {
     const comment = await this._commentModel.findByPk(id);
     const childComments = await this._commentModel.findAll({
       attributes: ['id'],
@@ -101,7 +98,6 @@ export class CommentRepository implements ICommentRepository {
       });
       await comment.destroy({ transaction });
       await transaction.commit();
-      return true;
     } catch (e) {
       await transaction.rollback();
       throw e;

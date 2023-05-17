@@ -27,7 +27,7 @@ import { ImageDto } from '../../dto';
 import { IComment } from 'apps/api/src/database/models/comment.model';
 
 @CommandHandler(UpdateCommentCommand)
-export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, boolean> {
+export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
@@ -44,7 +44,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     private readonly _externalService: ExternalService
   ) {}
 
-  public async execute(command: UpdateCommentCommand): Promise<boolean> {
+  public async execute(command: UpdateCommentCommand): Promise<void> {
     const { actor, id, content, media, mentions, giphyId } = command.payload;
     const updateData: Partial<IComment> = {
       updatedBy: actor.id,
@@ -91,6 +91,6 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
       updateData.mentions = mentions;
     }
 
-    return this._commentRepository.updateComment(id, updateData);
+    this._commentRepository.updateComment(id, updateData);
   }
 }
