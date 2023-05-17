@@ -6,7 +6,7 @@ import { ImageResource } from '../../../data-type';
 export type ImageProps = {
   id: string;
   url: string;
-  src: string;
+  src?: string;
   createdBy: string;
   mimeType: string;
   resource: ImageResource;

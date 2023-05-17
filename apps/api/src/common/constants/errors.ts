@@ -20,6 +20,7 @@ export const ERRORS = {
     CONTENT_NO_CRUD_PERMISSION: 'content.no_crud_permission',
     CONTENT_NO_EDIT_SETTING_PERMISSION: 'content.no_edit_setting_permission',
     CONTENT_ACCESS_DENIED: 'content.access_denied',
+    CONTENT_NO_COMMENT_PERMISSION: 'content.no_comment_permission',
   },
   USER: {
     USER_NO_BELONG_GROUP: 'user.no_belong_group',
@@ -43,6 +44,13 @@ export const ERRORS = {
     SERIES_NO_UPDATE_PERMISSION: 'series.no_update_permission',
     SERIES_NO_CREATE_PERMISSION: 'series.no_create_permission',
     SERIES_NO_READ_PERMISSION: 'series.no_read_permission',
+  },
+  MENTION: {
+    USER_NOT_FOUND: 'mention.user_not_found',
+  },
+  COMMENT: {
+    COMMENT_NOT_FOUND: 'comment.not_found',
+    REPLY_NOT_EXIST: 'comment.reply_not_exist',
   },
   recent_search: {
     RECENT_SEARCH_NOT_FOUND: 'recent_search.not_found',
