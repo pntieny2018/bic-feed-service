@@ -53,6 +53,7 @@ export class GroupRepository implements IGroupRepository {
   }
 
   public async findAllByIds(groupIds: string[]): Promise<GroupEntity[]> {
+    if (!groupIds || groupIds?.length === 0) return [];
     const keys = [...new Set(ArrayHelper.arrayUnique(groupIds.map((id) => id)))].map(
       (groupId) => `${CACHE_KEYS.SHARE_GROUP}:${groupId}`
     );

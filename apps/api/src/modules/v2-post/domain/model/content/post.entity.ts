@@ -71,65 +71,66 @@ export class PostEntity extends ContentEntity<PostProps> {
     videos: VideoEntity[];
   }): void {
     const { files, images, videos } = media;
-    //
-    // const mediaProps = {
-    //   files: [],
-    //   images: [],
-    //   videos: [],
-    // };
-    // if (files.length) {
-    //   const currentFileIds = this._props.media.files.map((file) => file.get('id'));
-    //   for (const file of files) {
-    //     if (!currentFileIds.includes(file.get('id'))) {
-    //       this._state.attachFileIds.push(file.get('id'));
-    //     }
-    //   }
-    //
-    //   const newFileIds = files.map((file) => file.get('id'));
-    //   for (const fileId of currentFileIds) {
-    //     if (!newFileIds.includes(fileId)) {
-    //       this._state.detachFileIds.push(fileId);
-    //     }
-    //   }
-    //   mediaProps.files = files;
-    // }
-    //
-    // if (images.length) {
-    //   const currentImageIds = this._props.media.files.map((image) => image.get('id'));
-    //   for (const image of images) {
-    //     if (!currentImageIds.includes(image.get('id'))) {
-    //       this._state.attachImageIds.push(image.get('id'));
-    //     }
-    //   }
-    //
-    //   const newImageIds = images.map((image) => image.get('id'));
-    //   for (const imageId of currentImageIds) {
-    //     if (!newImageIds.includes(imageId)) {
-    //       this._state.detachImageIds.push(imageId);
-    //     }
-    //   }
-    //   mediaProps.images = images;
-    // }
-    //
-    // if (videos.length) {
-    //   const currentVideoIds = this._props.media.files.map((video) => video.get('id'));
-    //   for (const video of videos) {
-    //     if (!currentVideoIds.includes(video.get('id'))) {
-    //       this._state.attachVideoIds.push(video.get('id'));
-    //     }
-    //   }
-    //
-    //   const newVideoIds = videos.map((video) => video.get('id'));
-    //   for (const videoId of currentVideoIds) {
-    //     if (!newVideoIds.includes(videoId)) {
-    //       this._state.detachVideoIds.push(videoId);
-    //     }
-    //   }
-    //   mediaProps.videos = videos;
-    // }
+    this._updateVideosState(videos);
+    this._updateFilesState(files);
+    this._updateImagesState(images);
+  }
+  private _updateFilesState(files: FileEntity[]): void {
+    const currentFileIds = this._props.media.files.map((file) => file.get('id'));
+    for (const file of files) {
+      if (!currentFileIds.includes(file.get('id'))) {
+        this._state.attachFileIds.push(file.get('id'));
+      }
+    }
+
+    const newFileIds = files.map((file) => file.get('id'));
+    for (const fileId of currentFileIds) {
+      if (!newFileIds.includes(fileId)) {
+        this._state.detachFileIds.push(fileId);
+      }
+    }
     this._props.media = {
+      ...this._props.media,
       files,
+    };
+  }
+
+  private _updateImagesState(images: ImageEntity[]): void {
+    const currentImageIds = this._props.media.images.map((image) => image.get('id'));
+    for (const image of images) {
+      if (!currentImageIds.includes(image.get('id'))) {
+        this._state.attachImageIds.push(image.get('id'));
+      }
+    }
+
+    const newImageIds = images.map((image) => image.get('id'));
+    for (const imageId of currentImageIds) {
+      if (!newImageIds.includes(imageId)) {
+        this._state.detachImageIds.push(imageId);
+      }
+    }
+    this._props.media = {
+      ...this._props.media,
       images,
+    };
+  }
+
+  private _updateVideosState(videos: VideoEntity[]): void {
+    const currentVideoIds = this._props.media.videos.map((video) => video.get('id'));
+    for (const video of videos) {
+      if (!currentVideoIds.includes(video.get('id'))) {
+        this._state.attachVideoIds.push(video.get('id'));
+      }
+    }
+
+    const newVideoIds = videos.map((video) => video.get('id'));
+    for (const videoId of currentVideoIds) {
+      if (!newVideoIds.includes(videoId)) {
+        this._state.detachVideoIds.push(videoId);
+      }
+    }
+    this._props.media = {
+      ...this._props.media,
       videos,
     };
   }

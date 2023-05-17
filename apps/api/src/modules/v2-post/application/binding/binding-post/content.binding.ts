@@ -5,13 +5,14 @@ import {
   UserDto,
 } from '../../../../v2-user/application';
 import { Inject, Injectable } from '@nestjs/common';
-import { PostDto, UserMentionDto } from '../../dto';
+import { FileDto, ImageDto, PostDto, UserMentionDto, VideoDto } from '../../dto';
 import {
   GROUP_APPLICATION_TOKEN,
   GroupDto,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
 import { IContentBinding } from './content.interface';
+import { ArrayHelper } from '../../../../../common/helpers';
 
 type Props = {
   name?: string;
@@ -61,6 +62,10 @@ export class ContentBinding implements IContentBinding {
         (await this._groupApplicationService.findAllByIds(postEntity.get('groupIds'))),
     };
 
+    const communities = await this._groupApplicationService.findAllByIds(
+      ArrayHelper.arrayUnique(audience.groups.map((group) => group.rootGroupId))
+    );
+
     return new PostDto({
       id: postEntity.get('id'),
       audience,
@@ -71,6 +76,12 @@ export class ContentBinding implements IContentBinding {
         name: tag.get('name'),
       })),
       series: postEntity.get('seriesIds'),
+      communities,
+      media: {
+        files: postEntity.get('media').files.map((file) => new FileDto(file.toObject())),
+        images: postEntity.get('media').images.map((image) => new ImageDto(image.toObject())),
+        videos: postEntity.get('media').videos.map((video) => new VideoDto(video.toObject())),
+      },
       mentions: mentionUsers,
       actor,
       status: postEntity.get('status'),

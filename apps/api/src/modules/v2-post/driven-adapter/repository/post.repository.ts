@@ -324,7 +324,7 @@ export class PostRepository implements IPostRepository {
       content: post.content,
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
-      tags: post.tagsJson.map((tag) => new TagEntity(tag)),
+      tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
       media: {
         images: post.mediaJson?.images.map((image) => new ImageEntity(image)),
         files: post.mediaJson?.files.map((file) => new FileEntity(file)),

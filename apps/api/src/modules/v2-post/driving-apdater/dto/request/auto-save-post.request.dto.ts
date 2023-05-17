@@ -5,7 +5,6 @@ import { AudienceRequestDto } from './audience.request.dto';
 import { MediaDto } from '../../../../media/dto';
 import { UserMentionDto } from '../../../../mention/dto';
 import { LinkPreviewDto } from '../../../../link-preview/dto/link-preview.dto';
-import { ValidateMention } from '../../../../mention/validators/validate-mention.validator';
 import { PostSettingDto } from '../../../../post/dto/common/post-setting.dto';
 
 export class AutoSavePostRequestDto {
@@ -21,9 +20,7 @@ export class AutoSavePostRequestDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => AudienceRequestDto)
-  public audience?: AudienceRequestDto = {
-    groupIds: [],
-  };
+  public audience?: AudienceRequestDto;
 
   @ApiProperty({
     description: 'Content of post',
@@ -32,7 +29,7 @@ export class AutoSavePostRequestDto {
   })
   @IsOptional()
   @Type(() => String)
-  public content: string = null;
+  public content: string;
 
   @ApiProperty({
     description: 'Post data, includes content, images, files, videos',
@@ -101,7 +98,6 @@ export class AutoSavePostRequestDto {
     }
     return value;
   })
-  @ValidateMention()
   public mentions?: string[];
 
   @ApiProperty({
@@ -127,7 +123,7 @@ export class AutoSavePostRequestDto {
   })
   @IsOptional()
   @IsUUID('4', { each: true })
-  public tags?: string[] = [];
+  public tags?: string[];
 
   @ApiProperty({
     type: [String],
@@ -135,5 +131,5 @@ export class AutoSavePostRequestDto {
   })
   @IsOptional()
   @IsUUID('4', { each: true })
-  public series?: string[] = [];
+  public series?: string[];
 }
