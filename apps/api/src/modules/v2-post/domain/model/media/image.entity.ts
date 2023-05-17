@@ -30,6 +30,10 @@ export class ImageEntity extends DomainAggregateRoot<ImageProps> {
     return this._props.createdBy === userId;
   }
 
+  public isReady(): boolean {
+    return this._props.status === 'DONE';
+  }
+
   public isPostContentResource(): boolean {
     return this._props.resource === ImageResource.POST_CONTENT;
   }

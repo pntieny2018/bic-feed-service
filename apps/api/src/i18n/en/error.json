@@ -50,5 +50,6 @@
     "domain_model_validation": "Domain model invalidate",
     "access_denied": "Access denied"
   },
-  "tag_series_invalid": "Tag series invalid"
+  "tag_series_invalid": "Tag series invalid",
+  "image_resource_invalid": "Image resource invalid"
 }

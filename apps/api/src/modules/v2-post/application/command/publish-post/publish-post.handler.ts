@@ -47,7 +47,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groupArchived: false,
       },
       include: {
-        mustIncludeGroup: true,
+        shouldIncludeGroup: true,
         shouldIncludeSeries: true,
         shouldIncludeTag: true,
         shouldIncludeLinkPreview: true,
@@ -57,7 +57,9 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
       throw new ContentNotFoundException();
     }
 
-    const groups = await this._groupApplicationService.findAllByIds(groupIds);
+    const groups = await this._groupApplicationService.findAllByIds(
+      groupIds || postEntity.get('groupIds')
+    );
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });

@@ -10,7 +10,7 @@ export type PostCreateProps = {
 export type PostPublishProps = {
   postEntity: PostEntity;
   newData: PublishPostCommandPayload & {
-    groups: GroupDto[];
+    groups?: GroupDto[];
     mentionUsers: UserDto[];
   };
 };
