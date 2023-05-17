@@ -6,7 +6,6 @@ export type FileProps = {
   id: string;
   url: string;
   name: string;
-  createdAt: Date;
   createdBy: string;
   mimeType: string;
   size: number;

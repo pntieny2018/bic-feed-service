@@ -71,7 +71,6 @@ export class PostRepository implements IPostRepository {
     const transaction = await this._sequelizeConnection.transaction();
     try {
       const attributes = await this._getAttributes(postEntity);
-      console.log('attributes', attributes);
       await this._postModel.update(attributes, {
         where: {
           id: postEntity.get('id'),
@@ -130,7 +129,11 @@ export class PostRepository implements IPostRepository {
       canReact: postEntity.get('setting').canReact,
       commentsCount: postEntity.get('aggregation').commentsCount,
       totalUsersSeen: postEntity.get('aggregation').totalUsersSeen,
-      mediaJson: postEntity.get('media'),
+      mediaJson: {
+        files: postEntity.get('media').files.map((file) => file.toObject()),
+        images: postEntity.get('media').images.map((image) => image.toObject()),
+        videos: postEntity.get('media').videos.map((video) => video.toObject()),
+      },
       mentions: postEntity.get('mentionUserIds'),
       cover: postEntity.get('cover'),
       tagsJson: postEntity.get('tags').map((tag) => tag.toObject()),

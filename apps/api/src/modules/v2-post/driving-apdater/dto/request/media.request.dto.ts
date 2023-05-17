@@ -1,11 +1,21 @@
-import { IsArray, IsNotEmpty, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
-class MediaDto {
+export class MediaDto {
   @ApiProperty()
+  @Type(() => String)
   @IsUUID()
   @IsNotEmpty()
+  @Expose()
   public id: string;
 }
 
@@ -14,23 +24,23 @@ export class MediaRequestDto {
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
-  @Transform(({ value }) => value.map((item) => item?.id) ?? [])
   @Type(() => MediaDto)
-  public images?: string[];
+  @Expose()
+  public images?: MediaDto[] = [];
 
   @ApiProperty({ required: false, type: [MediaDto] })
   @IsArray()
   @ValidateNested({ each: true })
-  @IsOptional()
-  @Transform(({ value }) => value.map((item) => item?.id) ?? [])
   @Type(() => MediaDto)
-  public videos?: string[];
+  @IsOptional()
+  @Expose()
+  public videos?: MediaDto[] = [];
 
   @ApiProperty({ required: false, type: [MediaDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Transform(({ value }) => value.map((item) => item?.id) ?? [])
   @Type(() => MediaDto)
-  public files?: string[];
+  @Expose()
+  public files?: MediaDto[] = [];
 }

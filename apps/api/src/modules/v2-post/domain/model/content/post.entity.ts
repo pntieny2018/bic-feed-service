@@ -23,8 +23,7 @@ export class PostEntity extends ContentEntity<PostProps> {
   }
 
   public updateAttribute(data: PublishPostCommandPayload): void {
-    const { authUser, content, seriesIds, tagIds, linkPreview, groupIds, setting, mentionUserIds } =
-      data;
+    const { authUser, content, seriesIds, groupIds, setting, mentionUserIds } = data;
     super.update({
       authUser,
       setting,
@@ -72,62 +71,66 @@ export class PostEntity extends ContentEntity<PostProps> {
     videos: VideoEntity[];
   }): void {
     const { files, images, videos } = media;
-
-    const mediaProps = {
-      files: [],
-      images: [],
-      videos: [],
+    //
+    // const mediaProps = {
+    //   files: [],
+    //   images: [],
+    //   videos: [],
+    // };
+    // if (files.length) {
+    //   const currentFileIds = this._props.media.files.map((file) => file.get('id'));
+    //   for (const file of files) {
+    //     if (!currentFileIds.includes(file.get('id'))) {
+    //       this._state.attachFileIds.push(file.get('id'));
+    //     }
+    //   }
+    //
+    //   const newFileIds = files.map((file) => file.get('id'));
+    //   for (const fileId of currentFileIds) {
+    //     if (!newFileIds.includes(fileId)) {
+    //       this._state.detachFileIds.push(fileId);
+    //     }
+    //   }
+    //   mediaProps.files = files;
+    // }
+    //
+    // if (images.length) {
+    //   const currentImageIds = this._props.media.files.map((image) => image.get('id'));
+    //   for (const image of images) {
+    //     if (!currentImageIds.includes(image.get('id'))) {
+    //       this._state.attachImageIds.push(image.get('id'));
+    //     }
+    //   }
+    //
+    //   const newImageIds = images.map((image) => image.get('id'));
+    //   for (const imageId of currentImageIds) {
+    //     if (!newImageIds.includes(imageId)) {
+    //       this._state.detachImageIds.push(imageId);
+    //     }
+    //   }
+    //   mediaProps.images = images;
+    // }
+    //
+    // if (videos.length) {
+    //   const currentVideoIds = this._props.media.files.map((video) => video.get('id'));
+    //   for (const video of videos) {
+    //     if (!currentVideoIds.includes(video.get('id'))) {
+    //       this._state.attachVideoIds.push(video.get('id'));
+    //     }
+    //   }
+    //
+    //   const newVideoIds = videos.map((video) => video.get('id'));
+    //   for (const videoId of currentVideoIds) {
+    //     if (!newVideoIds.includes(videoId)) {
+    //       this._state.detachVideoIds.push(videoId);
+    //     }
+    //   }
+    //   mediaProps.videos = videos;
+    // }
+    this._props.media = {
+      files,
+      images,
+      videos,
     };
-    if (files.length) {
-      const currentFileIds = this._props.media.files.map((file) => file.get('id'));
-      for (const file of files) {
-        if (!currentFileIds.includes(file.get('id'))) {
-          this._state.attachFileIds.push(file.get('id'));
-        }
-      }
-
-      const newFileIds = files.map((file) => file.get('id'));
-      for (const fileId of currentFileIds) {
-        if (!newFileIds.includes(fileId)) {
-          this._state.detachFileIds.push(fileId);
-        }
-      }
-      mediaProps.files = files;
-    }
-
-    if (images.length) {
-      const currentImageIds = this._props.media.files.map((image) => image.get('id'));
-      for (const image of images) {
-        if (!currentImageIds.includes(image.get('id'))) {
-          this._state.attachImageIds.push(image.get('id'));
-        }
-      }
-
-      const newImageIds = images.map((image) => image.get('id'));
-      for (const imageId of currentImageIds) {
-        if (!newImageIds.includes(imageId)) {
-          this._state.detachImageIds.push(imageId);
-        }
-      }
-      mediaProps.images = images;
-    }
-
-    if (videos.length) {
-      const currentVideoIds = this._props.media.files.map((video) => video.get('id'));
-      for (const video of videos) {
-        if (!currentVideoIds.includes(video.get('id'))) {
-          this._state.attachVideoIds.push(video.get('id'));
-        }
-      }
-
-      const newVideoIds = videos.map((video) => video.get('id'));
-      for (const videoId of currentVideoIds) {
-        if (!newVideoIds.includes(videoId)) {
-          this._state.detachVideoIds.push(videoId);
-        }
-      }
-      mediaProps.videos = videos;
-    }
-    this._props.media = mediaProps;
   }
 }
