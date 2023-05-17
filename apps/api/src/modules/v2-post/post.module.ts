@@ -10,9 +10,10 @@ import { AuthorityModule } from '../authority';
 import { PostController } from './driving-apdater/controller/post.controller';
 import { postProvider } from './provider/post.provider';
 import { mediaProvider } from './provider/media.provider';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [CqrsModule, DatabaseModule, AuthorityModule, GroupModuleV2, UserModuleV2],
+  imports: [HttpModule, CqrsModule, DatabaseModule, AuthorityModule, GroupModuleV2, UserModuleV2],
   controllers: [TagController, CategoryController, PostController],
   providers: [
     ...tagProvider,

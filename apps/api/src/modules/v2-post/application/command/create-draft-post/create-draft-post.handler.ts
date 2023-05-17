@@ -41,6 +41,7 @@ export class CreateDraftPostHandler
       audience: {
         groups,
       },
+      setting: tagEntity.get('setting'),
     });
     return data;
   }

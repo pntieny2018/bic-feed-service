@@ -136,7 +136,8 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       const currentFileIds = mediaEntity.files.map((e) => e.get('id'));
       const addingFileIds = media.filesIds.filter((id) => !currentFileIds.includes(id));
       if (addingFileIds) {
-        mediaEntity.files.push(...(await this._mediaRepo.findFiles(addingFileIds)));
+        const files = await this._mediaRepo.findFiles(addingFileIds);
+        mediaEntity.files.push(...files);
       }
 
       const removingFileIds = currentFileIds.filter((id) => !media.filesIds.includes(id));
@@ -146,11 +147,12 @@ export class PostValidator extends ContentValidator implements IPostValidator {
     }
 
     if (media.imagesIds?.length > 0) {
-      mediaEntity.images = postEntity.get('media').images;
+      mediaEntity.images = postEntity.get('media').images || [];
       const currentImageIds = mediaEntity.images.map((e) => e.get('id'));
       const addingImageIds = media.imagesIds.filter((id) => !currentImageIds.includes(id));
       if (addingImageIds) {
-        mediaEntity.images.push(...(await this._mediaRepo.findImages(addingImageIds)));
+        const images = await this._mediaRepo.findImages(addingImageIds);
+        mediaEntity.images.push(...images);
       }
       const removingImageIds = currentImageIds.filter((id) => !media.imagesIds.includes(id));
       if (removingImageIds.length) {
@@ -163,20 +165,15 @@ export class PostValidator extends ContentValidator implements IPostValidator {
       const currentVideoIds = mediaEntity.videos.map((e) => e.get('id'));
       const addingVideoIds = media.videosIds.filter((id) => !currentVideoIds.includes(id));
       if (addingVideoIds) {
-        mediaEntity.videos.push(...(await this._mediaRepo.findVideos(addingVideoIds)));
+        const videos = await this._mediaRepo.findVideos(addingVideoIds);
+        mediaEntity.videos.push(...videos);
       }
       const removingVideoIds = currentVideoIds.filter((id) => !media.videosIds.includes(id));
       if (removingVideoIds.length) {
         mediaEntity.videos.filter((e) => !removingVideoIds.includes(e.get('id')));
       }
     }
-
-    if (media.imagesIds?.length > 0) {
-      mediaEntity.images = await this._mediaRepo.findImages(media.imagesIds);
-    }
-    if (media.videosIds?.length > 0) {
-      mediaEntity.videos = await this._mediaRepo.findVideos(media.videosIds);
-    }
+    console.log('mediaEntity', mediaEntity);
     postEntity.setMedia(mediaEntity);
   }
 }

@@ -4,17 +4,16 @@ import {
   ILinkPreviewFactory,
   LINK_PREVIEW_FACTORY_TOKEN,
 } from '../../domain/factory/interface/link-preview.factory.interface';
-import { HttpStatus, Inject, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IMediaRepository } from '../../domain/repositoty-interface/media.repository.interface';
 import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 import { lastValueFrom } from 'rxjs';
-import { AxiosHelper } from '../../../../common/helpers';
 import { ENDPOINT } from '../../../../common/constants/endpoint.constant';
 import { HttpService } from '@nestjs/axios';
 import { IAxiosConfig } from '../../../../config/axios';
 import { ConfigService } from '@nestjs/config';
-import { FileDto, ImageDto, VideoDto } from '../../application/dto';
 
+@Injectable()
 export class MediaRepository implements IMediaRepository {
   private _logger = new Logger(MediaRepository.name);
   @Inject(LINK_PREVIEW_FACTORY_TOKEN)
@@ -22,7 +21,6 @@ export class MediaRepository implements IMediaRepository {
   @InjectModel(LinkPreviewModel)
   private readonly _linkPreviewModel: typeof LinkPreviewModel;
 
-  private readonly _axiosConfig: IAxiosConfig;
   public constructor(
     private readonly _httpService: HttpService,
     private readonly _config: ConfigService
@@ -38,11 +36,20 @@ export class MediaRepository implements IMediaRepository {
           baseURL: axiosConfig.upload.baseUrl,
         })
       );
-      if (response.status !== HttpStatus.OK) {
-        return null;
-      }
-      const data = AxiosHelper.getDataResponse<FileDto[]>(response);
-      return data.map((file) => new FileEntity(file));
+
+      return response.data.data
+        ? response.data.data.map(
+            (i) =>
+              new FileEntity({
+                id: i.id,
+                url: i.origin_url,
+                name: i.properties.name,
+                mimeType: i.properties.mime_type,
+                size: i.properties.size,
+                createdBy: i.user_id,
+              })
+          )
+        : [];
     } catch (ex) {
       this._logger.debug(ex);
       return [];
@@ -58,11 +65,23 @@ export class MediaRepository implements IMediaRepository {
           baseURL: axiosConfig.upload.baseUrl,
         })
       );
-      if (response.status !== HttpStatus.OK) {
-        return null;
-      }
-      const data = AxiosHelper.getDataResponse<ImageDto[]>(response);
-      return data.map((image) => new ImageEntity(image));
+
+      return response.data.data
+        ? response.data.data.map(
+            (i) =>
+              new ImageEntity({
+                id: i.id,
+                url: i.url,
+                src: i.src,
+                createdBy: i.user_id,
+                mimeType: i.properties.mime_type,
+                resource: i.resource,
+                width: i.properties.width,
+                height: i.properties.height,
+                status: i.status,
+              })
+          )
+        : [];
     } catch (ex) {
       this._logger.debug(ex);
       return [];
@@ -78,11 +97,24 @@ export class MediaRepository implements IMediaRepository {
           baseURL: axiosConfig.upload.baseUrl,
         })
       );
-      if (response.status !== HttpStatus.OK) {
-        return null;
-      }
-      const data = AxiosHelper.getDataResponse<VideoDto[]>(response);
-      return data.map((video) => new VideoEntity(video));
+
+      return response.data.data
+        ? response.data.data.map(
+            (i) =>
+              new VideoEntity({
+                id: i.id,
+                url: i.origin_url,
+                name: i.properties.name,
+                mimeType: i.properties.mime_type,
+                width: i.properties.width,
+                height: i.properties.height,
+                size: i.properties.size,
+                thumbnails: i.thumbnails,
+                createdBy: i.user_id,
+                status: i.status,
+              })
+          )
+        : [];
     } catch (ex) {
       this._logger.debug(ex);
       return [];

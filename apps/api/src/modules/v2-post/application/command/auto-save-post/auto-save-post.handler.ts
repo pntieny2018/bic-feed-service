@@ -4,17 +4,9 @@ import {
   IPostDomainService,
   POST_DOMAIN_SERVICE_TOKEN,
 } from '../../../domain/domain-service/interface';
-import { PublishPostCommand } from './publish-post.command';
-import {
-  IPostRepository,
-  POST_REPOSITORY_TOKEN,
-} from '../../../domain/repositoty-interface/post.repository.interface';
-import {
-  IContentValidator,
-  CONTENT_VALIDATOR_TOKEN,
-  IPostValidator,
-  POST_VALIDATOR_TOKEN,
-} from '../../../domain/validator/interface';
+import { AutoSavePostCommand } from './auto-save-post.command';
+import { IPostRepository, POST_REPOSITORY_TOKEN } from '../../../domain/repositoty-interface';
+import { IPostValidator, POST_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import {
   GROUP_APPLICATION_TOKEN,
   IGroupApplicationService,
@@ -23,11 +15,9 @@ import { ContentNotFoundException } from '../../../domain/exception';
 import { PostEntity } from '../../../domain/model/content';
 import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { ContentBinding } from '../../binding/binding-post/content.binding';
-import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
 
-@CommandHandler(PublishPostCommand)
-export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
+@CommandHandler(AutoSavePostCommand)
+export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand, void> {
   public constructor(
     @Inject(POST_REPOSITORY_TOKEN) private readonly _postRepository: IPostRepository,
     @Inject(POST_DOMAIN_SERVICE_TOKEN) private readonly _postDomainService: IPostDomainService,
@@ -35,12 +25,11 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     private readonly _groupApplicationService: IGroupApplicationService,
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
-    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
+    @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator
   ) {}
 
-  public async execute(command: PublishPostCommand): Promise<PostDto> {
-    const { authUser, id, groupIds, mentionUserIds } = command.payload;
+  public async execute(command: AutoSavePostCommand): Promise<void> {
+    const { id, groupIds, mentionUserIds } = command.payload;
     const postEntity = await this._postRepository.findOne({
       where: {
         id,
@@ -61,7 +50,7 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     const mentionUsers = await this._userApplicationService.findAllByIds(mentionUserIds, {
       withGroupJoined: true,
     });
-    const post = await this._postDomainService.publishPost({
+    await this._postDomainService.autoSavePost({
       postEntity: postEntity as PostEntity,
       newData: {
         ...command.payload,
@@ -69,13 +58,5 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groups,
       },
     });
-
-    return this._contentBinding.postBinding(post, {
-      groups,
-      actor: authUser,
-      mentionUsers,
-    });
-    //TODO: emit event
-    //TODO: bind data and return
   }
 }

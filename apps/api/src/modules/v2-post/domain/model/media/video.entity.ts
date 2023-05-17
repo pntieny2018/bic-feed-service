@@ -13,12 +13,12 @@ export type VideoProps = {
   id: string;
   url: string;
   name: string;
-  createdAt: Date;
   mimeType: string;
   createdBy: string;
   size: number;
   width: number;
   height: number;
+  status: string;
   thumbnails: VideoThumbnailProps[];
 };
 

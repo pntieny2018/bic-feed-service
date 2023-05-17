@@ -13,7 +13,12 @@ import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../repositoty-interface/post.repository.interface';
-import { IPostValidator, POST_VALIDATOR_TOKEN } from '../validator/interface';
+import {
+  IMentionValidator,
+  IPostValidator,
+  MENTION_VALIDATOR_TOKEN,
+  POST_VALIDATOR_TOKEN,
+} from '../validator/interface';
 import { GROUP_APPLICATION_TOKEN, IGroupApplicationService } from '../../../v2-group/application';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../v2-user/application';
 import {
@@ -35,6 +40,8 @@ export class PostDomainService implements IPostDomainService {
   private readonly _postFactory: IPostFactory;
   @Inject(POST_VALIDATOR_TOKEN)
   private readonly _postValidator: IPostValidator;
+  @Inject(MENTION_VALIDATOR_TOKEN)
+  private readonly _mentionValidator: IMentionValidator;
   @Inject(USER_APPLICATION_TOKEN)
   private readonly _userApplicationService: IUserApplicationService;
   @Inject(GROUP_APPLICATION_TOKEN)
@@ -66,7 +73,7 @@ export class PostDomainService implements IPostDomainService {
 
   public async publishPost(input: PostPublishProps): Promise<PostEntity> {
     const { postEntity, newData } = input;
-    const { authUser, mentionUserIds, tagIds, linkPreview, groupIds, media } = newData;
+    const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
 
     let newTagEntities = [];
     if (tagIds) {
@@ -80,7 +87,7 @@ export class PostDomainService implements IPostDomainService {
       const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
       postEntity.setLinkPreview(linkPreviewEntity);
     }
-    const groups = await this._groupApplicationService.findAllByIds(postEntity.get('groupIds'));
+
     postEntity.updateAttribute(newData);
     postEntity.setPrivacyFromGroups(groups);
     postEntity.setPublish();
@@ -90,7 +97,7 @@ export class PostDomainService implements IPostDomainService {
       authUser,
       postEntity.get('groupIds')
     );
-    await this._postValidator.validateMentionUsers(mentionUserIds, groupIds);
+    await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
     await this._postValidator.validateSeriesAndTags(
       groups,
       postEntity.get('seriesIds'),
@@ -101,6 +108,31 @@ export class PostDomainService implements IPostDomainService {
     await this._postRepository.update(postEntity);
     postEntity.commit();
     return postEntity;
+  }
+
+  public async autoSavePost(input: PostPublishProps): Promise<void> {
+    const { postEntity, newData } = input;
+    const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
+
+    let newTagEntities = [];
+    if (tagIds) {
+      newTagEntities = await this._tagRepo.findAll({
+        ids: tagIds,
+      });
+      postEntity.setTags(newTagEntities);
+    }
+    await this._postValidator.validateAndSetMedia(postEntity, media);
+    if (linkPreview?.url !== postEntity.get('linkPreview')?.get('url')) {
+      const linkPreviewEntity = await this._linkPreviewDomainService.findOrUpsert(linkPreview);
+      postEntity.setLinkPreview(linkPreviewEntity);
+    }
+
+    postEntity.updateAttribute(newData);
+    postEntity.setPrivacyFromGroups(groups);
+
+    if (!postEntity.isChanged()) return;
+    await this._postRepository.update(postEntity);
+    postEntity.commit();
   }
 
   public async delete(id: string): Promise<void> {

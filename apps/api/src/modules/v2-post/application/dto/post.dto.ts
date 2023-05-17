@@ -21,7 +21,7 @@ export class PostDto {
   public series: string[];
   public setting: PostSettingDto;
   public linkPreview?: LinkPreviewDto;
-  public media?: {
+  public media: {
     files: FileDto[];
     images: ImageDto[];
     videos: VideoDto[];
@@ -35,8 +35,11 @@ export class PostDto {
   public mentions: UserMentionDto;
   public commentsCount: number;
   public totalUsersSeen: number;
-  public reactionsCount: number;
-  public ownerReactions: Date;
+  public reactionsCount: Record<string, Record<string, number>>;
+  public ownerReactions: {
+    id: string;
+    reactionName: string;
+  }[];
   public createdAt: Date;
   public updatedAt: Date;
 
