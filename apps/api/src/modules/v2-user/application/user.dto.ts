@@ -1,4 +1,5 @@
 import { Expose } from 'class-transformer';
+import { TRANSFORMER_VISIBLE_ONLY } from '../../../common/constants/transformer.constant';
 
 export class UserDto {
   @Expose()
@@ -11,10 +12,13 @@ export class UserDto {
   public email: string;
   @Expose()
   public avatar: string;
+
+  @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
   public permissions?: {
     communities: Record<string, string[]>;
     groups: Record<string, string[]>;
   };
+  @Expose({ groups: [TRANSFORMER_VISIBLE_ONLY.APPLICATION] })
   public groups?: string[];
   @Expose()
   public isDeactivated?: boolean;
