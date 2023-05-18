@@ -136,6 +136,7 @@ export class PostRepository implements IPostRepository {
       },
       mentions: postEntity.get('mentionUserIds'),
       cover: postEntity.get('cover'),
+      videoIdProcessing: postEntity.get('videoIdProcessing'),
       tagsJson: postEntity.get('tags').map((tag) => tag.toObject()),
       linkPreview: postEntity.get('linkPreview')?.toObject() || undefined,
     };

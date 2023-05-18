@@ -77,7 +77,6 @@ export class MentionService {
         });
       return replacement;
     };
-
     for (const comment of commentsResponse) {
       if (comment?.parent?.mentions.length) {
         comment.parent.mentions = convert(
@@ -110,11 +109,10 @@ export class MentionService {
       }
       if (comment.child?.list && comment.child?.list.length) {
         for (const cm of comment.child.list) {
-          userIds.push(...cm.mentions);
+          if (cm?.length) userIds.push(...cm.mentions);
         }
       }
     }
-
     return userIds;
   }
 
