@@ -27,13 +27,11 @@ export class SeriesAddedItemsListener {
       )}`
     );
 
-    const { seriesId } = event.payload;
+    const { seriesId, skipNotify } = event.payload;
 
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
     });
-
-    this._notifyAddedItem(event).catch((ex) => this._logger.error(ex, ex?.stack));
 
     if (series) {
       const items = series.items.map((item) => ({
@@ -45,6 +43,12 @@ export class SeriesAddedItemsListener {
         items,
       });
     }
+
+    if (skipNotify) {
+      return;
+    }
+
+    this._notifyAddedItem(event).catch((ex) => this._logger.error(ex, ex?.stack));
   }
 
   private async _notifyAddedItem(event: SeriesAddedItemsEvent): Promise<void> {
