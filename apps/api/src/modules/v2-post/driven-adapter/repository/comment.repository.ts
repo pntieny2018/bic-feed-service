@@ -6,6 +6,7 @@ import { CommentReactionModel } from '../../../../database/models/comment-reacti
 import { ICommentRepository } from '../../domain/repositoty-interface/comment.repository.interface';
 import { COMMENT_FACTORY_TOKEN, ICommentFactory } from '../../domain/factory/interface';
 import { Sequelize, WhereOptions } from 'sequelize';
+import { FileEntity, ImageEntity, VideoEntity } from '../../domain/model/media';
 
 @Injectable()
 export class CommentRepository implements ICommentRepository {
@@ -29,7 +30,11 @@ export class CommentRepository implements ICommentRepository {
       updatedBy: data.get('updatedBy'),
       createdBy: data.get('createdBy'),
       giphyId: data.get('giphyId'),
-      mediaJson: data.get('media'),
+      mediaJson: {
+        files: data.get('media').files.map((file) => file.toObject()),
+        images: data.get('media').images.map((image) => image.toObject()),
+        videos: data.get('media').videos.map((video) => video.toObject()),
+      },
       mentions: data.get('mentions'),
     });
     return this._modelToEntity(comment);
@@ -52,7 +57,11 @@ export class CommentRepository implements ICommentRepository {
       content: comment.content,
       childs: comment.child?.map((item) => this._modelToEntity(item)) || [],
       mentions: comment.mentions,
-      media: comment.mediaJson,
+      media: {
+        images: comment.mediaJson?.images.map((image) => new ImageEntity(image)),
+        files: comment.mediaJson?.files.map((file) => new FileEntity(file)),
+        videos: comment.mediaJson?.videos.map((video) => new VideoEntity(video)),
+      },
     });
   }
 
