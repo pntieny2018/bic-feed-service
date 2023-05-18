@@ -76,10 +76,9 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groups,
       },
     });
-
     return this._contentBinding.postBinding(post, {
       groups,
-      actor: authUser,
+      // actor: authUser,
       mentionUsers,
     });
   }
