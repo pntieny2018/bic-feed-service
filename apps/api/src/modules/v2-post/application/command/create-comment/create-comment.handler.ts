@@ -135,6 +135,7 @@ export class CreateCommentHandler
         fullname: actor.fullname,
         email: actor.email,
         username: actor.username,
+        avatar: actor.avatar,
       }),
     });
   }

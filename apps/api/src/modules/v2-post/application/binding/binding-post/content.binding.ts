@@ -113,6 +113,7 @@ export class ContentBinding implements IContentBinding {
           fullname: current.fullname,
           email: current.email,
           username: current.username,
+          avatar: current.avatar,
         },
       };
     }, {});
