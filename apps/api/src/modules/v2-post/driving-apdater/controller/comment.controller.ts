@@ -39,6 +39,7 @@ import {
   CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
 } from '../../domain/exception';
 import {
   DeleteCommentCommand,
@@ -86,6 +87,7 @@ export class CommentController {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
@@ -131,6 +133,7 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentReplyNotExistException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
@@ -175,6 +178,7 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentNotFoundException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
@@ -210,6 +214,9 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentNotFoundException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCommentPermissionException:
+          throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
         default:
