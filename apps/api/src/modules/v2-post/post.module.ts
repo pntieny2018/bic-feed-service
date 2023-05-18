@@ -11,16 +11,26 @@ import { PostController } from './driving-apdater/controller/post.controller';
 import { postProvider } from './provider/post.provider';
 import { mediaProvider } from './provider/media.provider';
 import { HttpModule } from '@nestjs/axios';
+import { PostPublishedConsumer } from './driving-apdater/consumer/post-published.consumer';
+import { CommentController } from '../comment/comment.controller';
 
 @Module({
   imports: [HttpModule, CqrsModule, DatabaseModule, AuthorityModule, GroupModuleV2, UserModuleV2],
-  controllers: [TagController, CategoryController, PostController],
+  controllers: [
+    TagController,
+    CategoryController,
+    PostController,
+    CommentController,
+    PostPublishedConsumer,
+  ],
   providers: [
     ...tagProvider,
     ...categoryProvider,
     ...postProvider,
     ...linkPreviewProvider,
     ...mediaProvider,
+    ...commentProvider,
+    ...sharedProvider,
   ],
 })
 export class PostModuleV2 {}

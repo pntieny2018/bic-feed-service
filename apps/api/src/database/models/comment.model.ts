@@ -456,6 +456,7 @@ export class CommentModel extends Model<IComment, Optional<IComment, 'id'>> impl
               "id", 
               "parent_id" AS "parentId", 
               "post_id" AS "postId", 
+              "mentions",
               "content", 
               "edited",
               "media_json" as "media",
