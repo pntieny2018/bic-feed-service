@@ -162,12 +162,12 @@ export class CommentAppService {
     }
     const response = await this._commentService.update(user, commentId, updateCommentDto);
 
-    const commentResponse = await this._commentService.getComment(user, response.comment.id);
+    const commentResponse = await this._commentService.getComment(user, commentId);
     this._eventEmitter.emit(
       new CommentHasBeenUpdatedEvent({
         actor: user,
-        oldComment: response.oldComment,
-        commentResponse: commentResponse,
+        oldMentions: response.oldComment.mentions,
+        commentId,
       })
     );
     return commentResponse;

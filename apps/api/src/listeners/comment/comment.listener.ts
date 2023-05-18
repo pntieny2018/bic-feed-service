@@ -48,7 +48,9 @@ export class CommentListener {
 
   @On(CommentHasBeenUpdatedEvent)
   public async onCommentHasBeenUpdated(event: CommentHasBeenUpdatedEvent): Promise<void> {
-    const { oldComment, commentResponse, actor } = event.payload;
+    const { oldMentions, commentId, actor } = event.payload;
+    const commentResponse = await this._commentService.getComment(actor, commentId);
+
     if (commentResponse.parentId !== NIL_UUID) {
       commentResponse.parent = await this._commentService.getComment(
         actor,
@@ -57,7 +59,7 @@ export class CommentListener {
       );
     }
     this._commentNotificationService
-      .update(event.getEventName(), actor, oldComment, commentResponse)
+      .update(event.getEventName(), actor, oldMentions, commentResponse)
       .catch((ex) => {
         this._logger.error(JSON.stringify(ex?.stack));
         this._sentryService.captureException(ex);
