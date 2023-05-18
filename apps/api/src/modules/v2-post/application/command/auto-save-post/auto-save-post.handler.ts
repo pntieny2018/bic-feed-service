@@ -42,9 +42,9 @@ export class AutoSavePostHandler implements ICommandHandler<AutoSavePostCommand,
         shouldIncludeLinkPreview: true,
       },
     });
-    if (!postEntity || !(postEntity instanceof PostEntity)) {
-      throw new ContentNotFoundException();
-    }
+    if (!postEntity || !(postEntity instanceof PostEntity)) return;
+
+    if (postEntity.isPublished()) return;
 
     let groups = undefined;
     if (groupIds || postEntity.get('groupIds')) {

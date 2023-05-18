@@ -15,6 +15,7 @@ export type PostProps = ContentProps & {
   linkPreview?: LinkPreviewEntity;
   seriesIds: string[];
   tags: TagEntity[];
+  videoIdProcessing?: string;
 };
 
 export class PostEntity extends ContentEntity<PostProps> {
@@ -63,6 +64,10 @@ export class PostEntity extends ContentEntity<PostProps> {
       }
     }
     this._props.tags = newTags;
+  }
+
+  public hasVideoProcessing(): boolean {
+    return this._props.media.videos.some((video) => !video.isProcessed());
   }
 
   public setMedia(media: {
@@ -115,10 +120,17 @@ export class PostEntity extends ContentEntity<PostProps> {
     };
   }
 
+  public getVideoIdProcessing(): string | undefined {
+    return this._props.videoIdProcessing;
+  }
+
   private _updateVideosState(videos: VideoEntity[]): void {
     const currentVideoIds = this._props.media.videos.map((video) => video.get('id'));
     for (const video of videos) {
       if (!currentVideoIds.includes(video.get('id'))) {
+        if (!video.isProcessed()) {
+          this._props.videoIdProcessing = video.get('id');
+        }
         this._state.attachVideoIds.push(video.get('id'));
       }
     }

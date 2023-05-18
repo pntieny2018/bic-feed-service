@@ -147,7 +147,7 @@ export class CommentResponseDto {
   @Transform(({ obj, value }) => {
     const mentions = obj.mentions;
     if (Array.isArray(mentions) && mentions.length === 0) {
-      return {};
+      return [];
     }
     return mentions;
   })

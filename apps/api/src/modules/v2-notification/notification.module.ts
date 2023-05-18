@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { NotificationConsumer } from './driving-apdater/controller/notification.consumer';
-import { SendPostPublishedNotificationHandler } from './application/command/send-post-published-notification/send-post-published-notification.handler';
+import { PostPublishedConsumer } from './driving-apdater/consumer/post-published.consumer';
 
 @Module({
   imports: [],
-  controllers: [NotificationConsumer],
-  providers: [SendPostPublishedNotificationHandler],
+  controllers: [PostPublishedConsumer],
+  providers: [],
   exports: [],
 })
-export class UserModuleV2 {}
+export class NotificationModuleV2 {}

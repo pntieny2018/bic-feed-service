@@ -39,6 +39,8 @@ import {
   CONTENT_BINDING_TOKEN,
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment/comment-has-been-created.event';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
@@ -59,7 +61,8 @@ export class CreateCommentHandler
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(CONTENT_BINDING_TOKEN)
     private readonly _contentBinding: IContentBinding,
-    private readonly _externalService: ExternalService
+    private readonly _externalService: ExternalService,
+    private readonly _eventEmitter: InternalEventEmitterService
   ) {}
 
   public async execute(command: CreateCommentCommand): Promise<CreateCommentDto> {
@@ -112,6 +115,13 @@ export class CreateCommentHandler
       },
       mentions: mentions,
     });
+
+    this._eventEmitter.emit(
+      new CommentHasBeenCreatedEvent({
+        actor,
+        commentId: commentEntity.get('id'),
+      })
+    );
 
     return new CreateCommentDto({
       id: commentEntity.get('id'),

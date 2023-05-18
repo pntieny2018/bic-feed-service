@@ -124,6 +124,14 @@ export class ContentEntity<
     this._props.status = PostStatus.PUBLISHED;
   }
 
+  public setProcessing(): void {
+    this._props.status = PostStatus.PROCESSING;
+  }
+
+  public setDraft(): void {
+    this._props.status = PostStatus.DRAFT;
+  }
+
   public setGroups(groupIds: string[]): void {
     this._state.attachGroupIds = groupIds.filter(
       (groupId) => !this._props.groupIds?.includes(groupId)

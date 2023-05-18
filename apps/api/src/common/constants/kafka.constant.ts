@@ -24,6 +24,7 @@ export const KAFKA_TOPIC = {
   },
   CONTENT: {
     POST_PUBLISHED: `${process.env.KAFKA_ENV}.content.post_published`,
+    POST_AUTO_SAVE: `${process.env.KAFKA_ENV}.content.post_auto_save`,
     ARTICLE_PUBLISHED: `${process.env.KAFKA_ENV}.content.article_published`,
     SERIES_PUBLISHED: `${process.env.KAFKA_ENV}.content.series_published`,
     COMMENT_CREATED: `${process.env.KAFKA_ENV}.content.comment_created`,

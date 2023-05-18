@@ -23,6 +23,8 @@ import {
   UserDto,
 } from 'apps/api/src/modules/v2-user/application';
 import { GroupDto } from 'apps/api/src/modules/v2-group/application';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
+import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment/comment-has-been-updated.event';
 
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
@@ -36,7 +38,8 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    private readonly _userApplicationService: IUserApplicationService,
+    private readonly _eventEmitter: InternalEventEmitterService
   ) {}
 
   public async execute(command: UpdateCommentCommand): Promise<void> {
@@ -70,6 +73,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
         withGroupJoined: true,
       });
     }
+    const oldMentions = comment.get('mentions');
 
     await this._commentDomainService.update({
       commentEntity: comment,
@@ -77,5 +81,13 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
       mentionUsers,
       newData: command.payload,
     });
+
+    this._eventEmitter.emit(
+      new CommentHasBeenUpdatedEvent({
+        actor,
+        oldMentions,
+        commentId: comment.get('id'),
+      })
+    );
   }
 }

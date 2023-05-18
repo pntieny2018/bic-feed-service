@@ -25,6 +25,8 @@ import { PostDto } from '../../dto';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
 import { ContentBinding } from '../../binding/binding-post/content.binding';
 import { CONTENT_BINDING_TOKEN } from '../../binding/binding-post/content.interface';
+import { KAFKA_PRODUCER, KAFKA_TOPIC } from '../../../../../common/constants';
+import { ClientKafka } from '@nestjs/microservices';
 
 @CommandHandler(PublishPostCommand)
 export class PublishPostHandler implements ICommandHandler<PublishPostCommand, PostDto> {
@@ -36,7 +38,9 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
     @Inject(USER_APPLICATION_TOKEN)
     private readonly _userApplicationService: IUserApplicationService,
     @Inject(POST_VALIDATOR_TOKEN) private readonly _postValidator: IPostValidator,
-    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding
+    @Inject(CONTENT_BINDING_TOKEN) private readonly _contentBinding: ContentBinding,
+    @Inject(KAFKA_PRODUCER)
+    private readonly _clientKafka: ClientKafka
   ) {}
 
   public async execute(command: PublishPostCommand): Promise<PostDto> {
@@ -72,13 +76,10 @@ export class PublishPostHandler implements ICommandHandler<PublishPostCommand, P
         groups,
       },
     });
-
     return this._contentBinding.postBinding(post, {
       groups,
-      actor: authUser,
+      // actor: authUser,
       mentionUsers,
     });
-    //TODO: emit event
-    //TODO: bind data and return
   }
 }

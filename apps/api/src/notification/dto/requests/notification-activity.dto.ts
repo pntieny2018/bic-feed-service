@@ -20,7 +20,7 @@ export class ActivityObject {
   public item?: any;
   public items?: any;
   public createdAt: Date;
-  public updatedAt: Date;
+  public updatedAt?: Date;
 }
 
 export class ReportObject {

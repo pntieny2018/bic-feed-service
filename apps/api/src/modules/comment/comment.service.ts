@@ -208,7 +208,7 @@ export class CommentService {
   public async getComment(
     user: UserDto,
     commentId: string,
-    childLimit = 25
+    childLimit = 0
   ): Promise<CommentResponseDto> {
     const response = await this._commentModel.findOne({
       attributes: {
@@ -243,9 +243,6 @@ export class CommentService {
     const result = this._classTransformer.plainToInstance(CommentResponseDto, rawComment, {
       excludeExtraneousValues: true,
     });
-    if (childLimit > 0) {
-      await this.bindChildrenToComment([result], user.id, childLimit);
-    }
     return result;
   }
 
