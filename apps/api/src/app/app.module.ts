@@ -13,12 +13,10 @@ import { ReactionModule } from '../modules/reaction';
 import { AuthorityModule } from '../modules/authority';
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthMiddleware, AuthModule } from '../modules/auth';
-import { RecentSearchModule } from '../modules/recent-search';
 import { ReactionCountModule } from '../shared/reaction-count';
 import { FeedPublisherModule } from '../modules/feed-publisher';
 import { FeedGeneratorModule } from '../modules/feed-generator';
 import { DatabaseModule } from '../database';
-import { GiphyModule } from '../modules/giphy';
 import { ArticleModule } from '../modules/article';
 import { CategoryModule } from '../modules/category';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -35,6 +33,7 @@ import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
+import { NotificationModuleV2 } from '../modules/v2-notification/notification.module';
 
 @Module({
   imports: [
@@ -69,6 +68,7 @@ import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
     GroupModuleV2,
     UserModuleV2,
     RecentSearchModuleV2,
+    NotificationModuleV2,
     GiphyModuleV2,
     AdminModule,
     I18nGlobalModule,
