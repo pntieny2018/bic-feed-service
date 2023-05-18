@@ -9,6 +9,8 @@ import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/vali
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
+import { CommentHasBeenDeletedEvent } from 'apps/api/src/events/comment/comment-has-been-deleted.event';
 
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<DeleteCommentCommand, void> {
@@ -18,7 +20,8 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
     @Inject(COMMENT_REPOSITORY_TOKEN)
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
-    private readonly _contentValidator: IContentValidator
+    private readonly _contentValidator: IContentValidator,
+    private readonly _eventEmitter: InternalEventEmitterService
   ) {}
 
   public async execute(command: DeleteCommentCommand): Promise<void> {
@@ -41,6 +44,13 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     this._contentValidator.checkCanReadContent(post, actor);
 
-    await this._commentRepository.destroyComment(id);
+    const deletedComent = await this._commentRepository.destroyComment(id);
+
+    this._eventEmitter.emit(
+      new CommentHasBeenDeletedEvent({
+        actor,
+        comment: deletedComent,
+      })
+    );
   }
 }
