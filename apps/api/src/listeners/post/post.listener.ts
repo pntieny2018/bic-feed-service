@@ -384,7 +384,7 @@ export class PostListener {
         }
       });
 
-      if (sameOwnerItems.length) {
+      if (sameOwnerItems.length && !newPost.isHidden) {
         sameOwnerItems.forEach((so) => {
           this._internalEventEmitter.emit(
             new SeriesChangedItemsEvent({
@@ -412,7 +412,7 @@ export class PostListener {
           new SeriesAddedItemsEvent({
             itemIds: [newPost.id],
             seriesId: seriesId,
-            skipNotify: skipNotifyForNewItems.includes(seriesId),
+            skipNotify: skipNotifyForNewItems.includes(seriesId) && !newPost.isHidden,
             actor: actor,
             context: 'publish',
           })
@@ -438,7 +438,7 @@ export class PostListener {
               },
             ],
             seriesId: seriesId,
-            skipNotify: skipNotifyForRemoveItems.includes(seriesId),
+            skipNotify: skipNotifyForRemoveItems.includes(seriesId) && !newPost.isHidden,
             actor: actor,
             contentIsDeleted: false,
           })
