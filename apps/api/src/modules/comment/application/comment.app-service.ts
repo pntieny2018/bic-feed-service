@@ -67,7 +67,7 @@ export class CommentAppService {
     this._eventEmitter.emit(
       new CommentHasBeenCreatedEvent({
         actor: user,
-        commentResponse: commentResponse,
+        commentId: comment.id,
       })
     );
 
@@ -110,7 +110,7 @@ export class CommentAppService {
     this._eventEmitter.emit(
       new CommentHasBeenCreatedEvent({
         actor: user,
-        commentResponse: commentResponse,
+        commentId: comment.id,
       })
     );
 

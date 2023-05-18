@@ -23,7 +23,8 @@ export class CommentListener {
 
   @On(CommentHasBeenCreatedEvent)
   public async onCommentHasBeenCreated(event: CommentHasBeenCreatedEvent): Promise<void> {
-    const { commentResponse, actor } = event.payload;
+    const { commentId, actor } = event.payload;
+    const commentResponse = await this._commentService.getComment(actor, commentId);
 
     if (commentResponse.parentId !== NIL_UUID) {
       commentResponse.parent = await this._commentService.getComment(
