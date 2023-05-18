@@ -1,21 +1,11 @@
 import { Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateCommentCommand } from './update-comment.command';
-import { ExternalService } from '../../../../../app/external.service';
 import {
   IPostRepository,
   POST_REPOSITORY_TOKEN,
 } from '../../../domain/repositoty-interface/post.repository.interface';
-import {
-  ICommentValidator,
-  IMediaValidator,
-  IMentionValidator,
-  IContentValidator,
-  COMMENT_VALIDATOR_TOKEN,
-  MEDIA_VALIDATOR_TOKEN,
-  MENTION_VALIDATOR_TOKEN,
-  CONTENT_VALIDATOR_TOKEN,
-} from '../../../domain/validator/interface';
+import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
@@ -23,11 +13,19 @@ import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
-import { ImageDto } from '../../dto';
-import { IComment } from 'apps/api/src/database/models/comment.model';
+import {
+  COMMENT_DOMAIN_SERVICE_TOKEN,
+  ICommentDomainService,
+} from '../../../domain/domain-service/interface';
+import {
+  IUserApplicationService,
+  USER_APPLICATION_TOKEN,
+  UserDto,
+} from 'apps/api/src/modules/v2-user/application';
+import { GroupDto } from 'apps/api/src/modules/v2-group/application';
 
 @CommandHandler(UpdateCommentCommand)
-export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, boolean> {
+export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
   constructor(
     @Inject(POST_REPOSITORY_TOKEN)
     private readonly _postRepository: IPostRepository,
@@ -35,21 +33,14 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     private readonly _commentRepository: ICommentRepository,
     @Inject(CONTENT_VALIDATOR_TOKEN)
     private readonly _contentValidator: IContentValidator,
-    @Inject(MEDIA_VALIDATOR_TOKEN)
-    private readonly _mediaValidator: IMediaValidator,
-    @Inject(MENTION_VALIDATOR_TOKEN)
-    private readonly _mentionValidator: IMentionValidator,
-    @Inject(COMMENT_VALIDATOR_TOKEN)
-    private readonly _commentValidator: ICommentValidator,
-    private readonly _externalService: ExternalService
+    @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
+    private readonly _commentDomainService: ICommentDomainService,
+    @Inject(USER_APPLICATION_TOKEN)
+    private readonly _userApplicationService: IUserApplicationService
   ) {}
 
-  public async execute(command: UpdateCommentCommand): Promise<boolean> {
-    const { actor, id, content, media, mentions, giphyId } = command.payload;
-    const updateData: Partial<IComment> = {
-      updatedBy: actor.id,
-      edited: true,
-    };
+  public async execute(command: UpdateCommentCommand): Promise<void> {
+    const { actor, id, mentions } = command.payload;
 
     const comment = await this._commentRepository.findOne({
       id: id,
@@ -70,27 +61,21 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
 
     if (!post.allowComment()) throw new ContentNoCommentPermissionException();
 
-    const updateMasks = this._commentValidator.getUpdateMasks(command.payload, comment);
+    const groups = post.get('groupIds').map((id) => new GroupDto({ id }));
 
-    if (updateMasks.includes('content')) updateData.content = content;
+    let mentionUsers: UserDto[] = [];
 
-    if (updateMasks.includes('giphyId')) updateData.giphyId = giphyId;
-
-    if (updateMasks.includes('mediaJson')) {
-      const images: ImageDto[] = await this._externalService.getImageIds(media.images);
-      this._mediaValidator.validateImagesMedia(images, actor);
-      updateData.mediaJson = {
-        images,
-        files: [],
-        videos: [],
-      };
+    if (mentions) {
+      mentionUsers = await this._userApplicationService.findAllByIds(mentions, {
+        withGroupJoined: true,
+      });
     }
 
-    if (updateMasks.includes('mentions')) {
-      await this._mentionValidator.checkValidMentionsAndReturnUsers(post.get('groupIds'), mentions);
-      updateData.mentions = mentions;
-    }
-
-    return this._commentRepository.updateComment(id, updateData);
+    await this._commentDomainService.update({
+      commentEntity: comment,
+      groups,
+      mentionUsers,
+      newData: command.payload,
+    });
   }
 }

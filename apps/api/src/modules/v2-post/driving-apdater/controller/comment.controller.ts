@@ -39,6 +39,7 @@ import {
   CommentReplyNotExistException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
+  ContentRequireGroupException,
 } from '../../domain/exception';
 import {
   DeleteCommentCommand,
@@ -86,6 +87,7 @@ export class CommentController {
       switch (e.constructor) {
         case ContentNotFoundException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
@@ -131,6 +133,7 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentReplyNotExistException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
@@ -154,18 +157,18 @@ export class CommentController {
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body() updateCommentRequestDto: UpdateCommentRequestDto
-  ): Promise<boolean> {
+  ): Promise<void> {
     try {
-      return this._commandBus.execute<UpdateCommentCommand, boolean>(
+      await this._commandBus.execute<UpdateCommentCommand, void>(
         new UpdateCommentCommand({
           ...updateCommentRequestDto,
           id: commentId,
           actor: user,
           media: updateCommentRequestDto.media
             ? {
-                files: updateCommentRequestDto.media?.files.map((file) => file.id),
-                images: updateCommentRequestDto.media?.images.map((image) => image.id),
-                videos: updateCommentRequestDto.media?.videos.map((video) => video.id),
+                files: (updateCommentRequestDto.media?.files || []).map((file) => file.id),
+                images: (updateCommentRequestDto.media?.images || []).map((image) => image.id),
+                videos: (updateCommentRequestDto.media?.videos || []).map((video) => video.id),
               }
             : undefined,
         } as UpdateCommentCommandPayload)
@@ -175,6 +178,7 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentNotFoundException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
           throw new ForbiddenException(e);
         case DomainModelException:
@@ -197,9 +201,9 @@ export class CommentController {
   public async destroy(
     @AuthUser() user: UserDto,
     @Param('commentId', ParseUUIDPipe) commentId: string
-  ): Promise<boolean> {
+  ): Promise<void> {
     try {
-      return this._commandBus.execute<DeleteCommentCommand, boolean>(
+      await this._commandBus.execute<DeleteCommentCommand, void>(
         new DeleteCommentCommand({
           id: commentId,
           actor: user,
@@ -210,6 +214,9 @@ export class CommentController {
         case ContentNotFoundException:
         case CommentNotFoundException:
           throw new NotFoundException(e);
+        case ContentRequireGroupException:
+        case ContentNoCommentPermissionException:
+          throw new ForbiddenException(e);
         case DomainModelException:
           throw new BadRequestException(e);
         default:
