@@ -156,7 +156,7 @@ export class CommentController {
     @Body() updateCommentRequestDto: UpdateCommentRequestDto
   ): Promise<void> {
     try {
-      this._commandBus.execute<UpdateCommentCommand, void>(
+      await this._commandBus.execute<UpdateCommentCommand, void>(
         new UpdateCommentCommand({
           ...updateCommentRequestDto,
           id: commentId,
@@ -199,12 +199,12 @@ export class CommentController {
     @Param('commentId', ParseUUIDPipe) commentId: string
   ): Promise<void> {
     try {
-      this._commandBus.execute<DeleteCommentCommand, void>(
-         new DeleteCommentCommand({
-           id: commentId,
-           actor: user,
-         } as DeleteCommentCommandPayload)
-       );
+      await this._commandBus.execute<DeleteCommentCommand, void>(
+        new DeleteCommentCommand({
+          id: commentId,
+          actor: user,
+        } as DeleteCommentCommandPayload)
+      );
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
