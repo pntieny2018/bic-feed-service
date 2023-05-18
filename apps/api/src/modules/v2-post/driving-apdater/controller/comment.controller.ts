@@ -163,9 +163,9 @@ export class CommentController {
           actor: user,
           media: updateCommentRequestDto.media
             ? {
-                files: updateCommentRequestDto.media?.files.map((file) => file.id),
-                images: updateCommentRequestDto.media?.images.map((image) => image.id),
-                videos: updateCommentRequestDto.media?.videos.map((video) => video.id),
+                files: (updateCommentRequestDto.media?.files || []).map((file) => file.id),
+                images: (updateCommentRequestDto.media?.images || []).map((image) => image.id),
+                videos: (updateCommentRequestDto.media?.videos || []).map((video) => video.id),
               }
             : undefined,
         } as UpdateCommentCommandPayload)
