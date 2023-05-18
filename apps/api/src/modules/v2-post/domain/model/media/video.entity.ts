@@ -18,7 +18,7 @@ export type VideoProps = {
   size: number;
   width: number;
   height: number;
-  status: 'DONE';
+  status: string;
   thumbnails: VideoThumbnailProps[];
 };
 

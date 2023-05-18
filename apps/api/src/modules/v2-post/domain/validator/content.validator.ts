@@ -19,11 +19,14 @@ import {
   ContentEmptyGroupException,
   ContentNoCRUDPermissionException,
   ContentNoEditSettingPermissionException,
+  ContentRequireGroupException,
 } from '../exception';
 import { IContentValidator } from './interface/content.validator.interface';
 import { ContentEntity } from '../model/content/content.entity';
 import { AccessDeniedException } from '../exception/access-denied.exception';
 import { UserNoBelongGroupException } from '../exception/user-no-belong-group.exception';
+import { PostPrivacy } from '../../data-type';
+import { PostStatus } from '../../../../database/models/post.model';
 
 @Injectable()
 export class ContentValidator implements IContentValidator {
@@ -121,6 +124,30 @@ export class ContentValidator implements IContentValidator {
       throw new UserNoBelongGroupException({
         usersDenied: invalidUsers,
       });
+    }
+  }
+
+  /**
+   * Check user can read a content policy
+   * @param post ContentEntity
+   * @param user UserDto
+   * @param @optional requireGroups GroupDto
+   * @throws LogicException
+   * @returns void
+   */
+
+  public checkCanReadContent(post: ContentEntity, user: UserDto, requireGroups?: GroupDto[]): void {
+    if (post.get('status') !== PostStatus.PUBLISHED && post.get('createdBy') === user.id) return;
+    if (post.get('privacy') === PostPrivacy.OPEN || post.get('privacy') === PostPrivacy.CLOSED)
+      return;
+    const groupAudienceIds = post.get('groupIds') ?? [];
+    const userJoinedGroupIds = user.groups ?? [];
+    const canAccess = groupAudienceIds.some((groupId) => userJoinedGroupIds.includes(groupId));
+    if (!canAccess) {
+      if (requireGroups && requireGroups.length > 0) {
+        throw new ContentRequireGroupException({ requireGroups: requireGroups });
+      }
+      throw new ContentNoCRUDPermissionException();
     }
   }
 }

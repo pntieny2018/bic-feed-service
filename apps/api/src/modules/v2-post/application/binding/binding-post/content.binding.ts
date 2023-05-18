@@ -1,4 +1,3 @@
-import { IQuery } from '@nestjs/cqrs';
 import { PostEntity } from '../../../domain/model/content';
 import {
   IUserApplicationService,
@@ -12,8 +11,6 @@ import {
   GroupDto,
   IGroupApplicationService,
 } from '../../../../v2-group/application';
-import { PostStatus } from '../../../data-type/post-status.enum';
-import { PostPrivacy, PostType } from '../../../data-type';
 import { IContentBinding } from './content.interface';
 import { ArrayHelper } from '../../../../../common/helpers';
 
@@ -46,22 +43,16 @@ export class ContentBinding implements IContentBinding {
     if (!dataBinding?.actor) {
       userIdsNeedToFind.push(postEntity.get('createdBy'));
     }
-    const mentionUsers = {};
+    let mentionUsers: UserMentionDto = {};
     if (postEntity.get('mentionUserIds')?.length && !dataBinding?.mentionUsers) {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
     if (userIdsNeedToFind.length) {
       const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind);
-      const usersMap = users.reduce((obj, cur) => ({ ...obj, [cur.id]: cur }), {});
-      actor = usersMap[postEntity.get('createdBy')];
-      if (postEntity.get('mentionUserIds')) {
-        for (const mentionUserId of postEntity.get('mentionUserIds')) {
-          const findUser = usersMap[mentionUserId];
-          if (findUser) {
-            mentionUsers[findUser.username] = findUser;
-          }
-        }
+      actor = users.find((user) => user.id === postEntity.get('createdBy'));
+      if (postEntity.get('mentionUserIds') && users.length) {
+        mentionUsers = this.mapMentionWithUserInfo(users);
       }
     }
 
@@ -104,5 +95,27 @@ export class ContentBinding implements IContentBinding {
       reactionsCount: {},
       ownerReactions: [],
     });
+  }
+
+  /**
+   * Map mentions to UserInfo
+   * @param mentions string[]
+   * @param users UserDto[]
+   * @throws BadRequestException
+   * returns UserMentionDto
+   */
+  public mapMentionWithUserInfo(users: UserDto[]): UserMentionDto {
+    return users.reduce((returnValue, current) => {
+      return {
+        ...returnValue,
+        [current.username]: {
+          id: current.id,
+          fullname: current.fullname,
+          email: current.email,
+          username: current.username,
+          avatar: current.avatar,
+        },
+      };
+    }, {});
   }
 }
