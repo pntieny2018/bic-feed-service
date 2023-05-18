@@ -38,7 +38,7 @@ export class ContentBinding implements IContentBinding {
       groups?: GroupDto[];
     }
   ): Promise<PostDto> {
-    let actor = null;
+    let actor = dataBinding?.actor || null;
     const userIdsNeedToFind = [];
     if (!dataBinding?.actor) {
       userIdsNeedToFind.push(postEntity.get('createdBy'));
@@ -49,7 +49,10 @@ export class ContentBinding implements IContentBinding {
     }
 
     if (userIdsNeedToFind.length) {
-      const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind);
+      const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+        withGroupJoined: false,
+      });
+
       actor = users.find((user) => user.id === postEntity.get('createdBy'));
       if (postEntity.get('mentionUserIds') && users.length) {
         mentionUsers = this.mapMentionWithUserInfo(users);
