@@ -142,6 +142,7 @@ export class ReplyCommentHandler implements ICommandHandler<ReplyCommentCommand,
         fullname: actor.fullname,
         email: actor.email,
         username: actor.username,
+        avatar: actor.avatar,
       }),
     });
   }
