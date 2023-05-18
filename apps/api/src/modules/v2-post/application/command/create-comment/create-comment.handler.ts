@@ -40,7 +40,7 @@ import {
   IContentBinding,
 } from '../../binding/binding-post/content.interface';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
-import { CommentHasBeenCreatedEvent } from 'apps/api/src/events/comment/comment-has-been-created.event';
+import { CommentHasBeenCreatedEvent } from '../../../../../events/comment/comment-has-been-created.event';
 
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentHandler
