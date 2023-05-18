@@ -90,7 +90,7 @@ export class UpdateCommentRequestDto {
       )
   )
   @Transform(({ value }) => {
-    if (typeof value === 'object' && value?.type == 'gif') {
+    if (typeof value === 'object') {
       if (value?.id) return value.id;
     }
     return '';
