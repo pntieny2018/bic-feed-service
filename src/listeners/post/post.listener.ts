@@ -411,7 +411,7 @@ export class PostListener {
           new SeriesAddedItemsEvent({
             itemIds: [newPost.id],
             seriesId: seriesId,
-            skipNotify: skipNotifyForNewItems.includes(seriesId) && newPost.isHidden,
+            skipNotify: skipNotifyForNewItems.includes(seriesId) || newPost.isHidden,
             actor: actor,
             context: 'publish',
           })
@@ -437,7 +437,7 @@ export class PostListener {
               },
             ],
             seriesId: seriesId,
-            skipNotify: skipNotifyForRemoveItems.includes(seriesId) && newPost.isHidden,
+            skipNotify: skipNotifyForRemoveItems.includes(seriesId) || newPost.isHidden,
             actor: actor,
             contentIsDeleted: false,
           })
