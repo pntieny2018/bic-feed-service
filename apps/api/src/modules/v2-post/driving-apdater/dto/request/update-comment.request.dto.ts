@@ -9,15 +9,7 @@ export class UpdateCommentRequestDto {
   @ApiPropertyOptional()
   @Type(() => String)
   @IsNotEmpty()
-  @ValidateIf(
-    (o) =>
-      !(
-        o.media?.images?.length > 0 ||
-        o.media?.videos?.length > 0 ||
-        o.media?.files?.length > 0 ||
-        o.giphyId
-      )
-  )
+  @ValidateIf((o) => !(o.media?.images || o.giphyId))
   public content: string;
 
   @ApiPropertyOptional({
@@ -80,15 +72,7 @@ export class UpdateCommentRequestDto {
   @Expose({
     name: 'giphy',
   })
-  @ValidateIf(
-    (o) =>
-      !(
-        o.content ||
-        o.media?.images?.length > 0 ||
-        o.media?.videos?.length > 0 ||
-        o.media?.files?.length > 0
-      )
-  )
+  @ValidateIf((o) => !(o.content || o.media?.images))
   @Transform(({ value }) => {
     if (typeof value === 'object') {
       if (value?.id) return value.id;
