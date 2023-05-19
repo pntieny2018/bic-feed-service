@@ -13,7 +13,6 @@ import {
 } from '../../../../v2-group/application';
 import { PostEntity } from '../../../domain/model/content';
 import { IUserApplicationService, USER_APPLICATION_TOKEN } from '../../../../v2-user/application';
-import { PostStatus } from '../../../../../database/models/post.model';
 import { MediaService } from '../../../../media';
 import { MediaMarkAction, MediaType } from '../../../../../database/models/media.model';
 import {
