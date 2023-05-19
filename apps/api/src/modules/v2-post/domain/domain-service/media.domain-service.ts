@@ -1,4 +1,4 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import {
   IMediaRepository,
   MEDIA_REPOSITORY_TOKEN,
@@ -7,7 +7,6 @@ import { FileEntity, ImageEntity, VideoEntity } from '../model/media';
 import { IMediaDomainService } from './interface/media.domain-service.interface';
 
 export class MediaDomainService implements IMediaDomainService {
-  private readonly _logger = new Logger(MediaDomainService.name);
   @Inject(MEDIA_REPOSITORY_TOKEN)
   private readonly _mediaRepo: IMediaRepository;
 
@@ -67,9 +66,7 @@ export class MediaDomainService implements IMediaDomainService {
     const currentImageIds = imageEntities.map((e) => e.get('id'));
     const addingImageIds = imagesIds.filter((id) => !currentImageIds.includes(id));
     if (addingImageIds.length) {
-      this._logger.debug(addingImageIds, 'adding images');
       const images = await this._mediaRepo.findImages(addingImageIds);
-      this._logger.debug(JSON.stringify(images), 'response images');
       const availableImages = images.filter((image) => image.isOwner(ownerId) && image.isReady());
       result.push(...availableImages);
     }
