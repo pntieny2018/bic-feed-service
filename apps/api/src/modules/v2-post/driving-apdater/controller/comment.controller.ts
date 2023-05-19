@@ -41,6 +41,7 @@ import {
   ContentNoCommentPermissionException,
   ContentNotFoundException,
   ContentRequireGroupException,
+  MentionUserNotFoundException,
 } from '../../domain/exception';
 import {
   DeleteCommentCommand,
@@ -87,6 +88,7 @@ export class CommentController {
     } catch (e) {
       switch (e.constructor) {
         case ContentNotFoundException:
+        case MentionUserNotFoundException:
           throw new NotFoundException(e);
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
@@ -133,6 +135,7 @@ export class CommentController {
       switch (e.constructor) {
         case ContentNotFoundException:
         case CommentReplyNotExistException:
+        case MentionUserNotFoundException:
           throw new NotFoundException(e);
         case ContentRequireGroupException:
         case ContentNoCommentPermissionException:
