@@ -13,8 +13,6 @@ import {
 } from './interface/media.domain-service.interface';
 import { InvalidResourceImageException } from '../exception/invalid-resource-image.exception';
 import { IMentionValidator, MENTION_VALIDATOR_TOKEN } from '../validator/interface';
-import { ArrayHelper } from '../../../../common/helpers/array.helper';
-import { retry } from 'rxjs';
 
 @Injectable()
 export class CommentDomainService implements ICommentDomainService {
