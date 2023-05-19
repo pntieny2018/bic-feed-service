@@ -28,6 +28,7 @@ import { TagModel } from '../../../../database/models/tag.model';
 import { LinkPreviewModel } from '../../../../database/models/link-preview.model';
 import { LinkPreviewEntity } from '../../domain/model/link-preview';
 import { TagEntity } from '../../domain/model/tag';
+import { UserSeenPostModel } from '../../../../database/models/user-seen-post.model';
 
 export class PostRepository implements IPostRepository {
   @Inject(POST_FACTORY_TOKEN) private readonly _postFactory: IPostFactory;
@@ -46,6 +47,8 @@ export class PostRepository implements IPostRepository {
   private readonly _tagModel: typeof TagModel;
   @InjectModel(LinkPreviewModel)
   private readonly _linkPreviewModel: typeof LinkPreviewModel;
+  @InjectModel(UserSeenPostModel)
+  private readonly _userSeenPostModel: typeof UserSeenPostModel;
 
   public constructor(@InjectConnection() private readonly _sequelizeConnection: Sequelize) {}
 
@@ -220,6 +223,18 @@ export class PostRepository implements IPostRepository {
     return rows.map((row) => this._modelToPostEntity(row));
   }
 
+  public async markSeen(postId: string, userId: string): Promise<void> {
+    await this._userSeenPostModel.bulkCreate(
+      [
+        {
+          postId: postId,
+          userId: userId,
+        },
+      ],
+      { ignoreDuplicates: true }
+    );
+  }
+
   private _buildFindOptions(options: FindOnePostOptions | FindAllPostOptions): FindOptions<IPost> {
     const findOption: FindOptions<IPost> = {};
     if (options.where) {
@@ -311,6 +326,7 @@ export class PostRepository implements IPostRepository {
       privacy: post.privacy,
       status: post.status,
       type: post.type,
+      lang: post.lang,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -323,6 +339,7 @@ export class PostRepository implements IPostRepository {
       errorLog: post.errorLog,
       publishedAt: post.publishedAt,
       content: post.content,
+      mentionUserIds: post.mentions,
       groupIds: post.groups?.map((group) => group.groupId),
       seriesIds: post.postSeries?.map((series) => series.seriesId),
       tags: post.tagsJson?.map((tag) => new TagEntity(tag)),
@@ -352,6 +369,7 @@ export class PostRepository implements IPostRepository {
       type: post.type,
       title: post.title,
       summary: post.summary,
+      lang: post.lang,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,
@@ -384,6 +402,7 @@ export class PostRepository implements IPostRepository {
       type: post.type,
       title: post.title,
       summary: post.summary,
+      lang: post.lang,
       setting: {
         isImportant: post.isImportant,
         importantExpiredAt: post.importantExpiredAt,

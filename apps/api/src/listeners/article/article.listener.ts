@@ -69,13 +69,9 @@ export class ArticleListener {
         fullname: 'unused',
       },
       title: article.title,
-      commentsCount: article.commentsCount,
-      totalUsersSeen: article.totalUsersSeen,
       content: article.content,
+      contentType: article.type,
       createdAt: article.createdAt,
-      updatedAt: article.updatedAt,
-      createdBy: article.createdBy,
-      status: article.status,
       setting: {
         canComment: article.canComment,
         canReact: article.canReact,
@@ -84,13 +80,10 @@ export class ArticleListener {
       },
       id: article.id,
       audience: {
-        users: [],
         groups: (article?.groups ?? []).map((g) => ({
           id: g.groupId,
         })) as any,
       },
-      type: article.type,
-      privacy: article.privacy,
     });
 
     await this._notificationService.publishPostNotification({
@@ -200,7 +193,17 @@ export class ArticleListener {
       this._sentryService.captureException(error);
     }
 
-    const activity = this._postActivityService.createPayload(article);
+    const activity = this._postActivityService.createPayload({
+      id: article.id,
+      title: article.title,
+      content: article.content,
+      contentType: article.type,
+      setting: article.setting,
+      audience: article.audience,
+      mentions: article.mentions as any,
+      actor: article.actor,
+      createdAt: article.createdAt,
+    });
     await this._notificationService.publishPostNotification({
       key: `${article.id}`,
       value: {
@@ -304,8 +307,28 @@ export class ArticleListener {
     }
 
     if (!newArticle.isHidden) {
-      const updatedActivity = this._postActivityService.createPayload(newArticle);
-      const oldActivity = this._postActivityService.createPayload(oldArticle);
+      const updatedActivity = this._postActivityService.createPayload({
+        id: newArticle.id,
+        title: newArticle.title,
+        content: newArticle.content,
+        contentType: newArticle.type,
+        setting: newArticle.setting,
+        audience: newArticle.audience,
+        mentions: newArticle.mentions as any,
+        actor: newArticle.actor,
+        createdAt: newArticle.createdAt,
+      });
+      const oldActivity = this._postActivityService.createPayload({
+        id: oldArticle.id,
+        title: oldArticle.title,
+        content: oldArticle.content,
+        contentType: oldArticle.type,
+        setting: oldArticle.setting,
+        audience: oldArticle.audience,
+        mentions: oldArticle.mentions as any,
+        actor: oldArticle.actor,
+        createdAt: oldArticle.createdAt,
+      });
 
       await this._notificationService.publishPostNotification({
         key: `${id}`,

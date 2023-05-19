@@ -31,6 +31,7 @@ import {
   IMediaDomainService,
   MEDIA_DOMAIN_SERVICE_TOKEN,
 } from './interface/media.domain-service.interface';
+import { ContentEntity } from '../model/content/content.entity';
 
 export class PostDomainService implements IPostDomainService {
   private readonly _logger = new Logger(PostDomainService.name);
@@ -73,7 +74,7 @@ export class PostDomainService implements IPostDomainService {
     return postEntity;
   }
 
-  public async publishPost(input: PostPublishProps): Promise<PostEntity> {
+  public async publishPost(input: PostPublishProps): Promise<void> {
     const { postEntity, newData } = input;
     const { authUser, mentionUsers, tagIds, linkPreview, groups, media } = newData;
 
@@ -134,10 +135,14 @@ export class PostDomainService implements IPostDomainService {
       postEntity.get('tags')
     );
 
-    if (!postEntity.isChanged()) return postEntity;
+    if (!postEntity.isChanged()) return;
     await this._postRepository.update(postEntity);
+
     postEntity.commit();
-    return postEntity;
+  }
+
+  public async markSeen(contentEntity: ContentEntity, userId: string): Promise<void> {
+    await this._postRepository.markSeen(contentEntity.get('id'), userId);
   }
 
   public async autoSavePost(input: PostPublishProps): Promise<void> {

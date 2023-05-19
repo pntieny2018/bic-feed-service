@@ -38,6 +38,7 @@ import { TagSeriesInvalidException } from '../../domain/exception/tag-series-inv
 import { AccessDeniedException } from '../../domain/exception/access-denied.exception';
 import { AutoSavePostCommand } from '../../application/command/auto-save-post/auto-save-post.command';
 import { AutoSavePostRequestDto } from '../dto/request/auto-save-post.request.dto';
+import { PostStatus } from '../../../../database/models/post.model';
 
 @ApiTags('v2 Posts')
 @ApiSecurity('authorization')
@@ -89,7 +90,8 @@ export class PostController {
   public async publishPost(
     @Param('postId', ParseUUIDPipe) postId: string,
     @AuthUser() authUser: UserDto,
-    @Body() publishPostRequestDto: PublishPostRequestDto
+    @Body() publishPostRequestDto: PublishPostRequestDto,
+    @Req() req: Request
   ): Promise<PostDto> {
     const { audience, tags, series, mentions, media } = publishPostRequestDto;
     try {
@@ -111,6 +113,10 @@ export class PostController {
           authUser,
         })
       );
+
+      if (data.status === PostStatus.PROCESSING) {
+        req.message = 'message.post.published_success_with_video_waiting_process';
+      }
       return data;
     } catch (e) {
       console.log(e);

@@ -48,6 +48,7 @@ export interface IPostRepository {
   ): Promise<PostEntity[] | ArticleEntity[] | SeriesEntity[]>;
 
   delete(id: string): Promise<void>;
+  markSeen(postId: string, userId: string): Promise<void>;
 }
 
 export const POST_REPOSITORY_TOKEN = 'POST_REPOSITORY_TOKEN';

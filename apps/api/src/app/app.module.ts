@@ -33,7 +33,6 @@ import { I18nGlobalModule } from '../modules/i18n/i18n-global.module';
 import { I18nMiddleware } from 'nestjs-i18n';
 import { RecentSearchModuleV2 } from '../modules/v2-recent-search/recent-search.module';
 import { GiphyModuleV2 } from '../modules/v2-giphy/giphy.module';
-import { NotificationModuleV2 } from '../modules/v2-notification/notification.module';
 
 @Module({
   imports: [
@@ -68,7 +67,6 @@ import { NotificationModuleV2 } from '../modules/v2-notification/notification.mo
     GroupModuleV2,
     UserModuleV2,
     RecentSearchModuleV2,
-    NotificationModuleV2,
     GiphyModuleV2,
     AdminModule,
     I18nGlobalModule,

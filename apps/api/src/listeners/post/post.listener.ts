@@ -26,6 +26,12 @@ import { InternalEventEmitterService } from '../../app/custom/event-emitter';
 import { TagService } from '../../modules/tag/tag.service';
 import { UserDto } from '../../modules/v2-user/application';
 import { SeriesService } from '../../modules/series/series.service';
+import {
+  ActorObject,
+  AudienceObject,
+  MentionObject,
+  SettingObject,
+} from '../../notification/dto/requests/notification-activity.dto';
 
 @Injectable()
 export class PostListener {
@@ -65,14 +71,10 @@ export class PostListener {
       this._postSearchService.deletePostsToSearch([post]);
 
       const activity = this._postActivityService.createPayload({
+        title: null,
         actor: actor,
-        commentsCount: post.commentsCount,
-        totalUsersSeen: post.totalUsersSeen,
         content: post.content,
         createdAt: post.createdAt,
-        updatedAt: post.updatedAt,
-        createdBy: post.createdBy,
-        status: post.status,
         setting: {
           canComment: post.canComment,
           canReact: post.canReact,
@@ -81,12 +83,11 @@ export class PostListener {
         },
         id: post.id,
         audience: {
-          users: [],
           //groups: (post?.groups ?? []).map((g) => g.groupId) as any,
           groups: post?.groups ?? ([] as any),
         },
-        type: PostType.POST,
-        privacy: PostPrivacy.OPEN,
+        contentType: PostType.POST,
+        mentions: post.mentions as any,
       });
 
       await this._notificationService.publishPostNotification({
@@ -147,6 +148,7 @@ export class PostListener {
       type,
       isHidden,
       tags,
+      setting,
     } = post;
     if (post.videoIdProcessing) {
       await this._mediaService
@@ -156,7 +158,17 @@ export class PostListener {
 
     if (status !== PostStatus.PUBLISHED) return;
 
-    const activity = this._postActivityService.createPayload(post);
+    const activity = this._postActivityService.createPayload({
+      id,
+      title: null,
+      content,
+      contentType: type,
+      setting,
+      audience: audience,
+      mentions: mentions as any,
+      actor: actor,
+      createdAt: createdAt,
+    });
     if (((activity.object.mentions as any) ?? [])?.length === 0) {
       activity.object.mentions = {};
     }
@@ -284,8 +296,28 @@ export class PostListener {
     newPost.mentions = validMention;
 
     if (!newPost.isHidden) {
-      const updatedActivity = this._postActivityService.createPayload(newPost);
-      const oldActivity = this._postActivityService.createPayload(oldPost);
+      const updatedActivity = this._postActivityService.createPayload({
+        id: newPost.id,
+        title: null,
+        content: newPost.content,
+        contentType: newPost.type,
+        setting: newPost.setting,
+        audience: newPost.audience,
+        mentions: newPost.mentions as any,
+        actor: newPost.actor,
+        createdAt: newPost.createdAt,
+      });
+      const oldActivity = this._postActivityService.createPayload({
+        id: oldPost.id,
+        title: null,
+        content: oldPost.content,
+        contentType: oldPost.type,
+        setting: oldPost.setting,
+        audience: oldPost.audience,
+        mentions: oldPost.mentions as any,
+        actor: oldPost.actor,
+        createdAt: oldPost.createdAt,
+      });
 
       await this._notificationService.publishPostNotification({
         key: `${id}`,
@@ -418,7 +450,17 @@ export class PostListener {
           this._logger.error(JSON.stringify(e?.stack));
           this._sentryService.captureException(e);
         });
-      const postActivity = this._postActivityService.createPayload(post);
+      const postActivity = this._postActivityService.createPayload({
+        id: post.id,
+        title: null,
+        content: post.content,
+        contentType: post.type,
+        setting: post.setting,
+        audience: post.audience,
+        mentions: post.mentions as any,
+        actor: post.actor,
+        createdAt: post.createdAt,
+      });
       this._notificationService.publishPostNotification({
         key: `${post.id}`,
         value: {
