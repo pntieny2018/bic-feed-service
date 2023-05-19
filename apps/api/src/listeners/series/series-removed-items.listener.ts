@@ -26,10 +26,11 @@ export class SeriesRemovedItemsListener {
         event.payload.items[0]
       )}`
     );
-    const { seriesId } = event.payload;
+    const { seriesId, skipNotify } = event.payload;
     const series = await this._seriesService.findSeriesById(seriesId, {
       withItemId: true,
     });
+
     if (series) {
       const items = series.items.map((item) => ({
         id: item.id,
@@ -38,6 +39,10 @@ export class SeriesRemovedItemsListener {
       this._postSearchService.updateAttributePostToSearch(series, {
         items,
       });
+
+      if (skipNotify) {
+        return;
+      }
 
       this._notifyDeletedItems(event).catch((ex) => this._logger.error(ex, ex?.stack));
     }

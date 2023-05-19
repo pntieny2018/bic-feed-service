@@ -38,7 +38,6 @@ export class ContentBinding implements IContentBinding {
       groups?: GroupDto[];
     }
   ): Promise<PostDto> {
-    let actor = dataBinding?.actor || null;
     const userIdsNeedToFind = [];
     if (!dataBinding?.actor) {
       userIdsNeedToFind.push(postEntity.get('createdBy'));
@@ -48,15 +47,18 @@ export class ContentBinding implements IContentBinding {
       userIdsNeedToFind.push(...postEntity.get('mentionUserIds'));
     }
 
-    if (userIdsNeedToFind.length) {
-      const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
-        withGroupJoined: false,
-      });
+    const users = await this._userApplicationService.findAllByIds(userIdsNeedToFind, {
+      withGroupJoined: false,
+    });
+    if (dataBinding?.mentionUsers?.length) {
+      users.push(...dataBinding?.mentionUsers);
+    }
 
-      actor = users.find((user) => user.id === postEntity.get('createdBy'));
-      if (postEntity.get('mentionUserIds') && users.length) {
-        mentionUsers = this.mapMentionWithUserInfo(users);
-      }
+    const actor = users.find((user) => user.id === postEntity.get('createdBy'));
+    if (postEntity.get('mentionUserIds') && users.length) {
+      mentionUsers = this.mapMentionWithUserInfo(
+        users.filter((user) => postEntity.get('mentionUserIds').includes(user.id))
+      );
     }
 
     const audience = {
@@ -77,6 +79,7 @@ export class ContentBinding implements IContentBinding {
       tags: postEntity.get('tags').map((tag) => ({
         id: tag.get('id'),
         name: tag.get('name'),
+        groupId: tag.get('groupId'),
       })),
       series: postEntity.get('seriesIds'),
       communities,

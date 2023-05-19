@@ -32,7 +32,7 @@ export class CommunityResponseDto {
   public name: string;
 }
 
-class SeriesSimpleResponseDto {
+export class SeriesSimpleResponseDto {
   @ApiProperty({
     type: String,
   })
@@ -132,7 +132,6 @@ export class PostResponseDto {
       return {
         canReact: obj.canReact,
         canComment: obj.canComment,
-        canShare: obj.canShare,
         isImportant: obj.isImportant,
         importantExpiredAt: obj.importantExpiredAt,
       };

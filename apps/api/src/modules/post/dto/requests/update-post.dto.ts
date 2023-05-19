@@ -61,7 +61,6 @@ export class UpdatePostDto {
     type: PostSettingDto,
     required: false,
     example: {
-      canShare: true,
       canReact: true,
       canComment: true,
       isImportant: false,

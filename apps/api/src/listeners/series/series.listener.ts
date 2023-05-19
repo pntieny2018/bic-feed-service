@@ -100,7 +100,16 @@ export class SeriesListener {
     ]);
 
     try {
-      const activity = this._postActivityService.createPayload(series);
+      const activity = this._postActivityService.createPayload({
+        id: series.id,
+        title: series.title,
+        content: null,
+        contentType: series.type,
+        setting: series.setting,
+        audience: series.audience,
+        actor: series.actor,
+        createdAt: series.createdAt,
+      });
 
       let groupAdminIds = await this._groupAppService.getGroupAdminIds(actor, groupIds);
 
@@ -194,8 +203,26 @@ export class SeriesListener {
     }
 
     try {
-      const updatedActivity = this._postActivityService.createPayload(newSeries);
-      const oldActivity = this._postActivityService.createPayload(oldSeries);
+      const updatedActivity = this._postActivityService.createPayload({
+        id: oldSeries.id,
+        title: oldSeries.title,
+        content: null,
+        contentType: oldSeries.type,
+        setting: oldSeries.setting,
+        audience: oldSeries.audience,
+        actor: oldSeries.actor,
+        createdAt: oldSeries.createdAt,
+      });
+      const oldActivity = this._postActivityService.createPayload({
+        id: newSeries.id,
+        title: newSeries.title,
+        content: null,
+        contentType: newSeries.type,
+        setting: newSeries.setting,
+        audience: newSeries.audience,
+        actor: newSeries.actor,
+        createdAt: newSeries.createdAt,
+      });
       const oldGroupId = oldSeries.audience.groups.map((g) => g.id);
 
       const differenceGroupIds = [

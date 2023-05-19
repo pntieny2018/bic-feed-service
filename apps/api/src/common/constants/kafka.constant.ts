@@ -23,7 +23,7 @@ export const KAFKA_TOPIC = {
     REPORT: `${process.env.KAFKA_ENV}.bein_stream.report`,
   },
   CONTENT: {
-    POST_PUBLISHED: `${process.env.KAFKA_ENV}.content.post_published`,
+    POST_CHANGED: `${process.env.KAFKA_ENV}.content.post_changed`,
     POST_AUTO_SAVE: `${process.env.KAFKA_ENV}.content.post_auto_save`,
     ARTICLE_PUBLISHED: `${process.env.KAFKA_ENV}.content.article_published`,
     SERIES_PUBLISHED: `${process.env.KAFKA_ENV}.content.series_published`,

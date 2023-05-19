@@ -9,6 +9,7 @@ import { SearchService } from './search.service';
 import { UserModuleV2 } from '../v2-user/user.module';
 import { GroupModuleV2 } from '../v2-group/group.module';
 import { TagModule } from '../tag';
+import { SearchConsumer } from './search.consumer';
 
 export const register = async (config: ConfigService): Promise<KafkaOptions> => {
   const kafkaConfig = config.get<IKafkaConfig>('kafka');
@@ -19,7 +20,7 @@ export const register = async (config: ConfigService): Promise<KafkaOptions> => 
 };
 @Module({
   imports: [UserModuleV2, GroupModuleV2, PostModule, ReactionModule, TagModule],
-  controllers: [SearchController],
+  controllers: [SearchController, SearchConsumer],
   providers: [SearchService],
   exports: [SearchService],
 })

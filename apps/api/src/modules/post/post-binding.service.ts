@@ -275,7 +275,6 @@ export class PostBindingService {
             importantExpiredAt: findPost.importantExpiredAt,
             isImportant: findPost.isImportant,
             canReact: findPost.canReact,
-            canShare: findPost.canShare,
             canComment: findPost.canComment,
           };
         }

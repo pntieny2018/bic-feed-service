@@ -436,7 +436,6 @@ export class ArticleService {
           updatedBy: authUserId,
           isImportant: setting.isImportant,
           importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
           privacy: null,
@@ -647,9 +646,6 @@ export class ArticleService {
 
     if (content !== null) {
       dataUpdate['content'] = content;
-    }
-    if (setting && setting.hasOwnProperty('canShare')) {
-      dataUpdate['canShare'] = setting.canShare;
     }
     if (setting && setting.hasOwnProperty('canComment')) {
       dataUpdate['canComment'] = setting.canComment;

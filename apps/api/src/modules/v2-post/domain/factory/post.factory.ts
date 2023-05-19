@@ -34,7 +34,6 @@ export class PostFactory implements IPostFactory {
       setting: {
         canComment: true,
         canReact: true,
-        canShare: true,
         importantExpiredAt: null,
         isImportant: false,
       },

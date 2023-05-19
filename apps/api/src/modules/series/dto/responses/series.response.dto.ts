@@ -209,7 +209,6 @@ export class SeriesResponseDto {
       return {
         canReact: obj.canReact,
         canComment: obj.canComment,
-        canShare: obj.canShare,
         isImportant: obj.isImportant,
         importantExpiredAt: obj.importantExpiredAt,
       };

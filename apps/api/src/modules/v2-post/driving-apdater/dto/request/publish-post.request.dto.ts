@@ -56,7 +56,6 @@ export class PublishPostRequestDto {
     type: PostSettingDto,
     required: false,
     example: {
-      canShare: true,
       canReact: true,
       canComment: true,
       isImportant: false,

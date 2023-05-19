@@ -20,6 +20,7 @@ export const SeriesHasBeenUpdated = 'series.has.been.updated';
 export const SeriesHasBeenPublished = 'series.has.been.published';
 export const SeriesHasBeenDeleted = 'series.has.been.deleted';
 export const SeriesAddItem = 'series.has.been.added_item';
+export const SeriesChangeItems = 'series.has.been.changed_items';
 export const SeriesRemoveItem = 'series.has.been.removed_item';
 // comment
 export const CommentWillBeCreated = 'comment.will.be.created';

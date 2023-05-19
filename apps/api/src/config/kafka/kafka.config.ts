@@ -17,6 +17,7 @@ export const getKafkaConfig = (): IKafkaConfig => ({
       username: process.env.KAFKA_SASL_USERNAME,
       password: process.env.KAFKA_SASL_PASSWORD,
     },
+    connectionTimeout: 30000,
     logLevel: logLevel.INFO,
   },
   consumer: {

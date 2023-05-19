@@ -50,6 +50,7 @@ export type ContentState = {
   attachVideoIds?: string[];
   detachVideoIds?: string[];
   enableSetting?: boolean;
+  isChangeStatus?: boolean;
 };
 export class ContentEntity<
   Props extends ContentProps = ContentProps
@@ -75,6 +76,7 @@ export class ContentEntity<
       attachVideoIds: [],
       detachVideoIds: [],
       enableSetting: false,
+      isChangeStatus: false,
     };
   }
 
@@ -120,8 +122,18 @@ export class ContentEntity<
     return this._props.status === PostStatus.PUBLISHED;
   }
 
+  public isProcessing(): boolean {
+    return this._props.status === PostStatus.PROCESSING;
+  }
+
+  public isHidden(): boolean {
+    return this._props.isHidden;
+  }
+
   public setPublish(): void {
-    this._props.status = PostStatus.PUBLISHED;
+    if (!this.isPublished()) {
+      this._state.isChangeStatus = true;
+    }
   }
 
   public setProcessing(): void {
@@ -139,16 +151,14 @@ export class ContentEntity<
     this._state.detachGroupIds = this._props.groupIds?.filter(
       (groupId) => !groupIds.includes(groupId)
     );
+
     this._props.groupIds = groupIds;
   }
   public setSetting(setting: PostSettingDto): void {
     let isEnableSetting = false;
     if (
       setting &&
-      (setting.isImportant ||
-        setting.canComment === false ||
-        setting.canReact === false ||
-        setting.canShare === false)
+      (setting.isImportant || setting.canComment === false || setting.canReact === false)
     ) {
       isEnableSetting = true;
     }
