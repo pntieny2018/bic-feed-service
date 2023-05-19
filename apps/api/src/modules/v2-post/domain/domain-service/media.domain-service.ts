@@ -68,7 +68,9 @@ export class MediaDomainService implements IMediaDomainService {
     const currentImageIds = result.map((e) => e.get('id'));
     const addingImageIds = imagesIds.filter((id) => !currentImageIds.includes(id));
     if (addingImageIds.length) {
+      this._logger.debug(addingImageIds, 'adding images');
       const images = await this._mediaRepo.findImages(addingImageIds);
+      this._logger.debug(images, 'response images');
       const availableImages = images.filter((image) => image.isOwner(ownerId) && image.isReady());
       result.push(...availableImages);
     }

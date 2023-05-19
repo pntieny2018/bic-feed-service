@@ -72,7 +72,7 @@ export class CommentDomainService implements ICommentDomainService {
     commentEntity.updateAttribute(newData);
 
     await this._mentionValidator.validateMentionUsers(mentionUsers, groups);
-
+    this._logger.debug(`${commentEntity.isChanged() ? 'changed' : 'not change'}`);
     if (!commentEntity.isChanged()) return;
 
     await this._commentRepository.update(commentEntity);
