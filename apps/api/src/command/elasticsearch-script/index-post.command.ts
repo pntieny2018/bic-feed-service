@@ -20,8 +20,6 @@ import { Sequelize } from 'sequelize-typescript';
 import { SearchService } from '../../modules/search/search.service';
 import { IDataPostToAdd } from '../../modules/search/interfaces/post-elasticsearch.interface';
 import { PostGroupModel } from '../../database/models/post-group.model';
-import { MentionModel } from '../../database/models/mention.model';
-import { MediaModel } from '../../database/models/media.model';
 import { CategoryModel } from '../../database/models/category.model';
 import { LinkPreviewModel } from '../../database/models/link-preview.model';
 import {
@@ -274,7 +272,6 @@ export class IndexPostCommand implements CommandRunner {
             'title',
             'summary',
             'createdBy',
-            'canShare',
             'canComment',
             'canReact',
             'importantExpiredAt',

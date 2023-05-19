@@ -39,6 +39,7 @@ import { ITag, TagModel } from './tag.model';
 import { UserMarkReadPostModel } from './user-mark-read-post.model';
 import { IUserNewsFeed, UserNewsFeedModel } from './user-newsfeed.model';
 import { IUserSavePost, UserSavePostModel } from './user-save-post.model';
+import { PostLang } from '../../modules/v2-post/data-type/post-lang.enum';
 
 export enum PostPrivacy {
   OPEN = 'OPEN',
@@ -72,7 +73,6 @@ export interface IPost {
   isImportant: boolean;
   importantExpiredAt?: Date;
   canReact: boolean;
-  canShare: boolean;
   canComment: boolean;
   isReported?: boolean;
   isHidden?: boolean;
@@ -142,9 +142,6 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
   public canReact: boolean;
 
   @Column
-  public canShare: boolean;
-
-  @Column
   public isHidden: boolean;
 
   @Column
@@ -174,7 +171,7 @@ export class PostModel extends Model<IPost, Optional<IPost, 'id'>> implements IP
 
   @AllowNull(true)
   @Column
-  public lang: string;
+  public lang: PostLang;
 
   @Column
   public privacy: PostPrivacy;

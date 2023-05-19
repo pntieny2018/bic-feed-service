@@ -61,7 +61,7 @@ export interface IDataPostToAdd {
   items?: { id: string; zindex: number }[];
   tags?: {
     id: string;
-    groupId: string;
+    groupId?: string;
     name: string;
   }[];
   coverMedia?: any;

@@ -61,7 +61,6 @@ export class UpdateSeriesDto {
   @ValidateNested({ each: true })
   @Type(() => PostSettingDto)
   public setting?: PostSettingDto = {
-    canShare: true,
     canReact: true,
     canComment: true,
     isImportant: false,

@@ -91,6 +91,7 @@ export class SearchService {
         body,
         pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
       });
+      console.log(`ADD ES:`, JSON.stringify(res));
       if (res.errors === true) {
         const errorItems = res.items.filter((item) => item.index.error);
         this.logger.debug(`[ERROR index posts] ${errorItems}`);
@@ -162,6 +163,7 @@ export class SearchService {
           body: dataIndex,
           pipeline: ElasticsearchHelper.PIPE_LANG_IDENT.POST,
         });
+        console.log(`Update ES:`, JSON.stringify(res));
         const newLang = ElasticsearchHelper.getLangOfPostByIndexName(res._index);
         if (dataIndex.lang !== newLang) {
           await this.postService.updateData([dataIndex.id], { lang: newLang });

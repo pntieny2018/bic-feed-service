@@ -464,7 +464,6 @@ export class PostService {
             'content',
           ],
           'createdBy',
-          'canShare',
           'canComment',
           'canReact',
           'importantExpiredAt',
@@ -576,7 +575,6 @@ export class PostService {
           updatedBy: authUserId,
           isImportant: setting.isImportant,
           importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
           tagsJson: tagList,
@@ -757,9 +755,6 @@ export class PostService {
 
     if (content !== null) {
       dataUpdate['content'] = content;
-    }
-    if (setting && setting.hasOwnProperty('canShare')) {
-      dataUpdate['canShare'] = setting.canShare;
     }
     if (setting && setting.hasOwnProperty('canComment')) {
       dataUpdate['canComment'] = setting.canComment;
@@ -1466,7 +1461,6 @@ export class PostService {
         ],
         'summary',
         'createdBy',
-        'canShare',
         'canComment',
         'canReact',
         'importantExpiredAt',

@@ -1,5 +1,6 @@
 import { v4 } from 'uuid';
 import { TypeActivity, VerbActivity } from '../../notification.constants';
+import { UserDto } from '../../../modules/v2-user/application';
 
 export class ActivityObject {
   public id: string;
@@ -33,7 +34,6 @@ export class ReportObject {
 export class SettingObject {
   public canReact: boolean;
   public canComment: boolean;
-  public canShare: boolean;
   public isImportant: boolean;
   public importantExpiredAt?: Date;
 }
@@ -47,7 +47,7 @@ export class ActorObject {
 }
 
 export class MentionObject {
-  [index: string]: ActorObject[];
+  [index: string]: UserDto[];
 }
 export class MediaObject {
   public images: any[];
@@ -63,7 +63,7 @@ export class GroupAudienceObject {
   public id: string;
   public name?: string;
   public icon?: string;
-  public communityId?: number;
+  public communityId?: string;
   public isCommunity?: boolean;
 }
 
@@ -115,6 +115,6 @@ export class NotificationActivity {
     this.verb = verb;
     this.target = target;
     this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
+    // this.updatedAt = updatedAt;
   }
 }

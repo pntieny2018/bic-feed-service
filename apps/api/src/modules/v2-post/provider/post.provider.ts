@@ -23,6 +23,8 @@ import { CONTENT_BINDING_TOKEN } from '../application/binding/binding-post/conte
 import { ContentBinding } from '../application/binding/binding-post/content.binding';
 import { MentionValidator } from '../domain/validator/mention.validator';
 import { AutoSavePostHandler } from '../application/command/auto-save-post/auto-save-post.handler';
+import { ProcessPostPublishedHandler } from '../application/command/process-post-published/process-post-published.handler';
+import { ProcessPostUpdatedHandler } from '../application/command/process-post-updated/process-post-updated.handler';
 
 export const postProvider = [
   {
@@ -65,4 +67,6 @@ export const postProvider = [
   CreateDraftPostHandler,
   PublishPostHandler,
   AutoSavePostHandler,
+  ProcessPostPublishedHandler,
+  ProcessPostUpdatedHandler,
 ];

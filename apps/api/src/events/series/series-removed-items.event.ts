@@ -27,7 +27,7 @@ export type ItemRemovedInSeriesEvent = {
   createdBy: string;
   groupIds: string[];
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 };
 export interface ISeriesRemovedItemsPayload {
   seriesId: string;

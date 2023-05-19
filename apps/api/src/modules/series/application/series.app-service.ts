@@ -114,10 +114,7 @@ export class SeriesAppService {
     }
     if (audience.groupIds?.length > 0) {
       const isEnableSetting =
-        setting.isImportant ||
-        setting.canComment === false ||
-        setting.canReact === false ||
-        setting.canShare === false;
+        setting.isImportant || setting.canComment === false || setting.canReact === false;
       await this._authorityService.checkCanCreateSeries(user, audience.groupIds, isEnableSetting);
     }
     const created = await this._seriesService.create(user, createSeriesDto);
@@ -175,10 +172,7 @@ export class SeriesAppService {
     let isEnableSetting = false;
     if (
       setting &&
-      (setting.isImportant ||
-        setting.canComment === false ||
-        setting.canReact === false ||
-        setting.canShare === false)
+      (setting.isImportant || setting.canComment === false || setting.canReact === false)
     ) {
       isEnableSetting = true;
     }

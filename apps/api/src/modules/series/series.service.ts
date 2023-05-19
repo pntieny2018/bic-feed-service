@@ -156,7 +156,6 @@ export class SeriesService {
           privacy,
           isImportant: setting.isImportant,
           importantExpiredAt: setting.isImportant === false ? null : setting.importantExpiredAt,
-          canShare: setting.canShare,
           canComment: setting.canComment,
           canReact: setting.canReact,
           coverJson: coverMedia,
@@ -231,9 +230,6 @@ export class SeriesService {
         coverJson: coverMedia,
         privacy,
       };
-      if (setting && setting.hasOwnProperty('canShare')) {
-        dataUpdate['canShare'] = setting.canShare;
-      }
       if (setting && setting.hasOwnProperty('canComment')) {
         dataUpdate['canComment'] = setting.canComment;
       }
@@ -499,7 +495,6 @@ export class SeriesService {
           'title',
           'summary',
           'createdBy',
-          'canShare',
           'canComment',
           'canReact',
           'status',
