@@ -134,6 +134,7 @@ export class ContentEntity<
     if (!this.isPublished()) {
       this._state.isChangeStatus = true;
     }
+    this._props.status = PostStatus.PUBLISHED;
   }
 
   public setProcessing(): void {
