@@ -8,7 +8,11 @@ import {
 import { IContentValidator, CONTENT_VALIDATOR_TOKEN } from '../../../domain/validator/interface';
 import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/repositoty-interface';
 import { ContentEntity } from '../../../domain/model/content/content.entity';
-import { CommentNotFoundException, ContentNotFoundException } from '../../../domain/exception';
+import {
+  CommentNotFoundException,
+  ContentNoCRUDPermissionException,
+  ContentNotFoundException,
+} from '../../../domain/exception';
 import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
 import { CommentHasBeenDeletedEvent } from 'apps/api/src/events/comment/comment-has-been-deleted.event';
 
@@ -27,11 +31,11 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
   public async execute(command: DeleteCommentCommand): Promise<void> {
     const { actor, id } = command.payload;
 
-    const comment = await this._commentRepository.findOne({
-      id: id,
-      createdBy: actor.id,
-    });
+    const comment = await this._commentRepository.findOne({ id });
+
     if (!comment) throw new CommentNotFoundException();
+
+    if (comment.get('createdBy') !== actor.id) throw new ContentNoCRUDPermissionException();
 
     const post = (await this._postRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
