@@ -16,7 +16,7 @@ export class MediaDomainService implements IMediaDomainService {
     ownerId: string
   ): Promise<VideoEntity[]> {
     if (!videosIds || videosIds?.length === 0) return [];
-    let result = [];
+    let result = [...videoEntities];
     const currentVideoIds = (videoEntities || []).map((e) => e.get('id'));
     const addingVideoIds = videosIds.filter((id) => !currentVideoIds.includes(id));
     if (addingVideoIds.length) {
@@ -37,7 +37,7 @@ export class MediaDomainService implements IMediaDomainService {
     ownerId: string
   ): Promise<FileEntity[]> {
     if (!filesIds || filesIds.length === 0) return [];
-    let result = [];
+    let result = [...fileEntities];
     const currentFileIds = (fileEntities || []).map((e) => e.get('id'));
     const addingFileIds = filesIds.filter((id) => !currentFileIds.includes(id));
     if (addingFileIds.length) {
@@ -59,7 +59,7 @@ export class MediaDomainService implements IMediaDomainService {
     ownerId: string
   ): Promise<ImageEntity[]> {
     if (!imagesIds || imagesIds.length === 0) return [];
-    let result = [];
+    let result = [...imageEntities];
     const currentImageIds = (imageEntities || []).map((e) => e.get('id'));
     const addingImageIds = imagesIds.filter((id) => !currentImageIds.includes(id));
     if (addingImageIds.length) {
