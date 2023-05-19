@@ -34,6 +34,7 @@ import { MigratePostMediaCommand } from './migrate-post-media.command';
 import { CheckWrongMediaCommand } from './check-wrong-media.command';
 import { MigrateLinkPreviewCommand } from './migrate-link-preview.command';
 import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.command';
+import { MigratePostMentionsCommand } from './migrate-post-mentions.command';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { MigrateCommentMentionsCommand } from './migrate-comment-mentions.comman
     CheckWrongMediaCommand,
     MigrateLinkPreviewCommand,
     MigrateCommentMentionsCommand,
+    MigratePostMentionsCommand,
   ],
 })
 export class CommandModule {}
