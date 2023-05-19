@@ -35,7 +35,7 @@ export class DeleteCommentHandler implements ICommandHandler<DeleteCommentComman
 
     if (!comment) throw new CommentNotFoundException();
 
-    if (comment.get('createdBy') !== actor.id) throw new ContentNoCRUDPermissionException();
+    if (!comment.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
     const post = (await this._postRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
