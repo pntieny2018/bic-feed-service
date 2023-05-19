@@ -130,7 +130,7 @@ export class CommentNotificationService {
   public async update(
     event: string,
     actor: UserDto,
-    oldComment: IComment,
+    oldMentions: string[],
     commentResponse: CommentResponseDto
   ): Promise<void> {
     const postResponse = await this._postService.get(commentResponse.postId, actor, {
@@ -143,10 +143,8 @@ export class CommentNotificationService {
     }
     const newMentionedUserIds = Object.values(commentResponse.mentions ?? {}).map((u) => u.id);
 
-    const oldMentionedUserIds = oldComment.mentions ?? [];
-
     const validMentionUserIds = (newMentionedUserIds ?? []).filter(
-      (userId) => !(oldMentionedUserIds ?? []).includes(userId)
+      (userId) => !(oldMentions ?? []).includes(userId)
     );
 
     let commentActivity;

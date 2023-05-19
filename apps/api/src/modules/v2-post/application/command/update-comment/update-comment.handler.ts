@@ -10,6 +10,7 @@ import { COMMENT_REPOSITORY_TOKEN, ICommentRepository } from '../../../domain/re
 import { ContentEntity } from '../../../domain/model/content/content.entity';
 import {
   CommentNotFoundException,
+  ContentNoCRUDPermissionException,
   ContentNoCommentPermissionException,
   ContentNotFoundException,
 } from '../../../domain/exception';
@@ -23,6 +24,8 @@ import {
   UserDto,
 } from 'apps/api/src/modules/v2-user/application';
 import { GroupDto } from 'apps/api/src/modules/v2-group/application';
+import { InternalEventEmitterService } from '../../../../../app/custom/event-emitter/internal-event-emitter.service';
+import { CommentHasBeenUpdatedEvent } from '../../../../../events/comment/comment-has-been-updated.event';
 
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<UpdateCommentCommand, void> {
@@ -36,17 +39,18 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
     @Inject(COMMENT_DOMAIN_SERVICE_TOKEN)
     private readonly _commentDomainService: ICommentDomainService,
     @Inject(USER_APPLICATION_TOKEN)
-    private readonly _userApplicationService: IUserApplicationService
+    private readonly _userApplicationService: IUserApplicationService,
+    private readonly _eventEmitter: InternalEventEmitterService
   ) {}
 
   public async execute(command: UpdateCommentCommand): Promise<void> {
     const { actor, id, mentions } = command.payload;
 
-    const comment = await this._commentRepository.findOne({
-      id: id,
-      createdBy: actor.id,
-    });
+    const comment = await this._commentRepository.findOne({ id });
+
     if (!comment) throw new CommentNotFoundException();
+
+    if (!comment.isOwner(actor.id)) throw new ContentNoCRUDPermissionException();
 
     const post = (await this._postRepository.findOne({
       where: { id: comment.get('postId'), groupArchived: false, isHidden: false },
@@ -70,6 +74,7 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
         withGroupJoined: true,
       });
     }
+    const oldMentions = comment.get('mentions');
 
     await this._commentDomainService.update({
       commentEntity: comment,
@@ -77,5 +82,13 @@ export class UpdateCommentHandler implements ICommandHandler<UpdateCommentComman
       mentionUsers,
       newData: command.payload,
     });
+
+    this._eventEmitter.emit(
+      new CommentHasBeenUpdatedEvent({
+        actor,
+        oldMentions,
+        commentId: comment.get('id'),
+      })
+    );
   }
 }

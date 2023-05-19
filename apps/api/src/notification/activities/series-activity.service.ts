@@ -120,4 +120,34 @@ export class SeriesActivityService {
       new Date()
     );
   }
+
+  public getChangeSeriesActivity(content: IPost, series: ISeriesState[]): NotificationActivity {
+    const activityObject = {
+      id: content.id,
+      title: content.title,
+      content: content.content,
+      contentType: content.type.toLowerCase(),
+      actor: { id: content.createdBy },
+      items: series,
+      createdAt: content.createdAt,
+      updatedAt: content.createdAt,
+    };
+
+    return new NotificationActivity(
+      activityObject,
+      VerbActivity.CHANGE,
+      TypeActivity.SERIES,
+      new Date(),
+      new Date()
+    );
+  }
+}
+
+export interface ISeriesState {
+  actor: {
+    id: string;
+  };
+  id: string;
+  title: string;
+  state: 'add' | 'remove';
 }

@@ -32,7 +32,7 @@ export class CommunityResponseDto {
   public name: string;
 }
 
-class SeriesSimpleResponseDto {
+export class SeriesSimpleResponseDto {
   @ApiProperty({
     type: String,
   })

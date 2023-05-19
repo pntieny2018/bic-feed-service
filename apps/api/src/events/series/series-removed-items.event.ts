@@ -32,6 +32,7 @@ export type ItemRemovedInSeriesEvent = {
 export interface ISeriesRemovedItemsPayload {
   seriesId: string;
   items: ItemRemovedInSeriesEvent[];
+  skipNotify?: boolean;
   actor: UserDto;
   contentIsDeleted: boolean;
 }
